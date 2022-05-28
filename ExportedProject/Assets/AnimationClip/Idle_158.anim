@@ -1,0 +1,495 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!74 &7400000
+AnimationClip:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Idle
+  m_Legacy: 1
+  m_Compressed: 0
+  m_UseHighQualityCurve: 1
+  m_RotationCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1.9973709E-07, y: -0, z: -0, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1.9973709E-07, y: -0, z: -0, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 5.9604645E-08, y: -8.009374E-08, z: 4.662797E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 5.9604645E-08, y: -8.009374E-08, z: 4.662797E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_left
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 0.70710695, y: 0, z: 0, w: 0.70710665}
+        inSlope: {x: 0, y: -3.2125942E-07, z: 2.2840103E-07, w: 0}
+        outSlope: {x: 0, y: -3.2125942E-07, z: 2.2840103E-07, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 0.70710695, y: 0, z: 0, w: 0.70710665}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -0.0043110913, y: 0.70709366, z: -0.0043111853, w: 0.70709366}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.0043110913, y: 0.70709366, z: -0.0043111853, w: 0.70709366}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 8.19564E-08, y: -2.8206606E-15, z: -3.306195E-08, w: 1}
+        inSlope: {x: 0, y: -1.665244E-15, z: -1.0658151E-13, w: 0}
+        outSlope: {x: 0, y: -1.665244E-15, z: -1.0658151E-13, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 8.19564E-08, y: -2.8206606E-15, z: -3.306195E-08, w: 1}
+        inSlope: {x: 0, y: -1.2684224E-16, z: 0, w: 0}
+        outSlope: {x: 0, y: -1.2684224E-16, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Clip
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -1.8932537E-29, y: -3.55269E-15, z: -5.3290705E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -1.8932537E-29, y: -3.55269E-15, z: -5.3290705E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 2.1316282E-14, y: -3.5527003E-15, z: 7.5730364E-29, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 2.1316282E-14, y: -3.5527003E-15, z: 7.5730364E-29, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol/Bone_Stvol_Niz
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 2.1316282E-14, y: -3.5527003E-15, z: 7.5730364E-29, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 2.1316282E-14, y: -3.5527003E-15, z: 7.5730364E-29, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol/Bone_Stvol_Verh
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -1.8932537E-29, y: -3.55269E-15, z: -5.3290705E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -1.8932537E-29, y: -3.55269E-15, z: -5.3290705E-15, w: 1}
+        inSlope: {x: 0, y: 0, z: 0, w: 0}
+        outSlope: {x: 0, y: 0, z: 0, w: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Kurok
+  m_CompressedRotationCurves: []
+  m_EulerCurves: []
+  m_PositionCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0, y: 0, z: 0}
+        inSlope: {x: -0, y: -0, z: -0}
+        outSlope: {x: -0, y: -0, z: -0}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0, y: 0, z: 0}
+        inSlope: {x: -0, y: -0, z: -0}
+        outSlope: {x: -0, y: -0, z: -0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0, y: 1.1962733, z: 0.45576262}
+        inSlope: {x: -0, y: 3.8064826E-15, z: 3.8064826E-15}
+        outSlope: {x: -0, y: 8.881793E-15, z: 8.881793E-15}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0, y: 1.1962733, z: 0.45576262}
+        inSlope: {x: -0, y: 3.8064826E-15, z: 3.8064826E-15}
+        outSlope: {x: -0, y: 8.881793E-15, z: 8.881793E-15}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.25000012, y: 0.4557624, z: 0.17872696}
+        inSlope: {x: -0, y: -0, z: -0}
+        outSlope: {x: -0, y: -0, z: -0}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0.25000012, y: 0.4557624, z: 0.17872696}
+        inSlope: {x: -0, y: -0, z: -0}
+        outSlope: {x: -0, y: -0, z: -0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_left
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: 0.24999987, y: 0.45576245, z: 0.17872718}
+        inSlope: {x: -0, y: -1.2053862E-14, z: 1.427431E-15}
+        outSlope: {x: -0, y: 5.7097233E-15, z: 3.3306723E-15}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: 0.24999987, y: 0.45576245, z: 0.17872718}
+        inSlope: {x: -0, y: -1.2053862E-14, z: 1.427431E-15}
+        outSlope: {x: -0, y: 5.7097233E-15, z: 3.3306723E-15}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.024404392, y: -0.021372223, z: 0.51684517}
+        inSlope: {x: -8.506205E-08, y: 8.43918E-08, z: 2.7249562E-06}
+        outSlope: {x: -2.7755602E-16, y: -2.7755602E-16, z: 1.3322689E-14}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0.024404392, y: -0.021372223, z: 0.51684517}
+        inSlope: {x: -1.1895258E-16, y: -1.1895258E-16, z: 5.709724E-15}
+        outSlope: {x: -8.5213294E-08, y: -1.7033878E-07, z: -2.725068E-06}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.09265268, y: 0.12053695, z: -1.9073486E-08}
+        inSlope: {x: -4.7581033E-16, y: 1.427431E-15, z: -3.1221278E-12}
+        outSlope: {x: -1.1102241E-15, y: 3.3306723E-15, z: -2.6469805E-22}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0.09265268, y: 0.12053695, z: -1.9073486E-08}
+        inSlope: {x: -4.7581033E-16, y: 1.427431E-15, z: -1.1344202E-22}
+        outSlope: {x: -1.1102241E-15, y: 3.3306723E-15, z: 3.5772815E-12}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Clip
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -0.123338275, y: 0.076700434, z: 0.00086088176}
+        inSlope: {x: -9.516207E-16, y: 7.137155E-16, z: 1.1151805E-17}
+        outSlope: {x: -2.2204482E-15, y: 1.6653361E-15, z: 2.6020877E-17}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.123338275, y: 0.076700434, z: 0.00086088176}
+        inSlope: {x: -9.516207E-16, y: 7.137155E-16, z: 1.1151805E-17}
+        outSlope: {x: -2.2204482E-15, y: 1.6653361E-15, z: 2.6020877E-17}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.12274204, y: 0, z: -3.0517577E-07}
+        inSlope: {x: -9.516207E-16, y: -0, z: -1.8150724E-21}
+        outSlope: {x: -2.2204482E-15, y: -0, z: -4.2351688E-21}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0.12274204, y: 0, z: -3.0517577E-07}
+        inSlope: {x: -9.516207E-16, y: -0, z: -1.8150724E-21}
+        outSlope: {x: -2.2204482E-15, y: -0, z: -4.2351688E-21}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol/Bone_Stvol_Niz
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 0
+        value: {x: -0.12274203, y: 0.076963216, z: -3.2688942E-07}
+        inSlope: {x: -9.516207E-16, y: 7.137155E-16, z: -0}
+        outSlope: {x: -2.2204482E-15, y: 1.6653361E-15, z: -0}
+        tangentMode: 0
+      - time: 0.0333333
+        value: {x: -0.12274203, y: 0.076963216, z: -3.2688942E-07}
+        inSlope: {x: -9.516207E-16, y: 7.137155E-16, z: -0}
+        outSlope: {x: -2.2204482E-15, y: 1.6653361E-15, z: -0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Stvol/Bone_Stvol_Verh
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: -0.0005961418, y: 0.12053695, z: 0.000804348}
+        inSlope: {x: -1.858634E-18, y: 1.427431E-15, z: 1.1151805E-17}
+        outSlope: {x: -4.336813E-18, y: 3.3306723E-15, z: 2.6020877E-17}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: -0.0005961418, y: 0.12053695, z: 0.000804348}
+        inSlope: {x: -1.858634E-18, y: 1.427431E-15, z: 1.1151805E-17}
+        outSlope: {x: -4.336813E-18, y: 3.3306723E-15, z: 2.6020877E-17}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Kurok
+  m_ScaleCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1, y: 0.99999994, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1, y: 0.99999994, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1, y: 1, z: 1.0000001}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1, y: 1, z: 1.0000001}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_left
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1, y: 1, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 2.0377305, y: 2.0377312, z: 2.0377305}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 2.0377305, y: 2.0377312, z: 2.0377305}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - time: 4.7683716E-07
+        value: {x: 1, y: 0.9999999, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      - time: 0.03333378
+        value: {x: 1, y: 0.9999999, z: 1}
+        inSlope: {x: 0, y: 0, z: 0}
+        outSlope: {x: 0, y: 0, z: 0}
+        tangentMode: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: RailRevolver/RailRevolver 1/FPS_PLAYER_Arm_Right/Bone_Root/Bone_Clip
+  m_FloatCurves: []
+  m_PPtrCurves: []
+  m_SampleRate: 30
+  m_WrapMode: 2
+  m_Bounds:
+    m_Center: {x: -5.9604645E-08, y: 1.2832234, z: 0.5900858}
+    m_Extent: {x: 0.50000066, y: 0.53322303, z: 0.7150851}
+  m_ClipBindingConstant:
+    genericBindings: []
+    pptrCurveMapping: []
+  m_AnimationClipSettings:
+    serializedVersion: 2
+    m_AdditiveReferencePoseClip: {fileID: 0}
+    m_AdditiveReferencePoseTime: 0
+    m_StartTime: 0
+    m_StopTime: 1
+    m_OrientationOffsetY: 0
+    m_Level: 0
+    m_CycleOffset: 0
+    m_HasAdditiveReferencePose: 0
+    m_LoopTime: 0
+    m_LoopBlend: 0
+    m_LoopBlendOrientation: 0
+    m_LoopBlendPositionY: 0
+    m_LoopBlendPositionXZ: 0
+    m_KeepOriginalOrientation: 0
+    m_KeepOriginalPositionY: 1
+    m_KeepOriginalPositionXZ: 0
+    m_HeightFromFeet: 0
+    m_Mirror: 0
+  m_EditorCurves: []
+  m_EulerEditorCurves: []
+  m_HasGenericRootTransform: 0
+  m_HasMotionFloatCurves: 0
+  m_GenerateMotionCurves: 0
+  m_Events: []

@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1111210192304855}
+  m_IsPrefabParent: 1
+--- !u!1 &1111210192304855
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4146377489660502}
+  - 33: {fileID: 33864101777898375}
+  - 23: {fileID: 23189285141161965}
+  - 111: {fileID: 111712220864853695}
+  m_Layer: 0
+  m_Name: WeaponLike
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4146377489660502
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1111210192304855}
+  m_LocalRotation: {x: -0.4885739, y: 0.54733175, z: 0.4843721, w: 0.47655773}
+  m_LocalPosition: {x: 0.34809202, y: 1.6548246, z: 0.5822732}
+  m_LocalScale: {x: 1.0000004, y: 1, z: 0.9999998}
+  m_LocalEulerAnglesHint: {x: 139.85904, y: -84.252785, z: 133.0638}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!33 &33864101777898375
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1111210192304855}
+  m_Mesh: {fileID: 4300000, guid: d2f5b8a3380bd8444a50f905c4f38549, type: 2}
+--- !u!23 &23189285141161965
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1111210192304855}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: cd9afdd10dd8d314584488a03f500db2, type: 2}
+  m_SubsetIndices: []
+  m_StaticBatchRoot: {fileID: 0}
+  m_UseLightProbes: 1
+  m_ReflectionProbeUsage: 1
+  m_ProbeAnchor: {fileID: 0}
+  m_ScaleInLightmap: 0
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_MinimumChartSize: 0
+  m_AutoUVMaxDistance: 0
+  m_AutoUVMaxAngle: 0
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+--- !u!111 &111712220864853695
+Animation:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1111210192304855}
+  m_Enabled: 1
+  m_Animation: {fileID: 7400000, guid: 2224261775975764d808f4cb83346c3a, type: 2}
+  m_Animations:
+  - {fileID: 7400000, guid: 2224261775975764d808f4cb83346c3a, type: 2}
+  - {fileID: 7400000, guid: 8610c5eea6c66264fb87db82d942a2a0, type: 2}
+  m_WrapMode: 0
+  m_PlayAutomatically: 1
+  m_AnimatePhysics: 0
+  m_CullingType: 0

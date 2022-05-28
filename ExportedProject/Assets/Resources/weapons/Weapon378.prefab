@@ -1,0 +1,333 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1250058940132460}
+  m_IsPrefabParent: 1
+--- !u!1 &1250058940132460
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4892191375261344}
+  - 114: {fileID: 114089655473590057}
+  - 114: {fileID: 114356306138694644}
+  - 114: {fileID: 114818943528493803}
+  m_Layer: 0
+  m_Name: Weapon378
+  m_TagString: HarpoonGun_2
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4892191375261344
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1250058940132460}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+  m_Children:
+  - {fileID: 4991566247582516}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!114 &114089655473590057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1250058940132460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3de133043ab14245b7929735cd7bc24, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  typeForLow: 21
+  InShopEffects: 010000000c0000000b000000
+  zoomShop: 2
+  isSlowdown: 0
+  slowdownCoeff: 0
+  slowdownTime: 0
+  noFillObjects: []
+  typeTracer: 0
+  typeDead: 0
+  gunFlash: {fileID: 0}
+  gunFlashDouble: []
+  lengthForShot: 0.6500001
+  damageByTier:
+  - 6.500001
+  - 8.450001
+  - 9.750002
+  - 11.700002
+  - 11.700002
+  - 11.700002
+  dpses:
+  - 10
+  - 13
+  - 15
+  - 18
+  - 18
+  - 18
+  tier: 3
+  categoryNabor: 4
+  isGrenadeWeapon: 0
+  fireRateShop: 88
+  CapacityShop: 12
+  mobilityShop: 110
+  filterMap:
+  alternativeName: Weapon331
+  isBurstShooting: 0
+  countShootInBurst: 3
+  delayInBurstShooting: 1
+  isDaterWeapon: 0
+  daterMessage:
+  ammoInClip: 12
+  InitialAmmo: 24
+  maxAmmo: 72
+  ammoForBonusShotMelee: 10
+  isMelee: 0
+  isRoundMelee: 0
+  radiusRoundMelee: 5
+  isLoopShoot: 0
+  isCharging: 0
+  chargeMax: 25
+  chargeTime: 2
+  isShotGun: 0
+  isDoubleShot: 0
+  countShots: 15
+  isShotMelee: 0
+  isZooming: 1
+  isMagic: 0
+  flamethrower: 0
+  bulletExplode: 0
+  bazooka: 1
+  countInSeriaBazooka: 1
+  stepTimeInSeriaBazooka: 0.2
+  railgun: 0
+  railName: Weapon77
+  freezer: 0
+  countReflectionRay: 1
+  grenadeLauncher: 0
+  bazookaExplosionName: Weapon123
+  bazookaExplosionRadius: 2.5
+  bazookaExplosionRadiusSelf: 0
+  bazookaImpulseRadius: 0
+  impulseForce: 50
+  impulseForceSelf: 133.4
+  fieldOfViewZomm: 37.5
+  range: 3
+  damage: 350
+  speedModifier: 1.1
+  Probability: 0
+  damageRange: {x: -50, y: 50}
+  gunPosition: {x: 0, y: -1.7, z: 0}
+  inAppExtensionModifier: 10
+  meleeAngle: 45
+  multiplayerDamage: 6.500001
+  meleeAttackTimeModifier: 0.57
+  startZone: {x: 30, y: 30}
+  tekKoof: 1
+  upKoofFire: 2
+  maxKoof: 1.5
+  downKoofFirst: 2
+  downKoof: 2
+  campaignOnly: 0
+  rocketNum: 43
+  scopeNum: 1
+  scaleShop: 200.88
+  positionShop: {x: -0.58203125, y: 4.7773056, z: 0.05476457}
+  rotationShop: {x: -55, y: 120, z: 10}
+  specialEffect: -1
+  protectionEffectValue: 1
+  localizeWeaponKey: Key_1945
+  DPSRememberWhenGet: 0
+--- !u!114 &114356306138694644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1250058940132460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45356deb40596a14bb0611d9e2dcc3b0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  gunFlashObj: {fileID: 1657990311333379}
+  timeFireAction: 0.1
+--- !u!114 &114818943528493803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1250058940132460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68ea9dff03566db4bb0d4ea0f9cd80bb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _dataId: 1
+--- !u!1 &1007446768771151
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4991566247582516}
+  m_Layer: 0
+  m_Name: BulletSpawnPoint
+  m_TagString: HarpoonGun_2
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4991566247582516
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1007446768771151}
+  m_LocalRotation: {x: 0.5, y: -0.5, z: -0.5, w: -0.5}
+  m_LocalPosition: {x: 0.194, y: 1.469, z: 1.494}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: -90, y: -90, z: 0}
+  m_Children:
+  - {fileID: 4253606706547048}
+  m_Father: {fileID: 4892191375261344}
+  m_RootOrder: 0
+--- !u!1 &1657990311333379
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4253606706547048}
+  - 15: {fileID: 15079988841644793}
+  - 12: {fileID: 12786277988728492}
+  - 26: {fileID: 26567335605034904}
+  m_Layer: 0
+  m_Name: GunFlash
+  m_TagString: HarpoonGun_2
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &4253606706547048
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1657990311333379}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+  m_Children: []
+  m_Father: {fileID: 4991566247582516}
+  m_RootOrder: 0
+--- !u!15 &15079988841644793
+EllipsoidParticleEmitter:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1657990311333379}
+  m_Enabled: 1
+  m_Emit: 1
+  minSize: 0.1
+  maxSize: 0.3
+  minEnergy: 0.04
+  maxEnergy: 0.1
+  minEmission: 3
+  maxEmission: 3
+  worldVelocity: {x: 0, y: 0, z: 0}
+  localVelocity: {x: -2, y: 0, z: 0}
+  rndVelocity: {x: 2, y: 2, z: 2}
+  emitterVelocityScale: 0.05
+  tangentVelocity: {x: 0, y: 0, z: 0}
+  angularVelocity: 0
+  rndAngularVelocity: 0
+  rndRotation: 0
+  Simulate in Worldspace?: 0
+  m_OneShot: 1
+  m_Ellipsoid: {x: 0.01, y: 0.01, z: 0.01}
+  m_MinEmitterRange: 0
+--- !u!12 &12786277988728492
+ParticleAnimator:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1657990311333379}
+  Does Animate Color?: 1
+  colorAnimation[0]:
+    serializedVersion: 2
+    rgba: 184549375
+  colorAnimation[1]:
+    serializedVersion: 2
+    rgba: 3036676095
+  colorAnimation[2]:
+    serializedVersion: 2
+    rgba: 4294967295
+  colorAnimation[3]:
+    serializedVersion: 2
+    rgba: 3036676095
+  colorAnimation[4]:
+    serializedVersion: 2
+    rgba: 184549375
+  worldRotationAxis: {x: 0, y: 0, z: 0}
+  localRotationAxis: {x: 0, y: 0, z: 0}
+  sizeGrow: 0
+  rndForce: {x: 0, y: 0, z: 0}
+  force: {x: 0, y: 0, z: 0}
+  damping: 1
+  stopSimulation: 0
+  autodestruct: 0
+--- !u!26 &26567335605034904
+ParticleRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1657990311333379}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_Materials:
+  - {fileID: 2100000, guid: 1f76dcdd77ccef94d806a1e48645b34b, type: 2}
+  m_SubsetIndices: []
+  m_StaticBatchRoot: {fileID: 0}
+  m_UseLightProbes: 0
+  m_ReflectionProbeUsage: 1
+  m_ProbeAnchor: {fileID: 0}
+  m_ScaleInLightmap: 0
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_MinimumChartSize: 0
+  m_AutoUVMaxDistance: 0
+  m_AutoUVMaxAngle: 0
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_CameraVelocityScale: 0
+  m_StretchParticles: 0
+  m_LengthScale: 2
+  m_VelocityScale: 0
+  m_MaxParticleSize: 0.25
+  UV Animation:
+    x Tile: 1
+    y Tile: 1
+    cycles: 1

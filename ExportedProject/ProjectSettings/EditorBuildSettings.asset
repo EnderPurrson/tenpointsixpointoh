@@ -1,0 +1,211 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/AppCenter.unity
+  - enabled: 1
+    path: Assets/Loading.unity
+  - enabled: 1
+    path: Assets/Scenes/DeveloperConsole.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/City.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Hospital.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Gluk.unity
+  - enabled: 1
+    path: Assets/LoadAnotherApp.unity
+  - enabled: 1
+    path: Assets/SkinManager/Scene/SkinEditor.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Cementery.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Maze.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Swamp_campaign3.unity
+  - enabled: 1
+    path: Assets/ConnectScene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Area52.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Jail.unity
+  - enabled: 1
+    path: Assets/ChooseLevel.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Training.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Parkour.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Pool.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Slender.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Castle.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Coliseum.unity
+  - enabled: 1
+    path: Assets/LevelComplete.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Hungry.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Gluk_2.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Hill.unity
+  - enabled: 1
+    path: Assets/CampaignChooseBox.unity
+  - enabled: 1
+    path: Assets/ProfileShop.unity
+  - enabled: 1
+    path: Assets/CampaignLoading.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Space.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Underwater.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Sniper.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Castle.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Hockey.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Mine.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Space.unity
+  - enabled: 1
+    path: Assets/LevelArt.unity
+  - enabled: 1
+    path: Assets/PromScene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Sky_islands.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Dust.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Bridge.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Farm.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Utopia.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Winter.unity
+  - enabled: 1
+    path: Assets/map_test.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/School.unity
+  - enabled: 1
+    path: Assets/LevelToCompleteProm.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Coliseum_MP.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Hungry_Night.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Ships.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Estate.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Hungry_2.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Ships_Night.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Portal.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Two_Castles.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Two_Castles.unity
+  - enabled: 1
+    path: Assets/Scenes/AuthenticationScene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Gluk_3.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Matrix.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Ants.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Heaven.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Underwater.unity
+  - enabled: 1
+    path: Assets/Clans.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Knife.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Day_D.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Day_D.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/NuclearCity.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena_Swamp.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Cube.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Heaven.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Supermarket.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Pumpkins.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Halloween_Heaven.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Christmas_Town.unity
+  - enabled: 1
+    path: Assets/Menu_Christmas.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Christmas_Town_Night.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Paradise.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Pizza.unity
+  - enabled: 1
+    path: Assets/Scenes/ClosingScene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Slender_Multy.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Mine.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Castle_campaign3.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Space_campaign3.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Code_campaign3.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Mine.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/LoveIsland.unity
+  - enabled: 1
+    path: Assets/ChatScene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Area52Labs.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Cube_portals.unity
+  - enabled: 1
+    path: Assets/Scenes/Leaderboards.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Paradise_Night.unity
+  - enabled: 1
+    path: Assets/ConnectSceneSandbox.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Area52Labs_Helloween.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/WinterIsland.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/ToyFactory.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/WalkingFortress.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Developer_Scene.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/COLAPSED_CITY.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Menu_Colapsed_City.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Secret_Base.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Arena.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Knife.unity
+  - enabled: 1
+    path: Assets/Sources/Scenes/Four_Seasons.unity

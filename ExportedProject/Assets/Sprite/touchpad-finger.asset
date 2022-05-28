@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!213 &21300000
+Sprite:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: touchpad-finger
+  m_Rect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 148
+    height: 294
+  m_Offset: {x: 0, y: 0}
+  m_Border: {x: 0, y: 0, z: 0, w: 0}
+  m_PixelsToUnits: 100
+  m_Extrude: 1
+  m_IsPolygon: 0
+  m_AtlasName:
+  m_PackingTag:
+  m_RD:
+    texture: {fileID: 2800000, guid: 1e0968b55b072d54eab57451bfa44be0, type: 3}
+    alphaTexture: {fileID: 0}
+    vertices:
+    - serializedVersion: 2
+      pos: {x: 0.74, y: -0.72, z: 0}
+    - serializedVersion: 2
+      pos: {x: 0.72, y: -1.32, z: 0}
+    - serializedVersion: 2
+      pos: {x: 0.74, y: -1.29, z: 0}
+    - serializedVersion: 2
+      pos: {x: 0.43, y: -1.47, z: 0}
+    - serializedVersion: 2
+      pos: {x: 0.29, y: 1.17, z: 0}
+    - serializedVersion: 2
+      pos: {x: 0, y: 1.47, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.35, y: -1.47, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.37, y: -1.4, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.43, y: 1.47, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.57, y: 1.44, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.68, y: 0.39, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.69, y: 1.17, z: 0}
+    - serializedVersion: 2
+      pos: {x: -0.69, y: 0.43, z: 0}
+    indices:
+    - 12
+    - 11
+    - 10
+    - 9
+    - 10
+    - 11
+    - 7
+    - 10
+    - 9
+    - 8
+    - 7
+    - 9
+    - 5
+    - 7
+    - 8
+    - 6
+    - 7
+    - 5
+    - 3
+    - 6
+    - 5
+    - 4
+    - 3
+    - 5
+    - 0
+    - 3
+    - 4
+    - 1
+    - 3
+    - 0
+    - 2
+    - 1
+    - 0
+    textureRect:
+      serializedVersion: 2
+      x: 5.0761204
+      y: 0
+      width: 142.92387
+      height: 294
+    textureRectOffset: {x: 5.0761204, y: 0}
+    settingsRaw: 64
+    uvTransform: {x: 100, y: 74, z: 100, w: 147}

@@ -1,0 +1,237 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1112713054873056}
+  m_IsPrefabParent: 1
+--- !u!1 &1112713054873056
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4155237809452356}
+  - 114: {fileID: 114707791125441937}
+  - 114: {fileID: 114740320880639451}
+  - 114: {fileID: 114814858881793203}
+  m_Layer: 0
+  m_Name: Weapon454
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4155237809452356
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1112713054873056}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+  m_Children:
+  - {fileID: 4632403557127575}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!114 &114707791125441937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1112713054873056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3de133043ab14245b7929735cd7bc24, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  typeForLow: 21
+  InShopEffects: 010000000c00000017000000
+  zoomShop: 2
+  isSlowdown: 0
+  slowdownCoeff: 0
+  slowdownTime: 0
+  noFillObjects: []
+  typeTracer: 0
+  typeDead: 0
+  gunFlash: {fileID: 0}
+  gunFlashDouble: []
+  lengthForShot: 0.5500001
+  damageByTier:
+  - 4.950001
+  - 6.600001
+  - 7.700001
+  - 7.700001
+  - 7.700001
+  - 7.700001
+  dpses:
+  - 9
+  - 12
+  - 14
+  - 14
+  - 14
+  - 14
+  tier: 2
+  categoryNabor: 4
+  isGrenadeWeapon: 0
+  fireRateShop: 91
+  CapacityShop: 20
+  mobilityShop: 110
+  filterMap:
+  alternativeName: Weapon331
+  isBurstShooting: 0
+  countShootInBurst: 3
+  delayInBurstShooting: 1
+  isDaterWeapon: 0
+  daterMessage:
+  ammoInClip: 20
+  InitialAmmo: 40
+  maxAmmo: 120
+  ammoForBonusShotMelee: 10
+  isMelee: 0
+  isRoundMelee: 0
+  radiusRoundMelee: 5
+  isLoopShoot: 0
+  isCharging: 0
+  chargeMax: 25
+  chargeTime: 2
+  isShotGun: 0
+  isDoubleShot: 0
+  countShots: 15
+  isShotMelee: 0
+  isZooming: 0
+  isMagic: 0
+  flamethrower: 0
+  bulletExplode: 0
+  bazooka: 1
+  countInSeriaBazooka: 1
+  stepTimeInSeriaBazooka: 0.2
+  railgun: 0
+  railName: Weapon77
+  freezer: 0
+  countReflectionRay: 1
+  grenadeLauncher: 0
+  bazookaExplosionName: Explosion41
+  bazookaExplosionRadius: 1.5
+  bazookaExplosionRadiusSelf: 0
+  bazookaImpulseRadius: 0
+  impulseForce: 50
+  impulseForceSelf: 133.4
+  fieldOfViewZomm: 37.5
+  range: 3
+  damage: 90
+  speedModifier: 1.1
+  Probability: 0
+  damageRange: {x: -5, y: 5}
+  gunPosition: {x: 0, y: -1.7, z: 0}
+  inAppExtensionModifier: 10
+  meleeAngle: 45
+  multiplayerDamage: 4.950001
+  meleeAttackTimeModifier: 0.57
+  startZone: {x: 25, y: 25}
+  tekKoof: 1
+  upKoofFire: 0.25
+  maxKoof: 5
+  downKoofFirst: 0.25
+  downKoof: 0.5
+  campaignOnly: 0
+  rocketNum: 53
+  scopeNum: 1
+  scaleShop: 200
+  positionShop: {x: -4.138672, y: 15, z: -24.71589}
+  rotationShop: {x: -60.00003, y: -60, z: 180}
+  specialEffect: -1
+  protectionEffectValue: 0.88
+  localizeWeaponKey: Key_2215
+  DPSRememberWhenGet: 0
+--- !u!114 &114740320880639451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1112713054873056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45356deb40596a14bb0611d9e2dcc3b0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  gunFlashObj: {fileID: 0}
+  timeFireAction: 0.1
+--- !u!114 &114814858881793203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1112713054873056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68ea9dff03566db4bb0d4ea0f9cd80bb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _dataId: 10
+--- !u!1 &1626040615001625
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4632403557127575}
+  m_Layer: 0
+  m_Name: BulletSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4632403557127575
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1626040615001625}
+  m_LocalRotation: {x: 0.51753545, y: -0.52713203, z: -0.48038208, w: -0.47278112}
+  m_LocalPosition: {x: 0.111, y: 1.23, z: 1.578}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 169.41307, y: -84.663475, z: 100.70135}
+  m_Children:
+  - {fileID: 4951302396410081}
+  m_Father: {fileID: 4155237809452356}
+  m_RootOrder: 0
+--- !u!1 &1220538758222581
+GameObject:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_Component:
+  - 4: {fileID: 4951302396410081}
+  m_Layer: 0
+  m_Name: GunFlash
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4951302396410081
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1220538758222581}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: -0, z: -0}
+  m_Children: []
+  m_Father: {fileID: 4632403557127575}
+  m_RootOrder: 0
