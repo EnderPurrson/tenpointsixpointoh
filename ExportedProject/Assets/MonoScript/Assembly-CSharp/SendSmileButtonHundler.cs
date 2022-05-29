@@ -1,12 +1,17 @@
+using System;
 using UnityEngine;
 
 public class SendSmileButtonHundler : MonoBehaviour
 {
 	private string smileName = string.Empty;
 
+	public SendSmileButtonHundler()
+	{
+	}
+
 	private void Awake()
 	{
-		smileName = GetComponent<UISprite>().spriteName;
+		this.smileName = base.GetComponent<UISprite>().spriteName;
 	}
 
 	private void OnClick()
@@ -17,11 +22,11 @@ public class SendSmileButtonHundler : MonoBehaviour
 		}
 		if (PrivateChatController.sharedController != null)
 		{
-			PrivateChatController.sharedController.SendSmile(smileName);
+			PrivateChatController.sharedController.SendSmile(this.smileName);
 		}
 		if (ChatViewrController.sharedController != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
 		{
-			InGameGUI.sharedInGameGUI.playerMoveC.SendChat(string.Empty, false, smileName);
+			InGameGUI.sharedInGameGUI.playerMoveC.SendChat(string.Empty, false, this.smileName);
 			ChatViewrController.sharedController.HideSmilePannelOnClick();
 		}
 	}

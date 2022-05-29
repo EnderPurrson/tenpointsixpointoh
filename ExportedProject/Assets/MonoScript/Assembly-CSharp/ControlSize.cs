@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class ControlSize : MonoBehaviour
@@ -8,19 +9,23 @@ internal sealed class ControlSize : MonoBehaviour
 
 	public int defaultValue;
 
+	public ControlSize()
+	{
+	}
+
 	private void Update()
 	{
-		if (maxValue < minValue)
+		if (this.maxValue < this.minValue)
 		{
-			maxValue = minValue;
+			this.maxValue = this.minValue;
 		}
-		if (defaultValue < minValue)
+		if (this.defaultValue < this.minValue)
 		{
-			defaultValue = minValue;
+			this.defaultValue = this.minValue;
 		}
-		if (defaultValue > maxValue)
+		if (this.defaultValue > this.maxValue)
 		{
-			defaultValue = maxValue;
+			this.defaultValue = this.maxValue;
 		}
 	}
 }

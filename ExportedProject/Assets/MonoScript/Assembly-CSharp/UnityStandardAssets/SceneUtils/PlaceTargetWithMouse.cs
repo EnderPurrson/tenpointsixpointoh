@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace UnityStandardAssets.SceneUtils
@@ -8,21 +9,25 @@ namespace UnityStandardAssets.SceneUtils
 
 		public GameObject setTargetOn;
 
+		public PlaceTargetWithMouse()
+		{
+		}
+
 		private void Update()
 		{
+			RaycastHit raycastHit;
 			if (!Input.GetMouseButtonDown(0))
 			{
 				return;
 			}
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-			RaycastHit hitInfo;
-			if (Physics.Raycast(ray, out hitInfo))
+			if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out raycastHit))
 			{
-				base.transform.position = hitInfo.point + hitInfo.normal * surfaceOffset;
-				if (setTargetOn != null)
-				{
-					setTargetOn.SendMessage("SetTarget", base.transform);
-				}
+				return;
+			}
+			base.transform.position = raycastHit.point + (raycastHit.normal * this.surfaceOffset);
+			if (this.setTargetOn != null)
+			{
+				this.setTargetOn.SendMessage("SetTarget", base.transform);
 			}
 		}
 	}

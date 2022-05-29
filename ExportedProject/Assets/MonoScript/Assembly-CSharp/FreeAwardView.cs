@@ -1,7 +1,7 @@
-using System;
-using System.Collections.Generic;
 using I2.Loc;
 using Rilisoft;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 internal sealed class FreeAwardView : MonoBehaviour
@@ -48,81 +48,89 @@ internal sealed class FreeAwardView : MonoBehaviour
 	{
 		private get
 		{
-			return _currentState;
+			return this._currentState;
 		}
 		set
 		{
-			if (value != _currentState)
+			if (value != this._currentState)
 			{
 				FreeAwardController.WatchState watchState = value as FreeAwardController.WatchState;
-				if (watchState != null)
+				if (watchState == null)
+				{
+					this.SetWatchButtonEnabled(false);
+				}
+				else
 				{
 					TimeSpan estimatedTimeSpan = watchState.GetEstimatedTimeSpan();
-					SetWatchButtonEnabled(estimatedTimeSpan <= TimeSpan.FromMinutes(0.0), estimatedTimeSpan);
+					this.SetWatchButtonEnabled(estimatedTimeSpan <= TimeSpan.FromMinutes(0), estimatedTimeSpan);
 				}
-				else
-				{
-					SetWatchButtonEnabled(false);
-				}
-				RefreshAwardLabel(watchState != null);
+				this.RefreshAwardLabel(watchState != null);
 			}
-			if (backgroundPanel != null)
+			if (this.backgroundPanel != null)
 			{
-				backgroundPanel.SetActive(!(value is FreeAwardController.IdleState));
+				this.backgroundPanel.SetActive(!(value is FreeAwardController.IdleState));
 			}
-			if (waitingPanel != null)
+			if (this.waitingPanel != null)
 			{
-				waitingPanel.SetActive(value is FreeAwardController.WaitingState);
+				this.waitingPanel.SetActive(value is FreeAwardController.WaitingState);
 			}
-			if (connectionPanel != null)
+			if (this.connectionPanel != null)
 			{
-				connectionPanel.SetActive(value is FreeAwardController.ConnectionState);
+				this.connectionPanel.SetActive(value is FreeAwardController.ConnectionState);
 			}
-			if (closePanel != null)
+			if (this.closePanel != null)
 			{
-				closePanel.SetActive(value is FreeAwardController.CloseState);
+				this.closePanel.SetActive(value is FreeAwardController.CloseState);
 			}
-			if (value is FreeAwardController.WatchState)
+			if (!(value is FreeAwardController.WatchState))
 			{
-				if (FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")
-				{
-					watchForGemsPanel.SetActive(true);
-					watchForCoinsPanel.SetActive(false);
-				}
-				else
-				{
-					watchForGemsPanel.SetActive(false);
-					watchForCoinsPanel.SetActive(true);
-				}
+				this.watchForGemsPanel.SetActive(false);
+				this.watchForCoinsPanel.SetActive(false);
+			}
+			else if (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency")
+			{
+				this.watchForGemsPanel.SetActive(false);
+				this.watchForCoinsPanel.SetActive(true);
 			}
 			else
 			{
-				watchForGemsPanel.SetActive(false);
-				watchForCoinsPanel.SetActive(false);
+				this.watchForGemsPanel.SetActive(true);
+				this.watchForCoinsPanel.SetActive(false);
 			}
-			if (value is FreeAwardController.AwardState)
+			if (!(value is FreeAwardController.AwardState))
 			{
-				if (FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")
-				{
-					awardPanelGems.SetActive(true);
-				}
-				else
-				{
-					awardPanelCoins.SetActive(true);
-				}
+				this.awardPanelCoins.SetActive(false);
+				this.awardPanelGems.SetActive(false);
+			}
+			else if (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency")
+			{
+				this.awardPanelCoins.SetActive(true);
 			}
 			else
 			{
-				awardPanelCoins.SetActive(false);
-				awardPanelGems.SetActive(false);
+				this.awardPanelGems.SetActive(true);
 			}
-			_currentState = value;
+			this._currentState = value;
 		}
 	}
 
 	public FreeAwardView()
 	{
-		_watchTimerLabels = new Lazy<UILabel[]>(InitializeWatchTimerLabels);
+		this._watchTimerLabels = new Lazy<UILabel[]>(new Func<UILabel[]>(this.InitializeWatchTimerLabels));
+	}
+
+	private UILabel[] InitializeWatchTimerLabels()
+	{
+		if (this.watchTimer == null)
+		{
+			return new UILabel[0];
+		}
+		List<UILabel> uILabels = new List<UILabel>(3)
+		{
+			this.watchTimer
+		};
+		this.watchTimer.GetComponentsInChildren<UILabel>(true, uILabels);
+		return uILabels.ToArray();
 	}
 
 	private void RefreshAwardLabel(bool visible)
@@ -131,93 +139,89 @@ internal sealed class FreeAwardView : MonoBehaviour
 		{
 			return;
 		}
-		string text = LocalizationStore.Get(ScriptLocalization.Key_0291);
-		if (PromoActionsManager.MobileAdvert == null)
+		string str = LocalizationStore.Get(ScriptLocalization.Key_0291);
+		if (PromoActionsManager.MobileAdvert != null)
 		{
-			text += " 1";
+			int num = (!MobileAdManager.IsPayingUser() ? PromoActionsManager.MobileAdvert.AwardCoinsNonpaying : PromoActionsManager.MobileAdvert.AwardCoinsPaying);
+			str = string.Concat(str, (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency" ? num.ToString() : string.Format(" [c][50CEFFFF]{0}[-][/c]", num)));
 		}
 		else
 		{
-			int num = ((!MobileAdManager.IsPayingUser()) ? PromoActionsManager.MobileAdvert.AwardCoinsNonpaying : PromoActionsManager.MobileAdvert.AwardCoinsPaying);
-			text += ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? num.ToString() : string.Format(" [c][50CEFFFF]{0}[-][/c]", num));
+			str = string.Concat(str, " 1");
 		}
-		List<UILabel> list = new List<UILabel>();
-		list.AddRange(awardOuterLabelCoins.gameObject.GetComponentsInChildren<UILabel>(true));
-		list.AddRange(awardOuterLabelGems.gameObject.GetComponentsInChildren<UILabel>(true));
-		foreach (UILabel item in list)
+		List<UILabel> uILabels = new List<UILabel>();
+		uILabels.AddRange(this.awardOuterLabelCoins.gameObject.GetComponentsInChildren<UILabel>(true));
+		uILabels.AddRange(this.awardOuterLabelGems.gameObject.GetComponentsInChildren<UILabel>(true));
+		foreach (UILabel uILabel in uILabels)
 		{
-			item.text = text;
+			uILabel.text = str;
 		}
-		currencySprite.spriteName = ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? "ingame_coin" : "gem_znachek");
-	}
-
-	private void Start()
-	{
-		if (devSkipButton != null)
-		{
-			devSkipButton.gameObject.SetActive(Application.isEditor || (Defs.IsDeveloperBuild && BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64));
-		}
-	}
-
-	private void Update()
-	{
-		FreeAwardController.WaitingState waitingState = CurrentState as FreeAwardController.WaitingState;
-		if (waitingState != null && loadingSpinner != null)
-		{
-			float num = Time.realtimeSinceStartup - waitingState.StartTime;
-			int num2 = Convert.ToInt32(Mathf.Floor(num));
-			loadingSpinner.invert = num2 % 2 == 0;
-			loadingSpinner.fillAmount = ((!loadingSpinner.invert) ? (1f - num + (float)num2) : (num - (float)num2));
-		}
-		FreeAwardController.WatchState watchState = CurrentState as FreeAwardController.WatchState;
-		if (watchState != null && Time.frameCount % 10 == 0)
-		{
-			TimeSpan estimatedTimeSpan = watchState.GetEstimatedTimeSpan();
-			SetWatchButtonEnabled(estimatedTimeSpan <= TimeSpan.FromMinutes(0.0), estimatedTimeSpan);
-		}
+		this.currencySprite.spriteName = (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency" ? "ingame_coin" : "gem_znachek");
 	}
 
 	private void SetWatchButtonEnabled(bool enabled, TimeSpan nextTimeAwailable)
 	{
-		if (nguiWatchButton != null)
+		if (this.nguiWatchButton != null)
 		{
-			nguiWatchButton.isEnabled = enabled;
+			this.nguiWatchButton.isEnabled = enabled;
 		}
-		if (watchHeader != null)
+		if (this.watchHeader != null)
 		{
-			watchHeader.gameObject.SetActive(enabled);
+			this.watchHeader.gameObject.SetActive(enabled);
 		}
-		if (!(watchTimer != null))
+		if (this.watchTimer != null)
 		{
-			return;
-		}
-		watchTimer.transform.parent.gameObject.SetActive(!enabled);
-		if (!enabled)
-		{
-			string text = ((nextTimeAwailable.Hours <= 0) ? string.Format("{0}:{1:D2}", nextTimeAwailable.Minutes, nextTimeAwailable.Seconds) : string.Format("{0}:{1:D2}:{2:D2}", nextTimeAwailable.Hours, nextTimeAwailable.Minutes, nextTimeAwailable.Seconds));
-			UILabel[] value = _watchTimerLabels.Value;
-			foreach (UILabel uILabel in value)
+			this.watchTimer.transform.parent.gameObject.SetActive(!enabled);
+			if (!enabled)
 			{
-				uILabel.text = text;
+				string str = (nextTimeAwailable.Hours <= 0 ? string.Format("{0}:{1:D2}", nextTimeAwailable.Minutes, nextTimeAwailable.Seconds) : string.Format("{0}:{1:D2}:{2:D2}", nextTimeAwailable.Hours, nextTimeAwailable.Minutes, nextTimeAwailable.Seconds));
+				UILabel[] value = this._watchTimerLabels.Value;
+				for (int i = 0; i < (int)value.Length; i++)
+				{
+					value[i].text = str;
+				}
 			}
 		}
 	}
 
 	private void SetWatchButtonEnabled(bool enabled)
 	{
-		SetWatchButtonEnabled(enabled, default(TimeSpan));
+		this.SetWatchButtonEnabled(enabled, new TimeSpan());
 	}
 
-	private UILabel[] InitializeWatchTimerLabels()
+	private void Start()
 	{
-		if (watchTimer == null)
+		bool flag;
+		if (this.devSkipButton != null)
 		{
-			return new UILabel[0];
+			GameObject gameObject = this.devSkipButton.gameObject;
+			if (Application.isEditor)
+			{
+				flag = true;
+			}
+			else
+			{
+				flag = (!Defs.IsDeveloperBuild ? false : BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64);
+			}
+			gameObject.SetActive(flag);
 		}
-		List<UILabel> list = new List<UILabel>(3);
-		list.Add(watchTimer);
-		List<UILabel> list2 = list;
-		watchTimer.GetComponentsInChildren(true, list2);
-		return list2.ToArray();
+	}
+
+	private void Update()
+	{
+		FreeAwardController.WaitingState currentState = this.CurrentState as FreeAwardController.WaitingState;
+		if (currentState != null && this.loadingSpinner != null)
+		{
+			float startTime = Time.realtimeSinceStartup - currentState.StartTime;
+			int num = Convert.ToInt32(Mathf.Floor(startTime));
+			this.loadingSpinner.invert = num % 2 == 0;
+			this.loadingSpinner.fillAmount = (!this.loadingSpinner.invert ? 1f - startTime + (float)num : startTime - (float)num);
+		}
+		FreeAwardController.WatchState watchState = this.CurrentState as FreeAwardController.WatchState;
+		if (watchState != null && Time.frameCount % 10 == 0)
+		{
+			TimeSpan estimatedTimeSpan = watchState.GetEstimatedTimeSpan();
+			this.SetWatchButtonEnabled(estimatedTimeSpan <= TimeSpan.FromMinutes(0), estimatedTimeSpan);
+		}
 	}
 }

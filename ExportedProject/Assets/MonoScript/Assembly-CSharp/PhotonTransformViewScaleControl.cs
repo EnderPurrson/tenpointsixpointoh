@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PhotonTransformViewScaleControl
@@ -8,35 +9,46 @@ public class PhotonTransformViewScaleControl
 
 	public PhotonTransformViewScaleControl(PhotonTransformViewScaleModel model)
 	{
-		m_Model = model;
+		this.m_Model = model;
 	}
 
 	public Vector3 GetScale(Vector3 currentScale)
 	{
-		switch (m_Model.InterpolateOption)
+		switch (this.m_Model.InterpolateOption)
 		{
-		default:
-			return m_NetworkScale;
-		case PhotonTransformViewScaleModel.InterpolateOptions.MoveTowards:
-			return Vector3.MoveTowards(currentScale, m_NetworkScale, m_Model.InterpolateMoveTowardsSpeed * Time.deltaTime);
-		case PhotonTransformViewScaleModel.InterpolateOptions.Lerp:
-			return Vector3.Lerp(currentScale, m_NetworkScale, m_Model.InterpolateLerpSpeed * Time.deltaTime);
+			case PhotonTransformViewScaleModel.InterpolateOptions.Disabled:
+			{
+				return this.m_NetworkScale;
+			}
+			case PhotonTransformViewScaleModel.InterpolateOptions.MoveTowards:
+			{
+				return Vector3.MoveTowards(currentScale, this.m_NetworkScale, this.m_Model.InterpolateMoveTowardsSpeed * Time.deltaTime);
+			}
+			case PhotonTransformViewScaleModel.InterpolateOptions.Lerp:
+			{
+				return Vector3.Lerp(currentScale, this.m_NetworkScale, this.m_Model.InterpolateLerpSpeed * Time.deltaTime);
+			}
+			default:
+			{
+				return this.m_NetworkScale;
+			}
 		}
 	}
 
 	public void OnPhotonSerializeView(Vector3 currentScale, PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (m_Model.SynchronizeEnabled)
+		if (!this.m_Model.SynchronizeEnabled)
 		{
-			if (stream.isWriting)
-			{
-				stream.SendNext(currentScale);
-				m_NetworkScale = currentScale;
-			}
-			else
-			{
-				m_NetworkScale = (Vector3)stream.ReceiveNext();
-			}
+			return;
+		}
+		if (!stream.isWriting)
+		{
+			this.m_NetworkScale = (Vector3)stream.ReceiveNext();
+		}
+		else
+		{
+			stream.SendNext(currentScale);
+			this.m_NetworkScale = currentScale;
 		}
 	}
 }

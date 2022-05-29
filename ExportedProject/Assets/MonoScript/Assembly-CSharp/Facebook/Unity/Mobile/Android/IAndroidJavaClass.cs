@@ -1,3 +1,5 @@
+using System;
+
 namespace Facebook.Unity.Mobile.Android
 {
 	internal interface IAndroidJavaClass

@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -17,39 +20,36 @@ namespace Rilisoft
 
 		private bool _changed = true;
 
+		public MaterialColorSwitcher()
+		{
+		}
+
 		private void Awake()
 		{
-			_mat = GetComponent<Renderer>().material;
+			this._mat = base.GetComponent<Renderer>().material;
+		}
+
+		[DebuggerHidden]
+		private IEnumerator ChangeColor(int toIdx, float time)
+		{
+			MaterialColorSwitcher.u003cChangeColoru003ec__Iterator170 variable = null;
+			return variable;
 		}
 
 		private void OnEnable()
 		{
-			StopAllCoroutines();
-			_changed = true;
+			base.StopAllCoroutines();
+			this._changed = true;
 		}
 
 		private void Update()
 		{
-			if (_changed)
+			if (this._changed)
 			{
-				_changed = false;
-				_colorIdx = ((Colors.Count - 1 > _colorIdx) ? (_colorIdx + 1) : 0);
-				StartCoroutine(ChangeColor(_colorIdx, ToColorTime));
+				this._changed = false;
+				this._colorIdx = (this.Colors.Count - 1 <= this._colorIdx ? 0 : this._colorIdx + 1);
+				base.StartCoroutine(this.ChangeColor(this._colorIdx, this.ToColorTime));
 			}
-		}
-
-		private IEnumerator ChangeColor(int toIdx, float time)
-		{
-			Color startColor = _mat.color;
-			Color color = Colors[toIdx];
-			float elapsed = 0f;
-			while (elapsed < time)
-			{
-				elapsed += Time.deltaTime;
-				_mat.color = Color.Lerp(startColor, color, elapsed / time);
-				yield return null;
-			}
-			_changed = true;
 		}
 	}
 }

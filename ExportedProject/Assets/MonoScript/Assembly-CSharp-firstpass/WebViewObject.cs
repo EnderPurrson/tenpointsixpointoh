@@ -9,64 +9,73 @@ public class WebViewObject : MonoBehaviour
 
 	private Vector2 offset;
 
-	public void Init(Action<string> cb = null)
+	public WebViewObject()
 	{
-		callback = cb;
-		offset = new Vector2(0f, 0f);
-		webView = new AndroidJavaObject("net.gree.unitywebview.WebViewPlugin");
-		webView.Call("Init", base.name);
 	}
 
-	private void OnDestroy()
+	public void CallFromJS(string message)
 	{
-		if (webView != null)
+		if (this.callback != null)
 		{
-			webView.Call("Destroy");
-		}
-	}
-
-	public void SetMargins(int left, int top, int right, int bottom)
-	{
-		if (webView != null)
-		{
-			offset = new Vector2(left, top);
-			webView.Call("SetMargins", left, top, right, bottom);
-		}
-	}
-
-	public void SetVisibility(bool v)
-	{
-		if (webView != null)
-		{
-			webView.Call("SetVisibility", v);
-		}
-	}
-
-	public void LoadURL(string url)
-	{
-		if (webView != null)
-		{
-			webView.Call("LoadURL", url);
+			this.callback(message);
 		}
 	}
 
 	public void EvaluateJS(string js)
 	{
-		if (webView != null)
+		if (this.webView == null)
 		{
-			webView.Call("LoadURL", "javascript:" + js);
+			return;
 		}
-	}
-
-	public void CallFromJS(string message)
-	{
-		if (callback != null)
-		{
-			callback(message);
-		}
+		this.webView.Call("LoadURL", new object[] { string.Concat("javascript:", js) });
 	}
 
 	public void goHome()
 	{
+	}
+
+	public void Init(Action<string> cb = null)
+	{
+		this.callback = cb;
+		this.offset = new Vector2(0f, 0f);
+		this.webView = new AndroidJavaObject("net.gree.unitywebview.WebViewPlugin", new object[0]);
+		this.webView.Call("Init", new object[] { base.name });
+	}
+
+	public void LoadURL(string url)
+	{
+		if (this.webView == null)
+		{
+			return;
+		}
+		this.webView.Call("LoadURL", new object[] { url });
+	}
+
+	private void OnDestroy()
+	{
+		if (this.webView == null)
+		{
+			return;
+		}
+		this.webView.Call("Destroy", new object[0]);
+	}
+
+	public void SetMargins(int left, int top, int right, int bottom)
+	{
+		if (this.webView == null)
+		{
+			return;
+		}
+		this.offset = new Vector2((float)left, (float)top);
+		this.webView.Call("SetMargins", new object[] { left, top, right, bottom });
+	}
+
+	public void SetVisibility(bool v)
+	{
+		if (this.webView == null)
+		{
+			return;
+		}
+		this.webView.Call("SetVisibility", new object[] { v });
 	}
 }

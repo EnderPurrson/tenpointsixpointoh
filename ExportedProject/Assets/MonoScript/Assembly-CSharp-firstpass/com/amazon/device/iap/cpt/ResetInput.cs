@@ -1,98 +1,114 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class ResetInput : Jsonable
 	{
-		public bool Reset { get; set; }
-
-		public string ToJson()
+		public bool Reset
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public ResetInput()
 		{
-			//Discarded unreachable code: IL_0023, IL_0035
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("reset", Reset);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
 		}
 
 		public static ResetInput CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			ResetInput resetInput;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					ResetInput item = new ResetInput();
+					if (jsonMap.ContainsKey("reset"))
+					{
+						item.Reset = (bool)jsonMap["reset"];
+					}
+					resetInput = item;
 				}
-				ResetInput resetInput = new ResetInput();
-				if (jsonMap.ContainsKey("reset"))
+				else
 				{
-					resetInput.Reset = (bool)jsonMap["reset"];
+					resetInput = null;
 				}
-				return resetInput;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return resetInput;
 		}
 
 		public static ResetInput CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			ResetInput resetInput;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				resetInput = ResetInput.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return resetInput;
 		}
 
-		public static Dictionary<string, ResetInput> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, ResetInput> dictionary = new Dictionary<string, ResetInput>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				ResetInput value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "reset", this.Reset }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<ResetInput> ListFromJson(List<object> array)
 		{
-			List<ResetInput> list = new List<ResetInput>();
-			foreach (object item in array)
+			List<ResetInput> resetInputs = new List<ResetInput>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				resetInputs.Add(ResetInput.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return resetInputs;
+		}
+
+		public static Dictionary<string, ResetInput> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, ResetInput> strs = new Dictionary<string, ResetInput>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				ResetInput resetInput = ResetInput.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, resetInput);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

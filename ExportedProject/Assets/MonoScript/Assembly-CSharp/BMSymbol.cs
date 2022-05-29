@@ -26,39 +26,11 @@ public class BMSymbol
 
 	private Rect mUV;
 
-	public int length
+	public int advance
 	{
 		get
 		{
-			if (mLength == 0)
-			{
-				mLength = sequence.Length;
-			}
-			return mLength;
-		}
-	}
-
-	public int offsetX
-	{
-		get
-		{
-			return mOffsetX;
-		}
-	}
-
-	public int offsetY
-	{
-		get
-		{
-			return mOffsetY;
-		}
-	}
-
-	public int width
-	{
-		get
-		{
-			return mWidth;
+			return this.mAdvance;
 		}
 	}
 
@@ -66,15 +38,35 @@ public class BMSymbol
 	{
 		get
 		{
-			return mHeight;
+			return this.mHeight;
 		}
 	}
 
-	public int advance
+	public int length
 	{
 		get
 		{
-			return mAdvance;
+			if (this.mLength == 0)
+			{
+				this.mLength = this.sequence.Length;
+			}
+			return this.mLength;
+		}
+	}
+
+	public int offsetX
+	{
+		get
+		{
+			return this.mOffsetX;
+		}
+	}
+
+	public int offsetY
+	{
+		get
+		{
+			return this.mOffsetY;
 		}
 	}
 
@@ -82,48 +74,69 @@ public class BMSymbol
 	{
 		get
 		{
-			return mUV;
+			return this.mUV;
 		}
+	}
+
+	public int width
+	{
+		get
+		{
+			return this.mWidth;
+		}
+	}
+
+	public BMSymbol()
+	{
 	}
 
 	public void MarkAsChanged()
 	{
-		mIsValid = false;
+		this.mIsValid = false;
 	}
 
 	public bool Validate(UIAtlas atlas)
 	{
+		UISpriteData sprite;
 		if (atlas == null)
 		{
 			return false;
 		}
-		if (!mIsValid)
+		if (!this.mIsValid)
 		{
-			if (string.IsNullOrEmpty(spriteName))
+			if (string.IsNullOrEmpty(this.spriteName))
 			{
 				return false;
 			}
-			mSprite = ((!(atlas != null)) ? null : atlas.GetSprite(spriteName));
-			if (mSprite != null)
+			if (atlas == null)
+			{
+				sprite = null;
+			}
+			else
+			{
+				sprite = atlas.GetSprite(this.spriteName);
+			}
+			this.mSprite = sprite;
+			if (this.mSprite != null)
 			{
 				Texture texture = atlas.texture;
-				if (texture == null)
+				if (texture != null)
 				{
-					mSprite = null;
+					this.mUV = new Rect((float)this.mSprite.x, (float)this.mSprite.y, (float)this.mSprite.width, (float)this.mSprite.height);
+					this.mUV = NGUIMath.ConvertToTexCoords(this.mUV, texture.width, texture.height);
+					this.mOffsetX = this.mSprite.paddingLeft;
+					this.mOffsetY = this.mSprite.paddingTop;
+					this.mWidth = this.mSprite.width;
+					this.mHeight = this.mSprite.height;
+					this.mAdvance = this.mSprite.width + this.mSprite.paddingLeft + this.mSprite.paddingRight;
+					this.mIsValid = true;
 				}
 				else
 				{
-					mUV = new Rect(mSprite.x, mSprite.y, mSprite.width, mSprite.height);
-					mUV = NGUIMath.ConvertToTexCoords(mUV, texture.width, texture.height);
-					mOffsetX = mSprite.paddingLeft;
-					mOffsetY = mSprite.paddingTop;
-					mWidth = mSprite.width;
-					mHeight = mSprite.height;
-					mAdvance = mSprite.width + (mSprite.paddingLeft + mSprite.paddingRight);
-					mIsValid = true;
+					this.mSprite = null;
 				}
 			}
 		}
-		return mSprite != null;
+		return this.mSprite != null;
 	}
 }

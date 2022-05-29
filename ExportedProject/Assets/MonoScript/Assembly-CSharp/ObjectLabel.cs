@@ -54,140 +54,150 @@ public class ObjectLabel : MonoBehaviour
 
 	public GUIText clanName;
 
-	private void Start()
+	static ObjectLabel()
 	{
-		_weaponManager = WeaponManager.sharedManager;
-		isHunger = Defs.isHunger;
-		if (isHunger && GameObject.FindGameObjectWithTag("HungerGameController") != null)
-		{
-			hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
-		}
-		expController = GameObject.FindGameObjectWithTag("ExperienceController").GetComponent<ExperienceController>();
-		float num = 36f * Defs.Coef;
-		thisTransform = base.transform;
-		cam = currentCamera;
-		camTransform = cam.transform;
-		base.transform.GetComponent<GUITexture>().pixelInset = new Rect(-75f * koofScreen, -3f * koofScreen, 30f * koofScreen, 30f * koofScreen);
-		base.transform.GetComponent<GUIText>().pixelOffset = new Vector2(-45f * koofScreen, 0f);
-		base.transform.GetComponent<GUIText>().fontSize = Mathf.RoundToInt(20f * koofScreen);
-		isCompany = Defs.isCompany;
-		clanTexture.pixelInset = new Rect(-64f * koofScreen, -18f * koofScreen, 15f * koofScreen, 15f * koofScreen);
-		clanName.pixelOffset = new Vector2(-41f * koofScreen, -4f);
-		clanName.fontSize = Mathf.RoundToInt(16f * koofScreen);
+	}
+
+	public ObjectLabel()
+	{
 	}
 
 	public void ResetTimeShow()
 	{
-		timeShow = 1f;
+		this.timeShow = 1f;
+	}
+
+	private void Start()
+	{
+		this._weaponManager = WeaponManager.sharedManager;
+		this.isHunger = Defs.isHunger;
+		if (this.isHunger && GameObject.FindGameObjectWithTag("HungerGameController") != null)
+		{
+			this.hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
+		}
+		this.expController = GameObject.FindGameObjectWithTag("ExperienceController").GetComponent<ExperienceController>();
+		float coef = 36f * Defs.Coef;
+		this.thisTransform = base.transform;
+		this.cam = ObjectLabel.currentCamera;
+		this.camTransform = this.cam.transform;
+		base.transform.GetComponent<GUITexture>().pixelInset = new Rect(-75f * this.koofScreen, -3f * this.koofScreen, 30f * this.koofScreen, 30f * this.koofScreen);
+		base.transform.GetComponent<GUIText>().pixelOffset = new Vector2(-45f * this.koofScreen, 0f);
+		base.transform.GetComponent<GUIText>().fontSize = Mathf.RoundToInt(20f * this.koofScreen);
+		this.isCompany = Defs.isCompany;
+		this.clanTexture.pixelInset = new Rect(-64f * this.koofScreen, -18f * this.koofScreen, 15f * this.koofScreen, 15f * this.koofScreen);
+		this.clanName.pixelOffset = new Vector2(-41f * this.koofScreen, -4f);
+		this.clanName.fontSize = Mathf.RoundToInt(16f * this.koofScreen);
 	}
 
 	private void Update()
 	{
-		if (timeShow > 0f)
+		if (this.timeShow > 0f)
 		{
-			timeShow -= Time.deltaTime;
+			this.timeShow -= Time.deltaTime;
 		}
-		if (target == null || cam == null)
+		if (this.target == null || this.cam == null)
 		{
 			Debug.Log("target == null || cam == null");
 			UnityEngine.Object.Destroy(base.gameObject);
 			return;
 		}
-		if ((isHunger && hungerGameController != null && !hungerGameController.isGo) || _weaponManager.myPlayer == null)
+		if (this.isHunger && this.hungerGameController != null && !this.hungerGameController.isGo || this._weaponManager.myPlayer == null)
 		{
-			ResetTimeShow();
+			this.ResetTimeShow();
 		}
-		if ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints) && _weaponManager.myPlayer != null && _weaponManager.myPlayerMoveC != null && target.GetComponent<Player_move_c>() != null && _weaponManager.myPlayerMoveC.myCommand == target.GetComponent<Player_move_c>().myCommand)
+		if ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints) && this._weaponManager.myPlayer != null && this._weaponManager.myPlayerMoveC != null && this.target.GetComponent<Player_move_c>() != null && this._weaponManager.myPlayerMoveC.myCommand == this.target.GetComponent<Player_move_c>().myCommand)
 		{
-			ResetTimeShow();
+			this.ResetTimeShow();
 		}
 		try
 		{
-			cam = currentCamera;
-			camTransform = cam.transform;
+			this.cam = ObjectLabel.currentCamera;
+			this.camTransform = this.cam.transform;
 			GUITexture component = base.transform.GetComponent<GUITexture>();
-			if (component == null)
+			if (component != null)
 			{
-				Debug.LogError("guiTexture == null");
-				return;
-			}
-			if (!isMenu)
-			{
-				Player_move_c component2 = target.GetComponent<Player_move_c>();
-				if (!isSetColor)
+				if (this.isMenu)
 				{
-					if (component2.myCommand == 1)
+					component.pixelInset = new Rect(-130f * this.koofScreen, -6f * this.koofScreen, 36f * this.koofScreen, 36f * this.koofScreen);
+					base.transform.GetComponent<GUIText>().pixelOffset = new Vector2(-85f * this.koofScreen, 0f);
+					base.transform.GetComponent<GUIText>().fontSize = Mathf.RoundToInt(20f * Defs.Coef);
+					this.offset = new Vector3(0f, 2.25f, 0f);
+					component.texture = this.expController.marks[this.expController.currentLevel];
+					this.clanTexture.pixelInset = new Rect(-110f * this.koofScreen, -18f * this.koofScreen, 15f * this.koofScreen, 15f * this.koofScreen);
+					this.clanName.pixelOffset = new Vector2(-85f * this.koofScreen, -2f);
+					this.clanName.fontSize = Mathf.RoundToInt(16f * this.koofScreen);
+					if (this.clanTexture.texture == null)
 					{
-						base.gameObject.GetComponent<GUIText>().color = Color.blue;
-						isSetColor = true;
+						if (string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
+						{
+							this.clanTexture.texture = null;
+						}
+						else
+						{
+							byte[] numArray = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
+							Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
+							texture2D.LoadImage(numArray);
+							texture2D.filterMode = FilterMode.Point;
+							texture2D.Apply();
+							this.clanTexture.texture = texture2D;
+						}
+						this.clanName.text = FriendsController.sharedController.clanName;
 					}
-					if (component2.myCommand == 2)
-					{
-						base.gameObject.GetComponent<GUIText>().color = Color.red;
-						isSetColor = true;
-					}
-				}
-				int myRanks = component2.myTable.GetComponent<NetworkStartTable>().myRanks;
-				if (myRanks < 0 || myRanks >= expController.marks.Length)
-				{
-					string message = string.Format("Rank is equal to {0}, but the range [0, {1}) expected.", myRanks, expController.marks.Length);
-					Debug.LogError(message);
 				}
 				else
 				{
-					component.texture = expController.marks[myRanks];
-				}
-				clanTexture.texture = component2.myTable.GetComponent<NetworkStartTable>().myClanTexture;
-				clanName.text = component2.myTable.GetComponent<NetworkStartTable>().myClanName;
-			}
-			else
-			{
-				component.pixelInset = new Rect(-130f * koofScreen, -6f * koofScreen, 36f * koofScreen, 36f * koofScreen);
-				base.transform.GetComponent<GUIText>().pixelOffset = new Vector2(-85f * koofScreen, 0f);
-				base.transform.GetComponent<GUIText>().fontSize = Mathf.RoundToInt(20f * Defs.Coef);
-				offset = new Vector3(0f, 2.25f, 0f);
-				component.texture = expController.marks[expController.currentLevel];
-				clanTexture.pixelInset = new Rect(-110f * koofScreen, -18f * koofScreen, 15f * koofScreen, 15f * koofScreen);
-				clanName.pixelOffset = new Vector2(-85f * koofScreen, -2f);
-				clanName.fontSize = Mathf.RoundToInt(16f * koofScreen);
-				if (clanTexture.texture == null)
-				{
-					if (!string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
+					Player_move_c playerMoveC = this.target.GetComponent<Player_move_c>();
+					if (!this.isSetColor)
 					{
-						byte[] data = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
-						Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
-						texture2D.LoadImage(data);
-						texture2D.filterMode = FilterMode.Point;
-						texture2D.Apply();
-						clanTexture.texture = texture2D;
+						if (playerMoveC.myCommand == 1)
+						{
+							base.gameObject.GetComponent<GUIText>().color = Color.blue;
+							this.isSetColor = true;
+						}
+						if (playerMoveC.myCommand == 2)
+						{
+							base.gameObject.GetComponent<GUIText>().color = Color.red;
+							this.isSetColor = true;
+						}
+					}
+					int num = playerMoveC.myTable.GetComponent<NetworkStartTable>().myRanks;
+					if (num < 0 || num >= (int)this.expController.marks.Length)
+					{
+						string str = string.Format("Rank is equal to {0}, but the range [0, {1}) expected.", num, (int)this.expController.marks.Length);
+						Debug.LogError(str);
 					}
 					else
 					{
-						clanTexture.texture = null;
+						component.texture = this.expController.marks[num];
 					}
-					clanName.text = FriendsController.sharedController.clanName;
+					this.clanTexture.texture = playerMoveC.myTable.GetComponent<NetworkStartTable>().myClanTexture;
+					this.clanName.text = playerMoveC.myTable.GetComponent<NetworkStartTable>().myClanName;
 				}
-			}
-			if (timeShow > 0f)
-			{
-				posLabel = cam.WorldToViewportPoint(target.position + offset);
-			}
-			if (timeShow > 0f && posLabel.z >= 0f)
-			{
-				thisTransform.position = posLabel;
+				if (this.timeShow > 0f)
+				{
+					this.posLabel = this.cam.WorldToViewportPoint(this.target.position + this.offset);
+				}
+				if (this.timeShow <= 0f || this.posLabel.z < 0f)
+				{
+					this.thisTransform.position = new Vector3(-1000f, -1000f, -1000f);
+				}
+				else
+				{
+					this.thisTransform.position = this.posLabel;
+				}
+				if (!this.isMenu && this.target.transform.parent.transform.position.y < -1000f)
+				{
+					this.thisTransform.position = new Vector3(-1000f, -1000f, -1000f);
+				}
 			}
 			else
 			{
-				thisTransform.position = new Vector3(-1000f, -1000f, -1000f);
-			}
-			if (!isMenu && target.transform.parent.transform.position.y < -1000f)
-			{
-				thisTransform.position = new Vector3(-1000f, -1000f, -1000f);
+				Debug.LogError("guiTexture == null");
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.Log("Exception in ObjectLabel: " + ex);
+			Debug.Log(string.Concat("Exception in ObjectLabel: ", exception));
 		}
 	}
 }

@@ -1,29 +1,23 @@
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.InteropServices;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeScoreSummary : BaseReferenceHolder
 	{
-		internal NativeScoreSummary(IntPtr selfPtr)
-			: base(selfPtr)
+		internal NativeScoreSummary(IntPtr selfPtr) : base(selfPtr)
 		{
+		}
+
+		internal ulong ApproximateResults()
+		{
+			return ScoreSummary.ScoreSummary_ApproximateNumberOfScores(base.SelfPtr());
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
 		{
 			ScoreSummary.ScoreSummary_Dispose(selfPointer);
-		}
-
-		internal ulong ApproximateResults()
-		{
-			return ScoreSummary.ScoreSummary_ApproximateNumberOfScores(SelfPtr());
-		}
-
-		internal NativeScore LocalUserScore()
-		{
-			return NativeScore.FromPointer(ScoreSummary.ScoreSummary_CurrentPlayerScore(SelfPtr()));
 		}
 
 		internal static NativeScoreSummary FromPointer(IntPtr pointer)
@@ -33,6 +27,11 @@ namespace GooglePlayGames.Native.PInvoke
 				return null;
 			}
 			return new NativeScoreSummary(pointer);
+		}
+
+		internal NativeScore LocalUserScore()
+		{
+			return NativeScore.FromPointer(ScoreSummary.ScoreSummary_CurrentPlayerScore(base.SelfPtr()));
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,18 +6,23 @@ internal sealed class AddFrendsButtonInTableRangs : MonoBehaviour
 {
 	public int ID;
 
+	public AddFrendsButtonInTableRangs()
+	{
+	}
+
 	private void OnPress(bool isDown)
 	{
 		if (!isDown)
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Added Friends", "AddFrendsButtonInTableRangs");
-			dictionary.Add("Deleted Friends", "Add");
-			Dictionary<string, object> socialEventParameters = dictionary;
-			FriendsController.sharedController.SendInvitation(ID.ToString(), socialEventParameters);
-			if (!FriendsController.sharedController.notShowAddIds.Contains(ID.ToString()))
+			Dictionary<string, object> strs = new Dictionary<string, object>()
 			{
-				FriendsController.sharedController.notShowAddIds.Add(ID.ToString());
+				{ "Added Friends", "AddFrendsButtonInTableRangs" },
+				{ "Deleted Friends", "Add" }
+			};
+			FriendsController.sharedController.SendInvitation(this.ID.ToString(), strs);
+			if (!FriendsController.sharedController.notShowAddIds.Contains(this.ID.ToString()))
+			{
+				FriendsController.sharedController.notShowAddIds.Add(this.ID.ToString());
 			}
 			base.gameObject.SetActive(false);
 		}

@@ -1,15 +1,17 @@
+using System;
+
 namespace FyberPlugin
 {
 	public enum UserEthnicity
 	{
-		asian = 0,
-		black = 1,
-		hispanic = 2,
-		indian = 3,
-		middle_eastern = 4,
-		native_american = 5,
-		pacific_islander = 6,
-		white = 7,
-		other = 8
+		asian,
+		black,
+		hispanic,
+		indian,
+		middle_eastern,
+		native_american,
+		pacific_islander,
+		white,
+		other
 	}
 }

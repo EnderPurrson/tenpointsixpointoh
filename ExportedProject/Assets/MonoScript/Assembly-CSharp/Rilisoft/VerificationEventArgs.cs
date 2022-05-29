@@ -1,25 +1,66 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public class VerificationEventArgs : EventArgs
 	{
-		public VerificationErrorCode ErrorCode { get; set; }
+		public VerificationErrorCode ErrorCode
+		{
+			get;
+			set;
+		}
 
-		public int SentNonce { get; set; }
+		public int ReceivedNonce
+		{
+			get;
+			set;
+		}
 
-		public string SentPackageName { get; set; }
+		public string ReceivedPackageName
+		{
+			get;
+			set;
+		}
 
-		public string ReceivedPackageName { get; set; }
+		public ResponseCode ReceivedResponseCode
+		{
+			get;
+			set;
+		}
 
-		public int ReceivedNonce { get; set; }
+		public long ReceivedTimestamp
+		{
+			get;
+			set;
+		}
 
-		public ResponseCode ReceivedResponseCode { get; set; }
+		public string ReceivedUserId
+		{
+			get;
+			set;
+		}
 
-		public long ReceivedTimestamp { get; set; }
+		public int ReceivedVersionCode
+		{
+			get;
+			set;
+		}
 
-		public string ReceivedUserId { get; set; }
+		public int SentNonce
+		{
+			get;
+			set;
+		}
 
-		public int ReceivedVersionCode { get; set; }
+		public string SentPackageName
+		{
+			get;
+			set;
+		}
+
+		public VerificationEventArgs()
+		{
+		}
 	}
 }

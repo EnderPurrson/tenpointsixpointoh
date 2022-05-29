@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -9,38 +10,43 @@ public class Label3d : MonoBehaviour
 
 	public float offset = -3f;
 
-	private void Create3dText()
+	public Label3d()
 	{
-		GameObject gameObject = Object.Instantiate(base.gameObject);
-		Object.DestroyImmediate(gameObject.GetComponent<Label3d>());
-		gameObject.GetComponent<UILabel>().depth = gameObject.GetComponent<UILabel>().depth - 2;
-		GameObject gameObject2 = Object.Instantiate(base.gameObject);
-		Object.DestroyImmediate(gameObject2.GetComponent<Label3d>());
-		gameObject2.transform.parent = base.transform;
-		gameObject2.GetComponent<UILabel>().depth = gameObject2.GetComponent<UILabel>().depth - 1;
-		gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-		gameObject2.transform.localPosition = new Vector3(0f, offset, 0f);
-		gameObject2.GetComponent<UILabel>().color = shadedColor;
-		gameObject.transform.parent = base.transform;
-		gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-		gameObject.transform.localPosition = new Vector3(0f, 0f, 0f);
-		base.gameObject.GetComponent<UILabel>().effectStyle = UILabel.Effect.None;
-		base.gameObject.SetActive(false);
-		DeleteScript();
 	}
 
-	private void Update()
+	private void Create3dText()
 	{
-		if (apply)
-		{
-			apply = false;
-			Create3dText();
-		}
+		GameObject component = UnityEngine.Object.Instantiate<GameObject>(base.gameObject);
+		UnityEngine.Object.DestroyImmediate(component.GetComponent<Label3d>());
+		component.GetComponent<UILabel>().depth = component.GetComponent<UILabel>().depth - 2;
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(base.gameObject);
+		UnityEngine.Object.DestroyImmediate(vector3.GetComponent<Label3d>());
+		vector3.transform.parent = base.transform;
+		vector3.GetComponent<UILabel>().depth = vector3.GetComponent<UILabel>().depth - 1;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		vector3.transform.localPosition = new Vector3(0f, this.offset, 0f);
+		vector3.GetComponent<UILabel>().color = this.shadedColor;
+		component.transform.parent = base.transform;
+		component.transform.localScale = new Vector3(1f, 1f, 1f);
+		component.transform.localPosition = new Vector3(0f, 0f, 0f);
+		base.gameObject.GetComponent<UILabel>().effectStyle = UILabel.Effect.None;
+		base.gameObject.SetActive(false);
+		this.DeleteScript();
 	}
 
 	private void DeleteScript()
 	{
 		base.gameObject.SetActive(true);
-		Object.DestroyImmediate(base.gameObject.GetComponent<Label3d>());
+		UnityEngine.Object.DestroyImmediate(base.gameObject.GetComponent<Label3d>());
+	}
+
+	private void Update()
+	{
+		if (!this.apply)
+		{
+			return;
+		}
+		this.apply = false;
+		this.Create3dText();
 	}
 }

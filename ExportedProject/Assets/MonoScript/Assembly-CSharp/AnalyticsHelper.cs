@@ -1,6 +1,6 @@
+using Rilisoft;
 using System;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 
 internal sealed class AnalyticsHelper
 {
@@ -8,48 +8,39 @@ internal sealed class AnalyticsHelper
 
 	private AdvertisementInfo _advertisementContext = AdvertisementInfo.Default;
 
-	private static readonly Lazy<AnalyticsHelper> _instance;
-
-	[CompilerGenerated]
-	private static Func<AnalyticsHelper> _003C_003Ef__am_0024cache2;
-
-	public static AnalyticsHelper Instance
-	{
-		get
-		{
-			return _instance.Value;
-		}
-	}
+	private readonly static Lazy<AnalyticsHelper> _instance;
 
 	public AdvertisementInfo AdvertisementContext
 	{
 		get
 		{
-			return _advertisementContext;
+			return this._advertisementContext;
 		}
 		set
 		{
-			_advertisementContext = value ?? AdvertisementInfo.Default;
+			this._advertisementContext = value ?? AdvertisementInfo.Default;
+		}
+	}
+
+	public static AnalyticsHelper Instance
+	{
+		get
+		{
+			return AnalyticsHelper._instance.Value;
 		}
 	}
 
 	static AnalyticsHelper()
 	{
-		if (_003C_003Ef__am_0024cache2 == null)
-		{
-			_003C_003Ef__am_0024cache2 = _003C_instance_003Em__240;
-		}
-		_instance = new Lazy<AnalyticsHelper>(_003C_003Ef__am_0024cache2);
+		AnalyticsHelper._instance = new Lazy<AnalyticsHelper>(() => new AnalyticsHelper());
+	}
+
+	public AnalyticsHelper()
+	{
 	}
 
 	public static string GetAdProviderName(AdProvider provider)
 	{
-		return (provider != AdProvider.GoogleMobileAds) ? provider.ToString() : "AdMob";
-	}
-
-	[CompilerGenerated]
-	private static AnalyticsHelper _003C_instance_003Em__240()
-	{
-		return new AnalyticsHelper();
+		return (provider != AdProvider.GoogleMobileAds ? provider.ToString() : "AdMob");
 	}
 }

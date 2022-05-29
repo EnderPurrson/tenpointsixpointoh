@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ShowNoJoinConnectFromRanks : MonoBehaviour
@@ -10,32 +11,36 @@ public class ShowNoJoinConnectFromRanks : MonoBehaviour
 
 	public static ShowNoJoinConnectFromRanks sharedController;
 
-	private void Start()
+	public ShowNoJoinConnectFromRanks()
 	{
-		sharedController = this;
-	}
-
-	private void Update()
-	{
-		if (showTimer > 0f)
-		{
-			showTimer -= Time.deltaTime;
-			if (showTimer <= 0f)
-			{
-				panelMessage.SetActive(false);
-			}
-		}
-	}
-
-	public void resetShow(int rank)
-	{
-		label.text = "Reach rank " + rank + "  to play this mode!";
-		panelMessage.SetActive(true);
-		showTimer = 3f;
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		ShowNoJoinConnectFromRanks.sharedController = null;
+	}
+
+	public void resetShow(int rank)
+	{
+		this.label.text = string.Concat("Reach rank ", rank, "  to play this mode!");
+		this.panelMessage.SetActive(true);
+		this.showTimer = 3f;
+	}
+
+	private void Start()
+	{
+		ShowNoJoinConnectFromRanks.sharedController = this;
+	}
+
+	private void Update()
+	{
+		if (this.showTimer > 0f)
+		{
+			this.showTimer -= Time.deltaTime;
+			if (this.showTimer <= 0f)
+			{
+				this.panelMessage.SetActive(false);
+			}
+		}
 	}
 }

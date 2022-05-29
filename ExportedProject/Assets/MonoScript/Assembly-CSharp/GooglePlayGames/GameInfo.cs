@@ -1,3 +1,5 @@
+using System;
+
 namespace GooglePlayGames
 {
 	public static class GameInfo
@@ -20,34 +22,34 @@ namespace GooglePlayGames
 
 		public const string NearbyConnectionServiceId = "com.pixel.gun3d";
 
+		public static bool ApplicationIdInitialized()
+		{
+			return (string.IsNullOrEmpty("339873998127") ? false : !"339873998127".Equals(GameInfo.ToEscapedToken("APP_ID")));
+		}
+
+		public static bool IosClientIdInitialized()
+		{
+			return (string.IsNullOrEmpty(string.Empty) ? false : !string.Empty.Equals(GameInfo.ToEscapedToken("IOS_CLIENTID")));
+		}
+
+		public static bool NearbyConnectionsInitialized()
+		{
+			return (string.IsNullOrEmpty("com.pixel.gun3d") ? false : !"com.pixel.gun3d".Equals(GameInfo.ToEscapedToken("NEARBY_SERVICE_ID")));
+		}
+
 		public static bool RequireGooglePlus()
 		{
 			return false;
 		}
 
-		public static bool ApplicationIdInitialized()
+		private static string ToEscapedToken(string token)
 		{
-			return !string.IsNullOrEmpty("339873998127") && !"339873998127".Equals(ToEscapedToken("APP_ID"));
-		}
-
-		public static bool IosClientIdInitialized()
-		{
-			return !string.IsNullOrEmpty(string.Empty) && !string.Empty.Equals(ToEscapedToken("IOS_CLIENTID"));
+			return string.Format("__{0}__", token);
 		}
 
 		public static bool WebClientIdInitialized()
 		{
-			return !string.IsNullOrEmpty(string.Empty) && !string.Empty.Equals(ToEscapedToken("WEB_CLIENTID"));
-		}
-
-		public static bool NearbyConnectionsInitialized()
-		{
-			return !string.IsNullOrEmpty("com.pixel.gun3d") && !"com.pixel.gun3d".Equals(ToEscapedToken("NEARBY_SERVICE_ID"));
-		}
-
-		private static string ToEscapedToken(string token)
-		{
-			return string.Format("__{0}__", token);
+			return (string.IsNullOrEmpty(string.Empty) ? false : !string.Empty.Equals(GameInfo.ToEscapedToken("WEB_CLIENTID")));
 		}
 	}
 }

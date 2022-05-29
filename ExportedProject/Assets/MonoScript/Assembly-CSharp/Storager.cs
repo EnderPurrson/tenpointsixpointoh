@@ -1,8 +1,9 @@
+using Rilisoft;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public static class Storager
@@ -21,23 +22,17 @@ public static class Storager
 
 	private static bool _weaponDigestIsDirty;
 
-	private static readonly IDictionary<string, SaltedInt> _protectedIntCache;
+	private readonly static IDictionary<string, SaltedInt> _protectedIntCache;
 
-	private static readonly System.Random _prng;
+	private readonly static System.Random _prng;
 
-	private static readonly string[] _expendableKeys;
-
-	[CompilerGenerated]
-	private static Func<string, IEnumerable<byte>> _003C_003Ef__am_0024cache8;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache9;
+	private readonly static string[] _expendableKeys;
 
 	public static bool ICloudAvailable
 	{
 		get
 		{
-			return iCloudAvailable;
+			return Storager.iCloudAvailable;
 		}
 	}
 
@@ -51,108 +46,172 @@ public static class Storager
 
 	static Storager()
 	{
-		iCloudAvailable = false;
-		_keychainCache = new Dictionary<string, SaltedInt>();
-		_keychainStringCache = new Dictionary<string, string>();
-		iosCloudSyncBuffer = new Dictionary<string, int>();
-		_protectedIntCache = new Dictionary<string, SaltedInt>();
-		_prng = new System.Random();
-		_expendableKeys = new string[4]
+		Storager.iCloudAvailable = false;
+		Storager._keychainCache = new Dictionary<string, SaltedInt>();
+		Storager._keychainStringCache = new Dictionary<string, string>();
+		Storager.iosCloudSyncBuffer = new Dictionary<string, int>();
+		Storager._protectedIntCache = new Dictionary<string, SaltedInt>();
+		Storager._prng = new System.Random();
+		Storager._expendableKeys = new string[] { GearManager.InvisibilityPotion, GearManager.Jetpack, GearManager.Turret, GearManager.Mech };
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
 		{
-			GearManager.InvisibilityPotion,
-			GearManager.Jetpack,
-			GearManager.Turret,
-			GearManager.Mech
-		};
-		if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer)
-		{
-			return;
-		}
-		IEnumerable<string> enumerable = PurchasesSynchronizer.AllItemIds();
-		foreach (string item in enumerable)
-		{
-			iosCloudSyncBuffer.Add(item, 0);
+			IEnumerator<string> enumerator = PurchasesSynchronizer.AllItemIds().GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					string current = enumerator.Current;
+					Storager.iosCloudSyncBuffer.Add(current, 0);
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
 		}
 	}
 
-	public static void SynchronizeIosWithCloud(ref List<string> weaponsForWhichSetRememberedTier, out bool armorArmy1Comes)
+	public static int getInt(string key, bool useICloud)
 	{
-		armorArmy1Comes = false;
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer && !iCloudAvailable)
+		SaltedInt saltedInt;
+		string str;
+		int num;
+		if (Application.isEditor)
 		{
+			return PlayerPrefs.GetInt(key);
 		}
+		if (Storager._protectedIntCache.TryGetValue(key, out saltedInt))
+		{
+			return saltedInt.Value;
+		}
+		if (CryptoPlayerPrefs.HasKey(key))
+		{
+			int num1 = CryptoPlayerPrefs.GetInt(key, 0);
+			Storager._protectedIntCache.Add(key, new SaltedInt(Storager._prng.Next(), num1));
+			return num1;
+		}
+		if (!key.Equals("Coins") && !key.Equals("GemsCurrency") || !Defs2.SignedPreferences.TryGetValue(key, out str) || !Defs2.SignedPreferences.Verify(key) || !int.TryParse(str, out num))
+		{
+			return 0;
+		}
+		return num;
+	}
+
+	public static string getString(string key, bool useICloud)
+	{
+		string str;
+		if (Application.isEditor)
+		{
+			return PlayerPrefs.GetString(key);
+		}
+		if (Storager._keychainStringCache.TryGetValue(key, out str))
+		{
+			return str;
+		}
+		if (!CryptoPlayerPrefs.HasKey(key))
+		{
+			return string.Empty;
+		}
+		string str1 = CryptoPlayerPrefs.GetString(key, string.Empty);
+		Storager._keychainStringCache.Add(key, str1);
+		return str1;
+	}
+
+	public static bool hasKey(string key)
+	{
+		string str;
+		int num;
+		bool flag = CryptoPlayerPrefs.HasKey(key);
+		if (flag || !key.Equals("Coins") && !key.Equals("GemsCurrency") || !Defs2.SignedPreferences.TryGetValue(key, out str) || !Defs2.SignedPreferences.Verify(key) || !int.TryParse(str, out num))
+		{
+			return flag;
+		}
+		Storager.setInt(key, Math.Max(0, num), false);
+		return true;
 	}
 
 	public static void Initialize(bool cloudAvailable)
 	{
 	}
 
-	public static bool hasKey(string key)
+	public static bool IsInitialized(string flagName)
 	{
-		bool flag = CryptoPlayerPrefs.HasKey(key);
-		string value;
-		int result;
-		if (!flag && (key.Equals("Coins") || key.Equals("GemsCurrency")) && Defs2.SignedPreferences.TryGetValue(key, out value) && Defs2.SignedPreferences.Verify(key) && int.TryParse(value, out result))
+		if (Application.isEditor)
 		{
-			setInt(key, Math.Max(0, result), false);
-			return true;
+			return PlayerPrefs.HasKey(flagName);
 		}
-		return flag;
+		return Storager.hasKey(flagName);
+	}
+
+	private static void RefreshExpendablesDigest()
+	{
+		byte[] array = Storager._expendableKeys.SelectMany<string, byte>((string key) => BitConverter.GetBytes(Storager.getInt(key, false))).ToArray<byte>();
+		DigestStorager.Instance.Set("ExpendablesCount", array);
+	}
+
+	public static void RefreshWeaponDigestIfDirty()
+	{
+		if (!Storager._weaponDigestIsDirty)
+		{
+			return;
+		}
+		if (Defs.IsDeveloperBuild)
+		{
+			Debug.LogFormat("[Rilisoft] > RefreshWeaponsDigest: {0:F3}", new object[] { Time.realtimeSinceStartup });
+		}
+		Storager.RefreshWeaponsDigest();
+		if (Defs.IsDeveloperBuild)
+		{
+			Debug.LogFormat("[Rilisoft] < RefreshWeaponsDigest: {0:F3}", new object[] { Time.realtimeSinceStartup });
+		}
+	}
+
+	private static void RefreshWeaponsDigest()
+	{
+		IEnumerable<string> values = 
+			from w in WeaponManager.storeIDtoDefsSNMapping.Values
+			where Storager.getInt(w, false) == 1
+			select w;
+		int num = values.Count<string>();
+		DigestStorager.Instance.Set("WeaponsCount", num);
+		Storager._weaponDigestIsDirty = false;
+	}
+
+	public static void SetInitialized(string flagName)
+	{
+		Storager.setInt(flagName, 0, false);
 	}
 
 	public static void setInt(string key, int val, bool useICloud)
 	{
-		if (Application.isEditor)
-		{
-			PlayerPrefs.SetInt(key, val);
-		}
-		else
+		if (!Application.isEditor)
 		{
 			CryptoPlayerPrefs.SetInt(key, val);
-			_protectedIntCache[key] = new SaltedInt(_prng.Next(), val);
+			Storager._protectedIntCache[key] = new SaltedInt(Storager._prng.Next(), val);
 			if (key.Equals("Coins") || key.Equals("GemsCurrency"))
 			{
 				Defs2.SignedPreferences.Add(key, val.ToString());
 			}
 		}
+		else
+		{
+			PlayerPrefs.SetInt(key, val);
+		}
 		if (key.Equals("Coins") || key.Equals("GemsCurrency"))
 		{
 			DigestStorager.Instance.Set(key, val);
 		}
-		if (_expendableKeys.Contains(key))
+		if (Storager._expendableKeys.Contains<string>(key))
 		{
-			RefreshExpendablesDigest();
+			Storager.RefreshExpendablesDigest();
 		}
 		if (WeaponManager.PurchasableWeaponSetContains(key))
 		{
-			_weaponDigestIsDirty = true;
+			Storager._weaponDigestIsDirty = true;
 		}
-	}
-
-	public static int getInt(string key, bool useICloud)
-	{
-		if (Application.isEditor)
-		{
-			return PlayerPrefs.GetInt(key);
-		}
-		SaltedInt value;
-		if (_protectedIntCache.TryGetValue(key, out value))
-		{
-			return value.Value;
-		}
-		if (CryptoPlayerPrefs.HasKey(key))
-		{
-			int @int = CryptoPlayerPrefs.GetInt(key);
-			_protectedIntCache.Add(key, new SaltedInt(_prng.Next(), @int));
-			return @int;
-		}
-		string value2;
-		int result;
-		if ((key.Equals("Coins") || key.Equals("GemsCurrency")) && Defs2.SignedPreferences.TryGetValue(key, out value2) && Defs2.SignedPreferences.Verify(key) && int.TryParse(value2, out result))
-		{
-			return result;
-		}
-		return 0;
 	}
 
 	public static void setString(string key, string val, bool useICloud)
@@ -163,101 +222,24 @@ public static class Storager
 			return;
 		}
 		CryptoPlayerPrefs.SetString(key, val);
-		_keychainStringCache[key] = val;
+		Storager._keychainStringCache[key] = val;
 	}
 
-	public static string getString(string key, bool useICloud)
+	public static void SynchronizeIosWithCloud(ref List<string> weaponsForWhichSetRememberedTier, out bool armorArmy1Comes)
 	{
-		if (Application.isEditor)
+		armorArmy1Comes = false;
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
 		{
-			return PlayerPrefs.GetString(key);
+			!Storager.iCloudAvailable;
 		}
-		string value;
-		if (_keychainStringCache.TryGetValue(key, out value))
-		{
-			return value;
-		}
-		if (CryptoPlayerPrefs.HasKey(key))
-		{
-			string @string = CryptoPlayerPrefs.GetString(key, string.Empty);
-			_keychainStringCache.Add(key, @string);
-			return @string;
-		}
-		return string.Empty;
-	}
-
-	public static bool IsInitialized(string flagName)
-	{
-		if (Application.isEditor)
-		{
-			return PlayerPrefs.HasKey(flagName);
-		}
-		return hasKey(flagName);
-	}
-
-	public static void SetInitialized(string flagName)
-	{
-		setInt(flagName, 0, false);
 	}
 
 	public static void SyncWithCloud(string storageId)
 	{
-		int @int = getInt(storageId, true);
-		if (@int > 0)
+		int num = Storager.getInt(storageId, true);
+		if (num > 0)
 		{
-			setInt(storageId, @int, true);
+			Storager.setInt(storageId, num, true);
 		}
-	}
-
-	private static void RefreshExpendablesDigest()
-	{
-		string[] expendableKeys = _expendableKeys;
-		if (_003C_003Ef__am_0024cache8 == null)
-		{
-			_003C_003Ef__am_0024cache8 = _003CRefreshExpendablesDigest_003Em__453;
-		}
-		byte[] value = expendableKeys.SelectMany(_003C_003Ef__am_0024cache8).ToArray();
-		DigestStorager.Instance.Set("ExpendablesCount", value);
-	}
-
-	public static void RefreshWeaponDigestIfDirty()
-	{
-		if (_weaponDigestIsDirty)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogFormat("[Rilisoft] > RefreshWeaponsDigest: {0:F3}", Time.realtimeSinceStartup);
-			}
-			RefreshWeaponsDigest();
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogFormat("[Rilisoft] < RefreshWeaponsDigest: {0:F3}", Time.realtimeSinceStartup);
-			}
-		}
-	}
-
-	private static void RefreshWeaponsDigest()
-	{
-		Dictionary<string, string>.ValueCollection values = WeaponManager.storeIDtoDefsSNMapping.Values;
-		if (_003C_003Ef__am_0024cache9 == null)
-		{
-			_003C_003Ef__am_0024cache9 = _003CRefreshWeaponsDigest_003Em__454;
-		}
-		IEnumerable<string> source = values.Where(_003C_003Ef__am_0024cache9);
-		int value = source.Count();
-		DigestStorager.Instance.Set("WeaponsCount", value);
-		_weaponDigestIsDirty = false;
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<byte> _003CRefreshExpendablesDigest_003Em__453(string key)
-	{
-		return BitConverter.GetBytes(getInt(key, false));
-	}
-
-	[CompilerGenerated]
-	private static bool _003CRefreshWeaponsDigest_003Em__454(string w)
-	{
-		return getInt(w, false) == 1;
 	}
 }

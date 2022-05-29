@@ -17,63 +17,64 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (_instance == null)
+				if (LoadingProgress._instance == null)
 				{
-					_instance = new LoadingProgress();
+					LoadingProgress._instance = new LoadingProgress();
 				}
-				return _instance;
+				return LoadingProgress._instance;
 			}
 		}
 
 		private LoadingProgress()
 		{
-			_backgroundTexture = Resources.Load<Texture2D>("line_shadow");
-			_progressbarTexture = Resources.Load<Texture2D>("line");
-			_labelStyle = new GUIStyle(GUI.skin.label)
+			this._backgroundTexture = Resources.Load<Texture2D>("line_shadow");
+			this._progressbarTexture = Resources.Load<Texture2D>("line");
+			GUIStyle gUIStyle = new GUIStyle(GUI.skin.label)
 			{
 				alignment = TextAnchor.MiddleCenter,
 				font = Resources.Load<Font>("04B_03"),
 				fontSize = Convert.ToInt32(22f * Defs.Coef),
-				normal = new GUIStyleState
+				normal = new GUIStyleState()
 				{
 					textColor = Color.black
 				}
 			};
-		}
-
-		public static void Unload()
-		{
-			if (_instance != null)
-			{
-				Resources.UnloadAsset(_instance._backgroundTexture);
-				Resources.UnloadAsset(_instance._progressbarTexture);
-				_instance = null;
-			}
+			this._labelStyle = gUIStyle;
 		}
 
 		public void Draw(float progress)
 		{
-			float num = Mathf.Clamp01(progress);
-			if (_backgroundTexture != null)
+			float single = Mathf.Clamp01(progress);
+			if (this._backgroundTexture != null)
 			{
-				float num2 = 1.8f * (float)_backgroundTexture.width * Defs.Coef;
-				float num3 = 1.8f * (float)_backgroundTexture.height * Defs.Coef;
-				Rect rect = new Rect(0.5f * ((float)Screen.width - num2), (float)Screen.height - (21f * Defs.Coef + num3), num2, num3);
-				float num4 = num2 - 7.2f * Defs.Coef;
-				float width = num4 * num;
-				float height = num3 - 7.2f * Defs.Coef;
-				if (_progressbarTexture != null)
+				float coef = 1.8f * (float)this._backgroundTexture.width * Defs.Coef;
+				float coef1 = 1.8f * (float)this._backgroundTexture.height * Defs.Coef;
+				Rect rect = new Rect(0.5f * ((float)Screen.width - coef), (float)Screen.height - (21f * Defs.Coef + coef1), coef, coef1);
+				float single1 = coef - 7.2f * Defs.Coef;
+				float single2 = single1 * single;
+				float coef2 = coef1 - 7.2f * Defs.Coef;
+				if (this._progressbarTexture != null)
 				{
-					Rect position = new Rect(rect.xMin + 3.6f * Defs.Coef, rect.yMin + 3.6f * Defs.Coef, width, height);
-					GUI.DrawTexture(position, _progressbarTexture);
+					Rect rect1 = new Rect(rect.xMin + 3.6f * Defs.Coef, rect.yMin + 3.6f * Defs.Coef, single2, coef2);
+					GUI.DrawTexture(rect1, this._progressbarTexture);
 				}
-				GUI.DrawTexture(rect, _backgroundTexture);
-				Rect position2 = rect;
-				position2.yMin -= 1.8f * Defs.Coef;
-				position2.y += 1.8f * Defs.Coef;
-				int num5 = Mathf.RoundToInt(num * 100f);
-				string text = string.Format("{0}%", num5);
-				GUI.Label(position2, text, _labelStyle);
+				GUI.DrawTexture(rect, this._backgroundTexture);
+				Rect rect2 = rect;
+				rect2.yMin = rect2.yMin - 1.8f * Defs.Coef;
+				rect2.y = rect2.y + 1.8f * Defs.Coef;
+				int num = Mathf.RoundToInt(single * 100f);
+				string str = string.Format("{0}%", num);
+				GUI.Label(rect2, str, this._labelStyle);
+			}
+		}
+
+		public static void Unload()
+		{
+			if (LoadingProgress._instance != null)
+			{
+				Resources.UnloadAsset(LoadingProgress._instance._backgroundTexture);
+				Resources.UnloadAsset(LoadingProgress._instance._progressbarTexture);
+				LoadingProgress._instance = null;
 			}
 		}
 	}

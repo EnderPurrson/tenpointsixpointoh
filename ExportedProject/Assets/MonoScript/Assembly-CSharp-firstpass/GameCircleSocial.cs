@@ -21,13 +21,13 @@ public class GameCircleSocial : ISocialPlatform
 
 	private Dictionary<int, Action<IScore[]>> loadScoresCallbacks;
 
-	private static GameCircleSocial socialInstance = new GameCircleSocial();
+	private static GameCircleSocial socialInstance;
 
 	public static GameCircleSocial Instance
 	{
 		get
 		{
-			return socialInstance;
+			return GameCircleSocial.socialInstance;
 		}
 	}
 
@@ -35,39 +35,80 @@ public class GameCircleSocial : ISocialPlatform
 	{
 		get
 		{
-			return gameCircleLocalUser;
+			return this.gameCircleLocalUser;
 		}
+	}
+
+	static GameCircleSocial()
+	{
+		GameCircleSocial.socialInstance = new GameCircleSocial();
 	}
 
 	private GameCircleSocial()
 	{
-		requestID = 1;
-		simpleCallbacks = new Dictionary<int, Action<bool>>();
-		loadAchievementDescriptionsCallbacks = new Dictionary<int, Action<IAchievementDescription[]>>();
-		loadAchievementsCallbacks = new Dictionary<int, Action<IAchievement[]>>();
-		leaderboardForRequest = new Dictionary<int, AGSSocialLeaderboard>();
-		loadScoresCallbacks = new Dictionary<int, Action<IScore[]>>();
-		AGSClient.ServiceReadyEvent += OnServiceReady;
-		AGSClient.ServiceNotReadyEvent += OnServiceNotReady;
-		AGSAchievementsClient.UpdateAchievementCompleted += OnUpdateAchievementCompleted;
-		AGSAchievementsClient.RequestAchievementsCompleted += OnRequestAchievementsCompleted;
-		AGSLeaderboardsClient.SubmitScoreCompleted += OnSubmitScoreCompleted;
-		AGSLeaderboardsClient.RequestScoresCompleted += OnRequestScoresCompleted;
-		AGSLeaderboardsClient.RequestLocalPlayerScoreCompleted += OnRequestLocalPlayerScoreCompleted;
-		AGSPlayerClient.RequestLocalPlayerCompleted += OnRequestPlayerCompleted;
-		AGSPlayerClient.RequestFriendIdsCompleted += OnRequestFriendIdsCompleted;
-		AGSPlayerClient.RequestBatchFriendsCompleted += OnRequestBatchFriendsCompleted;
+		this.requestID = 1;
+		this.simpleCallbacks = new Dictionary<int, Action<bool>>();
+		this.loadAchievementDescriptionsCallbacks = new Dictionary<int, Action<IAchievementDescription[]>>();
+		this.loadAchievementsCallbacks = new Dictionary<int, Action<IAchievement[]>>();
+		this.leaderboardForRequest = new Dictionary<int, AGSSocialLeaderboard>();
+		this.loadScoresCallbacks = new Dictionary<int, Action<IScore[]>>();
+		AGSClient.ServiceReadyEvent += new Action(this.OnServiceReady);
+		AGSClient.ServiceNotReadyEvent += new Action<string>(this.OnServiceNotReady);
+		AGSAchievementsClient.UpdateAchievementCompleted += new Action<AGSUpdateAchievementResponse>(this.OnUpdateAchievementCompleted);
+		AGSAchievementsClient.RequestAchievementsCompleted += new Action<AGSRequestAchievementsResponse>(this.OnRequestAchievementsCompleted);
+		AGSLeaderboardsClient.SubmitScoreCompleted += new Action<AGSSubmitScoreResponse>(this.OnSubmitScoreCompleted);
+		AGSLeaderboardsClient.RequestScoresCompleted += new Action<AGSRequestScoresResponse>(this.OnRequestScoresCompleted);
+		AGSLeaderboardsClient.RequestLocalPlayerScoreCompleted += new Action<AGSRequestScoreResponse>(this.OnRequestLocalPlayerScoreCompleted);
+		AGSPlayerClient.RequestLocalPlayerCompleted += new Action<AGSRequestPlayerResponse>(this.OnRequestPlayerCompleted);
+		AGSPlayerClient.RequestFriendIdsCompleted += new Action<AGSRequestFriendIdsResponse>(this.OnRequestFriendIdsCompleted);
+		AGSPlayerClient.RequestBatchFriendsCompleted += new Action<AGSRequestBatchFriendsResponse>(this.OnRequestBatchFriendsCompleted);
 	}
 
-	public void LoadUsers(string[] userIDs, Action<IUserProfile[]> callback)
+	public void Authenticate(ILocalUser user, Action<bool> callback)
 	{
-		AGSClient.LogGameCircleError("ISocialPlatform.LoadUsers is not available for GameCircle");
+		this.authenticationCallback = callback;
+		Debug.Log("[Rilisoft] GameCircleSocial.Authenticate(user, callback) > AGSClient.Init(true, true, true).");
+		AGSClient.Init(true, true, true);
 	}
 
-	public void ReportProgress(string achievementID, double progress, Action<bool> callback)
+	public IAchievement CreateAchievement()
 	{
-		simpleCallbacks.Add(requestID, callback);
-		AGSAchievementsClient.UpdateAchievementProgress(achievementID, (float)progress, requestID++);
+		return new AGSSocialAchievement();
+	}
+
+	public ILeaderboard CreateLeaderboard()
+	{
+		return new AGSSocialLeaderboard();
+	}
+
+	private LeaderboardScope fromTimeScope(TimeScope scope)
+	{
+		switch (scope)
+		{
+			case TimeScope.Today:
+			{
+				return LeaderboardScope.GlobalDay;
+			}
+			case TimeScope.Week:
+			{
+				return LeaderboardScope.GlobalWeek;
+			}
+			case TimeScope.AllTime:
+			{
+				return LeaderboardScope.GlobalAllTime;
+			}
+		}
+		return LeaderboardScope.GlobalAllTime;
+	}
+
+	public bool GetLoading(ILeaderboard board)
+	{
+		if (board != null)
+		{
+			return board.loading;
+		}
+		AGSClient.LogGameCircleError("GetLoading \"board\" argument should not be null");
+		return false;
 	}
 
 	public void LoadAchievementDescriptions(Action<IAchievementDescription[]> callback)
@@ -77,8 +118,12 @@ public class GameCircleSocial : ISocialPlatform
 			AGSClient.LogGameCircleError("LoadAchievementDescriptions \"callback\" argument should not be null");
 			return;
 		}
-		loadAchievementDescriptionsCallbacks.Add(requestID, callback);
-		AGSAchievementsClient.RequestAchievements(requestID++);
+		this.loadAchievementDescriptionsCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSAchievementsClient.RequestAchievements(num1);
 	}
 
 	public void LoadAchievements(Action<IAchievement[]> callback)
@@ -88,30 +133,366 @@ public class GameCircleSocial : ISocialPlatform
 			AGSClient.LogGameCircleError("LoadAchievements \"callback\" argument should not be null");
 			return;
 		}
-		loadAchievementsCallbacks.Add(requestID, callback);
-		AGSAchievementsClient.RequestAchievements(requestID++);
+		this.loadAchievementsCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSAchievementsClient.RequestAchievements(num1);
 	}
 
-	public IAchievement CreateAchievement()
+	public void LoadFriends(ILocalUser user, Action<bool> callback)
 	{
-		return new AGSSocialAchievement();
-	}
-
-	public void ReportScore(long score, string board, Action<bool> callback)
-	{
-		simpleCallbacks.Add(requestID, callback);
-		AGSLeaderboardsClient.SubmitScore(board, score, requestID++);
+		if (user == null)
+		{
+			AGSClient.LogGameCircleError("LoadFriends \"user\" argument should not be null");
+			return;
+		}
+		user.LoadFriends(callback);
 	}
 
 	public void LoadScores(string leaderboardID, Action<IScore[]> callback)
 	{
-		loadScoresCallbacks.Add(requestID, callback);
-		AGSLeaderboardsClient.RequestLeaderboards(requestID++);
+		this.loadScoresCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSLeaderboardsClient.RequestLeaderboards(num1);
 	}
 
-	public ILeaderboard CreateLeaderboard()
+	public void LoadScores(ILeaderboard board, Action<bool> callback)
 	{
-		return new AGSSocialLeaderboard();
+		if (board == null)
+		{
+			AGSClient.LogGameCircleError("LoadScores \"board\" argument should not be null");
+			return;
+		}
+		board.LoadScores(callback);
+	}
+
+	public void LoadUsers(string[] userIDs, Action<IUserProfile[]> callback)
+	{
+		AGSClient.LogGameCircleError("ISocialPlatform.LoadUsers is not available for GameCircle");
+	}
+
+	private void OnRequestAchievementsCompleted(AGSRequestAchievementsResponse response)
+	{
+		Action<IAchievement[]> item;
+		Action<IAchievementDescription[]> action;
+		if (this.loadAchievementDescriptionsCallbacks.ContainsKey(response.userData))
+		{
+			if (!this.loadAchievementDescriptionsCallbacks.ContainsKey(response.userData))
+			{
+				action = null;
+			}
+			else
+			{
+				action = this.loadAchievementDescriptionsCallbacks[response.userData];
+			}
+			Action<IAchievementDescription[]> action1 = action;
+			if (action1 != null)
+			{
+				AGSSocialAchievement[] aGSSocialAchievement = new AGSSocialAchievement[response.achievements.Count];
+				for (int i = 0; i < response.achievements.Count; i++)
+				{
+					aGSSocialAchievement[i] = new AGSSocialAchievement(response.achievements[i]);
+				}
+				action1(aGSSocialAchievement);
+			}
+		}
+		if (this.loadAchievementsCallbacks.ContainsKey(response.userData))
+		{
+			if (!this.loadAchievementsCallbacks.ContainsKey(response.userData))
+			{
+				item = null;
+			}
+			else
+			{
+				item = this.loadAchievementsCallbacks[response.userData];
+			}
+			Action<IAchievement[]> action2 = item;
+			if (action2 != null)
+			{
+				AGSSocialAchievement[] aGSSocialAchievementArray = new AGSSocialAchievement[response.achievements.Count];
+				for (int j = 0; j < response.achievements.Count; j++)
+				{
+					aGSSocialAchievementArray[j] = new AGSSocialAchievement(response.achievements[j]);
+				}
+				action2(aGSSocialAchievementArray);
+			}
+		}
+		this.loadAchievementDescriptionsCallbacks.Remove(response.userData);
+	}
+
+	private void OnRequestBatchFriendsCompleted(AGSRequestBatchFriendsResponse response)
+	{
+		Action<bool> item;
+		if (!response.IsError())
+		{
+			AGSSocialLocalUser.friendList = new List<AGSSocialUser>();
+			foreach (AGSPlayer friend in response.friends)
+			{
+				AGSSocialLocalUser.friendList.Add(new AGSSocialUser(friend));
+			}
+		}
+		if (!this.simpleCallbacks.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.simpleCallbacks[response.userData];
+		}
+		Action<bool> action = item;
+		if (action != null)
+		{
+			action(!response.IsError());
+		}
+		this.simpleCallbacks.Remove(response.userData);
+	}
+
+	private void OnRequestFriendIdsCompleted(AGSRequestFriendIdsResponse response)
+	{
+		Action<bool> item;
+		if (!response.IsError())
+		{
+			AGSPlayerClient.RequestBatchFriends(response.friendIds, response.userData);
+		}
+		else
+		{
+			if (!this.simpleCallbacks.ContainsKey(response.userData))
+			{
+				item = null;
+			}
+			else
+			{
+				item = this.simpleCallbacks[response.userData];
+			}
+			Action<bool> action = item;
+			if (action != null)
+			{
+				action(false);
+			}
+			this.simpleCallbacks.Remove(response.userData);
+		}
+	}
+
+	private void OnRequestLocalPlayerScoreCompleted(AGSRequestScoreResponse response)
+	{
+		AGSSocialLeaderboard item;
+		if (!this.leaderboardForRequest.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.leaderboardForRequest[response.userData];
+		}
+		AGSSocialLeaderboard aGSSocialLeaderboard = item;
+		if (aGSSocialLeaderboard != null)
+		{
+			aGSSocialLeaderboard.localPlayerScore = response.score;
+			aGSSocialLeaderboard.localPlayerRank = response.rank;
+		}
+		this.leaderboardForRequest.Remove(response.userData);
+	}
+
+	private void OnRequestPlayerCompleted(AGSRequestPlayerResponse response)
+	{
+		Action<bool> item;
+		AGSSocialLocalUser.player = response.player;
+		if (!this.simpleCallbacks.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.simpleCallbacks[response.userData];
+		}
+		Action<bool> action = item;
+		if (action != null)
+		{
+			action(!response.IsError());
+		}
+		this.simpleCallbacks.Remove(response.userData);
+	}
+
+	private void OnRequestScoresCompleted(AGSRequestScoresResponse response)
+	{
+		AGSSocialLeaderboard item;
+		Action<bool> action;
+		Action<IScore[]> item1;
+		if (!this.leaderboardForRequest.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.leaderboardForRequest[response.userData];
+		}
+		AGSSocialLeaderboard aGSSocialLeaderboardScore = item;
+		if (aGSSocialLeaderboardScore != null && !response.IsError())
+		{
+			aGSSocialLeaderboardScore.scores = new IScore[response.scores.Count];
+			for (int i = 0; i < response.scores.Count; i++)
+			{
+				aGSSocialLeaderboardScore.scores[i] = new AGSSocialLeaderboardScore(response.scores[i], response.leaderboard);
+			}
+		}
+		if (!this.simpleCallbacks.ContainsKey(response.userData))
+		{
+			action = null;
+		}
+		else
+		{
+			action = this.simpleCallbacks[response.userData];
+		}
+		Action<bool> action1 = action;
+		if (action1 != null)
+		{
+			action1(!response.IsError());
+		}
+		if (!this.loadScoresCallbacks.ContainsKey(response.userData))
+		{
+			item1 = null;
+		}
+		else
+		{
+			item1 = this.loadScoresCallbacks[response.userData];
+		}
+		Action<IScore[]> action2 = item1;
+		if (action2 != null)
+		{
+			IScore[] scoreArray = new IScore[response.scores.Count];
+			for (int j = 0; j < response.scores.Count; j++)
+			{
+				scoreArray[j] = new AGSSocialLeaderboardScore(response.scores[j], response.leaderboard);
+			}
+			action2(scoreArray);
+		}
+		this.leaderboardForRequest.Remove(response.userData);
+		this.simpleCallbacks.Remove(response.userData);
+	}
+
+	private void OnServiceNotReady(string error)
+	{
+		if (this.authenticationCallback != null)
+		{
+			this.authenticationCallback(false);
+		}
+	}
+
+	private void OnServiceReady()
+	{
+		if (this.authenticationCallback != null)
+		{
+			this.authenticationCallback(true);
+		}
+	}
+
+	private void OnSubmitScoreCompleted(AGSSubmitScoreResponse response)
+	{
+		Action<bool> item;
+		if (!this.simpleCallbacks.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.simpleCallbacks[response.userData];
+		}
+		Action<bool> action = item;
+		if (action != null)
+		{
+			action(!response.IsError());
+		}
+		this.simpleCallbacks.Remove(response.userData);
+	}
+
+	private void OnUpdateAchievementCompleted(AGSUpdateAchievementResponse response)
+	{
+		Action<bool> item;
+		if (!this.simpleCallbacks.ContainsKey(response.userData))
+		{
+			item = null;
+		}
+		else
+		{
+			item = this.simpleCallbacks[response.userData];
+		}
+		Action<bool> action = item;
+		if (action != null)
+		{
+			action(!response.IsError());
+		}
+		this.simpleCallbacks.Remove(response.userData);
+	}
+
+	public void ReportProgress(string achievementID, double progress, Action<bool> callback)
+	{
+		this.simpleCallbacks.Add(this.requestID, callback);
+		float single = (float)progress;
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSAchievementsClient.UpdateAchievementProgress(achievementID, single, num1);
+	}
+
+	public void ReportScore(long score, string board, Action<bool> callback)
+	{
+		this.simpleCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSLeaderboardsClient.SubmitScore(board, score, num1);
+	}
+
+	public void RequestFriends(Action<bool> callback)
+	{
+		this.simpleCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSPlayerClient.RequestFriendIds(num1);
+	}
+
+	public void RequestLocalPlayer(Action<bool> callback)
+	{
+		this.simpleCallbacks.Add(this.requestID, callback);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSPlayerClient.RequestLocalPlayer(num1);
+	}
+
+	public void RequestLocalUserScore(AGSSocialLeaderboard leaderboard)
+	{
+		this.leaderboardForRequest.Add(this.requestID, leaderboard);
+		string str = leaderboard.id;
+		LeaderboardScope leaderboardScope = this.fromTimeScope(leaderboard.timeScope);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSLeaderboardsClient.RequestScores(str, leaderboardScope, num1);
+	}
+
+	public void RequestScores(AGSSocialLeaderboard leaderboard, Action<bool> callback)
+	{
+		this.leaderboardForRequest.Add(this.requestID, leaderboard);
+		this.simpleCallbacks.Add(this.requestID, callback);
+		string str = leaderboard.id;
+		LeaderboardScope leaderboardScope = this.fromTimeScope(leaderboard.timeScope);
+		GameCircleSocial gameCircleSocial = this;
+		int num = gameCircleSocial.requestID;
+		int num1 = num;
+		gameCircleSocial.requestID = num + 1;
+		AGSLeaderboardsClient.RequestScores(str, leaderboardScope, num1);
 	}
 
 	public void ShowAchievementsUI()
@@ -122,240 +503,5 @@ public class GameCircleSocial : ISocialPlatform
 	public void ShowLeaderboardUI()
 	{
 		AGSLeaderboardsClient.ShowLeaderboardsOverlay();
-	}
-
-	public void Authenticate(ILocalUser user, Action<bool> callback)
-	{
-		authenticationCallback = callback;
-		Debug.Log("[Rilisoft] GameCircleSocial.Authenticate(user, callback) > AGSClient.Init(true, true, true).");
-		AGSClient.Init(true, true, true);
-	}
-
-	public void LoadFriends(ILocalUser user, Action<bool> callback)
-	{
-		if (user == null)
-		{
-			AGSClient.LogGameCircleError("LoadFriends \"user\" argument should not be null");
-		}
-		else
-		{
-			user.LoadFriends(callback);
-		}
-	}
-
-	public void LoadScores(ILeaderboard board, Action<bool> callback)
-	{
-		if (board == null)
-		{
-			AGSClient.LogGameCircleError("LoadScores \"board\" argument should not be null");
-		}
-		else
-		{
-			board.LoadScores(callback);
-		}
-	}
-
-	public bool GetLoading(ILeaderboard board)
-	{
-		if (board == null)
-		{
-			AGSClient.LogGameCircleError("GetLoading \"board\" argument should not be null");
-			return false;
-		}
-		return board.loading;
-	}
-
-	public void RequestScores(AGSSocialLeaderboard leaderboard, Action<bool> callback)
-	{
-		leaderboardForRequest.Add(requestID, leaderboard);
-		simpleCallbacks.Add(requestID, callback);
-		AGSLeaderboardsClient.RequestScores(leaderboard.id, fromTimeScope(leaderboard.timeScope), requestID++);
-	}
-
-	public void RequestLocalUserScore(AGSSocialLeaderboard leaderboard)
-	{
-		leaderboardForRequest.Add(requestID, leaderboard);
-		AGSLeaderboardsClient.RequestScores(leaderboard.id, fromTimeScope(leaderboard.timeScope), requestID++);
-	}
-
-	public void RequestLocalPlayer(Action<bool> callback)
-	{
-		simpleCallbacks.Add(requestID, callback);
-		AGSPlayerClient.RequestLocalPlayer(requestID++);
-	}
-
-	public void RequestFriends(Action<bool> callback)
-	{
-		simpleCallbacks.Add(requestID, callback);
-		AGSPlayerClient.RequestFriendIds(requestID++);
-	}
-
-	private void OnServiceReady()
-	{
-		if (authenticationCallback != null)
-		{
-			authenticationCallback(true);
-		}
-	}
-
-	private void OnServiceNotReady(string error)
-	{
-		if (authenticationCallback != null)
-		{
-			authenticationCallback(false);
-		}
-	}
-
-	private void OnUpdateAchievementCompleted(AGSUpdateAchievementResponse response)
-	{
-		Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-		if (action != null)
-		{
-			action(!response.IsError());
-		}
-		simpleCallbacks.Remove(response.userData);
-	}
-
-	private void OnRequestAchievementsCompleted(AGSRequestAchievementsResponse response)
-	{
-		if (loadAchievementDescriptionsCallbacks.ContainsKey(response.userData))
-		{
-			Action<IAchievementDescription[]> action = ((!loadAchievementDescriptionsCallbacks.ContainsKey(response.userData)) ? null : loadAchievementDescriptionsCallbacks[response.userData]);
-			if (action != null)
-			{
-				AGSSocialAchievement[] array = new AGSSocialAchievement[response.achievements.Count];
-				for (int i = 0; i < response.achievements.Count; i++)
-				{
-					array[i] = new AGSSocialAchievement(response.achievements[i]);
-				}
-				action(array);
-			}
-		}
-		if (loadAchievementsCallbacks.ContainsKey(response.userData))
-		{
-			Action<IAchievement[]> action2 = ((!loadAchievementsCallbacks.ContainsKey(response.userData)) ? null : loadAchievementsCallbacks[response.userData]);
-			if (action2 != null)
-			{
-				AGSSocialAchievement[] array2 = new AGSSocialAchievement[response.achievements.Count];
-				for (int j = 0; j < response.achievements.Count; j++)
-				{
-					array2[j] = new AGSSocialAchievement(response.achievements[j]);
-				}
-				action2(array2);
-			}
-		}
-		loadAchievementDescriptionsCallbacks.Remove(response.userData);
-	}
-
-	private void OnSubmitScoreCompleted(AGSSubmitScoreResponse response)
-	{
-		Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-		if (action != null)
-		{
-			action(!response.IsError());
-		}
-		simpleCallbacks.Remove(response.userData);
-	}
-
-	private void OnRequestScoresCompleted(AGSRequestScoresResponse response)
-	{
-		AGSSocialLeaderboard aGSSocialLeaderboard = ((!leaderboardForRequest.ContainsKey(response.userData)) ? null : leaderboardForRequest[response.userData]);
-		if (aGSSocialLeaderboard != null && !response.IsError())
-		{
-			aGSSocialLeaderboard.scores = new IScore[response.scores.Count];
-			for (int i = 0; i < response.scores.Count; i++)
-			{
-				aGSSocialLeaderboard.scores[i] = new AGSSocialLeaderboardScore(response.scores[i], response.leaderboard);
-			}
-		}
-		Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-		if (action != null)
-		{
-			action(!response.IsError());
-		}
-		Action<IScore[]> action2 = ((!loadScoresCallbacks.ContainsKey(response.userData)) ? null : loadScoresCallbacks[response.userData]);
-		if (action2 != null)
-		{
-			IScore[] array = new IScore[response.scores.Count];
-			for (int j = 0; j < response.scores.Count; j++)
-			{
-				array[j] = new AGSSocialLeaderboardScore(response.scores[j], response.leaderboard);
-			}
-			action2(array);
-		}
-		leaderboardForRequest.Remove(response.userData);
-		simpleCallbacks.Remove(response.userData);
-	}
-
-	private void OnRequestLocalPlayerScoreCompleted(AGSRequestScoreResponse response)
-	{
-		AGSSocialLeaderboard aGSSocialLeaderboard = ((!leaderboardForRequest.ContainsKey(response.userData)) ? null : leaderboardForRequest[response.userData]);
-		if (aGSSocialLeaderboard != null)
-		{
-			aGSSocialLeaderboard.localPlayerScore = response.score;
-			aGSSocialLeaderboard.localPlayerRank = response.rank;
-		}
-		leaderboardForRequest.Remove(response.userData);
-	}
-
-	private void OnRequestPlayerCompleted(AGSRequestPlayerResponse response)
-	{
-		AGSSocialLocalUser.player = response.player;
-		Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-		if (action != null)
-		{
-			action(!response.IsError());
-		}
-		simpleCallbacks.Remove(response.userData);
-	}
-
-	private void OnRequestFriendIdsCompleted(AGSRequestFriendIdsResponse response)
-	{
-		if (response.IsError())
-		{
-			Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-			if (action != null)
-			{
-				action(false);
-			}
-			simpleCallbacks.Remove(response.userData);
-		}
-		else
-		{
-			AGSPlayerClient.RequestBatchFriends(response.friendIds, response.userData);
-		}
-	}
-
-	private void OnRequestBatchFriendsCompleted(AGSRequestBatchFriendsResponse response)
-	{
-		if (!response.IsError())
-		{
-			AGSSocialLocalUser.friendList = new List<AGSSocialUser>();
-			foreach (AGSPlayer friend in response.friends)
-			{
-				AGSSocialLocalUser.friendList.Add(new AGSSocialUser(friend));
-			}
-		}
-		Action<bool> action = ((!simpleCallbacks.ContainsKey(response.userData)) ? null : simpleCallbacks[response.userData]);
-		if (action != null)
-		{
-			action(!response.IsError());
-		}
-		simpleCallbacks.Remove(response.userData);
-	}
-
-	private LeaderboardScope fromTimeScope(TimeScope scope)
-	{
-		switch (scope)
-		{
-		case TimeScope.Today:
-			return LeaderboardScope.GlobalDay;
-		case TimeScope.Week:
-			return LeaderboardScope.GlobalWeek;
-		case TimeScope.AllTime:
-			return LeaderboardScope.GlobalAllTime;
-		default:
-			return LeaderboardScope.GlobalAllTime;
-		}
 	}
 }

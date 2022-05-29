@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class AdjustSpriteToLabel : MonoBehaviour
@@ -9,18 +10,22 @@ internal sealed class AdjustSpriteToLabel : MonoBehaviour
 
 	private UISprite _sprite;
 
+	public AdjustSpriteToLabel()
+	{
+	}
+
 	private void Start()
 	{
-		_sprite = GetComponent<UISprite>();
-		if (label == null)
+		this._sprite = base.GetComponent<UISprite>();
+		if (this.label == null)
 		{
-			label = base.transform.parent.GetComponent<UILabel>();
+			this.label = base.transform.parent.GetComponent<UILabel>();
 		}
-		if (_sprite == null)
+		if (this._sprite == null)
 		{
 			Debug.LogWarning("sprite == null");
 		}
-		if (label == null)
+		if (this.label == null)
 		{
 			Debug.LogWarning("label == null");
 		}
@@ -28,9 +33,14 @@ internal sealed class AdjustSpriteToLabel : MonoBehaviour
 
 	private void Update()
 	{
-		if (!(_sprite == null) && !(label == null))
+		if (this._sprite == null)
 		{
-			_sprite.transform.localPosition = new Vector3(padding + 0.5f * (float)label.width, 0f, 0f);
+			return;
 		}
+		if (this.label == null)
+		{
+			return;
+		}
+		this._sprite.transform.localPosition = new Vector3(this.padding + 0.5f * (float)this.label.width, 0f, 0f);
 	}
 }

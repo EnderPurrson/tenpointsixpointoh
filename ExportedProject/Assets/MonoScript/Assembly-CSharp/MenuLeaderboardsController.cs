@@ -1,9 +1,12 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Rilisoft;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
 
 internal sealed class MenuLeaderboardsController : MonoBehaviour
@@ -22,7 +25,7 @@ internal sealed class MenuLeaderboardsController : MonoBehaviour
 	{
 		get
 		{
-			return menuLeaderboardsView.opened.activeSelf;
+			return this.menuLeaderboardsView.opened.activeSelf;
 		}
 	}
 
@@ -30,264 +33,86 @@ internal sealed class MenuLeaderboardsController : MonoBehaviour
 	{
 		get
 		{
-			return _menuLeaderboardsView;
+			return this._menuLeaderboardsView;
 		}
 	}
 
-	public void RefreshWithCache()
+	static MenuLeaderboardsController()
 	{
-		if (PlayerPrefs.HasKey("MenuLeaderboardsFriendsCache"))
-		{
-			string @string = PlayerPrefs.GetString("MenuLeaderboardsFriendsCache");
-			FillListsWithResponseText(@string);
-		}
 	}
 
-	private IEnumerator Start()
+	public MenuLeaderboardsController()
 	{
-		sharedController = this;
-		using (new StopwatchLogger("MenuLeaderboardsController.Start()"))
-		{
-			_menuLeaderboardsView = GetComponent<MenuLeaderboardsView>();
-			_playerId = Storager.getString("AccountCreated", false);
-			if (PlayerPrefs.HasKey("MenuLeaderboardsFriendsCache"))
-			{
-				string responseText = PlayerPrefs.GetString("MenuLeaderboardsFriendsCache");
-				{
-					foreach (float item in FillListsWithResponseTextAsync(responseText))
-					{
-						float _ = item;
-						yield return null;
-					}
-					yield break;
-				}
-			}
-			TransitToFallbackState();
-		}
-	}
-
-	private void OnDestroy()
-	{
-		sharedController = null;
-	}
-
-	private void TransitToFallbackState()
-	{
-		LeaderboardItemViewModel leaderboardItemViewModel = new LeaderboardItemViewModel();
-		leaderboardItemViewModel.Id = _playerId;
-		leaderboardItemViewModel.Nickname = ProfileController.GetPlayerNameOrDefault();
-		leaderboardItemViewModel.WinCount = RatingSystem.instance.currentRating;
-		leaderboardItemViewModel.Place = 1;
-		leaderboardItemViewModel.Highlight = true;
-		LeaderboardItemViewModel item = leaderboardItemViewModel;
-		List<LeaderboardItemViewModel> list = new List<LeaderboardItemViewModel>(MenuLeaderboardsView.PageSize);
-		list.Add(item);
-		IList<LeaderboardItemViewModel> list2 = list;
-		for (int i = 0; i < MenuLeaderboardsView.PageSize - 1; i++)
-		{
-			list2.Add(LeaderboardItemViewModel.Empty);
-		}
-		_menuLeaderboardsView.FriendsList = list2;
 	}
 
 	private void FillListsWithResponseText(string responseText)
 	{
-		foreach (float item in FillListsWithResponseTextAsync(responseText))
+		IEnumerator<float> enumerator = this.FillListsWithResponseTextAsync(responseText).GetEnumerator();
+		try
 		{
-			float num = item;
+			while (enumerator.MoveNext())
+			{
+				float current = (float)enumerator.Current;
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
 		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerable<float> FillListsWithResponseTextAsync(string responseText)
 	{
-		Dictionary<string, object> response = Json.Deserialize(responseText) as Dictionary<string, object>;
-		if (response == null)
-		{
-			Debug.LogWarning("Leaderboards response is ill-formed.");
-			yield break;
-		}
-		if (!response.Any())
-		{
-			Debug.LogWarning("Leaderboards response contains no elements.");
-			yield break;
-		}
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log("Menu Leaderboards response:    " + responseText);
-		}
-		LeaderboardItemViewModel selfStats = new LeaderboardItemViewModel
-		{
-			Id = _playerId,
-			Nickname = ProfileController.GetPlayerNameOrDefault(),
-			WinCount = RatingSystem.instance.currentRating,
-			Highlight = true
-		};
-		if (_003CFillListsWithResponseTextAsync_003Ec__Iterator165._003C_003Ef__am_0024cache1A == null)
-		{
-			_003CFillListsWithResponseTextAsync_003Ec__Iterator165._003C_003Ef__am_0024cache1A = _003CFillListsWithResponseTextAsync_003Ec__Iterator165._003C_003Em__364;
-		}
-		Func<IList<LeaderboardItemViewModel>, IList<LeaderboardItemViewModel>> groupAndOrder = _003CFillListsWithResponseTextAsync_003Ec__Iterator165._003C_003Ef__am_0024cache1A;
-		if (string.IsNullOrEmpty(_playerId))
-		{
-			Debug.LogWarning("Player id should not be empty.");
-			yield break;
-		}
-		List<LeaderboardItemViewModel> rawFriendsList = LeaderboardsController.ParseLeaderboardEntries(_playerId, "friends", response);
-		rawFriendsList.Add(selfStats);
-		IList<LeaderboardItemViewModel> orderedFriendsList = groupAndOrder(rawFriendsList);
-		for (int k = orderedFriendsList.Count; k < MenuLeaderboardsView.PageSize; k++)
-		{
-			orderedFriendsList.Add(LeaderboardItemViewModel.Empty);
-		}
-		yield return 0.2f;
-		List<LeaderboardItemViewModel> rawBestPlayersList = LeaderboardsController.ParseLeaderboardEntries(_playerId, "best_players", response);
-		IList<LeaderboardItemViewModel> orderedBestPlayersList = groupAndOrder(rawBestPlayersList);
-		for (int j = orderedBestPlayersList.Count; j < MenuLeaderboardsView.PageSize; j++)
-		{
-			orderedBestPlayersList.Add(LeaderboardItemViewModel.Empty);
-		}
-		yield return 0.4f;
-		List<LeaderboardItemViewModel> rawClansList = LeaderboardsController.ParseLeaderboardEntries(FriendsController.sharedController.ClanID, "top_clans", response);
-		IList<LeaderboardItemViewModel> orderedClansList = groupAndOrder(rawClansList);
-		for (int i = orderedClansList.Count; i < MenuLeaderboardsView.PageSize; i++)
-		{
-			orderedClansList.Add(LeaderboardItemViewModel.Empty);
-		}
-		yield return 0.6f;
-		if (_menuLeaderboardsView != null)
-		{
-			LeaderboardItemViewModel selfInTop = orderedBestPlayersList.FirstOrDefault(((_003CFillListsWithResponseTextAsync_003Ec__Iterator165)(object)this)._003C_003Em__365);
-			bool weAreInTop = selfInTop != null;
-			if (Application.isEditor)
-			{
-				Debug.Log("We are in top: " + weAreInTop);
-			}
-			_menuLeaderboardsView.FriendsList = orderedFriendsList;
-			_menuLeaderboardsView.BestPlayersList = orderedBestPlayersList;
-			_menuLeaderboardsView.ClansList = orderedClansList;
-			_menuLeaderboardsView.SelfStats = ((!weAreInTop) ? FulfillSelfStats(selfStats, response) : LeaderboardItemViewModel.Empty);
-			object myClanObject;
-			if (response.TryGetValue("my_clan", out myClanObject))
-			{
-				Dictionary<string, object> myClanDictionary = myClanObject as Dictionary<string, object>;
-				if (Application.isEditor)
-				{
-					Debug.Log("My Clan: " + Json.Serialize(myClanObject));
-				}
-				if (myClanDictionary == null)
-				{
-					Debug.Log("myClanDictionary == null    Result type: " + myClanObject.GetType());
-				}
-				else
-				{
-					LeaderboardItemViewModel selfClanStats;
-					if (myClanDictionary.ContainsKey("place"))
-					{
-						selfClanStats = LeaderboardItemViewModel.Empty;
-					}
-					else
-					{
-						selfClanStats = new LeaderboardItemViewModel
-						{
-							Id = (FriendsController.sharedController.ClanID ?? string.Empty),
-							Nickname = (FriendsController.sharedController.clanName ?? string.Empty),
-							WinCount = int.MinValue,
-							Place = int.MinValue,
-							Highlight = true
-						};
-						object clanNameObject;
-						if (myClanDictionary.TryGetValue("name", out clanNameObject))
-						{
-							selfClanStats.Nickname = Convert.ToString(clanNameObject);
-						}
-						object clanPlace;
-						if (myClanDictionary.TryGetValue("place", out clanPlace))
-						{
-							selfClanStats.Place = Convert.ToInt32(clanPlace);
-						}
-						object clanWinCount;
-						if (myClanDictionary.TryGetValue("wins", out clanWinCount))
-						{
-							selfClanStats.WinCount = Convert.ToInt32(clanWinCount);
-						}
-					}
-					_menuLeaderboardsView.SelfClanStats = selfClanStats;
-				}
-			}
-			else
-			{
-				_menuLeaderboardsView.SelfClanStats = LeaderboardItemViewModel.Empty;
-			}
-		}
-		else
-		{
-			Debug.LogError("_menuLeaderboardsView == null");
-		}
-		yield return 1f;
+		MenuLeaderboardsController.u003cFillListsWithResponseTextAsyncu003ec__Iterator165 variable = null;
+		return variable;
 	}
 
 	private static LeaderboardItemViewModel FulfillSelfStats(LeaderboardItemViewModel selfStats, Dictionary<string, object> response)
 	{
-		LeaderboardItemViewModel leaderboardItemViewModel = new LeaderboardItemViewModel();
-		leaderboardItemViewModel.Id = selfStats.Id;
-		leaderboardItemViewModel.Nickname = selfStats.Nickname;
-		leaderboardItemViewModel.WinCount = selfStats.WinCount;
-		leaderboardItemViewModel.Place = int.MinValue;
-		leaderboardItemViewModel.Highlight = true;
-		LeaderboardItemViewModel leaderboardItemViewModel2 = leaderboardItemViewModel;
-		object value;
-		if (response.TryGetValue("me", out value))
+		object obj;
+		LeaderboardItemViewModel leaderboardItemViewModel = new LeaderboardItemViewModel()
 		{
-			Dictionary<string, object> dictionary = value as Dictionary<string, object>;
-			if (dictionary != null)
+			Id = selfStats.Id,
+			Nickname = selfStats.Nickname,
+			WinCount = selfStats.WinCount,
+			Place = -2147483648,
+			Highlight = true
+		};
+		LeaderboardItemViewModel num = leaderboardItemViewModel;
+		if (response.TryGetValue("me", out obj))
+		{
+			Dictionary<string, object> strs = obj as Dictionary<string, object>;
+			if (strs != null)
 			{
 				try
 				{
-					leaderboardItemViewModel2.WinCount = Convert.ToInt32(dictionary["wins"]);
-					return leaderboardItemViewModel2;
+					num.WinCount = Convert.ToInt32(strs["wins"]);
 				}
 				catch (Exception exception)
 				{
-					Debug.LogException(exception);
-					return leaderboardItemViewModel2;
+					UnityEngine.Debug.LogException(exception);
 				}
 			}
 		}
-		return leaderboardItemViewModel2;
+		return num;
 	}
 
+	[DebuggerHidden]
 	private IEnumerator GetLeaderboardsCoroutine(string playerId)
 	{
-		if (string.IsNullOrEmpty(playerId))
-		{
-			Debug.LogWarning("Player id should not be empty.");
-			yield break;
-		}
-		Debug.Log("MenuLeaderboardsController.GetLeaderboardsCoroutine(" + playerId + ")");
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_menu_leaderboards");
-		form.AddField("app_version", string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion));
-		form.AddField("id", playerId);
-		form.AddField("uniq_id", FriendsController.sharedController.id);
-		form.AddField("auth", FriendsController.Hash("get_menu_leaderboards"));
-		if (FriendsController.sharedController != null)
-		{
-			FriendsController.sharedController.NumberOfBestPlayersRequests++;
-		}
-		WWW request = Tools.CreateWwwIfNotConnected(FriendsController.actionAddress, form, string.Empty);
-		yield return request;
-		if (FriendsController.sharedController != null)
-		{
-			FriendsController.sharedController.NumberOfBestPlayersRequests--;
-		}
-		HandleRequestCompleted(request);
+		MenuLeaderboardsController.u003cGetLeaderboardsCoroutineu003ec__Iterator166 variable = null;
+		return variable;
 	}
 
 	private void HandleRequestCompleted(WWW request)
 	{
 		if (Application.isEditor)
 		{
-			Debug.Log("HandleRequestCompleted()");
+			UnityEngine.Debug.Log("HandleRequestCompleted()");
 		}
 		if (request == null)
 		{
@@ -295,24 +120,65 @@ internal sealed class MenuLeaderboardsController : MonoBehaviour
 		}
 		if (!string.IsNullOrEmpty(request.error))
 		{
-			Debug.LogWarning(request.error);
+			UnityEngine.Debug.LogWarning(request.error);
 			return;
 		}
-		string text = URLs.Sanitize(request);
-		if (string.IsNullOrEmpty(text))
+		string str = URLs.Sanitize(request);
+		if (string.IsNullOrEmpty(str))
 		{
-			Debug.LogWarning("Leaderboars response is empty.");
+			UnityEngine.Debug.LogWarning("Leaderboars response is empty.");
 			return;
 		}
-		PlayerPrefs.SetString("MenuLeaderboardsFriendsCache", text);
-		FillListsWithResponseText(text);
+		PlayerPrefs.SetString("MenuLeaderboardsFriendsCache", str);
+		this.FillListsWithResponseText(str);
+	}
+
+	public void OnBtnLeaderboardsOffClick()
+	{
 	}
 
 	public void OnBtnLeaderboardsOnClick()
 	{
 	}
 
-	public void OnBtnLeaderboardsOffClick()
+	private void OnDestroy()
 	{
+		MenuLeaderboardsController.sharedController = null;
+	}
+
+	public void RefreshWithCache()
+	{
+		if (PlayerPrefs.HasKey("MenuLeaderboardsFriendsCache"))
+		{
+			this.FillListsWithResponseText(PlayerPrefs.GetString("MenuLeaderboardsFriendsCache"));
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		MenuLeaderboardsController.u003cStartu003ec__Iterator164 variable = null;
+		return variable;
+	}
+
+	private void TransitToFallbackState()
+	{
+		LeaderboardItemViewModel leaderboardItemViewModel = new LeaderboardItemViewModel()
+		{
+			Id = this._playerId,
+			Nickname = ProfileController.GetPlayerNameOrDefault(),
+			WinCount = RatingSystem.instance.currentRating,
+			Place = 1,
+			Highlight = true
+		};
+		IList<LeaderboardItemViewModel> leaderboardItemViewModels = new List<LeaderboardItemViewModel>(MenuLeaderboardsView.PageSize)
+		{
+			leaderboardItemViewModel
+		};
+		for (int i = 0; i < MenuLeaderboardsView.PageSize - 1; i++)
+		{
+			leaderboardItemViewModels.Add(LeaderboardItemViewModel.Empty);
+		}
+		this._menuLeaderboardsView.FriendsList = leaderboardItemViewModels;
 	}
 }

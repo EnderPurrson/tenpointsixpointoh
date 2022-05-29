@@ -1,3 +1,6 @@
+using Facebook.Unity;
+using System;
+
 namespace Facebook.Unity.Editor
 {
 	internal class EditorFacebookLoader : FB.CompiledFacebookLoader
@@ -6,10 +9,14 @@ namespace Facebook.Unity.Editor
 		{
 			get
 			{
-				EditorFacebookGameObject component = ComponentFactory.GetComponent<EditorFacebookGameObject>();
+				EditorFacebookGameObject component = ComponentFactory.GetComponent<EditorFacebookGameObject>(ComponentFactory.IfNotExist.AddNew);
 				component.Facebook = new EditorFacebook();
 				return component;
 			}
+		}
+
+		public EditorFacebookLoader()
+		{
 		}
 	}
 }

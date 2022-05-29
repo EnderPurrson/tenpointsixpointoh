@@ -1,59 +1,60 @@
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
 
 public interface IPunCallbacks
 {
+	void OnConnectedToMaster();
+
 	void OnConnectedToPhoton();
-
-	void OnLeftRoom();
-
-	void OnMasterClientSwitched(PhotonPlayer newMasterClient);
-
-	void OnPhotonCreateRoomFailed(object[] codeAndMsg);
-
-	void OnPhotonJoinRoomFailed(object[] codeAndMsg);
-
-	void OnCreatedRoom();
-
-	void OnJoinedLobby();
-
-	void OnLeftLobby();
-
-	void OnFailedToConnectToPhoton(DisconnectCause cause);
 
 	void OnConnectionFail(DisconnectCause cause);
 
-	void OnDisconnectedFromPhoton();
-
-	void OnPhotonInstantiate(PhotonMessageInfo info);
-
-	void OnReceivedRoomListUpdate();
-
-	void OnJoinedRoom();
-
-	void OnPhotonPlayerConnected(PhotonPlayer newPlayer);
-
-	void OnPhotonPlayerDisconnected(PhotonPlayer otherPlayer);
-
-	void OnPhotonRandomJoinFailed(object[] codeAndMsg);
-
-	void OnConnectedToMaster();
-
-	void OnPhotonMaxCccuReached();
-
-	void OnPhotonCustomRoomPropertiesChanged(Hashtable propertiesThatChanged);
-
-	void OnPhotonPlayerPropertiesChanged(object[] playerAndUpdatedProps);
-
-	void OnUpdatedFriendList();
+	void OnCreatedRoom();
 
 	void OnCustomAuthenticationFailed(string debugMessage);
 
 	void OnCustomAuthenticationResponse(Dictionary<string, object> data);
 
-	void OnWebRpcResponse(OperationResponse response);
+	void OnDisconnectedFromPhoton();
+
+	void OnFailedToConnectToPhoton(DisconnectCause cause);
+
+	void OnJoinedLobby();
+
+	void OnJoinedRoom();
+
+	void OnLeftLobby();
+
+	void OnLeftRoom();
+
+	void OnLobbyStatisticsUpdate();
+
+	void OnMasterClientSwitched(PhotonPlayer newMasterClient);
 
 	void OnOwnershipRequest(object[] viewAndPlayer);
 
-	void OnLobbyStatisticsUpdate();
+	void OnPhotonCreateRoomFailed(object[] codeAndMsg);
+
+	void OnPhotonCustomRoomPropertiesChanged(Hashtable propertiesThatChanged);
+
+	void OnPhotonInstantiate(PhotonMessageInfo info);
+
+	void OnPhotonJoinRoomFailed(object[] codeAndMsg);
+
+	void OnPhotonMaxCccuReached();
+
+	void OnPhotonPlayerConnected(PhotonPlayer newPlayer);
+
+	void OnPhotonPlayerDisconnected(PhotonPlayer otherPlayer);
+
+	void OnPhotonPlayerPropertiesChanged(object[] playerAndUpdatedProps);
+
+	void OnPhotonRandomJoinFailed(object[] codeAndMsg);
+
+	void OnReceivedRoomListUpdate();
+
+	void OnUpdatedFriendList();
+
+	void OnWebRpcResponse(OperationResponse response);
 }

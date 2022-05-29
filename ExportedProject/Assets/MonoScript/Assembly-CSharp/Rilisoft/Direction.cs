@@ -1,8 +1,10 @@
+using System;
+
 namespace Rilisoft
 {
 	public enum Direction
 	{
-		Vertical = 0,
-		Horizontal = 1
+		Vertical,
+		Horizontal
 	}
 }

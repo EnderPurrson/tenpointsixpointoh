@@ -1,30 +1,21 @@
+using I2.Loc;
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public sealed class ExpController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F
-	{
-		internal string constTg;
-
-		internal bool _003C_003Em__28B(KeyValuePair<string, string> kvp)
-		{
-			return kvp.Key.Equals(constTg);
-		}
-	}
-
 	public const int MaxLobbyLevel = 3;
 
 	public ExpView experienceView;
 
 	private bool starterBannerShowed;
 
-	public static readonly int[] LevelsForTiers = new int[6] { 1, 7, 12, 17, 22, 27 };
+	public readonly static int[] LevelsForTiers;
 
 	private static ExpController _instance;
 
@@ -32,11 +23,28 @@ public sealed class ExpController : MonoBehaviour
 
 	private bool _inAddingState;
 
-	public static ExpController Instance
+	private int Experience
 	{
-		get
+		set
 		{
-			return _instance;
+			if (this.experienceView == null)
+			{
+				return;
+			}
+			if (ExperienceController.sharedController == null)
+			{
+				return;
+			}
+			int maxExpLevels = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
+			int num = Mathf.Clamp(value, 0, maxExpLevels);
+			this.experienceView.ExperienceLabel = ExpController.FormatExperienceLabel(num, maxExpLevels);
+			float single = (float)num / (float)maxExpLevels;
+			if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
+			{
+				single = 1f;
+			}
+			this.experienceView.CurrentProgress = single;
+			this.experienceView.OldProgress = single;
 		}
 	}
 
@@ -44,7 +52,15 @@ public sealed class ExpController : MonoBehaviour
 	{
 		get
 		{
-			return _inAddingState;
+			return this._inAddingState;
+		}
+	}
+
+	public static ExpController Instance
+	{
+		get
+		{
+			return ExpController._instance;
 		}
 	}
 
@@ -52,12 +68,18 @@ public sealed class ExpController : MonoBehaviour
 	{
 		get
 		{
-			return experienceView != null && experienceView.interfaceHolder != null && experienceView.interfaceHolder.gameObject.activeInHierarchy;
+			return (!(this.experienceView != null) || !(this.experienceView.interfaceHolder != null) ? false : this.experienceView.interfaceHolder.gameObject.activeInHierarchy);
 		}
 		set
 		{
-			SetInterfaceEnabled(value);
+			this.SetInterfaceEnabled(value);
 		}
+	}
+
+	public bool IsLevelUpShown
+	{
+		get;
+		private set;
 	}
 
 	public static int LobbyLevel
@@ -68,446 +90,156 @@ public sealed class ExpController : MonoBehaviour
 		}
 	}
 
-	public bool IsLevelUpShown { get; private set; }
+	public int OurTier
+	{
+		get
+		{
+			if (ExperienceController.sharedController == null)
+			{
+				return 0;
+			}
+			return ExpController.TierForLevel(ExperienceController.sharedController.currentLevel);
+		}
+	}
 
 	public int Rank
 	{
 		set
 		{
-			if (!(experienceView == null))
+			if (this.experienceView == null)
 			{
-				int rankSprite = Mathf.Clamp(value, 1, ExperienceController.maxLevel);
-				experienceView.RankSprite = rankSprite;
-			}
-		}
-	}
-
-	public bool WaitingForLevelUpView { get; private set; }
-
-	public int OurTier
-	{
-		get
-		{
-			if (ExperienceController.sharedController != null)
-			{
-				int currentLevel = ExperienceController.sharedController.currentLevel;
-				return TierForLevel(currentLevel);
-			}
-			return 0;
-		}
-	}
-
-	private int Experience
-	{
-		set
-		{
-			if (!(experienceView == null) && !(ExperienceController.sharedController == null))
-			{
-				int num = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
-				int num2 = Mathf.Clamp(value, 0, num);
-				experienceView.ExperienceLabel = FormatExperienceLabel(num2, num);
-				float num3 = (float)num2 / (float)num;
-				if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
-				{
-					num3 = 1f;
-				}
-				experienceView.CurrentProgress = num3;
-				experienceView.OldProgress = num3;
-			}
-		}
-	}
-
-	public static event Action LevelUpShown;
-
-	public static int OurTierForAnyPlace()
-	{
-		return (!(Instance != null)) ? GetOurTier() : Instance.OurTier;
-	}
-
-	private void SetInterfaceEnabled(bool value)
-	{
-		if (value && experienceView != null)
-		{
-			bool flag = Application.loadedLevelName != Defs.MainMenuScene || ShopNGUIController.GuiActive || (MainMenuController.sharedController != null && MainMenuController.sharedController.singleModePanel != null && MainMenuController.sharedController.singleModePanel.activeInHierarchy) || (ProfileController.Instance != null && ProfileController.Instance.InterfaceEnabled);
-			if (experienceView.rankIndicatorContainer.activeSelf != flag)
-			{
-				experienceView.rankIndicatorContainer.SetActive(flag);
-			}
-		}
-		if (InterfaceEnabled == value || !(experienceView != null) || !(experienceView.interfaceHolder != null))
-		{
-			return;
-		}
-		if (!value)
-		{
-			experienceView.StopAnimation();
-		}
-		if (ExperienceController.sharedController != null)
-		{
-			Rank = ExperienceController.sharedController.currentLevel;
-			Experience = ExperienceController.sharedController.CurrentExperience;
-		}
-		experienceView.interfaceHolder.gameObject.SetActive(value);
-		if (value && experienceView.experienceCamera != null)
-		{
-			AudioListener component = experienceView.experienceCamera.GetComponent<AudioListener>();
-			if (component != null)
-			{
-				component.enabled = false;
-			}
-		}
-	}
-
-	public void HandleContinueButton(GameObject tierPanel)
-	{
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? Defs.filterMaps[Application.loadedLevelName] : 0);
-		}
-		if (!starterBannerShowed && ExperienceController.sharedController.currentLevel == 2 && Defs.abTestBalansCohort == Defs.ABTestCohortsType.B)
-		{
-			starterBannerShowed = true;
-			experienceView.ToBonus(Defs.abTestBalansStartCapitalGems, Defs.abTestBalansStartCapitalCoins);
-		}
-		else
-		{
-			starterBannerShowed = false;
-			HideTierPanel(tierPanel);
-		}
-	}
-
-	public void HandleShopButtonFromTierPanel(GameObject tierPanel)
-	{
-		StartCoroutine(HandleShopButtonFromTierPanelCoroutine(tierPanel));
-	}
-
-	public void HandleNewAvailableItem(GameObject tierPanel, NewAvailableItemInShop itemInfo)
-	{
-		if (Defs.isHunger)
-		{
-			return;
-		}
-		if (CurrentFilterMap() != 0)
-		{
-			int[] target = new int[0];
-			bool flag = true;
-			if (itemInfo != null && itemInfo._tag != null)
-			{
-				flag = ItemDb.GetByTag(itemInfo._tag) != null;
-				if (flag)
-				{
-					target = ItemDb.GetItemFilterMap(itemInfo._tag);
-				}
-			}
-			if (flag && !target.Contains(CurrentFilterMap()))
-			{
-				HandleShopButtonFromTierPanel(tierPanel);
 				return;
 			}
-		}
-		if (ShopNGUIController.sharedShop == null)
-		{
-			Debug.LogWarning("ShopNGUIController.sharedShop == null");
-		}
-		else
-		{
-			if (!(itemInfo == null))
-			{
-				string text = itemInfo._tag ?? string.Empty;
-				Debug.Log("Available item:   " + text + "    " + itemInfo.category);
-				StartCoroutine(HandleShopButtonFromNewAvailableItemCoroutine(tierPanel, text, itemInfo.category));
-				return;
-			}
-			Debug.LogWarning("itemInfo == null");
-		}
-		StartCoroutine(HandleShopButtonFromTierPanelCoroutine(tierPanel));
-	}
-
-	public static int CurrentFilterMap()
-	{
-		return Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? Defs.filterMaps[Application.loadedLevelName] : 0;
-	}
-
-	private IEnumerator HandleShopButtonFromTierPanelCoroutine(GameObject tierPanel)
-	{
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(CurrentFilterMap());
-		}
-		yield return null;
-		ShopNGUIController.sharedShop.resumeAction = null;
-		ShopNGUIController.GuiActive = true;
-		yield return null;
-		HideTierPanel(tierPanel);
-	}
-
-	private IEnumerator HandleShopButtonFromNewAvailableItemCoroutine(GameObject tierPanel, string itemTag, ShopNGUIController.CategoryNames category)
-	{
-		if (ShopNGUIController.IsWeaponCategory(category))
-		{
-			itemTag = WeaponManager.FirstUnboughtOrForOurTier(itemTag) ?? itemTag;
-		}
-		ShopNGUIController.sharedShop.SetOfferID(itemTag);
-		ShopNGUIController.sharedShop.offerCategory = category;
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? Defs.filterMaps[Application.loadedLevelName] : 0);
-		}
-		yield return null;
-		ShopNGUIController.sharedShop.resumeAction = null;
-		ShopNGUIController.GuiActive = true;
-		yield return null;
-		HideTierPanel(tierPanel);
-	}
-
-	public void UpdateLabels()
-	{
-		if (ExperienceController.sharedController != null)
-		{
-			Rank = ExperienceController.sharedController.currentLevel;
-			Experience = ExperienceController.sharedController.CurrentExperience;
+			int num = Mathf.Clamp(value, 1, ExperienceController.maxLevel);
+			this.experienceView.RankSprite = num;
 		}
 	}
 
-	public void Refresh()
+	public bool WaitingForLevelUpView
 	{
-		if (ExperienceController.sharedController != null)
-		{
-			Rank = ExperienceController.sharedController.currentLevel;
-			Experience = ExperienceController.sharedController.CurrentExperience;
-		}
+		get;
+		private set;
 	}
 
-	public static int TierForLevel(int lev)
+	static ExpController()
 	{
-		if (lev < LevelsForTiers[1])
-		{
-			return 0;
-		}
-		if (lev < LevelsForTiers[2])
-		{
-			return 1;
-		}
-		if (lev < LevelsForTiers[3])
-		{
-			return 2;
-		}
-		if (lev < LevelsForTiers[4])
-		{
-			return 3;
-		}
-		if (lev < LevelsForTiers[5])
-		{
-			return 4;
-		}
-		return 5;
+		ExpController.LevelsForTiers = new int[] { 1, 7, 12, 17, 22, 27 };
 	}
 
-	public static int GetOurTier()
+	public ExpController()
 	{
-		int currentLevelWithUpdateCorrection = ExperienceController.GetCurrentLevelWithUpdateCorrection();
-		return TierForLevel(currentLevelWithUpdateCorrection);
 	}
 
 	public void AddExperience(int oldLevel, int oldExperience, int addend, AudioClip exp2, AudioClip levelup, AudioClip tierup = null)
 	{
-		if (experienceView == null || ExperienceController.sharedController == null)
+		if (this.experienceView == null)
+		{
+			return;
+		}
+		if (ExperienceController.sharedController == null)
 		{
 			return;
 		}
 		int num = oldExperience + addend;
-		int num2 = ExperienceController.MaxExpLevels[oldLevel];
-		if (num < num2)
+		int maxExpLevels = ExperienceController.MaxExpLevels[oldLevel];
+		if (num >= maxExpLevels)
 		{
-			float percentage = GetPercentage(num);
-			experienceView.CurrentProgress = percentage;
-			experienceView.StartBlinkingWithNewProgress();
-			experienceView.WaitAndUpdateOldProgress(exp2);
-			experienceView.ExperienceLabel = FormatExperienceLabel(num, num2);
-			if (experienceView.currentProgress != null && !experienceView.currentProgress.gameObject.activeInHierarchy)
+			float single = 1f;
+			this.experienceView.CurrentProgress = single;
+			AudioClip audioClip = levelup;
+			if (tierup != null && Array.IndexOf<int>(ExpController.LevelsForTiers, oldLevel + 1) > 0)
 			{
-				experienceView.OldProgress = percentage;
+				audioClip = tierup;
+			}
+			if (oldLevel < ExperienceController.maxLevel - 1)
+			{
+				this.experienceView.StartBlinkingWithNewProgress();
+				int num1 = oldLevel + 1;
+				int num2 = num - maxExpLevels;
+				base.StartCoroutine(this.WaitAndUpdateExperience(num1, num2, ExperienceController.MaxExpLevels[num1], true, audioClip));
+			}
+			else if (oldLevel != ExperienceController.maxLevel - 1)
+			{
+				if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
+				{
+					single = 1f;
+				}
+				this.experienceView.OldProgress = single;
+				this.experienceView.StartBlinkingWithNewProgress();
+				int num3 = ExperienceController.maxLevel;
+				int maxExpLevels1 = ExperienceController.MaxExpLevels[num3];
+				base.StartCoroutine(this.WaitAndUpdateExperience(num3, maxExpLevels1, ExperienceController.MaxExpLevels[num3], false, exp2));
+			}
+			else
+			{
+				this.experienceView.StartBlinkingWithNewProgress();
+				int num4 = oldLevel + 1;
+				int maxExpLevels2 = ExperienceController.MaxExpLevels[num4];
+				base.StartCoroutine(this.WaitAndUpdateExperience(num4, maxExpLevels2, ExperienceController.MaxExpLevels[num4], true, audioClip));
 			}
 		}
 		else
 		{
-			float num3 = 1f;
-			experienceView.CurrentProgress = num3;
-			AudioClip sound = levelup;
-			if (tierup != null && Array.IndexOf(LevelsForTiers, oldLevel + 1) > 0)
+			float percentage = ExpController.GetPercentage(num);
+			this.experienceView.CurrentProgress = percentage;
+			this.experienceView.StartBlinkingWithNewProgress();
+			this.experienceView.WaitAndUpdateOldProgress(exp2);
+			this.experienceView.ExperienceLabel = ExpController.FormatExperienceLabel(num, maxExpLevels);
+			if (this.experienceView.currentProgress != null && !this.experienceView.currentProgress.gameObject.activeInHierarchy)
 			{
-				sound = tierup;
-			}
-			if (oldLevel < ExperienceController.maxLevel - 1)
-			{
-				experienceView.StartBlinkingWithNewProgress();
-				int num4 = oldLevel + 1;
-				int newExperience = num - num2;
-				StartCoroutine(WaitAndUpdateExperience(num4, newExperience, ExperienceController.MaxExpLevels[num4], true, sound));
-			}
-			else if (oldLevel == ExperienceController.maxLevel - 1)
-			{
-				experienceView.StartBlinkingWithNewProgress();
-				int num5 = oldLevel + 1;
-				int newExperience2 = ExperienceController.MaxExpLevels[num5];
-				StartCoroutine(WaitAndUpdateExperience(num5, newExperience2, ExperienceController.MaxExpLevels[num5], true, sound));
-			}
-			else
-			{
-				if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
-				{
-					num3 = 1f;
-				}
-				experienceView.OldProgress = num3;
-				experienceView.StartBlinkingWithNewProgress();
-				int maxLevel = ExperienceController.maxLevel;
-				int newExperience3 = ExperienceController.MaxExpLevels[maxLevel];
-				StartCoroutine(WaitAndUpdateExperience(maxLevel, newExperience3, ExperienceController.MaxExpLevels[maxLevel], false, exp2));
+				this.experienceView.OldProgress = percentage;
 			}
 		}
-		StartCoroutine(SetAddingState());
+		base.StartCoroutine(this.SetAddingState());
 	}
 
-	public bool IsRenderedWithCamera(Camera c)
+	private void Awake()
 	{
-		return experienceView != null && experienceView.experienceCamera != null && experienceView.experienceCamera == c;
+		if (!SceneLoader.ActiveSceneName.EndsWith("Workbench"))
+		{
+			this.InterfaceEnabled = false;
+		}
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.UpdateLabels));
+		Singleton<SceneLoader>.Instance.OnSceneLoading += new Action<SceneLoadInfo>((SceneLoadInfo sli) => {
+			if (this.experienceView != null)
+			{
+				LevelUpWithOffers currentVisiblePanel = this.experienceView.CurrentVisiblePanel;
+				if (currentVisiblePanel != null)
+				{
+					ExpController.HideTierPanel(currentVisiblePanel.gameObject);
+				}
+			}
+			this.IsLevelUpShown = false;
+		});
 	}
 
-	private string SubstituteTempGunIfReplaced(string constTg)
+	public static int CurrentFilterMap()
 	{
-		_003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F _003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F = new _003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F();
-		_003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F.constTg = constTg;
-		if (_003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F.constTg == null)
-		{
-			return null;
-		}
-		KeyValuePair<string, string> keyValuePair = WeaponManager.replaceConstWithTemp.Find(_003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F._003C_003Em__28B);
-		if (keyValuePair.Key == null || keyValuePair.Value == null)
-		{
-			return _003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F.constTg;
-		}
-		if (!TempItemsController.GunsMappingFromTempToConst.ContainsKey(keyValuePair.Value))
-		{
-			return keyValuePair.Value;
-		}
-		return _003CSubstituteTempGunIfReplaced_003Ec__AnonStorey29F.constTg;
+		return (!Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? 0 : Defs.filterMaps[Application.loadedLevelName]);
 	}
 
-	private IEnumerator WaitAndUpdateExperience(int newRank, int newExperience, int newBound, bool showLevelUpPanel, AudioClip sound)
+	public static string ExpToString()
 	{
-		experienceView.RankSprite = newRank;
-		experienceView.ExperienceLabel = FormatExperienceLabel(newExperience, newBound);
-		WaitingForLevelUpView = showLevelUpPanel;
-		yield return new WaitForSeconds(1.2f);
-		Experience = newExperience;
-		if (showLevelUpPanel && ExperienceController.sharedController != null)
-		{
-			List<string> itemsToShow = new List<string>();
-			int i = Array.BinarySearch(LevelsForTiers, ExperienceController.sharedController.currentLevel);
-			if (0 <= i && i < LevelsForTiers.Length)
-			{
-				switch (i)
-				{
-				case 1:
-					itemsToShow = new List<string>
-					{
-						"Armor_Steel_1",
-						SubstituteTempGunIfReplaced(WeaponTags.Antihero_Rifle_1_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.frank_sheepone_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.PORTABLE_DEATH_MOON_Tag)
-					};
-					break;
-				case 2:
-					itemsToShow = new List<string>
-					{
-						"Armor_Royal_1",
-						SubstituteTempGunIfReplaced(WeaponTags.DragonGun_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.charge_rifle_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.loud_piggy_Tag)
-					};
-					break;
-				case 3:
-					itemsToShow = new List<string>
-					{
-						"Armor_Almaz_1",
-						SubstituteTempGunIfReplaced(WeaponTags.Dark_Matter_Generator_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.autoaim_bazooka_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.Photon_Pistol_Tag)
-					};
-					break;
-				case 4:
-					itemsToShow = new List<string>
-					{
-						SubstituteTempGunIfReplaced(WeaponTags.RailRevolverBuy_3_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.RayMinigun_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.Autoaim_RocketlauncherBuy_3_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.Impulse_Sniper_RifleBuy_3_Tag)
-					};
-					break;
-				case 5:
-					itemsToShow = new List<string>
-					{
-						SubstituteTempGunIfReplaced(WeaponTags.PX_3000_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.StormHammer_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.Sunrise_Tag),
-						SubstituteTempGunIfReplaced(WeaponTags.Bastion_Tag)
-					};
-					break;
-				}
-				experienceView.LevelUpPanelOptions.ShowTierView = true;
-			}
-			else
-			{
-				experienceView.LevelUpPanelOptions.ShowTierView = false;
-			}
-			experienceView.LevelUpPanelOptions.ShareButtonEnabled = true;
-			int oldRank = Math.Max(0, newRank - 1);
-			int coinsReward = ExperienceController.addCoinsFromLevels[oldRank];
-			int gemsReward = ExperienceController.addGemsFromLevels[oldRank];
-			if (NetworkStartTableNGUIController.sharedController != null)
-			{
-				_sameSceneIndicator = true;
-				while (NetworkStartTableNGUIController.sharedController != null && NetworkStartTableNGUIController.sharedController.isRewardShow)
-				{
-					yield return null;
-				}
-				if (!_sameSceneIndicator || NetworkStartTableNGUIController.sharedController == null)
-				{
-					WaitingForLevelUpView = false;
-					yield break;
-				}
-			}
-			else if (Application.loadedLevelName == "LevelComplete")
-			{
-				_sameSceneIndicator = true;
-				while (_sameSceneIndicator && LevelCompleteScript.IsInterfaceBusy)
-				{
-					yield return null;
-				}
-				if (!_sameSceneIndicator)
-				{
-					WaitingForLevelUpView = false;
-					yield break;
-				}
-			}
-			experienceView.LevelUpPanelOptions.NewItems = itemsToShow;
-			experienceView.LevelUpPanelOptions.CurrentRank = newRank;
-			experienceView.LevelUpPanelOptions.CoinsReward = coinsReward;
-			experienceView.LevelUpPanelOptions.GemsReward = gemsReward;
-			experienceView.ShowLevelUpPanel();
-		}
-		WaitingForLevelUpView = false;
-		if (Defs.isSoundFX)
-		{
-			NGUITools.PlaySound(sound);
-		}
+		int num = ExperienceController.sharedController.currentLevel;
+		int currentExperience = ExperienceController.sharedController.CurrentExperience;
+		return ExpController.FormatExperienceLabel(currentExperience, ExperienceController.MaxExpLevels[num]);
 	}
 
-	private IEnumerator SetAddingState()
+	private static string FormatExperienceLabel(int xp, int bound)
 	{
-		_inAddingState = true;
-		yield return new WaitForSeconds(1.2f);
-		_inAddingState = false;
+		string str = LocalizationStore.Get("Key_0928");
+		string str1 = string.Format("{0} {1}/{2}", LocalizationStore.Get("Key_0204"), xp, bound);
+		return (xp == bound || ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel ? str : str1);
+	}
+
+	private static string FormatLevelLabel(int level)
+	{
+		return string.Format("{0} {1}", LocalizationStore.Key_0226, level);
+	}
+
+	public static int GetOurTier()
+	{
+		return ExpController.TierForLevel(ExperienceController.GetCurrentLevelWithUpdateCorrection());
 	}
 
 	private static float GetPercentage(int experience)
@@ -516,96 +248,88 @@ public sealed class ExpController : MonoBehaviour
 		{
 			return 0f;
 		}
-		int num = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
-		int num2 = Mathf.Clamp(experience, 0, num);
-		return (float)num2 / (float)num;
+		int maxExpLevels = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
+		int num = Mathf.Clamp(experience, 0, maxExpLevels);
+		return (float)num / (float)maxExpLevels;
 	}
 
-	public static float progressExpInPer()
+	public void HandleContinueButton(GameObject tierPanel)
 	{
-		return GetPercentage(ExperienceController.sharedController.CurrentExperience);
-	}
-
-	private static string FormatExperienceLabel(int xp, int bound)
-	{
-		string text = LocalizationStore.Get("Key_0928");
-		string text2 = string.Format("{0} {1}/{2}", LocalizationStore.Get("Key_0204"), xp, bound);
-		return (xp != bound && ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel) ? text2 : text;
-	}
-
-	public static string ExpToString()
-	{
-		int currentLevel = ExperienceController.sharedController.currentLevel;
-		int currentExperience = ExperienceController.sharedController.CurrentExperience;
-		return FormatExperienceLabel(currentExperience, ExperienceController.MaxExpLevels[currentLevel]);
-	}
-
-	private static string FormatLevelLabel(int level)
-	{
-		return string.Format("{0} {1}", LocalizationStore.Key_0226, level);
-	}
-
-	private void OnEnable()
-	{
-		if (ExperienceController.sharedController != null)
+		if (WeaponManager.sharedManager != null)
 		{
-			Rank = ExperienceController.sharedController.currentLevel;
-			Experience = ExperienceController.sharedController.CurrentExperience;
+			WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? 0 : Defs.filterMaps[Application.loadedLevelName]));
+		}
+		if (this.starterBannerShowed || ExperienceController.sharedController.currentLevel != 2 || Defs.abTestBalansCohort != Defs.ABTestCohortsType.B)
+		{
+			this.starterBannerShowed = false;
+			ExpController.HideTierPanel(tierPanel);
+		}
+		else
+		{
+			this.starterBannerShowed = true;
+			this.experienceView.ToBonus(Defs.abTestBalansStartCapitalGems, Defs.abTestBalansStartCapitalCoins);
 		}
 	}
 
-	private void Awake()
+	public void HandleNewAvailableItem(GameObject tierPanel, NewAvailableItemInShop itemInfo)
 	{
-		if (!SceneLoader.ActiveSceneName.EndsWith("Workbench"))
-		{
-			InterfaceEnabled = false;
-		}
-		LocalizationStore.AddEventCallAfterLocalize(UpdateLabels);
-		SceneLoader instance = Singleton<SceneLoader>.Instance;
-		instance.OnSceneLoading = (Action<SceneLoadInfo>)Delegate.Combine(instance.OnSceneLoading, new Action<SceneLoadInfo>(_003CAwake_003Em__28C));
-	}
-
-	private void Start()
-	{
-		if (_instance != null)
-		{
-			Debug.LogWarning("ExpController is not null while starting.");
-		}
-		_instance = this;
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(UpdateLabels);
-		_instance = null;
-	}
-
-	private void Update()
-	{
-		if (ExperienceController.sharedController != null)
-		{
-			SetInterfaceEnabled(ExperienceController.sharedController.isShowRanks);
-		}
-	}
-
-	public static void ShowTierPanel(GameObject tierPanel)
-	{
-		if (!(tierPanel != null))
+		if (Defs.isHunger)
 		{
 			return;
 		}
-		tierPanel.SetActive(true);
-		if (Instance != null)
+		if (ExpController.CurrentFilterMap() != 0)
 		{
-			Instance.IsLevelUpShown = true;
-			Action levelUpShown = ExpController.LevelUpShown;
-			if (levelUpShown != null)
+			int[] itemFilterMap = new int[0];
+			bool byTag = true;
+			if (itemInfo != null && itemInfo._tag != null)
 			{
-				levelUpShown();
+				byTag = ItemDb.GetByTag(itemInfo._tag) != null;
+				if (byTag)
+				{
+					itemFilterMap = ItemDb.GetItemFilterMap(itemInfo._tag);
+				}
+			}
+			if (byTag && !itemFilterMap.Contains(ExpController.CurrentFilterMap()))
+			{
+				this.HandleShopButtonFromTierPanel(tierPanel);
+				return;
 			}
 		}
-		MainMenuController.SetInputEnabled(false);
-		LevelCompleteScript.SetInputEnabled(false);
+		if (ShopNGUIController.sharedShop != null)
+		{
+			if (itemInfo != null)
+			{
+				string str = itemInfo._tag ?? string.Empty;
+				UnityEngine.Debug.Log(string.Concat(new object[] { "Available item:   ", str, "    ", itemInfo.category }));
+				base.StartCoroutine(this.HandleShopButtonFromNewAvailableItemCoroutine(tierPanel, str, itemInfo.category));
+				return;
+			}
+			UnityEngine.Debug.LogWarning("itemInfo == null");
+		}
+		else
+		{
+			UnityEngine.Debug.LogWarning("ShopNGUIController.sharedShop == null");
+		}
+		base.StartCoroutine(this.HandleShopButtonFromTierPanelCoroutine(tierPanel));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator HandleShopButtonFromNewAvailableItemCoroutine(GameObject tierPanel, string itemTag, ShopNGUIController.CategoryNames category)
+	{
+		ExpController.u003cHandleShopButtonFromNewAvailableItemCoroutineu003ec__Iterator134 variable = null;
+		return variable;
+	}
+
+	public void HandleShopButtonFromTierPanel(GameObject tierPanel)
+	{
+		base.StartCoroutine(this.HandleShopButtonFromTierPanelCoroutine(tierPanel));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator HandleShopButtonFromTierPanelCoroutine(GameObject tierPanel)
+	{
+		ExpController.u003cHandleShopButtonFromTierPanelCoroutineu003ec__Iterator133 variable = null;
+		return variable;
 	}
 
 	public static void HideTierPanel(GameObject tierPanel)
@@ -613,31 +337,206 @@ public sealed class ExpController : MonoBehaviour
 		if (tierPanel != null)
 		{
 			tierPanel.SetActive(false);
-			if (Instance != null)
+			if (ExpController.Instance != null)
 			{
-				Instance.IsLevelUpShown = false;
+				ExpController.Instance.IsLevelUpShown = false;
 			}
 			MainMenuController.SetInputEnabled(true);
 			LevelCompleteScript.SetInputEnabled(true);
 		}
 	}
 
-	private void OnLevelWasLoaded(int index)
+	public bool IsRenderedWithCamera(Camera c)
 	{
-		_sameSceneIndicator = false;
+		return (!(this.experienceView != null) || !(this.experienceView.experienceCamera != null) ? false : this.experienceView.experienceCamera == c);
 	}
 
-	[CompilerGenerated]
-	private void _003CAwake_003Em__28C(SceneLoadInfo sli)
+	private void OnDestroy()
 	{
-		if (experienceView != null)
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.UpdateLabels));
+		ExpController._instance = null;
+	}
+
+	private void OnEnable()
+	{
+		if (ExperienceController.sharedController != null)
 		{
-			LevelUpWithOffers currentVisiblePanel = experienceView.CurrentVisiblePanel;
-			if (currentVisiblePanel != null)
+			this.Rank = ExperienceController.sharedController.currentLevel;
+			this.Experience = ExperienceController.sharedController.CurrentExperience;
+		}
+	}
+
+	private void OnLevelWasLoaded(int index)
+	{
+		this._sameSceneIndicator = false;
+	}
+
+	public static int OurTierForAnyPlace()
+	{
+		return (ExpController.Instance == null ? ExpController.GetOurTier() : ExpController.Instance.OurTier);
+	}
+
+	public static float progressExpInPer()
+	{
+		return ExpController.GetPercentage(ExperienceController.sharedController.CurrentExperience);
+	}
+
+	public void Refresh()
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			this.Rank = ExperienceController.sharedController.currentLevel;
+			this.Experience = ExperienceController.sharedController.CurrentExperience;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetAddingState()
+	{
+		ExpController.u003cSetAddingStateu003ec__Iterator136 variable = null;
+		return variable;
+	}
+
+	private void SetInterfaceEnabled(bool value)
+	{
+		bool flag;
+		if (value && this.experienceView != null)
+		{
+			if (Application.loadedLevelName != Defs.MainMenuScene || ShopNGUIController.GuiActive || MainMenuController.sharedController != null && MainMenuController.sharedController.singleModePanel != null && MainMenuController.sharedController.singleModePanel.activeInHierarchy)
 			{
-				HideTierPanel(currentVisiblePanel.gameObject);
+				flag = true;
+			}
+			else
+			{
+				flag = (ProfileController.Instance == null ? false : ProfileController.Instance.InterfaceEnabled);
+			}
+			bool flag1 = flag;
+			if (this.experienceView.rankIndicatorContainer.activeSelf != flag1)
+			{
+				this.experienceView.rankIndicatorContainer.SetActive(flag1);
 			}
 		}
-		IsLevelUpShown = false;
+		if (this.InterfaceEnabled == value)
+		{
+			return;
+		}
+		if (this.experienceView != null && this.experienceView.interfaceHolder != null)
+		{
+			if (!value)
+			{
+				this.experienceView.StopAnimation();
+			}
+			if (ExperienceController.sharedController != null)
+			{
+				this.Rank = ExperienceController.sharedController.currentLevel;
+				this.Experience = ExperienceController.sharedController.CurrentExperience;
+			}
+			this.experienceView.interfaceHolder.gameObject.SetActive(value);
+			if (value && this.experienceView.experienceCamera != null)
+			{
+				AudioListener component = this.experienceView.experienceCamera.GetComponent<AudioListener>();
+				if (component != null)
+				{
+					component.enabled = false;
+				}
+			}
+		}
 	}
+
+	public static void ShowTierPanel(GameObject tierPanel)
+	{
+		if (tierPanel != null)
+		{
+			tierPanel.SetActive(true);
+			if (ExpController.Instance != null)
+			{
+				ExpController.Instance.IsLevelUpShown = true;
+				Action action = ExpController.LevelUpShown;
+				if (action != null)
+				{
+					action();
+				}
+			}
+			MainMenuController.SetInputEnabled(false);
+			LevelCompleteScript.SetInputEnabled(false);
+		}
+	}
+
+	private void Start()
+	{
+		if (ExpController._instance != null)
+		{
+			UnityEngine.Debug.LogWarning("ExpController is not null while starting.");
+		}
+		ExpController._instance = this;
+	}
+
+	private string SubstituteTempGunIfReplaced(string constTg)
+	{
+		if (constTg == null)
+		{
+			return null;
+		}
+		KeyValuePair<string, string> keyValuePair = WeaponManager.replaceConstWithTemp.Find((KeyValuePair<string, string> kvp) => kvp.Key.Equals(constTg));
+		if (keyValuePair.Key == null || keyValuePair.Value == null)
+		{
+			return constTg;
+		}
+		if (!TempItemsController.GunsMappingFromTempToConst.ContainsKey(keyValuePair.Value))
+		{
+			return keyValuePair.Value;
+		}
+		return constTg;
+	}
+
+	public static int TierForLevel(int lev)
+	{
+		if (lev < ExpController.LevelsForTiers[1])
+		{
+			return 0;
+		}
+		if (lev < ExpController.LevelsForTiers[2])
+		{
+			return 1;
+		}
+		if (lev < ExpController.LevelsForTiers[3])
+		{
+			return 2;
+		}
+		if (lev < ExpController.LevelsForTiers[4])
+		{
+			return 3;
+		}
+		if (lev < ExpController.LevelsForTiers[5])
+		{
+			return 4;
+		}
+		return 5;
+	}
+
+	private void Update()
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			this.SetInterfaceEnabled(ExperienceController.sharedController.isShowRanks);
+		}
+	}
+
+	public void UpdateLabels()
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			this.Rank = ExperienceController.sharedController.currentLevel;
+			this.Experience = ExperienceController.sharedController.CurrentExperience;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitAndUpdateExperience(int newRank, int newExperience, int newBound, bool showLevelUpPanel, AudioClip sound)
+	{
+		ExpController.u003cWaitAndUpdateExperienceu003ec__Iterator135 variable = null;
+		return variable;
+	}
+
+	public static event Action LevelUpShown;
 }

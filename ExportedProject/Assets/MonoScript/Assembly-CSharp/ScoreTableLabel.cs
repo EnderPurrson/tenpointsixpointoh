@@ -1,20 +1,25 @@
+using System;
 using UnityEngine;
 
 public class ScoreTableLabel : MonoBehaviour
 {
+	public ScoreTableLabel()
+	{
+	}
+
 	private void Start()
 	{
 		if (Defs.isCOOP)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Get("Key_0190");
+			base.GetComponent<UILabel>().text = LocalizationStore.Get("Key_0190");
 		}
-		else if (Defs.isFlag)
+		else if (!Defs.isFlag)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Get("Key_1006");
+			base.GetComponent<UILabel>().text = LocalizationStore.Get("Key_0191");
 		}
 		else
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Get("Key_0191");
+			base.GetComponent<UILabel>().text = LocalizationStore.Get("Key_1006");
 		}
 	}
 

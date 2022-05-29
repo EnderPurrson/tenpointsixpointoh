@@ -1,20 +1,22 @@
-using System.Reflection;
 using Rilisoft;
+using System;
+using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class LoadConnectScene : MonoBehaviour
 {
-	public static string sceneToLoad = string.Empty;
+	public static string sceneToLoad;
 
-	public static Texture textureToShow = null;
+	public static Texture textureToShow;
 
-	public static Texture noteToShow = null;
+	public static Texture noteToShow;
 
-	public static float interval = _defaultInterval;
+	public static float interval;
 
 	public Texture loadingNote;
 
-	private static readonly float _defaultInterval = 1f;
+	private readonly static float _defaultInterval;
 
 	private Texture loading;
 
@@ -22,30 +24,63 @@ public sealed class LoadConnectScene : MonoBehaviour
 
 	public static LoadConnectScene Instance;
 
+	static LoadConnectScene()
+	{
+		LoadConnectScene.sceneToLoad = string.Empty;
+		LoadConnectScene.textureToShow = null;
+		LoadConnectScene.noteToShow = null;
+		LoadConnectScene.interval = LoadConnectScene._defaultInterval;
+		LoadConnectScene._defaultInterval = 1f;
+	}
+
+	public LoadConnectScene()
+	{
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void _loadConnectScene()
+	{
+		if (!LoadConnectScene.sceneToLoad.Equals("ConnectScene"))
+		{
+			Singleton<SceneLoader>.Instance.LoadSceneAsync(LoadConnectScene.sceneToLoad, LoadSceneMode.Single);
+		}
+		else
+		{
+			Singleton<SceneLoader>.Instance.LoadScene(LoadConnectScene.sceneToLoad, LoadSceneMode.Single);
+		}
+	}
+
 	private void Awake()
 	{
-		loading = textureToShow;
-		if (loading == null)
+		this.loading = LoadConnectScene.textureToShow;
+		if (this.loading == null)
 		{
-			string path = ConnectSceneNGUIController.MainLoadingTexture();
-			loading = Resources.Load<Texture>(path);
+			this.loading = Resources.Load<Texture>(ConnectSceneNGUIController.MainLoadingTexture());
 		}
-		_loadingNGUIController = Object.Instantiate(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
-		_loadingNGUIController.SceneToLoad = sceneToLoad;
-		_loadingNGUIController.loadingNGUITexture.mainTexture = loading;
-		_loadingNGUIController.Init();
+		this._loadingNGUIController = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
+		this._loadingNGUIController.SceneToLoad = LoadConnectScene.sceneToLoad;
+		this._loadingNGUIController.loadingNGUITexture.mainTexture = this.loading;
+		this._loadingNGUIController.Init();
 		NotificationController.instance.SaveTimeValues();
 	}
 
-	private void Start()
+	public static void LoadScene()
 	{
-		Instance = this;
-		if (interval != -1f)
+		if (LoadConnectScene.Instance == null)
 		{
-			Invoke("_loadConnectScene", interval);
+			return;
 		}
-		interval = _defaultInterval;
-		ActivityIndicator.IsActiveIndicator = true;
+		LoadConnectScene.Instance._loadConnectScene();
+	}
+
+	private void OnDestroy()
+	{
+		LoadConnectScene.Instance = null;
+		if (!LoadConnectScene.sceneToLoad.Equals("ConnectScene"))
+		{
+			ActivityIndicator.IsActiveIndicator = false;
+		}
+		LoadConnectScene.textureToShow = null;
 	}
 
 	private void OnGUI()
@@ -53,34 +88,14 @@ public sealed class LoadConnectScene : MonoBehaviour
 		ActivityIndicator.IsActiveIndicator = true;
 	}
 
-	[Obfuscation(Exclude = true)]
-	private void _loadConnectScene()
+	private void Start()
 	{
-		if (sceneToLoad.Equals("ConnectScene"))
+		LoadConnectScene.Instance = this;
+		if (LoadConnectScene.interval != -1f)
 		{
-			Singleton<SceneLoader>.Instance.LoadScene(sceneToLoad);
+			base.Invoke("_loadConnectScene", LoadConnectScene.interval);
 		}
-		else
-		{
-			Singleton<SceneLoader>.Instance.LoadSceneAsync(sceneToLoad);
-		}
-	}
-
-	public static void LoadScene()
-	{
-		if (!(Instance == null))
-		{
-			Instance._loadConnectScene();
-		}
-	}
-
-	private void OnDestroy()
-	{
-		Instance = null;
-		if (!sceneToLoad.Equals("ConnectScene"))
-		{
-			ActivityIndicator.IsActiveIndicator = false;
-		}
-		textureToShow = null;
+		LoadConnectScene.interval = LoadConnectScene._defaultInterval;
+		ActivityIndicator.IsActiveIndicator = true;
 	}
 }

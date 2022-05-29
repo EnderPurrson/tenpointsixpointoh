@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Toggled Components")]
-[RequireComponent(typeof(UIToggle))]
 [ExecuteInEditMode]
+[RequireComponent(typeof(UIToggle))]
 public class UIToggledComponents : MonoBehaviour
 {
 	public List<MonoBehaviour> activate;
@@ -14,47 +15,47 @@ public class UIToggledComponents : MonoBehaviour
 	[SerializeField]
 	private MonoBehaviour target;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool inverse;
+
+	public UIToggledComponents()
+	{
+	}
 
 	private void Awake()
 	{
-		if (target != null)
+		if (this.target != null)
 		{
-			if (activate.Count == 0 && deactivate.Count == 0)
+			if (this.activate.Count != 0 || this.deactivate.Count != 0)
 			{
-				if (inverse)
-				{
-					deactivate.Add(target);
-				}
-				else
-				{
-					activate.Add(target);
-				}
+				this.target = null;
+			}
+			else if (!this.inverse)
+			{
+				this.activate.Add(this.target);
 			}
 			else
 			{
-				target = null;
+				this.deactivate.Add(this.target);
 			}
 		}
-		UIToggle component = GetComponent<UIToggle>();
-		EventDelegate.Add(component.onChange, Toggle);
+		UIToggle component = base.GetComponent<UIToggle>();
+		EventDelegate.Add(component.onChange, new EventDelegate.Callback(this.Toggle));
 	}
 
 	public void Toggle()
 	{
 		if (base.enabled)
 		{
-			for (int i = 0; i < activate.Count; i++)
+			for (int i = 0; i < this.activate.Count; i++)
 			{
-				MonoBehaviour monoBehaviour = activate[i];
-				monoBehaviour.enabled = UIToggle.current.value;
+				this.activate[i].enabled = UIToggle.current.@value;
 			}
-			for (int j = 0; j < deactivate.Count; j++)
+			for (int j = 0; j < this.deactivate.Count; j++)
 			{
-				MonoBehaviour monoBehaviour2 = deactivate[j];
-				monoBehaviour2.enabled = !UIToggle.current.value;
+				MonoBehaviour item = this.deactivate[j];
+				item.enabled = !UIToggle.current.@value;
 			}
 		}
 	}

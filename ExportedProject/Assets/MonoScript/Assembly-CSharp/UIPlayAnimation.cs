@@ -1,9 +1,10 @@
-using System.Collections.Generic;
 using AnimationOrTween;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Play Animation")]
+[ExecuteInEditMode]
 public class UIPlayAnimation : MonoBehaviour
 {
 	public static UIPlayAnimation current;
@@ -28,8 +29,8 @@ public class UIPlayAnimation : MonoBehaviour
 
 	public List<EventDelegate> onFinished = new List<EventDelegate>();
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private GameObject eventReceiver;
 
 	[HideInInspector]
@@ -46,222 +47,266 @@ public class UIPlayAnimation : MonoBehaviour
 	{
 		get
 		{
-			return trigger == Trigger.OnPress || trigger == Trigger.OnHover;
+			return (this.trigger == Trigger.OnPress ? true : this.trigger == Trigger.OnHover);
 		}
+	}
+
+	static UIPlayAnimation()
+	{
+	}
+
+	public UIPlayAnimation()
+	{
 	}
 
 	private void Awake()
 	{
-		UIButton component = GetComponent<UIButton>();
+		UIButton component = base.GetComponent<UIButton>();
 		if (component != null)
 		{
-			dragHighlight = component.dragHighlight;
+			this.dragHighlight = component.dragHighlight;
 		}
-		if (eventReceiver != null && EventDelegate.IsValid(onFinished))
+		if (this.eventReceiver != null && EventDelegate.IsValid(this.onFinished))
 		{
-			eventReceiver = null;
-			callWhenFinished = null;
-		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
-		if (target == null && animator == null)
-		{
-			animator = GetComponentInChildren<Animator>();
-		}
-		if (animator != null)
-		{
-			if (animator.enabled)
-			{
-				animator.enabled = false;
-			}
-			return;
-		}
-		if (target == null)
-		{
-			target = GetComponentInChildren<Animation>();
-		}
-		if (target != null && target.enabled)
-		{
-			target.enabled = false;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
-		if (UICamera.currentTouch != null)
-		{
-			if (trigger == Trigger.OnPress || trigger == Trigger.OnPressTrue)
-			{
-				mActivated = UICamera.currentTouch.pressed == base.gameObject;
-			}
-			if (trigger == Trigger.OnHover || trigger == Trigger.OnHoverTrue)
-			{
-				mActivated = UICamera.currentTouch.current == base.gameObject;
-			}
-		}
-		UIToggle component = GetComponent<UIToggle>();
-		if (component != null)
-		{
-			EventDelegate.Add(component.onChange, OnToggle);
-		}
-	}
-
-	private void OnDisable()
-	{
-		UIToggle component = GetComponent<UIToggle>();
-		if (component != null)
-		{
-			EventDelegate.Remove(component.onChange, OnToggle);
-		}
-	}
-
-	private void OnHover(bool isOver)
-	{
-		if (base.enabled && (trigger == Trigger.OnHover || (trigger == Trigger.OnHoverTrue && isOver) || (trigger == Trigger.OnHoverFalse && !isOver)))
-		{
-			Play(isOver, dualState);
-		}
-	}
-
-	private void OnPress(bool isPressed)
-	{
-		if (base.enabled && UICamera.currentTouchID != -2 && UICamera.currentTouchID != -3 && (trigger == Trigger.OnPress || (trigger == Trigger.OnPressTrue && isPressed) || (trigger == Trigger.OnPressFalse && !isPressed)))
-		{
-			Play(isPressed, dualState);
+			this.eventReceiver = null;
+			this.callWhenFinished = null;
 		}
 	}
 
 	private void OnClick()
 	{
-		if (UICamera.currentTouchID != -2 && UICamera.currentTouchID != -3 && base.enabled && trigger == Trigger.OnClick)
+		if (UICamera.currentTouchID == -2 || UICamera.currentTouchID == -3)
 		{
-			Play(true, false);
+			return;
+		}
+		if (base.enabled && this.trigger == Trigger.OnClick)
+		{
+			this.Play(true, false);
+		}
+	}
+
+	private void OnDisable()
+	{
+		UIToggle component = base.GetComponent<UIToggle>();
+		if (component != null)
+		{
+			EventDelegate.Remove(component.onChange, new EventDelegate.Callback(this.OnToggle));
 		}
 	}
 
 	private void OnDoubleClick()
 	{
-		if (UICamera.currentTouchID != -2 && UICamera.currentTouchID != -3 && base.enabled && trigger == Trigger.OnDoubleClick)
+		if (UICamera.currentTouchID == -2 || UICamera.currentTouchID == -3)
 		{
-			Play(true, false);
+			return;
 		}
-	}
-
-	private void OnSelect(bool isSelected)
-	{
-		if (base.enabled && (trigger == Trigger.OnSelect || (trigger == Trigger.OnSelectTrue && isSelected) || (trigger == Trigger.OnSelectFalse && !isSelected)))
+		if (base.enabled && this.trigger == Trigger.OnDoubleClick)
 		{
-			Play(isSelected, dualState);
-		}
-	}
-
-	private void OnToggle()
-	{
-		if (base.enabled && !(UIToggle.current == null) && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && UIToggle.current.value) || (trigger == Trigger.OnActivateFalse && !UIToggle.current.value)))
-		{
-			Play(UIToggle.current.value, dualState);
-		}
-	}
-
-	private void OnDragOver()
-	{
-		if (base.enabled && dualState)
-		{
-			if (UICamera.currentTouch.dragged == base.gameObject)
-			{
-				Play(true, true);
-			}
-			else if (dragHighlight && trigger == Trigger.OnPress)
-			{
-				Play(true, true);
-			}
+			this.Play(true, false);
 		}
 	}
 
 	private void OnDragOut()
 	{
-		if (base.enabled && dualState && UICamera.hoveredObject != base.gameObject)
+		if (base.enabled && this.dualState && UICamera.hoveredObject != base.gameObject)
 		{
-			Play(false, true);
+			this.Play(false, true);
+		}
+	}
+
+	private void OnDragOver()
+	{
+		if (base.enabled && this.dualState)
+		{
+			if (UICamera.currentTouch.dragged == base.gameObject)
+			{
+				this.Play(true, true);
+			}
+			else if (this.dragHighlight && this.trigger == Trigger.OnPress)
+			{
+				this.Play(true, true);
+			}
 		}
 	}
 
 	private void OnDrop(GameObject go)
 	{
-		if (base.enabled && trigger == Trigger.OnPress && UICamera.currentTouch.dragged != base.gameObject)
+		if (base.enabled && this.trigger == Trigger.OnPress && UICamera.currentTouch.dragged != base.gameObject)
 		{
-			Play(false, true);
+			this.Play(false, true);
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this.mStarted)
+		{
+			this.OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+		if (UICamera.currentTouch != null)
+		{
+			if (this.trigger == Trigger.OnPress || this.trigger == Trigger.OnPressTrue)
+			{
+				this.mActivated = UICamera.currentTouch.pressed == base.gameObject;
+			}
+			if (this.trigger == Trigger.OnHover || this.trigger == Trigger.OnHoverTrue)
+			{
+				this.mActivated = UICamera.currentTouch.current == base.gameObject;
+			}
+		}
+		UIToggle component = base.GetComponent<UIToggle>();
+		if (component != null)
+		{
+			EventDelegate.Add(component.onChange, new EventDelegate.Callback(this.OnToggle));
+		}
+	}
+
+	private void OnFinished()
+	{
+		if (UIPlayAnimation.current == null)
+		{
+			UIPlayAnimation.current = this;
+			EventDelegate.Execute(this.onFinished);
+			if (this.eventReceiver != null && !string.IsNullOrEmpty(this.callWhenFinished))
+			{
+				this.eventReceiver.SendMessage(this.callWhenFinished, SendMessageOptions.DontRequireReceiver);
+			}
+			this.eventReceiver = null;
+			UIPlayAnimation.current = null;
+		}
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (!base.enabled)
+		{
+			return;
+		}
+		if (this.trigger == Trigger.OnHover || this.trigger == Trigger.OnHoverTrue && isOver || this.trigger == Trigger.OnHoverFalse && !isOver)
+		{
+			this.Play(isOver, this.dualState);
+		}
+	}
+
+	private void OnPress(bool isPressed)
+	{
+		if (!base.enabled)
+		{
+			return;
+		}
+		if (UICamera.currentTouchID == -2 || UICamera.currentTouchID == -3)
+		{
+			return;
+		}
+		if (this.trigger == Trigger.OnPress || this.trigger == Trigger.OnPressTrue && isPressed || this.trigger == Trigger.OnPressFalse && !isPressed)
+		{
+			this.Play(isPressed, this.dualState);
+		}
+	}
+
+	private void OnSelect(bool isSelected)
+	{
+		if (!base.enabled)
+		{
+			return;
+		}
+		if (this.trigger == Trigger.OnSelect || this.trigger == Trigger.OnSelectTrue && isSelected || this.trigger == Trigger.OnSelectFalse && !isSelected)
+		{
+			this.Play(isSelected, this.dualState);
+		}
+	}
+
+	private void OnToggle()
+	{
+		if (!base.enabled || UIToggle.current == null)
+		{
+			return;
+		}
+		if (this.trigger == Trigger.OnActivate || this.trigger == Trigger.OnActivateTrue && UIToggle.current.@value || this.trigger == Trigger.OnActivateFalse && !UIToggle.current.@value)
+		{
+			this.Play(UIToggle.current.@value, this.dualState);
 		}
 	}
 
 	public void Play(bool forward)
 	{
-		Play(forward, true);
+		this.Play(forward, true);
 	}
 
 	public void Play(bool forward, bool onlyIfDifferent)
 	{
-		if (!target && !animator)
+		Direction direction;
+		if (this.target || this.animator)
 		{
-			return;
-		}
-		if (onlyIfDifferent)
-		{
-			if (mActivated == forward)
+			if (onlyIfDifferent)
 			{
-				return;
+				if (this.mActivated == forward)
+				{
+					return;
+				}
+				this.mActivated = forward;
 			}
-			mActivated = forward;
-		}
-		if (clearSelection && UICamera.selectedObject == base.gameObject)
-		{
-			UICamera.selectedObject = null;
-		}
-		int num = 0 - playDirection;
-		Direction direction = ((!forward) ? ((Direction)num) : playDirection);
-		ActiveAnimation activeAnimation = ((!target) ? ActiveAnimation.Play(animator, clipName, direction, ifDisabledOnPlay, disableWhenFinished) : ActiveAnimation.Play(target, clipName, direction, ifDisabledOnPlay, disableWhenFinished));
-		if (activeAnimation != null)
-		{
-			if (resetOnPlay)
+			if (this.clearSelection && UICamera.selectedObject == base.gameObject)
 			{
-				activeAnimation.Reset();
+				UICamera.selectedObject = null;
 			}
-			for (int i = 0; i < onFinished.Count; i++)
+			int num = -(int)this.playDirection;
+			if (!forward)
 			{
-				EventDelegate.Add(activeAnimation.onFinished, OnFinished, true);
+				direction = (Direction)num;
+			}
+			else
+			{
+				direction = this.playDirection;
+			}
+			Direction direction1 = direction;
+			ActiveAnimation activeAnimation = (!this.target ? ActiveAnimation.Play(this.animator, this.clipName, direction1, this.ifDisabledOnPlay, this.disableWhenFinished) : ActiveAnimation.Play(this.target, this.clipName, direction1, this.ifDisabledOnPlay, this.disableWhenFinished));
+			if (activeAnimation != null)
+			{
+				if (this.resetOnPlay)
+				{
+					activeAnimation.Reset();
+				}
+				for (int i = 0; i < this.onFinished.Count; i++)
+				{
+					EventDelegate.Add(activeAnimation.onFinished, new EventDelegate.Callback(this.OnFinished), true);
+				}
 			}
 		}
 	}
 
 	public void PlayForward()
 	{
-		Play(true);
+		this.Play(true);
 	}
 
 	public void PlayReverse()
 	{
-		Play(false);
+		this.Play(false);
 	}
 
-	private void OnFinished()
+	private void Start()
 	{
-		if (current == null)
+		this.mStarted = true;
+		if (this.target == null && this.animator == null)
 		{
-			current = this;
-			EventDelegate.Execute(onFinished);
-			if (eventReceiver != null && !string.IsNullOrEmpty(callWhenFinished))
+			this.animator = base.GetComponentInChildren<Animator>();
+		}
+		if (this.animator != null)
+		{
+			if (this.animator.enabled)
 			{
-				eventReceiver.SendMessage(callWhenFinished, SendMessageOptions.DontRequireReceiver);
+				this.animator.enabled = false;
 			}
-			eventReceiver = null;
-			current = null;
+			return;
+		}
+		if (this.target == null)
+		{
+			this.target = base.GetComponentInChildren<Animation>();
+		}
+		if (this.target != null && this.target.enabled)
+		{
+			this.target.enabled = false;
 		}
 	}
 }

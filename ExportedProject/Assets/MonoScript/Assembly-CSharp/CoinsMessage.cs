@@ -1,10 +1,10 @@
 using Rilisoft;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class CoinsMessage : MonoBehaviour
 {
-	public delegate void CoinsLabelDisappearedDelegate(bool isGems, int count);
-
 	public GUIStyle labelStyle;
 
 	public Rect rect = Tools.SuccessMessageRect();
@@ -31,7 +31,9 @@ public sealed class CoinsMessage : MonoBehaviour
 
 	public Texture plashka;
 
-	public static event CoinsLabelDisappearedDelegate CoinsLabelDisappeared;
+	public CoinsMessage()
+	{
+	}
 
 	public static void FireCoinsAddedEvent(bool isGems = false, int count = 2)
 	{
@@ -41,24 +43,28 @@ public sealed class CoinsMessage : MonoBehaviour
 		}
 	}
 
+	private void Remove()
+	{
+		UnityEngine.Object.Destroy(base.gameObject);
+	}
+
 	private void Start()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
-		coinsToShow = Storager.getInt(Defs.EarnedCoins, false);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		this.coinsToShow = Storager.getInt(Defs.EarnedCoins, false);
 		Storager.setInt(Defs.EarnedCoins, 0, false);
-		if (coinsToShow > 1)
+		if (this.coinsToShow <= 1)
 		{
-			plashka = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", "got_prize"));
+			this.plashka = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", "got_coin"));
 		}
 		else
 		{
-			plashka = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", "got_coin"));
+			this.plashka = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", "got_prize"));
 		}
-		startTime = Time.realtimeSinceStartup;
+		this.startTime = (double)Time.realtimeSinceStartup;
 	}
 
-	private void Remove()
-	{
-		Object.Destroy(base.gameObject);
-	}
+	public static event CoinsMessage.CoinsLabelDisappearedDelegate CoinsLabelDisappeared;
+
+	public delegate void CoinsLabelDisappearedDelegate(bool isGems, int count);
 }

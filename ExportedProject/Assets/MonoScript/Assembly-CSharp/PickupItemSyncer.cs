@@ -1,6 +1,6 @@
+using Photon;
 using System;
 using System.Collections.Generic;
-using Photon;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -10,55 +10,82 @@ public class PickupItemSyncer : Photon.MonoBehaviour
 
 	public bool IsWaitingForPickupInit;
 
-	public void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
+	public PickupItemSyncer()
 	{
-		if (PhotonNetwork.isMasterClient)
+	}
+
+	public void AskForPickupItemSpawnTimes()
+	{
+		if (this.IsWaitingForPickupInit)
 		{
-			SendPickedUpItems(newPlayer);
+			if ((int)PhotonNetwork.playerList.Length < 2)
+			{
+				Debug.Log("Cant ask anyone else for PickupItem spawn times.");
+				this.IsWaitingForPickupInit = false;
+				return;
+			}
+			PhotonPlayer next = PhotonNetwork.masterClient.GetNext();
+			if (next == null || next.Equals(PhotonNetwork.player))
+			{
+				next = PhotonNetwork.player.GetNext();
+			}
+			if (next == null || next.Equals(PhotonNetwork.player))
+			{
+				Debug.Log("No player left to ask");
+				this.IsWaitingForPickupInit = false;
+			}
+			else
+			{
+				base.photonView.RPC("RequestForPickupItems", next, new object[0]);
+			}
 		}
 	}
 
 	public void OnJoinedRoom()
 	{
-		Debug.Log("Joined Room. isMasterClient: " + PhotonNetwork.isMasterClient + " id: " + PhotonNetwork.player.ID);
-		IsWaitingForPickupInit = !PhotonNetwork.isMasterClient;
-		if (PhotonNetwork.playerList.Length >= 2)
+		Debug.Log(string.Concat(new object[] { "Joined Room. isMasterClient: ", PhotonNetwork.isMasterClient, " id: ", PhotonNetwork.player.ID }));
+		this.IsWaitingForPickupInit = !PhotonNetwork.isMasterClient;
+		if ((int)PhotonNetwork.playerList.Length >= 2)
 		{
-			Invoke("AskForPickupItemSpawnTimes", 2f);
+			base.Invoke("AskForPickupItemSpawnTimes", 2f);
 		}
 	}
 
-	public void AskForPickupItemSpawnTimes()
+	public void OnPhotonPlayerConnected(PhotonPlayer newPlayer)
 	{
-		if (!IsWaitingForPickupInit)
+		if (PhotonNetwork.isMasterClient)
 		{
-			return;
+			this.SendPickedUpItems(newPlayer);
 		}
-		if (PhotonNetwork.playerList.Length < 2)
-		{
-			Debug.Log("Cant ask anyone else for PickupItem spawn times.");
-			IsWaitingForPickupInit = false;
-			return;
-		}
-		PhotonPlayer next = PhotonNetwork.masterClient.GetNext();
-		if (next == null || next.Equals(PhotonNetwork.player))
-		{
-			next = PhotonNetwork.player.GetNext();
-		}
-		if (next != null && !next.Equals(PhotonNetwork.player))
-		{
-			base.photonView.RPC("RequestForPickupItems", next);
-			return;
-		}
-		Debug.Log("No player left to ask");
-		IsWaitingForPickupInit = false;
 	}
 
-	[Obsolete("Use RequestForPickupItems(PhotonMessageInfo msgInfo) with corrected typing instead.")]
 	[PunRPC]
-	public void RequestForPickupTimes(PhotonMessageInfo msgInfo)
+	public void PickupItemInit(double timeBase, float[] inactivePickupsAndTimes)
 	{
-		RequestForPickupItems(msgInfo);
+		this.IsWaitingForPickupInit = false;
+		for (int i = 0; i < (int)inactivePickupsAndTimes.Length / 2; i++)
+		{
+			int num = i * 2;
+			int num1 = (int)inactivePickupsAndTimes[num];
+			float single = inactivePickupsAndTimes[num + 1];
+			PhotonView photonView = PhotonView.Find(num1);
+			PickupItem component = photonView.GetComponent<PickupItem>();
+			if (single > 0f)
+			{
+				double num2 = (double)single + timeBase;
+				Debug.Log(string.Concat(new object[] { photonView.viewID, " respawn: ", num2, " timeUntilRespawnBasedOnTimeBase:", single, " SecondsBeforeRespawn: ", component.SecondsBeforeRespawn }));
+				double num3 = num2 - PhotonNetwork.time;
+				if (single <= 0f)
+				{
+					num3 = 0;
+				}
+				component.PickedUp((float)num3);
+			}
+			else
+			{
+				component.PickedUp(0f);
+			}
+		}
 	}
 
 	[PunRPC]
@@ -67,11 +94,16 @@ public class PickupItemSyncer : Photon.MonoBehaviour
 		if (msgInfo.sender == null)
 		{
 			Debug.LogError("Unknown player asked for PickupItems");
+			return;
 		}
-		else
-		{
-			SendPickedUpItems(msgInfo.sender);
-		}
+		this.SendPickedUpItems(msgInfo.sender);
+	}
+
+	[Obsolete("Use RequestForPickupItems(PhotonMessageInfo msgInfo) with corrected typing instead.")]
+	[PunRPC]
+	public void RequestForPickupTimes(PhotonMessageInfo msgInfo)
+	{
+		this.RequestForPickupItems(msgInfo);
 	}
 
 	private void SendPickedUpItems(PhotonPlayer targetPlayer)
@@ -81,55 +113,31 @@ public class PickupItemSyncer : Photon.MonoBehaviour
 			Debug.LogWarning("Cant send PickupItem spawn times to unknown targetPlayer.");
 			return;
 		}
-		double time = PhotonNetwork.time;
-		double num = time + 0.20000000298023224;
-		PickupItem[] array = new PickupItem[PickupItem.DisabledPickupItems.Count];
-		PickupItem.DisabledPickupItems.CopyTo(array);
-		List<float> list = new List<float>(array.Length * 2);
-		foreach (PickupItem pickupItem in array)
+		double num = PhotonNetwork.time;
+		double num1 = num + 0.20000000298023224;
+		PickupItem[] pickupItemArray = new PickupItem[PickupItem.DisabledPickupItems.Count];
+		PickupItem.DisabledPickupItems.CopyTo(pickupItemArray);
+		List<float> singles = new List<float>((int)pickupItemArray.Length * 2);
+		for (int i = 0; i < (int)pickupItemArray.Length; i++)
 		{
-			if (pickupItem.SecondsBeforeRespawn <= 0f)
+			PickupItem pickupItem = pickupItemArray[i];
+			if (pickupItem.SecondsBeforeRespawn > 0f)
 			{
-				list.Add(pickupItem.ViewID);
-				list.Add(0f);
-				continue;
+				double timeOfRespawn = pickupItem.TimeOfRespawn - PhotonNetwork.time;
+				if (pickupItem.TimeOfRespawn > num1)
+				{
+					Debug.Log(string.Concat(new object[] { pickupItem.ViewID, " respawn: ", pickupItem.TimeOfRespawn, " timeUntilRespawn: ", timeOfRespawn, " (now: ", PhotonNetwork.time, ")" }));
+					singles.Add((float)pickupItem.ViewID);
+					singles.Add((float)timeOfRespawn);
+				}
 			}
-			double num2 = pickupItem.TimeOfRespawn - PhotonNetwork.time;
-			if (pickupItem.TimeOfRespawn > num)
+			else
 			{
-				Debug.Log(pickupItem.ViewID + " respawn: " + pickupItem.TimeOfRespawn + " timeUntilRespawn: " + num2 + " (now: " + PhotonNetwork.time + ")");
-				list.Add(pickupItem.ViewID);
-				list.Add((float)num2);
+				singles.Add((float)pickupItem.ViewID);
+				singles.Add(0f);
 			}
 		}
-		Debug.Log("Sent count: " + list.Count + " now: " + time);
-		base.photonView.RPC("PickupItemInit", targetPlayer, PhotonNetwork.time, list.ToArray());
-	}
-
-	[PunRPC]
-	public void PickupItemInit(double timeBase, float[] inactivePickupsAndTimes)
-	{
-		IsWaitingForPickupInit = false;
-		for (int i = 0; i < inactivePickupsAndTimes.Length / 2; i++)
-		{
-			int num = i * 2;
-			int viewID = (int)inactivePickupsAndTimes[num];
-			float num2 = inactivePickupsAndTimes[num + 1];
-			PhotonView photonView = PhotonView.Find(viewID);
-			PickupItem component = photonView.GetComponent<PickupItem>();
-			if (num2 <= 0f)
-			{
-				component.PickedUp(0f);
-				continue;
-			}
-			double num3 = (double)num2 + timeBase;
-			Debug.Log(photonView.viewID + " respawn: " + num3 + " timeUntilRespawnBasedOnTimeBase:" + num2 + " SecondsBeforeRespawn: " + component.SecondsBeforeRespawn);
-			double num4 = num3 - PhotonNetwork.time;
-			if (num2 <= 0f)
-			{
-				num4 = 0.0;
-			}
-			component.PickedUp((float)num4);
-		}
+		Debug.Log(string.Concat(new object[] { "Sent count: ", singles.Count, " now: ", num }));
+		base.photonView.RPC("PickupItemInit", targetPlayer, new object[] { PhotonNetwork.time, singles.ToArray() });
 	}
 }

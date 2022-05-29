@@ -1,25 +1,30 @@
+using System;
 using UnityEngine;
 
 public class NewPrivateChatMessage : MonoBehaviour
 {
 	private GameObject newMessageSprite;
 
-	private void Start()
+	public NewPrivateChatMessage()
 	{
-		newMessageSprite = base.gameObject.transform.GetChild(0).gameObject;
-		UpdateStateNewMessage();
 	}
 
-	private void UpdateStateNewMessage()
+	private void Start()
 	{
-		if (newMessageSprite.activeSelf != ChatController.countNewPrivateMessage > 0)
-		{
-			newMessageSprite.SetActive(ChatController.countNewPrivateMessage > 0);
-		}
+		this.newMessageSprite = base.gameObject.transform.GetChild(0).gameObject;
+		this.UpdateStateNewMessage();
 	}
 
 	private void Update()
 	{
-		UpdateStateNewMessage();
+		this.UpdateStateNewMessage();
+	}
+
+	private void UpdateStateNewMessage()
+	{
+		if (this.newMessageSprite.activeSelf != ChatController.countNewPrivateMessage > 0)
+		{
+			this.newMessageSprite.SetActive(ChatController.countNewPrivateMessage > 0);
+		}
 	}
 }

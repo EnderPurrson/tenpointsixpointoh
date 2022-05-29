@@ -1,6 +1,6 @@
+using Rilisoft;
 using System;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class MultipleToggleButton : MonoBehaviour
@@ -9,56 +9,70 @@ public class MultipleToggleButton : MonoBehaviour
 
 	private int _selectedIndex;
 
+	private EventHandler<MultipleToggleEventArgs> Clicked;
+
 	public int SelectedIndex
 	{
 		get
 		{
-			return _selectedIndex;
+			return this._selectedIndex;
 		}
 		set
 		{
-			if (buttons == null || value == -1)
+			if (this.buttons == null || value == -1)
 			{
 				return;
 			}
-			_selectedIndex = value;
-			for (int i = 0; i < buttons.Length; i++)
+			this._selectedIndex = value;
+			for (int i = 0; i < (int)this.buttons.Length; i++)
 			{
-				if (i != _selectedIndex)
+				if (i != this._selectedIndex)
 				{
-					buttons[i].IsChecked = false;
+					this.buttons[i].IsChecked = false;
 				}
 			}
 			EventHandler<MultipleToggleEventArgs> clicked = this.Clicked;
 			if (clicked != null)
 			{
-				clicked(this, new MultipleToggleEventArgs
+				clicked(this, new MultipleToggleEventArgs()
 				{
-					Num = _selectedIndex
+					Num = this._selectedIndex
 				});
 			}
 		}
 	}
 
-	public event EventHandler<MultipleToggleEventArgs> Clicked;
+	public MultipleToggleButton()
+	{
+	}
 
 	private void Start()
 	{
-		if (buttons != null)
+		if (this.buttons != null)
 		{
-			for (int i = 0; i < buttons.Length; i++)
+			for (int i = 0; i < (int)this.buttons.Length; i++)
 			{
-				buttons[i].Clicked += _003CStart_003Em__1CD;
+				this.buttons[i].Clicked += new EventHandler<ToggleButtonEventArgs>((object sender, ToggleButtonEventArgs e) => {
+					if (e.IsChecked)
+					{
+						this.SelectedIndex = Array.IndexOf<ToggleButton>(this.buttons, sender as ToggleButton);
+					}
+				});
 			}
 		}
 	}
 
-	[CompilerGenerated]
-	private void _003CStart_003Em__1CD(object sender, ToggleButtonEventArgs e)
+	public event EventHandler<MultipleToggleEventArgs> Clicked
 	{
-		if (e.IsChecked)
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
 		{
-			SelectedIndex = Array.IndexOf(buttons, sender as ToggleButton);
+			this.Clicked += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.Clicked -= value;
 		}
 	}
 }

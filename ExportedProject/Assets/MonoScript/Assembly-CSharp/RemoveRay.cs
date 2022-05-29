@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class RemoveRay : MonoBehaviour
@@ -7,13 +11,14 @@ public class RemoveRay : MonoBehaviour
 
 	public float length = 100f;
 
+	public RemoveRay()
+	{
+	}
+
+	[DebuggerHidden]
 	private IEnumerator Start()
 	{
-		float startTime = Time.realtimeSinceStartup;
-		while (Time.realtimeSinceStartup - startTime < lifetime)
-		{
-			yield return null;
-		}
-		Object.Destroy(base.gameObject);
+		RemoveRay.u003cStartu003ec__Iterator101 variable = null;
+		return variable;
 	}
 }

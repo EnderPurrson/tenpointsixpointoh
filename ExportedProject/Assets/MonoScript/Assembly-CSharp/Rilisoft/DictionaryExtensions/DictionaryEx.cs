@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft.DictionaryExtensions
 {
@@ -10,9 +12,9 @@ namespace Rilisoft.DictionaryExtensions
 			{
 				return null;
 			}
-			object value = null;
-			dictionary.TryGetValue(key, out value);
-			return value;
+			object obj = null;
+			dictionary.TryGetValue(key, out obj);
+			return obj;
 		}
 	}
 }

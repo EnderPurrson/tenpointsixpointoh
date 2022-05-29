@@ -1,30 +1,14 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public sealed class ExpView : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A0
-	{
-		internal IEnumerator c;
-
-		internal ExpView _003C_003Ef__this;
-
-		internal void _003C_003Em__28F()
-		{
-			_003C_003Ef__this.currentProgress.StopCoroutine(c);
-			if (_003C_003Ef__this.currentProgress != null)
-			{
-				_003C_003Ef__this.currentProgress.enabled = true;
-			}
-		}
-	}
-
 	public GameObject rankIndicatorContainer;
 
 	public UIRoot interfaceHolder;
@@ -62,45 +46,15 @@ public sealed class ExpView : MonoBehaviour
 
 	private UIButton _profileButton;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache11;
-
-	[CompilerGenerated]
-	private static Func<UIButton, bool> _003C_003Ef__am_0024cache12;
-
-	public bool LevelUpPanelOpened
-	{
-		get
-		{
-			return _levelUpPanel.ObjectIsActive || _levelUpPanelTier.ObjectIsActive;
-		}
-	}
-
-	public LevelUpWithOffers CurrentVisiblePanel
-	{
-		get
-		{
-			if (_levelUpPanel.ObjectIsActive)
-			{
-				return _levelUpPanel.Value;
-			}
-			if (_levelUpPanelTier.ObjectIsActive)
-			{
-				return _levelUpPanelTier.Value;
-			}
-			return null;
-		}
-	}
-
 	public LazyObject<LevelUpWithOffers> _levelUpPanel
 	{
 		get
 		{
-			if (_levelUpPanelValue == null)
+			if (this._levelUpPanelValue == null)
 			{
-				_levelUpPanelValue = new LazyObject<LevelUpWithOffers>(_levelUpPanelPrefab.ResourcePath, _levelUpPanelsContainer);
+				this._levelUpPanelValue = new LazyObject<LevelUpWithOffers>(this._levelUpPanelPrefab.ResourcePath, this._levelUpPanelsContainer);
 			}
-			return _levelUpPanelValue;
+			return this._levelUpPanelValue;
 		}
 	}
 
@@ -108,38 +62,11 @@ public sealed class ExpView : MonoBehaviour
 	{
 		get
 		{
-			if (_levelUpPanelTierValue == null)
+			if (this._levelUpPanelTierValue == null)
 			{
-				_levelUpPanelTierValue = new LazyObject<LevelUpWithOffers>(_levelUpPanelTierPrefab.ResourcePath, _levelUpPanelsContainer);
+				this._levelUpPanelTierValue = new LazyObject<LevelUpWithOffers>(this._levelUpPanelTierPrefab.ResourcePath, this._levelUpPanelsContainer);
 			}
-			return _levelUpPanelTierValue;
-		}
-	}
-
-	public bool VisibleHUD
-	{
-		get
-		{
-			return objHUD.activeSelf;
-		}
-		set
-		{
-			objHUD.SetActive(value);
-		}
-	}
-
-	public string ExperienceLabel
-	{
-		get
-		{
-			return (!(experienceLabel != null)) ? string.Empty : experienceLabel.text;
-		}
-		set
-		{
-			if (experienceLabel != null)
-			{
-				experienceLabel.text = value ?? string.Empty;
-			}
+			return this._levelUpPanelTierValue;
 		}
 	}
 
@@ -147,14 +74,65 @@ public sealed class ExpView : MonoBehaviour
 	{
 		get
 		{
-			return (!(currentProgress != null)) ? 0f : currentProgress.fillAmount;
+			return (this.currentProgress == null ? 0f : this.currentProgress.fillAmount);
 		}
 		set
 		{
-			if (currentProgress != null)
+			if (this.currentProgress != null)
 			{
-				currentProgress.fillAmount = value;
+				this.currentProgress.fillAmount = value;
 			}
+		}
+	}
+
+	public LevelUpWithOffers CurrentVisiblePanel
+	{
+		get
+		{
+			if (this._levelUpPanel.ObjectIsActive)
+			{
+				return this._levelUpPanel.Value;
+			}
+			if (!this._levelUpPanelTier.ObjectIsActive)
+			{
+				return null;
+			}
+			return this._levelUpPanelTier.Value;
+		}
+	}
+
+	public string ExperienceLabel
+	{
+		get
+		{
+			return (this.experienceLabel == null ? string.Empty : this.experienceLabel.text);
+		}
+		set
+		{
+			if (this.experienceLabel != null)
+			{
+				this.experienceLabel.text = value ?? string.Empty;
+			}
+		}
+	}
+
+	public bool LevelUpPanelOpened
+	{
+		get
+		{
+			return (this._levelUpPanel.ObjectIsActive ? true : this._levelUpPanelTier.ObjectIsActive);
+		}
+	}
+
+	public LeveUpPanelShowOptions LevelUpPanelOptions
+	{
+		get
+		{
+			if (this._levelUpPanelOptions == null)
+			{
+				this._levelUpPanelOptions = new LeveUpPanelShowOptions();
+			}
+			return this._levelUpPanelOptions;
 		}
 	}
 
@@ -162,13 +140,13 @@ public sealed class ExpView : MonoBehaviour
 	{
 		get
 		{
-			return (!(oldProgress != null)) ? 0f : oldProgress.fillAmount;
+			return (this.oldProgress == null ? 0f : this.oldProgress.fillAmount);
 		}
 		set
 		{
-			if (oldProgress != null)
+			if (this.oldProgress != null)
 			{
-				oldProgress.fillAmount = value;
+				this.oldProgress.fillAmount = value;
 			}
 		}
 	}
@@ -177,168 +155,149 @@ public sealed class ExpView : MonoBehaviour
 	{
 		get
 		{
-			if (rankSprite == null)
+			if (this.rankSprite == null)
 			{
 				return 1;
 			}
-			string s = rankSprite.spriteName.Replace("Rank_", string.Empty);
-			int result = 0;
-			return (!int.TryParse(s, out result)) ? 1 : result;
+			string str = this.rankSprite.spriteName.Replace("Rank_", string.Empty);
+			int num = 0;
+			return (!int.TryParse(str, out num) ? 1 : num);
 		}
 		set
 		{
-			if (rankSprite != null)
+			if (this.rankSprite != null)
 			{
-				string spriteName = string.Format("Rank_{0}", value);
-				rankSprite.spriteName = spriteName;
+				string str = string.Format("Rank_{0}", value);
+				this.rankSprite.spriteName = str;
 			}
 		}
 	}
 
-	public LeveUpPanelShowOptions LevelUpPanelOptions
+	public bool VisibleHUD
 	{
 		get
 		{
-			if (_levelUpPanelOptions == null)
-			{
-				_levelUpPanelOptions = new LeveUpPanelShowOptions();
-			}
-			return _levelUpPanelOptions;
+			return this.objHUD.activeSelf;
 		}
+		set
+		{
+			this.objHUD.SetActive(value);
+		}
+	}
+
+	public ExpView()
+	{
 	}
 
 	private void Awake()
 	{
-		SceneLoader instance = Singleton<SceneLoader>.Instance;
-		instance.OnSceneLoading = (Action<SceneLoadInfo>)Delegate.Combine(instance.OnSceneLoading, new Action<SceneLoadInfo>(_003CAwake_003Em__28D));
+		Singleton<SceneLoader>.Instance.OnSceneLoading += new Action<SceneLoadInfo>((SceneLoadInfo loadInfo) => {
+			this._levelUpPanel.DestroyValue();
+			this._levelUpPanelTier.DestroyValue();
+		});
 	}
 
-	public void ShowLevelUpPanel()
+	private void OnDisable()
 	{
-		_currentLevelUpPanel = ((!LevelUpPanelOptions.ShowTierView) ? _levelUpPanel.Value : _levelUpPanelTier.Value);
-		_currentLevelUpPanel.SetCurrentRank(LevelUpPanelOptions.CurrentRank.ToString());
-		_currentLevelUpPanel.SetRewardPrice("+" + LevelUpPanelOptions.CoinsReward + "\n" + LocalizationStore.Get("Key_0275"));
-		_currentLevelUpPanel.SetGemsRewardPrice("+" + LevelUpPanelOptions.GemsReward + "\n" + LocalizationStore.Get("Key_0951"));
-		_currentLevelUpPanel.SetAddHealthCount(string.Format(LocalizationStore.Get("Key_1856"), ExperienceController.sharedController.AddHealthOnCurLevel.ToString()));
-		_currentLevelUpPanel.SetItems(LevelUpPanelOptions.NewItems);
-		_currentLevelUpPanel.shareScript.share.IsChecked = LevelUpPanelOptions.ShareButtonEnabled;
-		ExpController.ShowTierPanel(_currentLevelUpPanel.gameObject);
-	}
-
-	public void ToBonus(int starterGemsReward, int starterCoinsReward)
-	{
-		if (_currentLevelUpPanel != null)
+		this.oldProgress.enabled = true;
+		this.oldProgress.fillAmount = this.currentProgress.fillAmount;
+		if (this.currentProgress != null && this.currentProgress.gameObject.activeInHierarchy)
 		{
-			_currentLevelUpPanel.SetStarterBankValues(starterGemsReward, starterCoinsReward);
-			_currentLevelUpPanel.shareScript.animatorLevel.SetTrigger("Bonus");
-		}
-	}
-
-	public void StopAnimation()
-	{
-		if (currentProgress.gameObject.activeInHierarchy)
-		{
-			currentProgress.StopAllCoroutines();
-		}
-		if (oldProgress != null && oldProgress.gameObject.activeInHierarchy)
-		{
-			oldProgress.StopAllCoroutines();
-			oldProgress.enabled = true;
-			oldProgress.fillAmount = currentProgress.fillAmount;
-		}
-	}
-
-	public IDisposable StartBlinkingWithNewProgress()
-	{
-		_003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A0 _003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A = new _003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A0();
-		_003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A._003C_003Ef__this = this;
-		if (currentProgress == null || !currentProgress.gameObject.activeInHierarchy)
-		{
-			Debug.LogWarning("(currentProgress == null || !currentProgress.gameObject.activeInHierarchy)");
-			if (_003C_003Ef__am_0024cache11 == null)
-			{
-				_003C_003Ef__am_0024cache11 = _003CStartBlinkingWithNewProgress_003Em__28E;
-			}
-			return new ActionDisposable(_003C_003Ef__am_0024cache11);
-		}
-		currentProgress.StopAllCoroutines();
-		_003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A.c = StartBlinkingCoroutine();
-		currentProgress.StartCoroutine(_003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A.c);
-		return new ActionDisposable(_003CStartBlinkingWithNewProgress_003Ec__AnonStorey2A._003C_003Em__28F);
-	}
-
-	public void WaitAndUpdateOldProgress(AudioClip sound)
-	{
-		if (!(oldProgress == null) && oldProgress.gameObject.activeInHierarchy)
-		{
-			oldProgress.StopAllCoroutines();
-			oldProgress.StartCoroutine(WaitAndUpdateCoroutine(sound));
+			this.currentProgress.StopAllCoroutines();
 		}
 	}
 
 	private void OnEnable()
 	{
-		if (_profileButton == null)
+		if (this._profileButton == null)
 		{
-			UIButton[] source = UnityEngine.Object.FindObjectsOfType<UIButton>();
-			if (_003C_003Ef__am_0024cache12 == null)
-			{
-				_003C_003Ef__am_0024cache12 = _003COnEnable_003Em__290;
-			}
-			IEnumerable<UIButton> source2 = source.Where(_003C_003Ef__am_0024cache12);
-			_profileButton = source2.FirstOrDefault();
+			IEnumerable<UIButton> uIButtons = 
+				from b in (IEnumerable<UIButton>)UnityEngine.Object.FindObjectsOfType<UIButton>()
+				where b.gameObject.name.Equals("Profile")
+				select b;
+			this._profileButton = uIButtons.FirstOrDefault<UIButton>();
 		}
 	}
 
-	private void OnDisable()
+	public void ShowLevelUpPanel()
 	{
-		oldProgress.enabled = true;
-		oldProgress.fillAmount = currentProgress.fillAmount;
-		if (currentProgress != null && currentProgress.gameObject.activeInHierarchy)
-		{
-			currentProgress.StopAllCoroutines();
-		}
+		this._currentLevelUpPanel = (!this.LevelUpPanelOptions.ShowTierView ? this._levelUpPanel.Value : this._levelUpPanelTier.Value);
+		this._currentLevelUpPanel.SetCurrentRank(this.LevelUpPanelOptions.CurrentRank.ToString());
+		this._currentLevelUpPanel.SetRewardPrice(string.Concat(new object[] { "+", this.LevelUpPanelOptions.CoinsReward, "\n", LocalizationStore.Get("Key_0275") }));
+		this._currentLevelUpPanel.SetGemsRewardPrice(string.Concat(new object[] { "+", this.LevelUpPanelOptions.GemsReward, "\n", LocalizationStore.Get("Key_0951") }));
+		LevelUpWithOffers levelUpWithOffer = this._currentLevelUpPanel;
+		string str = LocalizationStore.Get("Key_1856");
+		int addHealthOnCurLevel = ExperienceController.sharedController.AddHealthOnCurLevel;
+		levelUpWithOffer.SetAddHealthCount(string.Format(str, addHealthOnCurLevel.ToString()));
+		this._currentLevelUpPanel.SetItems(this.LevelUpPanelOptions.NewItems);
+		this._currentLevelUpPanel.shareScript.share.IsChecked = this.LevelUpPanelOptions.ShareButtonEnabled;
+		ExpController.ShowTierPanel(this._currentLevelUpPanel.gameObject);
 	}
 
+	[DebuggerHidden]
 	private IEnumerator StartBlinkingCoroutine()
 	{
-		for (int i = 0; i != 4; i++)
+		ExpView.u003cStartBlinkingCoroutineu003ec__Iterator137 variable = null;
+		return variable;
+	}
+
+	public IDisposable StartBlinkingWithNewProgress()
+	{
+		if (this.currentProgress == null || !this.currentProgress.gameObject.activeInHierarchy)
 		{
-			currentProgress.enabled = false;
-			yield return new WaitForSeconds(0.15f);
-			currentProgress.enabled = true;
-			yield return new WaitForSeconds(0.15f);
+			UnityEngine.Debug.LogWarning("(currentProgress == null || !currentProgress.gameObject.activeInHierarchy)");
+			return new ActionDisposable(() => {
+			});
+		}
+		this.currentProgress.StopAllCoroutines();
+		IEnumerator enumerator = this.StartBlinkingCoroutine();
+		this.currentProgress.StartCoroutine(enumerator);
+		return new ActionDisposable(() => {
+			this.currentProgress.StopCoroutine(enumerator);
+			if (this.currentProgress != null)
+			{
+				this.currentProgress.enabled = true;
+			}
+		});
+	}
+
+	public void StopAnimation()
+	{
+		if (this.currentProgress.gameObject.activeInHierarchy)
+		{
+			this.currentProgress.StopAllCoroutines();
+		}
+		if (this.oldProgress != null && this.oldProgress.gameObject.activeInHierarchy)
+		{
+			this.oldProgress.StopAllCoroutines();
+			this.oldProgress.enabled = true;
+			this.oldProgress.fillAmount = this.currentProgress.fillAmount;
 		}
 	}
 
+	public void ToBonus(int starterGemsReward, int starterCoinsReward)
+	{
+		if (this._currentLevelUpPanel != null)
+		{
+			this._currentLevelUpPanel.SetStarterBankValues(starterGemsReward, starterCoinsReward);
+			this._currentLevelUpPanel.shareScript.animatorLevel.SetTrigger("Bonus");
+		}
+	}
+
+	[DebuggerHidden]
 	private IEnumerator WaitAndUpdateCoroutine(AudioClip sound)
 	{
-		yield return new WaitForSeconds(1.2f);
-		if (currentProgress != null)
+		ExpView.u003cWaitAndUpdateCoroutineu003ec__Iterator138 variable = null;
+		return variable;
+	}
+
+	public void WaitAndUpdateOldProgress(AudioClip sound)
+	{
+		if (this.oldProgress == null || !this.oldProgress.gameObject.activeInHierarchy)
 		{
-			oldProgress.fillAmount = currentProgress.fillAmount;
+			return;
 		}
-		if (Defs.isSoundFX)
-		{
-			NGUITools.PlaySound(sound);
-		}
-	}
-
-	[CompilerGenerated]
-	private void _003CAwake_003Em__28D(SceneLoadInfo loadInfo)
-	{
-		_levelUpPanel.DestroyValue();
-		_levelUpPanelTier.DestroyValue();
-	}
-
-	[CompilerGenerated]
-	private static void _003CStartBlinkingWithNewProgress_003Em__28E()
-	{
-	}
-
-	[CompilerGenerated]
-	private static bool _003COnEnable_003Em__290(UIButton b)
-	{
-		return b.gameObject.name.Equals("Profile");
+		this.oldProgress.StopAllCoroutines();
+		this.oldProgress.StartCoroutine(this.WaitAndUpdateCoroutine(sound));
 	}
 }

@@ -1,39 +1,181 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	public static class RiliExtensions
 	{
-		[CompilerGenerated]
-		private sealed class _003CGetChildGameObject_003Ec__AnonStorey2FF
+		public static Color ColorFromHex(string hex)
 		{
-			internal string name;
-
-			internal bool _003C_003Em__46B(Transform t)
+			hex = hex.Replace("0x", string.Empty);
+			hex = hex.Replace("#", string.Empty);
+			byte num = 255;
+			byte num1 = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
+			byte num2 = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
+			byte num3 = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+			if (hex.Length == 8)
 			{
-				return t.gameObject.name == name;
+				num = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+			}
+			return new Color32(num1, num2, num3, num);
+		}
+
+		public static Color ColorFromRGB(int r, int g, int b, int a = 255)
+		{
+			return new Color((float)(r / 255), (float)(g / 255), (float)(b / 255), (float)(a / 255));
+		}
+
+		public static int[] EnumNumbers<T>()
+		where T : struct
+		{
+			if (!typeof(T).IsEnum)
+			{
+				throw new ArgumentException("T must be an enumerated type");
+			}
+			return Enum.GetValues(typeof(T)).Cast<int>().ToArray<int>();
+		}
+
+		public static string[] EnumValues<T>()
+		where T : struct
+		{
+			if (!typeof(T).IsEnum)
+			{
+				throw new ArgumentException("T must be an enumerated type");
+			}
+			return Enum.GetValues(typeof(T)).Cast<string>().ToArray<string>();
+		}
+
+		public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+		{
+			IEnumerator<T> enumerator = enumeration.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					action(enumerator.Current);
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
 			}
 		}
 
-		public static IEnumerable<T> WithoutLast<T>(this IEnumerable<T> source)
+		public static void ForEachEnum<T>(Action<T> action)
 		{
-			using (IEnumerator<T> e = source.GetEnumerator())
+			if (action != null)
 			{
-				if (e.MoveNext())
+				IEnumerator enumerator = Enum.GetValues(typeof(T)).GetEnumerator();
+				try
 				{
-					T value = e.Current;
-					while (e.MoveNext())
+					while (enumerator.MoveNext())
 					{
-						yield return value;
-						value = e.Current;
+						action((T)enumerator.Current);
 					}
 				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
+				}
 			}
+		}
+
+		public static GameObject GetChildGameObject(this GameObject go, string name, bool includeInactive = false)
+		{
+			GameObject gameObject;
+			Transform transforms = go.transform.GetComponentsInChildren<Transform>(includeInactive).FirstOrDefault<Transform>((Transform t) => t.gameObject.name == name);
+			if (transforms == null)
+			{
+				gameObject = null;
+			}
+			else
+			{
+				gameObject = transforms.gameObject;
+			}
+			return gameObject;
+		}
+
+		public static T GetComponentInChildren<T>(this GameObject go, string name, bool includeInactive = false)
+		{
+			Transform[] componentsInChildren = go.transform.GetComponentsInChildren<Transform>(includeInactive);
+			for (int i = 0; i < (int)componentsInChildren.Length; i++)
+			{
+				Transform transforms = componentsInChildren[i];
+				if (transforms.gameObject.name == name)
+				{
+					return transforms.gameObject.GetComponent<T>();
+				}
+			}
+			return default(T);
+		}
+
+		public static T GetComponentInParents<T>(this GameObject go)
+		{
+			T component = go.GetComponent<T>();
+			if (component != null)
+			{
+				if (!component.Equals(default(T)))
+				{
+					return component;
+				}
+			}
+			return go.transform.parent.gameObject.GetComponentInParents<T>();
+		}
+
+		public static GameObject GetGameObjectInParent(this GameObject go, string name, bool includeInactive = false)
+		{
+			Transform[] componentsInParent = go.transform.GetComponentsInParent<Transform>(includeInactive);
+			for (int i = 0; i < (int)componentsInParent.Length; i++)
+			{
+				Transform transforms = componentsInParent[i];
+				if (transforms.gameObject.name == name)
+				{
+					return transforms.gameObject;
+				}
+			}
+			return null;
+		}
+
+		public static T GetOrAddComponent<T>(this Component child)
+		where T : Component
+		{
+			T component = child.GetComponent<T>();
+			if (component == null)
+			{
+				component = child.gameObject.AddComponent<T>();
+			}
+			return component;
+		}
+
+		public static T GetOrAddComponent<T>(this GameObject child)
+		where T : Component
+		{
+			T component = child.GetComponent<T>();
+			if (component == null)
+			{
+				component = child.gameObject.AddComponent<T>();
+			}
+			return component;
+		}
+
+		public static bool IsNullOrEmpty(this string str)
+		{
+			return string.IsNullOrEmpty(str);
 		}
 
 		public static string nameNoClone(this UnityEngine.Object obj)
@@ -45,118 +187,35 @@ namespace Rilisoft
 			return obj.name.Replace("(Clone)", string.Empty);
 		}
 
-		public static bool IsNullOrEmpty(this string str)
+		public static IEnumerable<T> Random<T>(this IEnumerable<T> source, int count)
 		{
-			return string.IsNullOrEmpty(str);
-		}
-
-		public static T? ToEnum<T>(this string str, T? defaultVal = null) where T : struct
-		{
-			if (!typeof(T).IsEnum)
+			if (source == null)
 			{
-				throw new ArgumentException("T must be an enumerated type");
+				return source;
 			}
-			if (str.IsNullOrEmpty())
+			List<T> list = source.ToList<T>();
+			if (!list.Any<T>())
 			{
-				Debug.LogError("String is null or empty");
-				return defaultVal;
+				return list;
 			}
-			str = str.ToLower();
-			foreach (T value in Enum.GetValues(typeof(T)))
+			List<T> ts = new List<T>();
+			if (count < 1)
 			{
-				if (value.ToString().ToLower() == str)
+				return ts;
+			}
+			bool flag = true;
+			while (flag)
+			{
+				int num = UnityEngine.Random.Range(0, list.Count);
+				ts.Add(list[num]);
+				list.RemoveAt(num);
+				if (list.Count != 0 && ts.Count != count)
 				{
-					return value;
+					continue;
 				}
+				flag = false;
 			}
-			Debug.LogErrorFormat("'{0}' does not contain '{1}'", typeof(T).Name, str);
-			return defaultVal;
-		}
-
-		public static string[] EnumValues<T>() where T : struct
-		{
-			if (!typeof(T).IsEnum)
-			{
-				throw new ArgumentException("T must be an enumerated type");
-			}
-			return Enum.GetValues(typeof(T)).Cast<string>().ToArray();
-		}
-
-		public static int[] EnumNumbers<T>() where T : struct
-		{
-			if (!typeof(T).IsEnum)
-			{
-				throw new ArgumentException("T must be an enumerated type");
-			}
-			return Enum.GetValues(typeof(T)).Cast<int>().ToArray();
-		}
-
-		public static void ForEachEnum<T>(Action<T> action)
-		{
-			if (action == null)
-			{
-				return;
-			}
-			Array values = Enum.GetValues(typeof(T));
-			foreach (object item in values)
-			{
-				action((T)item);
-			}
-		}
-
-		public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
-		{
-			foreach (T item in enumeration)
-			{
-				action(item);
-			}
-		}
-
-		public static GameObject GetChildGameObject(this GameObject go, string name, bool includeInactive = false)
-		{
-			_003CGetChildGameObject_003Ec__AnonStorey2FF _003CGetChildGameObject_003Ec__AnonStorey2FF = new _003CGetChildGameObject_003Ec__AnonStorey2FF();
-			_003CGetChildGameObject_003Ec__AnonStorey2FF.name = name;
-			Transform transform = go.transform.GetComponentsInChildren<Transform>(includeInactive).FirstOrDefault(_003CGetChildGameObject_003Ec__AnonStorey2FF._003C_003Em__46B);
-			return (!(transform != null)) ? null : transform.gameObject;
-		}
-
-		public static T GetComponentInChildren<T>(this GameObject go, string name, bool includeInactive = false)
-		{
-			Transform[] componentsInChildren = go.transform.GetComponentsInChildren<Transform>(includeInactive);
-			Transform[] array = componentsInChildren;
-			foreach (Transform transform in array)
-			{
-				if (transform.gameObject.name == name)
-				{
-					return transform.gameObject.GetComponent<T>();
-				}
-			}
-			return default(T);
-		}
-
-		public static GameObject GetGameObjectInParent(this GameObject go, string name, bool includeInactive = false)
-		{
-			Transform[] componentsInParent = go.transform.GetComponentsInParent<Transform>(includeInactive);
-			Transform[] array = componentsInParent;
-			foreach (Transform transform in array)
-			{
-				if (transform.gameObject.name == name)
-				{
-					return transform.gameObject;
-				}
-			}
-			return null;
-		}
-
-		public static T GetComponentInParents<T>(this GameObject go)
-		{
-			T component = go.GetComponent<T>();
-			if (component != null && !component.Equals(default(T)))
-			{
-				return component;
-			}
-			Transform parent = go.transform.parent;
-			return parent.gameObject.GetComponentInParents<T>();
+			return ts;
 		}
 
 		public static void SetActiveSafe(this GameObject go, bool state)
@@ -167,79 +226,58 @@ namespace Rilisoft
 			}
 		}
 
-		public static T GetOrAddComponent<T>(this Component child) where T : Component
+		public static Nullable<T> ToEnum<T>(this string str, Nullable<T> defaultVal = null)
+		where T : struct
 		{
-			T val = child.GetComponent<T>();
-			if ((UnityEngine.Object)val == (UnityEngine.Object)default(UnityEngine.Object))
+			Nullable<T> nullable;
+			if (!typeof(T).IsEnum)
 			{
-				val = child.gameObject.AddComponent<T>();
+				throw new ArgumentException("T must be an enumerated type");
 			}
-			return val;
-		}
-
-		public static T GetOrAddComponent<T>(this GameObject child) where T : Component
-		{
-			T val = child.GetComponent<T>();
-			if ((UnityEngine.Object)val == (UnityEngine.Object)default(UnityEngine.Object))
+			if (str.IsNullOrEmpty())
 			{
-				val = child.gameObject.AddComponent<T>();
+				UnityEngine.Debug.LogError("String is null or empty");
+				return defaultVal;
 			}
-			return val;
-		}
-
-		public static IEnumerable<T> Random<T>(this IEnumerable<T> source, int count)
-		{
-			if (source == null)
+			str = str.ToLower();
+			IEnumerator enumerator = Enum.GetValues(typeof(T)).GetEnumerator();
+			try
 			{
-				return source;
-			}
-			List<T> list = source.ToList();
-			if (!list.Any())
-			{
-				return list;
-			}
-			List<T> list2 = new List<T>();
-			if (count < 1)
-			{
-				return list2;
-			}
-			bool flag = true;
-			while (flag)
-			{
-				int index = UnityEngine.Random.Range(0, list.Count);
-				list2.Add(list[index]);
-				list.RemoveAt(index);
-				if (list.Count == 0 || list2.Count == count)
+				while (enumerator.MoveNext())
 				{
-					flag = false;
+					T current = (T)enumerator.Current;
+					if (current.ToString().ToLower() != str)
+					{
+						continue;
+					}
+					nullable = new Nullable<T>(current);
+					return nullable;
 				}
+				UnityEngine.Debug.LogErrorFormat("'{0}' does not contain '{1}'", new object[] { typeof(T).Name, str });
+				return defaultVal;
 			}
-			return list2;
-		}
-
-		public static Color ColorFromRGB(int r, int g, int b, int a = 255)
-		{
-			return new Color(r / 255, g / 255, b / 255, a / 255);
-		}
-
-		public static Color ColorFromHex(string hex)
-		{
-			hex = hex.Replace("0x", string.Empty);
-			hex = hex.Replace("#", string.Empty);
-			byte a = byte.MaxValue;
-			byte r = byte.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);
-			byte g = byte.Parse(hex.Substring(2, 2), NumberStyles.HexNumber);
-			byte b = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
-			if (hex.Length == 8)
+			finally
 			{
-				a = byte.Parse(hex.Substring(4, 2), NumberStyles.HexNumber);
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
 			}
-			return new Color32(r, g, b, a);
+			return nullable;
 		}
 
 		public static string ToHex(this Color32 color)
 		{
-			return color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
+			string str = string.Concat(color.r.ToString("X2"), color.g.ToString("X2"), color.b.ToString("X2"));
+			return str;
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<T> WithoutLast<T>(IEnumerable<T> source)
+		{
+			RiliExtensions.u003cWithoutLastu003ec__Iterator19B<T> variable = null;
+			return variable;
 		}
 	}
 }

@@ -1,201 +1,26 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public static class NGUITools
 {
 	private static AudioListener mListener;
 
-	private static bool mLoaded = false;
+	private static bool mLoaded;
 
-	private static float mGlobalVolume = 1f;
+	private static float mGlobalVolume;
 
-	private static float mLastTimestamp = 0f;
+	private static float mLastTimestamp;
 
 	private static AudioClip mLastClip;
 
-	private static Vector3[] mSides = new Vector3[4];
+	private static Vector3[] mSides;
 
-	public static KeyCode[] keys = new KeyCode[145]
-	{
-		KeyCode.Backspace,
-		KeyCode.Tab,
-		KeyCode.Clear,
-		KeyCode.Return,
-		KeyCode.Pause,
-		KeyCode.Escape,
-		KeyCode.Space,
-		KeyCode.Exclaim,
-		KeyCode.DoubleQuote,
-		KeyCode.Hash,
-		KeyCode.Dollar,
-		KeyCode.Ampersand,
-		KeyCode.Quote,
-		KeyCode.LeftParen,
-		KeyCode.RightParen,
-		KeyCode.Asterisk,
-		KeyCode.Plus,
-		KeyCode.Comma,
-		KeyCode.Minus,
-		KeyCode.Period,
-		KeyCode.Slash,
-		KeyCode.Alpha0,
-		KeyCode.Alpha1,
-		KeyCode.Alpha2,
-		KeyCode.Alpha3,
-		KeyCode.Alpha4,
-		KeyCode.Alpha5,
-		KeyCode.Alpha6,
-		KeyCode.Alpha7,
-		KeyCode.Alpha8,
-		KeyCode.Alpha9,
-		KeyCode.Colon,
-		KeyCode.Semicolon,
-		KeyCode.Less,
-		KeyCode.Equals,
-		KeyCode.Greater,
-		KeyCode.Question,
-		KeyCode.At,
-		KeyCode.LeftBracket,
-		KeyCode.Backslash,
-		KeyCode.RightBracket,
-		KeyCode.Caret,
-		KeyCode.Underscore,
-		KeyCode.BackQuote,
-		KeyCode.A,
-		KeyCode.B,
-		KeyCode.C,
-		KeyCode.D,
-		KeyCode.E,
-		KeyCode.F,
-		KeyCode.G,
-		KeyCode.H,
-		KeyCode.I,
-		KeyCode.J,
-		KeyCode.K,
-		KeyCode.L,
-		KeyCode.M,
-		KeyCode.N,
-		KeyCode.O,
-		KeyCode.P,
-		KeyCode.Q,
-		KeyCode.R,
-		KeyCode.S,
-		KeyCode.T,
-		KeyCode.U,
-		KeyCode.V,
-		KeyCode.W,
-		KeyCode.X,
-		KeyCode.Y,
-		KeyCode.Z,
-		KeyCode.Delete,
-		KeyCode.Keypad0,
-		KeyCode.Keypad1,
-		KeyCode.Keypad2,
-		KeyCode.Keypad3,
-		KeyCode.Keypad4,
-		KeyCode.Keypad5,
-		KeyCode.Keypad6,
-		KeyCode.Keypad7,
-		KeyCode.Keypad8,
-		KeyCode.Keypad9,
-		KeyCode.KeypadPeriod,
-		KeyCode.KeypadDivide,
-		KeyCode.KeypadMultiply,
-		KeyCode.KeypadMinus,
-		KeyCode.KeypadPlus,
-		KeyCode.KeypadEnter,
-		KeyCode.KeypadEquals,
-		KeyCode.UpArrow,
-		KeyCode.DownArrow,
-		KeyCode.RightArrow,
-		KeyCode.LeftArrow,
-		KeyCode.Insert,
-		KeyCode.Home,
-		KeyCode.End,
-		KeyCode.PageUp,
-		KeyCode.PageDown,
-		KeyCode.F1,
-		KeyCode.F2,
-		KeyCode.F3,
-		KeyCode.F4,
-		KeyCode.F5,
-		KeyCode.F6,
-		KeyCode.F7,
-		KeyCode.F8,
-		KeyCode.F9,
-		KeyCode.F10,
-		KeyCode.F11,
-		KeyCode.F12,
-		KeyCode.F13,
-		KeyCode.F14,
-		KeyCode.F15,
-		KeyCode.Numlock,
-		KeyCode.CapsLock,
-		KeyCode.ScrollLock,
-		KeyCode.RightShift,
-		KeyCode.LeftShift,
-		KeyCode.RightControl,
-		KeyCode.LeftControl,
-		KeyCode.RightAlt,
-		KeyCode.LeftAlt,
-		KeyCode.Mouse3,
-		KeyCode.Mouse4,
-		KeyCode.Mouse5,
-		KeyCode.Mouse6,
-		KeyCode.JoystickButton0,
-		KeyCode.JoystickButton1,
-		KeyCode.JoystickButton2,
-		KeyCode.JoystickButton3,
-		KeyCode.JoystickButton4,
-		KeyCode.JoystickButton5,
-		KeyCode.JoystickButton6,
-		KeyCode.JoystickButton7,
-		KeyCode.JoystickButton8,
-		KeyCode.JoystickButton9,
-		KeyCode.JoystickButton10,
-		KeyCode.JoystickButton11,
-		KeyCode.JoystickButton12,
-		KeyCode.JoystickButton13,
-		KeyCode.JoystickButton14,
-		KeyCode.JoystickButton15,
-		KeyCode.JoystickButton16,
-		KeyCode.JoystickButton17,
-		KeyCode.JoystickButton18,
-		KeyCode.JoystickButton19
-	};
-
-	public static float soundVolume
-	{
-		get
-		{
-			if (!mLoaded)
-			{
-				mLoaded = true;
-				mGlobalVolume = PlayerPrefs.GetFloat("Sound", 1f);
-			}
-			return mGlobalVolume;
-		}
-		set
-		{
-			if (mGlobalVolume != value)
-			{
-				mLoaded = true;
-				mGlobalVolume = value;
-				PlayerPrefs.SetFloat("Sound", value);
-			}
-		}
-	}
-
-	public static bool fileAccess
-	{
-		get
-		{
-			return Application.platform != RuntimePlatform.WindowsWebPlayer && Application.platform != RuntimePlatform.OSXWebPlayer;
-		}
-	}
+	public static KeyCode[] keys;
 
 	public static string clipboard
 	{
@@ -207,10 +32,20 @@ public static class NGUITools
 		}
 		set
 		{
-			TextEditor textEditor = new TextEditor();
-			textEditor.content = new GUIContent(value);
+			TextEditor textEditor = new TextEditor()
+			{
+				content = new GUIContent(value)
+			};
 			textEditor.OnFocus();
 			textEditor.Copy();
+		}
+	}
+
+	public static bool fileAccess
+	{
+		get
+		{
+			return (Application.platform == RuntimePlatform.WindowsWebPlayer ? false : Application.platform != RuntimePlatform.OSXWebPlayer);
 		}
 	}
 
@@ -218,309 +53,74 @@ public static class NGUITools
 	{
 		get
 		{
-			return new Vector2(Screen.width, Screen.height);
+			return new Vector2((float)Screen.width, (float)Screen.height);
 		}
 	}
 
-	public static AudioSource PlaySound(AudioClip clip)
+	public static float soundVolume
 	{
-		return PlaySound(clip, 1f, 1f);
-	}
-
-	public static AudioSource PlaySound(AudioClip clip, float volume)
-	{
-		return PlaySound(clip, volume, 1f);
-	}
-
-	public static AudioSource PlaySound(AudioClip clip, float volume, float pitch)
-	{
-		float time = RealTime.time;
-		if (mLastClip == clip && mLastTimestamp + 0.1f > time)
+		get
 		{
-			return null;
-		}
-		mLastClip = clip;
-		mLastTimestamp = time;
-		volume *= soundVolume;
-		if (clip != null && volume > 0.01f)
-		{
-			if (mListener == null || !GetActive(mListener))
+			if (!NGUITools.mLoaded)
 			{
-				AudioListener[] array = UnityEngine.Object.FindObjectsOfType(typeof(AudioListener)) as AudioListener[];
-				if (array != null)
+				NGUITools.mLoaded = true;
+				NGUITools.mGlobalVolume = PlayerPrefs.GetFloat("Sound", 1f);
+			}
+			return NGUITools.mGlobalVolume;
+		}
+		set
+		{
+			if (NGUITools.mGlobalVolume != value)
+			{
+				NGUITools.mLoaded = true;
+				NGUITools.mGlobalVolume = value;
+				PlayerPrefs.SetFloat("Sound", value);
+			}
+		}
+	}
+
+	static NGUITools()
+	{
+		NGUITools.mLoaded = false;
+		NGUITools.mGlobalVolume = 1f;
+		NGUITools.mLastTimestamp = 0f;
+		NGUITools.mSides = new Vector3[4];
+		NGUITools.keys = new KeyCode[] { KeyCode.Backspace, KeyCode.Tab, KeyCode.Clear, KeyCode.Return, KeyCode.Pause, KeyCode.Escape, KeyCode.Space, KeyCode.Exclaim, KeyCode.DoubleQuote, KeyCode.Hash, KeyCode.Dollar, KeyCode.Ampersand, KeyCode.Quote, KeyCode.LeftParen, KeyCode.RightParen, KeyCode.Asterisk, KeyCode.Plus, KeyCode.Comma, KeyCode.Minus, KeyCode.Period, KeyCode.Slash, KeyCode.Alpha0, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6, KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Alpha9, KeyCode.Colon, KeyCode.Semicolon, KeyCode.Less, KeyCode.Equals, KeyCode.Greater, KeyCode.Question, KeyCode.At, KeyCode.LeftBracket, KeyCode.Backslash, KeyCode.RightBracket, KeyCode.Caret, KeyCode.Underscore, KeyCode.BackQuote, KeyCode.A, KeyCode.B, KeyCode.C, KeyCode.D, KeyCode.E, KeyCode.F, KeyCode.G, KeyCode.H, KeyCode.I, KeyCode.J, KeyCode.K, KeyCode.L, KeyCode.M, KeyCode.N, KeyCode.O, KeyCode.P, KeyCode.Q, KeyCode.R, KeyCode.S, KeyCode.T, KeyCode.U, KeyCode.V, KeyCode.W, KeyCode.X, KeyCode.Y, KeyCode.Z, KeyCode.Delete, KeyCode.Keypad0, KeyCode.Keypad1, KeyCode.Keypad2, KeyCode.Keypad3, KeyCode.Keypad4, KeyCode.Keypad5, KeyCode.Keypad6, KeyCode.Keypad7, KeyCode.Keypad8, KeyCode.Keypad9, KeyCode.KeypadPeriod, KeyCode.KeypadDivide, KeyCode.KeypadMultiply, KeyCode.KeypadMinus, KeyCode.KeypadPlus, KeyCode.KeypadEnter, KeyCode.KeypadEquals, KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.RightArrow, KeyCode.LeftArrow, KeyCode.Insert, KeyCode.Home, KeyCode.End, KeyCode.PageUp, KeyCode.PageDown, KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5, KeyCode.F6, KeyCode.F7, KeyCode.F8, KeyCode.F9, KeyCode.F10, KeyCode.F11, KeyCode.F12, KeyCode.F13, KeyCode.F14, KeyCode.F15, KeyCode.Numlock, KeyCode.CapsLock, KeyCode.ScrollLock, KeyCode.RightShift, KeyCode.LeftShift, KeyCode.RightControl, KeyCode.LeftControl, KeyCode.RightAlt, KeyCode.LeftAlt, KeyCode.Mouse3, KeyCode.Mouse4, KeyCode.Mouse5, KeyCode.Mouse6, KeyCode.JoystickButton0, KeyCode.JoystickButton1, KeyCode.JoystickButton2, KeyCode.JoystickButton3, KeyCode.JoystickButton4, KeyCode.JoystickButton5, KeyCode.JoystickButton6, KeyCode.JoystickButton7, KeyCode.JoystickButton8, KeyCode.JoystickButton9, KeyCode.JoystickButton10, KeyCode.JoystickButton11, KeyCode.JoystickButton12, KeyCode.JoystickButton13, KeyCode.JoystickButton14, KeyCode.JoystickButton15, KeyCode.JoystickButton16, KeyCode.JoystickButton17, KeyCode.JoystickButton18, KeyCode.JoystickButton19 };
+	}
+
+	private static void Activate(Transform t)
+	{
+		NGUITools.Activate(t, false);
+	}
+
+	private static void Activate(Transform t, bool compatibilityMode)
+	{
+		NGUITools.SetActiveSelf(t.gameObject, true);
+		if (compatibilityMode)
+		{
+			int num = 0;
+			int num1 = t.childCount;
+			while (num < num1)
+			{
+				if (t.GetChild(num).gameObject.activeSelf)
 				{
-					for (int i = 0; i < array.Length; i++)
-					{
-						if (GetActive(array[i]))
-						{
-							mListener = array[i];
-							break;
-						}
-					}
+					return;
 				}
-				if (mListener == null)
-				{
-					Camera camera = Camera.main;
-					if (camera == null)
-					{
-						camera = UnityEngine.Object.FindObjectOfType(typeof(Camera)) as Camera;
-					}
-					if (camera != null)
-					{
-						mListener = camera.gameObject.AddComponent<AudioListener>();
-					}
-				}
+				num++;
 			}
-			if (mListener != null && mListener.enabled && GetActive(mListener.gameObject))
+			int num2 = 0;
+			int num3 = t.childCount;
+			while (num2 < num3)
 			{
-				AudioSource audioSource = mListener.GetComponent<AudioSource>();
-				if (audioSource == null)
-				{
-					audioSource = mListener.gameObject.AddComponent<AudioSource>();
-				}
-				audioSource.priority = 50;
-				audioSource.pitch = pitch;
-				audioSource.PlayOneShot(clip, volume);
-				return audioSource;
+				NGUITools.Activate(t.GetChild(num2), true);
+				num2++;
 			}
 		}
-		return null;
-	}
-
-	public static int RandomRange(int min, int max)
-	{
-		if (min == max)
-		{
-			return min;
-		}
-		return UnityEngine.Random.Range(min, max + 1);
-	}
-
-	public static string GetHierarchy(GameObject obj)
-	{
-		if (obj == null)
-		{
-			return string.Empty;
-		}
-		string text = obj.name;
-		while (obj.transform.parent != null)
-		{
-			obj = obj.transform.parent.gameObject;
-			text = obj.name + "\\" + text;
-		}
-		return text;
-	}
-
-	public static T[] FindActive<T>() where T : Component
-	{
-		return UnityEngine.Object.FindObjectsOfType(typeof(T)) as T[];
-	}
-
-	public static Camera FindCameraForLayer(int layer)
-	{
-		int num = 1 << layer;
-		Camera cachedCamera;
-		for (int i = 0; i < UICamera.list.size; i++)
-		{
-			cachedCamera = UICamera.list.buffer[i].cachedCamera;
-			if ((bool)cachedCamera && (cachedCamera.cullingMask & num) != 0)
-			{
-				return cachedCamera;
-			}
-		}
-		cachedCamera = Camera.main;
-		if ((bool)cachedCamera && (cachedCamera.cullingMask & num) != 0)
-		{
-			return cachedCamera;
-		}
-		Camera[] array = new Camera[Camera.allCamerasCount];
-		int allCameras = Camera.GetAllCameras(array);
-		for (int j = 0; j < allCameras; j++)
-		{
-			cachedCamera = array[j];
-			if ((bool)cachedCamera && cachedCamera.enabled && (cachedCamera.cullingMask & num) != 0)
-			{
-				return cachedCamera;
-			}
-		}
-		return null;
-	}
-
-	public static void AddWidgetCollider(GameObject go)
-	{
-		AddWidgetCollider(go, false);
-	}
-
-	public static void AddWidgetCollider(GameObject go, bool considerInactive)
-	{
-		if (!(go != null))
-		{
-			return;
-		}
-		Collider component = go.GetComponent<Collider>();
-		BoxCollider boxCollider = component as BoxCollider;
-		if (boxCollider != null)
-		{
-			UpdateWidgetCollider(boxCollider, considerInactive);
-		}
-		else
-		{
-			if (component != null)
-			{
-				return;
-			}
-			BoxCollider2D component2 = go.GetComponent<BoxCollider2D>();
-			if (component2 != null)
-			{
-				UpdateWidgetCollider(component2, considerInactive);
-				return;
-			}
-			UICamera uICamera = UICamera.FindCameraForLayer(go.layer);
-			if (uICamera != null && (uICamera.eventType == UICamera.EventType.World_2D || uICamera.eventType == UICamera.EventType.UI_2D))
-			{
-				component2 = go.AddComponent<BoxCollider2D>();
-				component2.isTrigger = true;
-				UIWidget component3 = go.GetComponent<UIWidget>();
-				if (component3 != null)
-				{
-					component3.autoResizeBoxCollider = true;
-				}
-				UpdateWidgetCollider(component2, considerInactive);
-			}
-			else
-			{
-				boxCollider = go.AddComponent<BoxCollider>();
-				boxCollider.isTrigger = true;
-				UIWidget component4 = go.GetComponent<UIWidget>();
-				if (component4 != null)
-				{
-					component4.autoResizeBoxCollider = true;
-				}
-				UpdateWidgetCollider(boxCollider, considerInactive);
-			}
-		}
-	}
-
-	public static void UpdateWidgetCollider(GameObject go)
-	{
-		UpdateWidgetCollider(go, false);
-	}
-
-	public static void UpdateWidgetCollider(GameObject go, bool considerInactive)
-	{
-		if (!(go != null))
-		{
-			return;
-		}
-		BoxCollider component = go.GetComponent<BoxCollider>();
-		if (component != null)
-		{
-			UpdateWidgetCollider(component, considerInactive);
-			return;
-		}
-		BoxCollider2D component2 = go.GetComponent<BoxCollider2D>();
-		if (component2 != null)
-		{
-			UpdateWidgetCollider(component2, considerInactive);
-		}
-	}
-
-	public static void UpdateWidgetCollider(BoxCollider box, bool considerInactive)
-	{
-		if (!(box != null))
-		{
-			return;
-		}
-		GameObject gameObject = box.gameObject;
-		UIWidget component = gameObject.GetComponent<UIWidget>();
-		if (component != null)
-		{
-			Vector4 drawRegion = component.drawRegion;
-			if (drawRegion.x != 0f || drawRegion.y != 0f || drawRegion.z != 1f || drawRegion.w != 1f)
-			{
-				Vector4 drawingDimensions = component.drawingDimensions;
-				box.center = new Vector3((drawingDimensions.x + drawingDimensions.z) * 0.5f, (drawingDimensions.y + drawingDimensions.w) * 0.5f);
-				box.size = new Vector3(drawingDimensions.z - drawingDimensions.x, drawingDimensions.w - drawingDimensions.y);
-			}
-			else
-			{
-				Vector3[] localCorners = component.localCorners;
-				box.center = Vector3.Lerp(localCorners[0], localCorners[2], 0.5f);
-				box.size = localCorners[2] - localCorners[0];
-			}
-		}
-		else
-		{
-			Bounds bounds = NGUIMath.CalculateRelativeWidgetBounds(gameObject.transform, considerInactive);
-			box.center = bounds.center;
-			box.size = new Vector3(bounds.size.x, bounds.size.y, 0f);
-		}
-	}
-
-	public static void UpdateWidgetCollider(BoxCollider2D box, bool considerInactive)
-	{
-		if (box != null)
-		{
-			GameObject gameObject = box.gameObject;
-			UIWidget component = gameObject.GetComponent<UIWidget>();
-			if (component != null)
-			{
-				Vector3[] localCorners = component.localCorners;
-				box.offset = Vector3.Lerp(localCorners[0], localCorners[2], 0.5f);
-				box.size = localCorners[2] - localCorners[0];
-			}
-			else
-			{
-				Bounds bounds = NGUIMath.CalculateRelativeWidgetBounds(gameObject.transform, considerInactive);
-				box.offset = bounds.center;
-				box.size = new Vector2(bounds.size.x, bounds.size.y);
-			}
-		}
-	}
-
-	public static string GetTypeName<T>()
-	{
-		string text = typeof(T).ToString();
-		if (text.StartsWith("UI"))
-		{
-			text = text.Substring(2);
-		}
-		else if (text.StartsWith("UnityEngine."))
-		{
-			text = text.Substring(12);
-		}
-		return text;
-	}
-
-	public static string GetTypeName(UnityEngine.Object obj)
-	{
-		if (obj == null)
-		{
-			return "Null";
-		}
-		string text = obj.GetType().ToString();
-		if (text.StartsWith("UI"))
-		{
-			text = text.Substring(2);
-		}
-		else if (text.StartsWith("UnityEngine."))
-		{
-			text = text.Substring(12);
-		}
-		return text;
-	}
-
-	public static void RegisterUndo(UnityEngine.Object obj, string name)
-	{
-	}
-
-	public static void SetDirty(UnityEngine.Object obj)
-	{
 	}
 
 	public static GameObject AddChild(GameObject parent)
 	{
-		return AddChild(parent, true);
+		return NGUITools.AddChild(parent, true);
 	}
 
 	public static GameObject AddChild(GameObject parent, bool undo)
@@ -528,11 +128,11 @@ public static class NGUITools
 		GameObject gameObject = new GameObject();
 		if (parent != null)
 		{
-			Transform transform = gameObject.transform;
-			transform.parent = parent.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-			transform.localScale = Vector3.one;
+			Transform transforms = gameObject.transform;
+			transforms.parent = parent.transform;
+			transforms.localPosition = Vector3.zero;
+			transforms.localRotation = Quaternion.identity;
+			transforms.localScale = Vector3.one;
 			gameObject.layer = parent.layer;
 		}
 		return gameObject;
@@ -540,744 +140,164 @@ public static class NGUITools
 
 	public static GameObject AddChild(GameObject parent, GameObject prefab)
 	{
-		GameObject gameObject = UnityEngine.Object.Instantiate(prefab);
+		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab);
 		if (gameObject != null && parent != null)
 		{
-			Transform transform = gameObject.transform;
-			transform.parent = parent.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-			transform.localScale = Vector3.one;
+			Transform transforms = gameObject.transform;
+			transforms.parent = parent.transform;
+			transforms.localPosition = Vector3.zero;
+			transforms.localRotation = Quaternion.identity;
+			transforms.localScale = Vector3.one;
 			gameObject.layer = parent.layer;
 		}
 		return gameObject;
 	}
 
-	public static int CalculateRaycastDepth(GameObject go)
+	public static T AddChild<T>(GameObject parent)
+	where T : Component
 	{
-		UIWidget component = go.GetComponent<UIWidget>();
-		if (component != null)
-		{
-			return component.raycastDepth;
-		}
-		UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
-		if (componentsInChildren.Length == 0)
-		{
-			return 0;
-		}
-		int num = int.MaxValue;
-		int i = 0;
-		for (int num2 = componentsInChildren.Length; i < num2; i++)
-		{
-			if (componentsInChildren[i].enabled)
-			{
-				num = Mathf.Min(num, componentsInChildren[i].raycastDepth);
-			}
-		}
-		return num;
+		GameObject typeName = NGUITools.AddChild(parent);
+		typeName.name = NGUITools.GetTypeName<T>();
+		return typeName.AddComponent<T>();
 	}
 
-	public static int CalculateNextDepth(GameObject go)
+	public static T AddChild<T>(GameObject parent, bool undo)
+	where T : Component
 	{
-		if ((bool)go)
-		{
-			int num = -1;
-			UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
-			int i = 0;
-			for (int num2 = componentsInChildren.Length; i < num2; i++)
-			{
-				num = Mathf.Max(num, componentsInChildren[i].depth);
-			}
-			return num + 1;
-		}
-		return 0;
+		GameObject typeName = NGUITools.AddChild(parent, undo);
+		typeName.name = NGUITools.GetTypeName<T>();
+		return typeName.AddComponent<T>();
 	}
 
-	public static int CalculateNextDepth(GameObject go, bool ignoreChildrenWithColliders)
+	public static T AddMissingComponent<T>(this GameObject go)
+	where T : Component
 	{
-		if ((bool)go && ignoreChildrenWithColliders)
+		T component = go.GetComponent<T>();
+		if (component == null)
 		{
-			int num = -1;
-			UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
-			int i = 0;
-			for (int num2 = componentsInChildren.Length; i < num2; i++)
-			{
-				UIWidget uIWidget = componentsInChildren[i];
-				if (!(uIWidget.cachedGameObject != go) || (!(uIWidget.GetComponent<Collider>() != null) && !(uIWidget.GetComponent<Collider2D>() != null)))
-				{
-					num = Mathf.Max(num, uIWidget.depth);
-				}
-			}
-			return num + 1;
+			component = go.AddComponent<T>();
 		}
-		return CalculateNextDepth(go);
+		return component;
 	}
 
-	public static int AdjustDepth(GameObject go, int adjustment)
+	public static UISprite AddSprite(GameObject go, UIAtlas atlas, string spriteName, int depth = 2147483647)
 	{
-		if (go != null)
+		UISpriteData sprite;
+		if (atlas == null)
 		{
-			UIPanel component = go.GetComponent<UIPanel>();
-			if (component != null)
-			{
-				UIPanel[] componentsInChildren = go.GetComponentsInChildren<UIPanel>(true);
-				for (int i = 0; i < componentsInChildren.Length; i++)
-				{
-					componentsInChildren[i].depth += adjustment;
-				}
-				return 1;
-			}
-			component = FindInParents<UIPanel>(go);
-			if (component == null)
-			{
-				return 0;
-			}
-			UIWidget[] componentsInChildren2 = go.GetComponentsInChildren<UIWidget>(true);
-			int j = 0;
-			for (int num = componentsInChildren2.Length; j < num; j++)
-			{
-				UIWidget uIWidget = componentsInChildren2[j];
-				if (!(uIWidget.panel != component))
-				{
-					uIWidget.depth += adjustment;
-				}
-			}
-			return 2;
+			sprite = null;
 		}
-		return 0;
-	}
-
-	public static void BringForward(GameObject go)
-	{
-		switch (AdjustDepth(go, 1000))
+		else
 		{
-		case 1:
-			NormalizePanelDepths();
-			break;
-		case 2:
-			NormalizeWidgetDepths();
-			break;
+			sprite = atlas.GetSprite(spriteName);
 		}
-	}
-
-	public static void PushBack(GameObject go)
-	{
-		switch (AdjustDepth(go, -1000))
-		{
-		case 1:
-			NormalizePanelDepths();
-			break;
-		case 2:
-			NormalizeWidgetDepths();
-			break;
-		}
-	}
-
-	public static void NormalizeDepths()
-	{
-		NormalizeWidgetDepths();
-		NormalizePanelDepths();
-	}
-
-	public static void NormalizeWidgetDepths()
-	{
-		NormalizeWidgetDepths(FindActive<UIWidget>());
-	}
-
-	public static void NormalizeWidgetDepths(GameObject go)
-	{
-		NormalizeWidgetDepths(go.GetComponentsInChildren<UIWidget>());
-	}
-
-	public static void NormalizeWidgetDepths(UIWidget[] list)
-	{
-		int num = list.Length;
-		if (num <= 0)
-		{
-			return;
-		}
-		Array.Sort(list, UIWidget.FullCompareFunc);
-		int num2 = 0;
-		int depth = list[0].depth;
-		for (int i = 0; i < num; i++)
-		{
-			UIWidget uIWidget = list[i];
-			if (uIWidget.depth == depth)
-			{
-				uIWidget.depth = num2;
-				continue;
-			}
-			depth = uIWidget.depth;
-			num2 = (uIWidget.depth = num2 + 1);
-		}
-	}
-
-	public static void NormalizePanelDepths()
-	{
-		UIPanel[] array = FindActive<UIPanel>();
-		int num = array.Length;
-		if (num <= 0)
-		{
-			return;
-		}
-		Array.Sort(array, UIPanel.CompareFunc);
-		int num2 = 0;
-		int depth = array[0].depth;
-		for (int i = 0; i < num; i++)
-		{
-			UIPanel uIPanel = array[i];
-			if (uIPanel.depth == depth)
-			{
-				uIPanel.depth = num2;
-				continue;
-			}
-			depth = uIPanel.depth;
-			num2 = (uIPanel.depth = num2 + 1);
-		}
-	}
-
-	public static UIPanel CreateUI(bool advanced3D)
-	{
-		return CreateUI(null, advanced3D, -1);
-	}
-
-	public static UIPanel CreateUI(bool advanced3D, int layer)
-	{
-		return CreateUI(null, advanced3D, layer);
-	}
-
-	public static UIPanel CreateUI(Transform trans, bool advanced3D, int layer)
-	{
-		UIRoot uIRoot = ((!(trans != null)) ? null : FindInParents<UIRoot>(trans.gameObject));
-		if (uIRoot == null && UIRoot.list.Count > 0)
-		{
-			foreach (UIRoot item in UIRoot.list)
-			{
-				if (item.gameObject.layer == layer)
-				{
-					uIRoot = item;
-					break;
-				}
-			}
-		}
-		if (uIRoot == null)
-		{
-			int i = 0;
-			for (int count = UIPanel.list.Count; i < count; i++)
-			{
-				UIPanel uIPanel = UIPanel.list[i];
-				GameObject gameObject = uIPanel.gameObject;
-				if (gameObject.hideFlags == HideFlags.None && gameObject.layer == layer)
-				{
-					trans.parent = uIPanel.transform;
-					trans.localScale = Vector3.one;
-					return uIPanel;
-				}
-			}
-		}
-		if (uIRoot != null)
-		{
-			UICamera componentInChildren = uIRoot.GetComponentInChildren<UICamera>();
-			if (componentInChildren != null && componentInChildren.GetComponent<Camera>().orthographic == advanced3D)
-			{
-				trans = null;
-				uIRoot = null;
-			}
-		}
-		if (uIRoot == null)
-		{
-			GameObject gameObject2 = AddChild(null, false);
-			uIRoot = gameObject2.AddComponent<UIRoot>();
-			if (layer == -1)
-			{
-				layer = LayerMask.NameToLayer("UI");
-			}
-			if (layer == -1)
-			{
-				layer = LayerMask.NameToLayer("2D UI");
-			}
-			gameObject2.layer = layer;
-			if (advanced3D)
-			{
-				gameObject2.name = "UI Root (3D)";
-				uIRoot.scalingStyle = UIRoot.Scaling.Constrained;
-			}
-			else
-			{
-				gameObject2.name = "UI Root";
-				uIRoot.scalingStyle = UIRoot.Scaling.Flexible;
-			}
-		}
-		UIPanel uIPanel2 = uIRoot.GetComponentInChildren<UIPanel>();
-		if (uIPanel2 == null)
-		{
-			Camera[] array = FindActive<Camera>();
-			float num = -1f;
-			bool flag = false;
-			int num2 = 1 << uIRoot.gameObject.layer;
-			foreach (Camera camera in array)
-			{
-				if (camera.clearFlags == CameraClearFlags.Color || camera.clearFlags == CameraClearFlags.Skybox)
-				{
-					flag = true;
-				}
-				num = Mathf.Max(num, camera.depth);
-				camera.cullingMask &= ~num2;
-			}
-			Camera camera2 = AddChild<Camera>(uIRoot.gameObject, false);
-			camera2.gameObject.AddComponent<UICamera>();
-			camera2.clearFlags = ((!flag) ? CameraClearFlags.Color : CameraClearFlags.Depth);
-			camera2.backgroundColor = Color.grey;
-			camera2.cullingMask = num2;
-			camera2.depth = num + 1f;
-			if (advanced3D)
-			{
-				camera2.nearClipPlane = 0.1f;
-				camera2.farClipPlane = 4f;
-				camera2.transform.localPosition = new Vector3(0f, 0f, -700f);
-			}
-			else
-			{
-				camera2.orthographic = true;
-				camera2.orthographicSize = 1f;
-				camera2.nearClipPlane = -10f;
-				camera2.farClipPlane = 10f;
-			}
-			AudioListener[] array2 = FindActive<AudioListener>();
-			if (array2 == null || array2.Length == 0)
-			{
-				camera2.gameObject.AddComponent<AudioListener>();
-			}
-			uIPanel2 = uIRoot.gameObject.AddComponent<UIPanel>();
-		}
-		if (trans != null)
-		{
-			while (trans.parent != null)
-			{
-				trans = trans.parent;
-			}
-			if (IsChild(trans, uIPanel2.transform))
-			{
-				uIPanel2 = trans.gameObject.AddComponent<UIPanel>();
-			}
-			else
-			{
-				trans.parent = uIPanel2.transform;
-				trans.localScale = Vector3.one;
-				trans.localPosition = Vector3.zero;
-				SetChildLayer(uIPanel2.cachedTransform, uIPanel2.cachedGameObject.layer);
-			}
-		}
-		return uIPanel2;
-	}
-
-	public static void SetChildLayer(Transform t, int layer)
-	{
-		for (int i = 0; i < t.childCount; i++)
-		{
-			Transform child = t.GetChild(i);
-			child.gameObject.layer = layer;
-			SetChildLayer(child, layer);
-		}
-	}
-
-	public static T AddChild<T>(GameObject parent) where T : Component
-	{
-		GameObject gameObject = AddChild(parent);
-		gameObject.name = GetTypeName<T>();
-		return gameObject.AddComponent<T>();
-	}
-
-	public static T AddChild<T>(GameObject parent, bool undo) where T : Component
-	{
-		GameObject gameObject = AddChild(parent, undo);
-		gameObject.name = GetTypeName<T>();
-		return gameObject.AddComponent<T>();
-	}
-
-	public static T AddWidget<T>(GameObject go, int depth = int.MaxValue) where T : UIWidget
-	{
-		if (depth == int.MaxValue)
-		{
-			depth = CalculateNextDepth(go);
-		}
-		T result = AddChild<T>(go);
-		result.width = 100;
-		result.height = 100;
-		result.depth = depth;
-		return result;
-	}
-
-	public static UISprite AddSprite(GameObject go, UIAtlas atlas, string spriteName, int depth = int.MaxValue)
-	{
-		UISpriteData uISpriteData = ((!(atlas != null)) ? null : atlas.GetSprite(spriteName));
-		UISprite uISprite = AddWidget<UISprite>(go, depth);
-		uISprite.type = ((uISpriteData != null && uISpriteData.hasBorder) ? UIBasicSprite.Type.Sliced : UIBasicSprite.Type.Simple);
+		UISpriteData uISpriteDatum = sprite;
+		UISprite uISprite = NGUITools.AddWidget<UISprite>(go, depth);
+		uISprite.type = (uISpriteDatum == null || !uISpriteDatum.hasBorder ? UIBasicSprite.Type.Simple : UIBasicSprite.Type.Sliced);
 		uISprite.atlas = atlas;
 		uISprite.spriteName = spriteName;
 		return uISprite;
 	}
 
-	public static GameObject GetRoot(GameObject go)
+	public static T AddWidget<T>(GameObject go, int depth = 2147483647)
+	where T : UIWidget
 	{
-		Transform transform = go.transform;
-		while (true)
+		if (depth == 2147483647)
 		{
-			Transform parent = transform.parent;
-			if (parent == null)
-			{
-				break;
-			}
-			transform = parent;
+			depth = NGUITools.CalculateNextDepth(go);
 		}
-		return transform.gameObject;
+		T t = NGUITools.AddChild<T>(go);
+		t.width = 100;
+		t.height = 100;
+		t.depth = depth;
+		return t;
 	}
 
-	public static T FindInParents<T>(GameObject go) where T : Component
+	public static void AddWidgetCollider(GameObject go)
 	{
-		if (go == null)
-		{
-			return (T)default(T);
-		}
-		T component = go.GetComponent<T>();
-		if ((UnityEngine.Object)component == (UnityEngine.Object)default(UnityEngine.Object))
-		{
-			Transform parent = go.transform.parent;
-			while (parent != null && (UnityEngine.Object)component == (UnityEngine.Object)default(UnityEngine.Object))
-			{
-				component = parent.gameObject.GetComponent<T>();
-				parent = parent.parent;
-			}
-		}
-		return component;
+		NGUITools.AddWidgetCollider(go, false);
 	}
 
-	public static T FindInParents<T>(Transform trans) where T : Component
+	public static void AddWidgetCollider(GameObject go, bool considerInactive)
 	{
-		if (trans == null)
+		if (go != null)
 		{
-			return (T)default(T);
-		}
-		return trans.GetComponentInParent<T>();
-	}
-
-	public static void Destroy(UnityEngine.Object obj)
-	{
-		if (!obj)
-		{
-			return;
-		}
-		if (obj is Transform)
-		{
-			Transform transform = obj as Transform;
-			GameObject gameObject = transform.gameObject;
-			if (Application.isPlaying)
+			Collider component = go.GetComponent<Collider>();
+			BoxCollider boxCollider = component as BoxCollider;
+			if (boxCollider != null)
 			{
-				transform.parent = null;
-				UnityEngine.Object.Destroy(gameObject);
+				NGUITools.UpdateWidgetCollider(boxCollider, considerInactive);
+				return;
 			}
-			else
-			{
-				UnityEngine.Object.DestroyImmediate(gameObject);
-			}
-		}
-		else if (obj is GameObject)
-		{
-			GameObject gameObject2 = obj as GameObject;
-			Transform transform2 = gameObject2.transform;
-			if (Application.isPlaying)
-			{
-				transform2.parent = null;
-				UnityEngine.Object.Destroy(gameObject2);
-			}
-			else
-			{
-				UnityEngine.Object.DestroyImmediate(gameObject2);
-			}
-		}
-		else if (Application.isPlaying)
-		{
-			UnityEngine.Object.Destroy(obj);
-		}
-		else
-		{
-			UnityEngine.Object.DestroyImmediate(obj);
-		}
-	}
-
-	public static void DestroyChildren(this Transform t)
-	{
-		bool isPlaying = Application.isPlaying;
-		while (t.childCount != 0)
-		{
-			Transform child = t.GetChild(0);
-			if (isPlaying)
-			{
-				child.parent = null;
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-			else
-			{
-				UnityEngine.Object.DestroyImmediate(child.gameObject);
-			}
-		}
-	}
-
-	public static void DestroyImmediate(UnityEngine.Object obj)
-	{
-		if (obj != null)
-		{
-			if (Application.isEditor)
-			{
-				UnityEngine.Object.DestroyImmediate(obj);
-			}
-			else
-			{
-				UnityEngine.Object.Destroy(obj);
-			}
-		}
-	}
-
-	public static void Broadcast(string funcName)
-	{
-		GameObject[] array = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
-		int i = 0;
-		for (int num = array.Length; i < num; i++)
-		{
-			array[i].SendMessage(funcName, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	public static void Broadcast(string funcName, object param)
-	{
-		GameObject[] array = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
-		int i = 0;
-		for (int num = array.Length; i < num; i++)
-		{
-			array[i].SendMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	public static bool IsChild(Transform parent, Transform child)
-	{
-		if (parent == null || child == null)
-		{
-			return false;
-		}
-		while (child != null)
-		{
-			if (child == parent)
-			{
-				return true;
-			}
-			child = child.parent;
-		}
-		return false;
-	}
-
-	private static void Activate(Transform t)
-	{
-		Activate(t, false);
-	}
-
-	private static void Activate(Transform t, bool compatibilityMode)
-	{
-		SetActiveSelf(t.gameObject, true);
-		if (!compatibilityMode)
-		{
-			return;
-		}
-		int i = 0;
-		for (int childCount = t.childCount; i < childCount; i++)
-		{
-			Transform child = t.GetChild(i);
-			if (child.gameObject.activeSelf)
+			if (component != null)
 			{
 				return;
 			}
-		}
-		int j = 0;
-		for (int childCount2 = t.childCount; j < childCount2; j++)
-		{
-			Transform child2 = t.GetChild(j);
-			Activate(child2, true);
-		}
-	}
-
-	private static void Deactivate(Transform t)
-	{
-		SetActiveSelf(t.gameObject, false);
-	}
-
-	public static void SetActive(GameObject go, bool state)
-	{
-		SetActive(go, state, true);
-	}
-
-	public static void SetActive(GameObject go, bool state, bool compatibilityMode)
-	{
-		if ((bool)go)
-		{
-			if (state)
+			BoxCollider2D boxCollider2D = go.GetComponent<BoxCollider2D>();
+			if (boxCollider2D != null)
 			{
-				Activate(go.transform, compatibilityMode);
-				CallCreatePanel(go.transform);
+				NGUITools.UpdateWidgetCollider(boxCollider2D, considerInactive);
+				return;
 			}
-			else
+			UICamera uICamera = UICamera.FindCameraForLayer(go.layer);
+			if (uICamera != null && (uICamera.eventType == UICamera.EventType.World_2D || uICamera.eventType == UICamera.EventType.UI_2D))
 			{
-				Deactivate(go.transform);
+				boxCollider2D = go.AddComponent<BoxCollider2D>();
+				boxCollider2D.isTrigger = true;
+				UIWidget uIWidget = go.GetComponent<UIWidget>();
+				if (uIWidget != null)
+				{
+					uIWidget.autoResizeBoxCollider = true;
+				}
+				NGUITools.UpdateWidgetCollider(boxCollider2D, considerInactive);
+				return;
 			}
+			boxCollider = go.AddComponent<BoxCollider>();
+			boxCollider.isTrigger = true;
+			UIWidget component1 = go.GetComponent<UIWidget>();
+			if (component1 != null)
+			{
+				component1.autoResizeBoxCollider = true;
+			}
+			NGUITools.UpdateWidgetCollider(boxCollider, considerInactive);
 		}
 	}
 
-	[DebuggerStepThrough]
-	[DebuggerHidden]
-	private static void CallCreatePanel(Transform t)
+	public static int AdjustDepth(GameObject go, int adjustment)
 	{
-		UIWidget component = t.GetComponent<UIWidget>();
+		if (go == null)
+		{
+			return 0;
+		}
+		UIPanel component = go.GetComponent<UIPanel>();
 		if (component != null)
 		{
-			component.CreatePanel();
-		}
-		int i = 0;
-		for (int childCount = t.childCount; i < childCount; i++)
-		{
-			CallCreatePanel(t.GetChild(i));
-		}
-	}
-
-	public static void SetActiveChildren(GameObject go, bool state)
-	{
-		Transform transform = go.transform;
-		if (state)
-		{
-			int i = 0;
-			for (int childCount = transform.childCount; i < childCount; i++)
+			UIPanel[] componentsInChildren = go.GetComponentsInChildren<UIPanel>(true);
+			for (int i = 0; i < (int)componentsInChildren.Length; i++)
 			{
-				Transform child = transform.GetChild(i);
-				Activate(child);
+				UIPanel uIPanel = componentsInChildren[i];
+				uIPanel.depth = uIPanel.depth + adjustment;
 			}
+			return 1;
 		}
-		else
+		component = NGUITools.FindInParents<UIPanel>(go);
+		if (component == null)
 		{
-			int j = 0;
-			for (int childCount2 = transform.childCount; j < childCount2; j++)
+			return 0;
+		}
+		UIWidget[] uIWidgetArray = go.GetComponentsInChildren<UIWidget>(true);
+		int num = 0;
+		int length = (int)uIWidgetArray.Length;
+		while (num < length)
+		{
+			UIWidget uIWidget = uIWidgetArray[num];
+			if (uIWidget.panel == component)
 			{
-				Transform child2 = transform.GetChild(j);
-				Deactivate(child2);
+				uIWidget.depth = uIWidget.depth + adjustment;
 			}
+			num++;
 		}
-	}
-
-	[Obsolete("Use NGUITools.GetActive instead")]
-	public static bool IsActive(Behaviour mb)
-	{
-		return mb != null && mb.enabled && mb.gameObject.activeInHierarchy;
-	}
-
-	[DebuggerStepThrough]
-	[DebuggerHidden]
-	public static bool GetActive(Behaviour mb)
-	{
-		return (bool)mb && mb.enabled && mb.gameObject.activeInHierarchy;
-	}
-
-	[DebuggerHidden]
-	[DebuggerStepThrough]
-	public static bool GetActive(GameObject go)
-	{
-		return (bool)go && go.activeInHierarchy;
-	}
-
-	[DebuggerStepThrough]
-	[DebuggerHidden]
-	public static void SetActiveSelf(GameObject go, bool state)
-	{
-		go.SetActive(state);
-	}
-
-	public static void SetLayer(GameObject go, int layer)
-	{
-		go.layer = layer;
-		Transform transform = go.transform;
-		int i = 0;
-		for (int childCount = transform.childCount; i < childCount; i++)
-		{
-			Transform child = transform.GetChild(i);
-			SetLayer(child.gameObject, layer);
-		}
-	}
-
-	public static Vector3 Round(Vector3 v)
-	{
-		v.x = Mathf.Round(v.x);
-		v.y = Mathf.Round(v.y);
-		v.z = Mathf.Round(v.z);
-		return v;
-	}
-
-	public static void MakePixelPerfect(Transform t)
-	{
-		UIWidget component = t.GetComponent<UIWidget>();
-		if (component != null)
-		{
-			component.MakePixelPerfect();
-		}
-		if (t.GetComponent<UIAnchor>() == null && t.GetComponent<UIRoot>() == null)
-		{
-			t.localPosition = Round(t.localPosition);
-			t.localScale = Round(t.localScale);
-		}
-		int i = 0;
-		for (int childCount = t.childCount; i < childCount; i++)
-		{
-			MakePixelPerfect(t.GetChild(i));
-		}
-	}
-
-	public static bool Save(string fileName, byte[] bytes)
-	{
-		//Discarded unreachable code: IL_0057
-		if (!fileAccess)
-		{
-			return false;
-		}
-		string path = Application.persistentDataPath + "/" + fileName;
-		if (bytes == null)
-		{
-			if (File.Exists(path))
-			{
-				File.Delete(path);
-			}
-			return true;
-		}
-		FileStream fileStream = null;
-		try
-		{
-			fileStream = File.Create(path);
-		}
-		catch (Exception ex)
-		{
-			UnityEngine.Debug.LogError(ex.Message);
-			return false;
-		}
-		fileStream.Write(bytes, 0, bytes.Length);
-		fileStream.Close();
-		return true;
-	}
-
-	public static byte[] Load(string fileName)
-	{
-		if (!fileAccess)
-		{
-			return null;
-		}
-		string path = Application.persistentDataPath + "/" + fileName;
-		if (File.Exists(path))
-		{
-			return File.ReadAllBytes(path);
-		}
-		return null;
+		return 2;
 	}
 
 	public static Color ApplyPMA(Color c)
@@ -1291,13 +311,353 @@ public static class NGUITools
 		return c;
 	}
 
-	public static void MarkParentAsChanged(GameObject go)
+	public static void BringForward(GameObject go)
 	{
-		UIRect[] componentsInChildren = go.GetComponentsInChildren<UIRect>();
-		int i = 0;
-		for (int num = componentsInChildren.Length; i < num; i++)
+		int num = NGUITools.AdjustDepth(go, 1000);
+		if (num == 1)
 		{
-			componentsInChildren[i].ParentHasChanged();
+			NGUITools.NormalizePanelDepths();
+		}
+		else if (num == 2)
+		{
+			NGUITools.NormalizeWidgetDepths();
+		}
+	}
+
+	public static void Broadcast(string funcName)
+	{
+		GameObject[] gameObjectArray = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
+		int num = 0;
+		int length = (int)gameObjectArray.Length;
+		while (num < length)
+		{
+			gameObjectArray[num].SendMessage(funcName, SendMessageOptions.DontRequireReceiver);
+			num++;
+		}
+	}
+
+	public static void Broadcast(string funcName, object param)
+	{
+		GameObject[] gameObjectArray = UnityEngine.Object.FindObjectsOfType(typeof(GameObject)) as GameObject[];
+		int num = 0;
+		int length = (int)gameObjectArray.Length;
+		while (num < length)
+		{
+			gameObjectArray[num].SendMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
+			num++;
+		}
+	}
+
+	public static int CalculateNextDepth(GameObject go)
+	{
+		if (!go)
+		{
+			return 0;
+		}
+		int num = -1;
+		UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
+		int num1 = 0;
+		int length = (int)componentsInChildren.Length;
+		while (num1 < length)
+		{
+			num = Mathf.Max(num, componentsInChildren[num1].depth);
+			num1++;
+		}
+		return num + 1;
+	}
+
+	public static int CalculateNextDepth(GameObject go, bool ignoreChildrenWithColliders)
+	{
+		if (!go || !ignoreChildrenWithColliders)
+		{
+			return NGUITools.CalculateNextDepth(go);
+		}
+		int num = -1;
+		UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
+		int num1 = 0;
+		int length = (int)componentsInChildren.Length;
+		while (num1 < length)
+		{
+			UIWidget uIWidget = componentsInChildren[num1];
+			if (!(uIWidget.cachedGameObject != go) || !(uIWidget.GetComponent<Collider>() != null) && !(uIWidget.GetComponent<Collider2D>() != null))
+			{
+				num = Mathf.Max(num, uIWidget.depth);
+			}
+			num1++;
+		}
+		return num + 1;
+	}
+
+	public static int CalculateRaycastDepth(GameObject go)
+	{
+		UIWidget component = go.GetComponent<UIWidget>();
+		if (component != null)
+		{
+			return component.raycastDepth;
+		}
+		UIWidget[] componentsInChildren = go.GetComponentsInChildren<UIWidget>();
+		if ((int)componentsInChildren.Length == 0)
+		{
+			return 0;
+		}
+		int num = 2147483647;
+		int num1 = 0;
+		int length = (int)componentsInChildren.Length;
+		while (num1 < length)
+		{
+			if (componentsInChildren[num1].enabled)
+			{
+				num = Mathf.Min(num, componentsInChildren[num1].raycastDepth);
+			}
+			num1++;
+		}
+		return num;
+	}
+
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	private static void CallCreatePanel(Transform t)
+	{
+		UIWidget component = t.GetComponent<UIWidget>();
+		if (component != null)
+		{
+			component.CreatePanel();
+		}
+		int num = 0;
+		int num1 = t.childCount;
+		while (num < num1)
+		{
+			NGUITools.CallCreatePanel(t.GetChild(num));
+			num++;
+		}
+	}
+
+	public static UIPanel CreateUI(bool advanced3D)
+	{
+		return NGUITools.CreateUI(null, advanced3D, -1);
+	}
+
+	public static UIPanel CreateUI(bool advanced3D, int layer)
+	{
+		return NGUITools.CreateUI(null, advanced3D, layer);
+	}
+
+	public static UIPanel CreateUI(Transform trans, bool advanced3D, int layer)
+	{
+		UIRoot uIRoot;
+		if (trans == null)
+		{
+			uIRoot = null;
+		}
+		else
+		{
+			uIRoot = NGUITools.FindInParents<UIRoot>(trans.gameObject);
+		}
+		UIRoot uIRoot1 = uIRoot;
+		if (uIRoot1 == null && UIRoot.list.Count > 0)
+		{
+			foreach (UIRoot uIRoot2 in UIRoot.list)
+			{
+				if (uIRoot2.gameObject.layer != layer)
+				{
+					continue;
+				}
+				uIRoot1 = uIRoot2;
+				break;
+			}
+		}
+		if (uIRoot1 == null)
+		{
+			int num = 0;
+			int count = UIPanel.list.Count;
+			while (num < count)
+			{
+				UIPanel item = UIPanel.list[num];
+				GameObject gameObject = item.gameObject;
+				if (gameObject.hideFlags == HideFlags.None && gameObject.layer == layer)
+				{
+					trans.parent = item.transform;
+					trans.localScale = Vector3.one;
+					return item;
+				}
+				num++;
+			}
+		}
+		if (uIRoot1 != null)
+		{
+			UICamera componentInChildren = uIRoot1.GetComponentInChildren<UICamera>();
+			if (componentInChildren != null && componentInChildren.GetComponent<Camera>().orthographic == advanced3D)
+			{
+				trans = null;
+				uIRoot1 = null;
+			}
+		}
+		if (uIRoot1 == null)
+		{
+			GameObject gameObject1 = NGUITools.AddChild(null, false);
+			uIRoot1 = gameObject1.AddComponent<UIRoot>();
+			if (layer == -1)
+			{
+				layer = LayerMask.NameToLayer("UI");
+			}
+			if (layer == -1)
+			{
+				layer = LayerMask.NameToLayer("2D UI");
+			}
+			gameObject1.layer = layer;
+			if (!advanced3D)
+			{
+				gameObject1.name = "UI Root";
+				uIRoot1.scalingStyle = UIRoot.Scaling.Flexible;
+			}
+			else
+			{
+				gameObject1.name = "UI Root (3D)";
+				uIRoot1.scalingStyle = UIRoot.Scaling.Constrained;
+			}
+		}
+		UIPanel uIPanel = uIRoot1.GetComponentInChildren<UIPanel>();
+		if (uIPanel == null)
+		{
+			Camera[] cameraArray = NGUITools.FindActive<Camera>();
+			float single = -1f;
+			bool flag = false;
+			int num1 = 1 << (uIRoot1.gameObject.layer & 31);
+			for (int i = 0; i < (int)cameraArray.Length; i++)
+			{
+				Camera camera = cameraArray[i];
+				if (camera.clearFlags == CameraClearFlags.Color || camera.clearFlags == CameraClearFlags.Skybox)
+				{
+					flag = true;
+				}
+				single = Mathf.Max(single, camera.depth);
+				camera.cullingMask = camera.cullingMask & ~num1;
+			}
+			Camera vector3 = NGUITools.AddChild<Camera>(uIRoot1.gameObject, false);
+			vector3.gameObject.AddComponent<UICamera>();
+			vector3.clearFlags = (!flag ? CameraClearFlags.Color : CameraClearFlags.Depth);
+			vector3.backgroundColor = Color.grey;
+			vector3.cullingMask = num1;
+			vector3.depth = single + 1f;
+			if (!advanced3D)
+			{
+				vector3.orthographic = true;
+				vector3.orthographicSize = 1f;
+				vector3.nearClipPlane = -10f;
+				vector3.farClipPlane = 10f;
+			}
+			else
+			{
+				vector3.nearClipPlane = 0.1f;
+				vector3.farClipPlane = 4f;
+				vector3.transform.localPosition = new Vector3(0f, 0f, -700f);
+			}
+			AudioListener[] audioListenerArray = NGUITools.FindActive<AudioListener>();
+			if (audioListenerArray == null || (int)audioListenerArray.Length == 0)
+			{
+				vector3.gameObject.AddComponent<AudioListener>();
+			}
+			uIPanel = uIRoot1.gameObject.AddComponent<UIPanel>();
+		}
+		if (trans != null)
+		{
+			while (trans.parent != null)
+			{
+				trans = trans.parent;
+			}
+			if (!NGUITools.IsChild(trans, uIPanel.transform))
+			{
+				trans.parent = uIPanel.transform;
+				trans.localScale = Vector3.one;
+				trans.localPosition = Vector3.zero;
+				NGUITools.SetChildLayer(uIPanel.cachedTransform, uIPanel.cachedGameObject.layer);
+			}
+			else
+			{
+				uIPanel = trans.gameObject.AddComponent<UIPanel>();
+			}
+		}
+		return uIPanel;
+	}
+
+	private static void Deactivate(Transform t)
+	{
+		NGUITools.SetActiveSelf(t.gameObject, false);
+	}
+
+	public static void Destroy(UnityEngine.Object obj)
+	{
+		if (obj)
+		{
+			if (obj is Transform)
+			{
+				Transform transforms = obj as Transform;
+				GameObject gameObject = transforms.gameObject;
+				if (!Application.isPlaying)
+				{
+					UnityEngine.Object.DestroyImmediate(gameObject);
+				}
+				else
+				{
+					transforms.parent = null;
+					UnityEngine.Object.Destroy(gameObject);
+				}
+			}
+			else if (obj is GameObject)
+			{
+				GameObject gameObject1 = obj as GameObject;
+				Transform transforms1 = gameObject1.transform;
+				if (!Application.isPlaying)
+				{
+					UnityEngine.Object.DestroyImmediate(gameObject1);
+				}
+				else
+				{
+					transforms1.parent = null;
+					UnityEngine.Object.Destroy(gameObject1);
+				}
+			}
+			else if (!Application.isPlaying)
+			{
+				UnityEngine.Object.DestroyImmediate(obj);
+			}
+			else
+			{
+				UnityEngine.Object.Destroy(obj);
+			}
+		}
+	}
+
+	public static void DestroyChildren(this Transform t)
+	{
+		bool flag = Application.isPlaying;
+		while (t.childCount != 0)
+		{
+			Transform child = t.GetChild(0);
+			if (!flag)
+			{
+				UnityEngine.Object.DestroyImmediate(child.gameObject);
+			}
+			else
+			{
+				child.parent = null;
+				UnityEngine.Object.Destroy(child.gameObject);
+			}
+		}
+	}
+
+	public static void DestroyImmediate(UnityEngine.Object obj)
+	{
+		if (obj != null)
+		{
+			if (!Application.isEditor)
+			{
+				UnityEngine.Object.Destroy(obj);
+			}
+			else
+			{
+				UnityEngine.Object.DestroyImmediate(obj);
+			}
 		}
 	}
 
@@ -1307,26 +667,156 @@ public static class NGUITools
 		return NGUIText.EncodeColor24(c);
 	}
 
-	[Obsolete("Use NGUIText.ParseColor instead")]
-	public static Color ParseColor(string text, int offset)
+	public static void Execute<T>(GameObject go, string funcName)
+	where T : Component
 	{
-		return NGUIText.ParseColor24(text, offset);
-	}
-
-	[Obsolete("Use NGUIText.StripSymbols instead")]
-	public static string StripSymbols(string text)
-	{
-		return NGUIText.StripSymbols(text);
-	}
-
-	public static T AddMissingComponent<T>(this GameObject go) where T : Component
-	{
-		T val = go.GetComponent<T>();
-		if ((UnityEngine.Object)val == (UnityEngine.Object)default(UnityEngine.Object))
+		T[] components = go.GetComponents<T>();
+		for (int i = 0; i < (int)components.Length; i++)
 		{
-			val = go.AddComponent<T>();
+			T t = components[i];
+			MethodInfo method = t.GetType().GetMethod(funcName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (method != null)
+			{
+				method.Invoke(t, null);
+			}
 		}
-		return val;
+	}
+
+	public static void ExecuteAll<T>(GameObject root, string funcName)
+	where T : Component
+	{
+		NGUITools.Execute<T>(root, funcName);
+		Transform transforms = root.transform;
+		int num = 0;
+		int num1 = transforms.childCount;
+		while (num < num1)
+		{
+			NGUITools.ExecuteAll<T>(transforms.GetChild(num).gameObject, funcName);
+			num++;
+		}
+	}
+
+	public static T[] FindActive<T>()
+	where T : Component
+	{
+		return UnityEngine.Object.FindObjectsOfType(typeof(T)) as T[];
+	}
+
+	public static Camera FindCameraForLayer(int layer)
+	{
+		Camera camera;
+		int num = 1 << (layer & 31);
+		for (int i = 0; i < UICamera.list.size; i++)
+		{
+			camera = UICamera.list.buffer[i].cachedCamera;
+			if (camera && (camera.cullingMask & num) != 0)
+			{
+				return camera;
+			}
+		}
+		camera = Camera.main;
+		if (camera && (camera.cullingMask & num) != 0)
+		{
+			return camera;
+		}
+		Camera[] cameraArray = new Camera[Camera.allCamerasCount];
+		int allCameras = Camera.GetAllCameras(cameraArray);
+		for (int j = 0; j < allCameras; j++)
+		{
+			camera = cameraArray[j];
+			if (camera && camera.enabled && (camera.cullingMask & num) != 0)
+			{
+				return camera;
+			}
+		}
+		return null;
+	}
+
+	public static T FindInParents<T>(GameObject go)
+	where T : Component
+	{
+		if (go == null)
+		{
+			return (T)null;
+		}
+		T component = go.GetComponent<T>();
+		if (component == null)
+		{
+			for (Transform i = go.transform.parent; i != null && component == null; i = i.parent)
+			{
+				component = i.gameObject.GetComponent<T>();
+			}
+		}
+		return component;
+	}
+
+	public static T FindInParents<T>(Transform trans)
+	where T : Component
+	{
+		if (trans == null)
+		{
+			return (T)null;
+		}
+		return trans.GetComponentInParent<T>();
+	}
+
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	public static bool GetActive(Behaviour mb)
+	{
+		return (!mb || !mb.enabled ? false : mb.gameObject.activeInHierarchy);
+	}
+
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	public static bool GetActive(GameObject go)
+	{
+		return (!go ? false : go.activeInHierarchy);
+	}
+
+	public static string GetFuncName(object obj, string method)
+	{
+		if (obj == null)
+		{
+			return "<null>";
+		}
+		string str = obj.GetType().ToString();
+		int num = str.LastIndexOf('/');
+		if (num > 0)
+		{
+			str = str.Substring(num + 1);
+		}
+		return (!string.IsNullOrEmpty(method) ? string.Concat(str, "/", method) : str);
+	}
+
+	public static string GetHierarchy(GameObject obj)
+	{
+		if (obj == null)
+		{
+			return string.Empty;
+		}
+		string str = obj.name;
+		while (obj.transform.parent != null)
+		{
+			obj = obj.transform.parent.gameObject;
+			str = string.Concat(obj.name, "\\", str);
+		}
+		return str;
+	}
+
+	public static GameObject GetRoot(GameObject go)
+	{
+		Transform transforms = go.transform;
+		while (true)
+		{
+			Transform transforms1 = transforms.parent;
+			if (transforms1 == null)
+			{
+				break;
+			}
+			transforms = transforms1;
+		}
+		return transforms.gameObject;
 	}
 
 	public static Vector3[] GetSides(this Camera cam)
@@ -1346,58 +836,90 @@ public static class NGUITools
 
 	public static Vector3[] GetSides(this Camera cam, float depth, Transform relativeTo)
 	{
-		if (cam.orthographic)
+		if (!cam.orthographic)
 		{
-			float orthographicSize = cam.orthographicSize;
-			float num = 0f - orthographicSize;
-			float num2 = orthographicSize;
-			float y = 0f - orthographicSize;
-			float y2 = orthographicSize;
-			Rect rect = cam.rect;
-			Vector2 vector = screenSize;
-			float num3 = vector.x / vector.y;
-			num3 *= rect.width / rect.height;
-			num *= num3;
-			num2 *= num3;
-			Transform transform = cam.transform;
-			Quaternion rotation = transform.rotation;
-			Vector3 position = transform.position;
-			int num4 = Mathf.RoundToInt(vector.x);
-			int num5 = Mathf.RoundToInt(vector.y);
-			if ((num4 & 1) == 1)
-			{
-				position.x -= 1f / vector.x;
-			}
-			if ((num5 & 1) == 1)
-			{
-				position.y += 1f / vector.y;
-			}
-			mSides[0] = rotation * new Vector3(num, 0f, depth) + position;
-			mSides[1] = rotation * new Vector3(0f, y2, depth) + position;
-			mSides[2] = rotation * new Vector3(num2, 0f, depth) + position;
-			mSides[3] = rotation * new Vector3(0f, y, depth) + position;
+			NGUITools.mSides[0] = cam.ViewportToWorldPoint(new Vector3(0f, 0.5f, depth));
+			NGUITools.mSides[1] = cam.ViewportToWorldPoint(new Vector3(0.5f, 1f, depth));
+			NGUITools.mSides[2] = cam.ViewportToWorldPoint(new Vector3(1f, 0.5f, depth));
+			NGUITools.mSides[3] = cam.ViewportToWorldPoint(new Vector3(0.5f, 0f, depth));
 		}
 		else
 		{
-			mSides[0] = cam.ViewportToWorldPoint(new Vector3(0f, 0.5f, depth));
-			mSides[1] = cam.ViewportToWorldPoint(new Vector3(0.5f, 1f, depth));
-			mSides[2] = cam.ViewportToWorldPoint(new Vector3(1f, 0.5f, depth));
-			mSides[3] = cam.ViewportToWorldPoint(new Vector3(0.5f, 0f, depth));
+			float single = cam.orthographicSize;
+			float single1 = -single;
+			float single2 = single;
+			float single3 = -single;
+			float single4 = single;
+			Rect rect = cam.rect;
+			Vector2 vector2 = NGUITools.screenSize;
+			float single5 = vector2.x / vector2.y;
+			single5 = single5 * (rect.width / rect.height);
+			single1 *= single5;
+			single2 *= single5;
+			Transform transforms = cam.transform;
+			Quaternion quaternion = transforms.rotation;
+			Vector3 vector3 = transforms.position;
+			int num = Mathf.RoundToInt(vector2.x);
+			int num1 = Mathf.RoundToInt(vector2.y);
+			if ((num & 1) == 1)
+			{
+				vector3.x = vector3.x - 1f / vector2.x;
+			}
+			if ((num1 & 1) == 1)
+			{
+				vector3.y = vector3.y + 1f / vector2.y;
+			}
+			NGUITools.mSides[0] = (quaternion * new Vector3(single1, 0f, depth)) + vector3;
+			NGUITools.mSides[1] = (quaternion * new Vector3(0f, single4, depth)) + vector3;
+			NGUITools.mSides[2] = (quaternion * new Vector3(single2, 0f, depth)) + vector3;
+			NGUITools.mSides[3] = (quaternion * new Vector3(0f, single3, depth)) + vector3;
 		}
 		if (relativeTo != null)
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				mSides[i] = relativeTo.InverseTransformPoint(mSides[i]);
+				NGUITools.mSides[i] = relativeTo.InverseTransformPoint(NGUITools.mSides[i]);
 			}
 		}
-		return mSides;
+		return NGUITools.mSides;
+	}
+
+	public static string GetTypeName<T>()
+	{
+		string str = typeof(T).ToString();
+		if (str.StartsWith("UI"))
+		{
+			str = str.Substring(2);
+		}
+		else if (str.StartsWith("UnityEngine."))
+		{
+			str = str.Substring(12);
+		}
+		return str;
+	}
+
+	public static string GetTypeName(UnityEngine.Object obj)
+	{
+		if (obj == null)
+		{
+			return "Null";
+		}
+		string str = obj.GetType().ToString();
+		if (str.StartsWith("UI"))
+		{
+			str = str.Substring(2);
+		}
+		else if (str.StartsWith("UnityEngine."))
+		{
+			str = str.Substring(12);
+		}
+		return str;
 	}
 
 	public static Vector3[] GetWorldCorners(this Camera cam)
 	{
-		float depth = Mathf.Lerp(cam.nearClipPlane, cam.farClipPlane, 0.5f);
-		return cam.GetWorldCorners(depth, null);
+		float single = Mathf.Lerp(cam.nearClipPlane, cam.farClipPlane, 0.5f);
+		return cam.GetWorldCorners(single, null);
 	}
 
 	public static Vector3[] GetWorldCorners(this Camera cam, float depth)
@@ -1412,398 +934,1129 @@ public static class NGUITools
 
 	public static Vector3[] GetWorldCorners(this Camera cam, float depth, Transform relativeTo)
 	{
-		if (cam.orthographic)
+		if (!cam.orthographic)
 		{
-			float orthographicSize = cam.orthographicSize;
-			float num = 0f - orthographicSize;
-			float num2 = orthographicSize;
-			float y = 0f - orthographicSize;
-			float y2 = orthographicSize;
-			Rect rect = cam.rect;
-			Vector2 vector = screenSize;
-			float num3 = vector.x / vector.y;
-			num3 *= rect.width / rect.height;
-			num *= num3;
-			num2 *= num3;
-			Transform transform = cam.transform;
-			Quaternion rotation = transform.rotation;
-			Vector3 position = transform.position;
-			mSides[0] = rotation * new Vector3(num, y, depth) + position;
-			mSides[1] = rotation * new Vector3(num, y2, depth) + position;
-			mSides[2] = rotation * new Vector3(num2, y2, depth) + position;
-			mSides[3] = rotation * new Vector3(num2, y, depth) + position;
+			NGUITools.mSides[0] = cam.ViewportToWorldPoint(new Vector3(0f, 0f, depth));
+			NGUITools.mSides[1] = cam.ViewportToWorldPoint(new Vector3(0f, 1f, depth));
+			NGUITools.mSides[2] = cam.ViewportToWorldPoint(new Vector3(1f, 1f, depth));
+			NGUITools.mSides[3] = cam.ViewportToWorldPoint(new Vector3(1f, 0f, depth));
 		}
 		else
 		{
-			mSides[0] = cam.ViewportToWorldPoint(new Vector3(0f, 0f, depth));
-			mSides[1] = cam.ViewportToWorldPoint(new Vector3(0f, 1f, depth));
-			mSides[2] = cam.ViewportToWorldPoint(new Vector3(1f, 1f, depth));
-			mSides[3] = cam.ViewportToWorldPoint(new Vector3(1f, 0f, depth));
+			float single = cam.orthographicSize;
+			float single1 = -single;
+			float single2 = single;
+			float single3 = -single;
+			float single4 = single;
+			Rect rect = cam.rect;
+			Vector2 vector2 = NGUITools.screenSize;
+			float single5 = vector2.x / vector2.y;
+			single5 = single5 * (rect.width / rect.height);
+			single1 *= single5;
+			single2 *= single5;
+			Transform transforms = cam.transform;
+			Quaternion quaternion = transforms.rotation;
+			Vector3 vector3 = transforms.position;
+			NGUITools.mSides[0] = (quaternion * new Vector3(single1, single3, depth)) + vector3;
+			NGUITools.mSides[1] = (quaternion * new Vector3(single1, single4, depth)) + vector3;
+			NGUITools.mSides[2] = (quaternion * new Vector3(single2, single4, depth)) + vector3;
+			NGUITools.mSides[3] = (quaternion * new Vector3(single2, single3, depth)) + vector3;
 		}
 		if (relativeTo != null)
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				mSides[i] = relativeTo.InverseTransformPoint(mSides[i]);
+				NGUITools.mSides[i] = relativeTo.InverseTransformPoint(NGUITools.mSides[i]);
 			}
 		}
-		return mSides;
-	}
-
-	public static string GetFuncName(object obj, string method)
-	{
-		if (obj == null)
-		{
-			return "<null>";
-		}
-		string text = obj.GetType().ToString();
-		int num = text.LastIndexOf('/');
-		if (num > 0)
-		{
-			text = text.Substring(num + 1);
-		}
-		return (!string.IsNullOrEmpty(method)) ? (text + "/" + method) : text;
-	}
-
-	public static void Execute<T>(GameObject go, string funcName) where T : Component
-	{
-		T[] components = go.GetComponents<T>();
-		T[] array = components;
-		for (int i = 0; i < array.Length; i++)
-		{
-			T obj = array[i];
-			MethodInfo method = obj.GetType().GetMethod(funcName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-			if (method != null)
-			{
-				method.Invoke(obj, null);
-			}
-		}
-	}
-
-	public static void ExecuteAll<T>(GameObject root, string funcName) where T : Component
-	{
-		Execute<T>(root, funcName);
-		Transform transform = root.transform;
-		int i = 0;
-		for (int childCount = transform.childCount; i < childCount; i++)
-		{
-			ExecuteAll<T>(transform.GetChild(i).gameObject, funcName);
-		}
+		return NGUITools.mSides;
 	}
 
 	public static void ImmediatelyCreateDrawCalls(GameObject root)
 	{
-		ExecuteAll<UIWidget>(root, "Start");
-		ExecuteAll<UIPanel>(root, "Start");
-		ExecuteAll<UIWidget>(root, "Update");
-		ExecuteAll<UIPanel>(root, "Update");
-		ExecuteAll<UIPanel>(root, "LateUpdate");
+		NGUITools.ExecuteAll<UIWidget>(root, "Start");
+		NGUITools.ExecuteAll<UIPanel>(root, "Start");
+		NGUITools.ExecuteAll<UIWidget>(root, "Update");
+		NGUITools.ExecuteAll<UIPanel>(root, "Update");
+		NGUITools.ExecuteAll<UIPanel>(root, "LateUpdate");
+	}
+
+	[Obsolete("Use NGUITools.GetActive instead")]
+	public static bool IsActive(Behaviour mb)
+	{
+		return (!(mb != null) || !mb.enabled ? false : mb.gameObject.activeInHierarchy);
+	}
+
+	public static bool IsChild(Transform parent, Transform child)
+	{
+		if (parent == null || child == null)
+		{
+			return false;
+		}
+		while (child != null)
+		{
+			if (child == parent)
+			{
+				return true;
+			}
+			child = child.parent;
+		}
+		return false;
 	}
 
 	public static string KeyToCaption(KeyCode key)
 	{
-		switch (key)
+		KeyCode keyCode = key;
+		switch (keyCode)
 		{
-		case KeyCode.None:
+			case KeyCode.None:
+			{
+				return null;
+			}
+			case KeyCode.Backspace:
+			{
+				return "BS";
+			}
+			case KeyCode.Tab:
+			{
+				return "Tab";
+			}
+			case KeyCode.Clear:
+			{
+				return "Clr";
+			}
+			case KeyCode.Return:
+			{
+				return "NT";
+			}
+			case KeyCode.Pause:
+			{
+				return "PS";
+			}
+			case KeyCode.Escape:
+			{
+				return "Esc";
+			}
+			case KeyCode.Space:
+			{
+				return "SP";
+			}
+			case KeyCode.Exclaim:
+			{
+				return "!";
+			}
+			case KeyCode.DoubleQuote:
+			{
+				return "\"";
+			}
+			case KeyCode.Hash:
+			{
+				return "#";
+			}
+			case KeyCode.Dollar:
+			{
+				return "$";
+			}
+			case KeyCode.Ampersand:
+			{
+				return "&";
+			}
+			case KeyCode.Quote:
+			{
+				return "'";
+			}
+			case KeyCode.LeftParen:
+			{
+				return "(";
+			}
+			case KeyCode.RightParen:
+			{
+				return ")";
+			}
+			case KeyCode.Asterisk:
+			{
+				return "*";
+			}
+			case KeyCode.Plus:
+			{
+				return "+";
+			}
+			case KeyCode.Comma:
+			{
+				return ",";
+			}
+			case KeyCode.Minus:
+			{
+				return "-";
+			}
+			case KeyCode.Period:
+			{
+				return ".";
+			}
+			case KeyCode.Slash:
+			{
+				return "/";
+			}
+			case KeyCode.Alpha0:
+			{
+				return "0";
+			}
+			case KeyCode.Alpha1:
+			{
+				return "1";
+			}
+			case KeyCode.Alpha2:
+			{
+				return "2";
+			}
+			case KeyCode.Alpha3:
+			{
+				return "3";
+			}
+			case KeyCode.Alpha4:
+			{
+				return "4";
+			}
+			case KeyCode.Alpha5:
+			{
+				return "5";
+			}
+			case KeyCode.Alpha6:
+			{
+				return "6";
+			}
+			case KeyCode.Alpha7:
+			{
+				return "7";
+			}
+			case KeyCode.Alpha8:
+			{
+				return "8";
+			}
+			case KeyCode.Alpha9:
+			{
+				return "9";
+			}
+			case KeyCode.Colon:
+			{
+				return ":";
+			}
+			case KeyCode.Semicolon:
+			{
+				return ";";
+			}
+			case KeyCode.Less:
+			{
+				return "<";
+			}
+			case KeyCode.Equals:
+			{
+				return "=";
+			}
+			case KeyCode.Greater:
+			{
+				return ">";
+			}
+			case KeyCode.Question:
+			{
+				return "?";
+			}
+			case KeyCode.At:
+			{
+				return "@";
+			}
+			case KeyCode.LeftBracket:
+			{
+				return "[";
+			}
+			case KeyCode.Backslash:
+			{
+				return "\\";
+			}
+			case KeyCode.RightBracket:
+			{
+				return "]";
+			}
+			case KeyCode.Caret:
+			{
+				return "^";
+			}
+			case KeyCode.Underscore:
+			{
+				return "_";
+			}
+			case KeyCode.BackQuote:
+			{
+				return "`";
+			}
+			case KeyCode.A:
+			{
+				return "A";
+			}
+			case KeyCode.B:
+			{
+				return "B";
+			}
+			case KeyCode.C:
+			{
+				return "C";
+			}
+			case KeyCode.D:
+			{
+				return "D";
+			}
+			case KeyCode.E:
+			{
+				return "E";
+			}
+			case KeyCode.F:
+			{
+				return "F";
+			}
+			case KeyCode.G:
+			{
+				return "G";
+			}
+			case KeyCode.H:
+			{
+				return "H";
+			}
+			case KeyCode.I:
+			{
+				return "I";
+			}
+			case KeyCode.J:
+			{
+				return "J";
+			}
+			case KeyCode.K:
+			{
+				return "K";
+			}
+			case KeyCode.L:
+			{
+				return "L";
+			}
+			case KeyCode.M:
+			{
+				return "M";
+			}
+			case KeyCode.N:
+			{
+				return "N0";
+			}
+			case KeyCode.O:
+			{
+				return "O";
+			}
+			case KeyCode.P:
+			{
+				return "P";
+			}
+			case KeyCode.Q:
+			{
+				return "Q";
+			}
+			case KeyCode.R:
+			{
+				return "R";
+			}
+			case KeyCode.S:
+			{
+				return "S";
+			}
+			case KeyCode.T:
+			{
+				return "T";
+			}
+			case KeyCode.U:
+			{
+				return "U";
+			}
+			case KeyCode.V:
+			{
+				return "V";
+			}
+			case KeyCode.W:
+			{
+				return "W";
+			}
+			case KeyCode.X:
+			{
+				return "X";
+			}
+			case KeyCode.Y:
+			{
+				return "Y";
+			}
+			case KeyCode.Z:
+			{
+				return "Z";
+			}
+			case KeyCode.Delete:
+			{
+				return "Del";
+			}
+			default:
+			{
+				switch (keyCode)
+				{
+					case KeyCode.Keypad0:
+					{
+						return "K0";
+					}
+					case KeyCode.Keypad1:
+					{
+						return "K1";
+					}
+					case KeyCode.Keypad2:
+					{
+						return "K2";
+					}
+					case KeyCode.Keypad3:
+					{
+						return "K3";
+					}
+					case KeyCode.Keypad4:
+					{
+						return "K4";
+					}
+					case KeyCode.Keypad5:
+					{
+						return "K5";
+					}
+					case KeyCode.Keypad6:
+					{
+						return "K6";
+					}
+					case KeyCode.Keypad7:
+					{
+						return "K7";
+					}
+					case KeyCode.Keypad8:
+					{
+						return "K8";
+					}
+					case KeyCode.Keypad9:
+					{
+						return "K9";
+					}
+					case KeyCode.KeypadPeriod:
+					{
+						return ".";
+					}
+					case KeyCode.KeypadDivide:
+					{
+						return "/";
+					}
+					case KeyCode.KeypadMultiply:
+					{
+						return "*";
+					}
+					case KeyCode.KeypadMinus:
+					{
+						return "-";
+					}
+					case KeyCode.KeypadPlus:
+					{
+						return "+";
+					}
+					case KeyCode.KeypadEnter:
+					{
+						return "NT";
+					}
+					case KeyCode.KeypadEquals:
+					{
+						return "=";
+					}
+					case KeyCode.UpArrow:
+					{
+						return "UP";
+					}
+					case KeyCode.DownArrow:
+					{
+						return "DN";
+					}
+					case KeyCode.RightArrow:
+					{
+						return "LT";
+					}
+					case KeyCode.LeftArrow:
+					{
+						return "RT";
+					}
+					case KeyCode.Insert:
+					{
+						return "Ins";
+					}
+					case KeyCode.Home:
+					{
+						return "Home";
+					}
+					case KeyCode.End:
+					{
+						return "End";
+					}
+					case KeyCode.PageUp:
+					{
+						return "PU";
+					}
+					case KeyCode.PageDown:
+					{
+						return "PD";
+					}
+					case KeyCode.F1:
+					{
+						return "F1";
+					}
+					case KeyCode.F2:
+					{
+						return "F2";
+					}
+					case KeyCode.F3:
+					{
+						return "F3";
+					}
+					case KeyCode.F4:
+					{
+						return "F4";
+					}
+					case KeyCode.F5:
+					{
+						return "F5";
+					}
+					case KeyCode.F6:
+					{
+						return "F6";
+					}
+					case KeyCode.F7:
+					{
+						return "F7";
+					}
+					case KeyCode.F8:
+					{
+						return "F8";
+					}
+					case KeyCode.F9:
+					{
+						return "F9";
+					}
+					case KeyCode.F10:
+					{
+						return "F10";
+					}
+					case KeyCode.F11:
+					{
+						return "F11";
+					}
+					case KeyCode.F12:
+					{
+						return "F12";
+					}
+					case KeyCode.F13:
+					{
+						return "F13";
+					}
+					case KeyCode.F14:
+					{
+						return "F14";
+					}
+					case KeyCode.F15:
+					{
+						return "F15";
+					}
+					case KeyCode.Backspace | KeyCode.Tab | KeyCode.Space | KeyCode.Keypad0 | KeyCode.Keypad1 | KeyCode.Keypad8 | KeyCode.Keypad9 | KeyCode.F7 | KeyCode.F8 | KeyCode.F15 | KeyCode.Exclaim | KeyCode.LeftParen | KeyCode.RightParen:
+					case KeyCode.Backspace | KeyCode.Space | KeyCode.Keypad0 | KeyCode.Keypad2 | KeyCode.Keypad8 | KeyCode.KeypadPeriod | KeyCode.F7 | KeyCode.F9 | KeyCode.F15 | KeyCode.DoubleQuote | KeyCode.LeftParen | KeyCode.Asterisk:
+					case KeyCode.Backspace | KeyCode.Tab | KeyCode.Space | KeyCode.Keypad0 | KeyCode.Keypad1 | KeyCode.Keypad2 | KeyCode.Keypad3 | KeyCode.Keypad8 | KeyCode.Keypad9 | KeyCode.KeypadPeriod | KeyCode.KeypadDivide | KeyCode.F7 | KeyCode.F8 | KeyCode.F9 | KeyCode.F10 | KeyCode.F15 | KeyCode.Exclaim | KeyCode.DoubleQuote | KeyCode.Hash | KeyCode.LeftParen | KeyCode.RightParen | KeyCode.Asterisk | KeyCode.Plus:
+					case KeyCode.RightCommand:
+					case KeyCode.LeftCommand:
+					case KeyCode.LeftWindows:
+					case KeyCode.RightWindows:
+					case KeyCode.AltGr:
+					case KeyCode.Backspace | KeyCode.Space | KeyCode.Keypad0 | KeyCode.Keypad2 | KeyCode.Keypad8 | KeyCode.KeypadPeriod | KeyCode.KeypadEquals | KeyCode.DownArrow | KeyCode.PageUp | KeyCode.F1 | KeyCode.F7 | KeyCode.F9 | KeyCode.F15 | KeyCode.Alpha0 | KeyCode.Alpha2 | KeyCode.Alpha8 | KeyCode.DoubleQuote | KeyCode.LeftParen | KeyCode.Asterisk | KeyCode.Colon | KeyCode.LeftShift | KeyCode.LeftControl | KeyCode.RightWindows:
+					case KeyCode.Help:
+					case KeyCode.Print:
+					case KeyCode.SysReq:
+					case KeyCode.Break:
+					case KeyCode.Menu:
+					case KeyCode.Keypad0 | KeyCode.At:
+					case KeyCode.Keypad0 | KeyCode.Keypad1 | KeyCode.At:
+					case KeyCode.Keypad0 | KeyCode.Keypad2 | KeyCode.At:
+					{
+						return null;
+					}
+					case KeyCode.Numlock:
+					{
+						return "Num";
+					}
+					case KeyCode.CapsLock:
+					{
+						return "Cap";
+					}
+					case KeyCode.ScrollLock:
+					{
+						return "Scr";
+					}
+					case KeyCode.RightShift:
+					{
+						return "RS";
+					}
+					case KeyCode.LeftShift:
+					{
+						return "LS";
+					}
+					case KeyCode.RightControl:
+					{
+						return "RC";
+					}
+					case KeyCode.LeftControl:
+					{
+						return "LC";
+					}
+					case KeyCode.RightAlt:
+					{
+						return "RA";
+					}
+					case KeyCode.LeftAlt:
+					{
+						return "LA";
+					}
+					case KeyCode.Mouse0:
+					{
+						return "M0";
+					}
+					case KeyCode.Mouse1:
+					{
+						return "M1";
+					}
+					case KeyCode.Mouse2:
+					{
+						return "M2";
+					}
+					case KeyCode.Mouse3:
+					{
+						return "M3";
+					}
+					case KeyCode.Mouse4:
+					{
+						return "M4";
+					}
+					case KeyCode.Mouse5:
+					{
+						return "M5";
+					}
+					case KeyCode.Mouse6:
+					{
+						return "M6";
+					}
+					case KeyCode.JoystickButton0:
+					{
+						return "(A)";
+					}
+					case KeyCode.JoystickButton1:
+					{
+						return "(B)";
+					}
+					case KeyCode.JoystickButton2:
+					{
+						return "(X)";
+					}
+					case KeyCode.JoystickButton3:
+					{
+						return "(Y)";
+					}
+					case KeyCode.JoystickButton4:
+					{
+						return "(RB)";
+					}
+					case KeyCode.JoystickButton5:
+					{
+						return "(LB)";
+					}
+					case KeyCode.JoystickButton6:
+					{
+						return "(Back)";
+					}
+					case KeyCode.JoystickButton7:
+					{
+						return "(Start)";
+					}
+					case KeyCode.JoystickButton8:
+					{
+						return "(LS)";
+					}
+					case KeyCode.JoystickButton9:
+					{
+						return "(RS)";
+					}
+					case KeyCode.JoystickButton10:
+					{
+						return "J10";
+					}
+					case KeyCode.JoystickButton11:
+					{
+						return "J11";
+					}
+					case KeyCode.JoystickButton12:
+					{
+						return "J12";
+					}
+					case KeyCode.JoystickButton13:
+					{
+						return "J13";
+					}
+					case KeyCode.JoystickButton14:
+					{
+						return "J14";
+					}
+					case KeyCode.JoystickButton15:
+					{
+						return "J15";
+					}
+					case KeyCode.JoystickButton16:
+					{
+						return "J16";
+					}
+					case KeyCode.JoystickButton17:
+					{
+						return "J17";
+					}
+					case KeyCode.JoystickButton18:
+					{
+						return "J18";
+					}
+					case KeyCode.JoystickButton19:
+					{
+						return "J19";
+					}
+					default:
+					{
+						return null;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	public static byte[] Load(string fileName)
+	{
+		if (!NGUITools.fileAccess)
+		{
 			return null;
-		case KeyCode.Backspace:
-			return "BS";
-		case KeyCode.Tab:
-			return "Tab";
-		case KeyCode.Clear:
-			return "Clr";
-		case KeyCode.Return:
-			return "NT";
-		case KeyCode.Pause:
-			return "PS";
-		case KeyCode.Escape:
-			return "Esc";
-		case KeyCode.Space:
-			return "SP";
-		case KeyCode.Exclaim:
-			return "!";
-		case KeyCode.DoubleQuote:
-			return "\"";
-		case KeyCode.Hash:
-			return "#";
-		case KeyCode.Dollar:
-			return "$";
-		case KeyCode.Ampersand:
-			return "&";
-		case KeyCode.Quote:
-			return "'";
-		case KeyCode.LeftParen:
-			return "(";
-		case KeyCode.RightParen:
-			return ")";
-		case KeyCode.Asterisk:
-			return "*";
-		case KeyCode.Plus:
-			return "+";
-		case KeyCode.Comma:
-			return ",";
-		case KeyCode.Minus:
-			return "-";
-		case KeyCode.Period:
-			return ".";
-		case KeyCode.Slash:
-			return "/";
-		case KeyCode.Alpha0:
-			return "0";
-		case KeyCode.Alpha1:
-			return "1";
-		case KeyCode.Alpha2:
-			return "2";
-		case KeyCode.Alpha3:
-			return "3";
-		case KeyCode.Alpha4:
-			return "4";
-		case KeyCode.Alpha5:
-			return "5";
-		case KeyCode.Alpha6:
-			return "6";
-		case KeyCode.Alpha7:
-			return "7";
-		case KeyCode.Alpha8:
-			return "8";
-		case KeyCode.Alpha9:
-			return "9";
-		case KeyCode.Colon:
-			return ":";
-		case KeyCode.Semicolon:
-			return ";";
-		case KeyCode.Less:
-			return "<";
-		case KeyCode.Equals:
-			return "=";
-		case KeyCode.Greater:
-			return ">";
-		case KeyCode.Question:
-			return "?";
-		case KeyCode.At:
-			return "@";
-		case KeyCode.LeftBracket:
-			return "[";
-		case KeyCode.Backslash:
-			return "\\";
-		case KeyCode.RightBracket:
-			return "]";
-		case KeyCode.Caret:
-			return "^";
-		case KeyCode.Underscore:
-			return "_";
-		case KeyCode.BackQuote:
-			return "`";
-		case KeyCode.A:
-			return "A";
-		case KeyCode.B:
-			return "B";
-		case KeyCode.C:
-			return "C";
-		case KeyCode.D:
-			return "D";
-		case KeyCode.E:
-			return "E";
-		case KeyCode.F:
-			return "F";
-		case KeyCode.G:
-			return "G";
-		case KeyCode.H:
-			return "H";
-		case KeyCode.I:
-			return "I";
-		case KeyCode.J:
-			return "J";
-		case KeyCode.K:
-			return "K";
-		case KeyCode.L:
-			return "L";
-		case KeyCode.M:
-			return "M";
-		case KeyCode.N:
-			return "N0";
-		case KeyCode.O:
-			return "O";
-		case KeyCode.P:
-			return "P";
-		case KeyCode.Q:
-			return "Q";
-		case KeyCode.R:
-			return "R";
-		case KeyCode.S:
-			return "S";
-		case KeyCode.T:
-			return "T";
-		case KeyCode.U:
-			return "U";
-		case KeyCode.V:
-			return "V";
-		case KeyCode.W:
-			return "W";
-		case KeyCode.X:
-			return "X";
-		case KeyCode.Y:
-			return "Y";
-		case KeyCode.Z:
-			return "Z";
-		case KeyCode.Delete:
-			return "Del";
-		case KeyCode.Keypad0:
-			return "K0";
-		case KeyCode.Keypad1:
-			return "K1";
-		case KeyCode.Keypad2:
-			return "K2";
-		case KeyCode.Keypad3:
-			return "K3";
-		case KeyCode.Keypad4:
-			return "K4";
-		case KeyCode.Keypad5:
-			return "K5";
-		case KeyCode.Keypad6:
-			return "K6";
-		case KeyCode.Keypad7:
-			return "K7";
-		case KeyCode.Keypad8:
-			return "K8";
-		case KeyCode.Keypad9:
-			return "K9";
-		case KeyCode.KeypadPeriod:
-			return ".";
-		case KeyCode.KeypadDivide:
-			return "/";
-		case KeyCode.KeypadMultiply:
-			return "*";
-		case KeyCode.KeypadMinus:
-			return "-";
-		case KeyCode.KeypadPlus:
-			return "+";
-		case KeyCode.KeypadEnter:
-			return "NT";
-		case KeyCode.KeypadEquals:
-			return "=";
-		case KeyCode.UpArrow:
-			return "UP";
-		case KeyCode.DownArrow:
-			return "DN";
-		case KeyCode.RightArrow:
-			return "LT";
-		case KeyCode.LeftArrow:
-			return "RT";
-		case KeyCode.Insert:
-			return "Ins";
-		case KeyCode.Home:
-			return "Home";
-		case KeyCode.End:
-			return "End";
-		case KeyCode.PageUp:
-			return "PU";
-		case KeyCode.PageDown:
-			return "PD";
-		case KeyCode.F1:
-			return "F1";
-		case KeyCode.F2:
-			return "F2";
-		case KeyCode.F3:
-			return "F3";
-		case KeyCode.F4:
-			return "F4";
-		case KeyCode.F5:
-			return "F5";
-		case KeyCode.F6:
-			return "F6";
-		case KeyCode.F7:
-			return "F7";
-		case KeyCode.F8:
-			return "F8";
-		case KeyCode.F9:
-			return "F9";
-		case KeyCode.F10:
-			return "F10";
-		case KeyCode.F11:
-			return "F11";
-		case KeyCode.F12:
-			return "F12";
-		case KeyCode.F13:
-			return "F13";
-		case KeyCode.F14:
-			return "F14";
-		case KeyCode.F15:
-			return "F15";
-		case KeyCode.Numlock:
-			return "Num";
-		case KeyCode.CapsLock:
-			return "Cap";
-		case KeyCode.ScrollLock:
-			return "Scr";
-		case KeyCode.RightShift:
-			return "RS";
-		case KeyCode.LeftShift:
-			return "LS";
-		case KeyCode.RightControl:
-			return "RC";
-		case KeyCode.LeftControl:
-			return "LC";
-		case KeyCode.RightAlt:
-			return "RA";
-		case KeyCode.LeftAlt:
-			return "LA";
-		case KeyCode.Mouse0:
-			return "M0";
-		case KeyCode.Mouse1:
-			return "M1";
-		case KeyCode.Mouse2:
-			return "M2";
-		case KeyCode.Mouse3:
-			return "M3";
-		case KeyCode.Mouse4:
-			return "M4";
-		case KeyCode.Mouse5:
-			return "M5";
-		case KeyCode.Mouse6:
-			return "M6";
-		case KeyCode.JoystickButton0:
-			return "(A)";
-		case KeyCode.JoystickButton1:
-			return "(B)";
-		case KeyCode.JoystickButton2:
-			return "(X)";
-		case KeyCode.JoystickButton3:
-			return "(Y)";
-		case KeyCode.JoystickButton4:
-			return "(RB)";
-		case KeyCode.JoystickButton5:
-			return "(LB)";
-		case KeyCode.JoystickButton6:
-			return "(Back)";
-		case KeyCode.JoystickButton7:
-			return "(Start)";
-		case KeyCode.JoystickButton8:
-			return "(LS)";
-		case KeyCode.JoystickButton9:
-			return "(RS)";
-		case KeyCode.JoystickButton10:
-			return "J10";
-		case KeyCode.JoystickButton11:
-			return "J11";
-		case KeyCode.JoystickButton12:
-			return "J12";
-		case KeyCode.JoystickButton13:
-			return "J13";
-		case KeyCode.JoystickButton14:
-			return "J14";
-		case KeyCode.JoystickButton15:
-			return "J15";
-		case KeyCode.JoystickButton16:
-			return "J16";
-		case KeyCode.JoystickButton17:
-			return "J17";
-		case KeyCode.JoystickButton18:
-			return "J18";
-		case KeyCode.JoystickButton19:
-			return "J19";
-		default:
+		}
+		string str = string.Concat(Application.persistentDataPath, "/", fileName);
+		if (!File.Exists(str))
+		{
 			return null;
+		}
+		return File.ReadAllBytes(str);
+	}
+
+	public static void MakePixelPerfect(Transform t)
+	{
+		UIWidget component = t.GetComponent<UIWidget>();
+		if (component != null)
+		{
+			component.MakePixelPerfect();
+		}
+		if (t.GetComponent<UIAnchor>() == null && t.GetComponent<UIRoot>() == null)
+		{
+			t.localPosition = NGUITools.Round(t.localPosition);
+			t.localScale = NGUITools.Round(t.localScale);
+		}
+		int num = 0;
+		int num1 = t.childCount;
+		while (num < num1)
+		{
+			NGUITools.MakePixelPerfect(t.GetChild(num));
+			num++;
+		}
+	}
+
+	public static void MarkParentAsChanged(GameObject go)
+	{
+		UIRect[] componentsInChildren = go.GetComponentsInChildren<UIRect>();
+		int num = 0;
+		int length = (int)componentsInChildren.Length;
+		while (num < length)
+		{
+			componentsInChildren[num].ParentHasChanged();
+			num++;
+		}
+	}
+
+	public static void NormalizeDepths()
+	{
+		NGUITools.NormalizeWidgetDepths();
+		NGUITools.NormalizePanelDepths();
+	}
+
+	public static void NormalizePanelDepths()
+	{
+		UIPanel[] uIPanelArray = NGUITools.FindActive<UIPanel>();
+		int length = (int)uIPanelArray.Length;
+		if (length > 0)
+		{
+			Array.Sort<UIPanel>(uIPanelArray, new Comparison<UIPanel>(UIPanel.CompareFunc));
+			int num = 0;
+			int num1 = uIPanelArray[0].depth;
+			for (int i = 0; i < length; i++)
+			{
+				UIPanel uIPanel = uIPanelArray[i];
+				if (uIPanel.depth != num1)
+				{
+					num1 = uIPanel.depth;
+					int num2 = num + 1;
+					num = num2;
+					uIPanel.depth = num2;
+				}
+				else
+				{
+					uIPanel.depth = num;
+				}
+			}
+		}
+	}
+
+	public static void NormalizeWidgetDepths()
+	{
+		NGUITools.NormalizeWidgetDepths(NGUITools.FindActive<UIWidget>());
+	}
+
+	public static void NormalizeWidgetDepths(GameObject go)
+	{
+		NGUITools.NormalizeWidgetDepths(go.GetComponentsInChildren<UIWidget>());
+	}
+
+	public static void NormalizeWidgetDepths(UIWidget[] list)
+	{
+		int length = (int)list.Length;
+		if (length > 0)
+		{
+			Array.Sort<UIWidget>(list, new Comparison<UIWidget>(UIWidget.FullCompareFunc));
+			int num = 0;
+			int num1 = list[0].depth;
+			for (int i = 0; i < length; i++)
+			{
+				UIWidget uIWidget = list[i];
+				if (uIWidget.depth != num1)
+				{
+					num1 = uIWidget.depth;
+					int num2 = num + 1;
+					num = num2;
+					uIWidget.depth = num2;
+				}
+				else
+				{
+					uIWidget.depth = num;
+				}
+			}
+		}
+	}
+
+	[Obsolete("Use NGUIText.ParseColor instead")]
+	public static Color ParseColor(string text, int offset)
+	{
+		return NGUIText.ParseColor24(text, offset);
+	}
+
+	public static AudioSource PlaySound(AudioClip clip)
+	{
+		return NGUITools.PlaySound(clip, 1f, 1f);
+	}
+
+	public static AudioSource PlaySound(AudioClip clip, float volume)
+	{
+		return NGUITools.PlaySound(clip, volume, 1f);
+	}
+
+	public static AudioSource PlaySound(AudioClip clip, float volume, float pitch)
+	{
+		float single = RealTime.time;
+		if (NGUITools.mLastClip == clip && NGUITools.mLastTimestamp + 0.1f > single)
+		{
+			return null;
+		}
+		NGUITools.mLastClip = clip;
+		NGUITools.mLastTimestamp = single;
+		volume *= NGUITools.soundVolume;
+		if (clip != null && volume > 0.01f)
+		{
+			if (NGUITools.mListener == null || !NGUITools.GetActive(NGUITools.mListener))
+			{
+				AudioListener[] audioListenerArray = UnityEngine.Object.FindObjectsOfType(typeof(AudioListener)) as AudioListener[];
+				if (audioListenerArray != null)
+				{
+					int num = 0;
+					while (num < (int)audioListenerArray.Length)
+					{
+						if (!NGUITools.GetActive(audioListenerArray[num]))
+						{
+							num++;
+						}
+						else
+						{
+							NGUITools.mListener = audioListenerArray[num];
+							break;
+						}
+					}
+				}
+				if (NGUITools.mListener == null)
+				{
+					Camera camera = Camera.main;
+					if (camera == null)
+					{
+						camera = UnityEngine.Object.FindObjectOfType(typeof(Camera)) as Camera;
+					}
+					if (camera != null)
+					{
+						NGUITools.mListener = camera.gameObject.AddComponent<AudioListener>();
+					}
+				}
+			}
+			if (NGUITools.mListener != null && NGUITools.mListener.enabled && NGUITools.GetActive(NGUITools.mListener.gameObject))
+			{
+				AudioSource component = NGUITools.mListener.GetComponent<AudioSource>();
+				if (component == null)
+				{
+					component = NGUITools.mListener.gameObject.AddComponent<AudioSource>();
+				}
+				component.priority = 50;
+				component.pitch = pitch;
+				component.PlayOneShot(clip, volume);
+				return component;
+			}
+		}
+		return null;
+	}
+
+	public static void PushBack(GameObject go)
+	{
+		int num = NGUITools.AdjustDepth(go, -1000);
+		if (num == 1)
+		{
+			NGUITools.NormalizePanelDepths();
+		}
+		else if (num == 2)
+		{
+			NGUITools.NormalizeWidgetDepths();
+		}
+	}
+
+	public static int RandomRange(int min, int max)
+	{
+		if (min == max)
+		{
+			return min;
+		}
+		return UnityEngine.Random.Range(min, max + 1);
+	}
+
+	public static void RegisterUndo(UnityEngine.Object obj, string name)
+	{
+	}
+
+	public static Vector3 Round(Vector3 v)
+	{
+		v.x = Mathf.Round(v.x);
+		v.y = Mathf.Round(v.y);
+		v.z = Mathf.Round(v.z);
+		return v;
+	}
+
+	public static bool Save(string fileName, byte[] bytes)
+	{
+		bool flag;
+		if (!NGUITools.fileAccess)
+		{
+			return false;
+		}
+		string str = string.Concat(Application.persistentDataPath, "/", fileName);
+		if (bytes == null)
+		{
+			if (File.Exists(str))
+			{
+				File.Delete(str);
+			}
+			return true;
+		}
+		FileStream fileStream = null;
+		try
+		{
+			fileStream = File.Create(str);
+			fileStream.Write(bytes, 0, (int)bytes.Length);
+			fileStream.Close();
+			return true;
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(exception.Message);
+			flag = false;
+		}
+		return flag;
+	}
+
+	public static void SetActive(GameObject go, bool state)
+	{
+		NGUITools.SetActive(go, state, true);
+	}
+
+	public static void SetActive(GameObject go, bool state, bool compatibilityMode)
+	{
+		if (go)
+		{
+			if (!state)
+			{
+				NGUITools.Deactivate(go.transform);
+			}
+			else
+			{
+				NGUITools.Activate(go.transform, compatibilityMode);
+				NGUITools.CallCreatePanel(go.transform);
+			}
+		}
+	}
+
+	public static void SetActiveChildren(GameObject go, bool state)
+	{
+		Transform transforms = go.transform;
+		if (!state)
+		{
+			int num = 0;
+			int num1 = transforms.childCount;
+			while (num < num1)
+			{
+				NGUITools.Deactivate(transforms.GetChild(num));
+				num++;
+			}
+		}
+		else
+		{
+			int num2 = 0;
+			int num3 = transforms.childCount;
+			while (num2 < num3)
+			{
+				NGUITools.Activate(transforms.GetChild(num2));
+				num2++;
+			}
+		}
+	}
+
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	public static void SetActiveSelf(GameObject go, bool state)
+	{
+		go.SetActive(state);
+	}
+
+	public static void SetChildLayer(Transform t, int layer)
+	{
+		for (int i = 0; i < t.childCount; i++)
+		{
+			Transform child = t.GetChild(i);
+			child.gameObject.layer = layer;
+			NGUITools.SetChildLayer(child, layer);
+		}
+	}
+
+	public static void SetDirty(UnityEngine.Object obj)
+	{
+	}
+
+	public static void SetLayer(GameObject go, int layer)
+	{
+		go.layer = layer;
+		Transform transforms = go.transform;
+		int num = 0;
+		int num1 = transforms.childCount;
+		while (num < num1)
+		{
+			NGUITools.SetLayer(transforms.GetChild(num).gameObject, layer);
+			num++;
+		}
+	}
+
+	[Obsolete("Use NGUIText.StripSymbols instead")]
+	public static string StripSymbols(string text)
+	{
+		return NGUIText.StripSymbols(text);
+	}
+
+	public static void UpdateWidgetCollider(GameObject go)
+	{
+		NGUITools.UpdateWidgetCollider(go, false);
+	}
+
+	public static void UpdateWidgetCollider(GameObject go, bool considerInactive)
+	{
+		if (go != null)
+		{
+			BoxCollider component = go.GetComponent<BoxCollider>();
+			if (component != null)
+			{
+				NGUITools.UpdateWidgetCollider(component, considerInactive);
+				return;
+			}
+			BoxCollider2D boxCollider2D = go.GetComponent<BoxCollider2D>();
+			if (boxCollider2D != null)
+			{
+				NGUITools.UpdateWidgetCollider(boxCollider2D, considerInactive);
+			}
+		}
+	}
+
+	public static void UpdateWidgetCollider(BoxCollider box, bool considerInactive)
+	{
+		if (box != null)
+		{
+			GameObject gameObject = box.gameObject;
+			UIWidget component = gameObject.GetComponent<UIWidget>();
+			if (component == null)
+			{
+				Bounds bound = NGUIMath.CalculateRelativeWidgetBounds(gameObject.transform, considerInactive);
+				box.center = bound.center;
+				float single = bound.size.x;
+				Vector3 vector3 = bound.size;
+				box.size = new Vector3(single, vector3.y, 0f);
+			}
+			else
+			{
+				Vector4 vector4 = component.drawRegion;
+				if (vector4.x != 0f || vector4.y != 0f || vector4.z != 1f || vector4.w != 1f)
+				{
+					Vector4 vector41 = component.drawingDimensions;
+					box.center = new Vector3((vector41.x + vector41.z) * 0.5f, (vector41.y + vector41.w) * 0.5f);
+					box.size = new Vector3(vector41.z - vector41.x, vector41.w - vector41.y);
+				}
+				else
+				{
+					Vector3[] vector3Array = component.localCorners;
+					box.center = Vector3.Lerp(vector3Array[0], vector3Array[2], 0.5f);
+					box.size = vector3Array[2] - vector3Array[0];
+				}
+			}
+		}
+	}
+
+	public static void UpdateWidgetCollider(BoxCollider2D box, bool considerInactive)
+	{
+		if (box != null)
+		{
+			GameObject gameObject = box.gameObject;
+			UIWidget component = gameObject.GetComponent<UIWidget>();
+			if (component == null)
+			{
+				Bounds bound = NGUIMath.CalculateRelativeWidgetBounds(gameObject.transform, considerInactive);
+				box.offset = bound.center;
+				box.size = new Vector2(bound.size.x, bound.size.y);
+			}
+			else
+			{
+				Vector3[] vector3Array = component.localCorners;
+				box.offset = Vector3.Lerp(vector3Array[0], vector3Array[2], 0.5f);
+				box.size = vector3Array[2] - vector3Array[0];
+			}
 		}
 	}
 }

@@ -1,6 +1,6 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
-using Rilisoft;
 using UnityEngine;
 
 public sealed class ZombiManager : MonoBehaviour
@@ -21,59 +21,171 @@ public sealed class ZombiManager : MonoBehaviour
 
 	public bool startGame;
 
-	public double maxTimeGame = 240.0;
+	public double maxTimeGame = 240;
 
 	public PhotonView photonView;
 
 	public bool isPizzaMap;
 
-	private void Awake()
+	public ZombiManager()
 	{
-		//Discarded unreachable code: IL_0155
-		try
+	}
+
+	private void addZombi()
+	{
+		GameObject gameObject = this._enemyCreationZones[UnityEngine.Random.Range(0, (int)this._enemyCreationZones.Length)];
+		BoxCollider component = gameObject.GetComponent<BoxCollider>();
+		float single = component.size.x * gameObject.transform.localScale.x;
+		float single1 = component.size.z;
+		Vector3 vector3 = gameObject.transform.localScale;
+		Vector2 vector2 = new Vector2(single, single1 * vector3.z);
+		Vector3 vector31 = gameObject.transform.position;
+		float single2 = vector31.x - vector2.x / 2f;
+		Vector3 vector32 = gameObject.transform.position;
+		Rect rect = new Rect(single2, vector32.z - vector2.y / 2f, vector2.x, vector2.y);
+		float single3 = rect.x + UnityEngine.Random.Range(0f, rect.width);
+		Vector3 vector33 = gameObject.transform.position;
+		Vector3 vector34 = new Vector3(single3, vector33.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
+		int num = 0;
+		double num1 = this.timeGame / this.maxTimeGame * 100;
+		if (!this.isPizzaMap)
 		{
-			string[] array = null;
-			isPizzaMap = SceneLoader.ActiveSceneName.Equals("Pizza") || SceneLoader.ActiveSceneName.Equals("Paradise_Night");
-			array = ((!isPizzaMap) ? new string[11]
+			if (num1 < 15)
 			{
-				"1", "79", "2", "3", "57", "16", "56", "27", "73", "9",
-				"39"
-			} : new string[11]
+				num = UnityEngine.Random.Range(0, 3);
+			}
+			if (num1 >= 15 && num1 < 30)
 			{
-				"86", "90", "88", "91", "84", "87", "82", "81", "92", "80",
-				"83"
-			});
-			string[] array2 = array;
-			foreach (string text in array2)
+				num = UnityEngine.Random.Range(0, 5);
+			}
+			if (num1 >= 30 && num1 < 45)
 			{
-				string item = "Enemies/Enemy" + text + "_go";
-				zombiePrefabs.Add(item);
+				num = UnityEngine.Random.Range(0, 6);
+			}
+			if (num1 >= 45 && num1 < 60)
+			{
+				num = UnityEngine.Random.Range(1, 8);
+			}
+			if (num1 >= 60 && num1 < 75)
+			{
+				num = UnityEngine.Random.Range(3, 10);
+			}
+			if (num1 >= 75)
+			{
+				num = UnityEngine.Random.Range(3, 11);
 			}
 		}
-		catch (Exception exception)
+		else
 		{
+			if (num1 < 15)
+			{
+				num = UnityEngine.Random.Range(0, 4);
+			}
+			if (num1 >= 15 && num1 < 30)
+			{
+				num = UnityEngine.Random.Range(0, 5);
+			}
+			if (num1 >= 30 && num1 < 45)
+			{
+				num = UnityEngine.Random.Range(0, 6);
+			}
+			if (num1 >= 45 && num1 < 60)
+			{
+				num = UnityEngine.Random.Range(1, 7);
+			}
+			if (num1 >= 60 && num1 < 75)
+			{
+				num = UnityEngine.Random.Range(1, 9);
+			}
+			if (num1 >= 75)
+			{
+				num = UnityEngine.Random.Range(3, 11);
+			}
+		}
+		PhotonNetwork.InstantiateSceneObject(this.zombiePrefabs[num], vector34, Quaternion.identity, 0, null);
+	}
+
+	private void addZombies(int count)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			this.addZombi();
+		}
+	}
+
+	private void Awake()
+	{
+		try
+		{
+			string[] strArrays = null;
+			this.isPizzaMap = (SceneLoader.ActiveSceneName.Equals("Pizza") ? true : SceneLoader.ActiveSceneName.Equals("Paradise_Night"));
+			strArrays = (!this.isPizzaMap ? new string[] { "1", "79", "2", "3", "57", "16", "56", "27", "73", "9", "39" } : new string[] { "86", "90", "88", "91", "84", "87", "82", "81", "92", "80", "83" });
+			string[] strArrays1 = strArrays;
+			for (int i = 0; i < (int)strArrays1.Length; i++)
+			{
+				string str = string.Concat("Enemies/Enemy", strArrays1[i], "_go");
+				this.zombiePrefabs.Add(str);
+			}
+		}
+		catch (Exception exception1)
+		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;
 		}
 	}
 
+	public void EndMatch()
+	{
+		if (this.photonView.isMine)
+		{
+			if (TimeGameController.sharedController.isEndMatch)
+			{
+				return;
+			}
+			TimeGameController.sharedController.isEndMatch = true;
+			this.startGame = false;
+			this.timeGame = 0;
+			GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("NetworkTable");
+			float component = -100f;
+			string empty = string.Empty;
+			int num = 0;
+			for (int i = 0; i < (int)gameObjectArray.Length; i++)
+			{
+				if ((float)gameObjectArray[i].GetComponent<NetworkStartTable>().score > component)
+				{
+					component = (float)gameObjectArray[i].GetComponent<NetworkStartTable>().score;
+					empty = gameObjectArray[i].GetComponent<NetworkStartTable>().NamePlayer;
+					num = i;
+				}
+			}
+			this.photonView.RPC("win", PhotonTargets.All, new object[] { empty });
+			this.photonView.RPC("WinID", PhotonTargets.All, new object[] { gameObjectArray[num].GetComponent<PhotonView>().ownerId });
+		}
+	}
+
+	private void OnDestroy()
+	{
+		ZombiManager.sharedManager = null;
+	}
+
 	private void Start()
 	{
-		//Discarded unreachable code: IL_0064
 		if (!Defs.isMulti || !Defs.isCOOP)
 		{
 			UnityEngine.Object.Destroy(base.gameObject);
 		}
-		sharedManager = this;
+		ZombiManager.sharedManager = this;
 		try
 		{
-			nextAddZombi = 5f;
-			_enemyCreationZones = GameObject.FindGameObjectsWithTag("EnemyCreationZone");
-			photonView = PhotonView.Get(this);
+			this.nextAddZombi = 5f;
+			this._enemyCreationZones = GameObject.FindGameObjectsWithTag("EnemyCreationZone");
+			this.photonView = PhotonView.Get(this);
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;
@@ -86,77 +198,50 @@ public sealed class ZombiManager : MonoBehaviour
 	{
 	}
 
-	public void EndMatch()
-	{
-		if (!photonView.isMine || TimeGameController.sharedController.isEndMatch)
-		{
-			return;
-		}
-		TimeGameController.sharedController.isEndMatch = true;
-		startGame = false;
-		timeGame = 0.0;
-		GameObject[] array = GameObject.FindGameObjectsWithTag("NetworkTable");
-		float num = -100f;
-		string text = string.Empty;
-		int num2 = 0;
-		for (int i = 0; i < array.Length; i++)
-		{
-			if ((float)array[i].GetComponent<NetworkStartTable>().score > num)
-			{
-				num = array[i].GetComponent<NetworkStartTable>().score;
-				text = array[i].GetComponent<NetworkStartTable>().NamePlayer;
-				num2 = i;
-			}
-		}
-		photonView.RPC("win", PhotonTargets.All, text);
-		photonView.RPC("WinID", PhotonTargets.All, array[num2].GetComponent<PhotonView>().ownerId);
-	}
-
 	private void Update()
 	{
-		//Discarded unreachable code: IL_019b
 		try
 		{
 			int count = Initializer.players.Count;
-			if (!startGame && count > 0)
+			if (!this.startGame && count > 0)
 			{
-				startGame = true;
-				timeGame = 0.0;
-				nextTimeSynch = 0f;
-				nextAddZombi = 0f;
+				this.startGame = true;
+				this.timeGame = 0;
+				this.nextTimeSynch = 0f;
+				this.nextAddZombi = 0f;
 			}
-			if (startGame && count == 0)
+			if (this.startGame && count == 0)
 			{
-				startGame = false;
-				timeGame = 0.0;
-				nextTimeSynch = 0f;
-				nextAddZombi = 0f;
+				this.startGame = false;
+				this.timeGame = 0;
+				this.nextTimeSynch = 0f;
+				this.nextAddZombi = 0f;
 			}
-			if (!startGame)
+			if (this.startGame)
 			{
-				return;
-			}
-			timeGame = maxTimeGame - TimeGameController.sharedController.timerToEndMatch;
-			if (timeGame > (double)nextAddZombi && photonView.isMine && Initializer.enemiesObj.Count < 15)
-			{
-				float num = 4f;
-				if (timeGame > maxTimeGame * 0.4000000059604645)
+				this.timeGame = this.maxTimeGame - TimeGameController.sharedController.timerToEndMatch;
+				if (this.timeGame > (double)this.nextAddZombi && this.photonView.isMine && Initializer.enemiesObj.Count < 15)
 				{
-					num = 3f;
+					float single = 4f;
+					if (this.timeGame > this.maxTimeGame * 0.4000000059604645)
+					{
+						single = 3f;
+					}
+					if (this.timeGame > this.maxTimeGame * 0.800000011920929)
+					{
+						single = 2f;
+					}
+					this.nextAddZombi += single;
+					int num = Initializer.players.Count - (Application.loadedLevelName != "Arena" ? 1 : 2);
+					num = Mathf.Clamp(num, 1, 15);
+					Debug.LogWarning(string.Concat(">>> ZOMBIE COUNT ", num));
+					this.addZombies(num);
 				}
-				if (timeGame > maxTimeGame * 0.800000011920929)
-				{
-					num = 2f;
-				}
-				nextAddZombi += num;
-				int value = Initializer.players.Count - ((!(Application.loadedLevelName == "Arena")) ? 1 : 2);
-				value = Mathf.Clamp(value, 1, 15);
-				Debug.LogWarning(">>> ZOMBIE COUNT " + value);
-				addZombies(value);
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;
@@ -169,82 +254,8 @@ public sealed class ZombiManager : MonoBehaviour
 	{
 		if (WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			WeaponManager.sharedManager.myNetworkStartTable.win(_winer);
+			WeaponManager.sharedManager.myNetworkStartTable.win(_winer, 0, 0, 0);
 		}
-	}
-
-	private void addZombies(int count)
-	{
-		for (int i = 0; i < count; i++)
-		{
-			addZombi();
-		}
-	}
-
-	private void addZombi()
-	{
-		GameObject gameObject = _enemyCreationZones[UnityEngine.Random.Range(0, _enemyCreationZones.Length)];
-		BoxCollider component = gameObject.GetComponent<BoxCollider>();
-		Vector2 vector = new Vector2(component.size.x * gameObject.transform.localScale.x, component.size.z * gameObject.transform.localScale.z);
-		Rect rect = new Rect(gameObject.transform.position.x - vector.x / 2f, gameObject.transform.position.z - vector.y / 2f, vector.x, vector.y);
-		Vector3 position = new Vector3(rect.x + UnityEngine.Random.Range(0f, rect.width), gameObject.transform.position.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
-		int index = 0;
-		double num = timeGame / maxTimeGame * 100.0;
-		if (isPizzaMap)
-		{
-			if (num < 15.0)
-			{
-				index = UnityEngine.Random.Range(0, 4);
-			}
-			if (num >= 15.0 && num < 30.0)
-			{
-				index = UnityEngine.Random.Range(0, 5);
-			}
-			if (num >= 30.0 && num < 45.0)
-			{
-				index = UnityEngine.Random.Range(0, 6);
-			}
-			if (num >= 45.0 && num < 60.0)
-			{
-				index = UnityEngine.Random.Range(1, 7);
-			}
-			if (num >= 60.0 && num < 75.0)
-			{
-				index = UnityEngine.Random.Range(1, 9);
-			}
-			if (num >= 75.0)
-			{
-				index = UnityEngine.Random.Range(3, 11);
-			}
-		}
-		else
-		{
-			if (num < 15.0)
-			{
-				index = UnityEngine.Random.Range(0, 3);
-			}
-			if (num >= 15.0 && num < 30.0)
-			{
-				index = UnityEngine.Random.Range(0, 5);
-			}
-			if (num >= 30.0 && num < 45.0)
-			{
-				index = UnityEngine.Random.Range(0, 6);
-			}
-			if (num >= 45.0 && num < 60.0)
-			{
-				index = UnityEngine.Random.Range(1, 8);
-			}
-			if (num >= 60.0 && num < 75.0)
-			{
-				index = UnityEngine.Random.Range(3, 10);
-			}
-			if (num >= 75.0)
-			{
-				index = UnityEngine.Random.Range(3, 11);
-			}
-		}
-		PhotonNetwork.InstantiateSceneObject(zombiePrefabs[index], position, Quaternion.identity, 0, null);
 	}
 
 	[PunRPC]
@@ -254,17 +265,12 @@ public sealed class ZombiManager : MonoBehaviour
 		WeaponManager weaponManager = WeaponManager.sharedManager;
 		if (weaponManager.myTable != null && weaponManager.myTable.GetComponent<PhotonView>().ownerId == winID)
 		{
-			int val = Storager.getInt("Rating", false) + 1;
-			Storager.setInt("Rating", val, false);
+			int num = Storager.getInt("Rating", false) + 1;
+			Storager.setInt("Rating", num, false);
 			if (FriendsController.sharedController != null)
 			{
 				FriendsController.sharedController.TryIncrementWinCountTimestamp();
 			}
 		}
-	}
-
-	private void OnDestroy()
-	{
-		sharedManager = null;
 	}
 }

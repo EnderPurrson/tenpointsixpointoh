@@ -1,3 +1,5 @@
+using GooglePlayGames;
+using System;
 using System.Collections.Generic;
 using UnityEngine.SocialPlatforms;
 
@@ -21,47 +23,15 @@ namespace GooglePlayGames.BasicApi
 
 		private List<PlayGamesScore> mScores = new List<PlayGamesScore>();
 
-		public bool Valid
-		{
-			get
-			{
-				return mStatus == ResponseStatus.Success || mStatus == ResponseStatus.SuccessWithStale;
-			}
-		}
-
-		public ResponseStatus Status
-		{
-			get
-			{
-				return mStatus;
-			}
-			internal set
-			{
-				mStatus = value;
-			}
-		}
-
 		public ulong ApproximateCount
 		{
 			get
 			{
-				return mApproxCount;
+				return this.mApproxCount;
 			}
 			internal set
 			{
-				mApproxCount = value;
-			}
-		}
-
-		public string Title
-		{
-			get
-			{
-				return mTitle;
-			}
-			internal set
-			{
-				mTitle = value;
+				this.mApproxCount = value;
 			}
 		}
 
@@ -69,43 +39,11 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mId;
+				return this.mId;
 			}
 			internal set
 			{
-				mId = value;
-			}
-		}
-
-		public IScore PlayerScore
-		{
-			get
-			{
-				return mPlayerScore;
-			}
-			internal set
-			{
-				mPlayerScore = value;
-			}
-		}
-
-		public IScore[] Scores
-		{
-			get
-			{
-				return mScores.ToArray();
-			}
-		}
-
-		public ScorePageToken PrevPageToken
-		{
-			get
-			{
-				return mPrevPage;
-			}
-			internal set
-			{
-				mPrevPage = value;
+				this.mId = value;
 			}
 		}
 
@@ -113,34 +51,98 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mNextPage;
+				return this.mNextPage;
 			}
 			internal set
 			{
-				mNextPage = value;
+				this.mNextPage = value;
+			}
+		}
+
+		public IScore PlayerScore
+		{
+			get
+			{
+				return this.mPlayerScore;
+			}
+			internal set
+			{
+				this.mPlayerScore = value;
+			}
+		}
+
+		public ScorePageToken PrevPageToken
+		{
+			get
+			{
+				return this.mPrevPage;
+			}
+			internal set
+			{
+				this.mPrevPage = value;
+			}
+		}
+
+		public IScore[] Scores
+		{
+			get
+			{
+				return this.mScores.ToArray();
+			}
+		}
+
+		public ResponseStatus Status
+		{
+			get
+			{
+				return this.mStatus;
+			}
+			internal set
+			{
+				this.mStatus = value;
+			}
+		}
+
+		public string Title
+		{
+			get
+			{
+				return this.mTitle;
+			}
+			internal set
+			{
+				this.mTitle = value;
+			}
+		}
+
+		public bool Valid
+		{
+			get
+			{
+				return (this.mStatus == ResponseStatus.Success ? true : this.mStatus == ResponseStatus.SuccessWithStale);
 			}
 		}
 
 		internal LeaderboardScoreData(string leaderboardId)
 		{
-			mId = leaderboardId;
+			this.mId = leaderboardId;
 		}
 
 		internal LeaderboardScoreData(string leaderboardId, ResponseStatus status)
 		{
-			mId = leaderboardId;
-			mStatus = status;
+			this.mId = leaderboardId;
+			this.mStatus = status;
 		}
 
 		internal int AddScore(PlayGamesScore score)
 		{
-			mScores.Add(score);
-			return mScores.Count;
+			this.mScores.Add(score);
+			return this.mScores.Count;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("[LeaderboardScoreData: mId={0},  mStatus={1}, mApproxCount={2}, mTitle={3}]", mId, mStatus, mApproxCount, mTitle);
+			return string.Format("[LeaderboardScoreData: mId={0},  mStatus={1}, mApproxCount={2}, mTitle={3}]", new object[] { this.mId, this.mStatus, this.mApproxCount, this.mTitle });
 		}
 	}
 }

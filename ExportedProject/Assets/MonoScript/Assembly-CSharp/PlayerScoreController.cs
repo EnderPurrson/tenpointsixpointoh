@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,12 +6,7 @@ public class PlayerScoreController : MonoBehaviour
 {
 	public int currentScore;
 
-	public string[] addScoreString = new string[3]
-	{
-		string.Empty,
-		string.Empty,
-		string.Empty
-	};
+	public string[] addScoreString = new string[] { string.Empty, string.Empty, string.Empty };
 
 	public int sumScore;
 
@@ -30,22 +26,26 @@ public class PlayerScoreController : MonoBehaviour
 
 	private Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();
 
-	private void Start()
+	public PlayerScoreController()
 	{
-		if (Defs.isMulti && ((Defs.isInet && !GetComponent<PhotonView>().isMine) || (!Defs.isInet && !GetComponent<NetworkView>().isMine)))
+	}
+
+	private void AddScoreMessage(string _message, int _addScore)
+	{
+		this.addScoreString[2] = this.addScoreString[1];
+		this.addScoreString[1] = _message;
+		if (this.timerAddScoreShow[0] <= 0f)
 		{
-			base.enabled = false;
-			return;
+			this.sumScore = _addScore;
 		}
-		foreach (KeyValuePair<string, string> item in PlayerEventScoreController.audioClipNameOnEvent)
+		else
 		{
-			string value = item.Value;
-			AudioClip audioClip = Resources.Load("ScoreEventSounds/" + value) as AudioClip;
-			if (audioClip != null)
-			{
-				clips.Add(item.Key, audioClip);
-			}
+			this.sumScore += _addScore;
 		}
+		this.addScoreString[0] = this.sumScore.ToString();
+		this.timerAddScoreShow[2] = this.timerAddScoreShow[1];
+		this.timerAddScoreShow[1] = this.maxTimerMessage;
+		this.timerAddScoreShow[0] = this.maxTimerSumMessage;
 	}
 
 	public void AddScoreOnEvent(PlayerEventScoreController.ScoreEvent _event, float _koef = 1f)
@@ -54,84 +54,87 @@ public class PlayerScoreController : MonoBehaviour
 		{
 			Debug.Log(_event.ToString());
 		}
-		if ((_event == PlayerEventScoreController.ScoreEvent.deadHeadShot || _event == PlayerEventScoreController.ScoreEvent.deadHeadShot) && Time.time - timeOldHeadShot < 1.5f)
+		if ((_event == PlayerEventScoreController.ScoreEvent.deadHeadShot || _event == PlayerEventScoreController.ScoreEvent.deadHeadShot) && Time.time - this.timeOldHeadShot < 1.5f)
 		{
 			_event = PlayerEventScoreController.ScoreEvent.doubleHeadShot;
 		}
-		int num = (int)((float)PlayerEventScoreController.scoreOnEvent[_event.ToString()] * _koef);
-		if (num == 0)
+		int item = (int)((float)PlayerEventScoreController.scoreOnEvent[_event.ToString()] * _koef);
+		if (item == 0)
 		{
 			return;
 		}
-		currentScore = WeaponManager.sharedManager.myNetworkStartTable.score;
-		currentScore += num;
-		string text = PlayerEventScoreController.messageOnEvent[_event.ToString()];
-		if (!string.IsNullOrEmpty(text))
+		this.currentScore = WeaponManager.sharedManager.myNetworkStartTable.score;
+		this.currentScore += item;
+		string str = PlayerEventScoreController.messageOnEvent[_event.ToString()];
+		if (!string.IsNullOrEmpty(str))
 		{
-			AddScoreMessage("+" + num + " " + LocalizationStore.Get(text), num);
+			this.AddScoreMessage(string.Concat(new object[] { "+", item, " ", LocalizationStore.Get(str) }), item);
 		}
-		string text2 = PlayerEventScoreController.pictureNameOnEvent[_event.ToString()];
-		if (!string.IsNullOrEmpty(text2) && InGameGUI.sharedInGameGUI != null)
+		string item1 = PlayerEventScoreController.pictureNameOnEvent[_event.ToString()];
+		if (!string.IsNullOrEmpty(item1) && InGameGUI.sharedInGameGUI != null)
 		{
 			bool flag = true;
-			if (text2.Equals("Kill") && WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.multiKill > 0)
+			if (item1.Equals("Kill") && WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.multiKill > 0)
 			{
 				flag = false;
 			}
-			if (flag && !pictNameList.Contains(text2))
+			if (flag && !this.pictNameList.Contains(item1))
 			{
-				pictNameList.Add(text2);
+				this.pictNameList.Add(item1);
 			}
 		}
-		GlobalGameController.Score = currentScore;
-		WeaponManager.sharedManager.myNetworkStartTable.score = currentScore;
+		GlobalGameController.Score = this.currentScore;
+		WeaponManager.sharedManager.myNetworkStartTable.score = this.currentScore;
 		WeaponManager.sharedManager.myNetworkStartTable.SynhScore();
 	}
 
-	private void AddScoreMessage(string _message, int _addScore)
+	private void Start()
 	{
-		addScoreString[2] = addScoreString[1];
-		addScoreString[1] = _message;
-		if (timerAddScoreShow[0] > 0f)
+		if (!Defs.isMulti || (!Defs.isInet || base.GetComponent<PhotonView>().isMine) && (Defs.isInet || base.GetComponent<NetworkView>().isMine))
 		{
-			sumScore += _addScore;
+			foreach (KeyValuePair<string, string> keyValuePair in PlayerEventScoreController.audioClipNameOnEvent)
+			{
+				string value = keyValuePair.Value;
+				AudioClip audioClip = Resources.Load(string.Concat("ScoreEventSounds/", value)) as AudioClip;
+				if (audioClip == null)
+				{
+					continue;
+				}
+				this.clips.Add(keyValuePair.Key, audioClip);
+			}
 		}
 		else
 		{
-			sumScore = _addScore;
+			base.enabled = false;
 		}
-		addScoreString[0] = sumScore.ToString();
-		timerAddScoreShow[2] = timerAddScoreShow[1];
-		timerAddScoreShow[1] = maxTimerMessage;
-		timerAddScoreShow[0] = maxTimerSumMessage;
 	}
 
 	private void Update()
 	{
-		timeShowPict += Time.deltaTime;
-		if (timeShowPict > minTimeShowPict && pictNameList.Count > 0)
+		this.timeShowPict += Time.deltaTime;
+		if (this.timeShowPict > this.minTimeShowPict && this.pictNameList.Count > 0)
 		{
-			string text = pictNameList[0];
-			timeShowPict = 0f;
+			string item = this.pictNameList[0];
+			this.timeShowPict = 0f;
 			InGameGUI.sharedInGameGUI.timerShowScorePict = InGameGUI.sharedInGameGUI.maxTimerShowScorePict;
-			InGameGUI.sharedInGameGUI.scorePictName = text;
-			if (clips.ContainsKey(text) && Defs.isSoundFX)
+			InGameGUI.sharedInGameGUI.scorePictName = item;
+			if (this.clips.ContainsKey(item) && Defs.isSoundFX)
 			{
-				NGUITools.PlaySound(clips[text]);
+				NGUITools.PlaySound(this.clips[item]);
 			}
-			pictNameList.RemoveAt(0);
+			this.pictNameList.RemoveAt(0);
 		}
-		if (timerAddScoreShow[2] > 0f)
+		if (this.timerAddScoreShow[2] > 0f)
 		{
-			timerAddScoreShow[2] -= Time.deltaTime;
+			this.timerAddScoreShow[2] -= Time.deltaTime;
 		}
-		if (timerAddScoreShow[1] > 0f)
+		if (this.timerAddScoreShow[1] > 0f)
 		{
-			timerAddScoreShow[1] -= Time.deltaTime;
+			this.timerAddScoreShow[1] -= Time.deltaTime;
 		}
-		if (timerAddScoreShow[0] > 0f)
+		if (this.timerAddScoreShow[0] > 0f)
 		{
-			timerAddScoreShow[0] -= Time.deltaTime;
+			this.timerAddScoreShow[0] -= Time.deltaTime;
 		}
 	}
 }

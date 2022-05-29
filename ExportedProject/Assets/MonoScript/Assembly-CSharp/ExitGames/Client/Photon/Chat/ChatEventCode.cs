@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public class ChatEventCode
@@ -15,5 +17,9 @@ namespace ExitGames.Client.Photon.Chat
 		public const byte Subscribe = 5;
 
 		public const byte Unsubscribe = 6;
+
+		public ChatEventCode()
+		{
+		}
 	}
 }

@@ -1,3 +1,5 @@
+using System;
+
 public class PromoActionMenu
 {
 	public string tg;
@@ -11,4 +13,8 @@ public class PromoActionMenu
 	public int discount;
 
 	public int price;
+
+	public PromoActionMenu()
+	{
+	}
 }

@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Internal/Snapshot Point")]
+[ExecuteInEditMode]
 public class UISnapshotPoint : MonoBehaviour
 {
 	public bool isOrthographic = true;
@@ -16,6 +17,10 @@ public class UISnapshotPoint : MonoBehaviour
 	public float orthoSize = 30f;
 
 	public Texture2D thumbnail;
+
+	public UISnapshotPoint()
+	{
+	}
 
 	private void Start()
 	{

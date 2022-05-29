@@ -1,10 +1,11 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 internal sealed class LeaderboardsController : MonoBehaviour
@@ -15,43 +16,31 @@ internal sealed class LeaderboardsController : MonoBehaviour
 
 	private string _playerId = string.Empty;
 
-	[CompilerGenerated]
-	private static Func<IList<LeaderboardItemViewModel>, IList<LeaderboardItemViewModel>> _003C_003Ef__am_0024cache3;
-
-	[CompilerGenerated]
-	private static Func<LeaderboardItemViewModel, int> _003C_003Ef__am_0024cache4;
-
-	[CompilerGenerated]
-	private static Func<IGrouping<int, LeaderboardItemViewModel>, int> _003C_003Ef__am_0024cache5;
-
-	[CompilerGenerated]
-	private static Func<LeaderboardItemViewModel, int> _003C_003Ef__am_0024cache6;
+	public FriendsGUIController FriendsGuiController
+	{
+		private get
+		{
+			return this._friendsGuiController;
+		}
+		set
+		{
+			this._friendsGuiController = value;
+		}
+	}
 
 	public LeaderboardsView LeaderboardsView
 	{
 		private get
 		{
-			return _leaderboardsView;
+			return this._leaderboardsView;
 		}
 		set
 		{
-			_leaderboardsView = value;
-			if (_leaderboardsView != null)
+			this._leaderboardsView = value;
+			if (this._leaderboardsView != null)
 			{
-				_leaderboardsView.BackPressed += HandleBackPressed;
+				this._leaderboardsView.BackPressed += new EventHandler(this.HandleBackPressed);
 			}
-		}
-	}
-
-	public FriendsGUIController FriendsGuiController
-	{
-		private get
-		{
-			return _friendsGuiController;
-		}
-		set
-		{
-			_friendsGuiController = value;
 		}
 	}
 
@@ -59,28 +48,153 @@ internal sealed class LeaderboardsController : MonoBehaviour
 	{
 		private get
 		{
-			return _playerId;
+			return this._playerId;
 		}
 		set
 		{
-			_playerId = value ?? string.Empty;
+			this._playerId = value ?? string.Empty;
 		}
 	}
 
-	public void RequestLeaderboards()
+	public LeaderboardsController()
 	{
-		if (!string.IsNullOrEmpty(_playerId))
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetLeaderboardsCoroutine(string playerId)
+	{
+		LeaderboardsController.u003cGetLeaderboardsCoroutineu003ec__Iterator15E variable = null;
+		return variable;
+	}
+
+	private void HandleBackPressed(object sender, EventArgs e)
+	{
+		if (Application.isEditor)
 		{
-			StartCoroutine(GetLeaderboardsCoroutine(_playerId));
+			UnityEngine.Debug.Log("Back pressed.");
 		}
-		else
+		if (this._friendsGuiController != null)
 		{
-			Debug.Log("Player id should not be empty.");
+			this._friendsGuiController.leaderboardsView.gameObject.SetActive(false);
+			this._friendsGuiController.friendsPanel.gameObject.SetActive(true);
+		}
+	}
+
+	private void HandleRequestCompleted(WWW request)
+	{
+		if (Application.isEditor)
+		{
+			UnityEngine.Debug.Log("HandleRequestCompleted()");
+		}
+		if (request == null)
+		{
+			return;
+		}
+		if (!string.IsNullOrEmpty(request.error))
+		{
+			UnityEngine.Debug.LogWarning(request.error);
+			return;
+		}
+		string str = URLs.Sanitize(request);
+		if (string.IsNullOrEmpty(str))
+		{
+			UnityEngine.Debug.LogWarning("Leaderboars response is empty.");
+			return;
+		}
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs == null)
+		{
+			UnityEngine.Debug.LogWarning("Leaderboards response is ill-formed.");
+			return;
+		}
+		if (!strs.Any<KeyValuePair<string, object>>())
+		{
+			UnityEngine.Debug.LogWarning("Leaderboards response contains no elements.");
+			return;
+		}
+		Func<IList<LeaderboardItemViewModel>, IList<LeaderboardItemViewModel>> func = (IList<LeaderboardItemViewModel> items) => {
+			List<LeaderboardItemViewModel> leaderboardItemViewModels = new List<LeaderboardItemViewModel>();
+			IOrderedEnumerable<IGrouping<int, LeaderboardItemViewModel>> groupings = 
+				from vm in items
+				group vm by vm.WinCount into g
+				orderby g.Key descending
+				select g;
+			int num = 1;
+			IEnumerator<IGrouping<int, LeaderboardItemViewModel>> enumerator = groupings.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					IGrouping<int, LeaderboardItemViewModel> current = enumerator.Current;
+					IEnumerator<LeaderboardItemViewModel> enumerator1 = (
+						from vm in current
+						orderby vm.Rank descending
+						select vm).GetEnumerator();
+					try
+					{
+						while (enumerator1.MoveNext())
+						{
+							LeaderboardItemViewModel leaderboardItemViewModel = enumerator1.Current;
+							leaderboardItemViewModel.Place = num;
+							leaderboardItemViewModels.Add(leaderboardItemViewModel);
+						}
+					}
+					finally
+					{
+						if (enumerator1 == null)
+						{
+						}
+						enumerator1.Dispose();
+					}
+					num += current.Count<LeaderboardItemViewModel>();
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			return leaderboardItemViewModels;
+		};
+		List<LeaderboardItemViewModel> leaderboardItemViewModels1 = LeaderboardsController.ParseLeaderboardEntries(this._playerId, "friends", strs);
+		List<LeaderboardItemViewModel> leaderboardItemViewModels2 = leaderboardItemViewModels1;
+		LeaderboardItemViewModel leaderboardItemViewModel1 = new LeaderboardItemViewModel()
+		{
+			Id = this._playerId,
+			Nickname = ProfileController.GetPlayerNameOrDefault(),
+			Rank = ExperienceController.sharedController.currentLevel,
+			WinCount = RatingSystem.instance.currentRating,
+			Highlight = true,
+			ClanLogo = FriendsController.sharedController.clanLogo ?? string.Empty
+		};
+		leaderboardItemViewModels2.Add(leaderboardItemViewModel1);
+		func(leaderboardItemViewModels1);
+		List<LeaderboardItemViewModel> leaderboardItemViewModels3 = LeaderboardsController.ParseLeaderboardEntries(this._playerId, "best_players", strs);
+		func(leaderboardItemViewModels3);
+		List<LeaderboardItemViewModel> leaderboardItemViewModels4 = LeaderboardsController.ParseLeaderboardEntries(this._playerId, "top_clans", strs);
+		func(leaderboardItemViewModels4);
+	}
+
+	private void OnDestroy()
+	{
+		if (this._leaderboardsView != null)
+		{
+			this._leaderboardsView.BackPressed -= new EventHandler(this.HandleBackPressed);
 		}
 	}
 
 	internal static List<LeaderboardItemViewModel> ParseLeaderboardEntries(string entryId, string leaderboardName, Dictionary<string, object> response)
 	{
+		object obj;
+		object obj1;
+		object obj2;
+		int num;
+		object obj3;
+		object obj4;
+		object obj5;
+		object obj6;
 		if (string.IsNullOrEmpty(leaderboardName))
 		{
 			throw new ArgumentException("Leaderbord should not be empty.", "leaderboardName");
@@ -89,258 +203,115 @@ internal sealed class LeaderboardsController : MonoBehaviour
 		{
 			throw new ArgumentNullException("response");
 		}
-		List<LeaderboardItemViewModel> list = new List<LeaderboardItemViewModel>();
-		object value;
-		if (response.TryGetValue(leaderboardName, out value))
+		List<LeaderboardItemViewModel> leaderboardItemViewModels = new List<LeaderboardItemViewModel>();
+		if (response.TryGetValue(leaderboardName, out obj))
 		{
-			List<object> list2 = value as List<object>;
-			if (list2 != null)
+			List<object> objs = obj as List<object>;
+			if (objs != null)
 			{
-				IEnumerable<Dictionary<string, object>> enumerable = list2.OfType<Dictionary<string, object>>();
+				IEnumerator<Dictionary<string, object>> enumerator = objs.OfType<Dictionary<string, object>>().GetEnumerator();
+				try
 				{
-					foreach (Dictionary<string, object> item in enumerable)
+					while (enumerator.MoveNext())
 					{
+						Dictionary<string, object> current = enumerator.Current;
 						LeaderboardItemViewModel leaderboardItemViewModel = new LeaderboardItemViewModel();
-						object value2;
-						if (item.TryGetValue("id", out value2))
+						if (current.TryGetValue("id", out obj1))
 						{
-							leaderboardItemViewModel.Id = Convert.ToString(value2);
-							leaderboardItemViewModel.Highlight = !string.IsNullOrEmpty(leaderboardItemViewModel.Id) && leaderboardItemViewModel.Id.Equals(entryId);
+							leaderboardItemViewModel.Id = Convert.ToString(obj1);
+							leaderboardItemViewModel.Highlight = (string.IsNullOrEmpty(leaderboardItemViewModel.Id) ? false : leaderboardItemViewModel.Id.Equals(entryId));
 						}
-						object value3;
-						int result;
-						if (item.TryGetValue("rank", out value3) && int.TryParse(value3 as string, out result))
+						if (current.TryGetValue("rank", out obj2) && int.TryParse(obj2 as string, out num))
 						{
-							leaderboardItemViewModel.Rank = result;
+							leaderboardItemViewModel.Rank = num;
 						}
-						else if (item.TryGetValue("member_cnt", out value3))
+						else if (current.TryGetValue("member_cnt", out obj2))
 						{
 							try
 							{
-								leaderboardItemViewModel.Rank = Convert.ToInt32(value3);
+								leaderboardItemViewModel.Rank = Convert.ToInt32(obj2);
 							}
 							catch (Exception exception)
 							{
-								Debug.LogException(exception);
+								UnityEngine.Debug.LogException(exception);
 							}
 						}
-						object value4;
-						if (item.TryGetValue("nick", out value4))
+						if (current.TryGetValue("nick", out obj3))
 						{
-							leaderboardItemViewModel.Nickname = (value4 as string) ?? string.Empty;
+							leaderboardItemViewModel.Nickname = obj3 as string ?? string.Empty;
 						}
-						else if (item.TryGetValue("name", out value4))
+						else if (current.TryGetValue("name", out obj3))
 						{
-							leaderboardItemViewModel.Nickname = (value4 as string) ?? string.Empty;
+							leaderboardItemViewModel.Nickname = obj3 as string ?? string.Empty;
 						}
 						try
 						{
-							object value5;
-							if (item.TryGetValue("trophies", out value5))
+							if (current.TryGetValue("trophies", out obj4))
 							{
-								leaderboardItemViewModel.WinCount = Convert.ToInt32(value5);
+								leaderboardItemViewModel.WinCount = Convert.ToInt32(obj4);
 							}
-							else if (item.TryGetValue("wins", out value5))
+							else if (current.TryGetValue("wins", out obj4))
 							{
-								leaderboardItemViewModel.WinCount = Convert.ToInt32(value5);
+								leaderboardItemViewModel.WinCount = Convert.ToInt32(obj4);
 							}
-							else if (item.TryGetValue("win", out value5))
+							else if (current.TryGetValue("win", out obj4))
 							{
-								leaderboardItemViewModel.WinCount = Convert.ToInt32(value5);
+								leaderboardItemViewModel.WinCount = Convert.ToInt32(obj4);
 							}
 						}
-						catch (Exception exception2)
+						catch (Exception exception1)
 						{
-							Debug.LogException(exception2);
+							UnityEngine.Debug.LogException(exception1);
 						}
-						object value6;
-						if (item.TryGetValue("logo", out value6))
-						{
-							leaderboardItemViewModel.ClanLogo = (value6 as string) ?? string.Empty;
-						}
-						else
+						if (!current.TryGetValue("logo", out obj5))
 						{
 							leaderboardItemViewModel.ClanLogo = string.Empty;
 						}
-						object value7;
-						if (item.TryGetValue("name", out value7))
-						{
-							leaderboardItemViewModel.ClanName = (value7 as string) ?? string.Empty;
-						}
-						else if (item.TryGetValue("clan_name", out value7))
-						{
-							leaderboardItemViewModel.ClanName = (value7 as string) ?? string.Empty;
-						}
 						else
+						{
+							leaderboardItemViewModel.ClanLogo = obj5 as string ?? string.Empty;
+						}
+						if (current.TryGetValue("name", out obj6))
+						{
+							leaderboardItemViewModel.ClanName = obj6 as string ?? string.Empty;
+						}
+						else if (!current.TryGetValue("clan_name", out obj6))
 						{
 							leaderboardItemViewModel.ClanName = string.Empty;
 						}
-						list.Add(leaderboardItemViewModel);
+						else
+						{
+							leaderboardItemViewModel.ClanName = obj6 as string ?? string.Empty;
+						}
+						leaderboardItemViewModels.Add(leaderboardItemViewModel);
 					}
-					return list;
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
 				}
 			}
 		}
-		return list;
+		return leaderboardItemViewModels;
 	}
 
-	private void OnDestroy()
+	public void RequestLeaderboards()
 	{
-		if (_leaderboardsView != null)
+		if (string.IsNullOrEmpty(this._playerId))
 		{
-			_leaderboardsView.BackPressed -= HandleBackPressed;
+			UnityEngine.Debug.Log("Player id should not be empty.");
+		}
+		else
+		{
+			base.StartCoroutine(this.GetLeaderboardsCoroutine(this._playerId));
 		}
 	}
 
 	private void Start()
 	{
-		RequestLeaderboards();
-	}
-
-	private IEnumerator GetLeaderboardsCoroutine(string playerId)
-	{
-		if (string.IsNullOrEmpty(playerId))
-		{
-			Debug.LogWarning("Player id should not be empty.");
-			yield break;
-		}
-		Debug.Log("LeaderboardsController.GetLeaderboardsCoroutine(" + playerId + ")");
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_leaderboards_league");
-		form.AddField("app_version", string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion));
-		form.AddField("id", playerId);
-		form.AddField("league_id", LeaderboardScript.GetLeagueId());
-		form.AddField("uniq_id", FriendsController.sharedController.id);
-		form.AddField("auth", FriendsController.Hash("get_leaderboards_league"));
-		if (FriendsController.sharedController.NumberOfBestPlayersRequests > 0)
-		{
-			Debug.Log("Waiting previous leaderboards request...");
-			while (FriendsController.sharedController.NumberOfBestPlayersRequests > 0)
-			{
-				yield return null;
-			}
-		}
-		FriendsController.sharedController.NumberOfBestPlayersRequests++;
-		WWW request = Tools.CreateWwwIfNotConnected(FriendsController.actionAddress, form, string.Empty);
-		yield return request;
-		FriendsController.sharedController.NumberOfBestPlayersRequests--;
-		HandleRequestCompleted(request);
-	}
-
-	private void HandleBackPressed(object sender, EventArgs e)
-	{
-		if (Application.isEditor)
-		{
-			Debug.Log("Back pressed.");
-		}
-		if (_friendsGuiController != null)
-		{
-			_friendsGuiController.leaderboardsView.gameObject.SetActive(false);
-			_friendsGuiController.friendsPanel.gameObject.SetActive(true);
-		}
-	}
-
-	private void HandleRequestCompleted(WWW request)
-	{
-		if (Application.isEditor)
-		{
-			Debug.Log("HandleRequestCompleted()");
-		}
-		if (request == null)
-		{
-			return;
-		}
-		if (!string.IsNullOrEmpty(request.error))
-		{
-			Debug.LogWarning(request.error);
-			return;
-		}
-		string text = URLs.Sanitize(request);
-		if (string.IsNullOrEmpty(text))
-		{
-			Debug.LogWarning("Leaderboars response is empty.");
-			return;
-		}
-		Dictionary<string, object> dictionary = Json.Deserialize(text) as Dictionary<string, object>;
-		if (dictionary == null)
-		{
-			Debug.LogWarning("Leaderboards response is ill-formed.");
-			return;
-		}
-		if (!dictionary.Any())
-		{
-			Debug.LogWarning("Leaderboards response contains no elements.");
-			return;
-		}
-		if (_003C_003Ef__am_0024cache3 == null)
-		{
-			_003C_003Ef__am_0024cache3 = _003CHandleRequestCompleted_003Em__351;
-		}
-		Func<IList<LeaderboardItemViewModel>, IList<LeaderboardItemViewModel>> func = _003C_003Ef__am_0024cache3;
-		List<LeaderboardItemViewModel> list = ParseLeaderboardEntries(_playerId, "friends", dictionary);
-		list.Add(new LeaderboardItemViewModel
-		{
-			Id = _playerId,
-			Nickname = ProfileController.GetPlayerNameOrDefault(),
-			Rank = ExperienceController.sharedController.currentLevel,
-			WinCount = RatingSystem.instance.currentRating,
-			Highlight = true,
-			ClanLogo = (FriendsController.sharedController.clanLogo ?? string.Empty)
-		});
-		IList<LeaderboardItemViewModel> list2 = func(list);
-		List<LeaderboardItemViewModel> arg = ParseLeaderboardEntries(_playerId, "best_players", dictionary);
-		IList<LeaderboardItemViewModel> list3 = func(arg);
-		List<LeaderboardItemViewModel> arg2 = ParseLeaderboardEntries(_playerId, "top_clans", dictionary);
-		IList<LeaderboardItemViewModel> list4 = func(arg2);
-	}
-
-	[CompilerGenerated]
-	private static IList<LeaderboardItemViewModel> _003CHandleRequestCompleted_003Em__351(IList<LeaderboardItemViewModel> items)
-	{
-		List<LeaderboardItemViewModel> list = new List<LeaderboardItemViewModel>();
-		if (_003C_003Ef__am_0024cache4 == null)
-		{
-			_003C_003Ef__am_0024cache4 = _003CHandleRequestCompleted_003Em__352;
-		}
-		IEnumerable<IGrouping<int, LeaderboardItemViewModel>> source = items.GroupBy(_003C_003Ef__am_0024cache4);
-		if (_003C_003Ef__am_0024cache5 == null)
-		{
-			_003C_003Ef__am_0024cache5 = _003CHandleRequestCompleted_003Em__353;
-		}
-		IOrderedEnumerable<IGrouping<int, LeaderboardItemViewModel>> orderedEnumerable = source.OrderByDescending(_003C_003Ef__am_0024cache5);
-		int num = 1;
-		foreach (IGrouping<int, LeaderboardItemViewModel> item in orderedEnumerable)
-		{
-			if (_003C_003Ef__am_0024cache6 == null)
-			{
-				_003C_003Ef__am_0024cache6 = _003CHandleRequestCompleted_003Em__354;
-			}
-			IOrderedEnumerable<LeaderboardItemViewModel> orderedEnumerable2 = item.OrderByDescending(_003C_003Ef__am_0024cache6);
-			foreach (LeaderboardItemViewModel item2 in orderedEnumerable2)
-			{
-				item2.Place = num;
-				list.Add(item2);
-			}
-			num += item.Count();
-		}
-		return list;
-	}
-
-	[CompilerGenerated]
-	private static int _003CHandleRequestCompleted_003Em__352(LeaderboardItemViewModel vm)
-	{
-		return vm.WinCount;
-	}
-
-	[CompilerGenerated]
-	private static int _003CHandleRequestCompleted_003Em__353(IGrouping<int, LeaderboardItemViewModel> g)
-	{
-		return g.Key;
-	}
-
-	[CompilerGenerated]
-	private static int _003CHandleRequestCompleted_003Em__354(LeaderboardItemViewModel vm)
-	{
-		return vm.Rank;
+		this.RequestLeaderboards();
 	}
 }

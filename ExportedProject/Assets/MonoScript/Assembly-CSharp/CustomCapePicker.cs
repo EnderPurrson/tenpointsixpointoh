@@ -1,16 +1,21 @@
+using System;
 using UnityEngine;
 
 public sealed class CustomCapePicker : MonoBehaviour
 {
 	public bool shouldLoadTexture = true;
 
+	public CustomCapePicker()
+	{
+	}
+
 	private void Start()
 	{
-		if (shouldLoadTexture)
+		if (this.shouldLoadTexture)
 		{
-			Texture capeUserTexture = SkinsController.capeUserTexture;
-			capeUserTexture.filterMode = FilterMode.Point;
-			Player_move_c.SetTextureRecursivelyFrom(base.gameObject, capeUserTexture, new GameObject[0]);
+			Texture texture = SkinsController.capeUserTexture;
+			texture.filterMode = FilterMode.Point;
+			Player_move_c.SetTextureRecursivelyFrom(base.gameObject, texture, new GameObject[0]);
 		}
 	}
 }

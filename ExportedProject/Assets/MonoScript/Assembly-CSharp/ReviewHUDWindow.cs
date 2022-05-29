@@ -1,6 +1,9 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ReviewHUDWindow : MonoBehaviour
@@ -40,13 +43,24 @@ public class ReviewHUDWindow : MonoBehaviour
 	{
 		get
 		{
-			if (_instance == null)
+			if (ReviewHUDWindow._instance != null)
 			{
-				GameObject gameObject = InfoWindowController.Instance.gameObject;
-				_instance = gameObject.GetComponentInChildren<ReviewHUDWindow>();
-				return _instance;
+				return ReviewHUDWindow._instance;
 			}
-			return _instance;
+			ReviewHUDWindow._instance = InfoWindowController.Instance.gameObject.GetComponentInChildren<ReviewHUDWindow>();
+			return ReviewHUDWindow._instance;
+		}
+	}
+
+	public bool NeedShowThanks
+	{
+		get
+		{
+			return this._NeedShowThanks;
+		}
+		set
+		{
+			this._NeedShowThanks = value;
 		}
 	}
 
@@ -58,47 +72,194 @@ public class ReviewHUDWindow : MonoBehaviour
 		}
 	}
 
-	public bool NeedShowThanks
+	static ReviewHUDWindow()
 	{
-		get
+	}
+
+	public ReviewHUDWindow()
+	{
+	}
+
+	private void AddBackSubscription()
+	{
+		if (this._backSubscription == null)
 		{
-			return _NeedShowThanks;
-		}
-		set
-		{
-			_NeedShowThanks = value;
+			this._backSubscription = BackSystem.Instance.Register(new Action(this.OnClickClose), "Review HUD (Window with 5 stars)");
 		}
 	}
 
 	private void Awake()
 	{
-		_instance = this;
-		if (arrStarByOrder != null)
+		ReviewHUDWindow._instance = this;
+		if (this.arrStarByOrder != null)
 		{
-			for (int i = 0; i < arrStarByOrder.Length; i++)
+			for (int i = 0; i < (int)this.arrStarByOrder.Length; i++)
 			{
-				arrStarByOrder[i].numOrderStar = i;
-				arrStarByOrder[i].lbNumStar.text = (i + 1).ToString();
+				this.arrStarByOrder[i].numOrderStar = i;
+				int num = i + 1;
+				this.arrStarByOrder[i].lbNumStar.text = num.ToString();
 			}
 		}
 	}
 
-	private void OnEnable()
+	[DebuggerHidden]
+	private IEnumerator Crt_OnShowThanks()
 	{
-		OnShowThanks();
+		ReviewHUDWindow.u003cCrt_OnShowThanksu003ec__Iterator188 variable = null;
+		return variable;
+	}
+
+	[ContextMenu("Find all stars")]
+	private void FindStars()
+	{
+		this.arrStarByOrder = base.GetComponentsInChildren<StarReview>(true);
+	}
+
+	public void OnChangeMsgReview()
+	{
+		this.UpdateStateBtnSendMsg(true);
+	}
+
+	public void OnClickClose()
+	{
+		ReviewHUDWindow.isShow = false;
+		if (this.countStarForReview != 0)
+		{
+			FlurryEvents.LogRateUsFake(true, this.countStarForReview, false);
+		}
+		else
+		{
+			FlurryEvents.LogRateUsFake(false, 0, false);
+		}
+		AnalyticsStuff.RateUsFake(this.countStarForReview != 0, this.countStarForReview, false);
+		this.SendMsgReview(false);
+	}
+
+	public void OnClickStarRating()
+	{
+		if (this.countStarForReview <= 0 || this.countStarForReview > 4)
+		{
+			this.SendMsgReview(true);
+		}
+		else
+		{
+			this.OnShowWindowEnterMessage();
+		}
+	}
+
+	private void OnCloseAllWindow()
+	{
+		ReviewHUDWindow.isShow = false;
+		if (this.objWindowRating)
+		{
+			this.objWindowRating.SetActive(false);
+		}
+		if (this.objWindowEnterMsg)
+		{
+			this.objWindowEnterMsg.SetActive(false);
+		}
+		if (this.objWindowGoToStore)
+		{
+			this.objWindowGoToStore.SetActive(false);
+		}
+		if (this.objThanks)
+		{
+			this.objThanks.SetActive(false);
+		}
+		this.RemoveBackSubscription();
+	}
+
+	public void OnCloseThanks()
+	{
+		if (this.objThanks != null)
+		{
+			this.objThanks.SetActive(false);
+		}
+		BannerWindowController.firstScreen = false;
+		ReviewHUDWindow.isShow = false;
+		this.RemoveBackSubscription();
 	}
 
 	private void OnDestroy()
 	{
-		_instance = null;
+		ReviewHUDWindow._instance = null;
 	}
 
-	public void ShowWindowRating()
+	private void OnEnable()
 	{
-		ReviewController.CheckActiveReview();
-		if (ReviewController.IsNeedActive)
+		this.OnShowThanks();
+	}
+
+	public void OnSendMsgWithRating()
+	{
+		this.SendMsgReview(true);
+	}
+
+	private void OnShowThanks()
+	{
+		if (this.NeedShowThanks)
 		{
-			OnShowWidowRating();
+			base.StartCoroutine(this.Crt_OnShowThanks());
+		}
+	}
+
+	private void OnShowWidowRating()
+	{
+		ReviewHUDWindow.isShow = true;
+		this.countStarForReview = 0;
+		this.SelectStar(null);
+		ReviewController.IsSendReview = true;
+		ReviewController.IsNeedActive = false;
+		if (this.lbTitle5Stars)
+		{
+			this.lbTitle5Stars.text = this.TitleTextTranslate;
+		}
+		if (this.objWindowRating)
+		{
+			this.objWindowRating.SetActive(true);
+		}
+		if (this.objWindowEnterMsg)
+		{
+			this.objWindowEnterMsg.SetActive(false);
+		}
+		if (this.objWindowGoToStore)
+		{
+			this.objWindowGoToStore.SetActive(false);
+		}
+		this.AddBackSubscription();
+	}
+
+	private void OnShowWindowEnterMessage()
+	{
+		this.UpdateStateBtnSendMsg(false);
+		if (this.objWindowRating)
+		{
+			this.objWindowRating.SetActive(false);
+		}
+		if (this.objWindowEnterMsg)
+		{
+			this.objWindowEnterMsg.SetActive(true);
+		}
+	}
+
+	private void OnShowWindowGoToStore()
+	{
+		if (this.objWindowRating)
+		{
+			this.objWindowRating.SetActive(false);
+		}
+		if (this.objWindowEnterMsg)
+		{
+			this.objWindowGoToStore.SetActive(true);
+		}
+	}
+
+	private void RemoveBackSubscription()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
 	}
 
@@ -106,241 +267,81 @@ public class ReviewHUDWindow : MonoBehaviour
 	{
 		if (curStar != null)
 		{
-			countStarForReview = curStar.numOrderStar + 1;
+			this.countStarForReview = curStar.numOrderStar + 1;
 		}
-		if (arrStarByOrder == null)
+		if (this.arrStarByOrder != null)
 		{
-			return;
-		}
-		for (int i = 0; i < arrStarByOrder.Length; i++)
-		{
-			if (curStar != null && i <= curStar.numOrderStar)
+			for (int i = 0; i < (int)this.arrStarByOrder.Length; i++)
 			{
-				arrStarByOrder[i].SetActiveStar(true);
+				if (!(curStar != null) || i > curStar.numOrderStar)
+				{
+					this.arrStarByOrder[i].SetActiveStar(false);
+				}
+				else
+				{
+					this.arrStarByOrder[i].SetActiveStar(true);
+				}
 			}
-			else
-			{
-				arrStarByOrder[i].SetActiveStar(false);
-			}
 		}
-	}
-
-	public void OnChangeMsgReview()
-	{
-		UpdateStateBtnSendMsg(true);
-	}
-
-	public void OnClickStarRating()
-	{
-		if (countStarForReview > 0 && countStarForReview <= 4)
-		{
-			OnShowWindowEnterMessage();
-		}
-		else
-		{
-			SendMsgReview();
-		}
-	}
-
-	public void OnSendMsgWithRating()
-	{
-		SendMsgReview();
 	}
 
 	private void SendMsgReview(bool isClickSend = true)
 	{
-		OnCloseAllWindow();
-		if (countStarForReview > 0)
+		this.OnCloseAllWindow();
+		if (this.countStarForReview > 0)
 		{
-			string msgReview = string.Empty;
-			if (isInputMsgForReview)
+			string empty = string.Empty;
+			if (this.isInputMsgForReview)
 			{
-				msgReview = inputMsg.value;
+				empty = this.inputMsg.@value;
 			}
-			if (countStarForReview == 5)
+			if (this.countStarForReview != 5)
 			{
-				FlurryEvents.LogRateUsFake(true, 5);
+				FlurryEvents.LogRateUsFake(true, this.countStarForReview, this.isInputMsgForReview);
 			}
 			else
 			{
-				FlurryEvents.LogRateUsFake(true, countStarForReview, isInputMsgForReview);
+				FlurryEvents.LogRateUsFake(true, 5, false);
 			}
-			AnalyticsStuff.RateUsFake(true, countStarForReview, isInputMsgForReview && countStarForReview != 5);
-			ReviewController.SendReview(countStarForReview, msgReview);
+			AnalyticsStuff.RateUsFake(true, this.countStarForReview, (!this.isInputMsgForReview ? false : this.countStarForReview != 5));
+			ReviewController.SendReview(this.countStarForReview, empty);
 			if (isClickSend)
 			{
-				NeedShowThanks = true;
-				isShow = true;
-				OnShowThanks();
+				this.NeedShowThanks = true;
+				ReviewHUDWindow.isShow = true;
+				this.OnShowThanks();
 			}
 		}
 	}
 
-	public void OnClickClose()
+	public void ShowWindowRating()
 	{
-		isShow = false;
-		if (countStarForReview == 0)
+		ReviewController.CheckActiveReview();
+		if (ReviewController.IsNeedActive)
 		{
-			FlurryEvents.LogRateUsFake(false);
+			this.OnShowWidowRating();
 		}
-		else
-		{
-			FlurryEvents.LogRateUsFake(true, countStarForReview);
-		}
-		AnalyticsStuff.RateUsFake(countStarForReview != 0, countStarForReview);
-		SendMsgReview(false);
-	}
-
-	private void OnCloseAllWindow()
-	{
-		isShow = false;
-		if ((bool)objWindowRating)
-		{
-			objWindowRating.SetActive(false);
-		}
-		if ((bool)objWindowEnterMsg)
-		{
-			objWindowEnterMsg.SetActive(false);
-		}
-		if ((bool)objWindowGoToStore)
-		{
-			objWindowGoToStore.SetActive(false);
-		}
-		if ((bool)objThanks)
-		{
-			objThanks.SetActive(false);
-		}
-		RemoveBackSubscription();
-	}
-
-	private void OnShowWindowEnterMessage()
-	{
-		UpdateStateBtnSendMsg(false);
-		if ((bool)objWindowRating)
-		{
-			objWindowRating.SetActive(false);
-		}
-		if ((bool)objWindowEnterMsg)
-		{
-			objWindowEnterMsg.SetActive(true);
-		}
-	}
-
-	private void AddBackSubscription()
-	{
-		if (_backSubscription == null)
-		{
-			_backSubscription = BackSystem.Instance.Register(OnClickClose, "Review HUD (Window with 5 stars)");
-		}
-	}
-
-	private void OnShowWidowRating()
-	{
-		isShow = true;
-		countStarForReview = 0;
-		SelectStar(null);
-		ReviewController.IsSendReview = true;
-		ReviewController.IsNeedActive = false;
-		if ((bool)lbTitle5Stars)
-		{
-			lbTitle5Stars.text = TitleTextTranslate;
-		}
-		if ((bool)objWindowRating)
-		{
-			objWindowRating.SetActive(true);
-		}
-		if ((bool)objWindowEnterMsg)
-		{
-			objWindowEnterMsg.SetActive(false);
-		}
-		if ((bool)objWindowGoToStore)
-		{
-			objWindowGoToStore.SetActive(false);
-		}
-		AddBackSubscription();
-	}
-
-	private void OnShowWindowGoToStore()
-	{
-		if ((bool)objWindowRating)
-		{
-			objWindowRating.SetActive(false);
-		}
-		if ((bool)objWindowEnterMsg)
-		{
-			objWindowGoToStore.SetActive(true);
-		}
-	}
-
-	private void OnShowThanks()
-	{
-		if (NeedShowThanks)
-		{
-			StartCoroutine(Crt_OnShowThanks());
-		}
-	}
-
-	private IEnumerator Crt_OnShowThanks()
-	{
-		yield return new WaitForEndOfFrame();
-		if (NeedShowThanks)
-		{
-			NeedShowThanks = false;
-			if (objThanks != null)
-			{
-				objThanks.SetActive(true);
-			}
-			AddBackSubscription();
-			yield return new WaitForSeconds(3f);
-			OnCloseThanks();
-		}
-	}
-
-	public void OnCloseThanks()
-	{
-		if (objThanks != null)
-		{
-			objThanks.SetActive(false);
-		}
-		BannerWindowController.firstScreen = false;
-		isShow = false;
-		RemoveBackSubscription();
-	}
-
-	private void UpdateStateBtnSendMsg(bool val)
-	{
-		isInputMsgForReview = val;
-		if (isInputMsgForReview)
-		{
-			btnSendMsg.enabled = true;
-			btnSendMsg.state = UIButtonColor.State.Normal;
-		}
-		else
-		{
-			btnSendMsg.enabled = false;
-			btnSendMsg.state = UIButtonColor.State.Disabled;
-		}
-	}
-
-	[ContextMenu("Find all stars")]
-	private void FindStars()
-	{
-		arrStarByOrder = GetComponentsInChildren<StarReview>(true);
 	}
 
 	[ContextMenu("Show window")]
 	public void TestShow()
 	{
 		ReviewController.IsNeedActive = true;
-		ShowWindowRating();
+		this.ShowWindowRating();
 	}
 
-	private void RemoveBackSubscription()
+	private void UpdateStateBtnSendMsg(bool val)
 	{
-		if (_backSubscription != null)
+		this.isInputMsgForReview = val;
+		if (!this.isInputMsgForReview)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			this.btnSendMsg.enabled = false;
+			this.btnSendMsg.state = UIButtonColor.State.Disabled;
+		}
+		else
+		{
+			this.btnSendMsg.enabled = true;
+			this.btnSendMsg.state = UIButtonColor.State.Normal;
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class WallParticleStackController : MonoBehaviour
@@ -8,21 +9,8 @@ public class WallParticleStackController : MonoBehaviour
 
 	private int currentIndexHole;
 
-	private void Start()
+	public WallParticleStackController()
 	{
-		if (Device.isPixelGunLow)
-		{
-			Object.Destroy(base.gameObject);
-		}
-		sharedController = this;
-		Transform transform = base.transform;
-		transform.position = Vector3.zero;
-		int childCount = transform.childCount;
-		particles = new WallBloodParticle[childCount];
-		for (int i = 0; i < childCount; i++)
-		{
-			particles[i] = transform.GetChild(i).GetComponent<WallBloodParticle>();
-		}
 	}
 
 	public WallBloodParticle GetCurrentParticle(bool _isUseMine)
@@ -30,23 +18,41 @@ public class WallParticleStackController : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexHole++;
-			if (currentIndexHole >= particles.Length)
+			this.currentIndexHole++;
+			if (this.currentIndexHole < (int)this.particles.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexHole = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexHole = 0;
+			flag = false;
 		}
-		while (particles[currentIndexHole].isUseMine && !_isUseMine);
-		return particles[currentIndexHole];
+		while (this.particles[this.currentIndexHole].isUseMine && !_isUseMine);
+		return this.particles[this.currentIndexHole];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		WallParticleStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		if (Device.isPixelGunLow)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
+		WallParticleStackController.sharedController = this;
+		Transform transforms = base.transform;
+		transforms.position = Vector3.zero;
+		int num = transforms.childCount;
+		this.particles = new WallBloodParticle[num];
+		for (int i = 0; i < num; i++)
+		{
+			this.particles[i] = transforms.GetChild(i).GetComponent<WallBloodParticle>();
+		}
 	}
 }

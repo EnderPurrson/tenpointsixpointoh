@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -8,14 +9,18 @@ namespace Rilisoft
 	{
 		private readonly HashSet<Renderer> _renderers = new HashSet<Renderer>();
 
+		public MaterialInfo()
+		{
+		}
+
 		public bool AddRenderer(Renderer renderer)
 		{
-			return _renderers.Add(renderer);
+			return this._renderers.Add(renderer);
 		}
 
 		public IList<Renderer> GetRenderers()
 		{
-			return _renderers.ToList();
+			return this._renderers.ToList<Renderer>();
 		}
 	}
 }

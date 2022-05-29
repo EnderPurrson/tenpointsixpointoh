@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class GameInfo : MonoBehaviour
@@ -18,7 +19,7 @@ public class GameInfo : MonoBehaviour
 
 	public int index;
 
-	private void Start()
+	public GameInfo()
 	{
 	}
 
@@ -30,14 +31,18 @@ public class GameInfo : MonoBehaviour
 		}
 		if (ConnectSceneNGUIController.sharedController != null)
 		{
-			if (Defs.isInet)
+			if (!Defs.isInet)
 			{
-				ConnectSceneNGUIController.sharedController.JoinToRoomPhoton(roomInfo);
+				ConnectSceneNGUIController.sharedController.JoinToLocalRoom(this.roomInfoLocal);
 			}
 			else
 			{
-				ConnectSceneNGUIController.sharedController.JoinToLocalRoom(roomInfoLocal);
+				ConnectSceneNGUIController.sharedController.JoinToRoomPhoton(this.roomInfo);
 			}
 		}
+	}
+
+	private void Start()
+	{
 	}
 }

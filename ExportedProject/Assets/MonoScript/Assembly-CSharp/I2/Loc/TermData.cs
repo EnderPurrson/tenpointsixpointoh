@@ -12,5 +12,9 @@ namespace I2.Loc
 		public string Description = string.Empty;
 
 		public string[] Languages = new string[0];
+
+		public TermData()
+		{
+		}
 	}
 }

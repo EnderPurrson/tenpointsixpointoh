@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Saved Option")]
@@ -15,93 +16,104 @@ public class UISavedOption : MonoBehaviour
 	{
 		get
 		{
-			return (!string.IsNullOrEmpty(keyName)) ? keyName : ("NGUI State: " + base.name);
+			return (!string.IsNullOrEmpty(this.keyName) ? this.keyName : string.Concat("NGUI State: ", base.name));
 		}
+	}
+
+	public UISavedOption()
+	{
 	}
 
 	private void Awake()
 	{
-		mList = GetComponent<UIPopupList>();
-		mCheck = GetComponent<UIToggle>();
-		mSlider = GetComponent<UIProgressBar>();
-	}
-
-	private void OnEnable()
-	{
-		if (mList != null)
-		{
-			EventDelegate.Add(mList.onChange, SaveSelection);
-			string @string = PlayerPrefs.GetString(key);
-			if (!string.IsNullOrEmpty(@string))
-			{
-				mList.value = @string;
-			}
-			return;
-		}
-		if (mCheck != null)
-		{
-			EventDelegate.Add(mCheck.onChange, SaveState);
-			mCheck.value = PlayerPrefs.GetInt(key, mCheck.startsActive ? 1 : 0) != 0;
-			return;
-		}
-		if (mSlider != null)
-		{
-			EventDelegate.Add(mSlider.onChange, SaveProgress);
-			mSlider.value = PlayerPrefs.GetFloat(key, mSlider.value);
-			return;
-		}
-		string string2 = PlayerPrefs.GetString(key);
-		UIToggle[] componentsInChildren = GetComponentsInChildren<UIToggle>(true);
-		int i = 0;
-		for (int num = componentsInChildren.Length; i < num; i++)
-		{
-			UIToggle uIToggle = componentsInChildren[i];
-			uIToggle.value = uIToggle.name == string2;
-		}
+		this.mList = base.GetComponent<UIPopupList>();
+		this.mCheck = base.GetComponent<UIToggle>();
+		this.mSlider = base.GetComponent<UIProgressBar>();
 	}
 
 	private void OnDisable()
 	{
-		if (mCheck != null)
+		if (this.mCheck != null)
 		{
-			EventDelegate.Remove(mCheck.onChange, SaveState);
-			return;
+			EventDelegate.Remove(this.mCheck.onChange, new EventDelegate.Callback(this.SaveState));
 		}
-		if (mList != null)
+		else if (this.mList != null)
 		{
-			EventDelegate.Remove(mList.onChange, SaveSelection);
-			return;
+			EventDelegate.Remove(this.mList.onChange, new EventDelegate.Callback(this.SaveSelection));
 		}
-		if (mSlider != null)
+		else if (this.mSlider == null)
 		{
-			EventDelegate.Remove(mSlider.onChange, SaveProgress);
-			return;
-		}
-		UIToggle[] componentsInChildren = GetComponentsInChildren<UIToggle>(true);
-		int i = 0;
-		for (int num = componentsInChildren.Length; i < num; i++)
-		{
-			UIToggle uIToggle = componentsInChildren[i];
-			if (uIToggle.value)
+			UIToggle[] componentsInChildren = base.GetComponentsInChildren<UIToggle>(true);
+			int num = 0;
+			int length = (int)componentsInChildren.Length;
+			while (num < length)
 			{
-				PlayerPrefs.SetString(key, uIToggle.name);
-				break;
+				UIToggle uIToggle = componentsInChildren[num];
+				if (!uIToggle.@value)
+				{
+					num++;
+				}
+				else
+				{
+					PlayerPrefs.SetString(this.key, uIToggle.name);
+					break;
+				}
 			}
 		}
+		else
+		{
+			EventDelegate.Remove(this.mSlider.onChange, new EventDelegate.Callback(this.SaveProgress));
+		}
 	}
 
-	public void SaveSelection()
+	private void OnEnable()
 	{
-		PlayerPrefs.SetString(key, UIPopupList.current.value);
-	}
-
-	public void SaveState()
-	{
-		PlayerPrefs.SetInt(key, UIToggle.current.value ? 1 : 0);
+		if (this.mList != null)
+		{
+			EventDelegate.Add(this.mList.onChange, new EventDelegate.Callback(this.SaveSelection));
+			string str = PlayerPrefs.GetString(this.key);
+			if (!string.IsNullOrEmpty(str))
+			{
+				this.mList.@value = str;
+			}
+		}
+		else if (this.mCheck != null)
+		{
+			EventDelegate.Add(this.mCheck.onChange, new EventDelegate.Callback(this.SaveState));
+			this.mCheck.@value = PlayerPrefs.GetInt(this.key, (!this.mCheck.startsActive ? 0 : 1)) != 0;
+		}
+		else if (this.mSlider == null)
+		{
+			string str1 = PlayerPrefs.GetString(this.key);
+			UIToggle[] componentsInChildren = base.GetComponentsInChildren<UIToggle>(true);
+			int num = 0;
+			int length = (int)componentsInChildren.Length;
+			while (num < length)
+			{
+				UIToggle uIToggle = componentsInChildren[num];
+				uIToggle.@value = uIToggle.name == str1;
+				num++;
+			}
+		}
+		else
+		{
+			EventDelegate.Add(this.mSlider.onChange, new EventDelegate.Callback(this.SaveProgress));
+			this.mSlider.@value = PlayerPrefs.GetFloat(this.key, this.mSlider.@value);
+		}
 	}
 
 	public void SaveProgress()
 	{
-		PlayerPrefs.SetFloat(key, UIProgressBar.current.value);
+		PlayerPrefs.SetFloat(this.key, UIProgressBar.current.@value);
+	}
+
+	public void SaveSelection()
+	{
+		PlayerPrefs.SetString(this.key, UIPopupList.current.@value);
+	}
+
+	public void SaveState()
+	{
+		PlayerPrefs.SetInt(this.key, (!UIToggle.current.@value ? 0 : 1));
 	}
 }

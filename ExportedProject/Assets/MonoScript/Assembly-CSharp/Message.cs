@@ -1,4 +1,5 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public sealed class Message : MonoBehaviour
@@ -15,27 +16,31 @@ public sealed class Message : MonoBehaviour
 
 	public float OnScreenTime = 3f;
 
-	private void Start()
+	public Message()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
-		_startTime = Time.realtimeSinceStartup;
-	}
-
-	private void Remove()
-	{
-		Object.Destroy(base.gameObject);
 	}
 
 	private void OnGUI()
 	{
-		if (Time.realtimeSinceStartup - _startTime >= (TrainingController.TrainingCompleted ? OnScreenTime : (OnScreenTime / 2f)))
+		if (Time.realtimeSinceStartup - this._startTime >= (TrainingController.TrainingCompleted ? this.OnScreenTime : this.OnScreenTime / 2f))
 		{
-			Remove();
+			this.Remove();
 			return;
 		}
-		rect = Tools.SuccessMessageRect();
-		GUI.depth = depth;
-		labelStyle.fontSize = Player_move_c.FontSizeForMessages;
-		GUI.Label(rect, message, labelStyle);
+		this.rect = Tools.SuccessMessageRect();
+		GUI.depth = this.depth;
+		this.labelStyle.fontSize = Player_move_c.FontSizeForMessages;
+		GUI.Label(this.rect, this.message, this.labelStyle);
+	}
+
+	private void Remove()
+	{
+		UnityEngine.Object.Destroy(base.gameObject);
+	}
+
+	private void Start()
+	{
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		this._startTime = Time.realtimeSinceStartup;
 	}
 }

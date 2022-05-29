@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public class ChatOperationCode
@@ -19,5 +21,9 @@ namespace ExitGames.Client.Photon.Chat
 		public const byte AddFriends = 6;
 
 		public const byte RemoveFriends = 7;
+
+		public ChatOperationCode()
+		{
+		}
 	}
 }

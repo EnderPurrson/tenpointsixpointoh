@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public class StarterPackItemData
@@ -10,43 +11,46 @@ public class StarterPackItemData
 	{
 		get
 		{
-			for (int i = 0; i < variantTags.Count; i++)
+			for (int i = 0; i < this.variantTags.Count; i++)
 			{
-				if (!ItemDb.IsItemInInventory(variantTags[i]) && !IsInvalidArmorTag(variantTags[i]))
+				if (!ItemDb.IsItemInInventory(this.variantTags[i]) && !this.IsInvalidArmorTag(this.variantTags[i]))
 				{
-					return variantTags[i];
+					return this.variantTags[i];
 				}
 			}
 			return string.Empty;
 		}
 	}
 
+	public StarterPackItemData()
+	{
+	}
+
 	private bool IsInvalidArmorTag(string tag)
 	{
-		List<string> list = null;
+		List<string> strs = null;
 		if (Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].Contains(tag))
 		{
-			list = new List<string>();
-			list.AddRange(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0]);
+			strs = new List<string>();
+			strs.AddRange(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0]);
 		}
 		else if (Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(tag))
 		{
-			list = new List<string>();
-			list.AddRange(Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0]);
+			strs = new List<string>();
+			strs.AddRange(Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0]);
 		}
-		if (list == null)
+		if (strs == null)
 		{
 			return false;
 		}
-		List<string> list2 = PromoActionsGUIController.FilterPurchases(list, true);
-		foreach (string item in list2)
+		foreach (string str in PromoActionsGUIController.FilterPurchases(strs, true, true, false, true))
 		{
-			list.Remove(item);
+			strs.Remove(str);
 		}
-		if (list.Count == 0)
+		if (strs.Count == 0)
 		{
 			return true;
 		}
-		return list[0] != tag;
+		return strs[0] != tag;
 	}
 }

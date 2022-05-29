@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -36,134 +37,148 @@ public class UIEventTrigger : MonoBehaviour
 	{
 		get
 		{
-			Collider component = GetComponent<Collider>();
+			Collider component = base.GetComponent<Collider>();
 			if (component != null)
 			{
 				return component.enabled;
 			}
-			Collider2D component2 = GetComponent<Collider2D>();
-			return component2 != null && component2.enabled;
+			Collider2D collider2D = base.GetComponent<Collider2D>();
+			return (collider2D == null ? false : collider2D.enabled);
 		}
 	}
 
-	private void OnHover(bool isOver)
+	public UIEventTrigger()
 	{
-		if (!(current != null) && isColliderEnabled)
-		{
-			current = this;
-			if (isOver)
-			{
-				EventDelegate.Execute(onHoverOver);
-			}
-			else
-			{
-				EventDelegate.Execute(onHoverOut);
-			}
-			current = null;
-		}
-	}
-
-	private void OnPress(bool pressed)
-	{
-		if (!(current != null) && isColliderEnabled)
-		{
-			current = this;
-			if (pressed)
-			{
-				EventDelegate.Execute(onPress);
-			}
-			else
-			{
-				EventDelegate.Execute(onRelease);
-			}
-			current = null;
-		}
-	}
-
-	private void OnSelect(bool selected)
-	{
-		if (!(current != null) && isColliderEnabled)
-		{
-			current = this;
-			if (selected)
-			{
-				EventDelegate.Execute(onSelect);
-			}
-			else
-			{
-				EventDelegate.Execute(onDeselect);
-			}
-			current = null;
-		}
 	}
 
 	private void OnClick()
 	{
-		if (!(current != null) && isColliderEnabled)
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
 		{
-			current = this;
-			EventDelegate.Execute(onClick);
-			current = null;
+			return;
 		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onClick);
+		UIEventTrigger.current = null;
 	}
 
 	private void OnDoubleClick()
 	{
-		if (!(current != null) && isColliderEnabled)
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
 		{
-			current = this;
-			EventDelegate.Execute(onDoubleClick);
-			current = null;
+			return;
 		}
-	}
-
-	private void OnDragStart()
-	{
-		if (!(current != null))
-		{
-			current = this;
-			EventDelegate.Execute(onDragStart);
-			current = null;
-		}
-	}
-
-	private void OnDragEnd()
-	{
-		if (!(current != null))
-		{
-			current = this;
-			EventDelegate.Execute(onDragEnd);
-			current = null;
-		}
-	}
-
-	private void OnDragOver(GameObject go)
-	{
-		if (!(current != null) && isColliderEnabled)
-		{
-			current = this;
-			EventDelegate.Execute(onDragOver);
-			current = null;
-		}
-	}
-
-	private void OnDragOut(GameObject go)
-	{
-		if (!(current != null) && isColliderEnabled)
-		{
-			current = this;
-			EventDelegate.Execute(onDragOut);
-			current = null;
-		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDoubleClick);
+		UIEventTrigger.current = null;
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
-		if (!(current != null))
+		if (UIEventTrigger.current != null)
 		{
-			current = this;
-			EventDelegate.Execute(onDrag);
-			current = null;
+			return;
 		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDrag);
+		UIEventTrigger.current = null;
+	}
+
+	private void OnDragEnd()
+	{
+		if (UIEventTrigger.current != null)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDragEnd);
+		UIEventTrigger.current = null;
+	}
+
+	private void OnDragOut(GameObject go)
+	{
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDragOut);
+		UIEventTrigger.current = null;
+	}
+
+	private void OnDragOver(GameObject go)
+	{
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDragOver);
+		UIEventTrigger.current = null;
+	}
+
+	private void OnDragStart()
+	{
+		if (UIEventTrigger.current != null)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		EventDelegate.Execute(this.onDragStart);
+		UIEventTrigger.current = null;
+	}
+
+	private void OnHover(bool isOver)
+	{
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		if (!isOver)
+		{
+			EventDelegate.Execute(this.onHoverOut);
+		}
+		else
+		{
+			EventDelegate.Execute(this.onHoverOver);
+		}
+		UIEventTrigger.current = null;
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		if (!pressed)
+		{
+			EventDelegate.Execute(this.onRelease);
+		}
+		else
+		{
+			EventDelegate.Execute(this.onPress);
+		}
+		UIEventTrigger.current = null;
+	}
+
+	private void OnSelect(bool selected)
+	{
+		if (UIEventTrigger.current != null || !this.isColliderEnabled)
+		{
+			return;
+		}
+		UIEventTrigger.current = this;
+		if (!selected)
+		{
+			EventDelegate.Execute(this.onDeselect);
+		}
+		else
+		{
+			EventDelegate.Execute(this.onSelect);
+		}
+		UIEventTrigger.current = null;
 	}
 }

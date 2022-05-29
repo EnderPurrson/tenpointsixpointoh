@@ -1,15 +1,20 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Rilisoft
 {
 	public class PurchasesSavingEventArgs : EventArgs
 	{
-		public Task<bool> Future { get; private set; }
+		public Task<bool> Future
+		{
+			get;
+			private set;
+		}
 
 		public PurchasesSavingEventArgs(Task<bool> future)
 		{
-			Future = future;
+			this.Future = future;
 		}
 	}
 }

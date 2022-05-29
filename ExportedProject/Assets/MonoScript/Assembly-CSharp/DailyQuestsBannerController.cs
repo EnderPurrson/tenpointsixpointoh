@@ -1,8 +1,8 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class DailyQuestsBannerController : BannerWindow
@@ -23,18 +23,26 @@ internal sealed class DailyQuestsBannerController : BannerWindow
 
 	private IDisposable _backSubscription;
 
-	[CompilerGenerated]
-	private static Func<QuestBase, bool> _003C_003Ef__am_0024cache8;
+	public DailyQuestsBannerController()
+	{
+	}
 
 	private void Awake()
 	{
-		QuestSystem.Instance.Updated += HandleQuestSystemUpdate;
-		Instance = this;
+		QuestSystem.Instance.Updated += new EventHandler(this.HandleQuestSystemUpdate);
+		DailyQuestsBannerController.Instance = this;
 	}
 
-	private void OnDestroy()
+	private void HandleLevelUpShown()
 	{
-		QuestSystem.Instance.Updated -= HandleQuestSystemUpdate;
+		if (!this.inBannerSystem)
+		{
+			base.gameObject.SetActive(false);
+		}
+		else if (BannerWindowController.SharedController != null)
+		{
+			BannerWindowController.SharedController.HideBannerWindowNoShowNext();
+		}
 	}
 
 	private void HandleQuestSystemUpdate(object sender, EventArgs e)
@@ -43,133 +51,103 @@ internal sealed class DailyQuestsBannerController : BannerWindow
 		{
 			Debug.Log("Refreshing after quest system update.");
 		}
-		UpdateItems();
-	}
-
-	public new void Show()
-	{
-		if (inBannerSystem && BannerWindowController.SharedController != null)
-		{
-			BannerWindowController.SharedController.RegisterWindow(this, BannerWindowType.DailyQuests);
-			BannerWindowController.SharedController.ForceShowBanner(BannerWindowType.DailyQuests);
-		}
-		else
-		{
-			base.gameObject.SetActive(true);
-		}
+		this.UpdateItems();
 	}
 
 	public new void Hide()
 	{
-		if (inBannerSystem)
+		if (!this.inBannerSystem)
 		{
-			BannerWindowController.SharedController.HideBannerWindow();
+			base.gameObject.SetActive(false);
 		}
 		else
 		{
-			base.gameObject.SetActive(false);
+			BannerWindowController.SharedController.HideBannerWindow();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		QuestSystem.Instance.Updated -= new EventHandler(this.HandleQuestSystemUpdate);
+	}
+
+	private void OnDisable()
+	{
+		ExpController.LevelUpShown -= new Action(this.HandleLevelUpShown);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
 	}
 
 	private void OnEnable()
 	{
-		ExpController.LevelUpShown += HandleLevelUpShown;
-		UpdateItems();
-		if (_backSubscription != null)
+		ExpController.LevelUpShown += new Action(this.HandleLevelUpShown);
+		this.UpdateItems();
+		if (this._backSubscription != null)
 		{
-			_backSubscription.Dispose();
+			this._backSubscription.Dispose();
 		}
-		_backSubscription = BackSystem.Instance.Register(Hide, "Quest Banner");
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.Hide), "Quest Banner");
 	}
 
-	private void OnDisable()
+	public new void Show()
 	{
-		ExpController.LevelUpShown -= HandleLevelUpShown;
-		if (_backSubscription != null)
+		if (!this.inBannerSystem || !(BannerWindowController.SharedController != null))
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			base.gameObject.SetActive(true);
+		}
+		else
+		{
+			BannerWindowController.SharedController.RegisterWindow(this, BannerWindowType.DailyQuests);
+			BannerWindowController.SharedController.ForceShowBanner(BannerWindowType.DailyQuests);
 		}
 	}
 
 	private void Update()
 	{
-		if (blockingFon != null)
+		if (this.blockingFon != null)
 		{
-			blockingFon.depth = ((!(ExpController.Instance != null) || !ExpController.Instance.WaitingForLevelUpView) ? 100 : 100000);
+			this.blockingFon.depth = (!(ExpController.Instance != null) || !ExpController.Instance.WaitingForLevelUpView ? 100 : 100000);
 		}
 	}
 
 	public void UpdateItems()
 	{
 		QuestProgress questProgress = QuestSystem.Instance.QuestProgress;
-		int num;
-		if (TrainingController.TrainingCompleted && questProgress != null)
+		bool flag = (!TrainingController.TrainingCompleted || questProgress == null ? false : questProgress.GetActiveQuests().Values.Count<QuestBase>((QuestBase q) => (q == null ? false : !q.Rewarded)) > 0);
+		bool flag1 = false;
+		for (int i = 0; i < (int)this.DailyQuests.Length; i++)
 		{
-			ICollection<QuestBase> values = questProgress.GetActiveQuests().Values;
-			if (_003C_003Ef__am_0024cache8 == null)
-			{
-				_003C_003Ef__am_0024cache8 = _003CUpdateItems_003Em__3BC;
-			}
-			num = ((values.Count(_003C_003Ef__am_0024cache8) > 0) ? 1 : 0);
-		}
-		else
-		{
-			num = 0;
-		}
-		bool flag = (byte)num != 0;
-		bool flag2 = false;
-		for (int i = 0; i < DailyQuests.Length; i++)
-		{
-			DailyQuestItem dailyQuestItem = DailyQuests[i];
+			DailyQuestItem dailyQuests = this.DailyQuests[i];
 			if (flag)
 			{
-				if (!dailyQuestItem.gameObject.activeSelf)
+				if (!dailyQuests.gameObject.activeSelf)
 				{
-					dailyQuestItem.gameObject.SetActive(true);
+					dailyQuests.gameObject.SetActive(true);
 				}
-				dailyQuestItem.FillData(i);
+				dailyQuests.FillData(i);
 			}
-			else if (dailyQuestItem.gameObject.activeSelf)
+			else if (dailyQuests.gameObject.activeSelf)
 			{
-				dailyQuestItem.gameObject.SetActive(false);
+				dailyQuests.gameObject.SetActive(false);
 			}
-			flag2 = flag2 || dailyQuestItem.CanSkip;
+			flag1 = (flag1 ? true : dailyQuests.CanSkip);
 		}
-		if (skipHint != null)
+		if (this.skipHint != null)
 		{
-			skipHint.gameObject.SetActive(flag2);
+			this.skipHint.gameObject.SetActive(flag1);
 		}
 		QuestSystem.Instance.SaveQuestProgressIfDirty();
-		if (flag)
+		if (!flag)
 		{
-			noQuestsLabel.SetActive(false);
-			questsTable.Reposition();
+			this.noQuestsLabel.SetActive(true);
 		}
 		else
 		{
-			noQuestsLabel.SetActive(true);
+			this.noQuestsLabel.SetActive(false);
+			this.questsTable.Reposition();
 		}
-	}
-
-	private void HandleLevelUpShown()
-	{
-		if (inBannerSystem)
-		{
-			if (BannerWindowController.SharedController != null)
-			{
-				BannerWindowController.SharedController.HideBannerWindowNoShowNext();
-			}
-		}
-		else
-		{
-			base.gameObject.SetActive(false);
-		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003CUpdateItems_003Em__3BC(QuestBase q)
-	{
-		return q != null && !q.Rewarded;
 	}
 }

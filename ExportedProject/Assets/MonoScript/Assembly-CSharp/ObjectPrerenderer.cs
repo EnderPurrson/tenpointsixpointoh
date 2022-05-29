@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ObjectPrerenderer : MonoBehaviour
@@ -10,19 +11,23 @@ public class ObjectPrerenderer : MonoBehaviour
 
 	private GameObject _enemiesToRender;
 
+	public ObjectPrerenderer()
+	{
+	}
+
 	private void Awake()
 	{
-		_rt = new RenderTexture(32, 32, 24);
-		_rt.Create();
-		activeCamera.targetTexture = _rt;
-		activeCamera.useOcclusionCulling = false;
+		this._rt = new RenderTexture(32, 32, 24);
+		this._rt.Create();
+		this.activeCamera.targetTexture = this._rt;
+		this.activeCamera.useOcclusionCulling = false;
 	}
 
 	public void Render_()
 	{
-		activeCamera.Render();
-		RenderTexture.active = _rt;
-		activeCamera.targetTexture = null;
+		this.activeCamera.Render();
+		RenderTexture.active = this._rt;
+		this.activeCamera.targetTexture = null;
 		RenderTexture.active = null;
 	}
 }

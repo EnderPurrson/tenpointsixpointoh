@@ -1,4 +1,5 @@
 using Photon;
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -10,42 +11,47 @@ public class PickupItemSimple : Photon.MonoBehaviour
 
 	public bool SentPickup;
 
+	public PickupItemSimple()
+	{
+	}
+
 	public void OnTriggerEnter(Collider other)
 	{
 		PhotonView component = other.GetComponent<PhotonView>();
-		if (PickupOnCollide && component != null && component.isMine)
+		if (this.PickupOnCollide && component != null && component.isMine)
 		{
-			Pickup();
+			this.Pickup();
 		}
 	}
 
 	public void Pickup()
 	{
-		if (!SentPickup)
+		if (this.SentPickup)
 		{
-			SentPickup = true;
-			base.photonView.RPC("PunPickupSimple", PhotonTargets.AllViaServer);
+			return;
 		}
+		this.SentPickup = true;
+		base.photonView.RPC("PunPickupSimple", PhotonTargets.AllViaServer, new object[0]);
 	}
 
 	[PunRPC]
 	public void PunPickupSimple(PhotonMessageInfo msgInfo)
 	{
-		if (!SentPickup || !msgInfo.sender.isLocal || base.gameObject.GetActive())
+		if (this.SentPickup && msgInfo.sender.isLocal && base.gameObject.GetActive())
 		{
 		}
-		SentPickup = false;
+		this.SentPickup = false;
 		if (!base.gameObject.GetActive())
 		{
-			Debug.Log("Ignored PU RPC, cause item is inactive. " + base.gameObject);
+			Debug.Log(string.Concat("Ignored PU RPC, cause item is inactive. ", base.gameObject));
 			return;
 		}
 		double num = PhotonNetwork.time - msgInfo.timestamp;
-		float num2 = SecondsBeforeRespawn - (float)num;
-		if (num2 > 0f)
+		float secondsBeforeRespawn = this.SecondsBeforeRespawn - (float)num;
+		if (secondsBeforeRespawn > 0f)
 		{
 			base.gameObject.SetActive(false);
-			Invoke("RespawnAfter", num2);
+			base.Invoke("RespawnAfter", secondsBeforeRespawn);
 		}
 	}
 

@@ -9,60 +9,54 @@ namespace Rilisoft
 	{
 		private readonly string _persistentDataPath = string.Empty;
 
-		private static readonly Lazy<PersistentCache> _instance;
-
-		[CompilerGenerated]
-		private static Func<PersistentCache> _003C_003Ef__am_0024cache2;
-
-		public string PersistentDataPath
-		{
-			get
-			{
-				return _persistentDataPath;
-			}
-		}
+		private readonly static Lazy<PersistentCache> _instance;
 
 		public static PersistentCache Instance
 		{
 			get
 			{
-				return _instance.Value;
+				return PersistentCache._instance.Value;
 			}
+		}
+
+		public string PersistentDataPath
+		{
+			get
+			{
+				return this._persistentDataPath;
+			}
+		}
+
+		static PersistentCache()
+		{
+			PersistentCache._instance = new Lazy<PersistentCache>(() => new PersistentCache());
 		}
 
 		public PersistentCache()
 		{
 			try
 			{
-				string text = ((!string.IsNullOrEmpty(Application.persistentDataPath)) ? Application.persistentDataPath : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
-				if (!string.IsNullOrEmpty(text))
+				string str = (!string.IsNullOrEmpty(Application.persistentDataPath) ? Application.persistentDataPath : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+				if (!string.IsNullOrEmpty(str))
 				{
-					if (!Directory.Exists(text))
+					if (!Directory.Exists(str))
 					{
-						Directory.CreateDirectory(text);
+						Directory.CreateDirectory(str);
 					}
-					_persistentDataPath = text;
+					this._persistentDataPath = str;
 				}
 			}
-			catch (Exception exception)
+			catch (Exception exception1)
 			{
+				Exception exception = exception1;
 				Debug.LogWarning("Caught exception while persistent data path initialization. See next error message for details.");
 				Debug.LogException(exception);
 			}
 		}
 
-		static PersistentCache()
-		{
-			if (_003C_003Ef__am_0024cache2 == null)
-			{
-				_003C_003Ef__am_0024cache2 = _003C_instance_003Em__390;
-			}
-			_instance = new Lazy<PersistentCache>(_003C_003Ef__am_0024cache2);
-		}
-
 		public string GetCachePathByUri(string url)
 		{
-			//Discarded unreachable code: IL_0072, IL_0084
+			string empty;
 			if (url == null)
 			{
 				throw new ArgumentNullException("url");
@@ -71,27 +65,20 @@ namespace Rilisoft
 			{
 				return string.Empty;
 			}
-			if (string.IsNullOrEmpty(_persistentDataPath))
+			if (string.IsNullOrEmpty(this._persistentDataPath))
 			{
 				return string.Empty;
 			}
 			try
 			{
-				Uri uri = new Uri(url);
-				string[] segments = uri.Segments;
-				string path = string.Concat(segments).TrimStart('/');
-				return Path.Combine(_persistentDataPath, path);
+				string str = string.Concat((new Uri(url)).Segments).TrimStart(new char[] { '/' });
+				empty = Path.Combine(this._persistentDataPath, str);
 			}
 			catch
 			{
-				return string.Empty;
+				empty = string.Empty;
 			}
-		}
-
-		[CompilerGenerated]
-		private static PersistentCache _003C_instance_003Em__390()
-		{
-			return new PersistentCache();
+			return empty;
 		}
 	}
 }

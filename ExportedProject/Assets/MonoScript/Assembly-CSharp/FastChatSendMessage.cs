@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class FastChatSendMessage : MonoBehaviour
@@ -5,6 +6,10 @@ public class FastChatSendMessage : MonoBehaviour
 	public string message = "-=GO!=-";
 
 	public UISprite iconSprite;
+
+	public FastChatSendMessage()
+	{
+	}
 
 	private void Awake()
 	{
@@ -14,10 +19,10 @@ public class FastChatSendMessage : MonoBehaviour
 	{
 		if (InGameGUI.sharedInGameGUI.playerMoveC != null)
 		{
-			InGameGUI.sharedInGameGUI.playerMoveC.SendChat(message, false, string.Empty);
-			if ((bool)ChatViewrController.sharedController)
+			InGameGUI.sharedInGameGUI.playerMoveC.SendChat(this.message, false, string.Empty);
+			if (ChatViewrController.sharedController)
 			{
-				ChatViewrController.sharedController.CloseChat();
+				ChatViewrController.sharedController.CloseChat(false);
 			}
 		}
 	}

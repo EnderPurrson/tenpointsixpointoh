@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,36 +12,40 @@ public class PauseMenu : MonoBehaviour
 
 	private bool m_Paused;
 
-	private void Awake()
+	public PauseMenu()
 	{
-		m_MenuToggle = GetComponent<Toggle>();
 	}
 
-	private void MenuOn()
+	private void Awake()
 	{
-		m_TimeScaleRef = Time.timeScale;
-		Time.timeScale = 0f;
-		m_VolumeRef = AudioListener.volume;
-		AudioListener.volume = 0f;
-		m_Paused = true;
+		this.m_MenuToggle = base.GetComponent<Toggle>();
 	}
 
 	public void MenuOff()
 	{
-		Time.timeScale = m_TimeScaleRef;
-		AudioListener.volume = m_VolumeRef;
-		m_Paused = false;
+		Time.timeScale = this.m_TimeScaleRef;
+		AudioListener.volume = this.m_VolumeRef;
+		this.m_Paused = false;
+	}
+
+	private void MenuOn()
+	{
+		this.m_TimeScaleRef = Time.timeScale;
+		Time.timeScale = 0f;
+		this.m_VolumeRef = AudioListener.volume;
+		AudioListener.volume = 0f;
+		this.m_Paused = true;
 	}
 
 	public void OnMenuStatusChange()
 	{
-		if (m_MenuToggle.isOn && !m_Paused)
+		if (this.m_MenuToggle.isOn && !this.m_Paused)
 		{
-			MenuOn();
+			this.MenuOn();
 		}
-		else if (!m_MenuToggle.isOn && m_Paused)
+		else if (!this.m_MenuToggle.isOn && this.m_Paused)
 		{
-			MenuOff();
+			this.MenuOff();
 		}
 	}
 }

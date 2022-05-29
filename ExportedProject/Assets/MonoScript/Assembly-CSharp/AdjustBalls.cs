@@ -1,26 +1,153 @@
 using LitJson;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AdjustBalls : MonoBehaviour
 {
+	public AdjustBalls()
+	{
+	}
+
 	public void DoSomethingWithTheData(JsonData[] ssObjects)
 	{
-		OptionalMiddleStruct container = default(OptionalMiddleStruct);
-		for (int i = 0; i < ssObjects.Length; i++)
+		OptionalMiddleStruct str = new OptionalMiddleStruct();
+		for (int i = 0; i < (int)ssObjects.Length; i++)
 		{
 			if (ssObjects[i].Keys.Contains("name"))
 			{
-				container.name = ssObjects[i]["name"].ToString();
+				str.name = ssObjects[i]["name"].ToString();
 			}
 			if (ssObjects[i].Keys.Contains("color"))
 			{
-				container.color = GetColor(ssObjects[i]["color"].ToString());
+				str.color = this.GetColor(ssObjects[i]["color"].ToString());
 			}
 			if (ssObjects[i].Keys.Contains("drag"))
 			{
-				container.drag = float.Parse(ssObjects[i]["drag"].ToString());
+				str.drag = float.Parse(ssObjects[i]["drag"].ToString());
 			}
-			UpdateObjectValues(container);
+			this.UpdateObjectValues(str);
+		}
+	}
+
+	private Color GetColor(string color)
+	{
+		Color color1;
+		int num;
+		string str = color;
+		if (str != null)
+		{
+			if (AdjustBalls.u003cu003ef__switchu0024map3 == null)
+			{
+				Dictionary<string, int> strs = new Dictionary<string, int>(11)
+				{
+					{ "black", 0 },
+					{ "blue", 1 },
+					{ "clear", 2 },
+					{ "cyan", 3 },
+					{ "gray", 4 },
+					{ "green", 5 },
+					{ "grey", 6 },
+					{ "magenta", 7 },
+					{ "red", 8 },
+					{ "white", 9 },
+					{ "yellow", 10 }
+				};
+				AdjustBalls.u003cu003ef__switchu0024map3 = strs;
+			}
+			if (AdjustBalls.u003cu003ef__switchu0024map3.TryGetValue(str, out num))
+			{
+				switch (num)
+				{
+					case 0:
+					{
+						color1 = Color.black;
+						break;
+					}
+					case 1:
+					{
+						color1 = Color.blue;
+						break;
+					}
+					case 2:
+					{
+						color1 = Color.clear;
+						break;
+					}
+					case 3:
+					{
+						color1 = Color.cyan;
+						break;
+					}
+					case 4:
+					{
+						color1 = Color.gray;
+						break;
+					}
+					case 5:
+					{
+						color1 = Color.green;
+						break;
+					}
+					case 6:
+					{
+						color1 = Color.grey;
+						break;
+					}
+					case 7:
+					{
+						color1 = Color.magenta;
+						break;
+					}
+					case 8:
+					{
+						color1 = Color.red;
+						break;
+					}
+					case 9:
+					{
+						color1 = Color.white;
+						break;
+					}
+					case 10:
+					{
+						color1 = Color.yellow;
+						break;
+					}
+					default:
+					{
+						color1 = Color.grey;
+						return color1;
+					}
+				}
+			}
+			else
+			{
+				color1 = Color.grey;
+				return color1;
+			}
+		}
+		else
+		{
+			color1 = Color.grey;
+			return color1;
+		}
+		return color1;
+	}
+
+	public void ResetBalls()
+	{
+		OptionalMiddleStruct optionalMiddleStruct = new OptionalMiddleStruct()
+		{
+			color = Color.white,
+			drag = 0f
+		};
+		string str = "Ball";
+		for (int i = 1; i < 4; i++)
+		{
+			optionalMiddleStruct.name = string.Concat(str, i.ToString());
+			this.UpdateObjectValues(optionalMiddleStruct);
 		}
 	}
 
@@ -29,49 +156,5 @@ public class AdjustBalls : MonoBehaviour
 		GameObject gameObject = GameObject.Find(container.name);
 		gameObject.GetComponent<Renderer>().sharedMaterial.color = container.color;
 		gameObject.GetComponent<Rigidbody>().drag = container.drag;
-	}
-
-	private Color GetColor(string color)
-	{
-		switch (color)
-		{
-		case "black":
-			return Color.black;
-		case "blue":
-			return Color.blue;
-		case "clear":
-			return Color.clear;
-		case "cyan":
-			return Color.cyan;
-		case "gray":
-			return Color.gray;
-		case "green":
-			return Color.green;
-		case "grey":
-			return Color.grey;
-		case "magenta":
-			return Color.magenta;
-		case "red":
-			return Color.red;
-		case "white":
-			return Color.white;
-		case "yellow":
-			return Color.yellow;
-		default:
-			return Color.grey;
-		}
-	}
-
-	public void ResetBalls()
-	{
-		OptionalMiddleStruct container = default(OptionalMiddleStruct);
-		container.color = Color.white;
-		container.drag = 0f;
-		string text = "Ball";
-		for (int i = 1; i < 4; i++)
-		{
-			container.name = text + i;
-			UpdateObjectValues(container);
-		}
 	}
 }

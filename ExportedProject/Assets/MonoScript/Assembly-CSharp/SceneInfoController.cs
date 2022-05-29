@@ -1,82 +1,19 @@
+using I2.Loc;
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public class SceneInfoController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CGetInfoScene_003Ec__AnonStorey2F1
-	{
-		internal string nameScene;
-
-		internal bool _003C_003Em__427(SceneInfo curInf)
-		{
-			return curInf.gameObject.name.ToLower() == nameScene.ToLower();
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGetInfoScene_003Ec__AnonStorey2F2
-	{
-		internal string nameScene;
-
-		internal bool _003C_003Em__428(SceneInfo curInf)
-		{
-			return curInf.gameObject.name.ToLower() == nameScene.ToLower();
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGetInfoScene_003Ec__AnonStorey2F3
-	{
-		internal int indexMap;
-
-		internal bool _003C_003Em__429(SceneInfo curInf)
-		{
-			return curInf.indexMap == indexMap;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGetListScenesForMode_003Ec__AnonStorey2F4
-	{
-		internal TypeModeGame needMode;
-
-		internal bool _003C_003Em__42A(AllScenesForMode mG)
-		{
-			return mG.mode == needMode;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGetListScenesForMode_003Ec__AnonStorey2F5
-	{
-		internal TypeModeGame needMode;
-
-		internal bool _003C_003Em__42B(AllScenesForMode mG)
-		{
-			return mG.mode == needMode;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGetCountScenesForMode_003Ec__AnonStorey2F6
-	{
-		internal TypeModeGame needMode;
-
-		internal bool _003C_003Em__42C(AllScenesForMode nM)
-		{
-			return nM.mode == needMode;
-		}
-	}
-
 	private const float timerUpdateDataFromServer = 870f;
 
-	public static SceneInfoController instance = null;
+	public static SceneInfoController instance;
 
 	public List<SceneInfo> allScenes = new List<SceneInfo>();
 
@@ -88,67 +25,15 @@ public class SceneInfoController : MonoBehaviour
 
 	private List<AllScenesForMode> copyModeInfo;
 
-	private static readonly Dictionary<TypeModeGame, int> _modeUnlockLevels = new Dictionary<TypeModeGame, int>
-	{
-		{
-			TypeModeGame.Deathmatch,
-			1
-		},
-		{
-			TypeModeGame.TeamFight,
-			2
-		},
-		{
-			TypeModeGame.TimeBattle,
-			3
-		},
-		{
-			TypeModeGame.FlagCapture,
-			4
-		},
-		{
-			TypeModeGame.DeadlyGames,
-			5
-		},
-		{
-			TypeModeGame.CapturePoints,
-			6
-		}
-	};
+	private readonly static Dictionary<TypeModeGame, int> _modeUnlockLevels;
 
-	private static readonly Dictionary<TypeModeGame, ConnectSceneNGUIController.RegimGame> _modesMap = new Dictionary<TypeModeGame, ConnectSceneNGUIController.RegimGame>
-	{
-		{
-			TypeModeGame.Deathmatch,
-			ConnectSceneNGUIController.RegimGame.Deathmatch
-		},
-		{
-			TypeModeGame.TeamFight,
-			ConnectSceneNGUIController.RegimGame.TeamFight
-		},
-		{
-			TypeModeGame.TimeBattle,
-			ConnectSceneNGUIController.RegimGame.TimeBattle
-		},
-		{
-			TypeModeGame.FlagCapture,
-			ConnectSceneNGUIController.RegimGame.FlagCapture
-		},
-		{
-			TypeModeGame.DeadlyGames,
-			ConnectSceneNGUIController.RegimGame.DeadlyGames
-		},
-		{
-			TypeModeGame.CapturePoints,
-			ConnectSceneNGUIController.RegimGame.CapturePoints
-		}
-	};
+	private readonly static Dictionary<TypeModeGame, ConnectSceneNGUIController.RegimGame> _modesMap;
 
 	private Version CurrentVersion
 	{
 		get
 		{
-			return GetType().Assembly.GetName().Version;
+			return base.GetType().Assembly.GetName().Version;
 		}
 	}
 
@@ -164,81 +49,207 @@ public class SceneInfoController : MonoBehaviour
 			{
 				return "https://secure.pixelgunserver.com/infomap_pixelgun_ios.json";
 			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
 			{
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.WP8Player)
 				{
-					return "https://secure.pixelgunserver.com/infomap_pixelgun_android.json";
-				}
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-				{
-					return "https://secure.pixelgunserver.com/infomap_pixelgun_amazon.json";
+					return "https://secure.pixelgunserver.com/infomap_pixelgun_wp8.json";
 				}
 				return string.Empty;
 			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.WP8Player)
+			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 			{
-				return "https://secure.pixelgunserver.com/infomap_pixelgun_wp8.json";
+				return "https://secure.pixelgunserver.com/infomap_pixelgun_android.json";
+			}
+			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+			{
+				return "https://secure.pixelgunserver.com/infomap_pixelgun_amazon.json";
 			}
 			return string.Empty;
 		}
 	}
 
-	public static event Action onChangeInfoMap;
+	static SceneInfoController()
+	{
+		SceneInfoController.instance = null;
+		Dictionary<TypeModeGame, int> typeModeGames = new Dictionary<TypeModeGame, int>()
+		{
+			{ TypeModeGame.Deathmatch, 1 },
+			{ TypeModeGame.TeamFight, 2 },
+			{ TypeModeGame.TimeBattle, 3 },
+			{ TypeModeGame.FlagCapture, 4 },
+			{ TypeModeGame.DeadlyGames, 5 },
+			{ TypeModeGame.CapturePoints, 6 }
+		};
+		SceneInfoController._modeUnlockLevels = typeModeGames;
+		Dictionary<TypeModeGame, ConnectSceneNGUIController.RegimGame> typeModeGames1 = new Dictionary<TypeModeGame, ConnectSceneNGUIController.RegimGame>()
+		{
+			{ TypeModeGame.Deathmatch, ConnectSceneNGUIController.RegimGame.Deathmatch },
+			{ TypeModeGame.TeamFight, ConnectSceneNGUIController.RegimGame.TeamFight },
+			{ TypeModeGame.TimeBattle, ConnectSceneNGUIController.RegimGame.TimeBattle },
+			{ TypeModeGame.FlagCapture, ConnectSceneNGUIController.RegimGame.FlagCapture },
+			{ TypeModeGame.DeadlyGames, ConnectSceneNGUIController.RegimGame.DeadlyGames },
+			{ TypeModeGame.CapturePoints, ConnectSceneNGUIController.RegimGame.CapturePoints }
+		};
+		SceneInfoController._modesMap = typeModeGames1;
+	}
+
+	public SceneInfoController()
+	{
+	}
+
+	private void AddSceneIfAvaliableVersion(string nameScene, string minVersion, string maxVersion)
+	{
+		if (this.GetInfoScene(nameScene, this.copyAllScenes) == null)
+		{
+			Version currentVersion = this.CurrentVersion;
+			Version version = new Version(maxVersion);
+			if (currentVersion >= new Version(minVersion) && currentVersion <= version)
+			{
+				GameObject gameObject = Resources.Load(string.Concat("SceneInfo/", nameScene)) as GameObject;
+				SceneInfo component = gameObject.GetComponent<SceneInfo>();
+				GameObject gameObject1 = UnityEngine.Object.Instantiate<GameObject>(component.gameObject);
+				gameObject1.transform.SetParent(base.transform);
+				gameObject1.gameObject.name = nameScene;
+				component = gameObject1.GetComponent<SceneInfo>();
+				component.minAvaliableVersion = minVersion;
+				component.maxAvaliableVersion = maxVersion;
+				component.UpdateKeyLoaded();
+				this.copyAllScenes.Add(component);
+			}
+		}
+	}
+
+	private void AddSceneInModeGame(string nameScene, TypeModeGame needMode)
+	{
+		SceneInfo infoScene = this.GetInfoScene(nameScene, this.copyAllScenes);
+		if (infoScene != null)
+		{
+			infoScene.AddMode(needMode);
+			if (infoScene.IsLoaded)
+			{
+				AllScenesForMode listScenesForMode = this.GetListScenesForMode(needMode, this.copyModeInfo);
+				if (listScenesForMode == null)
+				{
+					listScenesForMode = new AllScenesForMode()
+					{
+						mode = needMode
+					};
+					this.copyModeInfo.Add(listScenesForMode);
+				}
+				listScenesForMode.AddInfoScene(infoScene);
+			}
+		}
+	}
 
 	private void Awake()
 	{
-		instance = this;
+		SceneInfoController.instance = this;
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		ExperienceController.onLevelChange += UpdateListAvaliableMap;
-		LocalizationStore.AddEventCallAfterLocalize(OnChangeLocalize);
-		UpdateListAvaliableMap();
+		ExperienceController.onLevelChange += new Action(this.UpdateListAvaliableMap);
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.OnChangeLocalize));
+		this.UpdateListAvaliableMap();
 	}
 
-	private void OnDestroy()
+	public static TypeModeGame ConvertModeToEnum(string modeStr)
 	{
-		ExperienceController.onLevelChange -= UpdateListAvaliableMap;
-		instance = null;
-	}
-
-	public void UpdateListAvaliableMap()
-	{
-		if (!_isLoadingDataActive)
+		int num;
+		string str = modeStr;
+		if (str != null)
 		{
-			_isLoadingDataActive = true;
-			TextAsset textAsset = Resources.Load<TextAsset>("infomap_pixelgun_test");
-			if (textAsset != null)
+			if (SceneInfoController.u003cu003ef__switchu0024map10 == null)
 			{
-				StartCoroutine(ParseLoadData(textAsset.text));
+				Dictionary<string, int> strs = new Dictionary<string, int>(7)
+				{
+					{ "Deathmatch", 0 },
+					{ "TimeBattle", 1 },
+					{ "TeamFight", 2 },
+					{ "DeadlyGames", 3 },
+					{ "FlagCapture", 4 },
+					{ "CapturePoints", 5 },
+					{ "Dater", 6 }
+				};
+				SceneInfoController.u003cu003ef__switchu0024map10 = strs;
 			}
-			else
+			if (SceneInfoController.u003cu003ef__switchu0024map10.TryGetValue(str, out num))
 			{
-				Debug.LogWarning("Bindata == null");
+				switch (num)
+				{
+					case 0:
+					{
+						return TypeModeGame.Deathmatch;
+					}
+					case 1:
+					{
+						return TypeModeGame.TimeBattle;
+					}
+					case 2:
+					{
+						return TypeModeGame.TeamFight;
+					}
+					case 3:
+					{
+						return TypeModeGame.DeadlyGames;
+					}
+					case 4:
+					{
+						return TypeModeGame.FlagCapture;
+					}
+					case 5:
+					{
+						return TypeModeGame.CapturePoints;
+					}
+					case 6:
+					{
+						return TypeModeGame.Dater;
+					}
+				}
 			}
 		}
+		return TypeModeGame.Deathmatch;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DownloadDataFormServer()
+	{
+		SceneInfoController.u003cDownloadDataFormServeru003ec__Iterator18B variable = null;
+		return variable;
+	}
+
+	public int GetCountScenesForMode(TypeModeGame needMode)
+	{
+		AllScenesForMode allScenesForMode = this.modeInfo.Find((AllScenesForMode nM) => nM.mode == needMode);
+		if (allScenesForMode == null)
+		{
+			return 0;
+		}
+		return allScenesForMode.avaliableScenes.Count;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetDataFromServerLoop()
+	{
+		SceneInfoController.u003cGetDataFromServerLoopu003ec__Iterator18A variable = null;
+		return variable;
 	}
 
 	public SceneInfo GetInfoScene(string nameScene)
 	{
-		_003CGetInfoScene_003Ec__AnonStorey2F1 _003CGetInfoScene_003Ec__AnonStorey2F = new _003CGetInfoScene_003Ec__AnonStorey2F1();
-		_003CGetInfoScene_003Ec__AnonStorey2F.nameScene = nameScene;
-		return allScenes.Find(_003CGetInfoScene_003Ec__AnonStorey2F._003C_003Em__427);
+		return this.allScenes.Find((SceneInfo curInf) => curInf.gameObject.name.ToLower() == nameScene.ToLower());
 	}
 
 	public SceneInfo GetInfoScene(string nameScene, List<SceneInfo> needList)
 	{
-		_003CGetInfoScene_003Ec__AnonStorey2F2 _003CGetInfoScene_003Ec__AnonStorey2F = new _003CGetInfoScene_003Ec__AnonStorey2F2();
-		_003CGetInfoScene_003Ec__AnonStorey2F.nameScene = nameScene;
 		if (needList == null)
 		{
 			return null;
 		}
-		return needList.Find(_003CGetInfoScene_003Ec__AnonStorey2F._003C_003Em__428);
+		return needList.Find((SceneInfo curInf) => curInf.gameObject.name.ToLower() == nameScene.ToLower());
 	}
 
 	public SceneInfo GetInfoScene(TypeModeGame needMode, int indexMap)
 	{
-		SceneInfo infoScene = GetInfoScene(indexMap);
+		SceneInfo infoScene = this.GetInfoScene(indexMap);
 		if (infoScene != null && infoScene.IsAvaliableForMode(needMode))
 		{
 			return infoScene;
@@ -248,63 +259,35 @@ public class SceneInfoController : MonoBehaviour
 
 	public SceneInfo GetInfoScene(int indexMap)
 	{
-		_003CGetInfoScene_003Ec__AnonStorey2F3 _003CGetInfoScene_003Ec__AnonStorey2F = new _003CGetInfoScene_003Ec__AnonStorey2F3();
-		_003CGetInfoScene_003Ec__AnonStorey2F.indexMap = indexMap;
-		return allScenes.Find(_003CGetInfoScene_003Ec__AnonStorey2F._003C_003Em__429);
+		return this.allScenes.Find((SceneInfo curInf) => curInf.indexMap == indexMap);
 	}
 
 	public AllScenesForMode GetListScenesForMode(TypeModeGame needMode)
 	{
-		_003CGetListScenesForMode_003Ec__AnonStorey2F4 _003CGetListScenesForMode_003Ec__AnonStorey2F = new _003CGetListScenesForMode_003Ec__AnonStorey2F4();
-		_003CGetListScenesForMode_003Ec__AnonStorey2F.needMode = needMode;
-		return modeInfo.Find(_003CGetListScenesForMode_003Ec__AnonStorey2F._003C_003Em__42A);
+		return this.modeInfo.Find((AllScenesForMode mG) => mG.mode == needMode);
 	}
 
 	public AllScenesForMode GetListScenesForMode(TypeModeGame needMode, List<AllScenesForMode> needList)
 	{
-		_003CGetListScenesForMode_003Ec__AnonStorey2F5 _003CGetListScenesForMode_003Ec__AnonStorey2F = new _003CGetListScenesForMode_003Ec__AnonStorey2F5();
-		_003CGetListScenesForMode_003Ec__AnonStorey2F.needMode = needMode;
 		if (needList == null)
 		{
 			return null;
 		}
-		return needList.Find(_003CGetListScenesForMode_003Ec__AnonStorey2F._003C_003Em__42B);
+		return needList.Find((AllScenesForMode mG) => mG.mode == needMode);
 	}
 
-	public int GetCountScenesForMode(TypeModeGame needMode)
+	internal static HashSet<TypeModeGame> GetUnlockedModesByLevel(int level)
 	{
-		_003CGetCountScenesForMode_003Ec__AnonStorey2F6 _003CGetCountScenesForMode_003Ec__AnonStorey2F = new _003CGetCountScenesForMode_003Ec__AnonStorey2F6();
-		_003CGetCountScenesForMode_003Ec__AnonStorey2F.needMode = needMode;
-		AllScenesForMode allScenesForMode = modeInfo.Find(_003CGetCountScenesForMode_003Ec__AnonStorey2F._003C_003Em__42C);
-		if (allScenesForMode != null)
+		HashSet<TypeModeGame> typeModeGames = new HashSet<TypeModeGame>();
+		foreach (KeyValuePair<TypeModeGame, int> _modeUnlockLevel in SceneInfoController._modeUnlockLevels)
 		{
-			return allScenesForMode.avaliableScenes.Count;
-		}
-		return 0;
-	}
-
-	private void AddSceneIfAvaliableVersion(string nameScene, string minVersion, string maxVersion)
-	{
-		SceneInfo infoScene = GetInfoScene(nameScene, copyAllScenes);
-		if (infoScene == null)
-		{
-			Version currentVersion = CurrentVersion;
-			Version version = new Version(maxVersion);
-			Version version2 = new Version(minVersion);
-			if (currentVersion >= version2 && currentVersion <= version)
+			if (_modeUnlockLevel.Value > level)
 			{
-				GameObject gameObject = Resources.Load("SceneInfo/" + nameScene) as GameObject;
-				SceneInfo component = gameObject.GetComponent<SceneInfo>();
-				GameObject gameObject2 = UnityEngine.Object.Instantiate(component.gameObject);
-				gameObject2.transform.SetParent(base.transform);
-				gameObject2.gameObject.name = nameScene;
-				component = gameObject2.GetComponent<SceneInfo>();
-				component.minAvaliableVersion = minVersion;
-				component.maxAvaliableVersion = maxVersion;
-				component.UpdateKeyLoaded();
-				copyAllScenes.Add(component);
+				continue;
 			}
+			typeModeGames.Add(_modeUnlockLevel.Key);
 		}
+		return typeModeGames;
 	}
 
 	public bool MapExistInProject(string nameScene)
@@ -312,237 +295,82 @@ public class SceneInfoController : MonoBehaviour
 		return true;
 	}
 
-	private void AddSceneInModeGame(string nameScene, TypeModeGame needMode)
+	private void OnChangeLocalize()
 	{
-		SceneInfo infoScene = GetInfoScene(nameScene, copyAllScenes);
-		if (!(infoScene != null))
+		for (int i = 0; i < this.allScenes.Count; i++)
 		{
-			return;
+			this.allScenes[i].UpdateLocalize();
 		}
-		infoScene.AddMode(needMode);
-		if (infoScene.IsLoaded)
-		{
-			AllScenesForMode allScenesForMode = GetListScenesForMode(needMode, copyModeInfo);
-			if (allScenesForMode == null)
-			{
-				allScenesForMode = new AllScenesForMode();
-				allScenesForMode.mode = needMode;
-				copyModeInfo.Add(allScenesForMode);
-			}
-			allScenesForMode.AddInfoScene(infoScene);
-		}
-	}
-
-	private IEnumerator GetDataFromServerLoop()
-	{
-		while (true)
-		{
-			yield return StartCoroutine(DownloadDataFormServer());
-			yield return new WaitForSeconds(870f);
-		}
-	}
-
-	private IEnumerator DownloadDataFormServer()
-	{
-		if (_isLoadingDataActive)
-		{
-			yield break;
-		}
-		_isLoadingDataActive = true;
-		string urlDataAddress = UrlForLoadData;
-		WWW downloadData = null;
-		int iter = 3;
-		while (iter > 0)
-		{
-			downloadData = Tools.CreateWwwIfNotConnected(urlDataAddress);
-			if (downloadData == null)
-			{
-				yield break;
-			}
-			while (!downloadData.isDone)
-			{
-				yield return null;
-			}
-			if (!string.IsNullOrEmpty(downloadData.error))
-			{
-				yield return new WaitForSeconds(5f);
-				iter--;
-				continue;
-			}
-			break;
-		}
-		if (downloadData == null || !string.IsNullOrEmpty(downloadData.error))
-		{
-			if (Defs.IsDeveloperBuild && downloadData != null)
-			{
-				Debug.LogWarningFormat("Request to {0} failed: {1}", urlDataAddress, downloadData.error);
-			}
-			_isLoadingDataActive = false;
-		}
-		else
-		{
-			string responseText = URLs.Sanitize(downloadData);
-			yield return ParseLoadData(responseText);
-			_isLoadingDataActive = false;
-		}
-	}
-
-	private IEnumerator ParseLoadData(string lData)
-	{
-		Dictionary<string, object> allData = Json.Deserialize(lData) as Dictionary<string, object>;
-		if (allData == null)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("Bad response: " + lData);
-			}
-			_isLoadingDataActive = false;
-			yield break;
-		}
-		while (ExperienceController.sharedController == null)
-		{
-			yield return null;
-		}
-		copyAllScenes = new List<SceneInfo>();
-		copyModeInfo = new List<AllScenesForMode>();
-		copyModeInfo.Clear();
-		if (allData.ContainsKey("allAvaliableMap"))
-		{
-			List<object> listMap = allData["allAvaliableMap"] as List<object>;
-			for (int iM = 0; iM < listMap.Count; iM++)
-			{
-				Dictionary<string, object> infoMap = listMap[iM] as Dictionary<string, object>;
-				if (infoMap == null)
-				{
-					continue;
-				}
-				string curNameScene2 = string.Empty;
-				string minV = string.Empty;
-				string maxV = string.Empty;
-				if (infoMap.ContainsKey("nameScene"))
-				{
-					curNameScene2 = infoMap["nameScene"].ToString();
-					if (infoMap.ContainsKey("minV"))
-					{
-						minV = infoMap["minV"].ToString();
-					}
-					if (infoMap.ContainsKey("maxV"))
-					{
-						maxV = infoMap["maxV"].ToString();
-					}
-					AddSceneIfAvaliableVersion(curNameScene2, minV, maxV);
-				}
-			}
-		}
-		if (allData.ContainsKey("modeMap"))
-		{
-			List<object> listAllMode = allData["modeMap"] as List<object>;
-			for (int iMod = 0; iMod < listAllMode.Count; iMod++)
-			{
-				Dictionary<string, object> infoMode = listAllMode[iMod] as Dictionary<string, object>;
-				if (infoMode == null || !infoMode.ContainsKey("modeId"))
-				{
-					continue;
-				}
-				TypeModeGame curModeMap = ConvertModeToEnum(infoMode["modeId"].ToString());
-				if (!infoMode.ContainsKey("scenesForMode"))
-				{
-					continue;
-				}
-				List<object> listModeScenes = infoMode["scenesForMode"] as List<object>;
-				for (int iSc = 0; iSc < listModeScenes.Count; iSc++)
-				{
-					Dictionary<string, object> curSceneInf = listModeScenes[iSc] as Dictionary<string, object>;
-					if (curSceneInf == null)
-					{
-						continue;
-					}
-					bool avalForCurLev = true;
-					if (curSceneInf.ContainsKey("minLevPlayerForAval"))
-					{
-						int minAvalLev = int.Parse(curSceneInf["minLevPlayerForAval"].ToString());
-						if (ExperienceController.sharedController.currentLevel < minAvalLev)
-						{
-							avalForCurLev = false;
-						}
-					}
-					if (avalForCurLev && curSceneInf.ContainsKey("nameScene"))
-					{
-						AddSceneInModeGame(curSceneInf["nameScene"].ToString(), curModeMap);
-					}
-				}
-			}
-		}
-		OnDataLoaded();
-	}
-
-	public static TypeModeGame ConvertModeToEnum(string modeStr)
-	{
-		switch (modeStr)
-		{
-		case "Deathmatch":
-			return TypeModeGame.Deathmatch;
-		case "TimeBattle":
-			return TypeModeGame.TimeBattle;
-		case "TeamFight":
-			return TypeModeGame.TeamFight;
-		case "DeadlyGames":
-			return TypeModeGame.DeadlyGames;
-		case "FlagCapture":
-			return TypeModeGame.FlagCapture;
-		case "CapturePoints":
-			return TypeModeGame.CapturePoints;
-		case "Dater":
-			return TypeModeGame.Dater;
-		default:
-			return TypeModeGame.Deathmatch;
-		}
-	}
-
-	internal static HashSet<TypeModeGame> GetUnlockedModesByLevel(int level)
-	{
-		HashSet<TypeModeGame> hashSet = new HashSet<TypeModeGame>();
-		foreach (KeyValuePair<TypeModeGame, int> modeUnlockLevel in _modeUnlockLevels)
-		{
-			if (modeUnlockLevel.Value <= level)
-			{
-				hashSet.Add(modeUnlockLevel.Key);
-			}
-		}
-		return hashSet;
-	}
-
-	internal static HashSet<ConnectSceneNGUIController.RegimGame> SelectModes(IEnumerable<TypeModeGame> modes)
-	{
-		HashSet<ConnectSceneNGUIController.RegimGame> hashSet = new HashSet<ConnectSceneNGUIController.RegimGame>();
-		foreach (TypeModeGame mode in modes)
-		{
-			ConnectSceneNGUIController.RegimGame value;
-			if (_modesMap.TryGetValue(mode, out value))
-			{
-				hashSet.Add(value);
-			}
-		}
-		return hashSet;
 	}
 
 	private void OnDataLoaded()
 	{
-		allScenes = copyAllScenes;
-		modeInfo = copyModeInfo;
-		OnChangeLocalize();
+		this.allScenes = this.copyAllScenes;
+		this.modeInfo = this.copyModeInfo;
+		this.OnChangeLocalize();
 		if (SceneInfoController.onChangeInfoMap != null)
 		{
 			SceneInfoController.onChangeInfoMap();
 		}
-		_isLoadingDataActive = false;
+		this._isLoadingDataActive = false;
 	}
 
-	private void OnChangeLocalize()
+	private void OnDestroy()
 	{
-		for (int i = 0; i < allScenes.Count; i++)
+		ExperienceController.onLevelChange -= new Action(this.UpdateListAvaliableMap);
+		SceneInfoController.instance = null;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ParseLoadData(string lData)
+	{
+		SceneInfoController.u003cParseLoadDatau003ec__Iterator18C variable = null;
+		return variable;
+	}
+
+	internal static HashSet<ConnectSceneNGUIController.RegimGame> SelectModes(IEnumerable<TypeModeGame> modes)
+	{
+		ConnectSceneNGUIController.RegimGame regimGame;
+		HashSet<ConnectSceneNGUIController.RegimGame> regimGames = new HashSet<ConnectSceneNGUIController.RegimGame>();
+		IEnumerator<TypeModeGame> enumerator = modes.GetEnumerator();
+		try
 		{
-			allScenes[i].UpdateLocalize();
+			while (enumerator.MoveNext())
+			{
+				TypeModeGame current = enumerator.Current;
+				if (!SceneInfoController._modesMap.TryGetValue(current, out regimGame))
+				{
+					continue;
+				}
+				regimGames.Add(regimGame);
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		return regimGames;
+	}
+
+	public void UpdateListAvaliableMap()
+	{
+		if (!this._isLoadingDataActive)
+		{
+			this._isLoadingDataActive = true;
+			TextAsset textAsset = Resources.Load<TextAsset>("infomap_pixelgun_test");
+			if (textAsset == null)
+			{
+				UnityEngine.Debug.LogWarning("Bindata == null");
+			}
+			else
+			{
+				base.StartCoroutine(this.ParseLoadData(textAsset.text));
+			}
 		}
 	}
+
+	public static event Action onChangeInfoMap;
 }

@@ -1,87 +1,125 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Rilisoft;
 using Rilisoft.MiniJson;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class CampaignProgress
 {
-	[CompilerGenerated]
-	private sealed class _003CActualizeComicsViews_003Ec__AnonStorey29C
-	{
-		internal string boxName;
-
-		internal bool _003C_003Em__267(LevelBox levelBox)
-		{
-			return levelBox.name == boxName;
-		}
-	}
-
 	public const string CampaignProgressKey = "CampaignProgress";
 
 	public static Dictionary<string, Dictionary<string, int>> boxesLevelsAndStars;
 
-	[CompilerGenerated]
-	private static Func<KeyValuePair<string, Dictionary<string, int>>, IEnumerable<string>> _003C_003Ef__am_0024cache1;
-
-	[CompilerGenerated]
-	private static Func<string, int> _003C_003Ef__am_0024cache2;
-
 	static CampaignProgress()
 	{
-		boxesLevelsAndStars = new Dictionary<string, Dictionary<string, int>>();
+		CampaignProgress.boxesLevelsAndStars = new Dictionary<string, Dictionary<string, int>>();
 		Storager.hasKey("CampaignProgress");
-		LoadCampaignProgress();
-		if (boxesLevelsAndStars.Keys.Count == 0)
+		CampaignProgress.LoadCampaignProgress();
+		if (CampaignProgress.boxesLevelsAndStars.Keys.Count == 0)
 		{
-			boxesLevelsAndStars.Add(LevelBox.campaignBoxes[0].name, new Dictionary<string, int>());
-			SaveCampaignProgress();
+			CampaignProgress.boxesLevelsAndStars.Add(LevelBox.campaignBoxes[0].name, new Dictionary<string, int>());
+			CampaignProgress.SaveCampaignProgress();
 		}
 	}
 
-	public static void OpenNewBoxIfPossible()
+	public CampaignProgress()
 	{
-		int num = 0;
-		for (int i = 1; i < LevelBox.campaignBoxes.Count; i++)
+	}
+
+	public static void ActualizeComicsViews()
+	{
+		try
 		{
-			LevelBox levelBox = LevelBox.campaignBoxes[i];
-			if (boxesLevelsAndStars.ContainsKey(levelBox.name))
+			if (CampaignProgress.boxesLevelsAndStars != null)
 			{
-				num = i;
+				IEnumerable<string> strs = CampaignProgress.boxesLevelsAndStars.SelectMany<KeyValuePair<string, Dictionary<string, int>>, string>((KeyValuePair<string, Dictionary<string, int>> boxKvp) => boxKvp.Value.Keys).Concat<string>(Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0]).Distinct<string>();
+				Save.SaveStringArray(Defs.ArtLevsS, strs.ToArray<string>());
+				IEnumerable<string> strs1 = RiliExtensions.WithoutLast<string>(
+					from boxName in CampaignProgress.boxesLevelsAndStars.Keys
+					orderby LevelBox.campaignBoxes.FindIndex((LevelBox levelBox) => levelBox.name == boxName)
+					select boxName).Concat<string>(Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0]).Distinct<string>();
+				Save.SaveStringArray(Defs.ArtBoxS, strs1.ToArray<string>());
+			}
+			else
+			{
+				Debug.LogError("ActualizeComicsViews: boxesLevelsAndStars = null");
 			}
 		}
-		int num2 = 0;
-		foreach (KeyValuePair<string, Dictionary<string, int>> boxesLevelsAndStar in boxesLevelsAndStars)
+		catch (Exception exception)
 		{
-			foreach (KeyValuePair<string, int> item in boxesLevelsAndStar.Value)
+			Debug.LogError(string.Concat("ActualizeComicsViews: exception: ", exception));
+		}
+	}
+
+	internal static Dictionary<string, Dictionary<string, int>> DeserializeProgress(string serializedProgress)
+	{
+		Dictionary<string, Dictionary<string, int>> strs = new Dictionary<string, Dictionary<string, int>>();
+		object obj = Json.Deserialize(serializedProgress);
+		if (Debug.isDebugBuild && obj != null && BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+		{
+			Debug.Log(string.Concat("Deserialized progress type: ", obj.GetType()));
+			Debug.Log(string.Concat("##### Serialized campaign progress:\n", serializedProgress));
+		}
+		Dictionary<string, object> strs1 = obj as Dictionary<string, object>;
+		if (strs1 != null)
+		{
+			foreach (KeyValuePair<string, object> keyValuePair in strs1)
 			{
-				num2 += item.Value;
+				Dictionary<string, int> strs2 = new Dictionary<string, int>();
+				IDictionary<string, object> value = keyValuePair.Value as IDictionary<string, object>;
+				if (value != null)
+				{
+					IEnumerator<KeyValuePair<string, object>> enumerator = value.GetEnumerator();
+					try
+					{
+						while (enumerator.MoveNext())
+						{
+							KeyValuePair<string, object> current = enumerator.Current;
+							try
+							{
+								int num = Convert.ToInt32(current.Value);
+								strs2.Add(current.Key, num);
+							}
+							catch (InvalidCastException invalidCastException)
+							{
+								Debug.LogWarning(string.Concat("Cannot convert ", current.Value, " to int."));
+							}
+						}
+					}
+					finally
+					{
+						if (enumerator == null)
+						{
+						}
+						enumerator.Dispose();
+					}
+				}
+				else if (Debug.isDebugBuild)
+				{
+					Debug.LogWarning("boxProgressDictionary == null");
+				}
+				strs.Add(keyValuePair.Key, strs2);
 			}
 		}
-		int num3 = num + 1;
-		if (num3 < LevelBox.campaignBoxes.Count)
+		else if (Debug.isDebugBuild)
 		{
-			string name = LevelBox.campaignBoxes[num3].name;
-			if (LevelBox.campaignBoxes[num3].starsToOpen <= num2 && !boxesLevelsAndStars.ContainsKey(name))
-			{
-				boxesLevelsAndStars.Add(name, new Dictionary<string, int>());
-				SaveCampaignProgress();
-				FlurryPluginWrapper.LogBoxOpened(name);
-			}
+			Debug.LogWarning(string.Concat("campaignProgressDictionary == null,    serializedProgress == ", serializedProgress));
 		}
-		SaveCampaignProgress();
+		return strs;
+	}
+
+	internal static Dictionary<string, Dictionary<string, int>> DeserializeTestDictionary()
+	{
+		return CampaignProgress.DeserializeProgress("{\"Box_11\": { \"Level_02\": 1, \"Level_05\": 3 },\"Box_13\": { \"Level_03\": 1, \"Level_08\": 3, \"Level_21\": 2 },\"Box_34\": { },\"Box_99\": { \"Level_55\": 2 },}");
 	}
 
 	public static bool FirstTimeCompletesLevel(string lev)
 	{
-		return !boxesLevelsAndStars[CurrentCampaignGame.boXName].ContainsKey(lev);
-	}
-
-	public static void SaveCampaignProgress()
-	{
-		SetProgressDictionary("CampaignProgress", boxesLevelsAndStars, false);
+		return !CampaignProgress.boxesLevelsAndStars[CurrentCampaignGame.boXName].ContainsKey(lev);
 	}
 
 	public static string GetCampaignProgressString()
@@ -89,140 +127,81 @@ public sealed class CampaignProgress
 		return Storager.getString("CampaignProgress", false);
 	}
 
+	private static Dictionary<string, Dictionary<string, int>> GetProgressDictionary(string key, bool useCloud)
+	{
+		return CampaignProgress.DeserializeProgress(Storager.getString(key, useCloud));
+	}
+
 	public static void LoadCampaignProgress()
 	{
-		Dictionary<string, Dictionary<string, int>> dictionary = (boxesLevelsAndStars = GetProgressDictionary("CampaignProgress", false));
+		CampaignProgress.boxesLevelsAndStars = CampaignProgress.GetProgressDictionary("CampaignProgress", false);
+	}
+
+	public static void OpenNewBoxIfPossible()
+	{
+		int num = 0;
+		for (int i = 1; i < LevelBox.campaignBoxes.Count; i++)
+		{
+			LevelBox item = LevelBox.campaignBoxes[i];
+			if (CampaignProgress.boxesLevelsAndStars.ContainsKey(item.name))
+			{
+				num = i;
+			}
+		}
+		int value = 0;
+		foreach (KeyValuePair<string, Dictionary<string, int>> boxesLevelsAndStar in CampaignProgress.boxesLevelsAndStars)
+		{
+			foreach (KeyValuePair<string, int> keyValuePair in boxesLevelsAndStar.Value)
+			{
+				value += keyValuePair.Value;
+			}
+		}
+		int num1 = num + 1;
+		if (num1 < LevelBox.campaignBoxes.Count)
+		{
+			string str = LevelBox.campaignBoxes[num1].name;
+			if (LevelBox.campaignBoxes[num1].starsToOpen <= value && !CampaignProgress.boxesLevelsAndStars.ContainsKey(str))
+			{
+				CampaignProgress.boxesLevelsAndStars.Add(str, new Dictionary<string, int>());
+				CampaignProgress.SaveCampaignProgress();
+				FlurryPluginWrapper.LogBoxOpened(str);
+			}
+		}
+		CampaignProgress.SaveCampaignProgress();
+	}
+
+	public static void SaveCampaignProgress()
+	{
+		CampaignProgress.SetProgressDictionary("CampaignProgress", CampaignProgress.boxesLevelsAndStars, false);
 	}
 
 	internal static string SerializeProgress(Dictionary<string, Dictionary<string, int>> progress)
 	{
-		//Discarded unreachable code: IL_000e, IL_0051
+		string str;
 		try
 		{
-			return Json.Serialize(progress);
+			str = Json.Serialize(progress);
 		}
-		catch (Exception ex)
+		catch (Exception exception1)
 		{
-			Debug.LogError(ex);
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Message", ex.Message);
-			Dictionary<string, string> dictionary2 = dictionary;
-			FlurryPluginWrapper.LogEvent(ex.GetType().Name);
-			return "{ }";
-		}
-	}
-
-	internal static Dictionary<string, Dictionary<string, int>> DeserializeProgress(string serializedProgress)
-	{
-		Dictionary<string, Dictionary<string, int>> dictionary = new Dictionary<string, Dictionary<string, int>>();
-		object obj = Json.Deserialize(serializedProgress);
-		if (Debug.isDebugBuild && obj != null && BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-		{
-			Type type = obj.GetType();
-			Debug.Log("Deserialized progress type: " + type);
-			Debug.Log("##### Serialized campaign progress:\n" + serializedProgress);
-		}
-		Dictionary<string, object> dictionary2 = obj as Dictionary<string, object>;
-		if (dictionary2 != null)
-		{
-			foreach (KeyValuePair<string, object> item in dictionary2)
+			Exception exception = exception1;
+			Debug.LogError(exception);
+			Dictionary<string, string> strs = new Dictionary<string, string>()
 			{
-				Dictionary<string, int> dictionary3 = new Dictionary<string, int>();
-				IDictionary<string, object> dictionary4 = item.Value as IDictionary<string, object>;
-				if (dictionary4 != null)
-				{
-					foreach (KeyValuePair<string, object> item2 in dictionary4)
-					{
-						try
-						{
-							int value = Convert.ToInt32(item2.Value);
-							dictionary3.Add(item2.Key, value);
-						}
-						catch (InvalidCastException)
-						{
-							Debug.LogWarning(string.Concat("Cannot convert ", item2.Value, " to int."));
-						}
-					}
-				}
-				else if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("boxProgressDictionary == null");
-				}
-				dictionary.Add(item.Key, dictionary3);
-			}
-			return dictionary;
+				{ "Message", exception.Message }
+			};
+			FlurryPluginWrapper.LogEvent(exception.GetType().Name);
+			str = "{ }";
 		}
-		if (Debug.isDebugBuild)
-		{
-			Debug.LogWarning("campaignProgressDictionary == null,    serializedProgress == " + serializedProgress);
-		}
-		return dictionary;
+		return str;
 	}
 
 	private static void SetProgressDictionary(string key, Dictionary<string, Dictionary<string, int>> dictionary, bool useCloud)
 	{
-		string val = SerializeProgress(dictionary);
-		Storager.setString(key, val, useCloud);
+		Storager.setString(key, CampaignProgress.SerializeProgress(dictionary), useCloud);
 		if (Application.platform != RuntimePlatform.IPhonePlayer)
 		{
 			PlayerPrefs.Save();
 		}
-	}
-
-	private static Dictionary<string, Dictionary<string, int>> GetProgressDictionary(string key, bool useCloud)
-	{
-		string @string = Storager.getString(key, useCloud);
-		return DeserializeProgress(@string);
-	}
-
-	internal static Dictionary<string, Dictionary<string, int>> DeserializeTestDictionary()
-	{
-		string serializedProgress = "{\"Box_11\": { \"Level_02\": 1, \"Level_05\": 3 },\"Box_13\": { \"Level_03\": 1, \"Level_08\": 3, \"Level_21\": 2 },\"Box_34\": { },\"Box_99\": { \"Level_55\": 2 },}";
-		return DeserializeProgress(serializedProgress);
-	}
-
-	public static void ActualizeComicsViews()
-	{
-		try
-		{
-			if (boxesLevelsAndStars == null)
-			{
-				Debug.LogError("ActualizeComicsViews: boxesLevelsAndStars = null");
-				return;
-			}
-			Dictionary<string, Dictionary<string, int>> source = boxesLevelsAndStars;
-			if (_003C_003Ef__am_0024cache1 == null)
-			{
-				_003C_003Ef__am_0024cache1 = _003CActualizeComicsViews_003Em__265;
-			}
-			IEnumerable<string> source2 = source.SelectMany(_003C_003Ef__am_0024cache1).Concat(Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0]).Distinct();
-			Save.SaveStringArray(Defs.ArtLevsS, source2.ToArray());
-			Dictionary<string, Dictionary<string, int>>.KeyCollection keys = boxesLevelsAndStars.Keys;
-			if (_003C_003Ef__am_0024cache2 == null)
-			{
-				_003C_003Ef__am_0024cache2 = _003CActualizeComicsViews_003Em__266;
-			}
-			IEnumerable<string> source3 = keys.OrderBy(_003C_003Ef__am_0024cache2).WithoutLast().Concat(Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0])
-				.Distinct();
-			Save.SaveStringArray(Defs.ArtBoxS, source3.ToArray());
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("ActualizeComicsViews: exception: " + ex);
-		}
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CActualizeComicsViews_003Em__265(KeyValuePair<string, Dictionary<string, int>> boxKvp)
-	{
-		return boxKvp.Value.Keys;
-	}
-
-	[CompilerGenerated]
-	private static int _003CActualizeComicsViews_003Em__266(string boxName)
-	{
-		_003CActualizeComicsViews_003Ec__AnonStorey29C _003CActualizeComicsViews_003Ec__AnonStorey29C = new _003CActualizeComicsViews_003Ec__AnonStorey29C();
-		_003CActualizeComicsViews_003Ec__AnonStorey29C.boxName = boxName;
-		return LevelBox.campaignBoxes.FindIndex(_003CActualizeComicsViews_003Ec__AnonStorey29C._003C_003Em__267);
 	}
 }

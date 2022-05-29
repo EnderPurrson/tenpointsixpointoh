@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class MainMenuHeroCamera : MonoBehaviour
@@ -10,95 +13,91 @@ public class MainMenuHeroCamera : MonoBehaviour
 
 	private string animNormal = "MainMenuCloseOptions";
 
+	public bool IsAnimPlaying
+	{
+		get;
+		private set;
+	}
+
 	private float YawForMainMenu
 	{
 		get
 		{
-			return (!MenuLeaderboardsView.IsNeedShow) ? 6f : 0f;
+			return (!MenuLeaderboardsView.IsNeedShow ? 6f : 0f);
 		}
 	}
 
-	public bool IsAnimPlaying { get; private set; }
-
-	public static event Action onEndOpenGift;
-
-	public static event Action onEndCloseGift;
-
-	public void Start()
+	public MainMenuHeroCamera()
 	{
-		Vector3 eulerAngles = base.transform.rotation.eulerAngles;
-		base.transform.rotation = Quaternion.Euler(new Vector3(eulerAngles.x, YawForMainMenu, eulerAngles.z));
-	}
-
-	private void OnEnable()
-	{
-		ButOpenGift.onOpen += OnShowGift;
-		GiftBannerWindow.onClose += OnCloseGift;
-	}
-
-	private void OnDisable()
-	{
-		ButOpenGift.onOpen -= OnShowGift;
-		GiftBannerWindow.onClose -= OnCloseGift;
-	}
-
-	public void OnCloseGift()
-	{
-		GetComponent<Animation>()[animGotcha].speed = -1f;
-		GetComponent<Animation>()[animGotcha].time = GetComponent<Animation>()[animGotcha].length;
-		GetComponent<Animation>().Play(animGotcha);
-		StartCoroutine(WaitAnimEnd(animGotcha));
-	}
-
-	public void OnShowGift()
-	{
-		GetComponent<Animation>()[animGotcha].speed = 1f;
-		GetComponent<Animation>()[animGotcha].time = 0f;
-		GetComponent<Animation>().Play(animGotcha);
-		StartCoroutine(WaitAnimEnd(animGotcha));
 	}
 
 	private void EndAnimation(string nameAnim)
 	{
-		switch (nameAnim)
+		int num;
+		string str = nameAnim;
+		if (str != null)
 		{
-		case "MainMenuOpenGotcha":
-			if (GetComponent<Animation>()[animGotcha].speed > 0f)
+			if (MainMenuHeroCamera.u003cu003ef__switchu0024map11 == null)
 			{
-				if (MainMenuHeroCamera.onEndOpenGift != null)
+				MainMenuHeroCamera.u003cu003ef__switchu0024map11 = new Dictionary<string, int>(1)
 				{
-					MainMenuHeroCamera.onEndOpenGift();
+					{ "MainMenuOpenGotcha", 0 }
+				};
+			}
+			if (MainMenuHeroCamera.u003cu003ef__switchu0024map11.TryGetValue(str, out num))
+			{
+				if (num == 0)
+				{
+					if (base.GetComponent<Animation>()[this.animGotcha].speed > 0f)
+					{
+						if (MainMenuHeroCamera.onEndOpenGift != null)
+						{
+							MainMenuHeroCamera.onEndOpenGift();
+						}
+					}
+					else if (MainMenuHeroCamera.onEndCloseGift != null)
+					{
+						MainMenuHeroCamera.onEndCloseGift();
+					}
 				}
 			}
-			else if (MainMenuHeroCamera.onEndCloseGift != null)
-			{
-				MainMenuHeroCamera.onEndCloseGift();
-			}
-			break;
 		}
 	}
 
-	private IEnumerator WaitAnimEnd(string nameAnim)
+	public void OnCloseGift()
 	{
-		while (GetComponent<Animation>().IsPlaying(nameAnim))
-		{
-			yield return null;
-		}
-		EndAnimation(nameAnim);
+		base.GetComponent<Animation>()[this.animGotcha].speed = -1f;
+		base.GetComponent<Animation>()[this.animGotcha].time = base.GetComponent<Animation>()[this.animGotcha].length;
+		base.GetComponent<Animation>().Play(this.animGotcha);
+		base.StartCoroutine(this.WaitAnimEnd(this.animGotcha));
 	}
 
-	public void OnMainMenuOpenOptions()
+	public void OnCloseSingleModePanel()
 	{
-		PlayAnim(10f);
-		if (MenuLeaderboardsController.sharedController != null && MenuLeaderboardsController.sharedController.menuLeaderboardsView != null)
-		{
-			MenuLeaderboardsController.sharedController.menuLeaderboardsView.Show(false, false);
-		}
+		this.moveMenuAnimator.enabled = true;
+		this.PlayAnim(this.YawForMainMenu);
+	}
+
+	private void OnDisable()
+	{
+		ButOpenGift.onOpen -= new Action(this.OnShowGift);
+		GiftBannerWindow.onClose -= new Action(this.OnCloseGift);
+	}
+
+	private void OnEnable()
+	{
+		ButOpenGift.onOpen += new Action(this.OnShowGift);
+		GiftBannerWindow.onClose += new Action(this.OnCloseGift);
+	}
+
+	public void OnMainMenuCloseLeaderboards()
+	{
+		this.PlayAnim(6f);
 	}
 
 	public void OnMainMenuCloseOptions()
 	{
-		PlayAnim(YawForMainMenu);
+		this.PlayAnim(this.YawForMainMenu);
 		if (MenuLeaderboardsController.sharedController != null && MenuLeaderboardsController.sharedController.menuLeaderboardsView != null && MenuLeaderboardsView.IsNeedShow)
 		{
 			MenuLeaderboardsController.sharedController.menuLeaderboardsView.Show(true, true);
@@ -107,51 +106,59 @@ public class MainMenuHeroCamera : MonoBehaviour
 
 	public void OnMainMenuOpenLeaderboards()
 	{
-		PlayAnim(0f);
+		this.PlayAnim(0f);
 	}
 
-	public void OnMainMenuCloseLeaderboards()
+	public void OnMainMenuOpenOptions()
 	{
-		PlayAnim(6f);
-	}
-
-	private void PlayAnim(float endYaw)
-	{
-		StopAllCoroutines();
-		StartCoroutine(PlayAnimCoroutine(endYaw));
-	}
-
-	private IEnumerator PlayAnimCoroutine(float endYaw)
-	{
-		IsAnimPlaying = true;
-		Transform heroCameraTransform = base.transform;
-		Quaternion heroCameraRotation = heroCameraTransform.rotation;
-		float startTime = Time.realtimeSinceStartup;
-		Quaternion startRotation = heroCameraRotation;
-		Quaternion endRotation = Quaternion.Euler(heroCameraRotation.eulerAngles.x, endYaw, heroCameraRotation.eulerAngles.z);
-		while (Time.realtimeSinceStartup - startTime <= 1f)
+		this.PlayAnim(10f);
+		if (MenuLeaderboardsController.sharedController != null && MenuLeaderboardsController.sharedController.menuLeaderboardsView != null)
 		{
-			float deltaFromStart = Time.realtimeSinceStartup - startTime;
-			if (deltaFromStart <= 0.1f)
-			{
-				yield return null;
-			}
-			heroCameraTransform.rotation = Quaternion.Lerp(startRotation, endRotation, (deltaFromStart - 0.1f) / 0.9f);
-			yield return null;
+			MenuLeaderboardsController.sharedController.menuLeaderboardsView.Show(false, false);
 		}
-		heroCameraTransform.rotation = endRotation;
-		IsAnimPlaying = false;
 	}
 
 	public void OnOpenSingleModePanel()
 	{
-		StopAllCoroutines();
-		moveMenuAnimator.enabled = false;
+		base.StopAllCoroutines();
+		this.moveMenuAnimator.enabled = false;
 	}
 
-	public void OnCloseSingleModePanel()
+	public void OnShowGift()
 	{
-		moveMenuAnimator.enabled = true;
-		PlayAnim(YawForMainMenu);
+		base.GetComponent<Animation>()[this.animGotcha].speed = 1f;
+		base.GetComponent<Animation>()[this.animGotcha].time = 0f;
+		base.GetComponent<Animation>().Play(this.animGotcha);
+		base.StartCoroutine(this.WaitAnimEnd(this.animGotcha));
 	}
+
+	private void PlayAnim(float endYaw)
+	{
+		base.StopAllCoroutines();
+		base.StartCoroutine(this.PlayAnimCoroutine(endYaw));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator PlayAnimCoroutine(float endYaw)
+	{
+		MainMenuHeroCamera.u003cPlayAnimCoroutineu003ec__Iterator1BB variable = null;
+		return variable;
+	}
+
+	public void Start()
+	{
+		Vector3 vector3 = base.transform.rotation.eulerAngles;
+		base.transform.rotation = Quaternion.Euler(new Vector3(vector3.x, this.YawForMainMenu, vector3.z));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitAnimEnd(string nameAnim)
+	{
+		MainMenuHeroCamera.u003cWaitAnimEndu003ec__Iterator1BA variable = null;
+		return variable;
+	}
+
+	public static event Action onEndCloseGift;
+
+	public static event Action onEndOpenGift;
 }

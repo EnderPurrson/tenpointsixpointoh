@@ -1,25 +1,9 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class StarterPackModel
 {
-	public enum TypePack
-	{
-		Items = 0,
-		Coins = 1,
-		Gems = 2,
-		None = 3
-	}
-
-	public enum TypeCost
-	{
-		Money = 0,
-		Gems = 1,
-		InApp = 2,
-		None = 3
-	}
-
 	public const int MaxCountShownWindow = 1;
 
 	private const float HoursToShowWindow = 8f;
@@ -34,34 +18,75 @@ public class StarterPackModel
 
 	public const string pathToItemsPackImage = "Textures/Bank/StarterPack_Weapon";
 
-	public static TimeSpan TimeOutShownWindow = TimeSpan.FromHours(8.0);
+	public static TimeSpan TimeOutShownWindow;
 
-	public static TimeSpan MaxLiveTimeEvent = TimeSpan.FromDays(1.0);
+	public static TimeSpan MaxLiveTimeEvent;
 
-	public static TimeSpan CooldownTimeEvent = TimeSpan.FromDays(1.5);
+	public static TimeSpan CooldownTimeEvent;
 
-	public static string[] packNameLocalizeKey = new string[8] { "Key_1049", "Key_1050", "Key_1051", "Key_1052", "Key_1053", "Key_1054", "Key_1055", "Key_1056" };
+	public static string[] packNameLocalizeKey;
 
-	public static int[] savingMoneyForBuyPack = new int[8] { 7, 5, 17, 14, 27, 21, 22, 42 };
+	public static int[] savingMoneyForBuyPack;
 
-	public static DateTime GetTimeDataEvent(string timeEventKey)
+	static StarterPackModel()
 	{
-		DateTime result = default(DateTime);
-		string @string = Storager.getString(timeEventKey, false);
-		DateTime.TryParse(@string, out result);
-		return result;
+		StarterPackModel.TimeOutShownWindow = TimeSpan.FromHours(8);
+		StarterPackModel.MaxLiveTimeEvent = TimeSpan.FromDays(1);
+		StarterPackModel.CooldownTimeEvent = TimeSpan.FromDays(1.5);
+		StarterPackModel.packNameLocalizeKey = new string[] { "Key_1049", "Key_1050", "Key_1051", "Key_1052", "Key_1053", "Key_1054", "Key_1055", "Key_1056" };
+		StarterPackModel.savingMoneyForBuyPack = new int[] { 7, 5, 17, 14, 27, 21, 22, 42 };
 	}
 
-	public static string GetUrlForDownloadEventData()
+	public StarterPackModel()
 	{
-		string arg = "https://secure.pixelgunserver.com/pixelgun3d-config/starterPack/";
-		string empty = string.Empty;
-		empty = (Defs.IsDeveloperBuild ? "starter_pack_test.json" : ((BuildSettings.BuildTargetPlatform == RuntimePlatform.Android) ? ((Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon) ? "starter_pack_android.json" : "starter_pack_amazon.json") : ((BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64) ? "starter_pack_ios.json" : "starter_pack_wp8.json")));
-		return string.Format("{0}{1}", arg, empty);
 	}
 
 	public static DateTime GetCurrentTimeByUnixTime(int unixTime)
 	{
-		return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixTime);
+		DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		return dateTime.AddSeconds((double)unixTime);
+	}
+
+	public static DateTime GetTimeDataEvent(string timeEventKey)
+	{
+		DateTime dateTime = new DateTime();
+		string str = Storager.getString(timeEventKey, false);
+		DateTime.TryParse(str, out dateTime);
+		return dateTime;
+	}
+
+	public static string GetUrlForDownloadEventData()
+	{
+		string str = "https://secure.pixelgunserver.com/pixelgun3d-config/starterPack/";
+		string empty = string.Empty;
+		if (Defs.IsDeveloperBuild)
+		{
+			empty = "starter_pack_test.json";
+		}
+		else if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
+		{
+			empty = (BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64 ? "starter_pack_ios.json" : "starter_pack_wp8.json");
+		}
+		else
+		{
+			empty = (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon ? "starter_pack_android.json" : "starter_pack_amazon.json");
+		}
+		return string.Format("{0}{1}", str, empty);
+	}
+
+	public enum TypeCost
+	{
+		Money,
+		Gems,
+		InApp,
+		None
+	}
+
+	public enum TypePack
+	{
+		Items,
+		Coins,
+		Gems,
+		None
 	}
 }

@@ -1,9 +1,9 @@
+using Rilisoft;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -62,97 +62,33 @@ public class DailyQuestItem : MonoBehaviour
 
 	private QuestInfo _questInfo;
 
-	[CompilerGenerated]
-	private static Func<QuestInfo, AccumulativeQuestBase> _003C_003Ef__am_0024cache1A;
-
-	[CompilerGenerated]
-	private static Action<DailyQuestsBannerController> _003C_003Ef__am_0024cache1B;
+	public bool CanSkip
+	{
+		get
+		{
+			if (this._questInfo == null)
+			{
+				return false;
+			}
+			return this._questInfo.CanSkip;
+		}
+	}
 
 	private AccumulativeQuestBase Quest
 	{
 		get
 		{
-			QuestInfo questInfo = _questInfo;
-			if (_003C_003Ef__am_0024cache1A == null)
-			{
-				_003C_003Ef__am_0024cache1A = _003Cget_Quest_003Em__3BA;
-			}
-			return questInfo.Map(_003C_003Ef__am_0024cache1A);
+			return this._questInfo.Map<QuestInfo, AccumulativeQuestBase>((QuestInfo qi) => qi.Quest as AccumulativeQuestBase);
 		}
 	}
 
-	public bool CanSkip
+	public DailyQuestItem()
 	{
-		get
-		{
-			if (_questInfo == null)
-			{
-				return false;
-			}
-			return _questInfo.CanSkip;
-		}
-	}
-
-	public void Refresh()
-	{
-		if (itemInLobby)
-		{
-			FillData(-1);
-		}
-		else if (_questInfo != null)
-		{
-			QuestBase quest = _questInfo.Quest;
-			if (quest != null)
-			{
-				FillData(Quest.Slot);
-			}
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (questSkipFrame != null)
-		{
-			questSkipFrame.SetActive(false);
-		}
-		if (rewardAnim != null)
-		{
-			rewardAnim.enabled = false;
-		}
-		if (skipAnimPosition != null)
-		{
-			skipAnimPosition.enabled = false;
-			base.transform.localScale = Vector3.one;
-			base.transform.localPosition = skipAnimPosition.from;
-		}
-		if (itemInLobby)
-		{
-			FillData(-1);
-		}
-	}
-
-	private int GetQuestMode(AccumulativeQuestBase quest)
-	{
-		ModeAccumulativeQuest modeAccumulativeQuest = quest as ModeAccumulativeQuest;
-		if (modeAccumulativeQuest != null)
-		{
-			return (int)modeAccumulativeQuest.Mode;
-		}
-		return 0;
-	}
-
-	private string GetQuestMap(AccumulativeQuestBase quest)
-	{
-		MapAccumulativeQuest mapAccumulativeQuest = quest as MapAccumulativeQuest;
-		if (mapAccumulativeQuest != null)
-		{
-			return mapAccumulativeQuest.Map;
-		}
-		return string.Empty;
 	}
 
 	public void FillData(int slot)
 	{
+		bool flag;
 		if (!TrainingController.TrainingCompleted)
 		{
 			base.gameObject.SetActive(false);
@@ -164,108 +100,208 @@ public class DailyQuestItem : MonoBehaviour
 			base.gameObject.SetActive(false);
 			return;
 		}
-		_questInfo = ((slot != -1) ? questProgress.GetActiveQuestInfoBySlot(slot + 1) : questProgress.GetRandomQuestInfo());
-		if (Quest == null)
+		this._questInfo = (slot != -1 ? questProgress.GetActiveQuestInfoBySlot(slot + 1) : questProgress.GetRandomQuestInfo());
+		if (this.Quest == null)
 		{
 			base.gameObject.SetActive(false);
 			return;
 		}
-		if (Quest.SetActive())
+		if (this.Quest.SetActive())
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Total", "Get");
-			Dictionary<string, object> eventParams = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams);
-			string value = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", Quest.Id, QuestConstants.GetDifficultyKey(Quest.Difficulty));
-			dictionary = new Dictionary<string, object>();
-			dictionary.Add("Get", value);
-			Dictionary<string, object> eventParams2 = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams2);
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "Total", "Get" }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
+			string str = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", new object[] { this.Quest.Id, QuestConstants.GetDifficultyKey(this.Quest.Difficulty) });
+			strs = new Dictionary<string, object>()
+			{
+				{ "Get", str }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
 		}
 		if (!base.gameObject.activeSelf)
 		{
 			base.gameObject.SetActive(true);
 		}
-		questDescription.text = QuestConstants.GetAccumulativeQuestDescriptionByType(Quest);
-		progressLabel.text = string.Format("{0}/{1}", Quest.CurrentCount, Quest.RequiredCount);
-		progressBar.fillAmount = (float)Quest.CalculateProgress();
-		if (Defs.IsDeveloperBuild)
+		this.questDescription.text = QuestConstants.GetAccumulativeQuestDescriptionByType(this.Quest);
+		this.progressLabel.text = string.Format("{0}/{1}", this.Quest.CurrentCount, this.Quest.RequiredCount);
+		this.progressBar.fillAmount = (float)this.Quest.CalculateProgress();
+		if (Defs.IsDeveloperBuild && base.GetComponent<UISprite>() != null)
 		{
-			UISprite component = GetComponent<UISprite>();
-			if (component != null)
-			{
-				oldQuest.SetActive(Quest.Day < questProgress.Day);
-			}
+			this.oldQuest.SetActive(this.Quest.Day < questProgress.Day);
 		}
-		if (itemInLobby)
+		if (!this.itemInLobby)
 		{
-			if (_questInfo.Quest != null)
+			if (this.Quest.CalculateProgress() < new decimal(1))
 			{
-				bool flag = _questInfo.Quest.CalculateProgress() >= 1m && !_questInfo.Quest.Rewarded;
-				if (questsButtonLabel != null && rewardButtonLabel != null)
-				{
-					questsButtonLabel.gameObject.SetActive(!flag);
-					rewardButtonLabel.gameObject.SetActive(flag);
-					if (flag)
-					{
-						DailyQuestsButton component2 = questsButtonLabel.parent.GetComponent<DailyQuestsButton>();
-						if (component2 != null)
-						{
-							component2.SetUI();
-						}
-					}
-				}
-				if (modeColor != null)
-				{
-					modeColor.color = QuestImage.Instance.GetColor(_questInfo.Quest);
-				}
-				if (modeIcon != null)
-				{
-					modeIcon.spriteName = QuestImage.Instance.GetSpriteName(_questInfo.Quest);
-				}
-			}
-		}
-		else
-		{
-			if (Quest.CalculateProgress() >= 1m)
-			{
-				getRewardButton.SetActive(!Quest.Rewarded);
-				completedObject.SetActive(Quest.Rewarded);
-				toBattleButton.SetActive(false);
-				questInProgress.SetActive(false);
-				questSkipFrame.SetActive(false);
+				this.getRewardButton.SetActive(false);
+				this.completedObject.SetActive(false);
+				this.toBattleButton.SetActive(false);
+				this.questInProgress.SetActive(true);
+				this.questSkipFrame.SetActive(false);
 			}
 			else
 			{
-				getRewardButton.SetActive(false);
-				completedObject.SetActive(false);
-				toBattleButton.SetActive(false);
-				questInProgress.SetActive(true);
-				questSkipFrame.SetActive(false);
+				this.getRewardButton.SetActive(!this.Quest.Rewarded);
+				this.completedObject.SetActive(this.Quest.Rewarded);
+				this.toBattleButton.SetActive(false);
+				this.questInProgress.SetActive(false);
+				this.questSkipFrame.SetActive(false);
 			}
 			if (SceneManager.GetActiveScene().name != Defs.MainMenuScene)
 			{
-				toBattleButton.SetActive(false);
+				this.toBattleButton.SetActive(false);
 			}
-			if (modeColor != null)
+			if (this.modeColor != null)
 			{
-				modeColor.color = QuestImage.Instance.GetColor(_questInfo.Quest);
+				UISprite color = this.modeColor;
+				QuestImage instance = QuestImage.Instance;
+				color.color = instance.GetColor(this._questInfo.Quest);
 			}
-			if (modeIcon != null)
+			if (this.modeIcon != null)
 			{
-				modeIcon.spriteName = QuestImage.Instance.GetSpriteName(_questInfo.Quest);
+				UISprite spriteName = this.modeIcon;
+				QuestImage questImage = QuestImage.Instance;
+				spriteName.spriteName = questImage.GetSpriteName(this._questInfo.Quest);
 			}
 		}
-		coinsCount.text = Quest.Reward.Coins.ToString();
-		gemsCount.text = Quest.Reward.Gems.ToString();
-		expCount.text = Quest.Reward.Experience.ToString();
-		coinsObject.SetActive(Quest.Reward.Coins > 0);
-		gemObject.SetActive(Quest.Reward.Gems > 0);
-		expObject.SetActive(Quest.Reward.Experience > 0 && (ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel || (Quest.Reward.Coins == 0 && Quest.Reward.Gems == 0)));
-		awardTable.repositionNow = true;
-		if (skipButton != null)
+		else if (this._questInfo.Quest != null)
 		{
-			skipButton.gameObject.SetActive(_questInfo.CanSkip);
+			bool flag1 = (this._questInfo.Quest.CalculateProgress() < new decimal(1) ? false : !this._questInfo.Quest.Rewarded);
+			if (this.questsButtonLabel != null && this.rewardButtonLabel != null)
+			{
+				this.questsButtonLabel.gameObject.SetActive(!flag1);
+				this.rewardButtonLabel.gameObject.SetActive(flag1);
+				if (flag1)
+				{
+					DailyQuestsButton component = this.questsButtonLabel.parent.GetComponent<DailyQuestsButton>();
+					if (component != null)
+					{
+						component.SetUI();
+					}
+				}
+			}
+			if (this.modeColor != null)
+			{
+				UISprite uISprite = this.modeColor;
+				QuestImage instance1 = QuestImage.Instance;
+				uISprite.color = instance1.GetColor(this._questInfo.Quest);
+			}
+			if (this.modeIcon != null)
+			{
+				UISprite spriteName1 = this.modeIcon;
+				QuestImage questImage1 = QuestImage.Instance;
+				spriteName1.spriteName = questImage1.GetSpriteName(this._questInfo.Quest);
+			}
+		}
+		this.coinsCount.text = this.Quest.Reward.Coins.ToString();
+		this.gemsCount.text = this.Quest.Reward.Gems.ToString();
+		this.expCount.text = this.Quest.Reward.Experience.ToString();
+		this.coinsObject.SetActive(this.Quest.Reward.Coins > 0);
+		this.gemObject.SetActive(this.Quest.Reward.Gems > 0);
+		GameObject gameObject = this.expObject;
+		if (this.Quest.Reward.Experience <= 0)
+		{
+			flag = false;
+		}
+		else if (ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel)
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = (this.Quest.Reward.Coins != 0 ? false : this.Quest.Reward.Gems == 0);
+		}
+		gameObject.SetActive(flag);
+		this.awardTable.repositionNow = true;
+		if (this.skipButton != null)
+		{
+			this.skipButton.gameObject.SetActive(this._questInfo.CanSkip);
+		}
+	}
+
+	private string GetQuestMap(AccumulativeQuestBase quest)
+	{
+		MapAccumulativeQuest mapAccumulativeQuest = quest as MapAccumulativeQuest;
+		if (mapAccumulativeQuest == null)
+		{
+			return string.Empty;
+		}
+		return mapAccumulativeQuest.Map;
+	}
+
+	private int GetQuestMode(AccumulativeQuestBase quest)
+	{
+		ModeAccumulativeQuest modeAccumulativeQuest = quest as ModeAccumulativeQuest;
+		if (modeAccumulativeQuest == null)
+		{
+			return 0;
+		}
+		return (int)modeAccumulativeQuest.Mode;
+	}
+
+	private void HandleSkip()
+	{
+		if (this._questInfo == null)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.LogError("QuestInfo is null.");
+			}
+			return;
+		}
+		if (this._questInfo.CanSkip)
+		{
+			this._questInfo.Skip();
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "Total", "Skipped" }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
+			QuestBase quest = this._questInfo.Quest;
+			string str = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", new object[] { quest.Id, QuestConstants.GetDifficultyKey(quest.Difficulty) });
+			strs = new Dictionary<string, object>()
+			{
+				{ "Skip", str }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
+			DailyQuestsBannerController.Instance.Do<DailyQuestsBannerController>((DailyQuestsBannerController c) => c.UpdateItems());
+			if (this.questSkipFrame != null)
+			{
+				this.questSkipFrame.SetActive(true);
+			}
+			if (this.skipAnimPosition != null)
+			{
+				this.skipAnimPosition.enabled = true;
+			}
+		}
+		else if (Defs.IsDeveloperBuild)
+		{
+			Debug.LogError("Cannot skip!");
+		}
+		MainMenuQuestSystemListener.Refresh();
+	}
+
+	private void OnEnable()
+	{
+		if (this.questSkipFrame != null)
+		{
+			this.questSkipFrame.SetActive(false);
+		}
+		if (this.rewardAnim != null)
+		{
+			this.rewardAnim.enabled = false;
+		}
+		if (this.skipAnimPosition != null)
+		{
+			this.skipAnimPosition.enabled = false;
+			base.transform.localScale = Vector3.one;
+			base.transform.localPosition = this.skipAnimPosition.@from;
+		}
+		if (this.itemInLobby)
+		{
+			this.FillData(-1);
 		}
 	}
 
@@ -276,31 +312,33 @@ public class DailyQuestItem : MonoBehaviour
 			return;
 		}
 		QuestSystem.Instance.QuestProgress.FilterFulfilledTutorialQuests();
-		if (Quest.CalculateProgress() >= 1m && !Quest.Rewarded)
+		if (this.Quest.CalculateProgress() >= new decimal(1) && !this.Quest.Rewarded)
 		{
-			Quest.SetRewarded();
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Total", "Rewarded");
-			Dictionary<string, object> eventParams = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams);
-			string value = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", Quest.Id, QuestConstants.GetDifficultyKey(Quest.Difficulty));
-			dictionary = new Dictionary<string, object>();
-			dictionary.Add("Quests", value);
-			Dictionary<string, object> eventParams2 = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams2);
-			QuestSystem.Instance.QuestProgress.TryRemoveTutorialQuest(Quest.Id);
+			this.Quest.SetRewarded();
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "Total", "Rewarded" }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
+			string str = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", new object[] { this.Quest.Id, QuestConstants.GetDifficultyKey(this.Quest.Difficulty) });
+			strs = new Dictionary<string, object>()
+			{
+				{ "Quests", str }
+			};
+			AnalyticsFacade.SendCustomEvent("Daily Quests", strs);
+			QuestSystem.Instance.QuestProgress.TryRemoveTutorialQuest(this.Quest.Id);
 			QuestSystem.Instance.SaveQuestProgressIfDirty();
-			getRewardButton.SetActive(false);
-			completedObject.SetActive(true);
-			rewardAnim.enabled = true;
-			Reward reward = Quest.Reward;
+			this.getRewardButton.SetActive(false);
+			this.completedObject.SetActive(true);
+			this.rewardAnim.enabled = true;
+			Reward reward = this.Quest.Reward;
 			if (reward.Coins > 0)
 			{
-				BankController.AddCoins(reward.Coins);
+				BankController.AddCoins(reward.Coins, true, AnalyticsConstants.AccrualType.Earned);
 			}
 			if (reward.Gems > 0)
 			{
-				BankController.AddGems(reward.Gems);
+				BankController.AddGems(reward.Gems, true, AnalyticsConstants.AccrualType.Earned);
 			}
 			if (reward.Experience > 0)
 			{
@@ -311,69 +349,108 @@ public class DailyQuestItem : MonoBehaviour
 		MainMenuQuestSystemListener.Refresh();
 	}
 
-	public void OnSkipInMainMenuClick()
-	{
-		HandleSkip();
-	}
-
 	public void OnSkipInGameClick()
 	{
-		HandleSkip();
+		this.HandleSkip();
 	}
 
-	private void HandleSkip()
+	public void OnSkipInMainMenuClick()
 	{
-		if (_questInfo == null)
+		this.HandleSkip();
+	}
+
+	public void OnToBattleButtonClick()
+	{
+		int num;
+		if (this.Quest == null)
 		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("QuestInfo is null.");
-			}
+			Debug.LogError("Quest is null.");
 			return;
 		}
-		if (_questInfo.CanSkip)
+		string id = this.Quest.Id;
+		if (id != null)
 		{
-			_questInfo.Skip();
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Total", "Skipped");
-			Dictionary<string, object> eventParams = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams);
-			QuestBase quest = _questInfo.Quest;
-			string value = string.Format(CultureInfo.InvariantCulture, "{0} / {1}", quest.Id, QuestConstants.GetDifficultyKey(quest.Difficulty));
-			dictionary = new Dictionary<string, object>();
-			dictionary.Add("Skip", value);
-			Dictionary<string, object> eventParams2 = dictionary;
-			AnalyticsFacade.SendCustomEvent("Daily Quests", eventParams2);
-			DailyQuestsBannerController instance = DailyQuestsBannerController.Instance;
-			if (_003C_003Ef__am_0024cache1B == null)
+			if (DailyQuestItem.u003cu003ef__switchu0024mapD == null)
 			{
-				_003C_003Ef__am_0024cache1B = _003CHandleSkip_003Em__3BB;
+				Dictionary<string, int> strs = new Dictionary<string, int>(15)
+				{
+					{ "winInMode", 0 },
+					{ "killInMode", 0 },
+					{ "killFlagCarriers", 1 },
+					{ "captureFlags", 1 },
+					{ "capturePoints", 2 },
+					{ "killNpcWithWeapon", 3 },
+					{ "winInMap", 4 },
+					{ "killWithWeapon", 5 },
+					{ "killViaHeadshot", 5 },
+					{ "killWithGrenade", 5 },
+					{ "revenge", 5 },
+					{ "breakSeries", 5 },
+					{ "makeSeries", 5 },
+					{ "surviveWavesInArena", 6 },
+					{ "killInCampaign", 7 }
+				};
+				DailyQuestItem.u003cu003ef__switchu0024mapD = strs;
 			}
-			instance.Do(_003C_003Ef__am_0024cache1B);
-			if (questSkipFrame != null)
+			if (DailyQuestItem.u003cu003ef__switchu0024mapD.TryGetValue(id, out num))
 			{
-				questSkipFrame.SetActive(true);
-			}
-			if (skipAnimPosition != null)
-			{
-				skipAnimPosition.enabled = true;
+				switch (num)
+				{
+					case 0:
+					{
+						this.OpenConnectScene(this.GetQuestMode(this.Quest));
+						break;
+					}
+					case 1:
+					{
+						this.OpenConnectScene(4);
+						break;
+					}
+					case 2:
+					{
+						this.OpenConnectScene(5);
+						break;
+					}
+					case 3:
+					{
+						this.OpenConnectScene(1);
+						break;
+					}
+					case 4:
+					{
+						ConnectSceneNGUIController.selectedMap = this.GetQuestMap(this.Quest);
+						MainMenuController.sharedController.OnClickMultiplyerButton();
+						break;
+					}
+					case 5:
+					{
+						MainMenuController.sharedController.OnClickMultiplyerButton();
+						break;
+					}
+					case 6:
+					{
+						MainMenuController.sharedController.StartSurvivalButton();
+						break;
+					}
+					case 7:
+					{
+						MainMenuController.sharedController.StartCampaingButton();
+						break;
+					}
+				}
 			}
 		}
-		else if (Defs.IsDeveloperBuild)
-		{
-			Debug.LogError("Cannot skip!");
-		}
-		MainMenuQuestSystemListener.Refresh();
 	}
 
 	public void OnViewAllButtonClick()
 	{
 		BannerWindowController sharedController = BannerWindowController.SharedController;
-		if (!(sharedController == null))
+		if (sharedController == null)
 		{
-			sharedController.ForceShowBanner(BannerWindowType.DailyQuests);
-			base.gameObject.SetActive(false);
+			return;
 		}
+		sharedController.ForceShowBanner(BannerWindowType.DailyQuests);
+		base.gameObject.SetActive(false);
 	}
 
 	private void OpenConnectScene(int mode)
@@ -383,59 +460,20 @@ public class DailyQuestItem : MonoBehaviour
 		MainMenuController.sharedController.OnClickMultiplyerButton();
 	}
 
-	public void OnToBattleButtonClick()
+	public void Refresh()
 	{
-		if (Quest == null)
+		if (this.itemInLobby)
 		{
-			Debug.LogError("Quest is null.");
+			this.FillData(-1);
 			return;
 		}
-		switch (Quest.Id)
+		if (this._questInfo == null)
 		{
-		case "winInMode":
-		case "killInMode":
-			OpenConnectScene(GetQuestMode(Quest));
-			break;
-		case "killFlagCarriers":
-		case "captureFlags":
-			OpenConnectScene(4);
-			break;
-		case "capturePoints":
-			OpenConnectScene(5);
-			break;
-		case "killNpcWithWeapon":
-			OpenConnectScene(1);
-			break;
-		case "winInMap":
-			ConnectSceneNGUIController.selectedMap = GetQuestMap(Quest);
-			MainMenuController.sharedController.OnClickMultiplyerButton();
-			break;
-		case "killWithWeapon":
-		case "killViaHeadshot":
-		case "killWithGrenade":
-		case "revenge":
-		case "breakSeries":
-		case "makeSeries":
-			MainMenuController.sharedController.OnClickMultiplyerButton();
-			break;
-		case "surviveWavesInArena":
-			MainMenuController.sharedController.StartSurvivalButton();
-			break;
-		case "killInCampaign":
-			MainMenuController.sharedController.StartCampaingButton();
-			break;
+			return;
 		}
-	}
-
-	[CompilerGenerated]
-	private static AccumulativeQuestBase _003Cget_Quest_003Em__3BA(QuestInfo qi)
-	{
-		return qi.Quest as AccumulativeQuestBase;
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleSkip_003Em__3BB(DailyQuestsBannerController c)
-	{
-		c.UpdateItems();
+		if (this._questInfo.Quest != null)
+		{
+			this.FillData(this.Quest.Slot);
+		}
 	}
 }

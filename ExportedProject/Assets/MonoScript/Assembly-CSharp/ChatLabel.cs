@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ChatLabel : MonoBehaviour
@@ -9,4 +10,8 @@ public class ChatLabel : MonoBehaviour
 	public UITexture clanTexture;
 
 	public GameObject stickerObject;
+
+	public ChatLabel()
+	{
+	}
 }

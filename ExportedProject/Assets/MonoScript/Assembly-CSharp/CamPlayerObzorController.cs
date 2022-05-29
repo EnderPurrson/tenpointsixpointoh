@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class CamPlayerObzorController : MonoBehaviour
@@ -6,25 +7,33 @@ internal sealed class CamPlayerObzorController : MonoBehaviour
 
 	public GameObject playerGameObject;
 
+	public CamPlayerObzorController()
+	{
+	}
+
 	private void Start()
 	{
 		if (Defs.isMulti && Defs.isInet && !base.transform.parent.GetComponent<PhotonView>().isMine)
 		{
-			isMine = true;
+			this.isMine = true;
 		}
-		if (isMine)
-		{
-			SendMessage("SetActiveFalse");
-		}
-		else
+		if (!this.isMine)
 		{
 			base.enabled = false;
 		}
-		playerGameObject = base.transform.parent.GetComponent<SkinName>().playerGameObject;
+		else
+		{
+			base.SendMessage("SetActiveFalse");
+		}
+		this.playerGameObject = base.transform.parent.GetComponent<SkinName>().playerGameObject;
 	}
 
 	private void Update()
 	{
-		base.transform.rotation = Quaternion.Euler(new Vector3(playerGameObject.transform.rotation.x, base.transform.rotation.y, base.transform.rotation.z));
+		Transform transforms = base.transform;
+		float single = this.playerGameObject.transform.rotation.x;
+		float single1 = base.transform.rotation.y;
+		Quaternion quaternion = base.transform.rotation;
+		transforms.rotation = Quaternion.Euler(new Vector3(single, single1, quaternion.z));
 	}
 }

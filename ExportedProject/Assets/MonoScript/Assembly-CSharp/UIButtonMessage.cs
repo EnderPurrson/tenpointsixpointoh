@@ -1,54 +1,60 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Button Message (Legacy)")]
 public class UIButtonMessage : MonoBehaviour
 {
-	public enum Trigger
-	{
-		OnClick = 0,
-		OnMouseOver = 1,
-		OnMouseOut = 2,
-		OnPress = 3,
-		OnRelease = 4,
-		OnDoubleClick = 5
-	}
-
 	public GameObject target;
 
 	public string functionName;
 
-	public Trigger trigger;
+	public UIButtonMessage.Trigger trigger;
 
 	public bool includeChildren;
 
 	private bool mStarted;
 
-	private void Start()
+	public UIButtonMessage()
 	{
-		mStarted = true;
+	}
+
+	private void OnClick()
+	{
+		if (base.enabled && this.trigger == UIButtonMessage.Trigger.OnClick)
+		{
+			this.Send();
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && this.trigger == UIButtonMessage.Trigger.OnDoubleClick)
+		{
+			this.Send();
+		}
 	}
 
 	private void OnEnable()
 	{
-		if (mStarted)
+		if (this.mStarted)
 		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
+			this.OnHover(UICamera.IsHighlighted(base.gameObject));
 		}
 	}
 
 	private void OnHover(bool isOver)
 	{
-		if (base.enabled && ((isOver && trigger == Trigger.OnMouseOver) || (!isOver && trigger == Trigger.OnMouseOut)))
+		if (base.enabled && (isOver && this.trigger == UIButtonMessage.Trigger.OnMouseOver || !isOver && this.trigger == UIButtonMessage.Trigger.OnMouseOut))
 		{
-			Send();
+			this.Send();
 		}
 	}
 
 	private void OnPress(bool isPressed)
 	{
-		if (base.enabled && ((isPressed && trigger == Trigger.OnPress) || (!isPressed && trigger == Trigger.OnRelease)))
+		if (base.enabled && (isPressed && this.trigger == UIButtonMessage.Trigger.OnPress || !isPressed && this.trigger == UIButtonMessage.Trigger.OnRelease))
 		{
-			Send();
+			this.Send();
 		}
 	}
 
@@ -56,49 +62,50 @@ public class UIButtonMessage : MonoBehaviour
 	{
 		if (base.enabled && (!isSelected || UICamera.currentScheme == UICamera.ControlScheme.Controller))
 		{
-			OnHover(isSelected);
-		}
-	}
-
-	private void OnClick()
-	{
-		if (base.enabled && trigger == Trigger.OnClick)
-		{
-			Send();
-		}
-	}
-
-	private void OnDoubleClick()
-	{
-		if (base.enabled && trigger == Trigger.OnDoubleClick)
-		{
-			Send();
+			this.OnHover(isSelected);
 		}
 	}
 
 	private void Send()
 	{
-		if (string.IsNullOrEmpty(functionName))
+		if (string.IsNullOrEmpty(this.functionName))
 		{
 			return;
 		}
-		if (target == null)
+		if (this.target == null)
 		{
-			target = base.gameObject;
+			this.target = base.gameObject;
 		}
-		if (includeChildren)
+		if (!this.includeChildren)
 		{
-			Transform[] componentsInChildren = target.GetComponentsInChildren<Transform>();
-			int i = 0;
-			for (int num = componentsInChildren.Length; i < num; i++)
-			{
-				Transform transform = componentsInChildren[i];
-				transform.gameObject.SendMessage(functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
-			}
+			this.target.SendMessage(this.functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
 		}
 		else
 		{
-			target.SendMessage(functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
+			Transform[] componentsInChildren = this.target.GetComponentsInChildren<Transform>();
+			int num = 0;
+			int length = (int)componentsInChildren.Length;
+			while (num < length)
+			{
+				Transform transforms = componentsInChildren[num];
+				transforms.gameObject.SendMessage(this.functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
+				num++;
+			}
 		}
+	}
+
+	private void Start()
+	{
+		this.mStarted = true;
+	}
+
+	public enum Trigger
+	{
+		OnClick,
+		OnMouseOver,
+		OnMouseOut,
+		OnPress,
+		OnRelease,
+		OnDoubleClick
 	}
 }

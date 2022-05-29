@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public sealed class FriendsWindowGUI : MonoBehaviour
@@ -18,60 +18,68 @@ public sealed class FriendsWindowGUI : MonoBehaviour
 	{
 		get
 		{
-			return cameraObject.activeSelf;
+			return this.cameraObject.activeSelf;
 		}
 		private set
 		{
-			cameraObject.SetActive(value);
-			if (_escapeSubscription != null)
+			IDisposable disposable;
+			this.cameraObject.SetActive(value);
+			if (this._escapeSubscription != null)
 			{
-				_escapeSubscription.Dispose();
+				this._escapeSubscription.Dispose();
 			}
-			object escapeSubscription;
-			if (value)
+			if (!value)
 			{
-				IDisposable disposable = BackSystem.Instance.Register(HandleEscape, "Friends");
-				escapeSubscription = disposable;
+				disposable = null;
 			}
 			else
 			{
-				escapeSubscription = null;
+				IDisposable disposable1 = BackSystem.Instance.Register(new Action(this.HandleEscape), "Friends");
+				disposable = disposable1;
 			}
-			_escapeSubscription = (IDisposable)escapeSubscription;
+			this._escapeSubscription = disposable;
 		}
+	}
+
+	static FriendsWindowGUI()
+	{
+	}
+
+	public FriendsWindowGUI()
+	{
 	}
 
 	private void Awake()
 	{
-		Instance = this;
-		InterfaceEnabled = false;
-	}
-
-	private void OnDestroy()
-	{
-		Instance = null;
-	}
-
-	public void ShowInterface(Action _exitCallback = null)
-	{
-		InterfaceEnabled = true;
-		OnExitCallback = _exitCallback;
-		friendsWindow.SetStartState();
-	}
-
-	public void HideInterface()
-	{
-		if (OnExitCallback != null)
-		{
-			OnExitCallback();
-		}
-		ActivityIndicator.IsActiveIndicator = false;
-		friendsWindow.SetCancelState();
-		InterfaceEnabled = false;
+		FriendsWindowGUI.Instance = this;
+		this.InterfaceEnabled = false;
 	}
 
 	private void HandleEscape()
 	{
-		HideInterface();
+		this.HideInterface();
+	}
+
+	public void HideInterface()
+	{
+		if (this.OnExitCallback != null)
+		{
+			this.OnExitCallback();
+		}
+		ActivityIndicator.IsActiveIndicator = false;
+		this.friendsWindow.SetCancelState();
+		this.InterfaceEnabled = false;
+	}
+
+	private void OnDestroy()
+	{
+		FriendsWindowGUI.Instance = null;
+	}
+
+	public void ShowInterface(Action _exitCallback = null)
+	{
+		this.InterfaceEnabled = true;
+		this.OnExitCallback = _exitCallback;
+		this.friendsWindow.SetStartState();
 	}
 }

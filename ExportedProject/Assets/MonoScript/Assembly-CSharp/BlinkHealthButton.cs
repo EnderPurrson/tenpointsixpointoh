@@ -1,14 +1,10 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 public sealed class BlinkHealthButton : MonoBehaviour
 {
-	public enum RegimButton
-	{
-		Health = 0,
-		Ammo = 1
-	}
-
-	public RegimButton typeButton;
+	public BlinkHealthButton.RegimButton typeButton;
 
 	public static bool isBlink;
 
@@ -34,83 +30,97 @@ public sealed class BlinkHealthButton : MonoBehaviour
 
 	private Color _blinkColorNoAlpha;
 
+	static BlinkHealthButton()
+	{
+	}
+
+	public BlinkHealthButton()
+	{
+	}
+
 	private void Start()
 	{
-		isBlink = false;
-		isBlinkState = false;
-		_blinkColorNoAlpha = new Color(blinkColor.r, blinkColor.g, blinkColor.b, 0f);
+		BlinkHealthButton.isBlink = false;
+		this.isBlinkState = false;
+		this._blinkColorNoAlpha = new Color(this.blinkColor.r, this.blinkColor.g, this.blinkColor.b, 0f);
 	}
 
 	private void Update()
 	{
-		if (player_move_c == null)
+		if (this.player_move_c == null)
 		{
-			if (Defs.isMulti)
-			{
-				player_move_c = WeaponManager.sharedManager.myPlayerMoveC;
-			}
-			else
+			if (!Defs.isMulti)
 			{
 				GameObject gameObject = GameObject.FindGameObjectWithTag("Player");
 				if (gameObject != null)
 				{
-					player_move_c = gameObject.GetComponent<SkinName>().playerMoveC;
+					this.player_move_c = gameObject.GetComponent<SkinName>().playerMoveC;
 				}
 			}
+			else
+			{
+				this.player_move_c = WeaponManager.sharedManager.myPlayerMoveC;
+			}
 		}
-		if (player_move_c == null)
+		if (this.player_move_c == null)
 		{
 			return;
 		}
-		if (typeButton == RegimButton.Health)
+		if (this.typeButton == BlinkHealthButton.RegimButton.Health)
 		{
-			if (player_move_c.CurHealth + player_move_c.curArmor < 3f && !player_move_c.isMechActive)
+			if (this.player_move_c.CurHealth + this.player_move_c.curArmor >= 3f || this.player_move_c.isMechActive)
 			{
-				isBlink = true;
+				BlinkHealthButton.isBlink = false;
 			}
 			else
 			{
-				isBlink = false;
+				BlinkHealthButton.isBlink = true;
 			}
 		}
-		if (typeButton == RegimButton.Ammo)
+		if (this.typeButton == BlinkHealthButton.RegimButton.Ammo)
 		{
-			Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
-			if (weapon.currentAmmoInClip == 0 && weapon.currentAmmoInBackpack == 0 && (!weapon.weaponPrefab.GetComponent<WeaponSounds>().isMelee || weapon.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) && !player_move_c.isMechActive)
+			Weapon item = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
+			if (item.currentAmmoInClip != 0 || item.currentAmmoInBackpack != 0 || item.weaponPrefab.GetComponent<WeaponSounds>().isMelee && !item.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee || this.player_move_c.isMechActive)
 			{
-				isBlink = true;
+				BlinkHealthButton.isBlink = false;
 			}
 			else
 			{
-				isBlink = false;
+				BlinkHealthButton.isBlink = true;
 			}
 		}
-		isBlinkTemp = isBlink;
-		if (isBlinkOld != isBlink)
+		this.isBlinkTemp = BlinkHealthButton.isBlink;
+		if (this.isBlinkOld != BlinkHealthButton.isBlink)
 		{
-			timerBlink = maxTimerBlink;
+			this.timerBlink = this.maxTimerBlink;
 		}
-		if (isBlink)
+		if (BlinkHealthButton.isBlink)
 		{
-			timerBlink -= Time.deltaTime;
-			if (timerBlink < 0f)
+			this.timerBlink -= Time.deltaTime;
+			if (this.timerBlink < 0f)
 			{
-				timerBlink = maxTimerBlink;
-				isBlinkState = !isBlinkState;
-				if (shine != null)
+				this.timerBlink = this.maxTimerBlink;
+				this.isBlinkState = !this.isBlinkState;
+				if (this.shine != null)
 				{
-					shine.color = ((!isBlinkState) ? _blinkColorNoAlpha : blinkColor);
+					this.shine.color = (!this.isBlinkState ? this._blinkColorNoAlpha : this.blinkColor);
 				}
 			}
 		}
-		if (!isBlink && isBlinkState)
+		if (!BlinkHealthButton.isBlink && this.isBlinkState)
 		{
-			isBlinkState = !isBlinkState;
-			if (shine != null)
+			this.isBlinkState = !this.isBlinkState;
+			if (this.shine != null)
 			{
-				shine.color = ((!isBlinkState) ? _blinkColorNoAlpha : blinkColor);
+				this.shine.color = (!this.isBlinkState ? this._blinkColorNoAlpha : this.blinkColor);
 			}
 		}
-		isBlinkOld = isBlink;
+		this.isBlinkOld = BlinkHealthButton.isBlink;
+	}
+
+	public enum RegimButton
+	{
+		Health,
+		Ammo
 	}
 }

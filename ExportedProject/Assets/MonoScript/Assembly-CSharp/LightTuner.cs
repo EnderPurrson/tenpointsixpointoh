@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -5,9 +6,13 @@ public class LightTuner : MonoBehaviour
 {
 	public Light[] lighters;
 
-	public float value;
+	public float @value;
 
 	public bool apply;
+
+	public LightTuner()
+	{
+	}
 
 	private void Start()
 	{
@@ -15,14 +20,15 @@ public class LightTuner : MonoBehaviour
 
 	private void Update()
 	{
-		if (apply)
+		if (this.apply)
 		{
-			Light[] array = lighters;
-			for (int i = 0; i < array.Length; i++)
+			Light[] lightArray = this.lighters;
+			for (int i = 0; i < (int)lightArray.Length; i++)
 			{
-				array[i].intensity *= value;
+				Light light = lightArray[i];
+				light.intensity = light.intensity * this.@value;
 			}
-			apply = false;
+			this.apply = false;
 		}
 	}
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace Rilisoft
 {
 	public static class MemoryLimit

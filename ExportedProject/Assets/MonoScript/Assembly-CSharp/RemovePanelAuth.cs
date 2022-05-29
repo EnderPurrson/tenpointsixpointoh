@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class RemovePanelAuth : MonoBehaviour
@@ -8,17 +9,21 @@ public class RemovePanelAuth : MonoBehaviour
 
 	private bool isDestroyed;
 
+	public RemovePanelAuth()
+	{
+	}
+
 	private void Start()
 	{
-		startTime = Time.realtimeSinceStartup;
+		this.startTime = Time.realtimeSinceStartup;
 	}
 
 	private void Update()
 	{
-		if (!isDestroyed && Time.realtimeSinceStartup - startTime >= lifetime)
+		if (!this.isDestroyed && Time.realtimeSinceStartup - this.startTime >= this.lifetime)
 		{
-			Object.Destroy(base.gameObject);
-			isDestroyed = true;
+			UnityEngine.Object.Destroy(base.gameObject);
+			this.isDestroyed = true;
 		}
 	}
 }

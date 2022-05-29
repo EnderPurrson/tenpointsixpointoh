@@ -4,7 +4,7 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Tween/Tween Position")]
 public class TweenPosition : UITweener
 {
-	public Vector3 from;
+	public Vector3 @from;
 
 	public Vector3 to;
 
@@ -19,11 +19,11 @@ public class TweenPosition : UITweener
 	{
 		get
 		{
-			if (mTrans == null)
+			if (this.mTrans == null)
 			{
-				mTrans = base.transform;
+				this.mTrans = base.transform;
 			}
-			return mTrans;
+			return this.mTrans;
 		}
 	}
 
@@ -32,55 +32,51 @@ public class TweenPosition : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public Vector3 value
+	public Vector3 @value
 	{
 		get
 		{
-			return (!worldSpace) ? cachedTransform.localPosition : cachedTransform.position;
+			return (!this.worldSpace ? this.cachedTransform.localPosition : this.cachedTransform.position);
 		}
 		set
 		{
-			if (mRect == null || !mRect.isAnchored || worldSpace)
+			if (this.mRect != null && this.mRect.isAnchored && !this.worldSpace)
 			{
-				if (worldSpace)
-				{
-					cachedTransform.position = value;
-				}
-				else
-				{
-					cachedTransform.localPosition = value;
-				}
+				value -= this.cachedTransform.localPosition;
+				NGUIMath.MoveRect(this.mRect, value.x, value.y);
+			}
+			else if (!this.worldSpace)
+			{
+				this.cachedTransform.localPosition = value;
 			}
 			else
 			{
-				value -= cachedTransform.localPosition;
-				NGUIMath.MoveRect(mRect, value.x, value.y);
+				this.cachedTransform.position = value;
 			}
 		}
+	}
+
+	public TweenPosition()
+	{
 	}
 
 	private void Awake()
 	{
-		mRect = GetComponent<UIRect>();
-	}
-
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		value = from * (1f - factor) + to * factor;
+		this.mRect = base.GetComponent<UIRect>();
 	}
 
 	public static TweenPosition Begin(GameObject go, float duration, Vector3 pos)
 	{
 		TweenPosition tweenPosition = UITweener.Begin<TweenPosition>(go, duration);
-		tweenPosition.from = tweenPosition.value;
+		tweenPosition.@from = tweenPosition.@value;
 		tweenPosition.to = pos;
 		if (duration <= 0f)
 		{
@@ -94,7 +90,7 @@ public class TweenPosition : UITweener
 	{
 		TweenPosition tweenPosition = UITweener.Begin<TweenPosition>(go, duration);
 		tweenPosition.worldSpace = worldSpace;
-		tweenPosition.from = tweenPosition.value;
+		tweenPosition.@from = tweenPosition.@value;
 		tweenPosition.to = pos;
 		if (duration <= 0f)
 		{
@@ -104,27 +100,32 @@ public class TweenPosition : UITweener
 		return tweenPosition;
 	}
 
-	[ContextMenu("Set 'From' to current value")]
-	public override void SetStartToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		from = value;
-	}
-
-	[ContextMenu("Set 'To' to current value")]
-	public override void SetEndToCurrentValue()
-	{
-		to = value;
-	}
-
-	[ContextMenu("Assume value of 'From'")]
-	private void SetCurrentValueToStart()
-	{
-		value = from;
+		this.@value = (this.@from * (1f - factor)) + (this.to * factor);
 	}
 
 	[ContextMenu("Assume value of 'To'")]
 	private void SetCurrentValueToEnd()
 	{
-		value = to;
+		this.@value = this.to;
+	}
+
+	[ContextMenu("Assume value of 'From'")]
+	private void SetCurrentValueToStart()
+	{
+		this.@value = this.@from;
+	}
+
+	[ContextMenu("Set 'To' to current value")]
+	public override void SetEndToCurrentValue()
+	{
+		this.to = this.@value;
+	}
+
+	[ContextMenu("Set 'From' to current value")]
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

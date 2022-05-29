@@ -1,72 +1,18 @@
-using System;
-using System.Runtime.CompilerServices;
 using AOT;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class LeaderboardManager
 	{
-		[CompilerGenerated]
-		private sealed class _003CLoadLeaderboardData_003Ec__AnonStorey26D
-		{
-			internal ScorePageToken token;
-
-			internal string playerId;
-
-			internal int rowCount;
-
-			internal Action<LeaderboardScoreData> callback;
-
-			internal LeaderboardManager _003C_003Ef__this;
-
-			internal void _003C_003Em__12B(FetchResponse rsp)
-			{
-				_003C_003Ef__this.HandleFetch(token, rsp, playerId, rowCount, callback);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CHandleFetch_003Ec__AnonStorey26E
-		{
-			internal LeaderboardScoreData data;
-
-			internal string selfPlayerId;
-
-			internal int maxResults;
-
-			internal ScorePageToken token;
-
-			internal Action<LeaderboardScoreData> callback;
-
-			internal LeaderboardManager _003C_003Ef__this;
-
-			internal void _003C_003Em__12C(FetchScoreSummaryResponse rsp)
-			{
-				_003C_003Ef__this.HandleFetchScoreSummary(data, rsp, selfPlayerId, maxResults, token, callback);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CLoadScorePage_003Ec__AnonStorey26F
-		{
-			internal LeaderboardScoreData data;
-
-			internal ScorePageToken token;
-
-			internal Action<LeaderboardScoreData> callback;
-
-			internal LeaderboardManager _003C_003Ef__this;
-
-			internal void _003C_003Em__12D(FetchScorePageResponse rsp)
-			{
-				_003C_003Ef__this.HandleFetchScorePage(data, token, rsp, callback);
-			}
-		}
-
-		private readonly GameServices mServices;
+		private readonly GooglePlayGames.Native.PInvoke.GameServices mServices;
 
 		internal int LeaderboardMaxResults
 		{
@@ -76,117 +22,23 @@ namespace GooglePlayGames.Native.PInvoke
 			}
 		}
 
-		internal LeaderboardManager(GameServices services)
+		internal LeaderboardManager(GooglePlayGames.Native.PInvoke.GameServices services)
 		{
-			mServices = Misc.CheckNotNull(services);
-		}
-
-		internal void SubmitScore(string leaderboardId, long score, string metadata)
-		{
-			Misc.CheckNotNull(leaderboardId, "leaderboardId");
-			Logger.d("Native Submitting score: " + score + " for lb " + leaderboardId + " with metadata: " + metadata);
-			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_SubmitScore(mServices.AsHandle(), leaderboardId, (ulong)score, metadata ?? string.Empty);
-		}
-
-		internal void ShowAllUI(Action<CommonErrorStatus.UIStatus> callback)
-		{
-			Misc.CheckNotNull(callback);
-			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ShowAllUI(mServices.AsHandle(), Callbacks.InternalShowUICallback, Callbacks.ToIntPtr(callback));
-		}
-
-		internal void ShowUI(string leaderboardId, LeaderboardTimeSpan span, Action<CommonErrorStatus.UIStatus> callback)
-		{
-			Misc.CheckNotNull(callback);
-			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ShowUI(mServices.AsHandle(), leaderboardId, (Types.LeaderboardTimeSpan)span, Callbacks.InternalShowUICallback, Callbacks.ToIntPtr(callback));
-		}
-
-		public void LoadLeaderboardData(string leaderboardId, LeaderboardStart start, int rowCount, LeaderboardCollection collection, LeaderboardTimeSpan timeSpan, string playerId, Action<LeaderboardScoreData> callback)
-		{
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D _003CLoadLeaderboardData_003Ec__AnonStorey26D = new _003CLoadLeaderboardData_003Ec__AnonStorey26D();
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D.playerId = playerId;
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D.rowCount = rowCount;
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D.callback = callback;
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D._003C_003Ef__this = this;
-			NativeScorePageToken internalObject = new NativeScorePageToken(GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ScorePageToken(mServices.AsHandle(), leaderboardId, (Types.LeaderboardStart)start, (Types.LeaderboardTimeSpan)timeSpan, (Types.LeaderboardCollection)collection));
-			_003CLoadLeaderboardData_003Ec__AnonStorey26D.token = new ScorePageToken(internalObject, leaderboardId, collection, timeSpan);
-			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_Fetch(mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, leaderboardId, InternalFetchCallback, Callbacks.ToIntPtr(_003CLoadLeaderboardData_003Ec__AnonStorey26D._003C_003Em__12B, FetchResponse.FromPointer));
-		}
-
-		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchCallback))]
-		private static void InternalFetchCallback(IntPtr response, IntPtr data)
-		{
-			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchCallback", Callbacks.Type.Temporary, response, data);
+			this.mServices = Misc.CheckNotNull<GooglePlayGames.Native.PInvoke.GameServices>(services);
 		}
 
 		internal void HandleFetch(ScorePageToken token, FetchResponse response, string selfPlayerId, int maxResults, Action<LeaderboardScoreData> callback)
 		{
-			_003CHandleFetch_003Ec__AnonStorey26E _003CHandleFetch_003Ec__AnonStorey26E = new _003CHandleFetch_003Ec__AnonStorey26E();
-			_003CHandleFetch_003Ec__AnonStorey26E.selfPlayerId = selfPlayerId;
-			_003CHandleFetch_003Ec__AnonStorey26E.maxResults = maxResults;
-			_003CHandleFetch_003Ec__AnonStorey26E.token = token;
-			_003CHandleFetch_003Ec__AnonStorey26E.callback = callback;
-			_003CHandleFetch_003Ec__AnonStorey26E._003C_003Ef__this = this;
-			_003CHandleFetch_003Ec__AnonStorey26E.data = new LeaderboardScoreData(_003CHandleFetch_003Ec__AnonStorey26E.token.LeaderboardId, (ResponseStatus)response.GetStatus());
+			LeaderboardScoreData leaderboardScoreDatum = new LeaderboardScoreData(token.LeaderboardId, (ResponseStatus)response.GetStatus());
 			if (response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID && response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
 			{
-				Logger.w("Error returned from fetch: " + response.GetStatus());
-				_003CHandleFetch_003Ec__AnonStorey26E.callback(_003CHandleFetch_003Ec__AnonStorey26E.data);
-			}
-			else
-			{
-				_003CHandleFetch_003Ec__AnonStorey26E.data.Title = response.Leaderboard().Title();
-				_003CHandleFetch_003Ec__AnonStorey26E.data.Id = _003CHandleFetch_003Ec__AnonStorey26E.token.LeaderboardId;
-				GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_FetchScoreSummary(mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, _003CHandleFetch_003Ec__AnonStorey26E.token.LeaderboardId, (Types.LeaderboardTimeSpan)_003CHandleFetch_003Ec__AnonStorey26E.token.TimeSpan, (Types.LeaderboardCollection)_003CHandleFetch_003Ec__AnonStorey26E.token.Collection, InternalFetchSummaryCallback, Callbacks.ToIntPtr(_003CHandleFetch_003Ec__AnonStorey26E._003C_003Em__12C, FetchScoreSummaryResponse.FromPointer));
-			}
-		}
-
-		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScoreSummaryCallback))]
-		private static void InternalFetchSummaryCallback(IntPtr response, IntPtr data)
-		{
-			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchSummaryCallback", Callbacks.Type.Temporary, response, data);
-		}
-
-		internal void HandleFetchScoreSummary(LeaderboardScoreData data, FetchScoreSummaryResponse response, string selfPlayerId, int maxResults, ScorePageToken token, Action<LeaderboardScoreData> callback)
-		{
-			if (response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID && response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
-			{
-				Logger.w("Error returned from fetchScoreSummary: " + response);
-				data.Status = (ResponseStatus)response.GetStatus();
-				callback(data);
+				Logger.w(string.Concat("Error returned from fetch: ", response.GetStatus()));
+				callback(leaderboardScoreDatum);
 				return;
 			}
-			NativeScoreSummary scoreSummary = response.GetScoreSummary();
-			data.ApproximateCount = scoreSummary.ApproximateResults();
-			data.PlayerScore = scoreSummary.LocalUserScore().AsScore(data.Id, selfPlayerId);
-			if (maxResults <= 0)
-			{
-				callback(data);
-			}
-			else
-			{
-				LoadScorePage(data, maxResults, token, callback);
-			}
-		}
-
-		public void LoadScorePage(LeaderboardScoreData data, int maxResults, ScorePageToken token, Action<LeaderboardScoreData> callback)
-		{
-			_003CLoadScorePage_003Ec__AnonStorey26F _003CLoadScorePage_003Ec__AnonStorey26F = new _003CLoadScorePage_003Ec__AnonStorey26F();
-			_003CLoadScorePage_003Ec__AnonStorey26F.data = data;
-			_003CLoadScorePage_003Ec__AnonStorey26F.token = token;
-			_003CLoadScorePage_003Ec__AnonStorey26F.callback = callback;
-			_003CLoadScorePage_003Ec__AnonStorey26F._003C_003Ef__this = this;
-			if (_003CLoadScorePage_003Ec__AnonStorey26F.data == null)
-			{
-				_003CLoadScorePage_003Ec__AnonStorey26F.data = new LeaderboardScoreData(_003CLoadScorePage_003Ec__AnonStorey26F.token.LeaderboardId);
-			}
-			NativeScorePageToken nativeScorePageToken = (NativeScorePageToken)_003CLoadScorePage_003Ec__AnonStorey26F.token.InternalObject;
-			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_FetchScorePage(mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, nativeScorePageToken.AsPointer(), (uint)maxResults, InternalFetchScorePage, Callbacks.ToIntPtr(_003CLoadScorePage_003Ec__AnonStorey26F._003C_003Em__12D, FetchScorePageResponse.FromPointer));
-		}
-
-		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScorePageCallback))]
-		private static void InternalFetchScorePage(IntPtr response, IntPtr data)
-		{
-			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchScorePage", Callbacks.Type.Temporary, response, data);
+			leaderboardScoreDatum.Title = response.Leaderboard().Title();
+			leaderboardScoreDatum.Id = token.LeaderboardId;
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_FetchScoreSummary(this.mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, token.LeaderboardId, (Types.LeaderboardTimeSpan)token.TimeSpan, (Types.LeaderboardCollection)token.Collection, new GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScoreSummaryCallback(GooglePlayGames.Native.PInvoke.LeaderboardManager.InternalFetchSummaryCallback), Callbacks.ToIntPtr<FetchScoreSummaryResponse>((FetchScoreSummaryResponse rsp) => this.HandleFetchScoreSummary(leaderboardScoreDatum, rsp, selfPlayerId, maxResults, token, callback), new Func<IntPtr, FetchScoreSummaryResponse>(FetchScoreSummaryResponse.FromPointer)));
 		}
 
 		internal void HandleFetchScorePage(LeaderboardScoreData data, ScorePageToken token, FetchScorePageResponse rsp, Action<LeaderboardScoreData> callback)
@@ -209,11 +61,98 @@ namespace GooglePlayGames.Native.PInvoke
 			{
 				data.PrevPageToken = new ScorePageToken(scorePage.GetPreviousScorePageToken(), token.LeaderboardId, token.Collection, token.TimeSpan);
 			}
-			foreach (NativeScoreEntry item in scorePage)
+			IEnumerator<NativeScoreEntry> enumerator = scorePage.GetEnumerator();
+			try
 			{
-				data.AddScore(item.AsScore(data.Id));
+				while (enumerator.MoveNext())
+				{
+					NativeScoreEntry current = enumerator.Current;
+					data.AddScore(current.AsScore(data.Id));
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
 			}
 			callback(data);
+		}
+
+		internal void HandleFetchScoreSummary(LeaderboardScoreData data, FetchScoreSummaryResponse response, string selfPlayerId, int maxResults, ScorePageToken token, Action<LeaderboardScoreData> callback)
+		{
+			if (response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID && response.GetStatus() != CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
+			{
+				Logger.w(string.Concat("Error returned from fetchScoreSummary: ", response));
+				data.Status = (ResponseStatus)response.GetStatus();
+				callback(data);
+				return;
+			}
+			NativeScoreSummary scoreSummary = response.GetScoreSummary();
+			data.ApproximateCount = scoreSummary.ApproximateResults();
+			data.PlayerScore = scoreSummary.LocalUserScore().AsScore(data.Id, selfPlayerId);
+			if (maxResults <= 0)
+			{
+				callback(data);
+				return;
+			}
+			this.LoadScorePage(data, maxResults, token, callback);
+		}
+
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchCallback))]
+		private static void InternalFetchCallback(IntPtr response, IntPtr data)
+		{
+			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchCallback", Callbacks.Type.Temporary, response, data);
+		}
+
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScorePageCallback))]
+		private static void InternalFetchScorePage(IntPtr response, IntPtr data)
+		{
+			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchScorePage", Callbacks.Type.Temporary, response, data);
+		}
+
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScoreSummaryCallback))]
+		private static void InternalFetchSummaryCallback(IntPtr response, IntPtr data)
+		{
+			Callbacks.PerformInternalCallback("LeaderboardManager#InternalFetchSummaryCallback", Callbacks.Type.Temporary, response, data);
+		}
+
+		public void LoadLeaderboardData(string leaderboardId, LeaderboardStart start, int rowCount, LeaderboardCollection collection, LeaderboardTimeSpan timeSpan, string playerId, Action<LeaderboardScoreData> callback)
+		{
+			NativeScorePageToken nativeScorePageToken = new NativeScorePageToken(GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ScorePageToken(this.mServices.AsHandle(), leaderboardId, (Types.LeaderboardStart)start, (Types.LeaderboardTimeSpan)timeSpan, (Types.LeaderboardCollection)collection));
+			ScorePageToken scorePageToken = new ScorePageToken(nativeScorePageToken, leaderboardId, collection, timeSpan);
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_Fetch(this.mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, leaderboardId, new GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchCallback(GooglePlayGames.Native.PInvoke.LeaderboardManager.InternalFetchCallback), Callbacks.ToIntPtr<FetchResponse>((FetchResponse rsp) => this.HandleFetch(scorePageToken, rsp, playerId, rowCount, callback), new Func<IntPtr, FetchResponse>(FetchResponse.FromPointer)));
+		}
+
+		public void LoadScorePage(LeaderboardScoreData data, int maxResults, ScorePageToken token, Action<LeaderboardScoreData> callback)
+		{
+			LeaderboardScoreData leaderboardScoreDatum = data ?? new LeaderboardScoreData(token.LeaderboardId);
+			NativeScorePageToken internalObject = (NativeScorePageToken)token.InternalObject;
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_FetchScorePage(this.mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, internalObject.AsPointer(), (uint)maxResults, new GooglePlayGames.Native.Cwrapper.LeaderboardManager.FetchScorePageCallback(GooglePlayGames.Native.PInvoke.LeaderboardManager.InternalFetchScorePage), Callbacks.ToIntPtr<FetchScorePageResponse>((FetchScorePageResponse rsp) => this.HandleFetchScorePage(leaderboardScoreDatum, token, rsp, callback), new Func<IntPtr, FetchScorePageResponse>(FetchScorePageResponse.FromPointer)));
+		}
+
+		internal void ShowAllUI(Action<CommonErrorStatus.UIStatus> callback)
+		{
+			Misc.CheckNotNull<Action<CommonErrorStatus.UIStatus>>(callback);
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ShowAllUI(this.mServices.AsHandle(), new GooglePlayGames.Native.Cwrapper.LeaderboardManager.ShowAllUICallback(Callbacks.InternalShowUICallback), Callbacks.ToIntPtr(callback));
+		}
+
+		internal void ShowUI(string leaderboardId, LeaderboardTimeSpan span, Action<CommonErrorStatus.UIStatus> callback)
+		{
+			Misc.CheckNotNull<Action<CommonErrorStatus.UIStatus>>(callback);
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_ShowUI(this.mServices.AsHandle(), leaderboardId, (Types.LeaderboardTimeSpan)span, new GooglePlayGames.Native.Cwrapper.LeaderboardManager.ShowUICallback(Callbacks.InternalShowUICallback), Callbacks.ToIntPtr(callback));
+		}
+
+		internal void SubmitScore(string leaderboardId, long score, string metadata)
+		{
+			Misc.CheckNotNull<string>(leaderboardId, "leaderboardId");
+			Logger.d(string.Concat(new object[] { "Native Submitting score: ", score, " for lb ", leaderboardId, " with metadata: ", metadata }));
+			HandleRef handleRef = this.mServices.AsHandle();
+			string str = leaderboardId;
+			long num = score;
+			string str1 = metadata ?? string.Empty;
+			GooglePlayGames.Native.Cwrapper.LeaderboardManager.LeaderboardManager_SubmitScore(handleRef, str, (ulong)num, str1);
 		}
 	}
 }

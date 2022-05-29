@@ -1,96 +1,27 @@
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using AOT;
-using GooglePlayGames.Native.Cwrapper;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class GameServices : BaseReferenceHolder
 	{
-		internal class FetchServerAuthCodeResponse : BaseReferenceHolder
-		{
-			internal FetchServerAuthCodeResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetStatus(SelfPtr());
-			}
-
-			internal string Code()
-			{
-				return PInvokeUtilities.OutParamsToString(_003CCode_003Em__12A);
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchServerAuthCodeResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new FetchServerAuthCodeResponse(pointer);
-			}
-
-			[CompilerGenerated]
-			private UIntPtr _003CCode_003Em__12A(StringBuilder out_string, UIntPtr out_size)
-			{
-				return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetCode(SelfPtr(), out_string, out_size);
-			}
-		}
-
-		internal GameServices(IntPtr selfPointer)
-			: base(selfPointer)
+		internal GameServices(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
-		internal bool IsAuthenticated()
+		public GooglePlayGames.Native.PInvoke.AchievementManager AchievementManager()
 		{
-			return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_IsAuthorized(SelfPtr());
-		}
-
-		internal void SignOut()
-		{
-			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_SignOut(SelfPtr());
-		}
-
-		internal void StartAuthorizationUI()
-		{
-			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_StartAuthorizationUI(SelfPtr());
-		}
-
-		public AchievementManager AchievementManager()
-		{
-			return new AchievementManager(this);
-		}
-
-		public LeaderboardManager LeaderboardManager()
-		{
-			return new LeaderboardManager(this);
-		}
-
-		public PlayerManager PlayerManager()
-		{
-			return new PlayerManager(this);
-		}
-
-		public StatsManager StatsManager()
-		{
-			return new StatsManager(this);
+			return new GooglePlayGames.Native.PInvoke.AchievementManager(this);
 		}
 
 		internal HandleRef AsHandle()
 		{
-			return SelfPtr();
+			return base.SelfPtr();
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -98,17 +29,78 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_Dispose(selfPointer);
 		}
 
-		internal void FetchServerAuthCode(string server_client_id, Action<FetchServerAuthCodeResponse> callback)
+		internal void FetchServerAuthCode(string server_client_id, Action<GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse> callback)
 		{
-			Misc.CheckNotNull(callback);
-			Misc.CheckNotNull(server_client_id);
-			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCode(AsHandle(), server_client_id, InternalFetchServerAuthCodeCallback, Callbacks.ToIntPtr(callback, FetchServerAuthCodeResponse.FromPointer));
+			Misc.CheckNotNull<Action<GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse>>(callback);
+			Misc.CheckNotNull<string>(server_client_id);
+			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCode(this.AsHandle(), server_client_id, new GooglePlayGames.Native.Cwrapper.GameServices.FetchServerAuthCodeCallback(GooglePlayGames.Native.PInvoke.GameServices.InternalFetchServerAuthCodeCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse>(GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse.FromPointer)));
 		}
 
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.GameServices.FetchServerAuthCodeCallback))]
 		private static void InternalFetchServerAuthCodeCallback(IntPtr response, IntPtr data)
 		{
 			Callbacks.PerformInternalCallback("GameServices#InternalFetchServerAuthCodeCallback", Callbacks.Type.Temporary, response, data);
+		}
+
+		internal bool IsAuthenticated()
+		{
+			return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_IsAuthorized(base.SelfPtr());
+		}
+
+		public GooglePlayGames.Native.PInvoke.LeaderboardManager LeaderboardManager()
+		{
+			return new GooglePlayGames.Native.PInvoke.LeaderboardManager(this);
+		}
+
+		public GooglePlayGames.Native.PInvoke.PlayerManager PlayerManager()
+		{
+			return new GooglePlayGames.Native.PInvoke.PlayerManager(this);
+		}
+
+		internal void SignOut()
+		{
+			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_SignOut(base.SelfPtr());
+		}
+
+		internal void StartAuthorizationUI()
+		{
+			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_StartAuthorizationUI(base.SelfPtr());
+		}
+
+		public GooglePlayGames.Native.PInvoke.StatsManager StatsManager()
+		{
+			return new GooglePlayGames.Native.PInvoke.StatsManager(this);
+		}
+
+		internal class FetchServerAuthCodeResponse : BaseReferenceHolder
+		{
+			internal FetchServerAuthCodeResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_Dispose(selfPointer);
+			}
+
+			internal string Code()
+			{
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetCode(base.SelfPtr(), out_string, out_size));
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.GameServices.FetchServerAuthCodeResponse(pointer);
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetStatus(base.SelfPtr());
+			}
 		}
 	}
 }

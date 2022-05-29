@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class HitParticle : MonoBehaviour
@@ -14,45 +15,50 @@ public class HitParticle : MonoBehaviour
 
 	public ParticleSystem myParticleSystem;
 
+	public HitParticle()
+	{
+	}
+
 	private void Start()
 	{
-		myTransform = base.transform;
-		myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-		myParticleSystem.enableEmission = false;
+		this.myTransform = base.transform;
+		this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+		this.myParticleSystem.enableEmission = false;
 		base.gameObject.SetActive(false);
 	}
 
 	public void StartShowParticle(Vector3 pos, Quaternion rot, bool _isUseMine)
 	{
 		base.gameObject.SetActive(true);
-		isUseMine = _isUseMine;
-		liveTime = maxliveTime;
-		myTransform.position = pos;
-		myTransform.rotation = rot;
-		myParticleSystem.enableEmission = true;
+		this.isUseMine = _isUseMine;
+		this.liveTime = this.maxliveTime;
+		this.myTransform.position = pos;
+		this.myTransform.rotation = rot;
+		this.myParticleSystem.enableEmission = true;
 	}
 
 	public void StartShowParticle(Vector3 pos, Quaternion rot, bool _isUseMine, Vector3 flyOutPos)
 	{
-		StartShowParticle(pos, rot, _isUseMine);
-		if (myTransform.childCount > 0)
+		this.StartShowParticle(pos, rot, _isUseMine);
+		if (this.myTransform.childCount > 0)
 		{
-			myParticleSystem.transform.position = flyOutPos;
+			this.myParticleSystem.transform.position = flyOutPos;
 		}
 	}
 
 	private void Update()
 	{
-		if (!(liveTime < 0f))
+		if (this.liveTime < 0f)
 		{
-			liveTime -= Time.deltaTime;
-			if (liveTime < 0f)
-			{
-				myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-				myParticleSystem.enableEmission = false;
-				isUseMine = false;
-				base.gameObject.SetActive(false);
-			}
+			return;
+		}
+		this.liveTime -= Time.deltaTime;
+		if (this.liveTime < 0f)
+		{
+			this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+			this.myParticleSystem.enableEmission = false;
+			this.isUseMine = false;
+			base.gameObject.SetActive(false);
 		}
 	}
 }

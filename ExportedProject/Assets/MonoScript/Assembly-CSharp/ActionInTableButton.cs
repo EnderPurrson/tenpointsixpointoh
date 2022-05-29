@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class ActionInTableButton : MonoBehaviour
@@ -30,153 +31,180 @@ public sealed class ActionInTableButton : MonoBehaviour
 
 	public GameObject isMineSprite;
 
+	public ActionInTableButton()
+	{
+	}
+
+	private void OnClick()
+	{
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		if (LoadingInAfterGame.isShowLoading)
+		{
+			return;
+		}
+		if (ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
+		{
+			return;
+		}
+		if (this.isMine)
+		{
+			return;
+		}
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		this.networkStartTableNGUIController.ShowActionPanel(this.pixelbookID, this.nickPlayer);
+	}
+
 	private void Start()
 	{
 		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
 		{
-			float x = countKillsPlayers.transform.position.x;
-			countKillsPlayers.transform.position = new Vector3(scorePlayers.transform.position.x, countKillsPlayers.transform.position.y, countKillsPlayers.transform.position.z);
-			scorePlayers.transform.position = new Vector3(x, scorePlayers.transform.position.y, scorePlayers.transform.position.z);
+			float single = this.countKillsPlayers.transform.position.x;
+			Transform vector3 = this.countKillsPlayers.transform;
+			float single1 = this.scorePlayers.transform.position.x;
+			float single2 = this.countKillsPlayers.transform.position.y;
+			Vector3 vector31 = this.countKillsPlayers.transform.position;
+			vector3.position = new Vector3(single1, single2, vector31.z);
+			Transform transforms = this.scorePlayers.transform;
+			float single3 = this.scorePlayers.transform.position.y;
+			Vector3 vector32 = this.scorePlayers.transform.position;
+			transforms.position = new Vector3(single, single3, vector32.z);
 		}
 		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
 		{
-			scorePlayers.transform.position = new Vector3(countKillsPlayers.transform.position.x, scorePlayers.transform.position.y, scorePlayers.transform.position.z);
-			countKillsPlayers.gameObject.SetActive(false);
+			Transform transforms1 = this.scorePlayers.transform;
+			float single4 = this.countKillsPlayers.transform.position.x;
+			float single5 = this.scorePlayers.transform.position.y;
+			Vector3 vector33 = this.scorePlayers.transform.position;
+			transforms1.position = new Vector3(single4, single5, vector33.z);
+			this.countKillsPlayers.gameObject.SetActive(false);
 		}
 		if (Defs.isDaterRegim)
 		{
-			countKillsPlayers.gameObject.SetActive(true);
-			scorePlayers.gameObject.SetActive(false);
+			this.countKillsPlayers.gameObject.SetActive(true);
+			this.scorePlayers.gameObject.SetActive(false);
 		}
 	}
 
 	private void Update()
 	{
-		UpdateAddState();
+		this.UpdateAddState();
 	}
 
 	public void UpdateAddState()
 	{
-		if (string.IsNullOrEmpty(pixelbookID) || !FriendsController.sharedController.IsShowAdd(pixelbookID))
+		if (!string.IsNullOrEmpty(this.pixelbookID) && FriendsController.sharedController.IsShowAdd(this.pixelbookID))
 		{
-			if (string.IsNullOrEmpty(pixelbookID) || pixelbookID.Equals("0") || pixelbookID.Equals("-1") || pixelbookID.Equals(FriendsController.sharedController.id) || !Defs2.IsAvalibleAddFrends() || string.IsNullOrEmpty(FriendsController.sharedController.id))
+			if (!this.buttonScript.enabled)
 			{
-				if (buttonScript.enabled)
-				{
-					buttonScript.enabled = false;
-					buttonScript.tweenTarget.SetActive(false);
-					check.SetActive(false);
-				}
-				if (check.activeSelf)
-				{
-					check.SetActive(false);
-				}
+				this.buttonScript.enabled = true;
+				this.buttonScript.tweenTarget.SetActive(true);
+				this.check.SetActive(true);
 			}
-			else
+			if (!this.check.activeSelf)
 			{
-				if (buttonScript.enabled)
-				{
-					buttonScript.enabled = false;
-					buttonScript.tweenTarget.SetActive(false);
-				}
-				if (!check.activeSelf)
-				{
-					check.SetActive(true);
-				}
+				this.check.SetActive(true);
+			}
+		}
+		else if (string.IsNullOrEmpty(this.pixelbookID) || this.pixelbookID.Equals("0") || this.pixelbookID.Equals("-1") || this.pixelbookID.Equals(FriendsController.sharedController.id) || !Defs2.IsAvalibleAddFrends() || string.IsNullOrEmpty(FriendsController.sharedController.id))
+		{
+			if (this.buttonScript.enabled)
+			{
+				this.buttonScript.enabled = false;
+				this.buttonScript.tweenTarget.SetActive(false);
+				this.check.SetActive(false);
+			}
+			if (this.check.activeSelf)
+			{
+				this.check.SetActive(false);
 			}
 		}
 		else
 		{
-			if (!buttonScript.enabled)
+			if (this.buttonScript.enabled)
 			{
-				buttonScript.enabled = true;
-				buttonScript.tweenTarget.SetActive(true);
-				check.SetActive(true);
+				this.buttonScript.enabled = false;
+				this.buttonScript.tweenTarget.SetActive(false);
 			}
-			if (!check.activeSelf)
+			if (!this.check.activeSelf)
 			{
-				check.SetActive(true);
+				this.check.SetActive(true);
 			}
 		}
 	}
 
 	public void UpdateState(bool isActive, int placeIndex = 0, bool _isMine = false, int command = 0, string nick = "", string score = "", string countKills = "", int rank = 1, Texture clanLogo = null, string _pixelbookID = "")
 	{
-		pixelbookID = _pixelbookID;
-		nickPlayer = nick;
-		isMine = _isMine;
-		if (!isActive)
+		this.pixelbookID = _pixelbookID;
+		this.nickPlayer = nick;
+		this.isMine = _isMine;
+		if (isActive)
 		{
-			base.gameObject.SetActive(false);
-			return;
-		}
-		Color color = Color.white;
-		if (isMine)
-		{
-			isMineSprite.SetActive(true);
-			if (buttonScript.enabled)
+			Color color = Color.white;
+			if (!this.isMine)
 			{
-				buttonScript.enabled = false;
-				buttonScript.tweenTarget.SetActive(false);
-				check.SetActive(false);
-			}
-			if (check.activeSelf)
-			{
-				check.SetActive(false);
-			}
-			color = new Color(1f, 1f, 1f, 1f);
-		}
-		else
-		{
-			isMineSprite.SetActive(false);
-			if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
-			{
-				switch (command)
+				this.isMineSprite.SetActive(false);
+				if ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture ? true : ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints))
 				{
-				case 0:
-					color = new Color(0.6f, 0.6f, 0.6f, 1f);
-					break;
-				case 1:
-					color = new Color(0.6f, 0.8f, 1f, 1f);
-					break;
-				default:
-					color = new Color(1f, 0.7f, 0.7f, 1f);
-					break;
+					if (command != 0)
+					{
+						color = (command != 1 ? new Color(1f, 0.7f, 0.7f, 1f) : new Color(0.6f, 0.8f, 1f, 1f));
+					}
+					else
+					{
+						color = new Color(0.6f, 0.6f, 0.6f, 1f);
+					}
 				}
 			}
-		}
-		base.gameObject.SetActive(true);
-		namesPlayers.text = nick;
-		if (defaultNameLabelPos == Vector3.zero)
-		{
-			defaultNameLabelPos = namesPlayers.transform.localPosition;
-		}
-		if (clanLogo == null)
-		{
-			namesPlayers.transform.localPosition = defaultNameLabelPos;
+			else
+			{
+				this.isMineSprite.SetActive(true);
+				if (this.buttonScript.enabled)
+				{
+					this.buttonScript.enabled = false;
+					this.buttonScript.tweenTarget.SetActive(false);
+					this.check.SetActive(false);
+				}
+				if (this.check.activeSelf)
+				{
+					this.check.SetActive(false);
+				}
+				color = new Color(1f, 1f, 1f, 1f);
+			}
+			base.gameObject.SetActive(true);
+			this.namesPlayers.text = nick;
+			if (this.defaultNameLabelPos == Vector3.zero)
+			{
+				this.defaultNameLabelPos = this.namesPlayers.transform.localPosition;
+			}
+			if (clanLogo != null)
+			{
+				this.namesPlayers.transform.localPosition = this.defaultNameLabelPos + (Vector3.right * 34f);
+			}
+			else
+			{
+				this.namesPlayers.transform.localPosition = this.defaultNameLabelPos;
+			}
+			this.namesPlayers.color = color;
+			this.scorePlayers.text = score;
+			this.scorePlayers.color = color;
+			this.countKillsPlayers.text = countKills;
+			this.countKillsPlayers.color = color;
+			this.rankSprite.spriteName = string.Concat("Rank_", rank);
+			this.clanTexture.mainTexture = clanLogo;
 		}
 		else
 		{
-			namesPlayers.transform.localPosition = defaultNameLabelPos + Vector3.right * 34f;
-		}
-		namesPlayers.color = color;
-		scorePlayers.text = score;
-		scorePlayers.color = color;
-		countKillsPlayers.text = countKills;
-		countKillsPlayers.color = color;
-		rankSprite.spriteName = "Rank_" + rank;
-		clanTexture.mainTexture = clanLogo;
-	}
-
-	private void OnClick()
-	{
-		if ((!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !LoadingInAfterGame.isShowLoading && !ShopNGUIController.GuiActive && !ExperienceController.sharedController.isShowNextPlashka && !isMine && (!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled))
-		{
-			if (ButtonClickSound.Instance != null)
-			{
-				ButtonClickSound.Instance.PlayClick();
-			}
-			networkStartTableNGUIController.ShowActionPanel(pixelbookID, nickPlayer);
+			base.gameObject.SetActive(false);
 		}
 	}
 }

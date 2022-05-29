@@ -1,132 +1,38 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AGSLeaderboardsClient : MonoBehaviour
 {
 	private static AmazonJavaWrapper JavaObject;
 
-	private static readonly string PROXY_CLASS_NAME;
-
-	public static event Action<AGSSubmitScoreResponse> SubmitScoreCompleted;
-
-	public static event Action<AGSRequestLeaderboardsResponse> RequestLeaderboardsCompleted;
-
-	public static event Action<AGSRequestScoreResponse> RequestLocalPlayerScoreCompleted;
-
-	public static event Action<AGSRequestScoreForPlayerResponse> RequestScoreForPlayerCompleted;
-
-	public static event Action<AGSRequestScoresResponse> RequestScoresCompleted;
-
-	public static event Action<AGSRequestPercentilesResponse> RequestPercentileRanksCompleted;
-
-	public static event Action<AGSRequestPercentilesForPlayerResponse> RequestPercentileRanksForPlayerCompleted;
-
-	[Obsolete("SubmitScoreFailedEvent is deprecated. Use SubmitScoreCompleted instead.")]
-	public static event Action<string, string> SubmitScoreFailedEvent;
-
-	[Obsolete("SubmitScoreSucceededEvent is deprecated. Use SubmitScoreCompleted instead.")]
-	public static event Action<string> SubmitScoreSucceededEvent;
-
-	[Obsolete("RequestLeaderboardsFailedEvent is deprecated. Use RequestLeaderboardsCompleted instead.")]
-	public static event Action<string> RequestLeaderboardsFailedEvent;
-
-	[Obsolete("RequestLeaderboardsSucceededEvent is deprecated. Use RequestLeaderboardsCompleted instead.")]
-	public static event Action<List<AGSLeaderboard>> RequestLeaderboardsSucceededEvent;
-
-	[Obsolete("RequestLocalPlayerScoreFailedEvent is deprecated. Use RequestLocalPlayerScoreCompleted instead.")]
-	public static event Action<string, string> RequestLocalPlayerScoreFailedEvent;
-
-	[Obsolete("RequestLocalPlayerScoreSucceededEvent is deprecated. Use RequestLocalPlayerScoreCompleted instead.")]
-	public static event Action<string, int, long> RequestLocalPlayerScoreSucceededEvent;
-
-	[Obsolete("RequestPercentileRanksFailedEvent is deprecated. Use RequestPercentileRanksCompleted instead.")]
-	public static event Action<string, string> RequestPercentileRanksFailedEvent;
-
-	[Obsolete("RequestPercentileRanksSucceededEvent is deprecated. Use RequestPercentileRanksCompleted instead.")]
-	public static event Action<AGSLeaderboard, List<AGSLeaderboardPercentile>, int> RequestPercentileRanksSucceededEvent;
+	private readonly static string PROXY_CLASS_NAME;
 
 	static AGSLeaderboardsClient()
 	{
-		PROXY_CLASS_NAME = "com.amazon.ags.api.unity.LeaderboardsClientProxyImpl";
-		JavaObject = new AmazonJavaWrapper();
-		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(PROXY_CLASS_NAME))
+		AGSLeaderboardsClient.PROXY_CLASS_NAME = "com.amazon.ags.api.unity.LeaderboardsClientProxyImpl";
+		AGSLeaderboardsClient.JavaObject = new AmazonJavaWrapper();
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(AGSLeaderboardsClient.PROXY_CLASS_NAME))
 		{
-			if (androidJavaClass.GetRawClass() == IntPtr.Zero)
+			if (androidJavaClass.GetRawClass() != IntPtr.Zero)
 			{
-				AGSClient.LogGameCircleWarning("No java class " + PROXY_CLASS_NAME + " present, can't use AGSLeaderboardsClient");
+				AGSLeaderboardsClient.JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
 			}
 			else
 			{
-				JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
+				AGSClient.LogGameCircleWarning(string.Concat("No java class ", AGSLeaderboardsClient.PROXY_CLASS_NAME, " present, can't use AGSLeaderboardsClient"));
 			}
 		}
 	}
 
-	public static void SubmitScore(string leaderboardId, long score, int userData = 0)
+	public AGSLeaderboardsClient()
 	{
-		JavaObject.Call("submitScore", leaderboardId, score, userData);
-	}
-
-	public static void ShowLeaderboardsOverlay()
-	{
-		JavaObject.Call("showLeaderboardsOverlay");
 	}
 
 	public static void RequestLeaderboards(int userData = 0)
 	{
-		JavaObject.Call("requestLeaderboards", 0);
-	}
-
-	public static void RequestLocalPlayerScore(string leaderboardId, LeaderboardScope scope, int userData = 0)
-	{
-		JavaObject.Call("requestLocalPlayerScore", leaderboardId, (int)scope, 0);
-	}
-
-	public static void RequestScoreForPlayer(string leaderboardId, string playerId, LeaderboardScope scope, int userData = 0)
-	{
-		JavaObject.Call("requestScoreForPlayer", leaderboardId, playerId, (int)scope, userData);
-	}
-
-	public static void RequestScores(string leaderboardId, LeaderboardScope scope, int userData = 0)
-	{
-		JavaObject.Call("requestScores", leaderboardId, (int)scope, userData);
-	}
-
-	public static void RequestPercentileRanks(string leaderboardId, LeaderboardScope scope, int userData = 0)
-	{
-		JavaObject.Call("requestPercentileRanks", leaderboardId, (int)scope, userData);
-	}
-
-	public static void RequestPercentileRanksForPlayer(string leaderboardId, string playerId, LeaderboardScope scope, int userData = 0)
-	{
-		JavaObject.Call("requestPercentileRanksForPlayer", leaderboardId, playerId, (int)scope, userData);
-	}
-
-	public static void SubmitScoreFailed(string json)
-	{
-		AGSSubmitScoreResponse aGSSubmitScoreResponse = AGSSubmitScoreResponse.FromJSON(json);
-		if (aGSSubmitScoreResponse.IsError() && AGSLeaderboardsClient.SubmitScoreFailedEvent != null)
-		{
-			AGSLeaderboardsClient.SubmitScoreFailedEvent(aGSSubmitScoreResponse.leaderboardId, aGSSubmitScoreResponse.error);
-		}
-		if (AGSLeaderboardsClient.SubmitScoreCompleted != null)
-		{
-			AGSLeaderboardsClient.SubmitScoreCompleted(aGSSubmitScoreResponse);
-		}
-	}
-
-	public static void SubmitScoreSucceeded(string json)
-	{
-		AGSSubmitScoreResponse aGSSubmitScoreResponse = AGSSubmitScoreResponse.FromJSON(json);
-		if (!aGSSubmitScoreResponse.IsError() && AGSLeaderboardsClient.SubmitScoreSucceededEvent != null)
-		{
-			AGSLeaderboardsClient.SubmitScoreSucceededEvent(aGSSubmitScoreResponse.leaderboardId);
-		}
-		if (AGSLeaderboardsClient.SubmitScoreCompleted != null)
-		{
-			AGSLeaderboardsClient.SubmitScoreCompleted(aGSSubmitScoreResponse);
-		}
+		AGSLeaderboardsClient.JavaObject.Call("requestLeaderboards", new object[] { 0 });
 	}
 
 	public static void RequestLeaderboardsFailed(string json)
@@ -155,6 +61,11 @@ public class AGSLeaderboardsClient : MonoBehaviour
 		}
 	}
 
+	public static void RequestLocalPlayerScore(string leaderboardId, LeaderboardScope scope, int userData = 0)
+	{
+		AGSLeaderboardsClient.JavaObject.Call("requestLocalPlayerScore", new object[] { leaderboardId, (int)scope, 0 });
+	}
+
 	public static void RequestLocalPlayerScoreFailed(string json)
 	{
 		AGSRequestScoreResponse aGSRequestScoreResponse = AGSRequestScoreResponse.FromJSON(json);
@@ -181,28 +92,9 @@ public class AGSLeaderboardsClient : MonoBehaviour
 		}
 	}
 
-	public static void RequestScoreForPlayerComplete(string json)
+	public static void RequestPercentileRanks(string leaderboardId, LeaderboardScope scope, int userData = 0)
 	{
-		if (AGSLeaderboardsClient.RequestScoreForPlayerCompleted != null)
-		{
-			AGSLeaderboardsClient.RequestScoreForPlayerCompleted(AGSRequestScoreForPlayerResponse.FromJSON(json));
-		}
-	}
-
-	public static void RequestScoresSucceeded(string json)
-	{
-		if (AGSLeaderboardsClient.RequestScoresCompleted != null)
-		{
-			AGSLeaderboardsClient.RequestScoresCompleted(AGSRequestScoresResponse.FromJSON(json));
-		}
-	}
-
-	public static void RequestScoresFailed(string json)
-	{
-		if (AGSLeaderboardsClient.RequestScoresCompleted != null)
-		{
-			AGSLeaderboardsClient.RequestScoresCompleted(AGSRequestScoresResponse.FromJSON(json));
-		}
+		AGSLeaderboardsClient.JavaObject.Call("requestPercentileRanks", new object[] { leaderboardId, (int)scope, userData });
 	}
 
 	public static void RequestPercentileRanksFailed(string json)
@@ -215,6 +107,19 @@ public class AGSLeaderboardsClient : MonoBehaviour
 		if (AGSLeaderboardsClient.RequestPercentileRanksCompleted != null)
 		{
 			AGSLeaderboardsClient.RequestPercentileRanksCompleted(aGSRequestPercentilesResponse);
+		}
+	}
+
+	public static void RequestPercentileRanksForPlayer(string leaderboardId, string playerId, LeaderboardScope scope, int userData = 0)
+	{
+		AGSLeaderboardsClient.JavaObject.Call("requestPercentileRanksForPlayer", new object[] { leaderboardId, playerId, (int)scope, userData });
+	}
+
+	public static void RequestPercentileRanksForPlayerComplete(string json)
+	{
+		if (AGSLeaderboardsClient.RequestPercentileRanksForPlayerCompleted != null)
+		{
+			AGSLeaderboardsClient.RequestPercentileRanksForPlayerCompleted(AGSRequestPercentilesForPlayerResponse.FromJSON(json));
 		}
 	}
 
@@ -231,11 +136,111 @@ public class AGSLeaderboardsClient : MonoBehaviour
 		}
 	}
 
-	public static void RequestPercentileRanksForPlayerComplete(string json)
+	public static void RequestScoreForPlayer(string leaderboardId, string playerId, LeaderboardScope scope, int userData = 0)
 	{
-		if (AGSLeaderboardsClient.RequestPercentileRanksForPlayerCompleted != null)
+		AGSLeaderboardsClient.JavaObject.Call("requestScoreForPlayer", new object[] { leaderboardId, playerId, (int)scope, userData });
+	}
+
+	public static void RequestScoreForPlayerComplete(string json)
+	{
+		if (AGSLeaderboardsClient.RequestScoreForPlayerCompleted != null)
 		{
-			AGSLeaderboardsClient.RequestPercentileRanksForPlayerCompleted(AGSRequestPercentilesForPlayerResponse.FromJSON(json));
+			AGSLeaderboardsClient.RequestScoreForPlayerCompleted(AGSRequestScoreForPlayerResponse.FromJSON(json));
 		}
 	}
+
+	public static void RequestScores(string leaderboardId, LeaderboardScope scope, int userData = 0)
+	{
+		AGSLeaderboardsClient.JavaObject.Call("requestScores", new object[] { leaderboardId, (int)scope, userData });
+	}
+
+	public static void RequestScoresFailed(string json)
+	{
+		if (AGSLeaderboardsClient.RequestScoresCompleted != null)
+		{
+			AGSLeaderboardsClient.RequestScoresCompleted(AGSRequestScoresResponse.FromJSON(json));
+		}
+	}
+
+	public static void RequestScoresSucceeded(string json)
+	{
+		if (AGSLeaderboardsClient.RequestScoresCompleted != null)
+		{
+			AGSLeaderboardsClient.RequestScoresCompleted(AGSRequestScoresResponse.FromJSON(json));
+		}
+	}
+
+	public static void ShowLeaderboardsOverlay()
+	{
+		AGSLeaderboardsClient.JavaObject.Call("showLeaderboardsOverlay", new object[0]);
+	}
+
+	public static void SubmitScore(string leaderboardId, long score, int userData = 0)
+	{
+		AGSLeaderboardsClient.JavaObject.Call("submitScore", new object[] { leaderboardId, score, userData });
+	}
+
+	public static void SubmitScoreFailed(string json)
+	{
+		AGSSubmitScoreResponse aGSSubmitScoreResponse = AGSSubmitScoreResponse.FromJSON(json);
+		if (aGSSubmitScoreResponse.IsError() && AGSLeaderboardsClient.SubmitScoreFailedEvent != null)
+		{
+			AGSLeaderboardsClient.SubmitScoreFailedEvent(aGSSubmitScoreResponse.leaderboardId, aGSSubmitScoreResponse.error);
+		}
+		if (AGSLeaderboardsClient.SubmitScoreCompleted != null)
+		{
+			AGSLeaderboardsClient.SubmitScoreCompleted(aGSSubmitScoreResponse);
+		}
+	}
+
+	public static void SubmitScoreSucceeded(string json)
+	{
+		AGSSubmitScoreResponse aGSSubmitScoreResponse = AGSSubmitScoreResponse.FromJSON(json);
+		if (!aGSSubmitScoreResponse.IsError() && AGSLeaderboardsClient.SubmitScoreSucceededEvent != null)
+		{
+			AGSLeaderboardsClient.SubmitScoreSucceededEvent(aGSSubmitScoreResponse.leaderboardId);
+		}
+		if (AGSLeaderboardsClient.SubmitScoreCompleted != null)
+		{
+			AGSLeaderboardsClient.SubmitScoreCompleted(aGSSubmitScoreResponse);
+		}
+	}
+
+	public static event Action<AGSRequestLeaderboardsResponse> RequestLeaderboardsCompleted;
+
+	[Obsolete("RequestLeaderboardsFailedEvent is deprecated. Use RequestLeaderboardsCompleted instead.")]
+	public static event Action<string> RequestLeaderboardsFailedEvent;
+
+	[Obsolete("RequestLeaderboardsSucceededEvent is deprecated. Use RequestLeaderboardsCompleted instead.")]
+	public static event Action<List<AGSLeaderboard>> RequestLeaderboardsSucceededEvent;
+
+	public static event Action<AGSRequestScoreResponse> RequestLocalPlayerScoreCompleted;
+
+	[Obsolete("RequestLocalPlayerScoreFailedEvent is deprecated. Use RequestLocalPlayerScoreCompleted instead.")]
+	public static event Action<string, string> RequestLocalPlayerScoreFailedEvent;
+
+	[Obsolete("RequestLocalPlayerScoreSucceededEvent is deprecated. Use RequestLocalPlayerScoreCompleted instead.")]
+	public static event Action<string, int, long> RequestLocalPlayerScoreSucceededEvent;
+
+	public static event Action<AGSRequestPercentilesResponse> RequestPercentileRanksCompleted;
+
+	[Obsolete("RequestPercentileRanksFailedEvent is deprecated. Use RequestPercentileRanksCompleted instead.")]
+	public static event Action<string, string> RequestPercentileRanksFailedEvent;
+
+	public static event Action<AGSRequestPercentilesForPlayerResponse> RequestPercentileRanksForPlayerCompleted;
+
+	[Obsolete("RequestPercentileRanksSucceededEvent is deprecated. Use RequestPercentileRanksCompleted instead.")]
+	public static event Action<AGSLeaderboard, List<AGSLeaderboardPercentile>, int> RequestPercentileRanksSucceededEvent;
+
+	public static event Action<AGSRequestScoreForPlayerResponse> RequestScoreForPlayerCompleted;
+
+	public static event Action<AGSRequestScoresResponse> RequestScoresCompleted;
+
+	public static event Action<AGSSubmitScoreResponse> SubmitScoreCompleted;
+
+	[Obsolete("SubmitScoreFailedEvent is deprecated. Use SubmitScoreCompleted instead.")]
+	public static event Action<string, string> SubmitScoreFailedEvent;
+
+	[Obsolete("SubmitScoreSucceededEvent is deprecated. Use SubmitScoreCompleted instead.")]
+	public static event Action<string> SubmitScoreSucceededEvent;
 }

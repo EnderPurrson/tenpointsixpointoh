@@ -1,46 +1,27 @@
+using System;
 using UnityEngine;
 
 public static class TWTools
 {
-	public static void SetActiveSelf(GameObject go, bool state)
-	{
-		go.SetActive(state);
-	}
-
 	private static void Activate(Transform t)
 	{
-		SetActiveSelf(t.gameObject, true);
-		int i = 0;
-		for (int childCount = t.GetChildCount(); i < childCount; i++)
+		TWTools.SetActiveSelf(t.gameObject, true);
+		int num = 0;
+		int childCount = t.GetChildCount();
+		while (num < childCount)
 		{
-			Transform child = t.GetChild(i);
-			if (child.gameObject.activeSelf)
+			if (t.GetChild(num).gameObject.activeSelf)
 			{
 				return;
 			}
+			num++;
 		}
-		int j = 0;
-		for (int childCount2 = t.GetChildCount(); j < childCount2; j++)
+		int num1 = 0;
+		int childCount1 = t.GetChildCount();
+		while (num1 < childCount1)
 		{
-			Transform child2 = t.GetChild(j);
-			Activate(child2);
-		}
-	}
-
-	private static void Deactivate(Transform t)
-	{
-		SetActiveSelf(t.gameObject, false);
-	}
-
-	public static void SetActive(GameObject go, bool state)
-	{
-		if (state)
-		{
-			Activate(go.transform);
-		}
-		else
-		{
-			Deactivate(go.transform);
+			TWTools.Activate(t.GetChild(num1));
+			num1++;
 		}
 	}
 
@@ -49,11 +30,11 @@ public static class TWTools
 		GameObject gameObject = new GameObject();
 		if (parent != null)
 		{
-			Transform transform = gameObject.transform;
-			transform.parent = parent.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-			transform.localScale = Vector3.one;
+			Transform transforms = gameObject.transform;
+			transforms.parent = parent.transform;
+			transforms.localPosition = Vector3.zero;
+			transforms.localRotation = Quaternion.identity;
+			transforms.localScale = Vector3.one;
 			gameObject.layer = parent.layer;
 		}
 		return gameObject;
@@ -61,46 +42,68 @@ public static class TWTools
 
 	public static GameObject AddChild(GameObject parent, GameObject prefab)
 	{
-		GameObject gameObject = Object.Instantiate(prefab);
+		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(prefab);
 		if (gameObject != null && parent != null)
 		{
-			Transform transform = gameObject.transform;
-			transform.parent = parent.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-			transform.localScale = Vector3.one;
+			Transform transforms = gameObject.transform;
+			transforms.parent = parent.transform;
+			transforms.localPosition = Vector3.zero;
+			transforms.localRotation = Quaternion.identity;
+			transforms.localScale = Vector3.one;
 			gameObject.layer = parent.layer;
 		}
 		return gameObject;
 	}
 
-	public static void Destroy(Object obj)
+	private static void Deactivate(Transform t)
+	{
+		TWTools.SetActiveSelf(t.gameObject, false);
+	}
+
+	public static void Destroy(UnityEngine.Object obj)
 	{
 		if (obj != null)
 		{
-			if (Application.isPlaying)
+			if (!Application.isPlaying)
 			{
-				Object.Destroy(obj);
+				UnityEngine.Object.DestroyImmediate(obj);
 			}
 			else
 			{
-				Object.DestroyImmediate(obj);
+				UnityEngine.Object.Destroy(obj);
 			}
 		}
 	}
 
-	public static void DestroyImmediate(Object obj)
+	public static void DestroyImmediate(UnityEngine.Object obj)
 	{
 		if (obj != null)
 		{
-			if (Application.isEditor)
+			if (!Application.isEditor)
 			{
-				Object.DestroyImmediate(obj);
+				UnityEngine.Object.Destroy(obj);
 			}
 			else
 			{
-				Object.Destroy(obj);
+				UnityEngine.Object.DestroyImmediate(obj);
 			}
 		}
+	}
+
+	public static void SetActive(GameObject go, bool state)
+	{
+		if (!state)
+		{
+			TWTools.Deactivate(go.transform);
+		}
+		else
+		{
+			TWTools.Activate(go.transform);
+		}
+	}
+
+	public static void SetActiveSelf(GameObject go, bool state)
+	{
+		go.SetActive(state);
 	}
 }

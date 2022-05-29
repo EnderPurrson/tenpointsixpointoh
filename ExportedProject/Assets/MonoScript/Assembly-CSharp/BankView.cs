@@ -1,61 +1,16 @@
+using I2.Loc;
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using I2.Loc;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class BankView : MonoBehaviour, IDisposable
 {
-	[CompilerGenerated]
-	private sealed class _003CCreateButtonHandler_003Ec__AnonStorey297
-	{
-		internal PurchaseEventArgs purchaseInfo;
-
-		internal BankView _003C_003Ef__this;
-
-		internal void _003C_003Em__253(object sender, EventArgs e)
-		{
-			EventHandler<PurchaseEventArgs> purchaseButtonPressed = _003C_003Ef__this.PurchaseButtonPressed;
-			if (purchaseButtonPressed != null)
-			{
-				purchaseButtonPressed(_003C_003Ef__this, purchaseInfo);
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateItem_003Ec__AnonStorey29A
-	{
-		internal ButtonHandler purchaseButton;
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateItem_003Ec__AnonStorey298
-	{
-		internal string id;
-
-		internal bool _003C_003Em__254(IMarketProduct p)
-		{
-			return p.Id == id;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateItem_003Ec__AnonStorey299
-	{
-		internal EventHandler rawButtonHandler;
-
-		internal _003CUpdateItem_003Ec__AnonStorey29A _003C_003Ef__ref_0024666;
-
-		internal void _003C_003Em__255()
-		{
-			_003C_003Ef__ref_0024666.purchaseButton.Clicked -= rawButtonHandler;
-		}
-	}
-
 	public List<BankViewItem> coinItemsABStatic;
 
 	public List<BankViewItem> gemItemsABStatic;
@@ -130,55 +85,36 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 
 	private bool _disposed;
 
-	public static int[] discountsCoins = new int[7] { 0, 0, 7, 10, 12, 15, 33 };
+	public static int[] discountsCoins;
 
 	private static bool _isInitGoldPurchasesInfo_AB_Static;
 
 	private static IList<PurchaseEventArgs> _goldPurchasesInfo_AB_Static;
 
-	public static int[] discountsGems = new int[7] { 0, 0, 7, 10, 12, 15, 33 };
+	public static int[] discountsGems;
 
 	private static bool _isInitGemsPurchasesInfo_AB_Static;
 
 	private static IList<PurchaseEventArgs> _gemsPurchasesInfo_AB_Static;
 
-	[CompilerGenerated]
-	private static Func<PurchaseEventArgs, bool> _003C_003Ef__am_0024cache2C;
-
-	[CompilerGenerated]
-	private static Func<PurchaseEventArgs, bool> _003C_003Ef__am_0024cache2D;
-
-	[CompilerGenerated]
-	private static Func<Action, bool> _003C_003Ef__am_0024cache2E;
+	private EventHandler<PurchaseEventArgs> PurchaseButtonPressed;
 
 	private UILabel _freeAwardButtonLabel
 	{
 		get
 		{
-			if (_freeAwardButtonLagelCont != null)
+			if (this._freeAwardButtonLagelCont != null)
 			{
-				return _freeAwardButtonLagelCont;
+				return this._freeAwardButtonLagelCont;
 			}
-			if (freeAwardButton == null)
+			if (this.freeAwardButton == null)
 			{
-				return _freeAwardButtonLagelCont;
+				return this._freeAwardButtonLagelCont;
 			}
-			return _freeAwardButtonLagelCont = freeAwardButton.GetComponentInChildren<UILabel>();
-		}
-	}
-
-	public bool InterfaceEnabled
-	{
-		get
-		{
-			return interfaceHolder != null && interfaceHolder.activeInHierarchy;
-		}
-		set
-		{
-			if (interfaceHolder != null)
-			{
-				interfaceHolder.SetActive(value);
-			}
+			UILabel componentInChildren = this.freeAwardButton.GetComponentInChildren<UILabel>();
+			UILabel uILabel = componentInChildren;
+			this._freeAwardButtonLagelCont = componentInChildren;
+			return uILabel;
 		}
 	}
 
@@ -186,13 +122,13 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 	{
 		get
 		{
-			return connectionProblemLabel != null && connectionProblemLabel.gameObject.GetActive();
+			return (this.connectionProblemLabel == null ? false : this.connectionProblemLabel.gameObject.GetActive());
 		}
 		set
 		{
-			if (connectionProblemLabel != null)
+			if (this.connectionProblemLabel != null)
 			{
-				connectionProblemLabel.gameObject.SetActive(value);
+				this.connectionProblemLabel.gameObject.SetActive(value);
 			}
 		}
 	}
@@ -201,43 +137,122 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 	{
 		get
 		{
-			return crackersWarningLabel != null && crackersWarningLabel.gameObject.GetActive();
+			return (this.crackersWarningLabel == null ? false : this.crackersWarningLabel.gameObject.GetActive());
 		}
 		set
 		{
-			if (crackersWarningLabel != null)
+			if (this.crackersWarningLabel != null)
 			{
-				crackersWarningLabel.gameObject.SetActive(value);
+				this.crackersWarningLabel.gameObject.SetActive(value);
 			}
 		}
 	}
 
-	public bool NotEnoughCoinsLabelEnabled
+	public static IList<PurchaseEventArgs> gemsPurchasesInfo
 	{
 		get
 		{
-			return notEnoughCoinsLabel != null && notEnoughCoinsLabel.gameObject.GetActive();
-		}
-		set
-		{
-			if (notEnoughCoinsLabel != null)
+			List<PurchaseEventArgs> purchaseEventArgs = new List<PurchaseEventArgs>()
 			{
-				notEnoughCoinsLabel.gameObject.SetActive(value);
-			}
+				new PurchaseEventArgs(0, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[0]),
+				new PurchaseEventArgs(1, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[1]),
+				new PurchaseEventArgs(2, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[2]),
+				new PurchaseEventArgs(3, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[3]),
+				new PurchaseEventArgs(4, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[4]),
+				new PurchaseEventArgs(5, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[5]),
+				new PurchaseEventArgs(6, 0, new decimal(0), "GemsCurrency", BankView.discountsCoins[6])
+			};
+			return purchaseEventArgs;
 		}
 	}
 
-	public bool NotEnoughGemsLabelEnabled
+	public static IList<PurchaseEventArgs> gemsPurchasesInfo_AB_Static
 	{
 		get
 		{
-			return notEnoughGemsLabel != null && notEnoughGemsLabel.gameObject.GetActive();
+			if (!BankView._isInitGemsPurchasesInfo_AB_Static)
+			{
+				BankView._gemsPurchasesInfo_AB_Static = BankView.gemsPurchasesInfo_AB_StaticDefault;
+				FriendsController.ParseABTestBankViewConfig();
+			}
+			return BankView._gemsPurchasesInfo_AB_Static;
 		}
 		set
 		{
-			if (notEnoughGemsLabel != null)
+			BankView._gemsPurchasesInfo_AB_Static = value;
+			BankView._isInitGemsPurchasesInfo_AB_Static = true;
+		}
+	}
+
+	public static IList<PurchaseEventArgs> gemsPurchasesInfo_AB_StaticDefault
+	{
+		get
+		{
+			return (
+				from pi in BankView.gemsPurchasesInfo
+				where pi.Index != 0
+				select pi).ToList<PurchaseEventArgs>();
+		}
+	}
+
+	public static IList<PurchaseEventArgs> goldPurchasesInfo
+	{
+		get
+		{
+			List<PurchaseEventArgs> purchaseEventArgs = new List<PurchaseEventArgs>()
 			{
-				notEnoughGemsLabel.gameObject.SetActive(value);
+				new PurchaseEventArgs(0, 0, new decimal(0), "Coins", BankView.discountsCoins[0]),
+				new PurchaseEventArgs(1, 0, new decimal(0), "Coins", BankView.discountsCoins[1]),
+				new PurchaseEventArgs(2, 0, new decimal(0), "Coins", BankView.discountsCoins[2]),
+				new PurchaseEventArgs(3, 0, new decimal(0), "Coins", BankView.discountsCoins[3]),
+				new PurchaseEventArgs(4, 0, new decimal(0), "Coins", BankView.discountsCoins[4]),
+				new PurchaseEventArgs(5, 0, new decimal(0), "Coins", BankView.discountsCoins[5]),
+				new PurchaseEventArgs(6, 0, new decimal(0), "Coins", BankView.discountsCoins[6])
+			};
+			return purchaseEventArgs;
+		}
+	}
+
+	public static IList<PurchaseEventArgs> goldPurchasesInfo_AB_Static
+	{
+		get
+		{
+			if (!BankView._isInitGoldPurchasesInfo_AB_Static)
+			{
+				BankView._goldPurchasesInfo_AB_Static = BankView.goldPurchasesInfo_AB_StaticDefault;
+				FriendsController.ParseABTestBankViewConfig();
+			}
+			return BankView._goldPurchasesInfo_AB_Static;
+		}
+		set
+		{
+			BankView._goldPurchasesInfo_AB_Static = value;
+			BankView._isInitGoldPurchasesInfo_AB_Static = true;
+		}
+	}
+
+	public static IList<PurchaseEventArgs> goldPurchasesInfo_AB_StaticDefault
+	{
+		get
+		{
+			return (
+				from pi in BankView.goldPurchasesInfo
+				where pi.Index != 0
+				select pi).ToList<PurchaseEventArgs>();
+		}
+	}
+
+	public bool InterfaceEnabled
+	{
+		get
+		{
+			return (this.interfaceHolder == null ? false : this.interfaceHolder.activeInHierarchy);
+		}
+		set
+		{
+			if (this.interfaceHolder != null)
+			{
+				this.interfaceHolder.SetActive(value);
 			}
 		}
 	}
@@ -246,7 +261,37 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 	{
 		get
 		{
-			return coinItemsABStatic != null && coinItemsABStatic.Any() && gemItemsABStatic != null && gemItemsABStatic.Any();
+			return (this.coinItemsABStatic == null || !this.coinItemsABStatic.Any<BankViewItem>() || this.gemItemsABStatic == null ? false : this.gemItemsABStatic.Any<BankViewItem>());
+		}
+	}
+
+	public bool NotEnoughCoinsLabelEnabled
+	{
+		get
+		{
+			return (this.notEnoughCoinsLabel == null ? false : this.notEnoughCoinsLabel.gameObject.GetActive());
+		}
+		set
+		{
+			if (this.notEnoughCoinsLabel != null)
+			{
+				this.notEnoughCoinsLabel.gameObject.SetActive(value);
+			}
+		}
+	}
+
+	public bool NotEnoughGemsLabelEnabled
+	{
+		get
+		{
+			return (this.notEnoughGemsLabel == null ? false : this.notEnoughGemsLabel.gameObject.GetActive());
+		}
+		set
+		{
+			if (this.notEnoughGemsLabel != null)
+			{
+				this.notEnoughGemsLabel.gameObject.SetActive(value);
+			}
 		}
 	}
 
@@ -254,39 +299,36 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 	{
 		set
 		{
-			btnTabContainer.SetActive(value);
-			if (value)
+			this.btnTabContainer.SetActive(value);
+			if (!value)
 			{
-				if (!_isPurchasesAreadyEnabled)
+				if (!this.IsInAB_Static_Bank)
 				{
-					_isPurchasesAreadyEnabled = true;
-					bool isEnabled = btnTabGold.isEnabled;
-					if (IsInAB_Static_Bank)
-					{
-						goldContainerABStatic.SetActive(!isEnabled);
-						gemsContainerABStatic.SetActive(isEnabled);
-					}
-					else
-					{
-						goldScrollView.gameObject.SetActive(!isEnabled);
-						gemsScrollView.gameObject.SetActive(isEnabled);
-						ResetScrollView(isEnabled, false);
-					}
-				}
-			}
-			else
-			{
-				if (IsInAB_Static_Bank)
-				{
-					goldContainerABStatic.SetActive(value);
-					gemsContainerABStatic.SetActive(value);
+					this.goldScrollView.gameObject.SetActive(value);
+					this.gemsScrollView.gameObject.SetActive(value);
 				}
 				else
 				{
-					goldScrollView.gameObject.SetActive(value);
-					gemsScrollView.gameObject.SetActive(value);
+					this.goldContainerABStatic.SetActive(value);
+					this.gemsContainerABStatic.SetActive(value);
 				}
-				_isPurchasesAreadyEnabled = false;
+				this._isPurchasesAreadyEnabled = false;
+			}
+			else if (!this._isPurchasesAreadyEnabled)
+			{
+				this._isPurchasesAreadyEnabled = true;
+				bool flag = this.btnTabGold.isEnabled;
+				if (!this.IsInAB_Static_Bank)
+				{
+					this.goldScrollView.gameObject.SetActive(!flag);
+					this.gemsScrollView.gameObject.SetActive(flag);
+					this.ResetScrollView(flag, false);
+				}
+				else
+				{
+					this.goldContainerABStatic.SetActive(!flag);
+					this.gemsContainerABStatic.SetActive(flag);
+				}
 			}
 		}
 	}
@@ -295,368 +337,394 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 	{
 		get
 		{
-			return purchaseSuccessfulLabel != null && purchaseSuccessfulLabel.gameObject.GetActive();
+			return (this.purchaseSuccessfulLabel == null ? false : this.purchaseSuccessfulLabel.gameObject.GetActive());
 		}
 		set
 		{
-			if (purchaseSuccessfulLabel != null)
+			if (this.purchaseSuccessfulLabel != null)
 			{
-				purchaseSuccessfulLabel.gameObject.SetActive(value);
+				this.purchaseSuccessfulLabel.gameObject.SetActive(value);
 			}
 		}
 	}
 
-	public static IList<PurchaseEventArgs> goldPurchasesInfo
+	static BankView()
 	{
-		get
-		{
-			List<PurchaseEventArgs> list = new List<PurchaseEventArgs>();
-			list.Add(new PurchaseEventArgs(0, 0, 0m, "Coins", discountsCoins[0]));
-			list.Add(new PurchaseEventArgs(1, 0, 0m, "Coins", discountsCoins[1]));
-			list.Add(new PurchaseEventArgs(2, 0, 0m, "Coins", discountsCoins[2]));
-			list.Add(new PurchaseEventArgs(3, 0, 0m, "Coins", discountsCoins[3]));
-			list.Add(new PurchaseEventArgs(4, 0, 0m, "Coins", discountsCoins[4]));
-			list.Add(new PurchaseEventArgs(5, 0, 0m, "Coins", discountsCoins[5]));
-			list.Add(new PurchaseEventArgs(6, 0, 0m, "Coins", discountsCoins[6]));
-			return list;
-		}
+		BankView.discountsCoins = new int[] { 0, 0, 7, 10, 12, 15, 33 };
+		BankView.discountsGems = new int[] { 0, 0, 7, 10, 12, 15, 33 };
 	}
 
-	public static IList<PurchaseEventArgs> goldPurchasesInfo_AB_StaticDefault
+	public BankView()
 	{
-		get
-		{
-			IList<PurchaseEventArgs> source = goldPurchasesInfo;
-			if (_003C_003Ef__am_0024cache2C == null)
-			{
-				_003C_003Ef__am_0024cache2C = _003Cget_goldPurchasesInfo_AB_StaticDefault_003Em__250;
-			}
-			return source.Where(_003C_003Ef__am_0024cache2C).ToList();
-		}
-	}
-
-	public static IList<PurchaseEventArgs> goldPurchasesInfo_AB_Static
-	{
-		get
-		{
-			if (!_isInitGoldPurchasesInfo_AB_Static)
-			{
-				_goldPurchasesInfo_AB_Static = goldPurchasesInfo_AB_StaticDefault;
-				FriendsController.ParseABTestBankViewConfig();
-			}
-			return _goldPurchasesInfo_AB_Static;
-		}
-		set
-		{
-			_goldPurchasesInfo_AB_Static = value;
-			_isInitGoldPurchasesInfo_AB_Static = true;
-		}
-	}
-
-	public static IList<PurchaseEventArgs> gemsPurchasesInfo
-	{
-		get
-		{
-			List<PurchaseEventArgs> list = new List<PurchaseEventArgs>();
-			list.Add(new PurchaseEventArgs(0, 0, 0m, "GemsCurrency", discountsCoins[0]));
-			list.Add(new PurchaseEventArgs(1, 0, 0m, "GemsCurrency", discountsCoins[1]));
-			list.Add(new PurchaseEventArgs(2, 0, 0m, "GemsCurrency", discountsCoins[2]));
-			list.Add(new PurchaseEventArgs(3, 0, 0m, "GemsCurrency", discountsCoins[3]));
-			list.Add(new PurchaseEventArgs(4, 0, 0m, "GemsCurrency", discountsCoins[4]));
-			list.Add(new PurchaseEventArgs(5, 0, 0m, "GemsCurrency", discountsCoins[5]));
-			list.Add(new PurchaseEventArgs(6, 0, 0m, "GemsCurrency", discountsCoins[6]));
-			return list;
-		}
-	}
-
-	public static IList<PurchaseEventArgs> gemsPurchasesInfo_AB_StaticDefault
-	{
-		get
-		{
-			IList<PurchaseEventArgs> source = gemsPurchasesInfo;
-			if (_003C_003Ef__am_0024cache2D == null)
-			{
-				_003C_003Ef__am_0024cache2D = _003Cget_gemsPurchasesInfo_AB_StaticDefault_003Em__251;
-			}
-			return source.Where(_003C_003Ef__am_0024cache2D).ToList();
-		}
-	}
-
-	public static IList<PurchaseEventArgs> gemsPurchasesInfo_AB_Static
-	{
-		get
-		{
-			if (!_isInitGemsPurchasesInfo_AB_Static)
-			{
-				_gemsPurchasesInfo_AB_Static = gemsPurchasesInfo_AB_StaticDefault;
-				FriendsController.ParseABTestBankViewConfig();
-			}
-			return _gemsPurchasesInfo_AB_Static;
-		}
-		set
-		{
-			_gemsPurchasesInfo_AB_Static = value;
-			_isInitGemsPurchasesInfo_AB_Static = true;
-		}
-	}
-
-	public event EventHandler<PurchaseEventArgs> PurchaseButtonPressed;
-
-	public event EventHandler BackButtonPressed
-	{
-		add
-		{
-			if (backButton != null)
-			{
-				backButton.Clicked += value;
-			}
-		}
-		remove
-		{
-			if (backButton != null)
-			{
-				backButton.Clicked -= value;
-			}
-		}
-	}
-
-	public void Dispose()
-	{
-		if (_disposed)
-		{
-			return;
-		}
-		Debug.Log("Disposing " + GetType().Name);
-		List<Action> disposeActions = _disposeActions;
-		if (_003C_003Ef__am_0024cache2E == null)
-		{
-			_003C_003Ef__am_0024cache2E = _003CDispose_003Em__252;
-		}
-		foreach (Action item in disposeActions.Where(_003C_003Ef__am_0024cache2E))
-		{
-			item();
-		}
-		_disposed = true;
-	}
-
-	private void OnDestroy()
-	{
-		if (IsInAB_Static_Bank)
-		{
-			FriendsController.StaticBankConfigUpdated -= UpdateViewConfigChanged;
-		}
-		Dispose();
 	}
 
 	private void Awake()
 	{
-		InitializeButtonsCoroutine();
-		if (IsInAB_Static_Bank)
+		this.InitializeButtonsCoroutine();
+		if (this.IsInAB_Static_Bank)
 		{
-			FriendsController.StaticBankConfigUpdated += UpdateViewConfigChanged;
-		}
-	}
-
-	private void UpdateViewConfigChanged()
-	{
-		PopulateItemGrid(false);
-		PopulateItemGrid(true);
-	}
-
-	private void Start()
-	{
-		if (!IsInAB_Static_Bank)
-		{
-			goldScrollView.panel.UpdateAnchors();
-			gemsScrollView.panel.UpdateAnchors();
-			ResetScrollView(false, false);
-			ResetScrollView(true, false);
-		}
-	}
-
-	private void Update()
-	{
-		if (_needResetScrollView)
-		{
-			_needResetScrollView = false;
-			StartCoroutine(ResetScrollViewsDelayed());
-		}
-		if (Time.realtimeSinceStartup - _lastUpdateTime >= 0.5f)
-		{
-			long eventX3RemainedTime = PromoActionsManager.sharedManager.EventX3RemainedTime;
-			TimeSpan timeSpan = TimeSpan.FromSeconds(eventX3RemainedTime);
-			string empty = string.Empty;
-			empty = ((timeSpan.Days <= 0) ? string.Format("{0}: {1:00}:{2:00}:{3:00}", _localizeSaleLabel, timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds) : string.Format("{0}: {1} {2} {3:00}:{4:00}:{5:00}", _localizeSaleLabel, timeSpan.Days, (timeSpan.Days != 1) ? "Days" : "Day", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds));
-			if (eventX3RemainTime != null)
-			{
-				for (int i = 0; i < eventX3RemainTime.Length; i++)
-				{
-					eventX3RemainTime[i].text = empty;
-				}
-			}
-			if (colorBlinkForX3 != null && timeSpan.TotalHours < (double)Defs.HoursToEndX3ForIndicate && !colorBlinkForX3.enabled)
-			{
-				colorBlinkForX3.enabled = true;
-			}
-			_lastUpdateTime = Time.realtimeSinceStartup;
-		}
-		PremiumAccountController.AccountType accountType = PremiumAccountController.AccountType.None;
-		if (PremiumAccountController.Instance != null)
-		{
-			accountType = PremiumAccountController.Instance.GetCurrentAccount();
-		}
-		premium.SetActive(accountType == PremiumAccountController.AccountType.SevenDays || accountType == PremiumAccountController.AccountType.Month);
-		premium5percent.SetActive(accountType == PremiumAccountController.AccountType.SevenDays);
-		premium10percent.SetActive(accountType == PremiumAccountController.AccountType.Month);
-		if (_freeAwardButtonLabel != null && freeAwardButton.isActiveAndEnabled)
-		{
-			_freeAwardButtonLabel.text = ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? string.Format("[FFA300FF]{0}[-]", ScriptLocalization.Get("Key_1155")) : string.Format("[50CEFFFF]{0}[-]", ScriptLocalization.Get("Key_2046")));
+			FriendsController.StaticBankConfigUpdated += new Action(this.UpdateViewConfigChanged);
 		}
 	}
 
 	private EventHandler CreateButtonHandler(PurchaseEventArgs purchaseInfo)
 	{
-		_003CCreateButtonHandler_003Ec__AnonStorey297 _003CCreateButtonHandler_003Ec__AnonStorey = new _003CCreateButtonHandler_003Ec__AnonStorey297();
-		_003CCreateButtonHandler_003Ec__AnonStorey.purchaseInfo = purchaseInfo;
-		_003CCreateButtonHandler_003Ec__AnonStorey._003C_003Ef__this = this;
-		return _003CCreateButtonHandler_003Ec__AnonStorey._003C_003Em__253;
+		return (object sender, EventArgs e) => {
+			EventHandler<PurchaseEventArgs> purchaseButtonPressed = this.PurchaseButtonPressed;
+			if (purchaseButtonPressed != null)
+			{
+				purchaseButtonPressed(this, purchaseInfo);
+			}
+		};
+	}
+
+	public void Dispose()
+	{
+		if (this._disposed)
+		{
+			return;
+		}
+		UnityEngine.Debug.Log(string.Concat("Disposing ", base.GetType().Name));
+		IEnumerator<Action> enumerator = (
+			from a in this._disposeActions
+			where a != null
+			select a).GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				enumerator.Current();
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		this._disposed = true;
 	}
 
 	private void InitializeButtonsCoroutine()
 	{
-		_storeKitEventListener = UnityEngine.Object.FindObjectOfType<StoreKitEventListener>();
-		if (_storeKitEventListener == null)
+		this._storeKitEventListener = UnityEngine.Object.FindObjectOfType<StoreKitEventListener>();
+		if (this._storeKitEventListener != null)
 		{
-			Debug.LogWarning("storeKitEventListener == null");
-			if (goldItemPrefab != null)
+			if (!this.IsInAB_Static_Bank)
 			{
-				goldItemPrefab.gameObject.SetActive(false);
+				this.UpdateViewConfigChanged();
 			}
-			if (gemsItemPrefab != null)
-			{
-				gemsItemPrefab.gameObject.SetActive(false);
-			}
-		}
-		else
-		{
-			if (!IsInAB_Static_Bank)
-			{
-				UpdateViewConfigChanged();
-			}
-			OnEnable();
-		}
-	}
-
-	private void PopulateItemGrid(bool isGems)
-	{
-		IList<PurchaseEventArgs> list2;
-		if (isGems)
-		{
-			IList<PurchaseEventArgs> list = gemsPurchasesInfo;
-			list2 = list;
-		}
-		else
-		{
-			list2 = goldPurchasesInfo;
-		}
-		IList<PurchaseEventArgs> list3 = list2;
-		if (IsInAB_Static_Bank)
-		{
-			for (int i = 0; i < list3.Count; i++)
-			{
-				BankViewItem item = ((!isGems) ? coinItemsABStatic[i] : gemItemsABStatic[i]);
-				UpdateItem(item, i, isGems);
-			}
+			this.OnEnable();
 			return;
 		}
-		BankViewItem bankViewItem = ((!isGems) ? goldItemPrefab : gemsItemPrefab);
-		UIScrollView uIScrollView = ((!isGems) ? goldScrollView : gemsScrollView);
-		UIGrid uIGrid = ((!isGems) ? goldItemGrid : gemsItemGrid);
-		for (int j = 0; j < list3.Count; j++)
+		UnityEngine.Debug.LogWarning("storeKitEventListener == null");
+		if (this.goldItemPrefab != null)
 		{
-			BankViewItem bankViewItem2 = UnityEngine.Object.Instantiate(bankViewItem);
-			bankViewItem2.name = string.Format("{0:00}", j);
-			bankViewItem2.transform.parent = uIGrid.transform;
-			bankViewItem2.transform.localScale = Vector3.one;
-			bankViewItem2.transform.localPosition = Vector3.zero;
-			bankViewItem2.transform.localRotation = Quaternion.identity;
-			UpdateItem(bankViewItem2, j, isGems);
+			this.goldItemPrefab.gameObject.SetActive(false);
 		}
-		bankViewItem.gameObject.SetActive(false);
-		ResetScrollView(isGems, false);
-	}
-
-	private void LoadIconForItem(BankViewItem item, int i, bool isGems, bool load)
-	{
-		if (load)
+		if (this.gemsItemPrefab != null)
 		{
-			string text = ((!isGems) ? ("Textures/Bank" + ((!IsInAB_Static_Bank) ? string.Empty : "/Static_Bank_Textures") + "/Coins_Shop_" + (i + 1)) : ("Textures/Bank/Coins_Shop_Gem_" + (i + 1)));
-			if (Device.IsLoweMemoryDevice)
-			{
-				PreloadTexture component = item.icon.GetComponent<PreloadTexture>();
-				if (component != null)
-				{
-					component.pathTexture = text;
-				}
-			}
-			else
-			{
-				item.icon.mainTexture = Resources.Load<Texture>(text);
-			}
-		}
-		else
-		{
-			item.icon.mainTexture = null;
+			this.gemsItemPrefab.gameObject.SetActive(false);
 		}
 	}
 
 	public void LoadCurrencyIcons(bool load)
 	{
-		List<BankViewItem> list = ((!IsInAB_Static_Bank) ? (goldItemGrid.GetComponentsInChildren<BankViewItem>(true) ?? new BankViewItem[0]).ToList() : coinItemsABStatic);
-		for (int i = 0; i < list.Count; i++)
+		List<BankViewItem> bankViewItems = (!this.IsInAB_Static_Bank ? ((IEnumerable<BankViewItem>)(this.goldItemGrid.GetComponentsInChildren<BankViewItem>(true) ?? new BankViewItem[0])).ToList<BankViewItem>() : this.coinItemsABStatic);
+		for (int i = 0; i < bankViewItems.Count; i++)
 		{
-			if (list[i].purchaseInfo == null)
+			if (bankViewItems[i].purchaseInfo == null)
 			{
 				return;
 			}
-			LoadIconForItem(list[i], list[i].purchaseInfo.Index, false, load);
+			this.LoadIconForItem(bankViewItems[i], bankViewItems[i].purchaseInfo.Index, false, load);
 		}
-		List<BankViewItem> list2 = ((!IsInAB_Static_Bank) ? (gemsItemGrid.GetComponentsInChildren<BankViewItem>(true) ?? new BankViewItem[0]).ToList() : gemItemsABStatic);
-		for (int j = 0; j < list2.Count; j++)
+		List<BankViewItem> bankViewItems1 = (!this.IsInAB_Static_Bank ? ((IEnumerable<BankViewItem>)(this.gemsItemGrid.GetComponentsInChildren<BankViewItem>(true) ?? new BankViewItem[0])).ToList<BankViewItem>() : this.gemItemsABStatic);
+		for (int j = 0; j < bankViewItems1.Count; j++)
 		{
-			LoadIconForItem(list2[j], list2[j].purchaseInfo.Index, true, load);
+			this.LoadIconForItem(bankViewItems1[j], bankViewItems1[j].purchaseInfo.Index, true, load);
+		}
+	}
+
+	private void LoadIconForItem(BankViewItem item, int i, bool isGems, bool load)
+	{
+		string str;
+		if (!load)
+		{
+			item.icon.mainTexture = null;
+		}
+		else
+		{
+			if (!isGems)
+			{
+				object[] objArray = new object[] { "Textures/Bank", null, null, null };
+				objArray[1] = (!this.IsInAB_Static_Bank ? string.Empty : "/Static_Bank_Textures");
+				objArray[2] = "/Coins_Shop_";
+				objArray[3] = i + 1;
+				str = string.Concat(objArray);
+			}
+			else
+			{
+				str = string.Concat("Textures/Bank/Coins_Shop_Gem_", i + 1);
+			}
+			string str1 = str;
+			if (!Device.IsLoweMemoryDevice)
+			{
+				item.icon.mainTexture = Resources.Load<Texture>(str1);
+			}
+			else
+			{
+				PreloadTexture component = item.icon.GetComponent<PreloadTexture>();
+				if (component != null)
+				{
+					component.pathTexture = str1;
+				}
+			}
+		}
+	}
+
+	public void OnBtnTabClick(UIButton btnTab)
+	{
+		if (btnTab == this.btnTabGold)
+		{
+			UnityEngine.Debug.Log("Activated Tab Gold");
+			this.btnTabGold.isEnabled = false;
+			this.btnTabGems.isEnabled = true;
+			if (!this.IsInAB_Static_Bank)
+			{
+				this.goldScrollView.gameObject.SetActive(true);
+				this.gemsScrollView.gameObject.SetActive(false);
+				this.ResetScrollView(false, false);
+			}
+			else
+			{
+				this.goldContainerABStatic.SetActive(true);
+				this.gemsContainerABStatic.SetActive(false);
+			}
+		}
+		else if (btnTab != this.btnTabGems)
+		{
+			UnityEngine.Debug.Log("Unknown btnTab");
+		}
+		else
+		{
+			UnityEngine.Debug.Log("Activated Tab Gems");
+			this.btnTabGold.isEnabled = true;
+			this.btnTabGems.isEnabled = false;
+			if (!this.IsInAB_Static_Bank)
+			{
+				this.goldScrollView.gameObject.SetActive(false);
+				this.gemsScrollView.gameObject.SetActive(true);
+				this.ResetScrollView(true, false);
+			}
+			else
+			{
+				this.goldContainerABStatic.SetActive(false);
+				this.gemsContainerABStatic.SetActive(true);
+			}
+		}
+	}
+
+	private void OnDestroy()
+	{
+		if (this.IsInAB_Static_Bank)
+		{
+			FriendsController.StaticBankConfigUpdated -= new Action(this.UpdateViewConfigChanged);
+		}
+		this.Dispose();
+	}
+
+	private void OnEnable()
+	{
+		if (!this.IsInAB_Static_Bank)
+		{
+			this.SortItemGrid(false);
+			this.SortItemGrid(true);
+		}
+		else
+		{
+			this.UpdateViewConfigChanged();
+		}
+		UIButton uIButton = this.btnTabGems;
+		if (coinsShop.thisScript != null && coinsShop.thisScript.notEnoughCurrency != null && coinsShop.thisScript.notEnoughCurrency.Equals("Coins"))
+		{
+			uIButton = this.btnTabGold;
+		}
+		this.OnBtnTabClick(uIButton);
+		this._localizeSaleLabel = LocalizationStore.Get("Key_0419");
+		if (this.connectionProblemLabel != null)
+		{
+			this.connectionProblemLabel.text = LocalizationStore.Get("Key_0278");
+		}
+	}
+
+	private void PopulateItemGrid(bool isGems)
+	{
+		IList<PurchaseEventArgs> purchaseEventArgs = (!isGems ? BankView.goldPurchasesInfo : BankView.gemsPurchasesInfo);
+		if (!this.IsInAB_Static_Bank)
+		{
+			BankViewItem bankViewItem = (!isGems ? this.goldItemPrefab : this.gemsItemPrefab);
+			UIScrollView uIScrollView = (!isGems ? this.goldScrollView : this.gemsScrollView);
+			UIGrid uIGrid = (!isGems ? this.goldItemGrid : this.gemsItemGrid);
+			for (int i = 0; i < purchaseEventArgs.Count; i++)
+			{
+				BankViewItem bankViewItem1 = UnityEngine.Object.Instantiate<BankViewItem>(bankViewItem);
+				bankViewItem1.name = string.Format("{0:00}", i);
+				bankViewItem1.transform.parent = uIGrid.transform;
+				bankViewItem1.transform.localScale = Vector3.one;
+				bankViewItem1.transform.localPosition = Vector3.zero;
+				bankViewItem1.transform.localRotation = Quaternion.identity;
+				this.UpdateItem(bankViewItem1, i, isGems);
+			}
+			bankViewItem.gameObject.SetActive(false);
+			this.ResetScrollView(isGems, false);
+		}
+		else
+		{
+			for (int j = 0; j < purchaseEventArgs.Count; j++)
+			{
+				this.UpdateItem((!isGems ? this.coinItemsABStatic[j] : this.gemItemsABStatic[j]), j, isGems);
+			}
+		}
+	}
+
+	private void ResetScrollView(bool isGems, bool needDelayedUpdate = true)
+	{
+		if (this.IsInAB_Static_Bank)
+		{
+			return;
+		}
+		UIScrollView uIScrollView = (!isGems ? this.goldScrollView : this.gemsScrollView);
+		UIGrid uIGrid = (!isGems ? this.goldItemGrid : this.gemsItemGrid);
+		if (!needDelayedUpdate)
+		{
+			uIGrid.Reposition();
+			uIScrollView.ResetPosition();
+		}
+		else
+		{
+			this._needResetScrollView = needDelayedUpdate;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ResetScrollViewsDelayed()
+	{
+		BankView.u003cResetScrollViewsDelayedu003ec__Iterator109 variable = null;
+		return variable;
+	}
+
+	private void SortItemGrid(bool isGems)
+	{
+		if (this.IsInAB_Static_Bank)
+		{
+			return;
+		}
+		Transform transforms = ((!isGems ? this.goldItemGrid : this.gemsItemGrid)).transform;
+		List<BankViewItem> bankViewItems = new List<BankViewItem>();
+		for (int i = 0; i < transforms.childCount; i++)
+		{
+			bankViewItems.Add(transforms.GetChild(i).GetComponent<BankViewItem>());
+		}
+		bankViewItems.Sort();
+		for (int j = 0; j < bankViewItems.Count; j++)
+		{
+			bankViewItems[j].gameObject.name = string.Format("{0:00}", j);
+		}
+		this.ResetScrollView(isGems, false);
+	}
+
+	private void Start()
+	{
+		if (!this.IsInAB_Static_Bank)
+		{
+			this.goldScrollView.panel.UpdateAnchors();
+			this.gemsScrollView.panel.UpdateAnchors();
+			this.ResetScrollView(false, false);
+			this.ResetScrollView(true, false);
+		}
+	}
+
+	private void Update()
+	{
+		if (this._needResetScrollView)
+		{
+			this._needResetScrollView = false;
+			base.StartCoroutine(this.ResetScrollViewsDelayed());
+		}
+		if (Time.realtimeSinceStartup - this._lastUpdateTime >= 0.5f)
+		{
+			TimeSpan timeSpan = TimeSpan.FromSeconds((double)PromoActionsManager.sharedManager.EventX3RemainedTime);
+			string empty = string.Empty;
+			if (timeSpan.Days <= 0)
+			{
+				empty = string.Format("{0}: {1:00}:{2:00}:{3:00}", new object[] { this._localizeSaleLabel, timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds });
+			}
+			else
+			{
+				object[] days = new object[] { this._localizeSaleLabel, timeSpan.Days, null, null, null, null };
+				days[2] = (timeSpan.Days != 1 ? "Days" : "Day");
+				days[3] = timeSpan.Hours;
+				days[4] = timeSpan.Minutes;
+				days[5] = timeSpan.Seconds;
+				empty = string.Format("{0}: {1} {2} {3:00}:{4:00}:{5:00}", days);
+			}
+			if (this.eventX3RemainTime != null)
+			{
+				for (int i = 0; i < (int)this.eventX3RemainTime.Length; i++)
+				{
+					this.eventX3RemainTime[i].text = empty;
+				}
+			}
+			if (this.colorBlinkForX3 != null && timeSpan.TotalHours < (double)Defs.HoursToEndX3ForIndicate && !this.colorBlinkForX3.enabled)
+			{
+				this.colorBlinkForX3.enabled = true;
+			}
+			this._lastUpdateTime = Time.realtimeSinceStartup;
+		}
+		PremiumAccountController.AccountType currentAccount = PremiumAccountController.AccountType.None;
+		if (PremiumAccountController.Instance != null)
+		{
+			currentAccount = PremiumAccountController.Instance.GetCurrentAccount();
+		}
+		this.premium.SetActive((currentAccount == PremiumAccountController.AccountType.SevenDays ? true : currentAccount == PremiumAccountController.AccountType.Month));
+		this.premium5percent.SetActive(currentAccount == PremiumAccountController.AccountType.SevenDays);
+		this.premium10percent.SetActive(currentAccount == PremiumAccountController.AccountType.Month);
+		if (this._freeAwardButtonLabel != null && this.freeAwardButton.isActiveAndEnabled)
+		{
+			this._freeAwardButtonLabel.text = (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency" ? string.Format("[FFA300FF]{0}[-]", ScriptLocalization.Get("Key_1155")) : string.Format("[50CEFFFF]{0}[-]", ScriptLocalization.Get("Key_2046")));
 		}
 	}
 
 	private void UpdateItem(BankViewItem item, int i, bool isGems)
 	{
-		_003CUpdateItem_003Ec__AnonStorey29A _003CUpdateItem_003Ec__AnonStorey29A = new _003CUpdateItem_003Ec__AnonStorey29A();
-		PurchaseEventArgs purchaseEventArgs = ((!isGems) ? goldPurchasesInfo[i] : gemsPurchasesInfo[i]);
-		string[] array = ((!isGems) ? StoreKitEventListener.coinIds : StoreKitEventListener.gemsIds);
-		if (purchaseEventArgs.Index < array.Length)
+		string str;
+		PurchaseEventArgs num = (!isGems ? BankView.goldPurchasesInfo[i] : BankView.gemsPurchasesInfo[i]);
+		string[] strArrays = (!isGems ? StoreKitEventListener.coinIds : StoreKitEventListener.gemsIds);
+		if (num.Index < (int)strArrays.Length)
 		{
-			purchaseEventArgs.Count = ((!isGems) ? VirtualCurrencyHelper.coinInappsQuantity[purchaseEventArgs.Index] : VirtualCurrencyHelper.gemsInappsQuantity[purchaseEventArgs.Index]);
-			decimal num = ((!isGems) ? VirtualCurrencyHelper.coinPriceIds[purchaseEventArgs.Index] : VirtualCurrencyHelper.gemsPriceIds[purchaseEventArgs.Index]);
-			purchaseEventArgs.CurrencyAmount = num - 0.01m;
+			num.Count = (!isGems ? VirtualCurrencyHelper.coinInappsQuantity[num.Index] : VirtualCurrencyHelper.gemsInappsQuantity[num.Index]);
+			decimal num1 = (!isGems ? VirtualCurrencyHelper.coinPriceIds[num.Index] : VirtualCurrencyHelper.gemsPriceIds[num.Index]);
+			num.CurrencyAmount = num1 - new decimal(1, 0, 0, false, 2);
 		}
-		string price = string.Format("${0}", purchaseEventArgs.CurrencyAmount);
-		if (purchaseEventArgs.Index < array.Length)
+		string price = string.Format("${0}", num.CurrencyAmount);
+		if (num.Index >= (int)strArrays.Length)
 		{
-			_003CUpdateItem_003Ec__AnonStorey298 _003CUpdateItem_003Ec__AnonStorey = new _003CUpdateItem_003Ec__AnonStorey298();
-			_003CUpdateItem_003Ec__AnonStorey.id = array[purchaseEventArgs.Index];
-			IMarketProduct marketProduct = _storeKitEventListener.Products.FirstOrDefault(_003CUpdateItem_003Ec__AnonStorey._003C_003Em__254);
-			if (marketProduct != null)
-			{
-				price = marketProduct.Price;
-			}
-			else
-			{
-				Debug.LogWarning("marketProduct == null,    id: " + _003CUpdateItem_003Ec__AnonStorey.id);
-			}
+			UnityEngine.Debug.LogWarning("purchaseInfo.Index >= StoreKitEventListener.coinIds.Length");
 		}
 		else
 		{
-			Debug.LogWarning("purchaseInfo.Index >= StoreKitEventListener.coinIds.Length");
+			string str1 = strArrays[num.Index];
+			IMarketProduct marketProduct = this._storeKitEventListener.Products.FirstOrDefault<IMarketProduct>((IMarketProduct p) => p.Id == str1);
+			if (marketProduct == null)
+			{
+				UnityEngine.Debug.LogWarning(string.Concat("marketProduct == null,    id: ", str1));
+			}
+			else
+			{
+				price = marketProduct.Price;
+			}
 		}
 		item.Price = price;
 		try
@@ -665,185 +733,103 @@ internal sealed class BankView : MonoBehaviour, IDisposable
 			{
 				foreach (UILabel inappNameLabel in item.inappNameLabels)
 				{
-					inappNameLabel.text = LocalizationStore.Get((!isGems) ? VirtualCurrencyHelper.coinInappsLocalizationKeys[purchaseEventArgs.Index] : VirtualCurrencyHelper.gemsInappsLocalizationKeys[purchaseEventArgs.Index]);
+					inappNameLabel.text = LocalizationStore.Get((!isGems ? VirtualCurrencyHelper.coinInappsLocalizationKeys[num.Index] : VirtualCurrencyHelper.gemsInappsLocalizationKeys[num.Index]));
 				}
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception setting inapp localizations: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception setting inapp localizations: ", exception));
 		}
-		string text = ((!isGems) ? ("Textures/Bank" + ((!IsInAB_Static_Bank) ? string.Empty : "/Static_Bank_Textures") + "/Coins_Shop_" + (purchaseEventArgs.Index + 1)) : ("Textures/Bank/Coins_Shop_Gem_" + (purchaseEventArgs.Index + 1)));
-		if (Device.IsLoweMemoryDevice)
+		if (!isGems)
+		{
+			object[] index = new object[] { "Textures/Bank", null, null, null };
+			index[1] = (!this.IsInAB_Static_Bank ? string.Empty : "/Static_Bank_Textures");
+			index[2] = "/Coins_Shop_";
+			index[3] = num.Index + 1;
+			str = string.Concat(index);
+		}
+		else
+		{
+			str = string.Concat("Textures/Bank/Coins_Shop_Gem_", num.Index + 1);
+		}
+		string str2 = str;
+		if (!Device.IsLoweMemoryDevice)
+		{
+			item.icon.mainTexture = Resources.Load<Texture>(str2);
+		}
+		else
 		{
 			PreloadTexture component = item.icon.GetComponent<PreloadTexture>();
 			if (component != null)
 			{
-				component.pathTexture = text;
+				component.pathTexture = str2;
 			}
 		}
-		else
+		ButtonHandler buttonHandler = item.btnBuy.GetComponent<ButtonHandler>();
+		if (buttonHandler == null)
 		{
-			item.icon.mainTexture = Resources.Load<Texture>(text);
+			return;
 		}
-		_003CUpdateItem_003Ec__AnonStorey29A.purchaseButton = item.btnBuy.GetComponent<ButtonHandler>();
-		if (!(_003CUpdateItem_003Ec__AnonStorey29A.purchaseButton == null))
+		item.Count = num.Count;
+		item.CountX3 = 3 * num.Count;
+		if (item.discountSprite != null)
 		{
-			item.Count = purchaseEventArgs.Count;
-			item.CountX3 = 3 * purchaseEventArgs.Count;
-			if (item.discountSprite != null)
+			item.discountSprite.gameObject.SetActive(num.Discount > 0);
+		}
+		if (item.discountPercentsLabel != null && num.Discount > 0)
+		{
+			item.discountPercentsLabel.text = string.Format("{0}%", num.Discount);
+		}
+		item.purchaseInfo = num;
+		item.UpdateViewBestBuy();
+		if (item.bonusButtonView != null)
+		{
+			item.bonusButtonView.UpdateState(num);
+		}
+		if (!buttonHandler.HasClickedHandlers)
+		{
+			EventHandler eventHandler = this.CreateButtonHandler(num);
+			buttonHandler.Clicked += eventHandler;
+			this._disposeActions.Add(new Action(() => buttonHandler.Clicked -= eventHandler));
+		}
+	}
+
+	private void UpdateViewConfigChanged()
+	{
+		this.PopulateItemGrid(false);
+		this.PopulateItemGrid(true);
+	}
+
+	public event EventHandler BackButtonPressed
+	{
+		add
+		{
+			if (this.backButton != null)
 			{
-				item.discountSprite.gameObject.SetActive(purchaseEventArgs.Discount > 0);
+				this.backButton.Clicked += value;
 			}
-			if (item.discountPercentsLabel != null && purchaseEventArgs.Discount > 0)
+		}
+		remove
+		{
+			if (this.backButton != null)
 			{
-				item.discountPercentsLabel.text = string.Format("{0}%", purchaseEventArgs.Discount);
-			}
-			item.purchaseInfo = purchaseEventArgs;
-			item.UpdateViewBestBuy();
-			if (item.bonusButtonView != null)
-			{
-				item.bonusButtonView.UpdateState(purchaseEventArgs);
-			}
-			if (!_003CUpdateItem_003Ec__AnonStorey29A.purchaseButton.HasClickedHandlers)
-			{
-				_003CUpdateItem_003Ec__AnonStorey299 _003CUpdateItem_003Ec__AnonStorey2 = new _003CUpdateItem_003Ec__AnonStorey299();
-				_003CUpdateItem_003Ec__AnonStorey2._003C_003Ef__ref_0024666 = _003CUpdateItem_003Ec__AnonStorey29A;
-				_003CUpdateItem_003Ec__AnonStorey2.rawButtonHandler = CreateButtonHandler(purchaseEventArgs);
-				_003CUpdateItem_003Ec__AnonStorey29A.purchaseButton.Clicked += _003CUpdateItem_003Ec__AnonStorey2.rawButtonHandler;
-				_disposeActions.Add(_003CUpdateItem_003Ec__AnonStorey2._003C_003Em__255);
+				this.backButton.Clicked -= value;
 			}
 		}
 	}
 
-	public void OnBtnTabClick(UIButton btnTab)
+	public event EventHandler<PurchaseEventArgs> PurchaseButtonPressed
 	{
-		if (btnTab == btnTabGold)
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
 		{
-			Debug.Log("Activated Tab Gold");
-			btnTabGold.isEnabled = false;
-			btnTabGems.isEnabled = true;
-			if (IsInAB_Static_Bank)
-			{
-				goldContainerABStatic.SetActive(true);
-				gemsContainerABStatic.SetActive(false);
-			}
-			else
-			{
-				goldScrollView.gameObject.SetActive(true);
-				gemsScrollView.gameObject.SetActive(false);
-				ResetScrollView(false, false);
-			}
+			this.PurchaseButtonPressed += value;
 		}
-		else if (btnTab == btnTabGems)
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
 		{
-			Debug.Log("Activated Tab Gems");
-			btnTabGold.isEnabled = true;
-			btnTabGems.isEnabled = false;
-			if (IsInAB_Static_Bank)
-			{
-				goldContainerABStatic.SetActive(false);
-				gemsContainerABStatic.SetActive(true);
-			}
-			else
-			{
-				goldScrollView.gameObject.SetActive(false);
-				gemsScrollView.gameObject.SetActive(true);
-				ResetScrollView(true, false);
-			}
+			this.PurchaseButtonPressed -= value;
 		}
-		else
-		{
-			Debug.Log("Unknown btnTab");
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (IsInAB_Static_Bank)
-		{
-			UpdateViewConfigChanged();
-		}
-		else
-		{
-			SortItemGrid(false);
-			SortItemGrid(true);
-		}
-		UIButton btnTab = btnTabGems;
-		if (coinsShop.thisScript != null && coinsShop.thisScript.notEnoughCurrency != null && coinsShop.thisScript.notEnoughCurrency.Equals("Coins"))
-		{
-			btnTab = btnTabGold;
-		}
-		OnBtnTabClick(btnTab);
-		_localizeSaleLabel = LocalizationStore.Get("Key_0419");
-		if (connectionProblemLabel != null)
-		{
-			connectionProblemLabel.text = LocalizationStore.Get("Key_0278");
-		}
-	}
-
-	private void SortItemGrid(bool isGems)
-	{
-		if (!IsInAB_Static_Bank)
-		{
-			UIGrid uIGrid = ((!isGems) ? goldItemGrid : gemsItemGrid);
-			Transform transform = uIGrid.transform;
-			List<BankViewItem> list = new List<BankViewItem>();
-			for (int i = 0; i < transform.childCount; i++)
-			{
-				BankViewItem component = transform.GetChild(i).GetComponent<BankViewItem>();
-				list.Add(component);
-			}
-			list.Sort();
-			for (int j = 0; j < list.Count; j++)
-			{
-				list[j].gameObject.name = string.Format("{0:00}", j);
-			}
-			ResetScrollView(isGems, false);
-		}
-	}
-
-	private IEnumerator ResetScrollViewsDelayed()
-	{
-		if (!IsInAB_Static_Bank)
-		{
-			yield return null;
-			ResetScrollView(false, false);
-			ResetScrollView(true, false);
-		}
-	}
-
-	private void ResetScrollView(bool isGems, bool needDelayedUpdate = true)
-	{
-		if (!IsInAB_Static_Bank)
-		{
-			UIScrollView uIScrollView = ((!isGems) ? goldScrollView : gemsScrollView);
-			UIGrid uIGrid = ((!isGems) ? goldItemGrid : gemsItemGrid);
-			if (needDelayedUpdate)
-			{
-				_needResetScrollView = needDelayedUpdate;
-				return;
-			}
-			uIGrid.Reposition();
-			uIScrollView.ResetPosition();
-		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003Cget_goldPurchasesInfo_AB_StaticDefault_003Em__250(PurchaseEventArgs pi)
-	{
-		return pi.Index != 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003Cget_gemsPurchasesInfo_AB_StaticDefault_003Em__251(PurchaseEventArgs pi)
-	{
-		return pi.Index != 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CDispose_003Em__252(Action a)
-	{
-		return a != null;
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +20,23 @@ public class FriendPrevInChatItem : MonoBehaviour
 
 	public int myWrapIndex;
 
+	public FriendPrevInChatItem()
+	{
+	}
+
+	public void SetActivePlayer()
+	{
+		if (PrivateChatController.sharedController.selectedPlayerID == this.playerID)
+		{
+			return;
+		}
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		PrivateChatController.sharedController.SetSelectedPlayer(this.playerID, false);
+	}
+
 	private void Start()
 	{
 	}
@@ -30,36 +48,26 @@ public class FriendPrevInChatItem : MonoBehaviour
 	public void UpdateCountNewMessage()
 	{
 		int num = 0;
-		if (ChatController.privateMessages.ContainsKey(playerID))
+		if (ChatController.privateMessages.ContainsKey(this.playerID))
 		{
-			List<ChatController.PrivateMessage> list = ChatController.privateMessages[playerID];
-			for (int i = 0; i < list.Count; i++)
+			List<ChatController.PrivateMessage> item = ChatController.privateMessages[this.playerID];
+			for (int i = 0; i < item.Count; i++)
 			{
-				if (!list[i].isRead)
+				if (!item[i].isRead)
 				{
 					num++;
 				}
 			}
 		}
-		contNewMessage = num;
-		if (contNewMessage == 0)
+		this.contNewMessage = num;
+		if (this.contNewMessage != 0)
 		{
-			newMessageObj.SetActive(false);
-			return;
+			this.newMessageObj.SetActive(true);
+			this.countNewMessageLabel.text = this.contNewMessage.ToString();
 		}
-		newMessageObj.SetActive(true);
-		countNewMessageLabel.text = contNewMessage.ToString();
-	}
-
-	public void SetActivePlayer()
-	{
-		if (!(PrivateChatController.sharedController.selectedPlayerID == playerID))
+		else
 		{
-			if (ButtonClickSound.Instance != null)
-			{
-				ButtonClickSound.Instance.PlayClick();
-			}
-			PrivateChatController.sharedController.SetSelectedPlayer(playerID, false);
+			this.newMessageObj.SetActive(false);
 		}
 	}
 }

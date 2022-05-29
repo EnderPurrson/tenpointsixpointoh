@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class GiftScroll : MonoBehaviour
@@ -18,149 +21,132 @@ public class GiftScroll : MonoBehaviour
 
 	public BoxCollider scrollAreaCollider;
 
-	public static bool canReCreateSlots = true;
+	public static bool canReCreateSlots;
 
-	private void Awake()
+	static GiftScroll()
 	{
-		if ((bool)exampleBut)
-		{
-			exampleBut.gameObject.SetActive(false);
-		}
-		scView = GetComponentInParent<UIScrollView>();
+		GiftScroll.canReCreateSlots = true;
 	}
 
-	private void OnEnable()
+	public GiftScroll()
 	{
-		GiftController.OnChangeSlots += UpdateListButton;
-		UpdateListButton();
-	}
-
-	private void OnDisable()
-	{
-		GiftController.OnChangeSlots -= UpdateListButton;
-	}
-
-	public void UpdateListButton()
-	{
-		if (canReCreateSlots && base.gameObject.activeInHierarchy)
-		{
-			StartCoroutine(crtUpdateListButton());
-		}
-	}
-
-	private IEnumerator crtUpdateListButton()
-	{
-		while (GiftBannerWindow.instance == null)
-		{
-			yield return null;
-		}
-		if (wrapScript == null)
-		{
-			wrapScript = parentButton.GetComponent<UIWrapContent>();
-		}
-		listItemData = GiftController.Instance.Slots;
-		SetButtonCount(listItemData.Count);
-		for (int i = 0; i < listButton.Count; i++)
-		{
-			GiftHUDItem curButtonRoom = listButton[i];
-			curButtonRoom.gameObject.name = i + "_" + listItemData[i].gift.Id;
-			curButtonRoom.SetInfoButton(listItemData[i]);
-		}
-		Sort();
-	}
-
-	public void Sort()
-	{
-		if (canReCreateSlots)
-		{
-			StartCoroutine(CrtSort());
-		}
-	}
-
-	private IEnumerator CrtSort()
-	{
-		yield return null;
-		GiftBannerWindow.instance.UpdateSizeScroll();
-		scView.ResetPosition();
-		if (wrapScript != null)
-		{
-			wrapScript.SortAlphabetically();
-		}
-		if (wrapScript != null)
-		{
-			wrapScript.WrapContent();
-		}
-		scView.restrictWithinPanel = true;
-		yield return null;
-		scView.disableDragIfFits = false;
-		listButton[0].InCenter();
-	}
-
-	private void SetButtonCount(int needCount)
-	{
-		if (listButton.Count < needCount)
-		{
-			for (int i = listButton.Count; i < needCount; i++)
-			{
-				GiftHUDItem item = CreateButton();
-				listButton.Add(item);
-			}
-		}
-		else if (listButton.Count > needCount)
-		{
-			int num = listButton.Count - needCount;
-			for (int j = 0; j < num; j++)
-			{
-				GameObject obj = listButton[listButton.Count - 1].gameObject;
-				listButton[listButton.Count - 1] = null;
-				listButton.RemoveAt(listButton.Count - 1);
-				Object.Destroy(obj);
-			}
-		}
-	}
-
-	private GiftHUDItem CreateButton()
-	{
-		GameObject gameObject = Object.Instantiate(exampleBut.gameObject, Vector3.zero, Quaternion.identity) as GameObject;
-		gameObject.SetActive(true);
-		GiftHUDItem component = gameObject.GetComponent<GiftHUDItem>();
-		gameObject.transform.parent = parentButton.transform;
-		gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-		return component;
 	}
 
 	public void AnimScrollGift(int num)
 	{
-		if (listButton.Count > num)
+		if (this.listButton.Count > num)
 		{
-			listButton[num].InCenter(true, listButton.Count);
+			this.listButton[num].InCenter(true, this.listButton.Count);
+		}
+	}
+
+	private void Awake()
+	{
+		if (this.exampleBut)
+		{
+			this.exampleBut.gameObject.SetActive(false);
+		}
+		this.scView = base.GetComponentInParent<UIScrollView>();
+	}
+
+	private GiftHUDItem CreateButton()
+	{
+		GameObject vector3 = UnityEngine.Object.Instantiate(this.exampleBut.gameObject, Vector3.zero, Quaternion.identity) as GameObject;
+		vector3.SetActive(true);
+		GiftHUDItem component = vector3.GetComponent<GiftHUDItem>();
+		vector3.transform.parent = this.parentButton.transform;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		return component;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator CrtSort()
+	{
+		GiftScroll.u003cCrtSortu003ec__Iterator14F variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator crtUpdateListButton()
+	{
+		GiftScroll.u003ccrtUpdateListButtonu003ec__Iterator14E variable = null;
+		return variable;
+	}
+
+	private void OnDisable()
+	{
+		GiftController.OnChangeSlots -= new Action(this.UpdateListButton);
+	}
+
+	private void OnEnable()
+	{
+		GiftController.OnChangeSlots += new Action(this.UpdateListButton);
+		this.UpdateListButton();
+	}
+
+	private void SetButtonCount(int needCount)
+	{
+		if (this.listButton.Count < needCount)
+		{
+			for (int i = this.listButton.Count; i < needCount; i++)
+			{
+				GiftHUDItem giftHUDItem = this.CreateButton();
+				this.listButton.Add(giftHUDItem);
+			}
+		}
+		else if (this.listButton.Count > needCount)
+		{
+			int count = this.listButton.Count - needCount;
+			for (int j = 0; j < count; j++)
+			{
+				GameObject item = this.listButton[this.listButton.Count - 1].gameObject;
+				this.listButton[this.listButton.Count - 1] = null;
+				this.listButton.RemoveAt(this.listButton.Count - 1);
+				UnityEngine.Object.Destroy(item);
+			}
 		}
 	}
 
 	public void SetCanDraggable(bool val)
 	{
-		if ((bool)scrollAreaCollider)
+		if (this.scrollAreaCollider)
 		{
-			scrollAreaCollider.enabled = val;
+			this.scrollAreaCollider.enabled = val;
 		}
-		for (int i = 0; i < listButton.Count; i++)
+		for (int i = 0; i < this.listButton.Count; i++)
 		{
-			listButton[i].colliderForDrag.enabled = val;
+			this.listButton[i].colliderForDrag.enabled = val;
+		}
+	}
+
+	public void Sort()
+	{
+		if (GiftScroll.canReCreateSlots)
+		{
+			base.StartCoroutine(this.CrtSort());
+		}
+	}
+
+	[ContextMenu("Center main gift")]
+	private void TestCenterGift()
+	{
+		if (this.listButton.Count > 6)
+		{
+			this.listButton[0].InCenter(false, 1);
 		}
 	}
 
 	[ContextMenu("Sort gift")]
 	private void TestSortGift()
 	{
-		Sort();
+		this.Sort();
 	}
 
-	[ContextMenu("Center main gift")]
-	private void TestCenterGift()
+	public void UpdateListButton()
 	{
-		if (listButton.Count > 6)
+		if (GiftScroll.canReCreateSlots && base.gameObject.activeInHierarchy)
 		{
-			listButton[0].InCenter();
+			base.StartCoroutine(this.crtUpdateListButton());
 		}
 	}
 }

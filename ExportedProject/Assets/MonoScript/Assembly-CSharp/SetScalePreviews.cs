@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SetScalePreviews : MonoBehaviour
@@ -6,28 +7,31 @@ public class SetScalePreviews : MonoBehaviour
 
 	private float widthCell;
 
-	private void Start()
+	public SetScalePreviews()
 	{
-		widthCell = ConnectSceneNGUIController.sharedController.widthCell;
 	}
 
 	public void LateUpdate()
 	{
 		MapPreviewController[] componentsInChildren = base.transform.GetComponentsInChildren<MapPreviewController>();
-		if (componentsInChildren == null)
+		if (componentsInChildren != null)
 		{
-			return;
-		}
-		float x = myScrollPanel.clipOffset.x;
-		float num = 0.9f;
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			float num2 = 1f - Mathf.Abs(componentsInChildren[i].transform.localPosition.x - x) / widthCell * 0.1f;
-			if (num2 <= 0f)
+			float single = this.myScrollPanel.clipOffset.x;
+			for (int i = 0; i < (int)componentsInChildren.Length; i++)
 			{
-				num2 = 0.1f;
+				Vector3 vector3 = componentsInChildren[i].transform.localPosition;
+				float single1 = 1f - Mathf.Abs(vector3.x - single) / this.widthCell * 0.1f;
+				if (single1 <= 0f)
+				{
+					single1 = 0.1f;
+				}
+				componentsInChildren[i].transform.localScale = new Vector3(single1, single1, single1);
 			}
-			componentsInChildren[i].transform.localScale = new Vector3(num2, num2, num2);
 		}
+	}
+
+	private void Start()
+	{
+		this.widthCell = ConnectSceneNGUIController.sharedController.widthCell;
 	}
 }

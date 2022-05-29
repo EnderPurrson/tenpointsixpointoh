@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BombsCratorNucl : MonoBehaviour
@@ -9,28 +13,14 @@ public class BombsCratorNucl : MonoBehaviour
 
 	public int oldBombPeriod;
 
+	public BombsCratorNucl()
+	{
+	}
+
+	[DebuggerHidden]
 	private IEnumerator Start()
 	{
-		if (Defs.isMulti)
-		{
-			oldBombPeriod = (int)PhotonNetwork.time / (int)time;
-			while (true)
-			{
-				if (oldBombPeriod < (int)PhotonNetwork.time / (int)time)
-				{
-					oldBombPeriod = (int)PhotonNetwork.time / (int)time;
-					Object.Instantiate(bmb);
-				}
-				yield return null;
-			}
-		}
-		while (true)
-		{
-			yield return new WaitForSeconds(time);
-			if (bmb != null)
-			{
-				Object.Instantiate(bmb);
-			}
-		}
+		BombsCratorNucl.u003cStartu003ec__IteratorC variable = null;
+		return variable;
 	}
 }

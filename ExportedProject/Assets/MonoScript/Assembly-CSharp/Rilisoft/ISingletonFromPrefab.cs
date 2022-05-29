@@ -4,6 +4,9 @@ namespace Rilisoft
 {
 	public interface ISingletonFromPrefab
 	{
-		GameObject SingletonPrefab { get; }
+		GameObject SingletonPrefab
+		{
+			get;
+		}
 	}
 }

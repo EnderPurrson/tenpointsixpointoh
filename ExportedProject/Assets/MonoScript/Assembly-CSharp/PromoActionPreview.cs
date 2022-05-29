@@ -1,3 +1,6 @@
+using I2.Loc;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PromoActionPreview : MonoBehaviour
@@ -26,38 +29,46 @@ public class PromoActionPreview : MonoBehaviour
 
 	public Texture pressed;
 
-	public int Discount { get; set; }
-
-	private void Start()
+	public int Discount
 	{
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
+		get;
+		set;
 	}
 
-	private void SetSaleText()
+	public PromoActionPreview()
 	{
-		if (Discount > 0 && sale != null)
-		{
-			sale.text = string.Format("{0}\n{1}%", LocalizationStore.Key_0419, Discount);
-		}
-	}
-
-	private void OnEnable()
-	{
-		UIButton[] componentsInChildren = GetComponentsInChildren<UIButton>(true);
-		foreach (UIButton uIButton in componentsInChildren)
-		{
-			uIButton.isEnabled = TrainingController.TrainingCompleted;
-		}
-		SetSaleText();
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
 	}
 
 	private void HandleLocalizationChanged()
 	{
-		SetSaleText();
+		this.SetSaleText();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	private void OnEnable()
+	{
+		UIButton[] componentsInChildren = base.GetComponentsInChildren<UIButton>(true);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			componentsInChildren[i].isEnabled = TrainingController.TrainingCompleted;
+		}
+		this.SetSaleText();
+	}
+
+	private void SetSaleText()
+	{
+		if (this.Discount > 0 && this.sale != null)
+		{
+			this.sale.text = string.Format("{0}\n{1}%", LocalizationStore.Key_0419, this.Discount);
+		}
+	}
+
+	private void Start()
+	{
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 }

@@ -1,23 +1,31 @@
-using System.Globalization;
 using Rilisoft;
+using System;
+using System.Globalization;
+using System.Reflection;
 using UnityEngine;
 
 public class RenderAllInSceneObj : MonoBehaviour
 {
+	public RenderAllInSceneObj()
+	{
+	}
+
 	private void Awake()
 	{
-		string callee = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", GetType().Name);
-		ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+		string str = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", new object[] { base.GetType().Name });
+		ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 		try
 		{
-			if (Device.IsLoweMemoryDevice)
+			if (!Device.IsLoweMemoryDevice)
 			{
-				Object.Destroy(base.gameObject);
-				return;
+				Transform transforms = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("RenderAllInSceneObjInner")).transform;
+				transforms.parent = base.transform;
+				transforms.localPosition = Vector3.zero;
 			}
-			Transform transform = Object.Instantiate(Resources.Load<GameObject>("RenderAllInSceneObjInner")).transform;
-			transform.parent = base.transform;
-			transform.localPosition = Vector3.zero;
+			else
+			{
+				UnityEngine.Object.Destroy(base.gameObject);
+			}
 		}
 		finally
 		{

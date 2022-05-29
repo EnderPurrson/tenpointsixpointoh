@@ -1,11 +1,16 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [Obsolete]
 internal sealed class GoToMainNeuFromFriends : MonoBehaviour
 {
 	private bool firstFrame = true;
+
+	public GoToMainNeuFromFriends()
+	{
+	}
 
 	private void HandleClick()
 	{
@@ -14,18 +19,22 @@ internal sealed class GoToMainNeuFromFriends : MonoBehaviour
 		LoadConnectScene.textureToShow = null;
 		LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
 		LoadConnectScene.noteToShow = null;
-		Singleton<SceneLoader>.Instance.LoadScene(Defs.PromSceneName);
+		Singleton<SceneLoader>.Instance.LoadScene(Defs.PromSceneName, LoadSceneMode.Single);
 	}
 
 	private void OnPress(bool isDown)
 	{
-		if (isDown)
+		if (!isDown)
 		{
-			firstFrame = false;
+			if (this.firstFrame)
+			{
+				return;
+			}
+			this.HandleClick();
 		}
-		else if (!firstFrame)
+		else
 		{
-			HandleClick();
+			this.firstFrame = false;
 		}
 	}
 }

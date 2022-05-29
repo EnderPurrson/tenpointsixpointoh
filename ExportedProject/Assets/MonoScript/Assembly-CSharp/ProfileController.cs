@@ -1,64 +1,36 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Holoville.HOTween;
 using Holoville.HOTween.Plugins;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 internal sealed class ProfileController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CHandleBankButton_003Ec__AnonStorey2CE
-	{
-		internal EventHandler handleBackFromBank;
-
-		internal ProfileController _003C_003Ef__this;
-
-		internal void _003C_003Em__399(object sender, EventArgs e)
-		{
-			BankController.Instance.BackRequested -= handleBackFromBank;
-			BankController.Instance.InterfaceEnabled = false;
-			_003C_003Ef__this.InterfaceEnabled = true;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CRefresh_003Ec__AnonStorey2CF
-	{
-		internal string desiredPrefabName;
-
-		internal bool _003C_003Em__39A(Weapon w)
-		{
-			return w.weaponPrefab.name.Replace("(Clone)", string.Empty) == desiredPrefabName;
-		}
-	}
-
 	public const string keyChooseDefaultName = "keyChooseDefaultName";
 
 	private const string NicknameKey = "NamePlayer";
 
-	public static SaltedInt countGameTotalKills = new SaltedInt(640178770);
+	public static SaltedInt countGameTotalKills;
 
-	public static SaltedInt countGameTotalDeaths = new SaltedInt(371743314);
+	public static SaltedInt countGameTotalDeaths;
 
-	public static SaltedInt countGameTotalShoot = new SaltedInt(623401554);
+	public static SaltedInt countGameTotalShoot;
 
-	public static SaltedInt countGameTotalHit = new SaltedInt(606624338);
+	public static SaltedInt countGameTotalHit;
 
-	public static SaltedInt countLikes = new SaltedInt(606624338);
+	public static SaltedInt countLikes;
 
 	public ProfileView profileView;
 
-	public static string[] DefaultKeyNames = new string[19]
-	{
-		"Key_2020", "Key_2021", "Key_2022", "Key_2023", "Key_2024", "Key_2025", "Key_2026", "Key_2027", "Key_2028", "Key_2029",
-		"Key_2030", "Key_2031", "Key_2032", "Key_2033", "Key_2034", "Key_2035", "Key_2036", "Key_2037", "Key_2038"
-	};
+	public static string[] DefaultKeyNames;
 
-	private static string _defaultPlayerName = null;
+	private static string _defaultPlayerName;
 
 	private static ProfileController _instance;
 
@@ -82,69 +54,21 @@ internal sealed class ProfileController : MonoBehaviour
 
 	private bool _isNicknameSubmit;
 
-	public static ProfileController Instance
-	{
-		get
-		{
-			return _instance;
-		}
-	}
-
-	public string DesiredWeaponTag { get; set; }
+	private EventHandler EscapePressed;
 
 	public static int CurOrderCup
 	{
 		get
 		{
-			int currentLevel = ExperienceController.sharedController.currentLevel;
-			for (int i = 0; i < ExpController.LevelsForTiers.Length; i++)
+			int num = ExperienceController.sharedController.currentLevel;
+			for (int i = 0; i < (int)ExpController.LevelsForTiers.Length; i++)
 			{
-				if (currentLevel >= MinLevelTir(i) && currentLevel <= MaxLevelTir(i))
+				if (num >= ProfileController.MinLevelTir(i) && num <= ProfileController.MaxLevelTir(i))
 				{
 					return i;
 				}
 			}
 			return -1;
-		}
-	}
-
-	public bool InterfaceEnabled
-	{
-		get
-		{
-			return profileView != null && profileView.interfaceHolder != null && profileView.interfaceHolder.gameObject.activeInHierarchy;
-		}
-		private set
-		{
-			if (!(profileView != null) || !(profileView.interfaceHolder != null))
-			{
-				return;
-			}
-			profileView.interfaceHolder.gameObject.SetActive(value);
-			if (value)
-			{
-				Refresh();
-				if (ExperienceController.sharedController != null && ExpController.Instance != null)
-				{
-					ExperienceController.sharedController.isShowRanks = true;
-					ExpController.Instance.InterfaceEnabled = true;
-				}
-				if (_backSubscription != null)
-				{
-					_backSubscription.Dispose();
-				}
-				_backSubscription = BackSystem.Instance.Register(HandleEscape, "Profile Controller");
-			}
-			else
-			{
-				DesiredWeaponTag = string.Empty;
-				if (_backSubscription != null)
-				{
-					_backSubscription.Dispose();
-					_backSubscription = null;
-				}
-			}
-			FreeAwardShowHandler.CheckShowChest(value);
 		}
 	}
 
@@ -154,519 +78,323 @@ internal sealed class ProfileController : MonoBehaviour
 		{
 			if (!PlayerPrefs.HasKey("keyChooseDefaultName"))
 			{
-				_defaultPlayerName = GetRandomName();
-				PlayerPrefs.SetString("keyChooseDefaultName", _defaultPlayerName);
+				ProfileController._defaultPlayerName = ProfileController.GetRandomName();
+				PlayerPrefs.SetString("keyChooseDefaultName", ProfileController._defaultPlayerName);
 			}
-			if (_defaultPlayerName == null)
+			if (ProfileController._defaultPlayerName == null)
 			{
-				_defaultPlayerName = PlayerPrefs.GetString("keyChooseDefaultName");
+				ProfileController._defaultPlayerName = PlayerPrefs.GetString("keyChooseDefaultName");
 			}
-			return _defaultPlayerName;
+			return ProfileController._defaultPlayerName;
 		}
 	}
 
-	public event EventHandler<ProfileView.InputEventArgs> NicknameInput
+	public string DesiredWeaponTag
 	{
-		add
+		get;
+		set;
+	}
+
+	public static ProfileController Instance
+	{
+		get
 		{
-			if (profileView != null)
-			{
-				profileView.NicknameInput += value;
-			}
+			return ProfileController._instance;
 		}
-		remove
+	}
+
+	public bool InterfaceEnabled
+	{
+		get
 		{
-			if (profileView != null)
+			return (!(this.profileView != null) || !(this.profileView.interfaceHolder != null) ? false : this.profileView.interfaceHolder.gameObject.activeInHierarchy);
+		}
+		private set
+		{
+			if (this.profileView != null && this.profileView.interfaceHolder != null)
 			{
-				profileView.NicknameInput -= value;
+				this.profileView.interfaceHolder.gameObject.SetActive(value);
+				if (!value)
+				{
+					this.DesiredWeaponTag = string.Empty;
+					if (this._backSubscription != null)
+					{
+						this._backSubscription.Dispose();
+						this._backSubscription = null;
+					}
+				}
+				else
+				{
+					this.Refresh(true);
+					if (ExperienceController.sharedController != null && ExpController.Instance != null)
+					{
+						ExperienceController.sharedController.isShowRanks = true;
+						ExpController.Instance.InterfaceEnabled = true;
+					}
+					if (this._backSubscription != null)
+					{
+						this._backSubscription.Dispose();
+					}
+					this._backSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Profile Controller");
+				}
+				FreeAwardShowHandler.CheckShowChest(value);
 			}
 		}
 	}
 
-	public event EventHandler BackRequested
+	static ProfileController()
 	{
-		add
-		{
-			if (profileView != null)
-			{
-				profileView.BackButtonPressed += value;
-			}
-			this.EscapePressed = (EventHandler)Delegate.Combine(this.EscapePressed, value);
-		}
-		remove
-		{
-			if (profileView != null)
-			{
-				profileView.BackButtonPressed -= value;
-			}
-			this.EscapePressed = (EventHandler)Delegate.Remove(this.EscapePressed, value);
-		}
+		ProfileController.countGameTotalKills = new SaltedInt(640178770);
+		ProfileController.countGameTotalDeaths = new SaltedInt(371743314);
+		ProfileController.countGameTotalShoot = new SaltedInt(623401554);
+		ProfileController.countGameTotalHit = new SaltedInt(606624338);
+		ProfileController.countLikes = new SaltedInt(606624338);
+		ProfileController.DefaultKeyNames = new string[] { "Key_2020", "Key_2021", "Key_2022", "Key_2023", "Key_2024", "Key_2025", "Key_2026", "Key_2027", "Key_2028", "Key_2029", "Key_2030", "Key_2031", "Key_2032", "Key_2033", "Key_2034", "Key_2035", "Key_2036", "Key_2037", "Key_2038" };
+		ProfileController._defaultPlayerName = null;
 	}
 
-	private event EventHandler EscapePressed;
-
-	public void HandleBankButton()
+	public ProfileController()
 	{
-		if (BankController.Instance != null)
+	}
+
+	private void Awake()
+	{
+		ProfileController._instance = this;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ExitCallbacksCoroutine()
+	{
+		ProfileController.u003cExitCallbacksCoroutineu003ec__Iterator17C variable = null;
+		return variable;
+	}
+
+	public static float GetPerFillProgress(int order, int lev)
+	{
+		float single = 0f;
+		int num = lev;
+		if (order >= (int)ExpController.LevelsForTiers.Length)
 		{
-			_003CHandleBankButton_003Ec__AnonStorey2CE _003CHandleBankButton_003Ec__AnonStorey2CE = new _003CHandleBankButton_003Ec__AnonStorey2CE();
-			_003CHandleBankButton_003Ec__AnonStorey2CE._003C_003Ef__this = this;
-			_003CHandleBankButton_003Ec__AnonStorey2CE.handleBackFromBank = null;
-			_003CHandleBankButton_003Ec__AnonStorey2CE.handleBackFromBank = _003CHandleBankButton_003Ec__AnonStorey2CE._003C_003Em__399;
-			BankController.Instance.BackRequested += _003CHandleBankButton_003Ec__AnonStorey2CE.handleBackFromBank;
-			BankController.Instance.InterfaceEnabled = true;
-			InterfaceEnabled = false;
+			single = 0f;
 		}
 		else
 		{
-			Debug.LogWarning("BankController.Instance == null");
+			int num1 = ProfileController.MinLevelTir(order);
+			int num2 = num1;
+			num2 = ProfileController.MaxLevelTir(order);
+			float single1 = (float)(num - num1);
+			float single2 = (float)(num2 - num1);
+			single = (single1 <= 0f ? 0f : single1 / single2);
 		}
+		return single;
+	}
+
+	public static string GetPlayerNameOrDefault()
+	{
+		if (PlayerPrefs.HasKey("NamePlayer"))
+		{
+			string str = PlayerPrefs.GetString("NamePlayer");
+			if (str != null)
+			{
+				return str;
+			}
+		}
+		string instance = PlayerPrefs.GetString("SocialName", string.Empty);
+		if (Social.localUser != null && Social.localUser.authenticated && !string.IsNullOrEmpty(Social.localUser.userName))
+		{
+			if (!instance.Equals(Social.localUser.userName))
+			{
+				instance = Social.localUser.userName;
+				PlayerPrefs.SetString("SocialName", instance);
+			}
+			return instance;
+		}
+		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+		{
+			if (GameCircleSocial.Instance.localUser.authenticated)
+			{
+				if (!string.IsNullOrEmpty(GameCircleSocial.Instance.localUser.userName))
+				{
+					if (!instance.Equals(GameCircleSocial.Instance.localUser.userName))
+					{
+						instance = GameCircleSocial.Instance.localUser.userName;
+						PlayerPrefs.SetString("SocialName", instance);
+					}
+					return instance;
+				}
+			}
+		}
+		if (!string.IsNullOrEmpty(instance))
+		{
+			return instance;
+		}
+		return ProfileController.defaultPlayerName;
+	}
+
+	private static string GetRandomName()
+	{
+		if (ProfileController.DefaultKeyNames == null || (int)ProfileController.DefaultKeyNames.Length <= 0)
+		{
+			return "Player";
+		}
+		int num = UnityEngine.Random.Range(0, (int)ProfileController.DefaultKeyNames.Length);
+		return LocalizationStore.Get(ProfileController.DefaultKeyNames[num]);
 	}
 
 	public void HandleAchievementsButton()
 	{
 		if (Application.isEditor)
 		{
-			Debug.Log("[Achievements] button pressed");
+			UnityEngine.Debug.Log("[Achievements] button pressed");
 		}
 		switch (BuildSettings.BuildTargetPlatform)
 		{
-		case RuntimePlatform.IPhonePlayer:
-			if (!Application.isEditor)
+			case RuntimePlatform.IPhonePlayer:
 			{
-				if (Social.localUser.authenticated)
+				if (!Application.isEditor)
+				{
+					if (!Social.localUser.authenticated)
+					{
+						GameCenterSingleton.Instance.updateGameCenter();
+					}
+					else
+					{
+						Social.ShowAchievementsUI();
+					}
+				}
+				break;
+			}
+			case RuntimePlatform.PS3:
+			case RuntimePlatform.XBOX360:
+			{
+				break;
+			}
+			case RuntimePlatform.Android:
+			{
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 				{
 					Social.ShowAchievementsUI();
 				}
-				else
+				else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
 				{
-					GameCenterSingleton.Instance.updateGameCenter();
+					AGSAchievementsClient.ShowAchievementsOverlay();
 				}
+				break;
 			}
-			break;
-		case RuntimePlatform.Android:
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+			default:
 			{
-				Social.ShowAchievementsUI();
+				goto case RuntimePlatform.XBOX360;
 			}
-			else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-			{
-				AGSAchievementsClient.ShowAchievementsOverlay();
-			}
-			break;
-		case RuntimePlatform.PS3:
-		case RuntimePlatform.XBOX360:
-			break;
 		}
+	}
+
+	private void HandleBackRequest(object sender, EventArgs e)
+	{
+		if (this._dirty && FriendsController.sharedController != null)
+		{
+			FriendsController.sharedController.SendOurData(false);
+			this._dirty = false;
+		}
+		Action action = this._exitCallbacks.FirstOrDefault<Action>();
+		if (action != null)
+		{
+			action();
+		}
+		base.StartCoroutine(this.ExitCallbacksCoroutine());
+	}
+
+	public void HandleBankButton()
+	{
+		if (BankController.Instance == null)
+		{
+			UnityEngine.Debug.LogWarning("BankController.Instance == null");
+		}
+		else
+		{
+			EventHandler instance = null;
+			instance = (object sender, EventArgs e) => {
+				BankController.Instance.BackRequested -= this.handleBackFromBank;
+				BankController.Instance.InterfaceEnabled = false;
+				this.u003cu003ef__this.InterfaceEnabled = true;
+			};
+			BankController.Instance.BackRequested += instance;
+			BankController.Instance.InterfaceEnabled = true;
+			this.InterfaceEnabled = false;
+		}
+	}
+
+	private void HandleEscape()
+	{
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (InfoWindowController.IsActive)
+		{
+			InfoWindowController.HideCurrentWindow();
+			return;
+		}
+		this._escapePressed = true;
 	}
 
 	public void HandleLeaderboardsButton()
 	{
 		if (Application.isEditor)
 		{
-			Debug.Log("[Leaderboards] button pressed");
+			UnityEngine.Debug.Log("[Leaderboards] button pressed");
 		}
 		switch (BuildSettings.BuildTargetPlatform)
 		{
-		case RuntimePlatform.IPhonePlayer:
-			if (!Application.isEditor)
+			case RuntimePlatform.IPhonePlayer:
 			{
-				if (Social.localUser.authenticated)
+				if (!Application.isEditor)
+				{
+					if (!Social.localUser.authenticated)
+					{
+						GameCenterSingleton.Instance.updateGameCenter();
+					}
+					else
+					{
+						Social.ShowLeaderboardUI();
+					}
+				}
+				break;
+			}
+			case RuntimePlatform.PS3:
+			case RuntimePlatform.XBOX360:
+			{
+				break;
+			}
+			case RuntimePlatform.Android:
+			{
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 				{
 					Social.ShowLeaderboardUI();
 				}
-				else
-				{
-					GameCenterSingleton.Instance.updateGameCenter();
-				}
-			}
-			break;
-		case RuntimePlatform.Android:
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-			{
-				Social.ShowLeaderboardUI();
-			}
-			else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-			{
-				AGSLeaderboardsClient.ShowLeaderboardsOverlay();
-			}
-			break;
-		case RuntimePlatform.PS3:
-		case RuntimePlatform.XBOX360:
-			break;
-		}
-	}
-
-	public static int MinLevelTir(int curTir)
-	{
-		if (curTir >= 0 && curTir < ExpController.LevelsForTiers.Length)
-		{
-			return ExpController.LevelsForTiers[curTir];
-		}
-		return -1;
-	}
-
-	public static int MaxLevelTir(int curTir)
-	{
-		if (curTir >= 0 && curTir < ExpController.LevelsForTiers.Length)
-		{
-			if (curTir == ExpController.LevelsForTiers.Length - 1)
-			{
-				return ExperienceController.maxLevel;
-			}
-			return ExpController.LevelsForTiers[curTir + 1];
-		}
-		return -1;
-	}
-
-	public static float GetPerFillProgress(int order, int lev)
-	{
-		float num = 0f;
-		if (order < ExpController.LevelsForTiers.Length)
-		{
-			int num2 = MinLevelTir(order);
-			int num3 = num2;
-			num3 = MaxLevelTir(order);
-			float num4 = lev - num2;
-			float num5 = num3 - num2;
-			if (num4 > 0f)
-			{
-				return num4 / num5;
-			}
-			return 0f;
-		}
-		return 0f;
-	}
-
-	public void ShowInterface(params Action[] exitCallbacks)
-	{
-		FriendsController.sharedController.GetOurWins();
-		InterfaceEnabled = true;
-		_exitCallbacks = exitCallbacks ?? new Action[0];
-	}
-
-	public void SetStaticticTab(StatisticHUD.TypeOpenTab tab)
-	{
-		StatisticHUD componentInChildren = GetComponentInChildren<StatisticHUD>(true);
-		if (componentInChildren != null)
-		{
-			componentInChildren.OpenTab(tab);
-		}
-	}
-
-	private void Awake()
-	{
-		_instance = this;
-	}
-
-	private void Start()
-	{
-		BackRequested += HandleBackRequest;
-		if (profileView != null)
-		{
-			UIInputRilisoft nicknameInput = profileView.nicknameInput;
-			nicknameInput.onFocus = (UIInputRilisoft.OnFocus)Delegate.Combine(nicknameInput.onFocus, new UIInputRilisoft.OnFocus(OnFocusNickname));
-			UIInputRilisoft nicknameInput2 = profileView.nicknameInput;
-			nicknameInput2.onFocusLost = (UIInputRilisoft.OnFocusLost)Delegate.Combine(nicknameInput2.onFocusLost, new UIInputRilisoft.OnFocusLost(onFocusLostNickname));
-		}
-		if (profileView != null)
-		{
-			profileView.Nickname = GetPlayerNameOrDefault();
-			profileView.NicknameInput += HandleNicknameInput;
-			_initialLocalRotation = profileView.characterView.character.localRotation;
-			switch (BuildSettings.BuildTargetPlatform)
-			{
-			case RuntimePlatform.IPhonePlayer:
-				UpdateButton(profileView.achievementsButton, "gamecntr");
-				UpdateButton(profileView.leaderboardsButton, "gamecntr");
-				break;
-			case RuntimePlatform.Android:
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-				{
-					UpdateButton(profileView.achievementsButton, "google");
-					UpdateButton(profileView.leaderboardsButton, "google");
-				}
 				else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
 				{
-					UpdateButton(profileView.achievementsButton, "amazon");
-					UpdateButton(profileView.leaderboardsButton, "amazon");
+					AGSLeaderboardsClient.ShowLeaderboardsOverlay();
 				}
-				else
-				{
-					profileView.achievementsButton.gameObject.SetActive(false);
-				}
-				break;
-			default:
-				profileView.achievementsButton.gameObject.SetActive(false);
 				break;
 			}
+			default:
+			{
+				goto case RuntimePlatform.XBOX360;
+			}
 		}
-		InterfaceEnabled = false;
-		FriendsController.OurInfoUpdated += HandleOurInfoUpdated;
+	}
+
+	private void HandleNicknameInput(object sender, ProfileView.InputEventArgs e)
+	{
+		this.SaveNamePlayer(e.Input);
 	}
 
 	private void HandleOurInfoUpdated()
 	{
-		if (InterfaceEnabled)
+		if (this.InterfaceEnabled)
 		{
-			Refresh(false);
+			this.Refresh(false);
 		}
-	}
-
-	private void UpdateButton(UIButton button, string spriteName)
-	{
-		if (!(button == null))
-		{
-			button.normalSprite = spriteName;
-			button.pressedSprite = spriteName + "_n";
-			button.hoverSprite = spriteName;
-			button.disabledSprite = spriteName;
-		}
-	}
-
-	private void OnDestroy()
-	{
-		FriendsController.OurInfoUpdated -= HandleOurInfoUpdated;
-		if (profileView != null)
-		{
-			profileView.NicknameInput -= HandleNicknameInput;
-			UIInputRilisoft nicknameInput = profileView.nicknameInput;
-			nicknameInput.onFocus = (UIInputRilisoft.OnFocus)Delegate.Remove(nicknameInput.onFocus, new UIInputRilisoft.OnFocus(OnFocusNickname));
-			UIInputRilisoft nicknameInput2 = profileView.nicknameInput;
-			nicknameInput2.onFocusLost = (UIInputRilisoft.OnFocusLost)Delegate.Remove(nicknameInput2.onFocusLost, new UIInputRilisoft.OnFocusLost(onFocusLostNickname));
-		}
-	}
-
-	private void Refresh(bool updateWeapon = true)
-	{
-		if (profileView != null)
-		{
-			profileView.Nickname = GetPlayerNameOrDefault();
-			Dictionary<string, object> dictionary = ((!(FriendsController.sharedController != null) || FriendsController.sharedController.ourInfo == null || !FriendsController.sharedController.ourInfo.ContainsKey("wincount") || FriendsController.sharedController.ourInfo["wincount"] == null) ? null : (FriendsController.sharedController.ourInfo["wincount"] as Dictionary<string, object>));
-			profileView.CheckBtnCopy();
-			profileView.DeathmatchWinCount = Storager.getInt(Defs.RatingDeathmatch, false).ToString();
-			profileView.TeamBattleWinCount = Storager.getInt(Defs.RatingTeamBattle, false).ToString();
-			profileView.DeadlyGamesWinCount = Storager.getInt(Defs.RatingHunger, false).ToString();
-			profileView.FlagCaptureWinCount = Storager.getInt(Defs.RatingFlag, false).ToString();
-			profileView.CapturePointWinCount = Storager.getInt(Defs.RatingCapturePoint, false).ToString();
-			profileView.TotalWinCount = (Storager.getInt(Defs.RatingDeathmatch, false) + Storager.getInt(Defs.RatingTeamBattle, false) + Storager.getInt(Defs.RatingHunger, false) + Storager.getInt(Defs.RatingFlag, false) + Storager.getInt(Defs.RatingCapturePoint, false)).ToString();
-			profileView.PixelgunFriendsID = ((!(FriendsController.sharedController != null) || FriendsController.sharedController.id == null) ? string.Empty : FriendsController.sharedController.id);
-			object value;
-			profileView.TotalWeeklyWinCount = ((dictionary == null || !dictionary.TryGetValue("weekly", out value)) ? 0 : ((long)value)).ToString();
-			profileView.CoopTimeSurvivalPointCount = Storager.getInt(Defs.COOPScore, false).ToString();
-			profileView.GameTotalKills = countGameTotalKills.Value.ToString();
-			float num = 0f;
-			num = ((countGameTotalDeaths.Value != 0) ? ((float)countGameTotalKills.Value / (1f * (float)countGameTotalDeaths.Value)) : ((float)countGameTotalKills.Value));
-			num = (float)Math.Round(num, 2);
-			profileView.GameKillrate = num.ToString();
-			float num2 = 0f;
-			if (countGameTotalHit.Value != 0)
-			{
-				num2 = (float)(100 * countGameTotalHit.Value) / (1f * (float)countGameTotalShoot.Value);
-			}
-			num2 = (float)Math.Round(num2, 2);
-			profileView.GameAccuracy = num2.ToString();
-			profileView.GameLikes = countLikes.Value.ToString();
-			profileView.WaveCountLabel = PlayerPrefs.GetInt(Defs.WavesSurvivedMaxS, 0).ToString();
-			profileView.KilledCountLabel = PlayerPrefs.GetInt(Defs.KilledZombiesMaxSett, 0).ToString();
-			profileView.SurvivalScoreLabel = PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0).ToString();
-			profileView.Box1StarsLabel = InitializeStarCountLabelForBox(0);
-			profileView.Box2StarsLabel = InitializeStarCountLabelForBox(1);
-			profileView.Box3StarsLabel = InitializeStarCountLabelForBox(2);
-			profileView.SecretCoinsLabel = InitializeSecretBonusCountLabel(VirtualCurrencyBonusType.Coin);
-			profileView.SecretGemsLabel = InitializeSecretBonusCountLabel(VirtualCurrencyBonusType.Gem);
-			if (updateWeapon && WeaponManager.sharedManager != null)
-			{
-				Weapon[] array = WeaponManager.sharedManager.playerWeapons.OfType<Weapon>().ToArray();
-				if (array.Length > 0)
-				{
-					_003CRefresh_003Ec__AnonStorey2CF _003CRefresh_003Ec__AnonStorey2CF = new _003CRefresh_003Ec__AnonStorey2CF();
-					_003CRefresh_003Ec__AnonStorey2CF.desiredPrefabName = null;
-					if (!string.IsNullOrEmpty(DesiredWeaponTag))
-					{
-						ItemRecord byTag = ItemDb.GetByTag(DesiredWeaponTag);
-						if (byTag != null)
-						{
-							_003CRefresh_003Ec__AnonStorey2CF.desiredPrefabName = byTag.PrefabName;
-						}
-					}
-					if (!string.IsNullOrEmpty(_003CRefresh_003Ec__AnonStorey2CF.desiredPrefabName) && array.Any(_003CRefresh_003Ec__AnonStorey2CF._003C_003Em__39A))
-					{
-						profileView.SetWeaponAndSkin(DesiredWeaponTag, false);
-					}
-					else
-					{
-						System.Random random = new System.Random(Time.frameCount);
-						int num3 = random.Next(array.Length);
-						Weapon weapon = array[num3];
-						profileView.SetWeaponAndSkin(ItemDb.GetByPrefabName(weapon.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag, false);
-					}
-				}
-				else
-				{
-					profileView.SetWeaponAndSkin("Knife", false);
-				}
-			}
-			if (Storager.getString(Defs.HatEquppedSN, false) != Defs.HatNoneEqupped)
-			{
-				profileView.UpdateHat(Storager.getString(Defs.HatEquppedSN, false));
-			}
-			else
-			{
-				profileView.RemoveHat();
-			}
-			if (Storager.getString("MaskEquippedSN", false) != "MaskNoneEquipped")
-			{
-				profileView.UpdateMask(Storager.getString("MaskEquippedSN", false));
-			}
-			else
-			{
-				profileView.RemoveMask();
-			}
-			if (Storager.getString(Defs.BootsEquppedSN, false) != Defs.BootsNoneEqupped)
-			{
-				profileView.UpdateBoots(Storager.getString(Defs.BootsEquppedSN, false));
-			}
-			else
-			{
-				profileView.RemoveBoots();
-			}
-			if (Storager.getString(Defs.ArmorNewEquppedSN, false) != Defs.ArmorNoneEqupped)
-			{
-				profileView.UpdateArmor(Storager.getString(Defs.ArmorNewEquppedSN, false));
-			}
-			else
-			{
-				profileView.RemoveArmor();
-			}
-			if (Storager.getString(Defs.CapeEquppedSN, false) != Defs.CapeNoneEqupped)
-			{
-				profileView.UpdateCape(Storager.getString(Defs.CapeEquppedSN, false));
-			}
-			else
-			{
-				profileView.RemoveCape();
-			}
-			if (FriendsController.sharedController != null)
-			{
-				profileView.SetClanLogo(FriendsController.sharedController.clanLogo ?? string.Empty);
-			}
-			else
-			{
-				profileView.SetClanLogo(string.Empty);
-			}
-		}
-		_idleTimeStart = Time.realtimeSinceStartup;
-	}
-
-	private void OnEnable()
-	{
-		Refresh();
-	}
-
-	private void Update()
-	{
-		EventHandler escapePressed = this.EscapePressed;
-		if (_escapePressed && escapePressed != null)
-		{
-			escapePressed(this, EventArgs.Empty);
-			_escapePressed = false;
-		}
-		if (Time.realtimeSinceStartup - _idleTimeStart > ShopNGUIController.IdleTimeoutPers)
-		{
-			ReturnCharacterToInitialState();
-		}
-	}
-
-	private void LateUpdate()
-	{
-		if (!(profileView != null) || !InterfaceEnabled || HOTween.IsTweening(profileView.characterView.character))
-		{
-			return;
-		}
-		float num = -120f;
-		num *= ((BuildSettings.BuildTargetPlatform != RuntimePlatform.Android) ? 0.5f : 2f);
-		if (Input.touchCount > 0)
-		{
-			if (!_touchZone.HasValue)
-			{
-				_touchZone = new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height);
-			}
-			Touch touch = Input.GetTouch(0);
-			if (touch.phase == TouchPhase.Moved && _touchZone.Value.Contains(touch.position))
-			{
-				_idleTimeStart = Time.realtimeSinceStartup;
-				profileView.characterView.character.Rotate(Vector3.up, touch.deltaPosition.x * num * 0.5f * (Time.realtimeSinceStartup - _lastTime));
-			}
-		}
-		else if (Application.isEditor)
-		{
-			float num2 = Input.GetAxis("Mouse ScrollWheel") * 30f * num * (Time.realtimeSinceStartup - _lastTime);
-			profileView.characterView.character.Rotate(Vector3.up, num2);
-			if (num2 != 0f)
-			{
-				_idleTimeStart = Time.realtimeSinceStartup;
-			}
-		}
-		_lastTime = Time.realtimeSinceStartup;
-	}
-
-	private void HandleEscape()
-	{
-		if (!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled)
-		{
-			if (InfoWindowController.IsActive)
-			{
-				InfoWindowController.HideCurrentWindow();
-			}
-			else
-			{
-				_escapePressed = true;
-			}
-		}
-	}
-
-	private void ReturnCharacterToInitialState()
-	{
-		if (profileView == null)
-		{
-			Debug.LogWarning("profileView == null");
-			return;
-		}
-		int num = HOTween.Kill(profileView.characterView.character);
-		if (num > 0 && Application.isEditor)
-		{
-			Debug.LogWarning("Tweens killed: " + num);
-		}
-		_idleTimeStart = Time.realtimeSinceStartup;
-		HOTween.To(profileView.characterView.character, 0.5f, new TweenParms().Prop("localRotation", new PlugQuaternion(_initialLocalRotation)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear)
-			.OnComplete(_003CReturnCharacterToInitialState_003Em__39B));
-	}
-
-	private string InitializeStarCountLabelForBox(int boxIndex)
-	{
-		if (boxIndex >= LevelBox.campaignBoxes.Count)
-		{
-			Debug.LogWarning("Box index is out of range:    " + boxIndex);
-			return string.Empty;
-		}
-		LevelBox levelBox = LevelBox.campaignBoxes[boxIndex];
-		List<CampaignLevel> levels = levelBox.levels;
-		Dictionary<string, int> value;
-		if (!CampaignProgress.boxesLevelsAndStars.TryGetValue(levelBox.name, out value))
-		{
-			Debug.LogWarning("ProfileController: Box not found in dictionary: " + levelBox.name);
-			value = new Dictionary<string, int>();
-		}
-		int num = 0;
-		for (int i = 0; i != levels.Count; i++)
-		{
-			string sceneName = levels[i].sceneName;
-			int value2 = 0;
-			value.TryGetValue(sceneName, out value2);
-			num += value2;
-		}
-		return string.Concat(num, '/', levels.Count * 3);
 	}
 
 	private string InitializeSecretBonusCountLabel(VirtualCurrencyBonusType bonusType)
@@ -676,83 +404,65 @@ internal sealed class ProfileController : MonoBehaviour
 		return string.Concat(num, '/', 20);
 	}
 
-	private void HandleNicknameInput(object sender, ProfileView.InputEventArgs e)
+	private string InitializeStarCountLabelForBox(int boxIndex)
 	{
-		SaveNamePlayer(e.Input);
+		Dictionary<string, int> strs;
+		if (boxIndex >= LevelBox.campaignBoxes.Count)
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("Box index is out of range:    ", boxIndex));
+			return string.Empty;
+		}
+		LevelBox item = LevelBox.campaignBoxes[boxIndex];
+		List<CampaignLevel> campaignLevels = item.levels;
+		if (!CampaignProgress.boxesLevelsAndStars.TryGetValue(item.name, out strs))
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("ProfileController: Box not found in dictionary: ", item.name));
+			strs = new Dictionary<string, int>();
+		}
+		int num = 0;
+		for (int i = 0; i != campaignLevels.Count; i++)
+		{
+			string str = campaignLevels[i].sceneName;
+			int num1 = 0;
+			strs.TryGetValue(str, out num1);
+			num += num1;
+		}
+		return string.Concat(num, '/', campaignLevels.Count * 3);
 	}
 
-	public void SaveNamePlayer(string namePlayer)
+	private void LateUpdate()
 	{
-		namePlayer = FilterBadWorld.FilterString(namePlayer);
-		if (string.IsNullOrEmpty(namePlayer) || namePlayer.Trim() == string.Empty)
+		if (this.profileView != null && this.InterfaceEnabled && !HOTween.IsTweening(this.profileView.characterView.character))
 		{
-			namePlayer = defaultPlayerName;
-			profileView.nicknameInput.label.text = namePlayer;
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log("Saving new name:    " + namePlayer);
-		}
-		PlayerPrefs.SetString("NamePlayer", namePlayer);
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myTable != null)
-		{
-			NetworkStartTable component = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>();
-			if (component != null)
+			float single = -120f;
+			single = single * (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android ? 0.5f : 2f);
+			if (Input.touchCount > 0)
 			{
-				component.SetNewNick();
+				if (!this._touchZone.HasValue)
+				{
+					this._touchZone = new Rect?(new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height));
+				}
+				Touch touch = Input.GetTouch(0);
+				if (touch.phase == TouchPhase.Moved && this._touchZone.Value.Contains(touch.position))
+				{
+					this._idleTimeStart = Time.realtimeSinceStartup;
+					Transform transforms = this.profileView.characterView.character;
+					Vector3 vector3 = Vector3.up;
+					Vector2 vector2 = touch.deltaPosition;
+					transforms.Rotate(vector3, vector2.x * single * 0.5f * (Time.realtimeSinceStartup - this._lastTime));
+				}
 			}
+			else if (Application.isEditor)
+			{
+				float axis = Input.GetAxis("Mouse ScrollWheel") * 30f * single * (Time.realtimeSinceStartup - this._lastTime);
+				this.profileView.characterView.character.Rotate(Vector3.up, axis);
+				if (axis != 0f)
+				{
+					this._idleTimeStart = Time.realtimeSinceStartup;
+				}
+			}
+			this._lastTime = Time.realtimeSinceStartup;
 		}
-		_dirty = true;
-		_isNicknameSubmit = true;
-	}
-
-	private void HandleBackRequest(object sender, EventArgs e)
-	{
-		if (_dirty && FriendsController.sharedController != null)
-		{
-			FriendsController.sharedController.SendOurData();
-			_dirty = false;
-		}
-		Action action = _exitCallbacks.FirstOrDefault();
-		if (action != null)
-		{
-			action();
-		}
-		StartCoroutine(ExitCallbacksCoroutine());
-	}
-
-	private IEnumerator ExitCallbacksCoroutine()
-	{
-		for (int i = 1; i < _exitCallbacks.Length; i++)
-		{
-			Action exitCallback = _exitCallbacks[i];
-			exitCallback();
-			yield return null;
-		}
-		_exitCallbacks = new Action[0];
-		InterfaceEnabled = false;
-	}
-
-	private void OnFocusNickname()
-	{
-		_isNicknameSubmit = false;
-	}
-
-	private void onFocusLostNickname()
-	{
-		if (!_isNicknameSubmit && profileView != null)
-		{
-			profileView.nicknameInput.value = GetPlayerNameOrDefault();
-		}
-	}
-
-	public static void ResaveStatisticToKeychain()
-	{
-		Storager.setInt("keyGameTotalKills", countGameTotalKills.Value, false);
-		Storager.setInt("keyGameDeath", countGameTotalDeaths.Value, false);
-		Storager.setInt("keyGameShoot", countGameTotalShoot.Value, false);
-		Storager.setInt("keyGameHit", countGameTotalHit.Value, false);
-		Storager.setInt("keyCountLikes", countLikes.Value, false);
 	}
 
 	public static void LoadStatisticFromKeychain()
@@ -773,87 +483,439 @@ internal sealed class ProfileController : MonoBehaviour
 		{
 			Storager.setInt("keyGameHit", 0, false);
 		}
-		countGameTotalKills.Value = Storager.getInt("keyGameTotalKills", false);
-		countGameTotalDeaths.Value = Storager.getInt("keyGameDeath", false);
-		countGameTotalShoot.Value = Storager.getInt("keyGameShoot", false);
-		countGameTotalHit.Value = Storager.getInt("keyGameHit", false);
-		countLikes.Value = Storager.getInt("keyCountLikes", false);
+		ProfileController.countGameTotalKills.Value = Storager.getInt("keyGameTotalKills", false);
+		ProfileController.countGameTotalDeaths.Value = Storager.getInt("keyGameDeath", false);
+		ProfileController.countGameTotalShoot.Value = Storager.getInt("keyGameShoot", false);
+		ProfileController.countGameTotalHit.Value = Storager.getInt("keyGameHit", false);
+		ProfileController.countLikes.Value = Storager.getInt("keyCountLikes", false);
 	}
 
-	public static void OnGameTotalKills()
+	public static int MaxLevelTir(int curTir)
 	{
-		countGameTotalKills.Value++;
+		if (curTir < 0 || curTir >= (int)ExpController.LevelsForTiers.Length)
+		{
+			return -1;
+		}
+		if (curTir == (int)ExpController.LevelsForTiers.Length - 1)
+		{
+			return ExperienceController.maxLevel;
+		}
+		return ExpController.LevelsForTiers[curTir + 1];
+	}
+
+	public static int MinLevelTir(int curTir)
+	{
+		if (curTir < 0 || curTir >= (int)ExpController.LevelsForTiers.Length)
+		{
+			return -1;
+		}
+		return ExpController.LevelsForTiers[curTir];
+	}
+
+	private void OnDestroy()
+	{
+		FriendsController.OurInfoUpdated -= new Action(this.HandleOurInfoUpdated);
+		if (this.profileView != null)
+		{
+			this.profileView.NicknameInput -= new EventHandler<ProfileView.InputEventArgs>(this.HandleNicknameInput);
+			this.profileView.nicknameInput.onFocus -= new UIInputRilisoft.OnFocus(this.OnFocusNickname);
+			this.profileView.nicknameInput.onFocusLost -= new UIInputRilisoft.OnFocusLost(this.onFocusLostNickname);
+		}
+	}
+
+	private void OnEnable()
+	{
+		this.Refresh(true);
+	}
+
+	private void onFocusLostNickname()
+	{
+		if (!this._isNicknameSubmit && this.profileView != null)
+		{
+			this.profileView.nicknameInput.@value = ProfileController.GetPlayerNameOrDefault();
+		}
+	}
+
+	private void OnFocusNickname()
+	{
+		this._isNicknameSubmit = false;
 	}
 
 	public static void OnGameDeath()
 	{
-		countGameTotalDeaths.Value++;
-	}
-
-	public static void OnGameShoot()
-	{
-		countGameTotalShoot.Value++;
+		ref SaltedInt value = ref ProfileController.countGameTotalDeaths;
+		value.Value = value.Value + 1;
 	}
 
 	public static void OnGameHit()
 	{
-		countGameTotalHit.Value++;
+		ref SaltedInt value = ref ProfileController.countGameTotalHit;
+		value.Value = value.Value + 1;
+	}
+
+	public static void OnGameShoot()
+	{
+		ref SaltedInt value = ref ProfileController.countGameTotalShoot;
+		value.Value = value.Value + 1;
+	}
+
+	public static void OnGameTotalKills()
+	{
+		ref SaltedInt value = ref ProfileController.countGameTotalKills;
+		value.Value = value.Value + 1;
 	}
 
 	public static void OnGetLike()
 	{
-		countLikes.Value++;
+		ref SaltedInt value = ref ProfileController.countLikes;
+		value.Value = value.Value + 1;
 	}
 
-	private static string GetRandomName()
+	private void Refresh(bool updateWeapon = true)
 	{
-		if (DefaultKeyNames != null && DefaultKeyNames.Length > 0)
+		object obj;
+		Dictionary<string, object> item;
+		if (this.profileView != null)
 		{
-			int num = UnityEngine.Random.Range(0, DefaultKeyNames.Length);
-			return LocalizationStore.Get(DefaultKeyNames[num]);
+			this.profileView.Nickname = ProfileController.GetPlayerNameOrDefault();
+			if (!(FriendsController.sharedController != null) || FriendsController.sharedController.ourInfo == null || !FriendsController.sharedController.ourInfo.ContainsKey("wincount") || FriendsController.sharedController.ourInfo["wincount"] == null)
+			{
+				item = null;
+			}
+			else
+			{
+				item = FriendsController.sharedController.ourInfo["wincount"] as Dictionary<string, object>;
+			}
+			Dictionary<string, object> strs = item;
+			this.profileView.CheckBtnCopy();
+			ProfileView str = this.profileView;
+			int num = Storager.getInt(Defs.RatingDeathmatch, false);
+			str.DeathmatchWinCount = num.ToString();
+			ProfileView profileView = this.profileView;
+			int num1 = Storager.getInt(Defs.RatingTeamBattle, false);
+			profileView.TeamBattleWinCount = num1.ToString();
+			ProfileView str1 = this.profileView;
+			int num2 = Storager.getInt(Defs.RatingHunger, false);
+			str1.DeadlyGamesWinCount = num2.ToString();
+			ProfileView profileView1 = this.profileView;
+			int num3 = Storager.getInt(Defs.RatingFlag, false);
+			profileView1.FlagCaptureWinCount = num3.ToString();
+			ProfileView str2 = this.profileView;
+			int num4 = Storager.getInt(Defs.RatingCapturePoint, false);
+			str2.CapturePointWinCount = num4.ToString();
+			ProfileView profileView2 = this.profileView;
+			int num5 = Storager.getInt(Defs.RatingDeathmatch, false) + Storager.getInt(Defs.RatingTeamBattle, false) + Storager.getInt(Defs.RatingHunger, false) + Storager.getInt(Defs.RatingFlag, false) + Storager.getInt(Defs.RatingCapturePoint, false);
+			profileView2.TotalWinCount = num5.ToString();
+			this.profileView.PixelgunFriendsID = (!(FriendsController.sharedController != null) || FriendsController.sharedController.id == null ? string.Empty : FriendsController.sharedController.id);
+			this.profileView.TotalWeeklyWinCount = ((strs == null || !strs.TryGetValue("weekly", out obj) ? (long)0 : (long)obj)).ToString();
+			ProfileView str3 = this.profileView;
+			int num6 = Storager.getInt(Defs.COOPScore, false);
+			str3.CoopTimeSurvivalPointCount = num6.ToString();
+			this.profileView.GameTotalKills = ProfileController.countGameTotalKills.Value.ToString();
+			float single = 0f;
+			single = (ProfileController.countGameTotalDeaths.Value != 0 ? (float)ProfileController.countGameTotalKills.Value / (1f * (float)ProfileController.countGameTotalDeaths.Value) : (float)ProfileController.countGameTotalKills.Value);
+			single = (float)Math.Round((double)single, 2);
+			this.profileView.GameKillrate = single.ToString();
+			float value = 0f;
+			if (ProfileController.countGameTotalHit.Value != 0)
+			{
+				value = (float)(100 * ProfileController.countGameTotalHit.Value) / (1f * (float)ProfileController.countGameTotalShoot.Value);
+			}
+			value = (float)Math.Round((double)value, 2);
+			this.profileView.GameAccuracy = value.ToString();
+			this.profileView.GameLikes = ProfileController.countLikes.Value.ToString();
+			ProfileView profileView3 = this.profileView;
+			int num7 = PlayerPrefs.GetInt(Defs.WavesSurvivedMaxS, 0);
+			profileView3.WaveCountLabel = num7.ToString();
+			ProfileView str4 = this.profileView;
+			int num8 = PlayerPrefs.GetInt(Defs.KilledZombiesMaxSett, 0);
+			str4.KilledCountLabel = num8.ToString();
+			ProfileView profileView4 = this.profileView;
+			int num9 = PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0);
+			profileView4.SurvivalScoreLabel = num9.ToString();
+			this.profileView.Box1StarsLabel = this.InitializeStarCountLabelForBox(0);
+			this.profileView.Box2StarsLabel = this.InitializeStarCountLabelForBox(1);
+			this.profileView.Box3StarsLabel = this.InitializeStarCountLabelForBox(2);
+			this.profileView.SecretCoinsLabel = this.InitializeSecretBonusCountLabel(VirtualCurrencyBonusType.Coin);
+			this.profileView.SecretGemsLabel = this.InitializeSecretBonusCountLabel(VirtualCurrencyBonusType.Gem);
+			if (updateWeapon && WeaponManager.sharedManager != null)
+			{
+				Weapon[] array = WeaponManager.sharedManager.playerWeapons.OfType<Weapon>().ToArray<Weapon>();
+				if ((int)array.Length <= 0)
+				{
+					this.profileView.SetWeaponAndSkin("Knife", false);
+				}
+				else
+				{
+					string prefabName = null;
+					if (!string.IsNullOrEmpty(this.DesiredWeaponTag))
+					{
+						ItemRecord byTag = ItemDb.GetByTag(this.DesiredWeaponTag);
+						if (byTag != null)
+						{
+							prefabName = byTag.PrefabName;
+						}
+					}
+					if (string.IsNullOrEmpty(prefabName) || !array.Any<Weapon>((Weapon w) => w.weaponPrefab.name.Replace("(Clone)", string.Empty) == prefabName))
+					{
+						System.Random random = new System.Random(Time.frameCount);
+						Weapon weapon = array[random.Next((int)array.Length)];
+						this.profileView.SetWeaponAndSkin(ItemDb.GetByPrefabName(weapon.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag, false);
+					}
+					else
+					{
+						this.profileView.SetWeaponAndSkin(this.DesiredWeaponTag, false);
+					}
+				}
+			}
+			if (Storager.getString(Defs.HatEquppedSN, false) == Defs.HatNoneEqupped)
+			{
+				this.profileView.RemoveHat();
+			}
+			else
+			{
+				this.profileView.UpdateHat(Storager.getString(Defs.HatEquppedSN, false));
+			}
+			if (Storager.getString("MaskEquippedSN", false) == "MaskNoneEquipped")
+			{
+				this.profileView.RemoveMask();
+			}
+			else
+			{
+				this.profileView.UpdateMask(Storager.getString("MaskEquippedSN", false));
+			}
+			if (Storager.getString(Defs.BootsEquppedSN, false) == Defs.BootsNoneEqupped)
+			{
+				this.profileView.RemoveBoots();
+			}
+			else
+			{
+				this.profileView.UpdateBoots(Storager.getString(Defs.BootsEquppedSN, false));
+			}
+			if (Storager.getString(Defs.ArmorNewEquppedSN, false) == Defs.ArmorNoneEqupped)
+			{
+				this.profileView.RemoveArmor();
+			}
+			else
+			{
+				this.profileView.UpdateArmor(Storager.getString(Defs.ArmorNewEquppedSN, false));
+			}
+			if (Storager.getString(Defs.CapeEquppedSN, false) == Defs.CapeNoneEqupped)
+			{
+				this.profileView.RemoveCape();
+			}
+			else
+			{
+				this.profileView.UpdateCape(Storager.getString(Defs.CapeEquppedSN, false));
+			}
+			if (FriendsController.sharedController == null)
+			{
+				this.profileView.SetClanLogo(string.Empty);
+			}
+			else
+			{
+				this.profileView.SetClanLogo(FriendsController.sharedController.clanLogo ?? string.Empty);
+			}
 		}
-		return "Player";
+		this._idleTimeStart = Time.realtimeSinceStartup;
 	}
 
-	public static string GetPlayerNameOrDefault()
+	public static void ResaveStatisticToKeychain()
 	{
-		if (PlayerPrefs.HasKey("NamePlayer"))
-		{
-			string @string = PlayerPrefs.GetString("NamePlayer");
-			if (@string != null)
-			{
-				return @string;
-			}
-		}
-		string text = PlayerPrefs.GetString("SocialName", string.Empty);
-		if (Social.localUser != null && Social.localUser.authenticated && !string.IsNullOrEmpty(Social.localUser.userName))
-		{
-			if (!text.Equals(Social.localUser.userName))
-			{
-				text = Social.localUser.userName;
-				PlayerPrefs.SetString("SocialName", text);
-			}
-			return text;
-		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon && GameCircleSocial.Instance.localUser.authenticated && !string.IsNullOrEmpty(GameCircleSocial.Instance.localUser.userName))
-		{
-			if (!text.Equals(GameCircleSocial.Instance.localUser.userName))
-			{
-				text = GameCircleSocial.Instance.localUser.userName;
-				PlayerPrefs.SetString("SocialName", text);
-			}
-			return text;
-		}
-		if (!string.IsNullOrEmpty(text))
-		{
-			return text;
-		}
-		return defaultPlayerName;
+		Storager.setInt("keyGameTotalKills", ProfileController.countGameTotalKills.Value, false);
+		Storager.setInt("keyGameDeath", ProfileController.countGameTotalDeaths.Value, false);
+		Storager.setInt("keyGameShoot", ProfileController.countGameTotalShoot.Value, false);
+		Storager.setInt("keyGameHit", ProfileController.countGameTotalHit.Value, false);
+		Storager.setInt("keyCountLikes", ProfileController.countLikes.Value, false);
 	}
 
-	[CompilerGenerated]
-	private void _003CReturnCharacterToInitialState_003Em__39B()
+	private void ReturnCharacterToInitialState()
 	{
-		_idleTimeStart = Time.realtimeSinceStartup;
+		if (this.profileView == null)
+		{
+			UnityEngine.Debug.LogWarning("profileView == null");
+			return;
+		}
+		int num = HOTween.Kill(this.profileView.characterView.character);
+		if (num > 0 && Application.isEditor)
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("Tweens killed: ", num));
+		}
+		this._idleTimeStart = Time.realtimeSinceStartup;
+		HOTween.To(this.profileView.characterView.character, 0.5f, (new TweenParms()).Prop("localRotation", new PlugQuaternion(this._initialLocalRotation)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear).OnComplete(() => this._idleTimeStart = Time.realtimeSinceStartup));
+	}
+
+	public void SaveNamePlayer(string namePlayer)
+	{
+		namePlayer = FilterBadWorld.FilterString(namePlayer);
+		if (string.IsNullOrEmpty(namePlayer) || namePlayer.Trim() == string.Empty)
+		{
+			namePlayer = ProfileController.defaultPlayerName;
+			this.profileView.nicknameInput.label.text = namePlayer;
+		}
+		if (Application.isEditor)
+		{
+			UnityEngine.Debug.Log(string.Concat("Saving new name:    ", namePlayer));
+		}
+		PlayerPrefs.SetString("NamePlayer", namePlayer);
+		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myTable != null)
+		{
+			NetworkStartTable component = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>();
+			if (component != null)
+			{
+				component.SetNewNick();
+			}
+		}
+		this._dirty = true;
+		this._isNicknameSubmit = true;
+	}
+
+	public void SetStaticticTab(StatisticHUD.TypeOpenTab tab)
+	{
+		StatisticHUD componentInChildren = base.GetComponentInChildren<StatisticHUD>(true);
+		if (componentInChildren != null)
+		{
+			componentInChildren.OpenTab(tab);
+		}
+	}
+
+	public void ShowInterface(params Action[] exitCallbacks)
+	{
+		FriendsController.sharedController.GetOurWins();
+		this.InterfaceEnabled = true;
+		this._exitCallbacks = exitCallbacks ?? new Action[0];
+	}
+
+	private void Start()
+	{
+		this.BackRequested += new EventHandler(this.HandleBackRequest);
+		if (this.profileView != null)
+		{
+			this.profileView.nicknameInput.onFocus += new UIInputRilisoft.OnFocus(this.OnFocusNickname);
+			this.profileView.nicknameInput.onFocusLost += new UIInputRilisoft.OnFocusLost(this.onFocusLostNickname);
+		}
+		if (this.profileView != null)
+		{
+			this.profileView.Nickname = ProfileController.GetPlayerNameOrDefault();
+			this.profileView.NicknameInput += new EventHandler<ProfileView.InputEventArgs>(this.HandleNicknameInput);
+			this._initialLocalRotation = this.profileView.characterView.character.localRotation;
+			switch (BuildSettings.BuildTargetPlatform)
+			{
+				case RuntimePlatform.IPhonePlayer:
+				{
+					this.UpdateButton(this.profileView.achievementsButton, "gamecntr");
+					this.UpdateButton(this.profileView.leaderboardsButton, "gamecntr");
+					break;
+				}
+				case RuntimePlatform.PS3:
+				case RuntimePlatform.XBOX360:
+				{
+					this.profileView.achievementsButton.gameObject.SetActive(false);
+					break;
+				}
+				case RuntimePlatform.Android:
+				{
+					if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+					{
+						this.UpdateButton(this.profileView.achievementsButton, "google");
+						this.UpdateButton(this.profileView.leaderboardsButton, "google");
+					}
+					else if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+					{
+						this.profileView.achievementsButton.gameObject.SetActive(false);
+					}
+					else
+					{
+						this.UpdateButton(this.profileView.achievementsButton, "amazon");
+						this.UpdateButton(this.profileView.leaderboardsButton, "amazon");
+					}
+					break;
+				}
+				default:
+				{
+					goto case RuntimePlatform.XBOX360;
+				}
+			}
+		}
+		this.InterfaceEnabled = false;
+		FriendsController.OurInfoUpdated += new Action(this.HandleOurInfoUpdated);
+	}
+
+	private void Update()
+	{
+		EventHandler escapePressed = this.EscapePressed;
+		if (this._escapePressed && escapePressed != null)
+		{
+			escapePressed(this, EventArgs.Empty);
+			this._escapePressed = false;
+		}
+		if (Time.realtimeSinceStartup - this._idleTimeStart > ShopNGUIController.IdleTimeoutPers)
+		{
+			this.ReturnCharacterToInitialState();
+		}
+	}
+
+	private void UpdateButton(UIButton button, string spriteName)
+	{
+		if (button == null)
+		{
+			return;
+		}
+		button.normalSprite = spriteName;
+		button.pressedSprite = string.Concat(spriteName, "_n");
+		button.hoverSprite = spriteName;
+		button.disabledSprite = spriteName;
+	}
+
+	public event EventHandler BackRequested
+	{
+		add
+		{
+			if (this.profileView != null)
+			{
+				this.profileView.BackButtonPressed += value;
+			}
+			this.EscapePressed += value;
+		}
+		remove
+		{
+			if (this.profileView != null)
+			{
+				this.profileView.BackButtonPressed -= value;
+			}
+			this.EscapePressed -= value;
+		}
+	}
+
+	private event EventHandler EscapePressed
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.EscapePressed += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.EscapePressed -= value;
+		}
+	}
+
+	public event EventHandler<ProfileView.InputEventArgs> NicknameInput
+	{
+		add
+		{
+			if (this.profileView != null)
+			{
+				this.profileView.NicknameInput += value;
+			}
+		}
+		remove
+		{
+			if (this.profileView != null)
+			{
+				this.profileView.NicknameInput -= value;
+			}
+		}
 	}
 }

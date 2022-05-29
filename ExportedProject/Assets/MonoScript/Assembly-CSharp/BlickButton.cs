@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BlickButton : MonoBehaviour
@@ -17,41 +21,28 @@ public class BlickButton : MonoBehaviour
 
 	public int countFrame;
 
-	private void Start()
+	public BlickButton()
 	{
-		blickSprite.gameObject.SetActive(false);
-		StartCoroutine(Blink());
 	}
 
+	[DebuggerHidden]
 	private IEnumerator Blink()
 	{
-		yield return StartCoroutine(MyWaitForSeconds(firstSdvig));
-		while (true)
-		{
-			if (baseButton.state == UIButtonColor.State.Disabled)
-			{
-				yield return null;
-				continue;
-			}
-			yield return StartCoroutine(MyWaitForSeconds(blickPeriod));
-			blickSprite.gameObject.SetActive(true);
-			for (int i = 0; i < countFrame; i++)
-			{
-				blickSprite.spriteName = baseNameSprite + i;
-				yield return StartCoroutine(MyWaitForSeconds(blickSpeed));
-			}
-			blickSprite.gameObject.SetActive(false);
-		}
+		BlickButton.u003cBlinku003ec__IteratorA variable = null;
+		return variable;
 	}
 
+	[DebuggerHidden]
 	public IEnumerator MyWaitForSeconds(float tm)
 	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
+		BlickButton.u003cMyWaitForSecondsu003ec__IteratorB variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		this.blickSprite.gameObject.SetActive(false);
+		base.StartCoroutine(this.Blink());
 	}
 
 	private void Update()

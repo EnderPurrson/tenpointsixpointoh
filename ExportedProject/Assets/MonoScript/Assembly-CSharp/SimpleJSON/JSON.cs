@@ -1,3 +1,5 @@
+using System;
+
 namespace SimpleJSON
 {
 	public static class JSON

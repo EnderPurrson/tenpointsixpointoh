@@ -1,4 +1,5 @@
 using Photon;
+using System;
 using UnityEngine;
 
 public class SettingBonus : Photon.MonoBehaviour
@@ -7,20 +8,24 @@ public class SettingBonus : Photon.MonoBehaviour
 
 	public int numberSpawnZone = -1;
 
-	private void Start()
+	public SettingBonus()
 	{
 	}
 
 	public void SetNumberSpawnZone(int _number)
 	{
-		base.photonView.RPC("SynchNamberSpawnZoneRPC", PhotonTargets.AllBuffered, _number);
+		base.photonView.RPC("SynchNamberSpawnZoneRPC", PhotonTargets.AllBuffered, new object[] { _number });
 	}
 
-	[RPC]
+	private void Start()
+	{
+	}
+
 	[PunRPC]
+	[RPC]
 	public void SynchNamberSpawnZoneRPC(int _number)
 	{
-		numberSpawnZone = _number;
+		this.numberSpawnZone = _number;
 	}
 
 	private void Update()

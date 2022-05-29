@@ -1,3 +1,5 @@
+using System;
+
 namespace Rilisoft
 {
 	public struct SaltedLong
@@ -10,22 +12,21 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _salt ^ _saltedValue;
+				return this._salt ^ this._saltedValue;
 			}
 			set
 			{
-				_saltedValue = _salt ^ value;
+				this._saltedValue = this._salt ^ value;
 			}
 		}
 
 		public SaltedLong(long salt, long value)
 		{
-			_salt = salt;
-			_saltedValue = salt ^ value;
+			this._salt = salt;
+			this._saltedValue = salt ^ value;
 		}
 
-		public SaltedLong(long salt)
-			: this(salt, 0L)
+		public SaltedLong(long salt) : this(salt, (long)0)
 		{
 		}
 	}

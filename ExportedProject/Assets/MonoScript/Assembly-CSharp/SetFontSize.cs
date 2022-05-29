@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -5,31 +6,35 @@ public class SetFontSize : MonoBehaviour
 {
 	private UILabel myLabel;
 
-	private void Start()
+	public SetFontSize()
 	{
-		myLabel = GetComponent<UILabel>();
-		UpdateFontSize();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void UpdateFontSize()
-	{
-		if (myLabel != null)
-		{
-			myLabel.fontSize = myLabel.height;
-		}
 	}
 
 	private void OnEnable()
 	{
-		Invoke("UpdateFontSize", 0.05f);
+		base.Invoke("UpdateFontSize", 0.05f);
+	}
+
+	private void Start()
+	{
+		this.myLabel = base.GetComponent<UILabel>();
+		this.UpdateFontSize();
 	}
 
 	private void Update()
 	{
-		if (myLabel.fontSize != myLabel.height)
+		if (this.myLabel.fontSize != this.myLabel.height)
 		{
-			myLabel.fontSize = myLabel.height;
+			this.myLabel.fontSize = this.myLabel.height;
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void UpdateFontSize()
+	{
+		if (this.myLabel != null)
+		{
+			this.myLabel.fontSize = this.myLabel.height;
 		}
 	}
 }

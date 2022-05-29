@@ -5,44 +5,51 @@ public class AGSRequestScoreForPlayerResponse : AGSRequestScoreResponse
 {
 	public string playerId;
 
-	public new static AGSRequestScoreForPlayerResponse FromJSON(string json)
+	public AGSRequestScoreForPlayerResponse()
 	{
-		//Discarded unreachable code: IL_0162, IL_018f
+	}
+
+	public static new AGSRequestScoreForPlayerResponse FromJSON(string json)
+	{
+		AGSRequestScoreForPlayerResponse blankResponseWithError;
 		try
 		{
 			AGSRequestScoreForPlayerResponse aGSRequestScoreForPlayerResponse = new AGSRequestScoreForPlayerResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestScoreForPlayerResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestScoreForPlayerResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
-			aGSRequestScoreForPlayerResponse.leaderboardId = ((!hashtable.ContainsKey("leaderboardId")) ? string.Empty : hashtable["leaderboardId"].ToString());
-			aGSRequestScoreForPlayerResponse.rank = ((!hashtable.ContainsKey("rank")) ? (-1) : int.Parse(hashtable["rank"].ToString()));
-			aGSRequestScoreForPlayerResponse.score = ((!hashtable.ContainsKey("score")) ? (-1) : long.Parse(hashtable["score"].ToString()));
-			aGSRequestScoreForPlayerResponse.scope = (LeaderboardScope)(int)Enum.Parse(typeof(LeaderboardScope), hashtable["scope"].ToString());
-			aGSRequestScoreForPlayerResponse.playerId = ((!hashtable.Contains("playerId")) ? string.Empty : hashtable["playerId"].ToString());
-			return aGSRequestScoreForPlayerResponse;
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestScoreForPlayerResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestScoreForPlayerResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
+			aGSRequestScoreForPlayerResponse.leaderboardId = (!hashtables.ContainsKey("leaderboardId") ? string.Empty : hashtables["leaderboardId"].ToString());
+			aGSRequestScoreForPlayerResponse.rank = (!hashtables.ContainsKey("rank") ? -1 : int.Parse(hashtables["rank"].ToString()));
+			aGSRequestScoreForPlayerResponse.score = (!hashtables.ContainsKey("score") ? (long)-1 : long.Parse(hashtables["score"].ToString()));
+			aGSRequestScoreForPlayerResponse.scope = (LeaderboardScope)((int)Enum.Parse(typeof(LeaderboardScope), hashtables["scope"].ToString()));
+			aGSRequestScoreForPlayerResponse.playerId = (!hashtables.Contains("playerId") ? string.Empty : hashtables["playerId"].ToString());
+			blankResponseWithError = aGSRequestScoreForPlayerResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, string.Empty);
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestScoreForPlayerResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, string.Empty, LeaderboardScope.GlobalAllTime, 0);
 		}
+		return blankResponseWithError;
 	}
 
-	public static AGSRequestScoreForPlayerResponse GetBlankResponseWithError(string error, string leaderboardId = "", string playerId = "", LeaderboardScope scope = LeaderboardScope.GlobalAllTime, int userData = 0)
+	public static AGSRequestScoreForPlayerResponse GetBlankResponseWithError(string error, string leaderboardId = "", string playerId = "", LeaderboardScope scope = 0, int userData = 0)
 	{
-		AGSRequestScoreForPlayerResponse aGSRequestScoreForPlayerResponse = new AGSRequestScoreForPlayerResponse();
-		aGSRequestScoreForPlayerResponse.error = error;
-		aGSRequestScoreForPlayerResponse.playerId = playerId;
-		aGSRequestScoreForPlayerResponse.userData = userData;
-		aGSRequestScoreForPlayerResponse.leaderboardId = leaderboardId;
-		aGSRequestScoreForPlayerResponse.scope = scope;
-		aGSRequestScoreForPlayerResponse.rank = -1;
-		aGSRequestScoreForPlayerResponse.score = -1L;
+		AGSRequestScoreForPlayerResponse aGSRequestScoreForPlayerResponse = new AGSRequestScoreForPlayerResponse()
+		{
+			error = error,
+			playerId = playerId,
+			userData = userData,
+			leaderboardId = leaderboardId,
+			scope = scope,
+			rank = -1,
+			score = (long)-1
+		};
 		return aGSRequestScoreForPlayerResponse;
 	}
 
 	public static AGSRequestScoreForPlayerResponse GetPlatformNotSupportedResponse(string leaderboardId, string playerId, LeaderboardScope scope, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, playerId, scope, userData);
+		return AGSRequestScoreForPlayerResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, playerId, scope, userData);
 	}
 }

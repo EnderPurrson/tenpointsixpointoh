@@ -1,90 +1,80 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RilisoftBot
 {
 	public class FiringShotBot : BaseShootingBot
 	{
-		[Range(0.1f, 1f)]
 		[Header("Firing settings")]
+		[Range(0.1f, 1f)]
 		public float chanceMakeDamage = 1f;
 
 		public float timeShowFireEffect = 2f;
 
 		private bool _isEffectFireShow;
 
-		protected override void InitializeShotsPool(int sizePool)
+		public FiringShotBot()
 		{
-			base.InitializeShotsPool(sizePool);
-			Transform parent = ((firePoints.Length != 1) ? base.transform : firePoints[0]);
-			for (int i = 0; i < bulletsEffectPool.Length; i++)
+		}
+
+		protected override void Fire(Transform pointFire, GameObject target)
+		{
+			ParticleSystem fireShotEffectFromPool = this.GetFireShotEffectFromPool();
+			if ((int)this.firePoints.Length != 1)
 			{
-				bulletsEffectPool[i].transform.parent = parent;
-				bulletsEffectPool[i].transform.localPosition = Vector3.zero;
-				bulletsEffectPool[i].transform.rotation = Quaternion.identity;
-				bulletsEffectPool[i].GetComponent<ParticleSystem>().Stop();
+				base.StartCoroutine(this.ShowFireEffect(pointFire, fireShotEffectFromPool));
+			}
+			else
+			{
+				base.StartCoroutine(this.ShowFireEffect(fireShotEffectFromPool));
+			}
+			if (this.chanceMakeDamage >= UnityEngine.Random.@value)
+			{
+				base.MakeDamage(target.transform);
 			}
 		}
 
 		private ParticleSystem GetFireShotEffectFromPool()
 		{
-			GameObject shotEffectFromPool = GetShotEffectFromPool();
-			return shotEffectFromPool.GetComponent<ParticleSystem>();
+			return base.GetShotEffectFromPool().GetComponent<ParticleSystem>();
 		}
 
+		protected override void InitializeShotsPool(int sizePool)
+		{
+			base.InitializeShotsPool(sizePool);
+			Transform transforms = ((int)this.firePoints.Length != 1 ? base.transform : this.firePoints[0]);
+			for (int i = 0; i < (int)this.bulletsEffectPool.Length; i++)
+			{
+				this.bulletsEffectPool[i].transform.parent = transforms;
+				this.bulletsEffectPool[i].transform.localPosition = Vector3.zero;
+				this.bulletsEffectPool[i].transform.rotation = Quaternion.identity;
+				this.bulletsEffectPool[i].GetComponent<ParticleSystem>().Stop();
+			}
+		}
+
+		[DebuggerHidden]
 		private IEnumerator ShowFireEffect(GameObject effect)
 		{
-			if (!_isEffectFireShow)
-			{
-				_isEffectFireShow = true;
-				effect.SetActive(true);
-				yield return new WaitForSeconds(timeShowFireEffect);
-				effect.SetActive(false);
-				_isEffectFireShow = false;
-			}
+			FiringShotBot.u003cShowFireEffectu003ec__Iterator11D variable = null;
+			return variable;
 		}
 
+		[DebuggerHidden]
 		private IEnumerator ShowFireEffect(ParticleSystem effect)
 		{
-			if (!_isEffectFireShow)
-			{
-				_isEffectFireShow = true;
-				effect.Play();
-				yield return new WaitForSeconds(timeShowFireEffect);
-				effect.Stop();
-				_isEffectFireShow = false;
-			}
+			FiringShotBot.u003cShowFireEffectu003ec__Iterator11E variable = null;
+			return variable;
 		}
 
-		protected override void Fire(Transform pointFire, GameObject target)
-		{
-			ParticleSystem fireShotEffectFromPool = GetFireShotEffectFromPool();
-			if (firePoints.Length == 1)
-			{
-				StartCoroutine(ShowFireEffect(fireShotEffectFromPool));
-			}
-			else
-			{
-				StartCoroutine(ShowFireEffect(pointFire, fireShotEffectFromPool));
-			}
-			if (chanceMakeDamage >= Random.value)
-			{
-				MakeDamage(target.transform);
-			}
-		}
-
+		[DebuggerHidden]
 		private IEnumerator ShowFireEffect(Transform pointFire, ParticleSystem effect)
 		{
-			if (!_isEffectFireShow)
-			{
-				_isEffectFireShow = true;
-				effect.transform.position = pointFire.position;
-				effect.transform.rotation = pointFire.rotation;
-				effect.Play();
-				yield return new WaitForSeconds(timeShowFireEffect);
-				effect.Stop();
-				_isEffectFireShow = false;
-			}
+			FiringShotBot.u003cShowFireEffectu003ec__Iterator11F variable = null;
+			return variable;
 		}
 	}
 }

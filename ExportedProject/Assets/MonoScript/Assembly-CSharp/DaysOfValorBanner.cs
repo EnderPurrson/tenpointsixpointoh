@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class DaysOfValorBanner : BannerWindow
@@ -16,16 +16,8 @@ public class DaysOfValorBanner : BannerWindow
 
 	public UISprite moneyMultiplyerSprite;
 
-	private void SetButtonApplyText()
+	public DaysOfValorBanner()
 	{
-		if (SceneLoader.ActiveSceneName.Equals("ConnectScene") || SceneLoader.ActiveSceneName.Equals("ConnectSceneSandbox"))
-		{
-			buttonApplyLabel.text = LocalizationStore.Get("Key_0012");
-		}
-		else
-		{
-			buttonApplyLabel.text = LocalizationStore.Get("Key_0085");
-		}
 	}
 
 	private string GetNameSpriteForMultyplayer(int multiplyer)
@@ -33,60 +25,84 @@ public class DaysOfValorBanner : BannerWindow
 		return string.Format("{0}x", multiplyer);
 	}
 
-	private void SetSettingMultiplyerContainer()
+	public void HideWindow()
 	{
-		PromoActionsManager sharedManager = PromoActionsManager.sharedManager;
-		if (!(sharedManager == null))
+		if (BannerWindowController.SharedController != null)
 		{
-			Transform transform = expContainer.gameObject.transform;
-			Transform transform2 = coinsContainer.gameObject.transform;
-			transform.localPosition = Vector3.zero;
-			transform2.localPosition = Vector3.zero;
-			int num = expContainer.width / 2;
-			int dayOfValorMultiplyerForExp = sharedManager.DayOfValorMultiplyerForExp;
-			int dayOfValorMultiplyerForMoney = sharedManager.DayOfValorMultiplyerForMoney;
-			if (dayOfValorMultiplyerForExp > 1 && dayOfValorMultiplyerForMoney > 1)
-			{
-				transform.gameObject.SetActive(true);
-				transform2.gameObject.SetActive(true);
-				transform.localPosition = new Vector3(-num, 0f, 0f);
-				transform2.localPosition = new Vector3(num, 0f, 0f);
-				expMultiplyerSprite.spriteName = GetNameSpriteForMultyplayer(dayOfValorMultiplyerForExp);
-				moneyMultiplyerSprite.spriteName = GetNameSpriteForMultyplayer(dayOfValorMultiplyerForMoney);
-			}
-			else if (dayOfValorMultiplyerForExp > 1)
-			{
-				transform.gameObject.SetActive(true);
-				transform2.gameObject.SetActive(false);
-				expMultiplyerSprite.spriteName = GetNameSpriteForMultyplayer(dayOfValorMultiplyerForExp);
-			}
-			else if (dayOfValorMultiplyerForMoney > 1)
-			{
-				transform.gameObject.SetActive(false);
-				transform2.gameObject.SetActive(true);
-				moneyMultiplyerSprite.spriteName = GetNameSpriteForMultyplayer(dayOfValorMultiplyerForMoney);
-			}
+			BannerWindowController.SharedController.HideBannerWindow();
 		}
-	}
-
-	private void OnEnable()
-	{
-		SetButtonApplyText();
-		SetSettingMultiplyerContainer();
+		this.UpdateShownCount();
 	}
 
 	public void OnClickApplyButton()
 	{
 		if (SceneLoader.ActiveSceneName.Equals("ConnectScene") || SceneLoader.ActiveSceneName.Equals("ConnectSceneSandbox"))
 		{
-			HideWindow();
+			this.HideWindow();
+		}
+		else
+		{
+			this.HideWindow();
+			MainMenuController mainMenuController = MainMenuController.sharedController;
+			if (mainMenuController != null)
+			{
+				mainMenuController.OnClickMultiplyerButton();
+			}
+		}
+	}
+
+	private void OnEnable()
+	{
+		this.SetButtonApplyText();
+		this.SetSettingMultiplyerContainer();
+	}
+
+	private void SetButtonApplyText()
+	{
+		if (SceneLoader.ActiveSceneName.Equals("ConnectScene") || SceneLoader.ActiveSceneName.Equals("ConnectSceneSandbox"))
+		{
+			this.buttonApplyLabel.text = LocalizationStore.Get("Key_0012");
+		}
+		else
+		{
+			this.buttonApplyLabel.text = LocalizationStore.Get("Key_0085");
+		}
+	}
+
+	private void SetSettingMultiplyerContainer()
+	{
+		PromoActionsManager promoActionsManager = PromoActionsManager.sharedManager;
+		if (promoActionsManager == null)
+		{
 			return;
 		}
-		HideWindow();
-		MainMenuController sharedController = MainMenuController.sharedController;
-		if (sharedController != null)
+		Transform vector3 = this.expContainer.gameObject.transform;
+		Transform transforms = this.coinsContainer.gameObject.transform;
+		vector3.localPosition = Vector3.zero;
+		transforms.localPosition = Vector3.zero;
+		int num = this.expContainer.width / 2;
+		int dayOfValorMultiplyerForExp = promoActionsManager.DayOfValorMultiplyerForExp;
+		int dayOfValorMultiplyerForMoney = promoActionsManager.DayOfValorMultiplyerForMoney;
+		if (dayOfValorMultiplyerForExp > 1 && dayOfValorMultiplyerForMoney > 1)
 		{
-			sharedController.OnClickMultiplyerButton();
+			vector3.gameObject.SetActive(true);
+			transforms.gameObject.SetActive(true);
+			vector3.localPosition = new Vector3((float)(-num), 0f, 0f);
+			transforms.localPosition = new Vector3((float)num, 0f, 0f);
+			this.expMultiplyerSprite.spriteName = this.GetNameSpriteForMultyplayer(dayOfValorMultiplyerForExp);
+			this.moneyMultiplyerSprite.spriteName = this.GetNameSpriteForMultyplayer(dayOfValorMultiplyerForMoney);
+		}
+		else if (dayOfValorMultiplyerForExp > 1)
+		{
+			vector3.gameObject.SetActive(true);
+			transforms.gameObject.SetActive(false);
+			this.expMultiplyerSprite.spriteName = this.GetNameSpriteForMultyplayer(dayOfValorMultiplyerForExp);
+		}
+		else if (dayOfValorMultiplyerForMoney > 1)
+		{
+			vector3.gameObject.SetActive(false);
+			transforms.gameObject.SetActive(true);
+			this.moneyMultiplyerSprite.spriteName = this.GetNameSpriteForMultyplayer(dayOfValorMultiplyerForMoney);
 		}
 	}
 
@@ -97,19 +113,10 @@ public class DaysOfValorBanner : BannerWindow
 		PlayerPrefs.Save();
 	}
 
-	public void HideWindow()
-	{
-		if (BannerWindowController.SharedController != null)
-		{
-			BannerWindowController.SharedController.HideBannerWindow();
-		}
-		UpdateShownCount();
-	}
-
 	private void UpdateShownCount()
 	{
-		int @int = PlayerPrefs.GetInt("DaysOfValorShownCount", 1);
-		PlayerPrefs.SetInt("DaysOfValorShownCount", @int - 1);
+		int num = PlayerPrefs.GetInt("DaysOfValorShownCount", 1);
+		PlayerPrefs.SetInt("DaysOfValorShownCount", num - 1);
 		PlayerPrefs.Save();
 	}
 }

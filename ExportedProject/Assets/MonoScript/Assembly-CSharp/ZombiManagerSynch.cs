@@ -11,9 +11,12 @@ internal sealed class ZombiManagerSynch : MonoBehaviour
 
 	private Quaternion correctPlayerRot = Quaternion.identity;
 
+	public ZombiManagerSynch()
+	{
+	}
+
 	private void Awake()
 	{
-		//Discarded unreachable code: IL_0033
 		try
 		{
 			if (!Defs.isMulti || !Defs.isInet)
@@ -21,8 +24,9 @@ internal sealed class ZombiManagerSynch : MonoBehaviour
 				base.enabled = false;
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;
@@ -31,13 +35,13 @@ internal sealed class ZombiManagerSynch : MonoBehaviour
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			stream.SendNext(base.transform.position);
+			this.correctPlayerPos = (Vector3)stream.ReceiveNext();
 		}
 		else
 		{
-			correctPlayerPos = (Vector3)stream.ReceiveNext();
+			stream.SendNext(base.transform.position);
 		}
 	}
 }

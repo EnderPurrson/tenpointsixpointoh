@@ -21,34 +21,19 @@ namespace Rilisoft
 		[SerializeField]
 		private List<string> deletedSkins;
 
-		[CompilerGenerated]
-		private static Func<SkinMemento, string> _003C_003Ef__am_0024cache4;
+		public CapeMemento Cape
+		{
+			get
+			{
+				return this.cape;
+			}
+		}
 
 		public bool Conflicted
 		{
 			get
 			{
-				return _conflicted;
-			}
-		}
-
-		public CapeMemento Cape
-		{
-			get
-			{
-				return cape;
-			}
-		}
-
-		public List<SkinMemento> Skins
-		{
-			get
-			{
-				if (skins == null)
-				{
-					skins = new List<SkinMemento>();
-				}
-				return skins;
+				return this._conflicted;
 			}
 		}
 
@@ -56,44 +41,45 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (deletedSkins == null)
+				if (this.deletedSkins == null)
 				{
-					deletedSkins = new List<string>();
+					this.deletedSkins = new List<string>();
 				}
-				return deletedSkins;
+				return this.deletedSkins;
 			}
 		}
 
-		public SkinsMemento(IEnumerable<SkinMemento> skins, IEnumerable<string> deletedSkins, CapeMemento cape)
-			: this(skins, deletedSkins, cape, false)
+		public List<SkinMemento> Skins
+		{
+			get
+			{
+				if (this.skins == null)
+				{
+					this.skins = new List<SkinMemento>();
+				}
+				return this.skins;
+			}
+		}
+
+		public SkinsMemento(IEnumerable<SkinMemento> skins, IEnumerable<string> deletedSkins, CapeMemento cape) : this(skins, deletedSkins, cape, false)
 		{
 		}
 
 		public SkinsMemento(IEnumerable<SkinMemento> skins, IEnumerable<string> deletedSkins, CapeMemento cape, bool conflicted)
 		{
-			this.skins = ((skins != null) ? skins.ToList() : new List<SkinMemento>());
-			this.deletedSkins = ((deletedSkins != null) ? deletedSkins.ToList() : new List<string>());
+			this.skins = (skins != null ? skins.ToList<SkinMemento>() : new List<SkinMemento>());
+			this.deletedSkins = (deletedSkins != null ? deletedSkins.ToList<string>() : new List<string>());
 			this.cape = cape;
-			_conflicted = conflicted;
-		}
-
-		public Dictionary<string, SkinMemento> GetSkinsAsDictionary()
-		{
-			Dictionary<string, SkinMemento> dictionary = new Dictionary<string, SkinMemento>(Skins.Count);
-			foreach (SkinMemento skin in Skins)
-			{
-				dictionary[skin.Id] = skin;
-			}
-			return dictionary;
+			this._conflicted = conflicted;
 		}
 
 		public bool Equals(SkinsMemento other)
 		{
-			if (!Cape.Equals(other.Cape))
+			if (!this.Cape.Equals(other.Cape))
 			{
 				return false;
 			}
-			if (!Skins.SequenceEqual(other.Skins))
+			if (!this.Skins.SequenceEqual<SkinMemento>(other.Skins))
 			{
 				return false;
 			}
@@ -106,55 +92,56 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			SkinsMemento other = (SkinsMemento)obj;
-			return Equals(other);
+			return this.Equals((SkinsMemento)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return Cape.GetHashCode() ^ Skins.GetHashCode() ^ DeletedSkins.GetHashCode();
+			CapeMemento cape = this.Cape;
+			return cape.GetHashCode() ^ this.Skins.GetHashCode() ^ this.DeletedSkins.GetHashCode();
 		}
 
-		public override string ToString()
+		public Dictionary<string, SkinMemento> GetSkinsAsDictionary()
 		{
-			List<SkinMemento> source = Skins;
-			if (_003C_003Ef__am_0024cache4 == null)
+			Dictionary<string, SkinMemento> strs = new Dictionary<string, SkinMemento>(this.Skins.Count);
+			foreach (SkinMemento skin in this.Skins)
 			{
-				_003C_003Ef__am_0024cache4 = _003CToString_003Em__583;
+				strs[skin.Id] = skin;
 			}
-			string[] value = source.Select(_003C_003Ef__am_0024cache4).ToArray();
-			string text = string.Join(",", value);
-			string text2 = string.Join(",", DeletedSkins.ToArray());
-			return string.Format(CultureInfo.InvariantCulture, "{{ \"skins\":[{0}], \"cape\":\"{1}\", \"deletedSkins\":[{2}] }}", text, cape, text2);
+			return strs;
 		}
 
 		internal static SkinsMemento Merge(SkinsMemento left, SkinsMemento right)
 		{
-			HashSet<string> hashSet = new HashSet<string>(left.DeletedSkins.Concat(right.DeletedSkins));
-			Dictionary<string, SkinMemento> dictionary = new Dictionary<string, SkinMemento>();
+			HashSet<string> strs = new HashSet<string>(left.DeletedSkins.Concat<string>(right.DeletedSkins));
+			Dictionary<string, SkinMemento> strs1 = new Dictionary<string, SkinMemento>();
 			foreach (SkinMemento skin in left.Skins)
 			{
-				if (!hashSet.Contains(skin.Id))
+				if (!strs.Contains(skin.Id))
 				{
-					dictionary[skin.Id] = skin;
+					strs1[skin.Id] = skin;
 				}
 			}
-			foreach (SkinMemento skin2 in right.Skins)
+			foreach (SkinMemento skinMemento in right.Skins)
 			{
-				if (!hashSet.Contains(skin2.Id))
+				if (!strs.Contains(skinMemento.Id))
 				{
-					dictionary[skin2.Id] = skin2;
+					strs1[skinMemento.Id] = skinMemento;
 				}
 			}
-			bool conflicted = left.Conflicted || right.Conflicted;
+			bool flag = (left.Conflicted ? true : right.Conflicted);
 			CapeMemento capeMemento = CapeMemento.ChooseCape(left.Cape, right.Cape);
-			return new SkinsMemento(dictionary.Values.ToList(), hashSet, capeMemento, conflicted);
+			return new SkinsMemento(strs1.Values.ToList<SkinMemento>(), strs, capeMemento, flag);
 		}
 
-		[CompilerGenerated]
-		private static string _003CToString_003Em__583(SkinMemento s)
+		public override string ToString()
 		{
-			return string.Format("\"{0}\"", s.Name);
+			string[] array = (
+				from s in this.Skins
+				select string.Format("\"{0}\"", s.Name)).ToArray<string>();
+			string str = string.Join(",", array);
+			string str1 = string.Join(",", this.DeletedSkins.ToArray());
+			return string.Format(CultureInfo.InvariantCulture, "{{ \"skins\":[{0}], \"cape\":\"{1}\", \"deletedSkins\":[{2}] }}", new object[] { str, this.cape, str1 });
 		}
 	}
 }

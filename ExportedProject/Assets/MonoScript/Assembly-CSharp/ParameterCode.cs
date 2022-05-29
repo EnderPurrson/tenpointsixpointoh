@@ -50,7 +50,7 @@ public class ParameterCode
 	[Obsolete("TCP routing was removed after becoming obsolete.")]
 	public const byte AzureMasterNodeId = 208;
 
-	public const byte RoomName = byte.MaxValue;
+	public const byte RoomName = 255;
 
 	public const byte Broadcast = 250;
 
@@ -129,4 +129,8 @@ public class ParameterCode
 	public const byte PluginName = 201;
 
 	public const byte PluginVersion = 200;
+
+	public ParameterCode()
+	{
+	}
 }

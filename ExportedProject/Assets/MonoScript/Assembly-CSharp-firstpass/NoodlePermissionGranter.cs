@@ -3,14 +3,6 @@ using UnityEngine;
 
 public class NoodlePermissionGranter : MonoBehaviour
 {
-	public enum NoodleAndroidPermission
-	{
-		WRITE_EXTERNAL_STORAGE = 0,
-		ACCESS_COARSE_LOCATION = 1,
-		CAMERA = 2,
-		RECORD_AUDIO = 3
-	}
-
 	private const string WRITE_EXTERNAL_STORAGE = "WRITE_EXTERNAL_STORAGE";
 
 	private const string PERMISSION_GRANTED = "PERMISSION_GRANTED";
@@ -31,21 +23,17 @@ public class NoodlePermissionGranter : MonoBehaviour
 
 	private static AndroidJavaObject activity;
 
-	public static void GrantPermission(NoodleAndroidPermission permission)
+	static NoodlePermissionGranter()
 	{
-		if (!initialized)
-		{
-			initialize();
-		}
-		if (Application.platform == RuntimePlatform.Android)
-		{
-			noodlePermissionGranterClass.CallStatic("grantPermission", activity, (int)permission);
-		}
+	}
+
+	public NoodlePermissionGranter()
+	{
 	}
 
 	public void Awake()
 	{
-		instance = this;
+		NoodlePermissionGranter.instance = this;
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 		if (base.name != "NoodlePermissionGranter")
 		{
@@ -53,29 +41,50 @@ public class NoodlePermissionGranter : MonoBehaviour
 		}
 	}
 
+	public static void GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission permission)
+	{
+		if (!NoodlePermissionGranter.initialized)
+		{
+			NoodlePermissionGranter.initialize();
+		}
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return;
+		}
+		NoodlePermissionGranter.noodlePermissionGranterClass.CallStatic("grantPermission", new object[] { NoodlePermissionGranter.activity, (int)permission });
+	}
+
 	private static void initialize()
 	{
-		if (Application.platform == RuntimePlatform.Android)
+		if (Application.platform != RuntimePlatform.Android)
 		{
-			if (instance == null)
-			{
-				GameObject gameObject = new GameObject();
-				instance = gameObject.AddComponent<NoodlePermissionGranter>();
-				gameObject.name = "NoodlePermissionGranter";
-			}
-			noodlePermissionGranterClass = new AndroidJavaClass("com.noodlecake.unityplugins.NoodlePermissionGranter");
-			AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-			activity = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
-			initialized = true;
+			return;
 		}
+		if (NoodlePermissionGranter.instance == null)
+		{
+			GameObject gameObject = new GameObject();
+			NoodlePermissionGranter.instance = gameObject.AddComponent<NoodlePermissionGranter>();
+			gameObject.name = "NoodlePermissionGranter";
+		}
+		NoodlePermissionGranter.noodlePermissionGranterClass = new AndroidJavaClass("com.noodlecake.unityplugins.NoodlePermissionGranter");
+		NoodlePermissionGranter.activity = (new AndroidJavaClass("com.unity3d.player.UnityPlayer")).GetStatic<AndroidJavaObject>("currentActivity");
+		NoodlePermissionGranter.initialized = true;
 	}
 
 	private void permissionRequestCallbackInternal(string message)
 	{
-		bool obj = message == "PERMISSION_GRANTED";
-		if (PermissionRequestCallback != null)
+		bool flag = message == "PERMISSION_GRANTED";
+		if (NoodlePermissionGranter.PermissionRequestCallback != null)
 		{
-			PermissionRequestCallback(obj);
+			NoodlePermissionGranter.PermissionRequestCallback(flag);
 		}
+	}
+
+	public enum NoodleAndroidPermission
+	{
+		WRITE_EXTERNAL_STORAGE,
+		ACCESS_COARSE_LOCATION,
+		CAMERA,
+		RECORD_AUDIO
 	}
 }

@@ -1,107 +1,151 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.mas.cpt.ads.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public sealed class AdPair : Jsonable
 	{
-		private static AmazonLogger logger = new AmazonLogger("Pi");
+		private static AmazonLogger logger;
 
-		public Ad AdOne { get; set; }
-
-		public Ad AdTwo { get; set; }
-
-		public string ToJson()
+		public Ad AdOne
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public Ad AdTwo
 		{
-			//Discarded unreachable code: IL_005b, IL_006d
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("adOne", (AdOne == null) ? null : AdOne.GetObjectDictionary());
-				dictionary.Add("adTwo", (AdTwo == null) ? null : AdTwo.GetObjectDictionary());
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		static AdPair()
+		{
+			AdPair.logger = new AmazonLogger("Pi");
+		}
+
+		public AdPair()
+		{
 		}
 
 		public static AdPair CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0070, IL_0082
+			AdPair adPair;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					AdPair adPair1 = new AdPair();
+					if (jsonMap.ContainsKey("adOne"))
+					{
+						adPair1.AdOne = Ad.CreateFromDictionary(jsonMap["adOne"] as Dictionary<string, object>);
+					}
+					if (jsonMap.ContainsKey("adTwo"))
+					{
+						adPair1.AdTwo = Ad.CreateFromDictionary(jsonMap["adTwo"] as Dictionary<string, object>);
+					}
+					adPair = adPair1;
 				}
-				AdPair adPair = new AdPair();
-				if (jsonMap.ContainsKey("adOne"))
+				else
 				{
-					adPair.AdOne = Ad.CreateFromDictionary(jsonMap["adOne"] as Dictionary<string, object>);
+					adPair = null;
 				}
-				if (jsonMap.ContainsKey("adTwo"))
-				{
-					adPair.AdTwo = Ad.CreateFromDictionary(jsonMap["adTwo"] as Dictionary<string, object>);
-				}
-				return adPair;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return adPair;
 		}
 
 		public static AdPair CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			AdPair adPair;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				adPair = AdPair.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return adPair;
 		}
 
-		public static Dictionary<string, AdPair> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, AdPair> dictionary = new Dictionary<string, AdPair>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			object objectDictionary;
+			object obj;
+			try
 			{
-				AdPair value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>();
+				Dictionary<string, object> strs2 = strs1;
+				if (this.AdOne == null)
+				{
+					objectDictionary = null;
+				}
+				else
+				{
+					objectDictionary = this.AdOne.GetObjectDictionary();
+				}
+				strs2.Add("adOne", objectDictionary);
+				Dictionary<string, object> strs3 = strs1;
+				if (this.AdTwo == null)
+				{
+					obj = null;
+				}
+				else
+				{
+					obj = this.AdTwo.GetObjectDictionary();
+				}
+				strs3.Add("adTwo", obj);
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<AdPair> ListFromJson(List<object> array)
 		{
-			List<AdPair> list = new List<AdPair>();
-			foreach (object item in array)
+			List<AdPair> adPairs = new List<AdPair>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				adPairs.Add(AdPair.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return adPairs;
+		}
+
+		public static Dictionary<string, AdPair> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, AdPair> strs = new Dictionary<string, AdPair>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				AdPair adPair = AdPair.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, adPair);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

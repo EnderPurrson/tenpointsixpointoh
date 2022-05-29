@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,38 +10,43 @@ namespace Rilisoft
 
 		private readonly IDictionary<Mesh, MeshInfo> _meshes = new Dictionary<Mesh, MeshInfo>();
 
+		public ResourceProfiler()
+		{
+		}
+
 		public void Update()
 		{
-			Renderer[] array = Object.FindObjectsOfType<Renderer>();
-			Renderer[] array2 = array;
-			foreach (Renderer renderer in array2)
+			Renderer[] rendererArray = UnityEngine.Object.FindObjectsOfType<Renderer>();
+			for (int i = 0; i < (int)rendererArray.Length; i++)
 			{
-				Material[] sharedMaterials = renderer.sharedMaterials;
-				foreach (Material key in sharedMaterials)
+				Renderer renderer = rendererArray[i];
+				Material[] materialArray = renderer.sharedMaterials;
+				for (int j = 0; j < (int)materialArray.Length; j++)
 				{
-					MaterialInfo value = null;
-					if (!_materials.TryGetValue(key, out value))
+					Material material = materialArray[j];
+					MaterialInfo materialInfo = null;
+					if (!this._materials.TryGetValue(material, out materialInfo))
 					{
-						value = new MaterialInfo();
-						_materials.Add(key, value);
+						materialInfo = new MaterialInfo();
+						this._materials.Add(material, materialInfo);
 					}
-					value.AddRenderer(renderer);
+					materialInfo.AddRenderer(renderer);
 				}
 			}
-			MeshFilter[] array3 = Object.FindObjectsOfType<MeshFilter>();
-			MeshFilter[] array4 = array3;
-			foreach (MeshFilter meshFilter in array4)
+			MeshFilter[] meshFilterArray = UnityEngine.Object.FindObjectsOfType<MeshFilter>();
+			for (int k = 0; k < (int)meshFilterArray.Length; k++)
 			{
-				Mesh sharedMesh = meshFilter.sharedMesh;
-				if (sharedMesh != null)
+				MeshFilter meshFilter = meshFilterArray[k];
+				Mesh mesh = meshFilter.sharedMesh;
+				if (mesh != null)
 				{
-					MeshInfo value2 = null;
-					if (!_meshes.TryGetValue(sharedMesh, out value2))
+					MeshInfo meshInfo = null;
+					if (!this._meshes.TryGetValue(mesh, out meshInfo))
 					{
-						value2 = new MeshInfo();
-						_meshes.Add(sharedMesh, value2);
+						meshInfo = new MeshInfo();
+						this._meshes.Add(mesh, meshInfo);
 					}
-					value2.AddMeshFilter(meshFilter);
+					meshInfo.AddMeshFilter(meshFilter);
 				}
 			}
 		}

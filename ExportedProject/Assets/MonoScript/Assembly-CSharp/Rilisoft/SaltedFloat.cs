@@ -1,3 +1,5 @@
+using System;
+
 namespace Rilisoft
 {
 	public class SaltedFloat
@@ -6,29 +8,32 @@ namespace Rilisoft
 
 		private int _index;
 
-		public float value
+		public float @value
 		{
 			get
 			{
-				return _values[_index];
+				return this._values[this._index];
 			}
 			set
 			{
-				if (++_index >= _values.Length)
+				SaltedFloat saltedFloat = this;
+				int num = saltedFloat._index + 1;
+				int num1 = num;
+				saltedFloat._index = num;
+				if (num1 >= (int)this._values.Length)
 				{
-					_index = 0;
+					this._index = 0;
 				}
-				_values[_index] = value;
+				this._values[this._index] = value;
 			}
 		}
 
 		public SaltedFloat(float value)
 		{
-			this.value = value;
+			this.@value = value;
 		}
 
-		public SaltedFloat()
-			: this(0f)
+		public SaltedFloat() : this(0f)
 		{
 		}
 	}

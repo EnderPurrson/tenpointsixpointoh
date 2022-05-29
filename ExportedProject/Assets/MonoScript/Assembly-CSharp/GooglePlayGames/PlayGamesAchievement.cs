@@ -1,5 +1,5 @@
-using System;
 using GooglePlayGames.BasicApi;
+using System;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -39,51 +39,11 @@ namespace GooglePlayGames
 
 		private ulong mPoints;
 
-		public string id
+		public string achievedDescription
 		{
 			get
 			{
-				return mId;
-			}
-			set
-			{
-				mId = value;
-			}
-		}
-
-		public bool isIncremental
-		{
-			get
-			{
-				return mIsIncremental;
-			}
-		}
-
-		public int currentSteps
-		{
-			get
-			{
-				return mCurrentSteps;
-			}
-		}
-
-		public int totalSteps
-		{
-			get
-			{
-				return mTotalSteps;
-			}
-		}
-
-		public double percentCompleted
-		{
-			get
-			{
-				return mPercentComplete;
-			}
-			set
-			{
-				mPercentComplete = value;
+				return this.mDescription;
 			}
 		}
 
@@ -91,7 +51,15 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return mCompleted;
+				return this.mCompleted;
+			}
+		}
+
+		public int currentSteps
+		{
+			get
+			{
+				return this.mCurrentSteps;
 			}
 		}
 
@@ -99,23 +67,19 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return mHidden;
+				return this.mHidden;
 			}
 		}
 
-		public DateTime lastReportedDate
+		public string id
 		{
 			get
 			{
-				return mLastModifiedTime;
+				return this.mId;
 			}
-		}
-
-		public string title
-		{
-			get
+			set
 			{
-				return mTitle;
+				this.mId = value;
 			}
 		}
 
@@ -123,23 +87,35 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return LoadImage();
+				return this.LoadImage();
 			}
 		}
 
-		public string achievedDescription
+		public bool isIncremental
 		{
 			get
 			{
-				return mDescription;
+				return this.mIsIncremental;
 			}
 		}
 
-		public string unachievedDescription
+		public DateTime lastReportedDate
 		{
 			get
 			{
-				return mDescription;
+				return this.mLastModifiedTime;
+			}
+		}
+
+		public double percentCompleted
+		{
+			get
+			{
+				return this.mPercentComplete;
+			}
+			set
+			{
+				this.mPercentComplete = value;
 			}
 		}
 
@@ -147,82 +123,103 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return (int)mPoints;
+				return (int)this.mPoints;
+			}
+		}
+
+		public string title
+		{
+			get
+			{
+				return this.mTitle;
+			}
+		}
+
+		public int totalSteps
+		{
+			get
+			{
+				return this.mTotalSteps;
+			}
+		}
+
+		public string unachievedDescription
+		{
+			get
+			{
+				return this.mDescription;
 			}
 		}
 
 		internal PlayGamesAchievement()
-			: this(PlayGamesPlatform.Instance.ReportProgress)
 		{
+			PlayGamesPlatform instance = PlayGamesPlatform.Instance;
+			this(new ReportProgress(instance.ReportProgress));
 		}
 
 		internal PlayGamesAchievement(ReportProgress progressCallback)
 		{
-			mProgressCallback = progressCallback;
+			this.mProgressCallback = progressCallback;
 		}
 
-		internal PlayGamesAchievement(Achievement ach)
-			: this()
+		internal PlayGamesAchievement(Achievement ach) : this()
 		{
-			mId = ach.Id;
-			mIsIncremental = ach.IsIncremental;
-			mCurrentSteps = ach.CurrentSteps;
-			mTotalSteps = ach.TotalSteps;
-			if (ach.IsIncremental)
+			this.mId = ach.Id;
+			this.mIsIncremental = ach.IsIncremental;
+			this.mCurrentSteps = ach.CurrentSteps;
+			this.mTotalSteps = ach.TotalSteps;
+			if (!ach.IsIncremental)
 			{
-				if (ach.TotalSteps > 0)
-				{
-					mPercentComplete = (double)ach.CurrentSteps / (double)ach.TotalSteps * 100.0;
-				}
-				else
-				{
-					mPercentComplete = 0.0;
-				}
+				this.mPercentComplete = (!ach.IsUnlocked ? 0 : 100);
+			}
+			else if (ach.TotalSteps <= 0)
+			{
+				this.mPercentComplete = 0;
 			}
 			else
 			{
-				mPercentComplete = ((!ach.IsUnlocked) ? 0.0 : 100.0);
+				this.mPercentComplete = (double)ach.CurrentSteps / (double)ach.TotalSteps * 100;
 			}
-			mCompleted = ach.IsUnlocked;
-			mHidden = !ach.IsRevealed;
-			mLastModifiedTime = ach.LastModifiedTime;
-			mTitle = ach.Name;
-			mDescription = ach.Description;
-			mPoints = ach.Points;
-			mRevealedImageUrl = ach.RevealedImageUrl;
-			mUnlockedImageUrl = ach.UnlockedImageUrl;
-		}
-
-		public void ReportProgress(Action<bool> callback)
-		{
-			mProgressCallback(mId, mPercentComplete, callback);
+			this.mCompleted = ach.IsUnlocked;
+			this.mHidden = !ach.IsRevealed;
+			this.mLastModifiedTime = ach.LastModifiedTime;
+			this.mTitle = ach.Name;
+			this.mDescription = ach.Description;
+			this.mPoints = ach.Points;
+			this.mRevealedImageUrl = ach.RevealedImageUrl;
+			this.mUnlockedImageUrl = ach.UnlockedImageUrl;
 		}
 
 		private Texture2D LoadImage()
 		{
-			if (hidden)
+			if (this.hidden)
 			{
 				return null;
 			}
-			string text = ((!completed) ? mRevealedImageUrl : mUnlockedImageUrl);
-			if (!string.IsNullOrEmpty(text))
+			string str = (!this.completed ? this.mRevealedImageUrl : this.mUnlockedImageUrl);
+			if (!string.IsNullOrEmpty(str))
 			{
-				if (mImageFetcher == null || mImageFetcher.url != text)
+				if (this.mImageFetcher == null || this.mImageFetcher.url != str)
 				{
-					mImageFetcher = new WWW(text);
-					mImage = null;
+					this.mImageFetcher = new WWW(str);
+					this.mImage = null;
 				}
-				if (mImage != null)
+				if (this.mImage != null)
 				{
-					return mImage;
+					return this.mImage;
 				}
-				if (mImageFetcher.isDone)
+				if (this.mImageFetcher.isDone)
 				{
-					mImage = mImageFetcher.texture;
-					return mImage;
+					this.mImage = this.mImageFetcher.texture;
+					return this.mImage;
 				}
 			}
 			return null;
+		}
+
+		public void ReportProgress(Action<bool> callback)
+		{
+			this.mProgressCallback(this.mId, this.mPercentComplete, callback);
 		}
 	}
 }

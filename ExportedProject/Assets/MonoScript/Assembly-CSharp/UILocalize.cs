@@ -1,77 +1,81 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(UIWidget))]
 [AddComponentMenu("NGUI/UI/Localize")]
 [ExecuteInEditMode]
+[RequireComponent(typeof(UIWidget))]
 public class UILocalize : MonoBehaviour
 {
 	public string key;
 
 	private bool mStarted;
 
-	public string value
+	public string @value
 	{
 		set
 		{
-			if (string.IsNullOrEmpty(value))
+			if (!string.IsNullOrEmpty(value))
 			{
-				return;
-			}
-			UIWidget component = GetComponent<UIWidget>();
-			UILabel uILabel = component as UILabel;
-			UISprite uISprite = component as UISprite;
-			if (uILabel != null)
-			{
-				UIInput uIInput = NGUITools.FindInParents<UIInput>(uILabel.gameObject);
-				if (uIInput != null && uIInput.label == uILabel)
+				UIWidget component = base.GetComponent<UIWidget>();
+				UILabel uILabel = component as UILabel;
+				UISprite uISprite = component as UISprite;
+				if (uILabel != null)
 				{
-					uIInput.defaultText = value;
+					UIInput uIInput = NGUITools.FindInParents<UIInput>(uILabel.gameObject);
+					if (!(uIInput != null) || !(uIInput.label == uILabel))
+					{
+						uILabel.text = value;
+					}
+					else
+					{
+						uIInput.defaultText = value;
+					}
 				}
-				else
+				else if (uISprite != null)
 				{
-					uILabel.text = value;
+					UIButton uIButton = NGUITools.FindInParents<UIButton>(uISprite.gameObject);
+					if (uIButton != null && uIButton.tweenTarget == uISprite.gameObject)
+					{
+						uIButton.normalSprite = value;
+					}
+					uISprite.spriteName = value;
+					uISprite.MakePixelPerfect();
 				}
-			}
-			else if (uISprite != null)
-			{
-				UIButton uIButton = NGUITools.FindInParents<UIButton>(uISprite.gameObject);
-				if (uIButton != null && uIButton.tweenTarget == uISprite.gameObject)
-				{
-					uIButton.normalSprite = value;
-				}
-				uISprite.spriteName = value;
-				uISprite.MakePixelPerfect();
 			}
 		}
 	}
 
+	public UILocalize()
+	{
+	}
+
 	private void OnEnable()
 	{
-		if (mStarted)
+		if (this.mStarted)
 		{
-			OnLocalize();
+			this.OnLocalize();
+		}
+	}
+
+	private void OnLocalize()
+	{
+		if (string.IsNullOrEmpty(this.key))
+		{
+			UILabel component = base.GetComponent<UILabel>();
+			if (component != null)
+			{
+				this.key = component.text;
+			}
+		}
+		if (!string.IsNullOrEmpty(this.key))
+		{
+			this.@value = Localization.Get(this.key);
 		}
 	}
 
 	private void Start()
 	{
-		mStarted = true;
-		OnLocalize();
-	}
-
-	private void OnLocalize()
-	{
-		if (string.IsNullOrEmpty(key))
-		{
-			UILabel component = GetComponent<UILabel>();
-			if (component != null)
-			{
-				key = component.text;
-			}
-		}
-		if (!string.IsNullOrEmpty(key))
-		{
-			value = Localization.Get(key);
-		}
+		this.mStarted = true;
+		this.OnLocalize();
 	}
 }

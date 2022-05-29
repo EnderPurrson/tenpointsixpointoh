@@ -1,104 +1,91 @@
-using System.Collections;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class UpdatesChecker : MonoBehaviour
 {
-	private enum Store
-	{
-		Ios = 0,
-		Play = 1,
-		Wp8 = 2,
-		Amazon = 3,
-		Unknown = 4
-	}
-
 	private const string ActionAddress = "http://pixelgunserver.com/~rilisoft/action.php";
 
-	private Store _currentStore;
+	private UpdatesChecker.Store _currentStore;
 
-	private IEnumerator CheckUpdatesCoroutine(Store store)
+	public UpdatesChecker()
 	{
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage <= TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-		{
-			yield return null;
-		}
-		string version = string.Format("{0}:{1}", (int)store, GlobalGameController.AppVersion);
-		if (Application.isEditor)
-		{
-			Debug.LogFormat("Sending version: {0}", version);
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "check_shop_version");
-		form.AddField("app_version", version);
-		WWW request = Tools.CreateWwwIfNotConnected("http://pixelgunserver.com/~rilisoft/action.php", form, string.Empty);
-		if (request == null)
-		{
-			yield break;
-		}
-		yield return request;
-		if (!string.IsNullOrEmpty(request.error))
-		{
-			Debug.LogWarningFormat("Error while receiving version: {0}", request.error);
-			yield break;
-		}
-		string response = URLs.Sanitize(request);
-		if (string.IsNullOrEmpty(response))
-		{
-			Debug.Log("response is empty");
-			yield break;
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log("UpdatesChecker: " + response);
-		}
-		if (response.Equals("no"))
-		{
-			GlobalGameController.NewVersionAvailable = true;
-			Debug.Log("NewVersionAvailable: true");
-		}
 	}
 
 	private void Awake()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
-		_currentStore = Store.Unknown;
-		switch (BuildSettings.BuildTargetPlatform)
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		this._currentStore = UpdatesChecker.Store.Unknown;
+		RuntimePlatform buildTargetPlatform = BuildSettings.BuildTargetPlatform;
+		switch (buildTargetPlatform)
 		{
-		case RuntimePlatform.IPhonePlayer:
-			_currentStore = Store.Ios;
-			break;
-		case RuntimePlatform.Android:
-			switch (Defs.AndroidEdition)
+			case RuntimePlatform.IPhonePlayer:
 			{
-			case Defs.RuntimeAndroidEdition.GoogleLite:
-				_currentStore = Store.Play;
-				break;
-			case Defs.RuntimeAndroidEdition.Amazon:
-				_currentStore = Store.Amazon;
+				this._currentStore = UpdatesChecker.Store.Ios;
 				break;
 			}
-			break;
-		case RuntimePlatform.MetroPlayerX64:
-			_currentStore = Store.Wp8;
-			break;
+			case RuntimePlatform.Android:
+			{
+				Defs.RuntimeAndroidEdition androidEdition = Defs.AndroidEdition;
+				if (androidEdition == Defs.RuntimeAndroidEdition.Amazon)
+				{
+					this._currentStore = UpdatesChecker.Store.Amazon;
+				}
+				else if (androidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				{
+					this._currentStore = UpdatesChecker.Store.Play;
+				}
+				break;
+			}
+			default:
+			{
+				if (buildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+				{
+					this._currentStore = UpdatesChecker.Store.Wp8;
+					break;
+				}
+				else
+				{
+					break;
+				}
+			}
 		}
 	}
 
-	private void Start()
+	[DebuggerHidden]
+	private IEnumerator CheckUpdatesCoroutine(UpdatesChecker.Store store)
 	{
-		StartCoroutine(CheckUpdatesCoroutine(_currentStore));
+		UpdatesChecker.u003cCheckUpdatesCoroutineu003ec__Iterator1DC variable = null;
+		return variable;
 	}
 
 	private void OnApplicationPause(bool pause)
 	{
 		if (Application.isEditor)
 		{
-			Debug.Log(">>> UpdatesChecker.OnApplicationPause()");
+			UnityEngine.Debug.Log(">>> UpdatesChecker.OnApplicationPause()");
 		}
 		if (!pause)
 		{
-			StartCoroutine(CheckUpdatesCoroutine(_currentStore));
+			base.StartCoroutine(this.CheckUpdatesCoroutine(this._currentStore));
 		}
+	}
+
+	private void Start()
+	{
+		base.StartCoroutine(this.CheckUpdatesCoroutine(this._currentStore));
+	}
+
+	private enum Store
+	{
+		Ios,
+		Play,
+		Wp8,
+		Amazon,
+		Unknown
 	}
 }

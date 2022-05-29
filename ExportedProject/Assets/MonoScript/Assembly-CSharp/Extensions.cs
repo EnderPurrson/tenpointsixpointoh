@@ -1,32 +1,18 @@
+using ExitGames.Client.Photon;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using ExitGames.Client.Photon;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public static class Extensions
 {
-	public static Dictionary<MethodInfo, ParameterInfo[]> parametersOfMethods = new Dictionary<MethodInfo, ParameterInfo[]>();
+	public static Dictionary<MethodInfo, ParameterInfo[]> parametersOfMethods;
 
-	public static ParameterInfo[] GetCachedParemeters(this MethodInfo mo)
+	static Extensions()
 	{
-		ParameterInfo[] value;
-		if (!parametersOfMethods.TryGetValue(mo, out value))
-		{
-			value = mo.GetParameters();
-			parametersOfMethods[mo] = value;
-		}
-		return value;
-	}
-
-	public static PhotonView[] GetPhotonViewsInChildren(this GameObject go)
-	{
-		return go.GetComponentsInChildren<PhotonView>(true);
-	}
-
-	public static PhotonView GetPhotonView(this GameObject go)
-	{
-		return go.GetComponent<PhotonView>();
+		Extensions.parametersOfMethods = new Dictionary<MethodInfo, ParameterInfo[]>();
 	}
 
 	public static bool AlmostEquals(this Vector3 target, Vector3 second, float sqrMagnitudePrecision)
@@ -49,15 +35,65 @@ public static class Extensions
 		return Mathf.Abs(target - second) < floatDiff;
 	}
 
+	public static bool Contains(this int[] target, int nr)
+	{
+		if (target == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < (int)target.Length; i++)
+		{
+			if (target[i] == nr)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static ParameterInfo[] GetCachedParemeters(this MethodInfo mo)
+	{
+		ParameterInfo[] parameters;
+		if (!Extensions.parametersOfMethods.TryGetValue(mo, out parameters))
+		{
+			parameters = mo.GetParameters();
+			Extensions.parametersOfMethods[mo] = parameters;
+		}
+		return parameters;
+	}
+
+	public static PhotonView GetPhotonView(this GameObject go)
+	{
+		return go.GetComponent<PhotonView>();
+	}
+
+	public static PhotonView[] GetPhotonViewsInChildren(this GameObject go)
+	{
+		return go.GetComponentsInChildren<PhotonView>(true);
+	}
+
 	public static void Merge(this IDictionary target, IDictionary addHash)
 	{
 		if (addHash == null || target.Equals(addHash))
 		{
 			return;
 		}
-		foreach (object key in addHash.Keys)
+		IEnumerator enumerator = addHash.Keys.GetEnumerator();
+		try
 		{
-			target[key] = addHash[key];
+			while (enumerator.MoveNext())
+			{
+				object current = enumerator.Current;
+				target[current] = addHash[current];
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
 		}
 	}
 
@@ -67,18 +103,60 @@ public static class Extensions
 		{
 			return;
 		}
-		foreach (object key in addHash.Keys)
+		IEnumerator enumerator = addHash.Keys.GetEnumerator();
+		try
 		{
-			if (key is string)
+			while (enumerator.MoveNext())
 			{
-				target[key] = addHash[key];
+				object current = enumerator.Current;
+				if (!(current is string))
+				{
+					continue;
+				}
+				target[current] = addHash[current];
 			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
 		}
 	}
 
-	public static string ToStringFull(this IDictionary origin)
+	public static void StripKeysWithNullValues(this IDictionary original)
 	{
-		return SupportClass.DictionaryToString(origin, false);
+		object[] objArray = new object[original.Count];
+		int num = 0;
+		IEnumerator enumerator = original.Keys.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				object current = enumerator.Current;
+				int num1 = num;
+				num = num1 + 1;
+				objArray[num1] = current;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		for (int i = 0; i < (int)objArray.Length; i++)
+		{
+			object obj = objArray[i];
+			if (original[obj] == null)
+			{
+				original.Remove(obj);
+			}
+		}
 	}
 
 	public static ExitGames.Client.Photon.Hashtable StripToStringKeys(this IDictionary original)
@@ -86,48 +164,33 @@ public static class Extensions
 		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
 		if (original != null)
 		{
-			foreach (object key in original.Keys)
+			IEnumerator enumerator = original.Keys.GetEnumerator();
+			try
 			{
-				if (key is string)
+				while (enumerator.MoveNext())
 				{
-					hashtable[key] = original[key];
+					object current = enumerator.Current;
+					if (!(current is string))
+					{
+						continue;
+					}
+					hashtable[current] = original[current];
 				}
 			}
-			return hashtable;
+			finally
+			{
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
+			}
 		}
 		return hashtable;
 	}
 
-	public static void StripKeysWithNullValues(this IDictionary original)
+	public static string ToStringFull(this IDictionary origin)
 	{
-		object[] array = new object[original.Count];
-		int num = 0;
-		foreach (object key2 in original.Keys)
-		{
-			array[num++] = key2;
-		}
-		foreach (object key in array)
-		{
-			if (original[key] == null)
-			{
-				original.Remove(key);
-			}
-		}
-	}
-
-	public static bool Contains(this int[] target, int nr)
-	{
-		if (target == null)
-		{
-			return false;
-		}
-		for (int i = 0; i < target.Length; i++)
-		{
-			if (target[i] == nr)
-			{
-				return true;
-			}
-		}
-		return false;
+		return SupportClass.DictionaryToString(origin, false);
 	}
 }

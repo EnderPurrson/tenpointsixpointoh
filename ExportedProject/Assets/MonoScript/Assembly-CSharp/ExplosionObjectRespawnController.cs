@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,49 +14,55 @@ public class ExplosionObjectRespawnController : MonoBehaviour
 
 	private bool _isMultiplayerMode;
 
-	public static List<GameObject> respawnList = new List<GameObject>();
+	public static List<GameObject> respawnList;
+
+	static ExplosionObjectRespawnController()
+	{
+		ExplosionObjectRespawnController.respawnList = new List<GameObject>();
+	}
+
+	public ExplosionObjectRespawnController()
+	{
+	}
 
 	private void CreateExplosionObject()
 	{
-		if (_isMultiplayerMode)
+		if (!this._isMultiplayerMode)
 		{
-			if (PhotonNetwork.isMasterClient)
-			{
-				string prefabName = string.Format("ExplosionObjects/{0}", explosionObjectPrefab.name);
-				_currentExplosionObject = PhotonNetwork.InstantiateSceneObject(prefabName, base.transform.position, base.transform.rotation, 0, null);
-			}
-			else
-			{
-				_currentExplosionObject = null;
-			}
+			this._currentExplosionObject = UnityEngine.Object.Instantiate<GameObject>(this.explosionObjectPrefab);
+		}
+		else if (!PhotonNetwork.isMasterClient)
+		{
+			this._currentExplosionObject = null;
 		}
 		else
 		{
-			_currentExplosionObject = Object.Instantiate(explosionObjectPrefab);
+			string str = string.Format("ExplosionObjects/{0}", this.explosionObjectPrefab.name);
+			this._currentExplosionObject = PhotonNetwork.InstantiateSceneObject(str, base.transform.position, base.transform.rotation, 0, null);
 		}
-		if (_currentExplosionObject != null)
+		if (this._currentExplosionObject != null)
 		{
-			_currentExplosionObject.transform.parent = base.transform;
-			_currentExplosionObject.transform.localPosition = Vector3.zero;
-			_currentExplosionObject.transform.localRotation = Quaternion.identity;
+			this._currentExplosionObject.transform.parent = base.transform;
+			this._currentExplosionObject.transform.localPosition = Vector3.zero;
+			this._currentExplosionObject.transform.localRotation = Quaternion.identity;
 		}
-	}
-
-	private void Start()
-	{
-		_isMultiplayerMode = Defs.isMulti;
-		CreateExplosionObject();
-		respawnList.Add(base.gameObject);
 	}
 
 	private void OnDestroy()
 	{
-		respawnList.Remove(base.gameObject);
+		ExplosionObjectRespawnController.respawnList.Remove(base.gameObject);
+	}
+
+	private void Start()
+	{
+		this._isMultiplayerMode = Defs.isMulti;
+		this.CreateExplosionObject();
+		ExplosionObjectRespawnController.respawnList.Add(base.gameObject);
 	}
 
 	public void StartProcessNewRespawn()
 	{
-		_currentExplosionObject = null;
-		Invoke("CreateExplosionObject", timeToNextRespawn);
+		this._currentExplosionObject = null;
+		base.Invoke("CreateExplosionObject", this.timeToNextRespawn);
 	}
 }

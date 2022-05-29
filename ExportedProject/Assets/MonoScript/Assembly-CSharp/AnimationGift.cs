@@ -1,6 +1,9 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AnimationGift : MonoBehaviour
@@ -19,98 +22,38 @@ public class AnimationGift : MonoBehaviour
 
 	private float timeoutShowGift = 2f;
 
-	public static event Action onEndAnimOpen;
+	public AnimationGift()
+	{
+	}
 
 	private void Awake()
 	{
-		instance = this;
-		_animator = objGift.GetComponent<Animator>();
-		SetVisibleObjGift(false);
+		AnimationGift.instance = this;
+		this._animator = this.objGift.GetComponent<Animator>();
+		this.SetVisibleObjGift(false);
 	}
 
-	private void OnEnable()
+	private void ChangeActiveMainMenu(bool val)
 	{
-		GiftBannerWindow.onGetGift += OpenGift;
-		GiftBannerWindow.onHideInfoGift += CloseGift;
-		GiftBannerWindow.onHideInfoGift += CheckStateGift;
-		GiftBannerWindow.onOpenInfoGift += OnOpenInfoGift;
-		GiftController.OnTimerEnded += CheckStateGift;
-		GiftController.OnChangeSlots += CheckVisibleGift;
-		MainMenuController.onLoadMenu += OnLoadMenu;
-		TrainingController.onChangeTraining += CheckVisibleGift;
-		FriendsController.ServerTimeUpdated += CheckVisibleGift;
-		MainMenuHeroCamera.onEndOpenGift += EventOpenEndCam;
-		MainMenuHeroCamera.onEndCloseGift += EventCloseEndCam;
-		MainMenuController.onActiveMainMenu += ChangeActiveMainMenu;
-	}
-
-	private void OnDisable()
-	{
-		GiftBannerWindow.onHideInfoGift -= CloseGift;
-		GiftBannerWindow.onGetGift -= OpenGift;
-		GiftBannerWindow.onHideInfoGift -= CheckStateGift;
-		GiftBannerWindow.onOpenInfoGift -= OnOpenInfoGift;
-		GiftController.OnTimerEnded -= CheckStateGift;
-		FriendsController.ServerTimeUpdated -= CheckVisibleGift;
-		GiftController.OnChangeSlots -= CheckVisibleGift;
-		MainMenuController.onLoadMenu -= OnLoadMenu;
-		TrainingController.onChangeTraining -= CheckVisibleGift;
-		MainMenuHeroCamera.onEndOpenGift -= EventOpenEndCam;
-		MainMenuHeroCamera.onEndCloseGift -= EventCloseEndCam;
-		MainMenuController.onActiveMainMenu -= ChangeActiveMainMenu;
-	}
-
-	private void OnDetstroy()
-	{
-		instance = null;
-	}
-
-	private void OnLoadMenu()
-	{
-		CheckVisibleGift();
-	}
-
-	public void OpenGift()
-	{
-		StartCoroutine(WaitOpenGift());
-		if (Defs.isSoundFX && (bool)GetComponent<AudioSource>() && (bool)soundOpen)
+		if (ButOpenGift.instance != null)
 		{
-			GetComponent<AudioSource>().PlayOneShot(soundOpen);
-		}
-		TutorialQuestManager.Instance.AddFulfilledQuest("getGotcha");
-		QuestMediator.NotifyGetGotcha();
-	}
-
-	private IEnumerator WaitOpenGift()
-	{
-		yield return new WaitForSeconds(timeoutShowGift);
-		if (AnimationGift.onEndAnimOpen != null)
-		{
-			AnimationGift.onEndAnimOpen();
+			if (!val)
+			{
+				ButOpenGift.instance.HideLabelTap();
+			}
+			else
+			{
+				ButOpenGift.instance.UpdateHUDStateGift();
+			}
 		}
 	}
 
-	public void OnOpenInfoGift()
+	private void ChangeLayer(string nameLayer)
 	{
-		if (_animator != null)
+		Renderer[] componentsInChildren = base.GetComponentsInChildren<Renderer>(true);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
 		{
-			_animator.SetBool("IsOpen", true);
-		}
-		if (Defs.isSoundFX && (bool)GetComponent<AudioSource>() && (bool)soundGetGift)
-		{
-			GetComponent<AudioSource>().PlayOneShot(soundGetGift);
-		}
-	}
-
-	public void CloseGift()
-	{
-		if (_animator != null)
-		{
-			_animator.SetBool("IsOpen", false);
-		}
-		if (Defs.isSoundFX && (bool)GetComponent<AudioSource>() && (bool)soundClose)
-		{
-			GetComponent<AudioSource>().PlayOneShot(soundClose);
+			componentsInChildren[i].gameObject.layer = LayerMask.NameToLayer(nameLayer);
 		}
 	}
 
@@ -120,112 +63,34 @@ public class AnimationGift : MonoBehaviour
 		{
 			ButOpenGift.instance.IsCanGetGift = GiftController.Instance.CanGetTimerGift;
 		}
-		if (_animator != null)
+		if (this._animator != null)
 		{
-			_animator.SetBool("IsEnabled", GiftController.Instance.CanGetTimerGift);
+			this._animator.SetBool("IsEnabled", GiftController.Instance.CanGetTimerGift);
 		}
 	}
 
 	public void CheckVisibleGift()
 	{
-		if (TrainingController.TrainingCompleted && GiftController.Instance.ActiveGift)
+		if (!TrainingController.TrainingCompleted || !GiftController.Instance.ActiveGift)
 		{
-			SetVisibleObjGift(true);
-			CheckStateGift();
+			this.SetVisibleObjGift(false);
 		}
 		else
 		{
-			SetVisibleObjGift(false);
+			this.SetVisibleObjGift(true);
+			this.CheckStateGift();
 		}
 	}
 
-	public void ResetAnimation()
+	public void CloseGift()
 	{
-		if (_animator != null)
+		if (this._animator != null)
 		{
-			_animator.SetBool("IsOpen", false);
+			this._animator.SetBool("IsOpen", false);
 		}
-		StopCoroutine("WaitOpenGift");
-		if (ButOpenGift.instance != null)
+		if (Defs.isSoundFX && base.GetComponent<AudioSource>() && this.soundClose)
 		{
-			ButOpenGift.instance.CanShowLabel = false;
-		}
-	}
-
-	public void StartAnimForGetGift()
-	{
-		if (_animator != null)
-		{
-			_animator.SetBool("IsEnabled", true);
-		}
-	}
-
-	public void StopAnimForGetGift()
-	{
-		CheckStateGift();
-	}
-
-	private void SetVisibleObjGift(bool val)
-	{
-		if (objGift.activeSelf == val || (GiftBannerWindow.instance != null && GiftBannerWindow.instance.IsShow && GiftBannerWindow.instance.curStateAnimAward != 0))
-		{
-			return;
-		}
-		if (!TrainingController.TrainingCompleted || GiftController.Instance == null || !GiftController.Instance.ActiveGift)
-		{
-			val = false;
-		}
-		if (ButOpenGift.instance != null)
-		{
-			ButOpenGift.instance.ActiveHighLight = val;
-		}
-		objGift.SetActive(val);
-		if (val)
-		{
-			Invoke("WaitEndAnimShow", 1f);
-			return;
-		}
-		if (ButOpenGift.instance != null)
-		{
-			ButOpenGift.instance.CanShowLabel = false;
-		}
-		if (GiftBannerWindow.instance != null && GiftBannerWindow.instance.bannerObj.activeInHierarchy)
-		{
-			GiftBannerWindow.instance.ForceCloseAll();
-		}
-	}
-
-	private void WaitEndAnimShow()
-	{
-		CancelInvoke("WaitEndAnimShow");
-		if (ButOpenGift.instance != null)
-		{
-			ButOpenGift.instance.CanShowLabel = true;
-		}
-	}
-
-	private void OnApplicationPause(bool pausing)
-	{
-		if (!pausing)
-		{
-			Invoke("CheckVisibleGift", 0.1f);
-		}
-	}
-
-	private void ChangeLayer(string nameLayer)
-	{
-		Renderer[] componentsInChildren = GetComponentsInChildren<Renderer>(true);
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			componentsInChildren[i].gameObject.layer = LayerMask.NameToLayer(nameLayer);
-		}
-	}
-
-	private void EventOpenEndCam()
-	{
-		if (ButOpenGift.instance != null)
-		{
-			ButOpenGift.instance.OpenGift();
+			base.GetComponent<AudioSource>().PlayOneShot(this.soundClose);
 		}
 	}
 
@@ -237,18 +102,164 @@ public class AnimationGift : MonoBehaviour
 		}
 	}
 
-	private void ChangeActiveMainMenu(bool val)
+	private void EventOpenEndCam()
 	{
 		if (ButOpenGift.instance != null)
 		{
-			if (val)
-			{
-				ButOpenGift.instance.UpdateHUDStateGift();
-			}
-			else
-			{
-				ButOpenGift.instance.HideLabelTap();
-			}
+			ButOpenGift.instance.OpenGift();
 		}
 	}
+
+	private void OnApplicationPause(bool pausing)
+	{
+		if (!pausing)
+		{
+			base.Invoke("CheckVisibleGift", 0.1f);
+		}
+	}
+
+	private void OnDetstroy()
+	{
+		AnimationGift.instance = null;
+	}
+
+	private void OnDisable()
+	{
+		GiftBannerWindow.onHideInfoGift -= new Action(this.CloseGift);
+		GiftBannerWindow.onGetGift -= new Action(this.OpenGift);
+		GiftBannerWindow.onHideInfoGift -= new Action(this.CheckStateGift);
+		GiftBannerWindow.onOpenInfoGift -= new Action(this.OnOpenInfoGift);
+		GiftController.OnTimerEnded -= new Action(this.CheckStateGift);
+		FriendsController.ServerTimeUpdated -= new Action(this.CheckVisibleGift);
+		GiftController.OnChangeSlots -= new Action(this.CheckVisibleGift);
+		MainMenuController.onLoadMenu -= new Action(this.OnLoadMenu);
+		TrainingController.onChangeTraining -= new Action(this.CheckVisibleGift);
+		MainMenuHeroCamera.onEndOpenGift -= new Action(this.EventOpenEndCam);
+		MainMenuHeroCamera.onEndCloseGift -= new Action(this.EventCloseEndCam);
+		MainMenuController.onActiveMainMenu -= new Action<bool>(this.ChangeActiveMainMenu);
+	}
+
+	private void OnEnable()
+	{
+		GiftBannerWindow.onGetGift += new Action(this.OpenGift);
+		GiftBannerWindow.onHideInfoGift += new Action(this.CloseGift);
+		GiftBannerWindow.onHideInfoGift += new Action(this.CheckStateGift);
+		GiftBannerWindow.onOpenInfoGift += new Action(this.OnOpenInfoGift);
+		GiftController.OnTimerEnded += new Action(this.CheckStateGift);
+		GiftController.OnChangeSlots += new Action(this.CheckVisibleGift);
+		MainMenuController.onLoadMenu += new Action(this.OnLoadMenu);
+		TrainingController.onChangeTraining += new Action(this.CheckVisibleGift);
+		FriendsController.ServerTimeUpdated += new Action(this.CheckVisibleGift);
+		MainMenuHeroCamera.onEndOpenGift += new Action(this.EventOpenEndCam);
+		MainMenuHeroCamera.onEndCloseGift += new Action(this.EventCloseEndCam);
+		MainMenuController.onActiveMainMenu += new Action<bool>(this.ChangeActiveMainMenu);
+	}
+
+	private void OnLoadMenu()
+	{
+		this.CheckVisibleGift();
+	}
+
+	public void OnOpenInfoGift()
+	{
+		if (this._animator != null)
+		{
+			this._animator.SetBool("IsOpen", true);
+		}
+		if (Defs.isSoundFX && base.GetComponent<AudioSource>() && this.soundGetGift)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this.soundGetGift);
+		}
+	}
+
+	public void OpenGift()
+	{
+		base.StartCoroutine(this.WaitOpenGift());
+		if (Defs.isSoundFX && base.GetComponent<AudioSource>() && this.soundOpen)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this.soundOpen);
+		}
+		TutorialQuestManager.Instance.AddFulfilledQuest("getGotcha");
+		QuestMediator.NotifyGetGotcha();
+	}
+
+	public void ResetAnimation()
+	{
+		if (this._animator != null)
+		{
+			this._animator.SetBool("IsOpen", false);
+		}
+		base.StopCoroutine("WaitOpenGift");
+		if (ButOpenGift.instance != null)
+		{
+			ButOpenGift.instance.CanShowLabel = false;
+		}
+	}
+
+	private void SetVisibleObjGift(bool val)
+	{
+		if (this.objGift.activeSelf == val)
+		{
+			return;
+		}
+		if (GiftBannerWindow.instance != null && GiftBannerWindow.instance.IsShow && GiftBannerWindow.instance.curStateAnimAward != GiftBannerWindow.StepAnimation.none)
+		{
+			return;
+		}
+		if (!TrainingController.TrainingCompleted || GiftController.Instance == null || !GiftController.Instance.ActiveGift)
+		{
+			val = false;
+		}
+		if (ButOpenGift.instance != null)
+		{
+			ButOpenGift.instance.ActiveHighLight = val;
+		}
+		this.objGift.SetActive(val);
+		if (!val)
+		{
+			if (ButOpenGift.instance != null)
+			{
+				ButOpenGift.instance.CanShowLabel = false;
+			}
+			if (GiftBannerWindow.instance != null && GiftBannerWindow.instance.bannerObj.activeInHierarchy)
+			{
+				GiftBannerWindow.instance.ForceCloseAll();
+			}
+		}
+		else
+		{
+			base.Invoke("WaitEndAnimShow", 1f);
+		}
+	}
+
+	public void StartAnimForGetGift()
+	{
+		if (this._animator != null)
+		{
+			this._animator.SetBool("IsEnabled", true);
+		}
+	}
+
+	public void StopAnimForGetGift()
+	{
+		this.CheckStateGift();
+	}
+
+	private void WaitEndAnimShow()
+	{
+		base.CancelInvoke("WaitEndAnimShow");
+		if (ButOpenGift.instance != null)
+		{
+			ButOpenGift.instance.CanShowLabel = true;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitOpenGift()
+	{
+		AnimationGift.u003cWaitOpenGiftu003ec__Iterator144 variable = null;
+		return variable;
+	}
+
+	public static event Action onEndAnimOpen;
 }

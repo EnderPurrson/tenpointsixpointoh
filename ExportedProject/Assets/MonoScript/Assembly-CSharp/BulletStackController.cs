@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BulletStackController : MonoBehaviour
@@ -20,45 +21,8 @@ public class BulletStackController : MonoBehaviour
 
 	private int[] currentIndexBullet = new int[6];
 
-	private void Start()
+	public BulletStackController()
 	{
-		sharedController = this;
-		base.transform.position = Vector3.zero;
-		for (int i = 0; i < 6; i++)
-		{
-			currentIndexBullet[i] = 0;
-		}
-		bullets = new GameObject[6][];
-		bullets[0] = new GameObject[standartBulletStack.childCount];
-		for (int j = 0; j < bullets[0].Length; j++)
-		{
-			bullets[0][j] = standartBulletStack.GetChild(j).gameObject;
-		}
-		bullets[1] = new GameObject[redBulletStack.childCount];
-		for (int k = 0; k < bullets[1].Length; k++)
-		{
-			bullets[1][k] = redBulletStack.GetChild(k).gameObject;
-		}
-		bullets[2] = new GameObject[for252BulletStack.childCount];
-		for (int l = 0; l < bullets[2].Length; l++)
-		{
-			bullets[2][l] = for252BulletStack.GetChild(l).gameObject;
-		}
-		bullets[3] = new GameObject[turquoiseBulletStack.childCount];
-		for (int m = 0; m < bullets[3].Length; m++)
-		{
-			bullets[3][m] = turquoiseBulletStack.GetChild(m).gameObject;
-		}
-		bullets[4] = new GameObject[greenBulletStack.childCount];
-		for (int n = 0; n < bullets[4].Length; n++)
-		{
-			bullets[4][n] = greenBulletStack.GetChild(n).gameObject;
-		}
-		bullets[5] = new GameObject[violetBulletStack.childCount];
-		for (int num = 0; num < bullets[5].Length; num++)
-		{
-			bullets[5][num] = violetBulletStack.GetChild(num).gameObject;
-		}
 	}
 
 	public GameObject GetCurrentBullet(int type = 0)
@@ -67,16 +31,56 @@ public class BulletStackController : MonoBehaviour
 		{
 			return null;
 		}
-		currentIndexBullet[type]++;
-		if (currentIndexBullet[type] >= bullets[type].Length)
+		this.currentIndexBullet[type]++;
+		if (this.currentIndexBullet[type] >= (int)this.bullets[type].Length)
 		{
-			currentIndexBullet[type] = 0;
+			this.currentIndexBullet[type] = 0;
 		}
-		return bullets[type][currentIndexBullet[type]];
+		return this.bullets[type][this.currentIndexBullet[type]];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		BulletStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		BulletStackController.sharedController = this;
+		base.transform.position = Vector3.zero;
+		for (int i = 0; i < 6; i++)
+		{
+			this.currentIndexBullet[i] = 0;
+		}
+		this.bullets = new GameObject[][] { new GameObject[this.standartBulletStack.childCount], null, null, null, null, null };
+		for (int j = 0; j < (int)this.bullets[0].Length; j++)
+		{
+			this.bullets[0][j] = this.standartBulletStack.GetChild(j).gameObject;
+		}
+		this.bullets[1] = new GameObject[this.redBulletStack.childCount];
+		for (int k = 0; k < (int)this.bullets[1].Length; k++)
+		{
+			this.bullets[1][k] = this.redBulletStack.GetChild(k).gameObject;
+		}
+		this.bullets[2] = new GameObject[this.for252BulletStack.childCount];
+		for (int l = 0; l < (int)this.bullets[2].Length; l++)
+		{
+			this.bullets[2][l] = this.for252BulletStack.GetChild(l).gameObject;
+		}
+		this.bullets[3] = new GameObject[this.turquoiseBulletStack.childCount];
+		for (int m = 0; m < (int)this.bullets[3].Length; m++)
+		{
+			this.bullets[3][m] = this.turquoiseBulletStack.GetChild(m).gameObject;
+		}
+		this.bullets[4] = new GameObject[this.greenBulletStack.childCount];
+		for (int n = 0; n < (int)this.bullets[4].Length; n++)
+		{
+			this.bullets[4][n] = this.greenBulletStack.GetChild(n).gameObject;
+		}
+		this.bullets[5] = new GameObject[this.violetBulletStack.childCount];
+		for (int o = 0; o < (int)this.bullets[5].Length; o++)
+		{
+			this.bullets[5][o] = this.violetBulletStack.GetChild(o).gameObject;
+		}
 	}
 }

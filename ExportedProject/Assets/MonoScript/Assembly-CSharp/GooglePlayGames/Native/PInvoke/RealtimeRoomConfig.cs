@@ -1,13 +1,12 @@
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.InteropServices;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class RealtimeRoomConfig : BaseReferenceHolder
 	{
-		internal RealtimeRoomConfig(IntPtr selfPointer)
-			: base(selfPointer)
+		internal RealtimeRoomConfig(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 

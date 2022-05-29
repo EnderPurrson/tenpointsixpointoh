@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -21,90 +25,55 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (interfaceHolderValue == null)
+				if (this.interfaceHolderValue == null)
 				{
-					interfaceHolderValue = base.gameObject.GetComponentInParents<UIRoot>();
+					this.interfaceHolderValue = base.gameObject.GetComponentInParents<UIRoot>();
 				}
-				return interfaceHolderValue;
+				return this.interfaceHolderValue;
 			}
+		}
+
+		public WindowBackgroundAnimation()
+		{
+		}
+
+		[DebuggerHidden]
+		private IEnumerator LoopBackgroundAnimation()
+		{
+			WindowBackgroundAnimation.u003cLoopBackgroundAnimationu003ec__Iterator1A2 variable = null;
+			return variable;
 		}
 
 		private void OnEnable()
 		{
-			if (PlayOnEnable)
+			if (this.PlayOnEnable)
 			{
-				Play();
+				this.Play();
 			}
 		}
 
 		public void Play()
 		{
-			_currentBgArrowPrefabIndex = -1;
-			StartCoroutine(LoopBackgroundAnimation());
-		}
-
-		private IEnumerator LoopBackgroundAnimation()
-		{
-			GameObject arrowRowPrefab = Arrows[0];
-			if (_bgArrowRows == null)
-			{
-				_bgArrowRows = new GameObject[8];
-				for (int l = 0; l < _bgArrowRows.Length; l++)
-				{
-					GameObject newArrowRow = Object.Instantiate(arrowRowPrefab);
-					newArrowRow.transform.parent = arrowRowPrefab.transform.parent;
-					_bgArrowRows[l] = newArrowRow;
-				}
-			}
-			for (int k = 0; k < Arrows.Length; k++)
-			{
-				Arrows[k].SetActive(false);
-			}
-			_currentBgArrowPrefabIndex = -1;
-			while (true)
-			{
-				if (interfaceHolder != null && interfaceHolder.gameObject.activeInHierarchy)
-				{
-					for (int j = 0; j < ShineNodes.Length; j++)
-					{
-						GameObject shine = ShineNodes[j];
-						if (shine != null && shine.activeInHierarchy)
-						{
-							shine.transform.Rotate(Vector3.forward, Time.deltaTime * 10f, Space.Self);
-							if (j != _currentBgArrowPrefabIndex)
-							{
-								_currentBgArrowPrefabIndex = j;
-								ResetBackgroundArrows(Arrows[j].transform);
-							}
-						}
-					}
-					for (int i = 0; i < _bgArrowRows.Length; i++)
-					{
-						if (!(_bgArrowRows[i] == null))
-						{
-							Transform t = _bgArrowRows[i].transform;
-							float newLocalY = t.localPosition.y + Time.deltaTime * 60f;
-							if (newLocalY > 474f)
-							{
-								newLocalY -= 880f;
-							}
-							t.localPosition = new Vector3(t.localPosition.x, newLocalY, t.localPosition.z);
-						}
-					}
-				}
-				yield return null;
-			}
+			this._currentBgArrowPrefabIndex = -1;
+			base.StartCoroutine(this.LoopBackgroundAnimation());
 		}
 
 		private void ResetBackgroundArrows(Transform target)
 		{
-			for (int i = 0; i < _bgArrowRows.Length; i++)
+			float single;
+			for (int i = 0; i < (int)this._bgArrowRows.Length; i++)
 			{
-				Transform transform = _bgArrowRows[i].transform;
-				transform.parent = target.parent;
-				transform.localScale = Vector3.one;
-				transform.localPosition = new Vector3(target.localPosition.x + ((i % 2 != 1) ? 0f : 90f), target.localPosition.y - 110f * (float)i, target.localPosition.z);
-				transform.localRotation = target.localRotation;
+				Transform transforms = this._bgArrowRows[i].transform;
+				transforms.parent = target.parent;
+				transforms.localScale = Vector3.one;
+				Transform vector3 = transforms;
+				float single1 = target.localPosition.x;
+				single = (i % 2 != 1 ? 0f : 90f);
+				Vector3 vector31 = target.localPosition;
+				float single2 = vector31.y - 110f * (float)i;
+				Vector3 vector32 = target.localPosition;
+				vector3.localPosition = new Vector3(single1 + single, single2, vector32.z);
+				transforms.localRotation = target.localRotation;
 			}
 		}
 	}

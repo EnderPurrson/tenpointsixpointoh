@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,27 +14,31 @@ public class TrainingCompletedRewardWindowSettings : MonoBehaviour
 
 	public List<UILabel> coins;
 
+	public TrainingCompletedRewardWindowSettings()
+	{
+	}
+
 	private void Awake()
 	{
-		foreach (UILabel item in exp)
+		foreach (UILabel uILabel in this.exp)
 		{
-			item.text = string.Format(LocalizationStore.Get("Key_1532"), Defs.ExpForTraining);
+			uILabel.text = string.Format(LocalizationStore.Get("Key_1532"), Defs.ExpForTraining);
 		}
-		foreach (UILabel gem in gems)
+		foreach (UILabel gem in this.gems)
 		{
 			gem.text = string.Format(LocalizationStore.Get("Key_1531"), Defs.GemsForTraining);
 		}
-		foreach (UILabel coin in coins)
+		foreach (UILabel coin in this.coins)
 		{
 			coin.text = string.Format(LocalizationStore.Get("Key_1530"), Defs.CoinsForTraining);
 		}
-		foreach (UILabel armorNameLabel in armorNameLabels)
+		foreach (UILabel armorNameLabel in this.armorNameLabels)
 		{
-			armorNameLabel.text = LocalizationStore.Get((Storager.getInt("Training.NoviceArmorUsedKey", false) != 1) ? "Key_0724" : "Key_2045");
+			armorNameLabel.text = LocalizationStore.Get((Storager.getInt("Training.NoviceArmorUsedKey", false) != 1 ? "Key_0724" : "Key_2045"));
 		}
 		if (Storager.getInt("Training.NoviceArmorUsedKey", false) == 1)
 		{
-			armorTexture.mainTexture = Resources.Load<Texture2D>("OfferIcons/Armor_Novice_icon1_big");
+			this.armorTexture.mainTexture = Resources.Load<Texture2D>("OfferIcons/Armor_Novice_icon1_big");
 		}
 	}
 }

@@ -1,6 +1,8 @@
+using System;
+
 public class RaiseEventOptions
 {
-	public static readonly RaiseEventOptions Default = new RaiseEventOptions();
+	public readonly static RaiseEventOptions Default;
 
 	public EventCaching CachingOption;
 
@@ -15,4 +17,13 @@ public class RaiseEventOptions
 	public bool ForwardToWebhook;
 
 	public bool Encrypt;
+
+	static RaiseEventOptions()
+	{
+		RaiseEventOptions.Default = new RaiseEventOptions();
+	}
+
+	public RaiseEventOptions()
+	{
+	}
 }

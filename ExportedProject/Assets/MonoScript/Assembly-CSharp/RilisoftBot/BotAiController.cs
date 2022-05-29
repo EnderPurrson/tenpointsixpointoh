@@ -1,38 +1,15 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RilisoftBot
 {
 	public class BotAiController : MonoBehaviour
 	{
-		private enum AiState
-		{
-			Patrol = 0,
-			MoveToTarget = 1,
-			Damage = 2,
-			Waiting = 3,
-			Teleportation = 4,
-			None = 5
-		}
-
-		private enum TypeBot
-		{
-			Melee = 0,
-			Shooting = 1,
-			ShootAndMelee = 2,
-			None = 3
-		}
-
-		private enum TargetType
-		{
-			Player = 0,
-			Turret = 1,
-			Bot = 2,
-			None = 3
-		}
-
 		private const int MaxAttempTeleportation = 5;
 
 		private const float TimeDelayedTeleport = 0.2f;
@@ -43,9 +20,9 @@ namespace RilisoftBot
 
 		private BaseBot _botController;
 
-		private TypeBot _typeBot;
+		private BotAiController.TypeBot _typeBot;
 
-		private AiState _currentState;
+		private BotAiController.AiState _currentState;
 
 		private bool _isMultiplayerCoopMode;
 
@@ -84,7 +61,7 @@ namespace RilisoftBot
 		[Header("Teleport movement setting")]
 		public float timeToNextTeleport = 2f;
 
-		public float[] DeltaTeleportAttackDistance = new float[2] { 1f, 2f };
+		public float[] DeltaTeleportAttackDistance = new float[] { 1f, 2f };
 
 		public GameObject effectTeleport;
 
@@ -111,102 +88,88 @@ namespace RilisoftBot
 
 		private bool _isTargetCaptureForce;
 
+		public Transform currentTarget
+		{
+			get;
+			private set;
+		}
+
 		public bool IsCanMove
 		{
 			get
 			{
-				return _isCanMove;
+				return this._isCanMove;
 			}
 			set
 			{
-				if (_isCanMove != value)
+				if (this._isCanMove == value)
 				{
-					_isCanMove = value;
-					if (_isCanMove)
-					{
-						_lastTimeMoving = -1f;
-						_botController.PlayAnimZombieWalkByMode();
-					}
+					return;
+				}
+				this._isCanMove = value;
+				if (this._isCanMove)
+				{
+					this._lastTimeMoving = -1f;
+					this._botController.PlayAnimZombieWalkByMode();
 				}
 			}
 		}
-
-		public Transform currentTarget { get; private set; }
 
 		private bool IsWaitingState
 		{
 			get
 			{
-				return _isWaiting;
+				return this._isWaiting;
 			}
 			set
 			{
-				if (_isWaiting != value)
+				if (this._isWaiting == value)
 				{
-					_isWaiting = value;
-					if (_isWaiting)
-					{
-						_botController.PlayAnimationIdle();
-					}
+					return;
+				}
+				this._isWaiting = value;
+				if (this._isWaiting)
+				{
+					this._botController.PlayAnimationIdle();
 				}
 			}
 		}
 
-		private void Start()
+		public BotAiController()
 		{
-			_photonView = GetComponent<PhotonView>();
-			_isMultiplayerCoopMode = Defs.isCOOP && _photonView != null;
-			_currentState = AiState.None;
-			_botController = GetComponent<BaseBot>();
-			_typeBot = GetCurrentTypeBot();
-			_naveMeshAgent = GetComponent<NavMeshAgent>();
-			_modelCollider = GetComponentInChildren<BoxCollider>();
-			InitializePatrolModule();
-			if (_typeBot == TypeBot.Melee)
-			{
-				_timeToTakeDamage = GetTimeToTakeDamageMeleeBot();
-			}
-			_timeLastTeleport = timeToNextTeleport;
-			InitTeleportData();
-			_naveMeshAgent.Warp(base.transform.position + _naveMeshAgent.baseOffset * Vector3.up);
 		}
 
-		private TypeBot GetCurrentTypeBot()
+		private BotAiController.AiState CheckActiveAttackState()
 		{
-			if (_botController == null)
+			if (this._botController.IsDeath || this.currentTarget == null)
 			{
-				return TypeBot.None;
+				return BotAiController.AiState.None;
 			}
-			if (_botController as MeleeBot != null || _botController as MeleeBossBot != null)
+			if (this.CheckMoveFromTeleport())
 			{
-				return TypeBot.Melee;
+				return BotAiController.AiState.Teleportation;
 			}
-			if (_botController as MeleeShootBot != null)
+			float single = Vector3.SqrMagnitude(this.currentTarget.position - (base.transform.position + Vector3.up));
+			if (!this._botController.CheckEnemyInAttackZone(single))
 			{
-				return TypeBot.ShootAndMelee;
+				return (!this.isStationary ? BotAiController.AiState.MoveToTarget : BotAiController.AiState.Waiting);
 			}
-			return TypeBot.Shooting;
-		}
-
-		private void UpdateCurrentAiState()
-		{
-			if (IsCanMove)
+			if (this._typeBot != BotAiController.TypeBot.Shooting && this._typeBot != BotAiController.TypeBot.ShootAndMelee)
 			{
-				_currentState = AiState.Patrol;
+				return BotAiController.AiState.Damage;
 			}
-			else if (!_botController.IsDeath && currentTarget != null)
+			this.CheckTargetAvailabelForShot();
+			BotAiController.AiState aiState = (!this.isStationary ? BotAiController.AiState.MoveToTarget : BotAiController.AiState.Waiting);
+			if (this._isTargetAvalabelShot)
 			{
-				_currentState = CheckActiveAttackState();
+				return BotAiController.AiState.Damage;
 			}
-			else
-			{
-				_currentState = AiState.None;
-			}
+			return aiState;
 		}
 
 		private bool CheckApplyMultiplayerLogic()
 		{
-			if (!_isMultiplayerCoopMode)
+			if (!this._isMultiplayerCoopMode)
 			{
 				return false;
 			}
@@ -218,460 +181,137 @@ namespace RilisoftBot
 			{
 				if (PhotonNetwork.isMasterClient)
 				{
-					_botController.DestroyByNetworkType();
+					this._botController.DestroyByNetworkType();
 				}
 				return true;
 			}
-			if (!_photonView.isMine)
+			if (!this._photonView.isMine)
 			{
 				return true;
 			}
 			return false;
-		}
-
-		private void Update()
-		{
-			if (Defs.isMulti && _naveMeshAgent.enabled != PhotonNetwork.isMasterClient)
-			{
-				_naveMeshAgent.enabled = PhotonNetwork.isMasterClient;
-			}
-			if (CheckApplyMultiplayerLogic())
-			{
-				return;
-			}
-			UpdateTargetsForBot();
-			UpdateCurrentAiState();
-			if (_currentState == AiState.Patrol)
-			{
-				UpdatePatrolState();
-			}
-			else if (_currentState == AiState.MoveToTarget)
-			{
-				UpdateMoveToTargetState();
-			}
-			else if (_currentState == AiState.Damage)
-			{
-				UpdateDamagedTargetState();
-			}
-			else if (_currentState == AiState.Waiting)
-			{
-				IsWaitingState = true;
-			}
-			else if (_currentState == AiState.Teleportation)
-			{
-				StartCoroutine(TeleportFromRandomPoint());
-			}
-			if (_botController.IsDeath)
-			{
-				if (_botController.IsFalling)
-				{
-					_botController.SetPositionForFallState();
-				}
-				if (!_isDeaded)
-				{
-					_naveMeshAgent.enabled = false;
-					_isDeaded = true;
-				}
-			}
-		}
-
-		private void InitializePatrolModule()
-		{
-			_lastTimeMoving = -1f;
-			if (_isMultiplayerCoopMode && !_photonView.isMine)
-			{
-				_botController.PlayAnimZombieWalkByMode();
-				IsCanMove = false;
-			}
-			else
-			{
-				IsCanMove = !isStationary;
-			}
-		}
-
-		private void UpdatePatrolState()
-		{
-			if (IsCanMove && _lastTimeMoving <= Time.time)
-			{
-				ResetNavigationPathIfNeed();
-				Vector3 position = base.transform.position;
-				_targetPoint = new Vector3(position.x + UnityEngine.Random.Range(0f - minLenghtMove, minLenghtMove), position.y, position.z + UnityEngine.Random.Range(0f - minLenghtMove, minLenghtMove));
-				_lastTimeMoving = Time.time + Vector3.Distance(base.transform.position, _targetPoint) / _botController.GetWalkSpeed();
-				if (!_naveMeshAgent.SetDestination(_targetPoint))
-				{
-					_lastTimeMoving = 0f;
-					return;
-				}
-				_botController.OrientToTarget(_targetPoint);
-				_naveMeshAgent.speed = _botController.GetWalkSpeed();
-			}
-		}
-
-		private float GetTimeToTakeDamageMeleeBot()
-		{
-			if (_typeBot != 0)
-			{
-				return 0f;
-			}
-			MeleeBot meleeBot = _botController as MeleeBot;
-			return meleeBot.CheckTimeToTakeDamage();
-		}
-
-		private void CheckTargetAvailabelForShot()
-		{
-			_timeToCheckAvailabelShot -= Time.deltaTime;
-			if (!(_timeToCheckAvailabelShot > 0f))
-			{
-				_timeToCheckAvailabelShot = 1f;
-				_isTargetAvalabelShot = IsTargetAvailabelForShot();
-			}
-		}
-
-		private string GetTargetTagAndPointToShot(out Vector3 pointToShot)
-		{
-			switch (GetTargetType(currentTarget))
-			{
-			case TargetType.Player:
-			{
-				SkinName component = currentTarget.GetComponent<SkinName>();
-				if (component == null)
-				{
-					pointToShot = Vector3.zero;
-					return null;
-				}
-				Transform transform = component.headObj.transform;
-				pointToShot = transform.position;
-				return "Player";
-			}
-			case TargetType.Turret:
-				pointToShot = currentTarget.GetComponent<TurretController>().GetHeadPoint();
-				return "Turret";
-			case TargetType.Bot:
-				pointToShot = currentTarget.GetComponent<BaseBot>().GetHeadPoint();
-				return "Enemy";
-			default:
-				pointToShot = Vector3.zero;
-				return null;
-			}
-		}
-
-		private bool IsTargetAvailabelForShot()
-		{
-			Vector3 headPoint = _botController.GetHeadPoint();
-			Vector3 pointToShot;
-			string targetTagAndPointToShot = GetTargetTagAndPointToShot(out pointToShot);
-			float maxAttackDistance = _botController.GetMaxAttackDistance();
-			RaycastHit hitInfo;
-			if (Physics.Raycast(headPoint, pointToShot - headPoint, out hitInfo, maxAttackDistance, Tools.AllAvailabelBotRaycastMask))
-			{
-				Transform transform = hitInfo.collider.transform;
-				return transform.root.CompareTag(targetTagAndPointToShot);
-			}
-			return false;
-		}
-
-		private void UpdateMoveToTargetState()
-		{
-			IsWaitingState = false;
-			if (_botController.isFlyingSpeedLimit && _naveMeshAgent.isOnOffMeshLink)
-			{
-				_naveMeshAgent.speed = _botController.maxFlyingSpeed;
-			}
-			else
-			{
-				_naveMeshAgent.speed = _botController.GetAttackSpeedByCompleteLevel();
-			}
-			_naveMeshAgent.SetDestination(currentTarget.position);
-			if (_typeBot == TypeBot.Melee)
-			{
-				_timeToTakeDamage = GetTimeToTakeDamageMeleeBot();
-			}
-			_botController.PlayAnimZombieWalkByMode();
-		}
-
-		private AiState CheckActiveAttackState()
-		{
-			if (_botController.IsDeath || currentTarget == null)
-			{
-				return AiState.None;
-			}
-			if (CheckMoveFromTeleport())
-			{
-				return AiState.Teleportation;
-			}
-			float distanceToEnemy = Vector3.SqrMagnitude(currentTarget.position - (base.transform.position + Vector3.up));
-			if (_botController.CheckEnemyInAttackZone(distanceToEnemy))
-			{
-				if (_typeBot == TypeBot.Shooting || _typeBot == TypeBot.ShootAndMelee)
-				{
-					CheckTargetAvailabelForShot();
-					AiState result = ((!isStationary) ? AiState.MoveToTarget : AiState.Waiting);
-					if (_isTargetAvalabelShot)
-					{
-						return AiState.Damage;
-					}
-					return result;
-				}
-				return AiState.Damage;
-			}
-			return (!isStationary) ? AiState.MoveToTarget : AiState.Waiting;
-		}
-
-		private void InitTeleportData()
-		{
-			if (isTeleportationMove)
-			{
-				_effectObject = UnityEngine.Object.Instantiate(effectTeleport);
-				_effectObject.transform.parent = base.transform;
-				_effectObject.transform.localPosition = Vector3.zero;
-				_effectObject.transform.rotation = Quaternion.identity;
-				_effectObject.SetActive(false);
-			}
-		}
-
-		private IEnumerator ShowEffectTeleport(float seconds)
-		{
-			_effectObject.SetActive(true);
-			yield return new WaitForSeconds(seconds);
-			_effectObject.SetActive(false);
-		}
-
-		private IEnumerator TeleportFromRandomPoint()
-		{
-			bool isWarpComplete = false;
-			Vector3 positionFromTeleport2 = Vector3.zero;
-			isStationary = true;
-			StartCoroutine(ShowEffectTeleport(0.2f));
-			_botController.TryPlayAudioClip(teleportStart);
-			yield return new WaitForSeconds(0.2f);
-			for (int i = 0; i < 5; i++)
-			{
-				positionFromTeleport2 = GetPositionFromTeleport();
-				isWarpComplete = _naveMeshAgent.Warp(positionFromTeleport2);
-				if (isWarpComplete)
-				{
-					break;
-				}
-			}
-			if (!isWarpComplete)
-			{
-				_naveMeshAgent.Warp(Vector3.zero);
-			}
-			_botController.DelayShootAfterEvent(4f);
-			StartCoroutine(ShowEffectTeleport(0.2f));
-			_botController.TryPlayAudioClip(teleportEnd);
-			yield return new WaitForSeconds(0.2f);
-			isStationary = false;
-		}
-
-		private Vector3 GetPositionFromTeleport()
-		{
-			Vector3 zero = Vector3.zero;
-			float min = _botController.attackDistance + DeltaTeleportAttackDistance[0];
-			float max = _botController.attackDistance + DeltaTeleportAttackDistance[1];
-			float num = UnityEngine.Random.Range(min, max);
-			float value = UnityEngine.Random.value;
-			if (value >= 0f && value < 0.4f)
-			{
-				Quaternion quaternion = Quaternion.Euler(0f, angleByPlayerLook, 0f);
-				return currentTarget.position + quaternion * (currentTarget.forward * num);
-			}
-			if (value >= 0.4f && value < 0.5f)
-			{
-				Quaternion quaternion2 = Quaternion.Euler(0f, angleByPlayerLook, 0f);
-				Vector3 forward = currentTarget.forward;
-				forward.z = 0f - forward.z;
-				return currentTarget.position + quaternion2 * (forward * num);
-			}
-			if (value >= 0.5f && value < 0.6f)
-			{
-				Vector3 forward2 = currentTarget.forward;
-				forward2.z = 0f - forward2.z;
-				Quaternion quaternion3 = Quaternion.Euler(0f, 0f - angleByPlayerLook, 0f);
-				return currentTarget.position + quaternion3 * (forward2 * num);
-			}
-			Quaternion quaternion4 = Quaternion.Euler(0f, 0f - angleByPlayerLook, 0f);
-			return currentTarget.position + quaternion4 * (currentTarget.forward * num);
-		}
-
-		private bool CheckMoveFromTeleport()
-		{
-			if (!isTeleportationMove)
-			{
-				return false;
-			}
-			if (_timeLastTeleport > 0f)
-			{
-				_timeLastTeleport -= Time.deltaTime;
-				return false;
-			}
-			_timeLastTeleport = timeToNextTeleport;
-			return true;
-		}
-
-		public void SetTargetToMove(Transform target)
-		{
-			if (target != null && currentTarget != target)
-			{
-				ResetNavigationPathIfNeed();
-				_botController.PlayVoiceSound();
-				_botController.PlayAnimZombieWalkByMode();
-			}
-			else if (target == null && currentTarget != target)
-			{
-				ResetNavigationPathIfNeed();
-				_botController.PlayAnimationWalk();
-			}
-			currentTarget = target;
-			IsCanMove = target == null && !isStationary;
-		}
-
-		private void ResetNavigationPathIfNeed()
-		{
-			if (_naveMeshAgent.path != null && !_naveMeshAgent.isOnOffMeshLink)
-			{
-				_naveMeshAgent.ResetPath();
-			}
-		}
-
-		private void UpdateDamagedTargetState()
-		{
-			IsWaitingState = false;
-			ResetNavigationPathIfNeed();
-			Vector3 position = currentTarget.position;
-			position.y = base.transform.position.y;
-			_botController.OrientToTarget(position);
-			_botController.PlayAnimZombieAttackOrStopByMode();
-			if (_typeBot == TypeBot.Melee)
-			{
-				_timeToTakeDamage -= Time.deltaTime;
-				if (_timeToTakeDamage <= 0f)
-				{
-					_botController.MakeDamage(currentTarget);
-					_timeToTakeDamage = GetTimeToTakeDamageMeleeBot();
-				}
-			}
-		}
-
-		private TargetType GetTargetType(Transform target)
-		{
-			if (target.CompareTag("Player"))
-			{
-				return TargetType.Player;
-			}
-			if (target.CompareTag("Turret"))
-			{
-				return TargetType.Turret;
-			}
-			if (currentTarget.CompareTag("Enemy"))
-			{
-				return TargetType.Bot;
-			}
-			return TargetType.None;
-		}
-
-		private void UpdateTargetsForBot()
-		{
-			if (!isDetectPlayer)
-			{
-				return;
-			}
-			if (_isMultiplayerCoopMode)
-			{
-				_timeToUpdateMultiplayerTargets -= Time.deltaTime;
-				if (_timeToUpdateMultiplayerTargets <= 0f)
-				{
-					_timeToUpdateMultiplayerTargets = 3f;
-					CheckTargetForMultiplayerMode();
-				}
-			}
-			else
-			{
-				_timeToUpdateLocalTargets -= Time.deltaTime;
-				if (_timeToUpdateLocalTargets <= 0f)
-				{
-					CheckTargetForLocalMode();
-				}
-			}
 		}
 
 		private bool CheckForcedTarget()
 		{
-			if (!_isTargetCaptureForce)
+			if (!this._isTargetCaptureForce)
 			{
 				return false;
 			}
-			if (IsCurrentTargetLost())
+			if (this.IsCurrentTargetLost())
 			{
-				SetTargetToMove(null);
-				_isTargetCaptureForce = false;
+				this.SetTargetToMove(null);
+				this._isTargetCaptureForce = false;
 			}
 			return true;
 		}
 
-		private void CheckTargetForMultiplayerMode()
+		private bool CheckMoveFromTeleport()
 		{
-			if (CheckForcedTarget())
+			if (!this.isTeleportationMove)
+			{
+				return false;
+			}
+			if (this._timeLastTeleport <= 0f)
+			{
+				this._timeLastTeleport = this.timeToNextTeleport;
+				return true;
+			}
+			this._timeLastTeleport -= Time.deltaTime;
+			return false;
+		}
+
+		private void CheckTargetAvailabelForShot()
+		{
+			this._timeToCheckAvailabelShot -= Time.deltaTime;
+			if (this._timeToCheckAvailabelShot > 0f)
 			{
 				return;
 			}
-			float num = -1f;
-			bool isTargetPlayer;
-			GameObject nearestTargetForMultiplayer = GetNearestTargetForMultiplayer(out isTargetPlayer);
-			if (nearestTargetForMultiplayer == null)
-			{
-				SetTargetToMove(null);
-				return;
-			}
-			num = ((!isTargetPlayer) ? GetDistanceToTurret(nearestTargetForMultiplayer) : GetDistanceToPlayer(nearestTargetForMultiplayer));
-			if (num != -1f && _botController.detectRadius >= num && !IsTargetLost(nearestTargetForMultiplayer.transform))
-			{
-				SetTargetToMove(nearestTargetForMultiplayer.transform);
-			}
-			else
-			{
-				SetTargetToMove(null);
-			}
+			this._timeToCheckAvailabelShot = 1f;
+			this._isTargetAvalabelShot = this.IsTargetAvailabelForShot();
 		}
 
 		private void CheckTargetForLocalMode()
 		{
-			if (CheckForcedTarget())
+			if (this.CheckForcedTarget())
 			{
 				return;
 			}
-			if (!_isEntered)
+			if (!this._isEntered)
 			{
 				GameObject gameObject = GameObject.FindGameObjectWithTag("Turret");
-				float distanceToTurret = GetDistanceToTurret(gameObject);
-				bool flag = distanceToTurret != -1f && _botController.detectRadius >= distanceToTurret;
-				GameObject gameObject2 = GameObject.FindGameObjectWithTag("Player");
-				float distanceToPlayer = GetDistanceToPlayer(gameObject2);
-				bool flag2 = distanceToPlayer != -1f && _botController.detectRadius >= distanceToPlayer;
-				Transform transform = null;
-				if (flag2 && flag)
+				float distanceToTurret = this.GetDistanceToTurret(gameObject);
+				bool flag = (distanceToTurret != -1f ? this._botController.detectRadius >= distanceToTurret : false);
+				GameObject gameObject1 = GameObject.FindGameObjectWithTag("Player");
+				float distanceToPlayer = this.GetDistanceToPlayer(gameObject1);
+				bool flag1 = (distanceToPlayer != -1f ? this._botController.detectRadius >= distanceToPlayer : false);
+				Transform transforms = null;
+				if (flag1 && flag)
 				{
-					transform = ((!(distanceToPlayer < distanceToTurret)) ? gameObject.transform : gameObject2.transform);
+					transforms = (distanceToPlayer >= distanceToTurret ? gameObject.transform : gameObject1.transform);
 				}
-				else if (flag2)
+				else if (flag1)
 				{
-					transform = gameObject2.transform;
+					transforms = gameObject1.transform;
 				}
 				else if (flag)
 				{
-					transform = gameObject.transform;
+					transforms = gameObject.transform;
 				}
-				if (transform != null)
+				if (transforms != null)
 				{
-					SetTargetToMove(transform);
-					_isEntered = true;
+					this.SetTargetToMove(transforms);
+					this._isEntered = true;
 				}
 			}
-			else if (IsCurrentTargetLost())
+			else if (this.IsCurrentTargetLost())
 			{
-				SetTargetToMove(null);
-				_isEntered = false;
+				this.SetTargetToMove(null);
+				this._isEntered = false;
 			}
+		}
+
+		private void CheckTargetForMultiplayerMode()
+		{
+			bool flag;
+			if (this.CheckForcedTarget())
+			{
+				return;
+			}
+			float single = -1f;
+			GameObject nearestTargetForMultiplayer = this.GetNearestTargetForMultiplayer(out flag);
+			if (nearestTargetForMultiplayer == null)
+			{
+				this.SetTargetToMove(null);
+				return;
+			}
+			single = (!flag ? this.GetDistanceToTurret(nearestTargetForMultiplayer) : this.GetDistanceToPlayer(nearestTargetForMultiplayer));
+			if (single == -1f || this._botController.detectRadius < single || this.IsTargetLost(nearestTargetForMultiplayer.transform))
+			{
+				this.SetTargetToMove(null);
+			}
+			else
+			{
+				this.SetTargetToMove(nearestTargetForMultiplayer.transform);
+			}
+		}
+
+		private BotAiController.TypeBot GetCurrentTypeBot()
+		{
+			if (this._botController == null)
+			{
+				return BotAiController.TypeBot.None;
+			}
+			if (this._botController is MeleeBot || this._botController is MeleeBossBot)
+			{
+				return BotAiController.TypeBot.Melee;
+			}
+			if (this._botController is MeleeShootBot)
+			{
+				return BotAiController.TypeBot.ShootAndMelee;
+			}
+			return BotAiController.TypeBot.Shooting;
 		}
 
 		private float GetDistanceToPlayer(GameObject playerObj)
@@ -680,7 +320,7 @@ namespace RilisoftBot
 			{
 				return -1f;
 			}
-			if (IsTargetNotAvailabel(playerObj.transform, TargetType.Player))
+			if (this.IsTargetNotAvailabel(playerObj.transform, BotAiController.TargetType.Player))
 			{
 				return -1f;
 			}
@@ -693,7 +333,7 @@ namespace RilisoftBot
 			{
 				return -1f;
 			}
-			if (IsTargetNotAvailabel(turretObj.transform, TargetType.Turret))
+			if (this.IsTargetNotAvailabel(turretObj.transform, BotAiController.TargetType.Turret))
 			{
 				return -1f;
 			}
@@ -703,44 +343,173 @@ namespace RilisoftBot
 		private GameObject GetNearestTargetForMultiplayer(out bool isTargetPlayer)
 		{
 			isTargetPlayer = false;
-			GameObject[] array = GameObject.FindGameObjectsWithTag("Turret");
-			GameObject result = null;
+			GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Turret");
+			GameObject item = null;
 			if (Initializer.players.Count > 0)
 			{
-				float num = float.MaxValue;
+				float single = Single.MaxValue;
 				for (int i = 0; i < Initializer.players.Count; i++)
 				{
-					if (!IsTargetNotAvailabel(Initializer.players[i]))
+					if (!this.IsTargetNotAvailabel(Initializer.players[i]))
 					{
-						float num2 = Vector3.SqrMagnitude(base.transform.position - Initializer.players[i].myPlayerTransform.position);
-						if (num2 < num)
+						float single1 = Vector3.SqrMagnitude(base.transform.position - Initializer.players[i].myPlayerTransform.position);
+						if (single1 < single)
 						{
-							num = num2;
-							result = Initializer.players[i].mySkinName.gameObject;
+							single = single1;
+							item = Initializer.players[i].mySkinName.gameObject;
 							isTargetPlayer = true;
 						}
 					}
 				}
-				for (int j = 0; j < array.Length; j++)
+				for (int j = 0; j < (int)gameObjectArray.Length; j++)
 				{
-					if (!IsTargetNotAvailabel(array[j].transform, TargetType.Turret))
+					if (!this.IsTargetNotAvailabel(gameObjectArray[j].transform, BotAiController.TargetType.Turret))
 					{
-						float num3 = Vector3.SqrMagnitude(base.transform.position - array[j].transform.position);
-						if (num3 < num)
+						float single2 = Vector3.SqrMagnitude(base.transform.position - gameObjectArray[j].transform.position);
+						if (single2 < single)
 						{
-							num = num3;
-							result = array[j];
+							single = single2;
+							item = gameObjectArray[j];
 							isTargetPlayer = false;
 						}
 					}
 				}
 			}
-			return result;
+			return item;
+		}
+
+		private Vector3 GetPositionFromTeleport()
+		{
+			Vector3 vector3 = Vector3.zero;
+			float deltaTeleportAttackDistance = this._botController.attackDistance + this.DeltaTeleportAttackDistance[0];
+			float single = this._botController.attackDistance + this.DeltaTeleportAttackDistance[1];
+			float single1 = UnityEngine.Random.Range(deltaTeleportAttackDistance, single);
+			float single2 = UnityEngine.Random.@value;
+			if (single2 >= 0f && single2 < 0.4f)
+			{
+				Quaternion quaternion = Quaternion.Euler(0f, this.angleByPlayerLook, 0f);
+				vector3 = this.currentTarget.position + (quaternion * this.currentTarget.forward * single1);
+			}
+			else if (single2 >= 0.4f && single2 < 0.5f)
+			{
+				Quaternion quaternion1 = Quaternion.Euler(0f, this.angleByPlayerLook, 0f);
+				Vector3 vector31 = this.currentTarget.forward;
+				vector31.z = -vector31.z;
+				vector3 = this.currentTarget.position + (quaternion1 * vector31 * single1);
+			}
+			else if (single2 < 0.5f || single2 >= 0.6f)
+			{
+				Quaternion quaternion2 = Quaternion.Euler(0f, -this.angleByPlayerLook, 0f);
+				vector3 = this.currentTarget.position + (quaternion2 * this.currentTarget.forward * single1);
+			}
+			else
+			{
+				Vector3 vector32 = this.currentTarget.forward;
+				vector32.z = -vector32.z;
+				Quaternion quaternion3 = Quaternion.Euler(0f, -this.angleByPlayerLook, 0f);
+				vector3 = this.currentTarget.position + (quaternion3 * vector32 * single1);
+			}
+			return vector3;
+		}
+
+		private string GetTargetTagAndPointToShot(out Vector3 pointToShot)
+		{
+			BotAiController.TargetType targetType = this.GetTargetType(this.currentTarget);
+			if (targetType != BotAiController.TargetType.Player)
+			{
+				if (targetType == BotAiController.TargetType.Turret)
+				{
+					pointToShot = this.currentTarget.GetComponent<TurretController>().GetHeadPoint();
+					return "Turret";
+				}
+				if (targetType != BotAiController.TargetType.Bot)
+				{
+					pointToShot = Vector3.zero;
+					return null;
+				}
+				pointToShot = this.currentTarget.GetComponent<BaseBot>().GetHeadPoint();
+				return "Enemy";
+			}
+			SkinName component = this.currentTarget.GetComponent<SkinName>();
+			if (component == null)
+			{
+				pointToShot = Vector3.zero;
+				return null;
+			}
+			pointToShot = component.headObj.transform.position;
+			return "Player";
+		}
+
+		private BotAiController.TargetType GetTargetType(Transform target)
+		{
+			if (target.CompareTag("Player"))
+			{
+				return BotAiController.TargetType.Player;
+			}
+			if (target.CompareTag("Turret"))
+			{
+				return BotAiController.TargetType.Turret;
+			}
+			if (this.currentTarget.CompareTag("Enemy"))
+			{
+				return BotAiController.TargetType.Bot;
+			}
+			return BotAiController.TargetType.None;
+		}
+
+		private float GetTimeToTakeDamageMeleeBot()
+		{
+			if (this._typeBot != BotAiController.TypeBot.Melee)
+			{
+				return 0f;
+			}
+			return (this._botController as MeleeBot).CheckTimeToTakeDamage();
+		}
+
+		private void InitializePatrolModule()
+		{
+			this._lastTimeMoving = -1f;
+			if (!this._isMultiplayerCoopMode || this._photonView.isMine)
+			{
+				this.IsCanMove = !this.isStationary;
+			}
+			else
+			{
+				this._botController.PlayAnimZombieWalkByMode();
+				this.IsCanMove = false;
+			}
+		}
+
+		private void InitTeleportData()
+		{
+			if (!this.isTeleportationMove)
+			{
+				return;
+			}
+			this._effectObject = UnityEngine.Object.Instantiate<GameObject>(this.effectTeleport);
+			this._effectObject.transform.parent = base.transform;
+			this._effectObject.transform.localPosition = Vector3.zero;
+			this._effectObject.transform.rotation = Quaternion.identity;
+			this._effectObject.SetActive(false);
 		}
 
 		private bool IsCurrentTargetLost()
 		{
-			return IsTargetLost(currentTarget);
+			return this.IsTargetLost(this.currentTarget);
+		}
+
+		private bool IsTargetAvailabelForShot()
+		{
+			Vector3 vector3;
+			RaycastHit raycastHit;
+			Vector3 headPoint = this._botController.GetHeadPoint();
+			string targetTagAndPointToShot = this.GetTargetTagAndPointToShot(out vector3);
+			float maxAttackDistance = this._botController.GetMaxAttackDistance();
+			if (!Physics.Raycast(headPoint, vector3 - headPoint, out raycastHit, maxAttackDistance, Tools.AllAvailabelBotRaycastMask))
+			{
+				return false;
+			}
+			return raycastHit.collider.transform.root.CompareTag(targetTagAndPointToShot);
 		}
 
 		private bool IsTargetLost(Transform target)
@@ -749,32 +518,32 @@ namespace RilisoftBot
 			{
 				return true;
 			}
-			if (_isTargetCaptureForce && target.gameObject == null)
+			if (this._isTargetCaptureForce && target.gameObject == null)
 			{
 				return true;
 			}
-			TargetType targetType = GetTargetType(target);
-			if (targetType == TargetType.Player)
+			BotAiController.TargetType targetType = this.GetTargetType(target);
+			if (targetType == BotAiController.TargetType.Player)
 			{
-				if (IsTargetNotAvailabel(target, TargetType.Player))
+				if (this.IsTargetNotAvailabel(target, BotAiController.TargetType.Player))
 				{
 					return true;
 				}
-				if (!_isTargetCaptureForce && Vector3.SqrMagnitude(base.transform.position - target.transform.position) > _botController.GetSquareDetectRadius())
+				if (!this._isTargetCaptureForce && Vector3.SqrMagnitude(base.transform.position - target.transform.position) > this._botController.GetSquareDetectRadius())
 				{
 					return true;
 				}
 			}
-			if (targetType == TargetType.Turret && IsTargetNotAvailabel(target, TargetType.Turret))
+			if (targetType == BotAiController.TargetType.Turret && this.IsTargetNotAvailabel(target, BotAiController.TargetType.Turret))
 			{
 				return true;
 			}
 			return false;
 		}
 
-		private bool IsTargetNotAvailabel(Transform target, TargetType targetType)
+		private bool IsTargetNotAvailabel(Transform target, BotAiController.TargetType targetType)
 		{
-			if (targetType == TargetType.Player)
+			if (targetType == BotAiController.TargetType.Player)
 			{
 				SkinName component = target.GetComponent<SkinName>();
 				if (component != null && component.playerMoveC.isInvisible)
@@ -782,10 +551,10 @@ namespace RilisoftBot
 					return true;
 				}
 			}
-			if (targetType == TargetType.Turret)
+			if (targetType == BotAiController.TargetType.Turret)
 			{
-				TurretController component2 = target.GetComponent<TurretController>();
-				if (component2 != null && (component2.isKilled || !component2.isRun))
+				TurretController turretController = target.GetComponent<TurretController>();
+				if (turretController != null && (turretController.isKilled || !turretController.isRun))
 				{
 					return true;
 				}
@@ -802,10 +571,246 @@ namespace RilisoftBot
 			return false;
 		}
 
+		private void ResetNavigationPathIfNeed()
+		{
+			if (this._naveMeshAgent.path == null)
+			{
+				return;
+			}
+			if (this._naveMeshAgent.isOnOffMeshLink)
+			{
+				return;
+			}
+			this._naveMeshAgent.ResetPath();
+		}
+
 		public void SetTargetForced(Transform target)
 		{
-			SetTargetToMove(target);
-			_isTargetCaptureForce = true;
+			this.SetTargetToMove(target);
+			this._isTargetCaptureForce = true;
+		}
+
+		public void SetTargetToMove(Transform target)
+		{
+			if (target != null && this.currentTarget != target)
+			{
+				this.ResetNavigationPathIfNeed();
+				this._botController.PlayVoiceSound();
+				this._botController.PlayAnimZombieWalkByMode();
+			}
+			else if (target == null && this.currentTarget != target)
+			{
+				this.ResetNavigationPathIfNeed();
+				this._botController.PlayAnimationWalk();
+			}
+			this.currentTarget = target;
+			this.IsCanMove = (target != null ? false : !this.isStationary);
+		}
+
+		[DebuggerHidden]
+		private IEnumerator ShowEffectTeleport(float seconds)
+		{
+			BotAiController.u003cShowEffectTeleportu003ec__Iterator115 variable = null;
+			return variable;
+		}
+
+		private void Start()
+		{
+			this._photonView = base.GetComponent<PhotonView>();
+			this._isMultiplayerCoopMode = (!Defs.isCOOP ? false : this._photonView != null);
+			this._currentState = BotAiController.AiState.None;
+			this._botController = base.GetComponent<BaseBot>();
+			this._typeBot = this.GetCurrentTypeBot();
+			this._naveMeshAgent = base.GetComponent<NavMeshAgent>();
+			this._modelCollider = base.GetComponentInChildren<BoxCollider>();
+			this.InitializePatrolModule();
+			if (this._typeBot == BotAiController.TypeBot.Melee)
+			{
+				this._timeToTakeDamage = this.GetTimeToTakeDamageMeleeBot();
+			}
+			this._timeLastTeleport = this.timeToNextTeleport;
+			this.InitTeleportData();
+			this._naveMeshAgent.Warp(base.transform.position + (this._naveMeshAgent.baseOffset * Vector3.up));
+		}
+
+		[DebuggerHidden]
+		private IEnumerator TeleportFromRandomPoint()
+		{
+			BotAiController.u003cTeleportFromRandomPointu003ec__Iterator116 variable = null;
+			return variable;
+		}
+
+		private void Update()
+		{
+			if (Defs.isMulti && this._naveMeshAgent.enabled != PhotonNetwork.isMasterClient)
+			{
+				this._naveMeshAgent.enabled = PhotonNetwork.isMasterClient;
+			}
+			if (this.CheckApplyMultiplayerLogic())
+			{
+				return;
+			}
+			this.UpdateTargetsForBot();
+			this.UpdateCurrentAiState();
+			if (this._currentState == BotAiController.AiState.Patrol)
+			{
+				this.UpdatePatrolState();
+			}
+			else if (this._currentState == BotAiController.AiState.MoveToTarget)
+			{
+				this.UpdateMoveToTargetState();
+			}
+			else if (this._currentState == BotAiController.AiState.Damage)
+			{
+				this.UpdateDamagedTargetState();
+			}
+			else if (this._currentState == BotAiController.AiState.Waiting)
+			{
+				this.IsWaitingState = true;
+			}
+			else if (this._currentState == BotAiController.AiState.Teleportation)
+			{
+				base.StartCoroutine(this.TeleportFromRandomPoint());
+			}
+			if (this._botController.IsDeath)
+			{
+				if (this._botController.IsFalling)
+				{
+					this._botController.SetPositionForFallState();
+				}
+				if (!this._isDeaded)
+				{
+					this._naveMeshAgent.enabled = false;
+					this._isDeaded = true;
+				}
+			}
+		}
+
+		private void UpdateCurrentAiState()
+		{
+			if (this.IsCanMove)
+			{
+				this._currentState = BotAiController.AiState.Patrol;
+			}
+			else if (this._botController.IsDeath || !(this.currentTarget != null))
+			{
+				this._currentState = BotAiController.AiState.None;
+			}
+			else
+			{
+				this._currentState = this.CheckActiveAttackState();
+			}
+		}
+
+		private void UpdateDamagedTargetState()
+		{
+			this.IsWaitingState = false;
+			this.ResetNavigationPathIfNeed();
+			Vector3 vector3 = this.currentTarget.position;
+			vector3.y = base.transform.position.y;
+			this._botController.OrientToTarget(vector3);
+			this._botController.PlayAnimZombieAttackOrStopByMode();
+			if (this._typeBot == BotAiController.TypeBot.Melee)
+			{
+				this._timeToTakeDamage -= Time.deltaTime;
+				if (this._timeToTakeDamage <= 0f)
+				{
+					this._botController.MakeDamage(this.currentTarget);
+					this._timeToTakeDamage = this.GetTimeToTakeDamageMeleeBot();
+				}
+			}
+		}
+
+		private void UpdateMoveToTargetState()
+		{
+			this.IsWaitingState = false;
+			if (!this._botController.isFlyingSpeedLimit || !this._naveMeshAgent.isOnOffMeshLink)
+			{
+				this._naveMeshAgent.speed = this._botController.GetAttackSpeedByCompleteLevel();
+			}
+			else
+			{
+				this._naveMeshAgent.speed = this._botController.maxFlyingSpeed;
+			}
+			this._naveMeshAgent.SetDestination(this.currentTarget.position);
+			if (this._typeBot == BotAiController.TypeBot.Melee)
+			{
+				this._timeToTakeDamage = this.GetTimeToTakeDamageMeleeBot();
+			}
+			this._botController.PlayAnimZombieWalkByMode();
+		}
+
+		private void UpdatePatrolState()
+		{
+			if (!this.IsCanMove)
+			{
+				return;
+			}
+			if (this._lastTimeMoving <= Time.time)
+			{
+				this.ResetNavigationPathIfNeed();
+				Vector3 vector3 = base.transform.position;
+				this._targetPoint = new Vector3(vector3.x + UnityEngine.Random.Range(-this.minLenghtMove, this.minLenghtMove), vector3.y, vector3.z + UnityEngine.Random.Range(-this.minLenghtMove, this.minLenghtMove));
+				this._lastTimeMoving = Time.time + Vector3.Distance(base.transform.position, this._targetPoint) / this._botController.GetWalkSpeed();
+				if (!this._naveMeshAgent.SetDestination(this._targetPoint))
+				{
+					this._lastTimeMoving = 0f;
+					return;
+				}
+				this._botController.OrientToTarget(this._targetPoint);
+				this._naveMeshAgent.speed = this._botController.GetWalkSpeed();
+			}
+		}
+
+		private void UpdateTargetsForBot()
+		{
+			if (!this.isDetectPlayer)
+			{
+				return;
+			}
+			if (!this._isMultiplayerCoopMode)
+			{
+				this._timeToUpdateLocalTargets -= Time.deltaTime;
+				if (this._timeToUpdateLocalTargets <= 0f)
+				{
+					this.CheckTargetForLocalMode();
+				}
+			}
+			else
+			{
+				this._timeToUpdateMultiplayerTargets -= Time.deltaTime;
+				if (this._timeToUpdateMultiplayerTargets <= 0f)
+				{
+					this._timeToUpdateMultiplayerTargets = 3f;
+					this.CheckTargetForMultiplayerMode();
+				}
+			}
+		}
+
+		private enum AiState
+		{
+			Patrol,
+			MoveToTarget,
+			Damage,
+			Waiting,
+			Teleportation,
+			None
+		}
+
+		private enum TargetType
+		{
+			Player,
+			Turret,
+			Bot,
+			None
+		}
+
+		private enum TypeBot
+		{
+			Melee,
+			Shooting,
+			ShootAndMelee,
+			None
 		}
 	}
 }

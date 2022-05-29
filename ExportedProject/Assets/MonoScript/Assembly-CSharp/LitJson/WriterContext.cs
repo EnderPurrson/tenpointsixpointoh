@@ -1,3 +1,5 @@
+using System;
+
 namespace LitJson
 {
 	internal class WriterContext
@@ -11,5 +13,9 @@ namespace LitJson
 		public bool ExpectingValue;
 
 		public int Padding;
+
+		public WriterContext()
+		{
+		}
 	}
 }

@@ -1,105 +1,126 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class AmazonUserData : Jsonable
 	{
-		public string UserId { get; set; }
-
-		public string Marketplace { get; set; }
-
-		public string ToJson()
+		public string Marketplace
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public string UserId
 		{
-			//Discarded unreachable code: IL_002f, IL_0041
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("userId", UserId);
-				dictionary.Add("marketplace", Marketplace);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		public AmazonUserData()
+		{
 		}
 
 		public static AmazonUserData CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0066, IL_0078
+			AmazonUserData amazonUserDatum;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					AmazonUserData item = new AmazonUserData();
+					if (jsonMap.ContainsKey("userId"))
+					{
+						item.UserId = (string)jsonMap["userId"];
+					}
+					if (jsonMap.ContainsKey("marketplace"))
+					{
+						item.Marketplace = (string)jsonMap["marketplace"];
+					}
+					amazonUserDatum = item;
 				}
-				AmazonUserData amazonUserData = new AmazonUserData();
-				if (jsonMap.ContainsKey("userId"))
+				else
 				{
-					amazonUserData.UserId = (string)jsonMap["userId"];
+					amazonUserDatum = null;
 				}
-				if (jsonMap.ContainsKey("marketplace"))
-				{
-					amazonUserData.Marketplace = (string)jsonMap["marketplace"];
-				}
-				return amazonUserData;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return amazonUserDatum;
 		}
 
 		public static AmazonUserData CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			AmazonUserData amazonUserDatum;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				amazonUserDatum = AmazonUserData.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return amazonUserDatum;
 		}
 
-		public static Dictionary<string, AmazonUserData> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, AmazonUserData> dictionary = new Dictionary<string, AmazonUserData>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				AmazonUserData value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>()
+				{
+					{ "userId", this.UserId },
+					{ "marketplace", this.Marketplace }
+				};
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<AmazonUserData> ListFromJson(List<object> array)
 		{
-			List<AmazonUserData> list = new List<AmazonUserData>();
-			foreach (object item in array)
+			List<AmazonUserData> amazonUserDatas = new List<AmazonUserData>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				amazonUserDatas.Add(AmazonUserData.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return amazonUserDatas;
+		}
+
+		public static Dictionary<string, AmazonUserData> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, AmazonUserData> strs = new Dictionary<string, AmazonUserData>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				AmazonUserData amazonUserDatum = AmazonUserData.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, amazonUserDatum);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

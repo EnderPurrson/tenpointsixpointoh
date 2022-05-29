@@ -1,11 +1,11 @@
 using System;
 using UnityEngine;
 
-[RequireComponent(typeof(UIWidget))]
 [AddComponentMenu("NGUI/Tween/Tween Width")]
+[RequireComponent(typeof(UIWidget))]
 public class TweenWidth : UITweener
 {
-	public int from = 100;
+	public int @from = 100;
 
 	public int to = 100;
 
@@ -19,11 +19,23 @@ public class TweenWidth : UITweener
 	{
 		get
 		{
-			if (mWidget == null)
+			if (this.mWidget == null)
 			{
-				mWidget = GetComponent<UIWidget>();
+				this.mWidget = base.GetComponent<UIWidget>();
 			}
-			return mWidget;
+			return this.mWidget;
+		}
+	}
+
+	public int @value
+	{
+		get
+		{
+			return this.cachedWidget.width;
+		}
+		set
+		{
+			this.cachedWidget.width = value;
 		}
 	}
 
@@ -32,49 +44,22 @@ public class TweenWidth : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public int value
+	public TweenWidth()
 	{
-		get
-		{
-			return cachedWidget.width;
-		}
-		set
-		{
-			cachedWidget.width = value;
-		}
-	}
-
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		value = Mathf.RoundToInt((float)from * (1f - factor) + (float)to * factor);
-		if (!updateTable)
-		{
-			return;
-		}
-		if (mTable == null)
-		{
-			mTable = NGUITools.FindInParents<UITable>(base.gameObject);
-			if (mTable == null)
-			{
-				updateTable = false;
-				return;
-			}
-		}
-		mTable.repositionNow = true;
 	}
 
 	public static TweenWidth Begin(UIWidget widget, float duration, int width)
 	{
 		TweenWidth tweenWidth = UITweener.Begin<TweenWidth>(widget.gameObject, duration);
-		tweenWidth.from = widget.width;
+		tweenWidth.@from = widget.width;
 		tweenWidth.to = width;
 		if (duration <= 0f)
 		{
@@ -84,27 +69,45 @@ public class TweenWidth : UITweener
 		return tweenWidth;
 	}
 
-	[ContextMenu("Set 'From' to current value")]
-	public override void SetStartToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		from = value;
-	}
-
-	[ContextMenu("Set 'To' to current value")]
-	public override void SetEndToCurrentValue()
-	{
-		to = value;
-	}
-
-	[ContextMenu("Assume value of 'From'")]
-	private void SetCurrentValueToStart()
-	{
-		value = from;
+		this.@value = Mathf.RoundToInt((float)this.@from * (1f - factor) + (float)this.to * factor);
+		if (this.updateTable)
+		{
+			if (this.mTable == null)
+			{
+				this.mTable = NGUITools.FindInParents<UITable>(base.gameObject);
+				if (this.mTable == null)
+				{
+					this.updateTable = false;
+					return;
+				}
+			}
+			this.mTable.repositionNow = true;
+		}
 	}
 
 	[ContextMenu("Assume value of 'To'")]
 	private void SetCurrentValueToEnd()
 	{
-		value = to;
+		this.@value = this.to;
+	}
+
+	[ContextMenu("Assume value of 'From'")]
+	private void SetCurrentValueToStart()
+	{
+		this.@value = this.@from;
+	}
+
+	[ContextMenu("Set 'To' to current value")]
+	public override void SetEndToCurrentValue()
+	{
+		this.to = this.@value;
+	}
+
+	[ContextMenu("Set 'From' to current value")]
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

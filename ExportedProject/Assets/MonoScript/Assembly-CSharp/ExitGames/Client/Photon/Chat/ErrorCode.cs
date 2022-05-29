@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public class ErrorCode
@@ -31,5 +33,9 @@ namespace ExitGames.Client.Photon.Chat
 		public const int InvalidRegion = 32756;
 
 		public const int CustomAuthenticationFailed = 32755;
+
+		public ErrorCode()
+		{
+		}
 	}
 }

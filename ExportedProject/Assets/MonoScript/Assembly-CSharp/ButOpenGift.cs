@@ -1,6 +1,7 @@
+using Holoville.HOTween;
+using Holoville.HOTween.Core;
 using System;
 using System.Runtime.CompilerServices;
-using Holoville.HOTween;
 using UnityEngine;
 
 public class ButOpenGift : MonoBehaviour
@@ -39,46 +40,19 @@ public class ButOpenGift : MonoBehaviour
 	{
 		get
 		{
-			return _activeHighLight;
+			return this._activeHighLight;
 		}
 		set
 		{
-			if (_activeHighLight != value)
+			if (this._activeHighLight != value)
 			{
-				_activeHighLight = value;
+				this._activeHighLight = value;
 				if (GiftBannerWindow.instance != null && GiftBannerWindow.instance.IsShow)
 				{
-					_activeHighLight = false;
+					this._activeHighLight = false;
 				}
-				UpdateHUDStateGift();
+				this.UpdateHUDStateGift();
 			}
-		}
-	}
-
-	public bool IsPressBut
-	{
-		get
-		{
-			return _isPressBut;
-		}
-		set
-		{
-			_isPressBut = value;
-			UpdateHUDStateGift();
-		}
-	}
-
-	public bool IsCanGetGift
-	{
-		get
-		{
-			return _isCanGetGift;
-		}
-		set
-		{
-			_isCanGetGift = value;
-			SetStateColliderActive(_isCanGetGift);
-			UpdateHUDStateGift();
 		}
 	}
 
@@ -86,12 +60,12 @@ public class ButOpenGift : MonoBehaviour
 	{
 		get
 		{
-			return _canShowLabel;
+			return this._canShowLabel;
 		}
 		set
 		{
-			_canShowLabel = value;
-			UpdateHUDStateGift();
+			this._canShowLabel = value;
+			this.UpdateHUDStateGift();
 		}
 	}
 
@@ -99,15 +73,88 @@ public class ButOpenGift : MonoBehaviour
 	{
 		get
 		{
-			return !MainMenuController.SavedShwonLobbyLevelIsLessThanActual() && TrainingController.TrainingCompleted && GiftController.Instance.ActiveGift && AnimationGift.instance.objGift.activeSelf;
+			return (MainMenuController.SavedShwonLobbyLevelIsLessThanActual() || !TrainingController.TrainingCompleted || !GiftController.Instance.ActiveGift ? false : AnimationGift.instance.objGift.activeSelf);
 		}
 	}
 
-	public static event Action onOpen;
+	public bool IsCanGetGift
+	{
+		get
+		{
+			return this._isCanGetGift;
+		}
+		set
+		{
+			this._isCanGetGift = value;
+			this.SetStateColliderActive(this._isCanGetGift);
+			this.UpdateHUDStateGift();
+		}
+	}
+
+	public bool IsPressBut
+	{
+		get
+		{
+			return this._isPressBut;
+		}
+		set
+		{
+			this._isPressBut = value;
+			this.UpdateHUDStateGift();
+		}
+	}
+
+	static ButOpenGift()
+	{
+	}
+
+	public ButOpenGift()
+	{
+	}
+
+	private void AnimHS1()
+	{
+		HOTween.Kill(this);
+		HOTween.To(this, this.speedAnim, (new TweenParms()).Prop("curColorHS", this.normalColor).OnUpdate(() => this.SetColor(this.curColorHS)).OnComplete(new TweenDelegate.TweenCallback(this.AnimHS2)));
+	}
+
+	private void AnimHS2()
+	{
+		HOTween.Kill(this);
+		HOTween.To(this, this.speedAnim, (new TweenParms()).Prop("curColorHS", this.animColor).OnUpdate(() => this.SetColor(this.curColorHS)).OnComplete(new TweenDelegate.TweenCallback(this.AnimHS1)));
+	}
+
+	private void Awake()
+	{
+		ButOpenGift.instance = this;
+		HOTween.Init();
+		this._activeHighLight = false;
+		this._isPressBut = false;
+		this._isCanGetGift = false;
+	}
+
+	public void CloseGift()
+	{
+		GiftBannerWindow.instance.CloseBannerEndAnimtion();
+		this.ActiveHighLight = true;
+		MainMenuController.canRotationLobbyPlayer = true;
+	}
+
+	public void HideLabelTap()
+	{
+		if (this.labelOverGift == null || !this.labelOverGift.gameObject.activeSelf)
+		{
+			return;
+		}
+		if (this.labelOverGift != null && this.labelOverGift.gameObject.activeSelf)
+		{
+			this.labelOverGift.gameObject.SetActive(false);
+		}
+	}
 
 	private void OnClick()
 	{
-		if (CanTap)
+		if (this.CanTap)
 		{
 			GiftScroll.canReCreateSlots = true;
 			ButtonClickSound.Instance.PlayClick();
@@ -121,85 +168,27 @@ public class ButOpenGift : MonoBehaviour
 			MainMenuController.sharedController.SaveShowPanelAndClose();
 			MainMenuController.sharedController.OnShowBannerGift();
 			GiftBannerWindow.instance.SetVisibleBanner(false);
-			ActiveHighLight = false;
-			UpdateHUDStateGift();
+			this.ActiveHighLight = false;
+			this.UpdateHUDStateGift();
 		}
-	}
-
-	private void OnPress(bool isDown)
-	{
-		if (CanTap)
-		{
-			IsPressBut = isDown;
-			UpdateHUDStateGift();
-		}
-	}
-
-	private void OnDragOut()
-	{
-		OnPress(false);
-	}
-
-	private void Awake()
-	{
-		instance = this;
-		HOTween.Init();
-		_activeHighLight = false;
-		_isPressBut = false;
-		_isCanGetGift = false;
-	}
-
-	private void Start()
-	{
-		GiftController.Instance.TryGetData();
-		UpdateHUDStateGift();
 	}
 
 	private void OnDestroy()
 	{
-		instance = null;
+		ButOpenGift.instance = null;
 	}
 
-	public void UpdateHUDStateGift()
+	private void OnDragOut()
 	{
-		if (TrainingController.TrainingCompleted && GiftController.Instance.ActiveGift)
+		this.OnPress(false);
+	}
+
+	private void OnPress(bool isDown)
+	{
+		if (this.CanTap)
 		{
-			if (ActiveHighLight)
-			{
-				if (IsPressBut)
-				{
-					SetStateClick(true);
-				}
-				else if (IsCanGetGift)
-				{
-					SetStateAnim();
-				}
-				else
-				{
-					SetStateClick(false);
-				}
-				if (IsCanGetGift && CanShowLabel)
-				{
-					ShowLabelTap();
-				}
-				else
-				{
-					HideLabelTap();
-				}
-			}
-			else
-			{
-				SetActiveHighLight(false);
-				HideLabelTap();
-			}
-		}
-		else
-		{
-			SetActiveHighLight(false);
-			HideLabelTap();
-			_isPressBut = false;
-			_isCanGetGift = false;
-			_activeHighLight = false;
+			this.IsPressBut = isDown;
+			this.UpdateHUDStateGift();
 		}
 	}
 
@@ -208,38 +197,78 @@ public class ButOpenGift : MonoBehaviour
 		GiftBannerWindow.instance.SetVisibleBanner(true);
 	}
 
-	public void CloseGift()
+	private void SetActiveHighLight(bool val)
 	{
-		GiftBannerWindow.instance.CloseBannerEndAnimtion();
-		ActiveHighLight = true;
-		MainMenuController.canRotationLobbyPlayer = true;
+		if (!val)
+		{
+			this.StopAnim();
+			this.SetColor(new Color(0f, 0f, 0f, 0f));
+		}
 	}
 
-	private void SetStateClick(bool val)
+	private void SetColor(Color needColor)
 	{
-		StopAnim();
-		if (val)
+		this.curColorHS = needColor;
+		if (this.allHighlightMaterial != null)
 		{
-			SetColor(pressColor);
-		}
-		else
-		{
-			SetColor(normalColor);
+			for (int i = 0; i < (int)this.allHighlightMaterial.Length; i++)
+			{
+				this.allHighlightMaterial[i].SetColor(this.nameShaderColor, needColor);
+			}
 		}
 	}
 
 	private void SetStateAnim()
 	{
-		AnimHS2();
+		this.AnimHS2();
 	}
 
-	private void SetActiveHighLight(bool val)
+	private void SetStateClick(bool val)
 	{
+		this.StopAnim();
 		if (!val)
 		{
-			StopAnim();
-			SetColor(new Color(0f, 0f, 0f, 0f));
+			this.SetColor(this.normalColor);
 		}
+		else
+		{
+			this.SetColor(this.pressColor);
+		}
+	}
+
+	private void SetStateColliderActive(bool val)
+	{
+		if (this.colActive)
+		{
+			this.colActive.enabled = val;
+		}
+		if (this.colNormal)
+		{
+			this.colNormal.enabled = !val;
+		}
+	}
+
+	private void ShowLabelTap()
+	{
+		if (this.labelOverGift != null && this.labelOverGift.gameObject.activeSelf)
+		{
+			return;
+		}
+		if (this.labelOverGift == null)
+		{
+			this.labelOverGift = NickLabelStack.sharedStack.GetNextCurrentLabel();
+			this.labelOverGift.StartShow(NickLabelController.TypeNickLabel.GetGift, AnimationGift.instance.transform);
+		}
+		if (!this.labelOverGift.gameObject.activeSelf)
+		{
+			this.labelOverGift.gameObject.SetActive(true);
+		}
+	}
+
+	private void Start()
+	{
+		GiftController.Instance.TryGetData();
+		this.UpdateHUDStateGift();
 	}
 
 	private void StopAnim()
@@ -247,75 +276,45 @@ public class ButOpenGift : MonoBehaviour
 		HOTween.Kill(this);
 	}
 
-	private void AnimHS2()
+	public void UpdateHUDStateGift()
 	{
-		HOTween.Kill(this);
-		HOTween.To(this, speedAnim, new TweenParms().Prop("curColorHS", animColor).OnUpdate(_003CAnimHS2_003Em__2C0).OnComplete(AnimHS1));
-	}
-
-	private void AnimHS1()
-	{
-		HOTween.Kill(this);
-		HOTween.To(this, speedAnim, new TweenParms().Prop("curColorHS", normalColor).OnUpdate(_003CAnimHS1_003Em__2C1).OnComplete(AnimHS2));
-	}
-
-	private void SetColor(Color needColor)
-	{
-		curColorHS = needColor;
-		if (allHighlightMaterial != null)
+		if (!TrainingController.TrainingCompleted || !GiftController.Instance.ActiveGift)
 		{
-			for (int i = 0; i < allHighlightMaterial.Length; i++)
+			this.SetActiveHighLight(false);
+			this.HideLabelTap();
+			this._isPressBut = false;
+			this._isCanGetGift = false;
+			this._activeHighLight = false;
+		}
+		else if (!this.ActiveHighLight)
+		{
+			this.SetActiveHighLight(false);
+			this.HideLabelTap();
+		}
+		else
+		{
+			if (this.IsPressBut)
 			{
-				allHighlightMaterial[i].SetColor(nameShaderColor, needColor);
+				this.SetStateClick(true);
+			}
+			else if (!this.IsCanGetGift)
+			{
+				this.SetStateClick(false);
+			}
+			else
+			{
+				this.SetStateAnim();
+			}
+			if (!this.IsCanGetGift || !this.CanShowLabel)
+			{
+				this.HideLabelTap();
+			}
+			else
+			{
+				this.ShowLabelTap();
 			}
 		}
 	}
 
-	private void ShowLabelTap()
-	{
-		if (!(labelOverGift != null) || !labelOverGift.gameObject.activeSelf)
-		{
-			if (labelOverGift == null)
-			{
-				labelOverGift = NickLabelStack.sharedStack.GetNextCurrentLabel();
-				labelOverGift.StartShow(NickLabelController.TypeNickLabel.GetGift, AnimationGift.instance.transform);
-			}
-			if (!labelOverGift.gameObject.activeSelf)
-			{
-				labelOverGift.gameObject.SetActive(true);
-			}
-		}
-	}
-
-	public void HideLabelTap()
-	{
-		if (!(labelOverGift == null) && labelOverGift.gameObject.activeSelf && labelOverGift != null && labelOverGift.gameObject.activeSelf)
-		{
-			labelOverGift.gameObject.SetActive(false);
-		}
-	}
-
-	private void SetStateColliderActive(bool val)
-	{
-		if ((bool)colActive)
-		{
-			colActive.enabled = val;
-		}
-		if ((bool)colNormal)
-		{
-			colNormal.enabled = !val;
-		}
-	}
-
-	[CompilerGenerated]
-	private void _003CAnimHS2_003Em__2C0()
-	{
-		SetColor(curColorHS);
-	}
-
-	[CompilerGenerated]
-	private void _003CAnimHS1_003Em__2C1()
-	{
-		SetColor(curColorHS);
-	}
+	public static event Action onOpen;
 }

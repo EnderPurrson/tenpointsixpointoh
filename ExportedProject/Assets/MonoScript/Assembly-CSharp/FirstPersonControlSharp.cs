@@ -1,22 +1,14 @@
+using Rilisoft;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 internal sealed class FirstPersonControlSharp : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CJump_003Ec__AnonStorey34D
-	{
-		internal float newProgress;
-
-		internal void _003C_003Em__564(bool success)
-		{
-			string text = string.Format("Newbie Jumper achievement progress {0:0.0}%: {1}", newProgress, success);
-		}
-	}
-
 	private const string newbieJumperAchievement = "NewbieJumperAchievement";
 
 	private const int maxJumpCount = 10;
@@ -109,92 +101,38 @@ internal sealed class FirstPersonControlSharp : MonoBehaviour
 
 	private bool secondJumpEnabled = true;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache2B;
+	public FirstPersonControlSharp()
+	{
+	}
 
 	private void Awake()
 	{
-		isHunger = Defs.isHunger;
-		isInet = Defs.isInet;
-		isMulti = Defs.isMulti;
+		this.isHunger = Defs.isHunger;
+		this.isInet = Defs.isInet;
+		this.isMulti = Defs.isMulti;
 	}
 
-	private void Start()
+	[DebuggerHidden]
+	private IEnumerator EnableSecondJump()
 	{
-		mySkinName = GetComponent<SkinName>();
-		if (!isInet)
+		FirstPersonControlSharp.u003cEnableSecondJumpu003ec__Iterator1C7 variable = null;
+		return variable;
+	}
+
+	private Vector2 GrabCameraInputDelta()
+	{
+		Vector2 vector2 = Vector2.zero;
+		TouchPadController touchPadController = JoystickController.rightJoystick;
+		if (touchPadController != null)
 		{
-			isMine = GetComponent<NetworkView>().isMine;
+			vector2 = touchPadController.GrabDeltaPosition();
 		}
-		else
-		{
-			isMine = PhotonView.Get(this).isMine;
-		}
-		if (isHunger)
-		{
-			hungerGameController = HungerGameController.Instance;
-		}
-		if (!isMulti || isMine)
-		{
-			HandleInvertCamUpdated();
-			PauseNGUIController.InvertCamUpdated += HandleInvertCamUpdated;
-			oldJumpCount = PlayerPrefs.GetInt("NewbieJumperAchievement", 0);
-			oldNinjaJumpsCount = (Storager.hasKey("NinjaJumpsCount") ? Storager.getInt("NinjaJumpsCount", false) : 0);
-		}
-		thisTransform = GetComponent<Transform>();
-		character = GetComponent<CharacterController>();
-		_moveC = playerGameObject.GetComponent<Player_move_c>();
+		return vector2;
 	}
 
 	private void HandleInvertCamUpdated()
 	{
-		_invert = PlayerPrefs.GetInt(Defs.InvertCamSN, 0) == 1;
-	}
-
-	private void OnEndGame()
-	{
-		if (!isMulti || isMine)
-		{
-			if ((bool)JoystickController.leftJoystick)
-			{
-				JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
-			}
-			if ((bool)JoystickController.rightJoystick)
-			{
-				JoystickController.rightJoystick.gameObject.SetActive(false);
-			}
-		}
-		base.enabled = false;
-	}
-
-	[PunRPC]
-	[RPC]
-	private void setIp(string _ip)
-	{
-		myIp = _ip;
-	}
-
-	private Vector2 updateKeyboardControls()
-	{
-		int num = 0;
-		int num2 = 0;
-		if (Input.GetKey("w"))
-		{
-			num = 1;
-		}
-		if (Input.GetKey("s"))
-		{
-			num = -1;
-		}
-		if (Input.GetKey("a"))
-		{
-			num2 = -1;
-		}
-		if (Input.GetKey("d"))
-		{
-			num2 = 1;
-		}
-		return new Vector2(num2, num);
+		this._invert = PlayerPrefs.GetInt(Defs.InvertCamSN, 0) == 1;
 	}
 
 	private void Jump()
@@ -204,222 +142,33 @@ internal sealed class FirstPersonControlSharp : MonoBehaviour
 			TrainingController.timeShowJump = 1000f;
 			HintController.instance.HideHintByName("press_jump");
 		}
-		jump = true;
-		canJump = false;
+		this.jump = true;
+		this.canJump = false;
 		if (!Defs.isJetpackEnabled)
 		{
-			mySkinName.sendAnimJump();
+			this.mySkinName.sendAnimJump();
 		}
-		if (!TrainingController.TrainingCompleted || (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android && BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer) || !Social.localUser.authenticated)
+		if (TrainingController.TrainingCompleted && (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android || BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer) && Social.localUser.authenticated)
 		{
-			return;
-		}
-		int num = oldJumpCount + 1;
-		if (oldJumpCount >= 10)
-		{
-			return;
-		}
-		oldJumpCount = num;
-		if (num == 10)
-		{
-			_003CJump_003Ec__AnonStorey34D _003CJump_003Ec__AnonStorey34D = new _003CJump_003Ec__AnonStorey34D();
-			PlayerPrefs.SetInt("NewbieJumperAchievement", num);
-			_003CJump_003Ec__AnonStorey34D.newProgress = 100f;
-			string text = ((BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer && Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon) ? "CgkIr8rGkPIJEAIQAQ" : "Jumper_id");
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+			int num = this.oldJumpCount + 1;
+			if (this.oldJumpCount < 10)
 			{
-				AGSAchievementsClient.UpdateAchievementProgress(text, _003CJump_003Ec__AnonStorey34D.newProgress);
-			}
-			else
-			{
-				Social.ReportProgress(text, _003CJump_003Ec__AnonStorey34D.newProgress, _003CJump_003Ec__AnonStorey34D._003C_003Em__564);
-			}
-		}
-	}
-
-	private void Update()
-	{
-		if ((isMulti && !isMine) || mySkinName.playerMoveC.isKilled || JoystickController.leftJoystick == null || JoystickController.rightJoystick == null)
-		{
-			return;
-		}
-		if (mySkinName.playerMoveC.isRocketJump && character.isGrounded)
-		{
-			mySkinName.playerMoveC.isRocketJump = false;
-		}
-		_movement = thisTransform.TransformDirection(new Vector3(JoystickController.leftJoystick.value.x, 0f, JoystickController.leftJoystick.value.y));
-		if ((!isHunger || !hungerGameController.isGo) && isHunger)
-		{
-			_movement = Vector3.zero;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining < TrainingState.TapToMove)
-		{
-			_movement = Vector3.zero;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToMove && _movement != Vector3.zero)
-		{
-			TrainingController.isNextStep = TrainingState.TapToMove;
-		}
-		_movement.y = 0f;
-		_movement.Normalize();
-		Vector2 vector = new Vector2(Mathf.Abs(JoystickController.leftJoystick.value.x), Mathf.Abs(JoystickController.leftJoystick.value.y));
-		if (JoystickController.leftTouchPad.isShooting && JoystickController.leftTouchPad.isActiveFireButton)
-		{
-			vector = new Vector2(0f, 0f);
-		}
-		if (vector.y > vector.x)
-		{
-			if (JoystickController.leftJoystick.value.y > 0f)
-			{
-				_movement *= forwardSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector.y;
-			}
-			else
-			{
-				_movement *= backwardSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector.y;
-			}
-		}
-		else
-		{
-			_movement *= sidestepSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector.x * (float)((!character.isGrounded) ? 1 : 1);
-		}
-		if (character.isGrounded)
-		{
-			if (EffectsController.NinjaJumpEnabled)
-			{
-				ninjaJumpUsed = false;
-			}
-			canJump = true;
-			jump = false;
-			TouchPadController rightJoystick = JoystickController.rightJoystick;
-			if (canJump && (rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed))
-			{
-				if (!Defs.isJetpackEnabled)
+				this.oldJumpCount = num;
+				if (num == 10)
 				{
-					rightJoystick.jumpPressed = false;
-				}
-				Jump();
-			}
-			if (jump)
-			{
-				secondJumpEnabled = false;
-				if (!JoystickController.leftTouchPad.isJumpPressed)
-				{
-					StartCoroutine(EnableSecondJump());
-				}
-				else
-				{
-					jumpBy3dTouch = true;
-				}
-				velocity = Vector3.zero;
-				velocity.y = jumpSpeed * EffectsController.JumpModifier;
-			}
-		}
-		else
-		{
-			if (!JoystickController.leftTouchPad.isJumpPressed && jumpBy3dTouch)
-			{
-				secondJumpEnabled = true;
-				jumpBy3dTouch = false;
-			}
-			if (jump && mySkinName.interpolateScript.myAnim == 0 && !Defs.isJetpackEnabled)
-			{
-				mySkinName.sendAnimJump();
-			}
-			TouchPadController rightJoystick2 = JoystickController.rightJoystick;
-			TouchPadInJoystick leftTouchPad = JoystickController.leftTouchPad;
-			if ((rightJoystick2.jumpPressed || leftTouchPad.isJumpPressed) && ((EffectsController.NinjaJumpEnabled && !ninjaJumpUsed && secondJumpEnabled) || Defs.isJetpackEnabled))
-			{
-				if (!Defs.isJetpackEnabled)
-				{
-					RegisterNinjAchievment();
-				}
-				ninjaJumpUsed = true;
-				canJump = false;
-				if (!Defs.isJetpackEnabled)
-				{
-					mySkinName.sendAnimJump();
-				}
-				velocity.y = 1.1f * (jumpSpeed * EffectsController.JumpModifier);
-			}
-			if (!Defs.isJetpackEnabled)
-			{
-				rightJoystick2.jumpPressed = false;
-			}
-			velocity.y += Physics.gravity.y * gravityMultiplier * Time.deltaTime;
-		}
-		_movement += velocity;
-		_movement += Physics.gravity * gravityMultiplier;
-		_movement *= Time.deltaTime;
-		timeUpdateAnim -= Time.deltaTime;
-		if (timeUpdateAnim < 0f)
-		{
-			if (character.isGrounded)
-			{
-				timeUpdateAnim = 0.5f;
-				if (new Vector2(_movement.x, _movement.z).sqrMagnitude > 0f)
-				{
-					_moveC.WalkAnimation();
-				}
-				else
-				{
-					_moveC.IdleAnimation();
+					PlayerPrefs.SetInt("NewbieJumperAchievement", num);
+					float single = 100f;
+					string str = (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer || Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon ? "Jumper_id" : "CgkIr8rGkPIJEAIQAQ");
+					if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+					{
+						Social.ReportProgress(str, (double)single, (bool success) => string.Format("Newbie Jumper achievement progress {0:0.0}%: {1}", single, success));
+					}
+					else
+					{
+						AGSAchievementsClient.UpdateAchievementProgress(str, single, 0);
+					}
 				}
 			}
-			else
-			{
-				_moveC.WalkAnimation();
-			}
-		}
-		Update2();
-	}
-
-	private void Update2()
-	{
-		if (!character.enabled)
-		{
-			return;
-		}
-		if (!mySkinName.onRink)
-		{
-			if (mySkinName.onConveyor)
-			{
-				_movement += mySkinName.conveyorDirection * Time.deltaTime;
-			}
-			character.Move(_movement);
-			_movement = Vector3.zero;
-			steptRink = false;
-		}
-		else
-		{
-			if (!steptRink)
-			{
-				rinkMovement = _movement;
-				steptRink = true;
-			}
-			rinkMovement = Vector3.MoveTowards(rinkMovement, _movement, 0.068f * Time.deltaTime);
-			rinkMovement.y = _movement.y;
-			character.Move(rinkMovement);
-		}
-		if (character.isGrounded)
-		{
-			velocity = Vector3.zero;
-		}
-		else
-		{
-			if (mySkinName.onRink)
-			{
-				rinkMovement = _movement;
-			}
-			mySkinName.onConveyor = false;
-		}
-		Vector2 delta = GrabCameraInputDelta();
-		if (Device.isPixelGunLow && Defs.isTouchControlSmoothDump)
-		{
-			MoveCamera(delta);
-		}
-		if (Defs.isMulti && CameraSceneController.sharedController.killCamController.enabled)
-		{
-			CameraSceneController.sharedController.killCamController.UpdateMouseX();
 		}
 	}
 
@@ -430,73 +179,317 @@ internal sealed class FirstPersonControlSharp : MonoBehaviour
 			TrainingController.isNextStep = TrainingState.SwipeToRotate;
 		}
 		float sensitivity = Defs.Sensitivity;
-		float num = 1f;
-		if (_moveC != null)
+		float single = 1f;
+		if (this._moveC != null)
 		{
-			num *= ((!_moveC.isZooming) ? 1f : 0.2f);
+			single = single * (!this._moveC.isZooming ? 1f : 0.2f);
 		}
 		if (JoystickController.rightJoystick != null)
 		{
-			JoystickController.rightJoystick.ApplyDeltaTo(delta, thisTransform, cameraPivot.transform, sensitivity * num, _invert);
+			JoystickController.rightJoystick.ApplyDeltaTo(delta, this.thisTransform, this.cameraPivot.transform, sensitivity * single, this._invert);
 		}
-	}
-
-	private Vector2 GrabCameraInputDelta()
-	{
-		Vector2 result = Vector2.zero;
-		TouchPadController rightJoystick = JoystickController.rightJoystick;
-		if (rightJoystick != null)
-		{
-			result = rightJoystick.GrabDeltaPosition();
-		}
-		return result;
-	}
-
-	private void RegisterNinjAchievment()
-	{
-		if (!Social.localUser.authenticated)
-		{
-			return;
-		}
-		int num = oldNinjaJumpsCount + 1;
-		if (oldNinjaJumpsCount < 50)
-		{
-			Storager.setInt("NinjaJumpsCount", num, false);
-		}
-		oldNinjaJumpsCount = num;
-		if (Storager.hasKey("ParkourNinjaAchievementCompleted") || num < 50)
-		{
-			return;
-		}
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-		{
-			GpgFacade instance = GpgFacade.Instance;
-			if (_003C_003Ef__am_0024cache2B == null)
-			{
-				_003C_003Ef__am_0024cache2B = _003CRegisterNinjAchievment_003Em__565;
-			}
-			instance.IncrementAchievement("CgkIr8rGkPIJEAIQAw", 1, _003C_003Ef__am_0024cache2B);
-		}
-		Storager.setInt("ParkourNinjaAchievementCompleted", 1, false);
-	}
-
-	private IEnumerator EnableSecondJump()
-	{
-		yield return new WaitForSeconds(0.25f);
-		secondJumpEnabled = true;
 	}
 
 	private void OnDestroy()
 	{
-		if (!isMulti || isMine)
+		if (!this.isMulti || this.isMine)
 		{
-			PauseNGUIController.InvertCamUpdated -= HandleInvertCamUpdated;
+			PauseNGUIController.InvertCamUpdated -= new Action(this.HandleInvertCamUpdated);
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CRegisterNinjAchievment_003Em__565(bool success)
+	private void OnEndGame()
 	{
-		Debug.Log("Achievement Parkour Ninja incremented: " + success);
+		if (!this.isMulti || this.isMine)
+		{
+			if (JoystickController.leftJoystick)
+			{
+				JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
+			}
+			if (JoystickController.rightJoystick)
+			{
+				JoystickController.rightJoystick.gameObject.SetActive(false);
+			}
+		}
+		base.enabled = false;
+	}
+
+	private void RegisterNinjAchievment()
+	{
+		if (Social.localUser.authenticated)
+		{
+			int num = this.oldNinjaJumpsCount + 1;
+			if (this.oldNinjaJumpsCount < 50)
+			{
+				Storager.setInt("NinjaJumpsCount", num, false);
+			}
+			this.oldNinjaJumpsCount = num;
+			if (!Storager.hasKey("ParkourNinjaAchievementCompleted") && num >= 50)
+			{
+				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				{
+					GpgFacade instance = GpgFacade.Instance;
+					instance.IncrementAchievement("CgkIr8rGkPIJEAIQAw", 1, (bool success) => UnityEngine.Debug.Log(string.Concat("Achievement Parkour Ninja incremented: ", success)));
+				}
+				Storager.setInt("ParkourNinjaAchievementCompleted", 1, false);
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void setIp(string _ip)
+	{
+		this.myIp = _ip;
+	}
+
+	private void Start()
+	{
+		this.mySkinName = base.GetComponent<SkinName>();
+		if (this.isInet)
+		{
+			this.isMine = PhotonView.Get(this).isMine;
+		}
+		else
+		{
+			this.isMine = base.GetComponent<NetworkView>().isMine;
+		}
+		if (this.isHunger)
+		{
+			this.hungerGameController = HungerGameController.Instance;
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			this.HandleInvertCamUpdated();
+			PauseNGUIController.InvertCamUpdated += new Action(this.HandleInvertCamUpdated);
+			this.oldJumpCount = PlayerPrefs.GetInt("NewbieJumperAchievement", 0);
+			this.oldNinjaJumpsCount = (!Storager.hasKey("NinjaJumpsCount") ? 0 : Storager.getInt("NinjaJumpsCount", false));
+		}
+		this.thisTransform = base.GetComponent<Transform>();
+		this.character = base.GetComponent<CharacterController>();
+		this._moveC = this.playerGameObject.GetComponent<Player_move_c>();
+	}
+
+	private void Update()
+	{
+		if (this.isMulti && !this.isMine)
+		{
+			return;
+		}
+		if (this.mySkinName.playerMoveC.isKilled)
+		{
+			return;
+		}
+		if (JoystickController.leftJoystick == null || JoystickController.rightJoystick == null)
+		{
+			return;
+		}
+		if (this.mySkinName.playerMoveC.isRocketJump && this.character.isGrounded)
+		{
+			this.mySkinName.playerMoveC.isRocketJump = false;
+		}
+		this._movement = this.thisTransform.TransformDirection(new Vector3(JoystickController.leftJoystick.@value.x, 0f, JoystickController.leftJoystick.@value.y));
+		if ((!this.isHunger || !this.hungerGameController.isGo) && this.isHunger)
+		{
+			this._movement = Vector3.zero;
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining < TrainingState.TapToMove)
+		{
+			this._movement = Vector3.zero;
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToMove && this._movement != Vector3.zero)
+		{
+			TrainingController.isNextStep = TrainingState.TapToMove;
+		}
+		this._movement.y = 0f;
+		this._movement.Normalize();
+		Vector2 vector2 = new Vector2(Mathf.Abs(JoystickController.leftJoystick.@value.x), Mathf.Abs(JoystickController.leftJoystick.@value.y));
+		if (JoystickController.leftTouchPad.isShooting && JoystickController.leftTouchPad.isActiveFireButton)
+		{
+			vector2 = new Vector2(0f, 0f);
+		}
+		if (vector2.y <= vector2.x)
+		{
+			FirstPersonControlSharp firstPersonControlSharp = this;
+			firstPersonControlSharp._movement = firstPersonControlSharp._movement * (this.sidestepSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector2.x * (float)((!this.character.isGrounded ? 1 : 1)));
+		}
+		else if (JoystickController.leftJoystick.@value.y <= 0f)
+		{
+			FirstPersonControlSharp firstPersonControlSharp1 = this;
+			firstPersonControlSharp1._movement = firstPersonControlSharp1._movement * (this.backwardSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector2.y);
+		}
+		else
+		{
+			FirstPersonControlSharp firstPersonControlSharp2 = this;
+			firstPersonControlSharp2._movement = firstPersonControlSharp2._movement * (this.forwardSpeed * EffectsController.SpeedModifier(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1) * vector2.y);
+		}
+		if (!this.character.isGrounded)
+		{
+			if (!JoystickController.leftTouchPad.isJumpPressed && this.jumpBy3dTouch)
+			{
+				this.secondJumpEnabled = true;
+				this.jumpBy3dTouch = false;
+			}
+			if (this.jump && this.mySkinName.interpolateScript.myAnim == 0 && !Defs.isJetpackEnabled)
+			{
+				this.mySkinName.sendAnimJump();
+			}
+			TouchPadController touchPadController = JoystickController.rightJoystick;
+			TouchPadInJoystick touchPadInJoystick = JoystickController.leftTouchPad;
+			if ((touchPadController.jumpPressed || touchPadInJoystick.isJumpPressed) && (EffectsController.NinjaJumpEnabled && !this.ninjaJumpUsed && this.secondJumpEnabled || Defs.isJetpackEnabled))
+			{
+				if (!Defs.isJetpackEnabled)
+				{
+					this.RegisterNinjAchievment();
+				}
+				this.ninjaJumpUsed = true;
+				this.canJump = false;
+				if (!Defs.isJetpackEnabled)
+				{
+					this.mySkinName.sendAnimJump();
+				}
+				this.velocity.y = 1.1f * (this.jumpSpeed * EffectsController.JumpModifier);
+			}
+			if (!Defs.isJetpackEnabled)
+			{
+				touchPadController.jumpPressed = false;
+			}
+			ref Vector3 vector3Pointer = ref this.velocity;
+			float single = vector3Pointer.y;
+			Vector3 vector3 = Physics.gravity;
+			vector3Pointer.y = single + vector3.y * this.gravityMultiplier * Time.deltaTime;
+		}
+		else
+		{
+			if (EffectsController.NinjaJumpEnabled)
+			{
+				this.ninjaJumpUsed = false;
+			}
+			this.canJump = true;
+			this.jump = false;
+			TouchPadController touchPadController1 = JoystickController.rightJoystick;
+			if (this.canJump && (touchPadController1.jumpPressed || JoystickController.leftTouchPad.isJumpPressed))
+			{
+				if (!Defs.isJetpackEnabled)
+				{
+					touchPadController1.jumpPressed = false;
+				}
+				this.Jump();
+			}
+			if (this.jump)
+			{
+				this.secondJumpEnabled = false;
+				if (JoystickController.leftTouchPad.isJumpPressed)
+				{
+					this.jumpBy3dTouch = true;
+				}
+				else
+				{
+					base.StartCoroutine(this.EnableSecondJump());
+				}
+				this.velocity = Vector3.zero;
+				this.velocity.y = this.jumpSpeed * EffectsController.JumpModifier;
+			}
+		}
+		this._movement += this.velocity;
+		FirstPersonControlSharp firstPersonControlSharp3 = this;
+		firstPersonControlSharp3._movement = firstPersonControlSharp3._movement + (Physics.gravity * this.gravityMultiplier);
+		this._movement *= Time.deltaTime;
+		this.timeUpdateAnim -= Time.deltaTime;
+		if (this.timeUpdateAnim < 0f)
+		{
+			if (!this.character.isGrounded)
+			{
+				this._moveC.WalkAnimation();
+			}
+			else
+			{
+				this.timeUpdateAnim = 0.5f;
+				Vector2 vector21 = new Vector2(this._movement.x, this._movement.z);
+				if (vector21.sqrMagnitude <= 0f)
+				{
+					this._moveC.IdleAnimation();
+				}
+				else
+				{
+					this._moveC.WalkAnimation();
+				}
+			}
+		}
+		this.Update2();
+	}
+
+	private void Update2()
+	{
+		if (!this.character.enabled)
+		{
+			return;
+		}
+		if (this.mySkinName.onRink)
+		{
+			if (!this.steptRink)
+			{
+				this.rinkMovement = this._movement;
+				this.steptRink = true;
+			}
+			this.rinkMovement = Vector3.MoveTowards(this.rinkMovement, this._movement, 0.068f * Time.deltaTime);
+			this.rinkMovement.y = this._movement.y;
+			this.character.Move(this.rinkMovement);
+		}
+		else
+		{
+			if (this.mySkinName.onConveyor)
+			{
+				FirstPersonControlSharp firstPersonControlSharp = this;
+				firstPersonControlSharp._movement = firstPersonControlSharp._movement + (this.mySkinName.conveyorDirection * Time.deltaTime);
+			}
+			this.character.Move(this._movement);
+			this._movement = Vector3.zero;
+			this.steptRink = false;
+		}
+		if (!this.character.isGrounded)
+		{
+			if (this.mySkinName.onRink)
+			{
+				this.rinkMovement = this._movement;
+			}
+			this.mySkinName.onConveyor = false;
+		}
+		else
+		{
+			this.velocity = Vector3.zero;
+		}
+		Vector2 vector2 = this.GrabCameraInputDelta();
+		if (Device.isPixelGunLow && Defs.isTouchControlSmoothDump)
+		{
+			this.MoveCamera(vector2);
+		}
+		if (Defs.isMulti && CameraSceneController.sharedController.killCamController.enabled)
+		{
+			CameraSceneController.sharedController.killCamController.UpdateMouseX();
+		}
+	}
+
+	private Vector2 updateKeyboardControls()
+	{
+		int num = 0;
+		int num1 = 0;
+		if (Input.GetKey("w"))
+		{
+			num = 1;
+		}
+		if (Input.GetKey("s"))
+		{
+			num = -1;
+		}
+		if (Input.GetKey("a"))
+		{
+			num1 = -1;
+		}
+		if (Input.GetKey("d"))
+		{
+			num1 = 1;
+		}
+		return new Vector2((float)num1, (float)num);
 	}
 }

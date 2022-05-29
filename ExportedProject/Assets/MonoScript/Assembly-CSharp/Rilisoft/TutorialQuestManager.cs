@@ -1,26 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Rilisoft.DictionaryExtensions;
 using Rilisoft.MiniJson;
 using Rilisoft.NullExtensions;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	internal sealed class TutorialQuestManager
 	{
-		[Serializable]
-		internal struct Memento
-		{
-			public List<string> fulfilledQuests;
-
-			public bool received;
-		}
-
 		private const string Key = "TutorialQuestManager";
 
-		private static readonly Lazy<TutorialQuestManager> _instance = new Lazy<TutorialQuestManager>(Create);
+		private readonly static Lazy<TutorialQuestManager> _instance;
 
 		private bool _dirty;
 
@@ -32,7 +27,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _instance.Value;
+				return TutorialQuestManager._instance.Value;
 			}
 		}
 
@@ -40,27 +35,36 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _received;
+				return this._received;
 			}
+		}
+
+		static TutorialQuestManager()
+		{
+			TutorialQuestManager._instance = new Lazy<TutorialQuestManager>(new Func<TutorialQuestManager>(TutorialQuestManager.Create));
 		}
 
 		private TutorialQuestManager()
 		{
-			_fulfilledQuests = new HashSet<string>();
+			this._fulfilledQuests = new HashSet<string>();
 		}
 
-		private TutorialQuestManager(Memento dto)
+		private TutorialQuestManager(TutorialQuestManager.Memento dto)
 		{
 			Debug.Log("> TutorialQuestManager.TutorialQuestManager()");
 			try
 			{
-				_fulfilledQuests = ((dto.fulfilledQuests == null) ? new HashSet<string>() : new HashSet<string>(dto.fulfilledQuests));
-				_received = dto.received;
-			}
-			catch (Exception ex)
-			{
-				Debug.LogWarningFormat("TutorialQuestManager.TutorialQuestManager(): Exception caught: {0}", ex.GetType().Name);
-				Debug.LogException(ex);
+				try
+				{
+					this._fulfilledQuests = (dto.fulfilledQuests == null ? new HashSet<string>() : new HashSet<string>(dto.fulfilledQuests));
+					this._received = dto.received;
+				}
+				catch (Exception exception1)
+				{
+					Exception exception = exception1;
+					Debug.LogWarningFormat("TutorialQuestManager.TutorialQuestManager(): Exception caught: {0}", new object[] { exception.GetType().Name });
+					Debug.LogException(exception);
+				}
 			}
 			finally
 			{
@@ -68,40 +72,23 @@ namespace Rilisoft
 			}
 		}
 
-		public override string ToString()
-		{
-			Memento memento = default(Memento);
-			memento.fulfilledQuests = _fulfilledQuests.ToList();
-			memento.received = _received;
-			Memento memento2 = memento;
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("fulfilledQuests", _fulfilledQuests.ToList());
-			dictionary.Add("received", Convert.ToBoolean(_received));
-			Dictionary<string, object> obj = dictionary;
-			return Json.Serialize(obj);
-		}
-
 		public void AddFulfilledQuest(string questId)
 		{
-			if (questId != null)
+			if (questId == null)
 			{
-				_dirty = _fulfilledQuests.Add(questId);
+				return;
 			}
-		}
-
-		public void SetReceived()
-		{
-			_received = true;
-			_dirty = true;
+			this._dirty = this._fulfilledQuests.Add(questId);
 		}
 
 		public bool CheckQuestIfFulfilled(string questId)
 		{
+			int num;
 			if (questId == null)
 			{
 				return false;
 			}
-			if (_fulfilledQuests.Contains(questId))
+			if (this._fulfilledQuests.Contains(questId))
 			{
 				return true;
 			}
@@ -109,165 +96,251 @@ namespace Rilisoft
 			{
 				return true;
 			}
-			switch (questId)
+			string str = questId;
+			if (str != null)
 			{
-			case "loginFacebook":
-				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+				if (TutorialQuestManager.u003cu003ef__switchu0024mapF == null)
 				{
-					return true;
+					Dictionary<string, int> strs = new Dictionary<string, int>(3)
+					{
+						{ "loginFacebook", 0 },
+						{ "loginTwitter", 1 },
+						{ "likeFacebook", 2 }
+					};
+					TutorialQuestManager.u003cu003ef__switchu0024mapF = strs;
 				}
-				return Storager.hasKey(Defs.IsFacebookLoginRewardaGained) && Storager.getInt(Defs.IsFacebookLoginRewardaGained, true) == 1;
-			case "loginTwitter":
-				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+				if (TutorialQuestManager.u003cu003ef__switchu0024mapF.TryGetValue(str, out num))
 				{
-					return true;
-				}
-				return Application.isEditor;
-			case "likeFacebook":
-				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-				{
-					return true;
-				}
-				return Application.isEditor;
-			default:
-				return false;
-			}
-		}
-
-		public void SaveIfDirty()
-		{
-			if (_dirty)
-			{
-				string val = ToString();
-				Storager.setString("TutorialQuestManager", val, false);
-				_dirty = false;
-			}
-		}
-
-		public void FillTutorialQuests(IList<object> inputJsons, long day, IList<QuestBase> outputQuests)
-		{
-			if (inputJsons == null || outputQuests == null)
-			{
-				return;
-			}
-			foreach (object inputJson in inputJsons)
-			{
-				if (inputJson == null)
-				{
-					continue;
-				}
-				Dictionary<string, object> dictionary = inputJson as Dictionary<string, object>;
-				if (dictionary == null)
-				{
-					Debug.LogWarningFormat("Skipping bad quest: {0}", Json.Serialize(inputJson));
-					continue;
-				}
-				QuestBase questBase = CreateQuestFromJson(dictionary, day);
-				if (questBase != null && !questBase.Rewarded && (!CheckQuestIfFulfilled(questBase.Id) || !(questBase.CalculateProgress() < 1m)))
-				{
-					outputQuests.Add(questBase);
+					switch (num)
+					{
+						case 0:
+						{
+							if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+							{
+								return true;
+							}
+							return (!Storager.hasKey(Defs.IsFacebookLoginRewardaGained) ? false : Storager.getInt(Defs.IsFacebookLoginRewardaGained, true) == 1);
+						}
+						case 1:
+						{
+							if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+							{
+								return true;
+							}
+							return Application.isEditor;
+						}
+						case 2:
+						{
+							if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+							{
+								return true;
+							}
+							return Application.isEditor;
+						}
+					}
 				}
 			}
+			return false;
 		}
 
 		private static TutorialQuestManager Create()
 		{
-			//Discarded unreachable code: IL_00f1, IL_012a
+			object obj;
+			object obj1;
+			TutorialQuestManager tutorialQuestManager;
 			try
 			{
 				if (!Storager.hasKey("TutorialQuestManager"))
 				{
 					Storager.setString("TutorialQuestManager", "{}", false);
 				}
-				string text = Storager.getString("TutorialQuestManager", false);
-				if (string.IsNullOrEmpty(text))
+				string str = Storager.getString("TutorialQuestManager", false);
+				if (string.IsNullOrEmpty(str))
 				{
-					text = "{}";
+					str = "{}";
 				}
-				Debug.LogFormat("TutorialQuestManager.Create(): parsing data transfer object: {0}", text);
-				Memento memento = default(Memento);
-				memento.fulfilledQuests = new List<string>();
-				Memento dto = memento;
-				Dictionary<string, object> dictionary = Json.Deserialize(text) as Dictionary<string, object>;
-				if (dictionary != null)
+				Debug.LogFormat("TutorialQuestManager.Create(): parsing data transfer object: {0}", new object[] { str });
+				TutorialQuestManager.Memento flag = new TutorialQuestManager.Memento();
+				TutorialQuestManager.Memento strs = flag;
+				strs.fulfilledQuests = new List<string>();
+				flag = strs;
+				Dictionary<string, object> strs1 = Json.Deserialize(str) as Dictionary<string, object>;
+				if (strs1 != null)
 				{
-					object value;
-					if (dictionary.TryGetValue("fulfilledQuests", out value))
+					if (strs1.TryGetValue("fulfilledQuests", out obj))
 					{
-						List<object> list = value as List<object>;
-						dto.fulfilledQuests = ((list == null) ? new List<string>() : list.OfType<string>().ToList());
+						List<object> objs = obj as List<object>;
+						flag.fulfilledQuests = (objs == null ? new List<string>() : objs.OfType<string>().ToList<string>());
 					}
-					object value2;
-					if (dictionary.TryGetValue("received", out value2))
+					if (strs1.TryGetValue("received", out obj1))
 					{
-						dto.received = Convert.ToBoolean(value2);
+						flag.received = Convert.ToBoolean(obj1);
 					}
 				}
 				Debug.Log("TutorialQuestManager.Create(): data transfer object parsed.");
-				return new TutorialQuestManager(dto);
+				tutorialQuestManager = new TutorialQuestManager(flag);
 			}
-			catch (Exception ex)
+			catch (Exception exception1)
 			{
-				Debug.LogWarningFormat("TutorialQuestManager.Create(): Exception caught: {0}", ex.GetType().Name);
-				Debug.LogException(ex);
-				return new TutorialQuestManager();
+				Exception exception = exception1;
+				Debug.LogWarningFormat("TutorialQuestManager.Create(): Exception caught: {0}", new object[] { exception.GetType().Name });
+				Debug.LogException(exception);
+				tutorialQuestManager = new TutorialQuestManager();
 			}
+			return tutorialQuestManager;
 		}
 
 		private static QuestBase CreateQuestFromJson(Dictionary<string, object> questJson, long day)
 		{
-			//Discarded unreachable code: IL_01c2, IL_01eb
+			object obj;
+			QuestBase questBase;
 			if (questJson == null)
 			{
 				throw new ArgumentNullException("questJson");
 			}
 			try
 			{
-				string text = questJson.TryGet("id") as string;
-				if (text == null)
+				string str = questJson.TryGet("id") as string;
+				if (str != null)
 				{
-					Debug.LogWarningFormat("Failed to create quest, id = null: {0}", Json.Serialize(questJson));
-					return null;
-				}
-				int slot = Convert.ToInt32(questJson.TryGet("slot") ?? ((object)0));
-				Difficulty[] array = new Difficulty[3]
-				{
-					Difficulty.Easy,
-					Difficulty.Normal,
-					Difficulty.Hard
-				};
-				Difficulty difficulty = Difficulty.None;
-				Dictionary<string, object> dictionary = null;
-				Difficulty[] array2 = array;
-				foreach (Difficulty difficulty2 in array2)
-				{
-					string difficultyKey = QuestConstants.GetDifficultyKey(difficulty2);
-					object value;
-					if (questJson.TryGetValue(difficultyKey, out value))
+					int num = Convert.ToInt32(questJson.TryGet("slot") ?? 0);
+					Difficulty[] difficultyArray = new Difficulty[] { Difficulty.Easy, Difficulty.Normal, Difficulty.Hard };
+					Difficulty difficulty = Difficulty.None;
+					Dictionary<string, object> strs = null;
+					Difficulty[] difficultyArray1 = difficultyArray;
+					int num1 = 0;
+					while (num1 < (int)difficultyArray1.Length)
 					{
-						difficulty = difficulty2;
-						dictionary = value as Dictionary<string, object>;
-						break;
+						Difficulty difficulty1 = difficultyArray1[num1];
+						if (!questJson.TryGetValue(QuestConstants.GetDifficultyKey(difficulty1), out obj))
+						{
+							num1++;
+						}
+						else
+						{
+							difficulty = difficulty1;
+							strs = obj as Dictionary<string, object>;
+							break;
+						}
+					}
+					if (strs != null)
+					{
+						Reward reward = Reward.Create(strs.TryGet("reward") as List<object>);
+						int num2 = Convert.ToInt32(strs.TryGet("parameter") ?? 1);
+						int num3 = questJson.TryGet("currentCount").Map<object, int>(new Func<object, int>(Convert.ToInt32));
+						day = questJson.TryGet("day").Map<object, long>(new Func<object, long>(Convert.ToInt64), day);
+						bool flag = questJson.TryGet("rewarded").Map<object, bool>(new Func<object, bool>(Convert.ToBoolean));
+						bool flag1 = questJson.TryGet("active").Map<object, bool>(new Func<object, bool>(Convert.ToBoolean));
+						SimpleAccumulativeQuest simpleAccumulativeQuest = new SimpleAccumulativeQuest(str, day, num, difficulty, reward, flag1, flag, num2, num3);
+						questBase = simpleAccumulativeQuest;
+					}
+					else
+					{
+						Debug.LogWarningFormat("Failed to create quest, difficulty = null: {0}", new object[] { Json.Serialize(questJson) });
+						questBase = null;
 					}
 				}
-				if (dictionary == null)
+				else
 				{
-					Debug.LogWarningFormat("Failed to create quest, difficulty = null: {0}", Json.Serialize(questJson));
-					return null;
+					Debug.LogWarningFormat("Failed to create quest, id = null: {0}", new object[] { Json.Serialize(questJson) });
+					questBase = null;
 				}
-				Reward reward = Reward.Create(dictionary.TryGet("reward") as List<object>);
-				int requiredCount = Convert.ToInt32(dictionary.TryGet("parameter") ?? ((object)1));
-				int initialCount = questJson.TryGet("currentCount").Map(Convert.ToInt32);
-				day = questJson.TryGet("day").Map(Convert.ToInt64, day);
-				bool rewarded = questJson.TryGet("rewarded").Map(Convert.ToBoolean);
-				bool active = questJson.TryGet("active").Map(Convert.ToBoolean);
-				return new SimpleAccumulativeQuest(text, day, slot, difficulty, reward, active, rewarded, requiredCount, initialCount);
 			}
-			catch (Exception ex)
+			catch (Exception exception)
 			{
-				Debug.LogErrorFormat("Caught exception while creating quest object: {0}", ex.Message);
-				return null;
+				Debug.LogErrorFormat("Caught exception while creating quest object: {0}", new object[] { exception.Message });
+				questBase = null;
 			}
+			return questBase;
+		}
+
+		public void FillTutorialQuests(IList<object> inputJsons, long day, IList<QuestBase> outputQuests)
+		{
+			if (inputJsons == null)
+			{
+				return;
+			}
+			if (outputQuests == null)
+			{
+				return;
+			}
+			IEnumerator<object> enumerator = inputJsons.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					object current = enumerator.Current;
+					if (current != null)
+					{
+						Dictionary<string, object> strs = current as Dictionary<string, object>;
+						if (strs != null)
+						{
+							QuestBase questBase = TutorialQuestManager.CreateQuestFromJson(strs, day);
+							if (questBase == null)
+							{
+								continue;
+							}
+							if (!questBase.Rewarded)
+							{
+								if (!this.CheckQuestIfFulfilled(questBase.Id) || !(questBase.CalculateProgress() < new decimal(1)))
+								{
+									outputQuests.Add(questBase);
+								}
+							}
+						}
+						else
+						{
+							Debug.LogWarningFormat("Skipping bad quest: {0}", new object[] { Json.Serialize(current) });
+						}
+					}
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+		}
+
+		public void SaveIfDirty()
+		{
+			if (!this._dirty)
+			{
+				return;
+			}
+			Storager.setString("TutorialQuestManager", this.ToString(), false);
+			this._dirty = false;
+		}
+
+		public void SetReceived()
+		{
+			this._received = true;
+			this._dirty = true;
+		}
+
+		public override string ToString()
+		{
+			TutorialQuestManager.Memento memento = new TutorialQuestManager.Memento();
+			TutorialQuestManager.Memento list = memento;
+			list.fulfilledQuests = this._fulfilledQuests.ToList<string>();
+			list.received = this._received;
+			memento = list;
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "fulfilledQuests", this._fulfilledQuests.ToList<string>() },
+				{ "received", Convert.ToBoolean(this._received) }
+			};
+			return Json.Serialize(strs);
+		}
+
+		[Serializable]
+		internal struct Memento
+		{
+			public List<string> fulfilledQuests;
+
+			public bool received;
 		}
 	}
 }

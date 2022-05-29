@@ -1,10 +1,16 @@
+using System;
+
 namespace RilisoftBot
 {
 	public class ShootingBossBot : ShootingBot
 	{
+		public ShootingBossBot()
+		{
+		}
+
 		protected override void Initialize()
 		{
-			isMobChampion = true;
+			this.isMobChampion = true;
 			base.Initialize();
 		}
 	}

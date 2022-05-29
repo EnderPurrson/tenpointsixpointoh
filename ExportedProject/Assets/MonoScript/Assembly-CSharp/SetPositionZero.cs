@@ -1,17 +1,22 @@
+using System;
 using UnityEngine;
 
 public class SetPositionZero : MonoBehaviour
 {
 	private Transform myTransform;
 
+	public SetPositionZero()
+	{
+	}
+
 	private void Start()
 	{
-		myTransform = base.transform;
-		myTransform.localPosition = Vector3.zero;
+		this.myTransform = base.transform;
+		this.myTransform.localPosition = Vector3.zero;
 	}
 
 	private void Update()
 	{
-		myTransform.localPosition = Vector3.zero;
+		this.myTransform.localPosition = Vector3.zero;
 	}
 }

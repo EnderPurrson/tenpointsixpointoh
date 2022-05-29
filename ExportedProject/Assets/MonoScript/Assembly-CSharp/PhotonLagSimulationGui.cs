@@ -1,4 +1,6 @@
 using ExitGames.Client.Photon;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PhotonLagSimulationGui : MonoBehaviour
@@ -9,61 +11,70 @@ public class PhotonLagSimulationGui : MonoBehaviour
 
 	public bool Visible = true;
 
-	public PhotonPeer Peer { get; set; }
-
-	public void Start()
+	public PhotonPeer Peer
 	{
-		Peer = PhotonNetwork.networkingPeer;
+		get;
+		set;
 	}
 
-	public void OnGUI()
+	public PhotonLagSimulationGui()
 	{
-		if (Visible)
-		{
-			if (Peer == null)
-			{
-				WindowRect = GUILayout.Window(WindowId, WindowRect, NetSimHasNoPeerWindow, "Netw. Sim.");
-			}
-			else
-			{
-				WindowRect = GUILayout.Window(WindowId, WindowRect, NetSimWindow, "Netw. Sim.");
-			}
-		}
 	}
 
 	private void NetSimHasNoPeerWindow(int windowId)
 	{
-		GUILayout.Label("No peer to communicate with. ");
+		GUILayout.Label("No peer to communicate with. ", new GUILayoutOption[0]);
 	}
 
 	private void NetSimWindow(int windowId)
 	{
-		GUILayout.Label(string.Format("Rtt:{0,4} +/-{1,3}", Peer.RoundTripTime, Peer.RoundTripTimeVariance));
-		bool isSimulationEnabled = Peer.IsSimulationEnabled;
-		bool flag = GUILayout.Toggle(isSimulationEnabled, "Simulate");
+		GUILayout.Label(string.Format("Rtt:{0,4} +/-{1,3}", this.Peer.RoundTripTime, this.Peer.RoundTripTimeVariance), new GUILayoutOption[0]);
+		bool isSimulationEnabled = this.Peer.IsSimulationEnabled;
+		bool flag = GUILayout.Toggle(isSimulationEnabled, "Simulate", new GUILayoutOption[0]);
 		if (flag != isSimulationEnabled)
 		{
-			Peer.IsSimulationEnabled = flag;
+			this.Peer.IsSimulationEnabled = flag;
 		}
-		float num = Peer.NetworkSimulationSettings.IncomingLag;
-		GUILayout.Label("Lag " + num);
-		num = GUILayout.HorizontalSlider(num, 0f, 500f);
-		Peer.NetworkSimulationSettings.IncomingLag = (int)num;
-		Peer.NetworkSimulationSettings.OutgoingLag = (int)num;
-		float num2 = Peer.NetworkSimulationSettings.IncomingJitter;
-		GUILayout.Label("Jit " + num2);
-		num2 = GUILayout.HorizontalSlider(num2, 0f, 100f);
-		Peer.NetworkSimulationSettings.IncomingJitter = (int)num2;
-		Peer.NetworkSimulationSettings.OutgoingJitter = (int)num2;
-		float num3 = Peer.NetworkSimulationSettings.IncomingLossPercentage;
-		GUILayout.Label("Loss " + num3);
-		num3 = GUILayout.HorizontalSlider(num3, 0f, 10f);
-		Peer.NetworkSimulationSettings.IncomingLossPercentage = (int)num3;
-		Peer.NetworkSimulationSettings.OutgoingLossPercentage = (int)num3;
+		float incomingLag = (float)this.Peer.NetworkSimulationSettings.IncomingLag;
+		GUILayout.Label(string.Concat("Lag ", incomingLag), new GUILayoutOption[0]);
+		incomingLag = GUILayout.HorizontalSlider(incomingLag, 0f, 500f, new GUILayoutOption[0]);
+		this.Peer.NetworkSimulationSettings.IncomingLag = (int)incomingLag;
+		this.Peer.NetworkSimulationSettings.OutgoingLag = (int)incomingLag;
+		float incomingJitter = (float)this.Peer.NetworkSimulationSettings.IncomingJitter;
+		GUILayout.Label(string.Concat("Jit ", incomingJitter), new GUILayoutOption[0]);
+		incomingJitter = GUILayout.HorizontalSlider(incomingJitter, 0f, 100f, new GUILayoutOption[0]);
+		this.Peer.NetworkSimulationSettings.IncomingJitter = (int)incomingJitter;
+		this.Peer.NetworkSimulationSettings.OutgoingJitter = (int)incomingJitter;
+		float incomingLossPercentage = (float)this.Peer.NetworkSimulationSettings.IncomingLossPercentage;
+		GUILayout.Label(string.Concat("Loss ", incomingLossPercentage), new GUILayoutOption[0]);
+		incomingLossPercentage = GUILayout.HorizontalSlider(incomingLossPercentage, 0f, 10f, new GUILayoutOption[0]);
+		this.Peer.NetworkSimulationSettings.IncomingLossPercentage = (int)incomingLossPercentage;
+		this.Peer.NetworkSimulationSettings.OutgoingLossPercentage = (int)incomingLossPercentage;
 		if (GUI.changed)
 		{
-			WindowRect.height = 100f;
+			this.WindowRect.height = 100f;
 		}
 		GUI.DragWindow();
+	}
+
+	public void OnGUI()
+	{
+		if (!this.Visible)
+		{
+			return;
+		}
+		if (this.Peer != null)
+		{
+			this.WindowRect = GUILayout.Window(this.WindowId, this.WindowRect, new GUI.WindowFunction(this.NetSimWindow), "Netw. Sim.", new GUILayoutOption[0]);
+		}
+		else
+		{
+			this.WindowRect = GUILayout.Window(this.WindowId, this.WindowRect, new GUI.WindowFunction(this.NetSimHasNoPeerWindow), "Netw. Sim.", new GUILayoutOption[0]);
+		}
+	}
+
+	public void Start()
+	{
+		this.Peer = PhotonNetwork.networkingPeer;
 	}
 }

@@ -1,4 +1,5 @@
 using ExitGames.Client.Photon;
+using System;
 
 internal class OpJoinRandomRoomParams
 {
@@ -13,4 +14,8 @@ internal class OpJoinRandomRoomParams
 	public string SqlLobbyFilter;
 
 	public string[] ExpectedUsers;
+
+	public OpJoinRandomRoomParams()
+	{
+	}
 }

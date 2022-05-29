@@ -16,8 +16,12 @@ namespace Rilisoft
 		{
 			get
 			{
-				return ToResourcePath(FullPath);
+				return PrefabHandler.ToResourcePath(this.FullPath);
 			}
+		}
+
+		public PrefabHandler()
+		{
 		}
 
 		public static string ToResourcePath(string fullPath)
@@ -26,7 +30,7 @@ namespace Rilisoft
 			{
 				return string.Empty;
 			}
-			List<string> list = fullPath.Split((!fullPath.Contains("/")) ? '\\' : '/').ToList();
+			List<string> list = fullPath.Split(new char[] { (!fullPath.Contains("/") ? '\\' : '/') }).ToList<string>();
 			if (list.Count > 0 && list[0].Contains("Assets"))
 			{
 				list.RemoveAt(0);
@@ -35,7 +39,8 @@ namespace Rilisoft
 			{
 				list.RemoveAt(0);
 			}
-			fullPath = string.Join(Path.DirectorySeparatorChar.ToString(), list.ToArray());
+			char directorySeparatorChar = Path.DirectorySeparatorChar;
+			fullPath = string.Join(directorySeparatorChar.ToString(), list.ToArray());
 			fullPath = Path.Combine(Path.GetDirectoryName(fullPath), Path.GetFileNameWithoutExtension(fullPath));
 			return fullPath;
 		}

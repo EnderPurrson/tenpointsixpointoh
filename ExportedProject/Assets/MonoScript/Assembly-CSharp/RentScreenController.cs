@@ -5,135 +5,6 @@ using UnityEngine;
 
 public sealed class RentScreenController : PropertyInfoScreenController
 {
-	[CompilerGenerated]
-	private sealed class _003CHandleRentButton_003Ec__AnonStorey293
-	{
-		private sealed class _003CHandleRentButton_003Ec__AnonStorey294
-		{
-			internal string totalEvent;
-
-			internal string totalPayingEvent;
-
-			internal _003CHandleRentButton_003Ec__AnonStorey293 _003C_003Ef__ref_0024659;
-
-			internal void _003C_003Em__238(int baseNumber)
-			{
-				Dictionary<string, string> parameters = new Dictionary<string, string>
-				{
-					{
-						"Levels_" + baseNumber,
-						((ExperienceController.sharedController != null) ? ExperienceController.sharedController.currentLevel : 0).ToString()
-					},
-					{
-						"Tiers_" + baseNumber,
-						(((ExpController.Instance != null) ? ExpController.Instance.OurTier : 0) + 1).ToString()
-					}
-				};
-				FlurryPluginWrapper.LogEventAndDublicateToConsole(totalEvent, parameters);
-				FlurryPluginWrapper.LogEventAndDublicateToConsole(totalPayingEvent, parameters);
-			}
-		}
-
-		internal int ind;
-
-		internal bool hasBefore;
-
-		internal ItemPrice price;
-
-		internal RentScreenController _003C_003Ef__this;
-
-		private static Action<string> _003C_003Ef__am_0024cache4;
-
-		internal void _003C_003Em__234()
-		{
-			ShopNGUIController.CategoryNames category = _003C_003Ef__this.category;
-			string itemTag = _003C_003Ef__this._itemTag;
-			int timeForRentIndex = ind;
-			if (_003C_003Ef__am_0024cache4 == null)
-			{
-				_003C_003Ef__am_0024cache4 = _003C_003Em__237;
-			}
-			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(category, itemTag, 1, false, timeForRentIndex, _003C_003Ef__am_0024cache4, _003C_003Ef__this.customEquipWearAction, true, true, false);
-			bool flag = Wear.armorNumTemp.ContainsKey(_003C_003Ef__this._itemTag ?? string.Empty);
-			bool flag2 = !flag && _003C_003Ef__this._itemTag != null && (_003C_003Ef__this._itemTag.Equals(WeaponTags.DragonGunRent_Tag) || _003C_003Ef__this._itemTag.Equals(WeaponTags.PumpkinGunRent_Tag) || _003C_003Ef__this._itemTag.Equals(WeaponTags.RayMinigunRent_Tag) || _003C_003Ef__this._itemTag.Equals(WeaponTags.Red_StoneRent_Tag) || _003C_003Ef__this._itemTag.Equals(WeaponTags.TwoBoltersRent_Tag));
-			string format = (flag ? "Time Armor and Hat {0}" : ((!flag2) ? "Time Weapons {0}" : "Time Weapons (red test) {0}"));
-			string eventName = string.Format(format, "Total");
-			string[] array = new string[3] { "1", "3", "7" };
-			string text = ((array.Length <= ind || ind < 0) ? string.Empty : array[ind]) + " day - ";
-			string value = text + (_003C_003Ef__this._itemTag ?? string.Empty) + ((!hasBefore) ? " - First Purchase" : string.Empty);
-			Dictionary<string, string> parameters = new Dictionary<string, string>
-			{
-				{
-					"Levels",
-					((ExperienceController.sharedController != null) ? ExperienceController.sharedController.currentLevel : 0).ToString()
-				},
-				{
-					"Tiers",
-					(((ExpController.Instance != null) ? ExpController.Instance.OurTier : 0) + 1).ToString()
-				},
-				{ "Time Limits", value }
-			};
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-			string payingSuffixNo = FlurryPluginWrapper.GetPayingSuffixNo10();
-			string eventName2 = string.Format(format, payingSuffixNo);
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName2, parameters);
-			_003CHandleRentButton_003Ec__AnonStorey294 _003CHandleRentButton_003Ec__AnonStorey = new _003CHandleRentButton_003Ec__AnonStorey294();
-			_003CHandleRentButton_003Ec__AnonStorey._003C_003Ef__ref_0024659 = this;
-			int num = price.Price;
-			int num2 = num / 10;
-			int num3 = num % 10;
-			string format2 = ((price.Currency != null && price.Currency.Equals("GemsCurrency")) ? ((!flag) ? "Purchase for Gems {0}" : "Purchase for Gems TempArmor {0}") : ((!flag) ? "Purchase for Coins {0}" : "Purchase for Coins TempArmor {0}"));
-			_003CHandleRentButton_003Ec__AnonStorey.totalEvent = string.Format(format2, "Total");
-			string payingSuffixNo2 = FlurryPluginWrapper.GetPayingSuffixNo10();
-			_003CHandleRentButton_003Ec__AnonStorey.totalPayingEvent = string.Format(format2, payingSuffixNo2);
-			Action<int> action = _003CHandleRentButton_003Ec__AnonStorey._003C_003Em__238;
-			for (int i = 0; i < num2; i++)
-			{
-				action(10);
-			}
-			for (int j = 0; j < num3; j++)
-			{
-				action(1);
-			}
-			Action<string> onPurchaseCustomAction = _003C_003Ef__this.onPurchaseCustomAction;
-			if (onPurchaseCustomAction != null)
-			{
-				onPurchaseCustomAction(_003C_003Ef__this._itemTag);
-			}
-			if (TempItemsController.sharedController != null)
-			{
-				TempItemsController.sharedController.ExpiredItems.Remove(_003C_003Ef__this._itemTag);
-			}
-			_003C_003Ef__this.Hide();
-		}
-
-		internal void _003C_003Em__235()
-		{
-			Action onEnterCoinsShopAdditionalAction = _003C_003Ef__this.onEnterCoinsShopAdditionalAction;
-			if (onEnterCoinsShopAdditionalAction != null)
-			{
-				onEnterCoinsShopAdditionalAction();
-			}
-		}
-
-		internal void _003C_003Em__236()
-		{
-			Action onExitCoinsShopAdditionalAction = _003C_003Ef__this.onExitCoinsShopAdditionalAction;
-			if (onExitCoinsShopAdditionalAction != null)
-			{
-				onExitCoinsShopAdditionalAction();
-			}
-		}
-
-		private static void _003C_003Em__237(string item)
-		{
-			if (ShopNGUIController.sharedShop != null)
-			{
-				ShopNGUIController.sharedShop.FireBuyAction(item);
-			}
-		}
-	}
-
 	public GameObject viewButtonPanel;
 
 	public GameObject rentButtonsPanel;
@@ -166,39 +37,17 @@ public sealed class RentScreenController : PropertyInfoScreenController
 
 	private ShopNGUIController.CategoryNames category;
 
-	private Func<int, int> priceFormula
-	{
-		get
-		{
-			return _003Cget_priceFormula_003Em__233;
-		}
-	}
-
 	public string Header
 	{
 		set
 		{
-			UILabel[] array = header;
-			foreach (UILabel uILabel in array)
+			UILabel[] uILabelArray = this.header;
+			for (int i = 0; i < (int)uILabelArray.Length; i++)
 			{
+				UILabel uILabel = uILabelArray[i];
 				if (uILabel != null && value != null)
 				{
 					uILabel.text = value;
-				}
-			}
-		}
-	}
-
-	public string RentFor
-	{
-		set
-		{
-			UILabel[] array = rentFor;
-			foreach (UILabel uILabel in array)
-			{
-				if (uILabel != null && value != null && _itemTag != null)
-				{
-					uILabel.text = string.Format(value, ItemDb.GetItemNameByTag(_itemTag));
 				}
 			}
 		}
@@ -208,35 +57,194 @@ public sealed class RentScreenController : PropertyInfoScreenController
 	{
 		set
 		{
-			_itemTag = value;
-			if (_itemTag == null)
+			this._itemTag = value;
+			if (this._itemTag == null)
 			{
 				return;
 			}
-			string text = PromoActionsGUIController.IconNameForKey(cat: (int)(category = (ShopNGUIController.CategoryNames)PromoActionsGUIController.CatForTg(_itemTag)), key: _itemTag);
-			Texture texture = Resources.Load<Texture>("OfferIcons/" + text);
-			if (texture != null && itemImage != null)
+			int num = PromoActionsGUIController.CatForTg(this._itemTag);
+			this.category = (ShopNGUIController.CategoryNames)num;
+			string str = PromoActionsGUIController.IconNameForKey(this._itemTag, num);
+			Texture texture = Resources.Load<Texture>(string.Concat("OfferIcons/", str));
+			if (texture != null && this.itemImage != null)
 			{
-				itemImage.mainTexture = texture;
+				this.itemImage.mainTexture = texture;
 			}
-			ItemRecord byTag = ItemDb.GetByTag(_itemTag);
-			ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null) ? _itemTag : byTag.ShopId);
-			bool flag = priceByShopId != null && priceByShopId.Currency != null && priceByShopId.Currency.Equals("Coins");
-			UILabel[] array = ((!flag) ? prices : pricesCoins);
-			foreach (UILabel uILabel in array)
+			ItemRecord byTag = ItemDb.GetByTag(this._itemTag);
+			ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null ? this._itemTag : byTag.ShopId));
+			bool flag = (priceByShopId == null || priceByShopId.Currency == null ? false : priceByShopId.Currency.Equals("Coins"));
+			UILabel[] uILabelArray = (!flag ? this.prices : this.pricesCoins);
+			for (int i = 0; i < (int)uILabelArray.Length; i++)
 			{
+				UILabel uILabel = uILabelArray[i];
 				if (uILabel != null)
 				{
 					uILabel.gameObject.SetActive(true);
-					uILabel.text = priceFormula(Array.IndexOf((!flag) ? prices : pricesCoins, uILabel)).ToString();
+					UILabel str1 = uILabel;
+					int num1 = this.priceFormula(Array.IndexOf<UILabel>((!flag ? this.prices : this.pricesCoins), uILabel));
+					str1.text = num1.ToString();
 				}
 			}
-			UILabel[] array2 = ((!flag) ? pricesCoins : prices);
-			foreach (UILabel uILabel2 in array2)
+			UILabel[] uILabelArray1 = (!flag ? this.pricesCoins : this.prices);
+			for (int j = 0; j < (int)uILabelArray1.Length; j++)
 			{
-				if (uILabel2 != null)
+				UILabel uILabel1 = uILabelArray1[j];
+				if (uILabel1 != null)
 				{
-					uILabel2.gameObject.SetActive(false);
+					uILabel1.gameObject.SetActive(false);
+				}
+			}
+		}
+	}
+
+	private Func<int, int> priceFormula
+	{
+		get
+		{
+			return (int ind) => {
+				int num = 10;
+				if (this._itemTag != null)
+				{
+					ItemRecord byTag = ItemDb.GetByTag(this._itemTag);
+					ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null ? this._itemTag : byTag.ShopId));
+					if (priceByShopId != null)
+					{
+						if (-1 == -1)
+						{
+							num = Mathf.RoundToInt((float)priceByShopId.Price * TempItemsController.PriceCoefs[this._itemTag][ind]);
+						}
+					}
+				}
+				return num;
+			};
+		}
+	}
+
+	public string RentFor
+	{
+		set
+		{
+			UILabel[] uILabelArray = this.rentFor;
+			for (int i = 0; i < (int)uILabelArray.Length; i++)
+			{
+				UILabel uILabel = uILabelArray[i];
+				if (uILabel != null && value != null && this._itemTag != null)
+				{
+					uILabel.text = string.Format(value, ItemDb.GetItemNameByTag(this._itemTag));
+				}
+			}
+		}
+	}
+
+	public RentScreenController()
+	{
+	}
+
+	private void Awake()
+	{
+		this.rentButtonsPanel.SetActive(false);
+		this.viewButtonPanel.SetActive(true);
+	}
+
+	public void HandleRentButton(UIButton b)
+	{
+		Action<string> action1 = null;
+		if (Defs.isSoundFX)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		int num3 = Array.IndexOf<UIButton>(this.buttons, b);
+		ItemRecord byTag = ItemDb.GetByTag(this._itemTag);
+		ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null ? this._itemTag : byTag.ShopId));
+		ItemPrice itemPrice = new ItemPrice(this.priceFormula(num3), (priceByShopId == null ? "GemsCurrency" : priceByShopId.Currency));
+		bool flag1 = (TempItemsController.sharedController == null ? false : TempItemsController.sharedController.ContainsItem(this._itemTag));
+		ShopNGUIController.TryToBuy(this.window, itemPrice, () => {
+			ShopNGUIController.CategoryNames u003cu003ef_this = this.category;
+			string str = this._itemTag;
+			int num = num3;
+			if (action1 == null)
+			{
+				action1 = (string item) => {
+					if (ShopNGUIController.sharedShop != null)
+					{
+						ShopNGUIController.sharedShop.FireBuyAction(item);
+					}
+				};
+			}
+			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(u003cu003ef_this, str, 1, false, num, action1, this.customEquipWearAction, true, true, false);
+			bool flag = Wear.armorNumTemp.ContainsKey(this._itemTag ?? string.Empty);
+			string str1 = (!flag ? ((flag || this._itemTag == null ? true : (this._itemTag.Equals(WeaponTags.DragonGunRent_Tag) || this._itemTag.Equals(WeaponTags.PumpkinGunRent_Tag) || this._itemTag.Equals(WeaponTags.RayMinigunRent_Tag) || this._itemTag.Equals(WeaponTags.Red_StoneRent_Tag) ? false : !this._itemTag.Equals(WeaponTags.TwoBoltersRent_Tag))) ? "Time Weapons {0}" : "Time Weapons (red test) {0}") : "Time Armor and Hat {0}");
+			string str2 = string.Format(str1, "Total");
+			string[] strArrays = new string[] { "1", "3", "7" };
+			string str3 = string.Concat(string.Concat(((int)strArrays.Length <= num3 || num3 < 0 ? string.Empty : strArrays[num3]), " day - "), this._itemTag ?? string.Empty, (!flag1 ? " - First Purchase" : string.Empty));
+			Dictionary<string, string> strs1 = new Dictionary<string, string>()
+			{
+				{ "Levels", ((ExperienceController.sharedController == null ? 0 : ExperienceController.sharedController.currentLevel)).ToString() },
+				{ "Tiers", ((ExpController.Instance == null ? 0 : ExpController.Instance.OurTier) + 1).ToString() },
+				{ "Time Limits", str3 }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str2, strs1, true);
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(string.Format(str1, FlurryPluginWrapper.GetPayingSuffixNo10()), strs1, true);
+			int price = itemPrice.Price;
+			int num1 = price / 10;
+			int num2 = price % 10;
+			string str4 = (itemPrice.Currency == null || !itemPrice.Currency.Equals("GemsCurrency") ? (!flag ? "Purchase for Coins {0}" : "Purchase for Coins TempArmor {0}") : (!flag ? "Purchase for Gems {0}" : "Purchase for Gems TempArmor {0}"));
+			string str5 = string.Format(str4, "Total");
+			string str6 = string.Format(str4, FlurryPluginWrapper.GetPayingSuffixNo10());
+			Action<int> action = (int baseNumber) => {
+				Dictionary<string, string> strs = new Dictionary<string, string>()
+				{
+					{ string.Concat("Levels_", baseNumber.ToString()), ((ExperienceController.sharedController == null ? 0 : ExperienceController.sharedController.currentLevel)).ToString() },
+					{ string.Concat("Tiers_", baseNumber.ToString()), ((ExpController.Instance == null ? 0 : ExpController.Instance.OurTier) + 1).ToString() }
+				};
+				FlurryPluginWrapper.LogEventAndDublicateToConsole(str5, strs, true);
+				FlurryPluginWrapper.LogEventAndDublicateToConsole(str6, strs, true);
+			};
+			for (int i = 0; i < num1; i++)
+			{
+				action(10);
+			}
+			for (int j = 0; j < num2; j++)
+			{
+				action(1);
+			}
+			Action<string> u003cu003ef_this1 = this.onPurchaseCustomAction;
+			if (u003cu003ef_this1 != null)
+			{
+				u003cu003ef_this1(this._itemTag);
+			}
+			if (TempItemsController.sharedController != null)
+			{
+				TempItemsController.sharedController.ExpiredItems.Remove(this._itemTag);
+			}
+			this.Hide();
+		}, null, null, null, () => {
+			Action u003cu003ef_this = this.onEnterCoinsShopAdditionalAction;
+			if (u003cu003ef_this != null)
+			{
+				u003cu003ef_this();
+			}
+		}, () => {
+			Action u003cu003ef_this = this.onExitCoinsShopAdditionalAction;
+			if (u003cu003ef_this != null)
+			{
+				u003cu003ef_this();
+			}
+		});
+	}
+
+	public void HandleViewButton()
+	{
+		this.Hide();
+		if (this._itemTag != null && TempItemsController.GunsMappingFromTempToConst.ContainsKey(this._itemTag))
+		{
+			string str = WeaponManager.FirstUnboughtOrForOurTier(TempItemsController.GunsMappingFromTempToConst[this._itemTag]);
+			if (str != null)
+			{
+				int num = PromoActionsGUIController.CatForTg(str);
+				if (num != -1)
+				{
+					ShopNGUIController.GoToShop((ShopNGUIController.CategoryNames)num, str);
 				}
 			}
 		}
@@ -248,44 +256,9 @@ public sealed class RentScreenController : PropertyInfoScreenController
 		UnityEngine.Object.Destroy(base.gameObject);
 	}
 
-	public void HandleRentButton(UIButton b)
+	private void OnDestroy()
 	{
-		_003CHandleRentButton_003Ec__AnonStorey293 _003CHandleRentButton_003Ec__AnonStorey = new _003CHandleRentButton_003Ec__AnonStorey293();
-		_003CHandleRentButton_003Ec__AnonStorey._003C_003Ef__this = this;
-		if (Defs.isSoundFX)
-		{
-			ButtonClickSound.Instance.PlayClick();
-		}
-		_003CHandleRentButton_003Ec__AnonStorey.ind = Array.IndexOf(buttons, b);
-		ItemRecord byTag = ItemDb.GetByTag(_itemTag);
-		ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null) ? _itemTag : byTag.ShopId);
-		_003CHandleRentButton_003Ec__AnonStorey.price = new ItemPrice(priceFormula(_003CHandleRentButton_003Ec__AnonStorey.ind), (priceByShopId == null) ? "GemsCurrency" : priceByShopId.Currency);
-		_003CHandleRentButton_003Ec__AnonStorey.hasBefore = TempItemsController.sharedController != null && TempItemsController.sharedController.ContainsItem(_itemTag);
-		ShopNGUIController.TryToBuy(window, _003CHandleRentButton_003Ec__AnonStorey.price, _003CHandleRentButton_003Ec__AnonStorey._003C_003Em__234, null, null, null, _003CHandleRentButton_003Ec__AnonStorey._003C_003Em__235, _003CHandleRentButton_003Ec__AnonStorey._003C_003Em__236);
-	}
-
-	public void HandleViewButton()
-	{
-		Hide();
-		if (_itemTag == null || !TempItemsController.GunsMappingFromTempToConst.ContainsKey(_itemTag))
-		{
-			return;
-		}
-		string text = WeaponManager.FirstUnboughtOrForOurTier(TempItemsController.GunsMappingFromTempToConst[_itemTag]);
-		if (text != null)
-		{
-			int num = PromoActionsGUIController.CatForTg(text);
-			if (num != -1)
-			{
-				ShopNGUIController.GoToShop((ShopNGUIController.CategoryNames)num, text);
-			}
-		}
-	}
-
-	private void Awake()
-	{
-		rentButtonsPanel.SetActive(false);
-		viewButtonPanel.SetActive(true);
+		RentScreenController.SetDepthForExpGUI(99);
 	}
 
 	public static void SetDepthForExpGUI(int newDepth)
@@ -293,37 +266,12 @@ public sealed class RentScreenController : PropertyInfoScreenController
 		ExpController instance = ExpController.Instance;
 		if (instance != null)
 		{
-			instance.experienceView.experienceCamera.depth = newDepth;
+			instance.experienceView.experienceCamera.depth = (float)newDepth;
 		}
 	}
 
 	private void Start()
 	{
-		SetDepthForExpGUI(89);
-	}
-
-	private void OnDestroy()
-	{
-		SetDepthForExpGUI(99);
-	}
-
-	[CompilerGenerated]
-	private int _003Cget_priceFormula_003Em__233(int ind)
-	{
-		int result = 10;
-		if (_itemTag != null)
-		{
-			ItemRecord byTag = ItemDb.GetByTag(_itemTag);
-			ItemPrice priceByShopId = ItemDb.GetPriceByShopId((byTag == null || byTag.ShopId == null) ? _itemTag : byTag.ShopId);
-			if (priceByShopId != null)
-			{
-				int num = -1;
-				if (num == -1)
-				{
-					result = Mathf.RoundToInt((float)priceByShopId.Price * TempItemsController.PriceCoefs[_itemTag][ind]);
-				}
-			}
-		}
-		return result;
+		RentScreenController.SetDepthForExpGUI(89);
 	}
 }

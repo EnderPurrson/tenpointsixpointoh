@@ -1,31 +1,14 @@
+using System;
+
 namespace GooglePlayGames.Native.Cwrapper
 {
 	internal static class Types
 	{
-		internal enum DataSource
+		internal enum AchievementState
 		{
-			CACHE_OR_NETWORK = 1,
-			NETWORK_ONLY = 2
-		}
-
-		internal enum LogLevel
-		{
-			VERBOSE = 1,
-			INFO = 2,
-			WARNING = 3,
-			ERROR = 4
-		}
-
-		internal enum AuthOperation
-		{
-			SIGN_IN = 1,
-			SIGN_OUT = 2
-		}
-
-		internal enum ImageResolution
-		{
-			ICON = 1,
-			HI_RES = 2
+			HIDDEN = 1,
+			REVEALED = 2,
+			UNLOCKED = 3
 		}
 
 		internal enum AchievementType
@@ -34,17 +17,34 @@ namespace GooglePlayGames.Native.Cwrapper
 			INCREMENTAL = 2
 		}
 
-		internal enum AchievementState
+		internal enum AuthOperation
 		{
-			HIDDEN = 1,
-			REVEALED = 2,
-			UNLOCKED = 3
+			SIGN_IN = 1,
+			SIGN_OUT = 2
+		}
+
+		internal enum DataSource
+		{
+			CACHE_OR_NETWORK = 1,
+			NETWORK_ONLY = 2
 		}
 
 		internal enum EventVisibility
 		{
 			HIDDEN = 1,
 			REVEALED = 2
+		}
+
+		internal enum ImageResolution
+		{
+			ICON = 1,
+			HI_RES = 2
+		}
+
+		internal enum LeaderboardCollection
+		{
+			PUBLIC = 1,
+			SOCIAL = 2
 		}
 
 		internal enum LeaderboardOrder
@@ -66,21 +66,12 @@ namespace GooglePlayGames.Native.Cwrapper
 			ALL_TIME = 3
 		}
 
-		internal enum LeaderboardCollection
+		internal enum LogLevel
 		{
-			PUBLIC = 1,
-			SOCIAL = 2
-		}
-
-		internal enum ParticipantStatus
-		{
-			INVITED = 1,
-			JOINED = 2,
-			DECLINED = 3,
-			LEFT = 4,
-			NOT_INVITED_YET = 5,
-			FINISHED = 6,
-			UNRESPONSIVE = 7
+			VERBOSE = 1,
+			INFO = 2,
+			WARNING = 3,
+			ERROR = 4
 		}
 
 		internal enum MatchResult
@@ -104,24 +95,6 @@ namespace GooglePlayGames.Native.Cwrapper
 			EXPIRED = 7
 		}
 
-		internal enum QuestState
-		{
-			UPCOMING = 1,
-			OPEN = 2,
-			ACCEPTED = 3,
-			COMPLETED = 4,
-			EXPIRED = 5,
-			FAILED = 6
-		}
-
-		internal enum QuestMilestoneState
-		{
-			NOT_STARTED = 1,
-			NOT_COMPLETED = 2,
-			COMPLETED_NOT_CLAIMED = 3,
-			CLAIMED = 4
-		}
-
 		internal enum MultiplayerEvent
 		{
 			UPDATED = 1,
@@ -133,6 +106,35 @@ namespace GooglePlayGames.Native.Cwrapper
 		{
 			TURN_BASED = 1,
 			REAL_TIME = 2
+		}
+
+		internal enum ParticipantStatus
+		{
+			INVITED = 1,
+			JOINED = 2,
+			DECLINED = 3,
+			LEFT = 4,
+			NOT_INVITED_YET = 5,
+			FINISHED = 6,
+			UNRESPONSIVE = 7
+		}
+
+		internal enum QuestMilestoneState
+		{
+			NOT_STARTED = 1,
+			NOT_COMPLETED = 2,
+			COMPLETED_NOT_CLAIMED = 3,
+			CLAIMED = 4
+		}
+
+		internal enum QuestState
+		{
+			UPCOMING = 1,
+			OPEN = 2,
+			ACCEPTED = 3,
+			COMPLETED = 4,
+			EXPIRED = 5,
+			FAILED = 6
 		}
 
 		internal enum RealTimeRoomStatus

@@ -1,5 +1,8 @@
-using System.Reflection;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 internal sealed class SetParentWeapon : MonoBehaviour
@@ -12,81 +15,113 @@ internal sealed class SetParentWeapon : MonoBehaviour
 
 	private PhotonView photonView;
 
+	public SetParentWeapon()
+	{
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void SetParent()
+	{
+		int d = -1;
+		NetworkPlayer component = base.GetComponent<NetworkView>().owner;
+		if (this.isInet && this.photonView && this.photonView.owner != null)
+		{
+			d = this.photonView.owner.ID;
+		}
+		foreach (Player_move_c player in Initializer.players)
+		{
+			if ((!this.isInet || !(player.mySkinName.photonView != null) || player.mySkinName.photonView.owner == null || player.mySkinName.photonView.owner.ID != d) && (this.isInet || !player.mySkinName.GetComponent<NetworkView>().owner.Equals(component)))
+			{
+				continue;
+			}
+			GameObject gameObject = player.mySkinName.playerGameObject;
+			GameObject child = null;
+			base.transform.position = Vector3.zero;
+			if (!base.transform.GetComponent<WeaponSounds>().isMelee)
+			{
+				IEnumerator enumerator = base.transform.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						Transform current = (Transform)enumerator.Current;
+						if (!current.gameObject.name.Equals("BulletSpawnPoint") || current.childCount < 0)
+						{
+							continue;
+						}
+						child = current.GetChild(0).gameObject;
+						if (!this.isMine)
+						{
+							WeaponManager.SetGunFlashActive(child, false);
+						}
+						break;
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
+				}
+			}
+			IEnumerator enumerator1 = gameObject.transform.GetEnumerator();
+			try
+			{
+				while (enumerator1.MoveNext())
+				{
+					Transform transforms = (Transform)enumerator1.Current;
+					transforms.parent = null;
+					Transform transforms1 = transforms;
+					transforms1.position = transforms1.position + (-Vector3.up * 1000f);
+				}
+			}
+			finally
+			{
+				IDisposable disposable1 = enumerator1 as IDisposable;
+				if (disposable1 == null)
+				{
+				}
+				disposable1.Dispose();
+			}
+			base.transform.parent = gameObject.transform;
+			if (base.transform.FindChild("BulletSpawnPoint") != null)
+			{
+				player._bulletSpawnPoint = base.transform.FindChild("BulletSpawnPoint").gameObject;
+			}
+			base.transform.localPosition = new Vector3(0f, -1.7f, 0f);
+			base.transform.rotation = gameObject.transform.rotation;
+			if (gameObject.transform.parent.gameObject != null)
+			{
+				player.SetTextureForBodyPlayer(player._skin);
+			}
+			return;
+		}
+		base.Invoke("SetParent", 0.1f);
+	}
+
 	private void Start()
 	{
 		if (SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene))
 		{
 			return;
 		}
-		isMulti = Defs.isMulti;
-		if (isMulti)
+		this.isMulti = Defs.isMulti;
+		if (!this.isMulti)
 		{
-			isInet = Defs.isInet;
-			photonView = PhotonView.Get(this);
-			if (!isInet)
-			{
-				isMine = GetComponent<NetworkView>().isMine;
-			}
-			else
-			{
-				isMine = photonView.isMine;
-			}
-			SetParent();
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void SetParent()
-	{
-		int num = -1;
-		NetworkPlayer owner = GetComponent<NetworkView>().owner;
-		if (isInet && (bool)photonView && photonView.owner != null)
-		{
-			num = photonView.owner.ID;
-		}
-		foreach (Player_move_c player in Initializer.players)
-		{
-			if ((!isInet || !(player.mySkinName.photonView != null) || player.mySkinName.photonView.owner == null || player.mySkinName.photonView.owner.ID != num) && (isInet || !player.mySkinName.GetComponent<NetworkView>().owner.Equals(owner)))
-			{
-				continue;
-			}
-			GameObject playerGameObject = player.mySkinName.playerGameObject;
-			GameObject gameObject = null;
-			base.transform.position = Vector3.zero;
-			if (!base.transform.GetComponent<WeaponSounds>().isMelee)
-			{
-				foreach (Transform item in base.transform)
-				{
-					if (item.gameObject.name.Equals("BulletSpawnPoint") && item.childCount >= 0)
-					{
-						gameObject = item.GetChild(0).gameObject;
-						if (!isMine)
-						{
-							WeaponManager.SetGunFlashActive(gameObject, false);
-						}
-						break;
-					}
-				}
-			}
-			foreach (Transform item2 in playerGameObject.transform)
-			{
-				item2.parent = null;
-				item2.position += -Vector3.up * 1000f;
-			}
-			base.transform.parent = playerGameObject.transform;
-			if (base.transform.FindChild("BulletSpawnPoint") != null)
-			{
-				player._bulletSpawnPoint = base.transform.FindChild("BulletSpawnPoint").gameObject;
-			}
-			base.transform.localPosition = new Vector3(0f, -1.7f, 0f);
-			base.transform.rotation = playerGameObject.transform.rotation;
-			GameObject gameObject2 = playerGameObject.transform.parent.gameObject;
-			if (gameObject2 != null)
-			{
-				player.SetTextureForBodyPlayer(player._skin);
-			}
 			return;
 		}
-		Invoke("SetParent", 0.1f);
+		this.isInet = Defs.isInet;
+		this.photonView = PhotonView.Get(this);
+		if (this.isInet)
+		{
+			this.isMine = this.photonView.isMine;
+		}
+		else
+		{
+			this.isMine = base.GetComponent<NetworkView>().isMine;
+		}
+		this.SetParent();
 	}
 }

@@ -13,39 +13,8 @@ public sealed class HealthButtonInGamePanel : MonoBehaviour
 
 	public InGameGUI inGameGui;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache4;
-
-	private void Start()
+	public HealthButtonInGamePanel()
 	{
-		priceLabel.text = Defs.healthInGamePanelPrice.ToString();
-	}
-
-	private void Update()
-	{
-		UpdateState();
-	}
-
-	private void UpdateState(bool isDelta = true)
-	{
-		if (!(inGameGui.playerMoveC == null))
-		{
-			bool flag = inGameGui.playerMoveC.CurHealth == inGameGui.playerMoveC.MaxHealth;
-			if (fullLabel.activeSelf != flag)
-			{
-				fullLabel.SetActive(flag);
-			}
-			myButton.isEnabled = !flag;
-			if (priceLabel.gameObject.activeSelf != !flag)
-			{
-				priceLabel.gameObject.SetActive(!flag);
-			}
-		}
-	}
-
-	private void OnEnable()
-	{
-		UpdateState(false);
 	}
 
 	private void OnClick()
@@ -56,45 +25,69 @@ public sealed class HealthButtonInGamePanel : MonoBehaviour
 		}
 		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 		{
-			if (inGameGui.playerMoveC != null)
+			if (this.inGameGui.playerMoveC != null)
 			{
-				inGameGui.playerMoveC.CurHealth = inGameGui.playerMoveC.MaxHealth;
+				this.inGameGui.playerMoveC.CurHealth = this.inGameGui.playerMoveC.MaxHealth;
 			}
+			return;
 		}
-		else if (!(inGameGui.playerMoveC.CurHealth <= 0f))
+		if (this.inGameGui.playerMoveC.CurHealth <= 0f)
 		{
-			GameObject mainPanel = inGameGui.gameObject;
-			ItemPrice price = new ItemPrice(Defs.healthInGamePanelPrice, "Coins");
-			Action onSuccess = _003COnClick_003Em__177;
-			if (_003C_003Ef__am_0024cache4 == null)
-			{
-				_003C_003Ef__am_0024cache4 = _003COnClick_003Em__178;
-			}
-			ShopNGUIController.TryToBuy(mainPanel, price, onSuccess, _003C_003Ef__am_0024cache4);
+			return;
 		}
+		ShopNGUIController.TryToBuy(this.inGameGui.gameObject, new ItemPrice(Defs.healthInGamePanelPrice, "Coins"), () => {
+			if (this.inGameGui.playerMoveC != null)
+			{
+				this.inGameGui.playerMoveC.CurHealth = this.inGameGui.playerMoveC.MaxHealth;
+				this.inGameGui.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Health);
+				this.inGameGui.playerMoveC.timeBuyHealth = Time.time;
+			}
+			FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, "Health", 1, true);
+			FlurryPluginWrapper.LogGearPurchases("Health", 1, true);
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+			{
+				{ "Succeeded", "Health" }
+			}, true);
+			FlurryPluginWrapper.LogFastPurchase("Health");
+		}, () => {
+			JoystickController.leftJoystick.Reset();
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+			{
+				{ "Failed", "Health" }
+			}, true);
+		}, null, null, null, null);
 	}
 
-	[CompilerGenerated]
-	private void _003COnClick_003Em__177()
+	private void OnEnable()
 	{
-		if (inGameGui.playerMoveC != null)
-		{
-			inGameGui.playerMoveC.CurHealth = inGameGui.playerMoveC.MaxHealth;
-			inGameGui.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Health);
-			inGameGui.playerMoveC.timeBuyHealth = Time.time;
-		}
-		FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, "Health", 1, true);
-		FlurryPluginWrapper.LogGearPurchases("Health", 1, true);
-		Dictionary<string, string> parameters = new Dictionary<string, string> { { "Succeeded", "Health" } };
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-		FlurryPluginWrapper.LogFastPurchase("Health");
+		this.UpdateState(false);
 	}
 
-	[CompilerGenerated]
-	private static void _003COnClick_003Em__178()
+	private void Start()
 	{
-		JoystickController.leftJoystick.Reset();
-		Dictionary<string, string> parameters = new Dictionary<string, string> { { "Failed", "Health" } };
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
+		this.priceLabel.text = Defs.healthInGamePanelPrice.ToString();
+	}
+
+	private void Update()
+	{
+		this.UpdateState(true);
+	}
+
+	private void UpdateState(bool isDelta = true)
+	{
+		if (this.inGameGui.playerMoveC == null)
+		{
+			return;
+		}
+		bool curHealth = this.inGameGui.playerMoveC.CurHealth == this.inGameGui.playerMoveC.MaxHealth;
+		if (this.fullLabel.activeSelf != curHealth)
+		{
+			this.fullLabel.SetActive(curHealth);
+		}
+		this.myButton.isEnabled = !curHealth;
+		if (this.priceLabel.gameObject.activeSelf != !curHealth)
+		{
+			this.priceLabel.gameObject.SetActive(!curHealth);
+		}
 	}
 }

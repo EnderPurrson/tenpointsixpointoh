@@ -3,17 +3,6 @@ using UnityEngine;
 
 public class RPG_Camera : MonoBehaviour
 {
-	public struct ClipPlaneVertexes
-	{
-		public Vector3 UpperLeft;
-
-		public Vector3 UpperRight;
-
-		public Vector3 LowerLeft;
-
-		public Vector3 LowerRight;
-	}
-
 	public static RPG_Camera instance;
 
 	public Transform cameraPivot;
@@ -103,150 +92,36 @@ public class RPG_Camera : MonoBehaviour
 
 	public LayerMask collisionLayer;
 
+	public RPG_Camera()
+	{
+	}
+
 	private void Awake()
 	{
-		instance = this;
-		cam = GetComponent<Camera>();
-		nearClipPlaneNormal = cam.nearClipPlane;
-	}
-
-	private void Start()
-	{
-		distance = Mathf.Clamp(distance, distanceMin, distanceMax);
-		desiredDistance = distance;
-		halfFieldOfView = cam.fieldOfView / 2f * ((float)Math.PI / 180f);
-		planeAspect = cam.aspect;
-		halfPlaneHeight = cam.nearClipPlane * Mathf.Tan(halfFieldOfView);
-		halfPlaneWidth = halfPlaneHeight * planeAspect;
-		mouseY = 15f;
-	}
-
-	private void OnDestroy()
-	{
-		cam = null;
+		RPG_Camera.instance = this;
+		RPG_Camera.cam = base.GetComponent<Camera>();
+		this.nearClipPlaneNormal = RPG_Camera.cam.nearClipPlane;
 	}
 
 	public static void CameraSetup()
 	{
 		GameObject gameObject;
-		if (cam != null)
-		{
-			gameObject = cam.gameObject;
-		}
-		else
+		if (RPG_Camera.cam == null)
 		{
 			gameObject = new GameObject("Main Camera");
 			gameObject.AddComponent<Camera>();
 			gameObject.tag = "MainCamera";
 		}
+		else
+		{
+			gameObject = RPG_Camera.cam.gameObject;
+		}
 		if (!gameObject.GetComponent("RPG_Camera"))
 		{
 			gameObject.AddComponent<RPG_Camera>();
 		}
-		RPG_Camera rPG_Camera = gameObject.GetComponent("RPG_Camera") as RPG_Camera;
-		GameObject gameObject2 = GameObject.Find("cameraPivot");
-		rPG_Camera.cameraPivot = gameObject2.transform;
-	}
-
-	private void Update()
-	{
-		if (!(cameraPivot == null))
-		{
-			if (!RotatorKillCam.isDraggin && distance < 2f)
-			{
-				deltaMouseX += Time.deltaTime * speedRotateXfree;
-			}
-			curTargetEulerAngles = cameraPivot.eulerAngles;
-			GetInput();
-			GetDesiredPosition();
-			PositionUpdate();
-		}
-	}
-
-	private void GetInput()
-	{
-		if ((double)distance > 0.1)
-		{
-			camBottom = Physics.Linecast(base.transform.position, base.transform.position - Vector3.up * camBottomDistance, collisionLayer);
-		}
-		bool flag = camBottom && base.transform.position.y - cameraPivot.transform.position.y <= 0f;
-		mouseY = ClampAngle(mouseY, -89.5f, 89.5f);
-		mouseXSmooth = Mathf.SmoothDamp(mouseXSmooth, mouseX, ref mouseXVel, mouseSmoothingFactor);
-		mouseYSmooth = Mathf.SmoothDamp(mouseYSmooth, mouseY, ref mouseYVel, mouseSmoothingFactor);
-		if (flag)
-		{
-			mouseYMin = mouseY;
-		}
-		else
-		{
-			mouseYMin = -89.5f;
-		}
-		mouseYSmooth = ClampAngle(mouseYSmooth, mouseYMin, mouseYMax);
-		if (desiredDistance > distanceMax)
-		{
-			desiredDistance = distanceMax;
-		}
-		if (desiredDistance < distanceMin)
-		{
-			desiredDistance = distanceMin;
-		}
-		controlVector = Vector2.zero;
-	}
-
-	private void GetDesiredPosition()
-	{
-		distance = desiredDistance;
-		desiredPosition = GetCameraPosition(mouseYSmooth, mouseX, distance);
-		constraint = false;
-		float num = CheckCameraClipPlane(cameraPivot.position, desiredPosition);
-		if (num != -1f)
-		{
-			distance = num;
-			desiredPosition = GetCameraPosition(mouseYSmooth, mouseX, distance);
-			constraint = true;
-		}
-		distance -= cam.nearClipPlane;
-		if (lastDistance < distance || !constraint)
-		{
-			distance = Mathf.SmoothDamp(lastDistance, distance, ref distanceVel, camDistanceSpeed);
-		}
-		if (distance < distanceMin)
-		{
-			distance = distanceMin;
-		}
-		lastDistance = distance;
-		desiredPosition = GetCameraPosition(mouseYSmooth, mouseX, distance);
-		if (distance < 4f && hitInfo.normal != Vector3.zero)
-		{
-			desiredPosition -= hitInfo.normal * offsetY * (4f - distance) * 0.25f;
-			isCameraIntersect = true;
-			return;
-		}
-		isCameraIntersect = false;
-		if (cam.nearClipPlane != nearClipPlaneNormal)
-		{
-			cam.nearClipPlane = nearClipPlaneNormal;
-		}
-	}
-
-	private void PositionUpdate()
-	{
-		base.transform.position = desiredPosition;
-		if (distance > distanceMin)
-		{
-			base.transform.LookAt(cameraPivot);
-			base.transform.eulerAngles -= new Vector3(2f, 0f, 0f);
-		}
-	}
-
-	public void UpdateMouseX()
-	{
-		if (!(cameraPivot == null))
-		{
-			for (mouseX = 150f + deltaMouseX + cameraPivot.rotation.eulerAngles.y; mouseX > 360f; mouseX -= 360f)
-			{
-			}
-		}
+		RPG_Camera component = gameObject.GetComponent("RPG_Camera") as RPG_Camera;
+		component.cameraPivot = GameObject.Find("cameraPivot").transform;
 	}
 
 	private void CharacterFade()
@@ -255,70 +130,199 @@ public class RPG_Camera : MonoBehaviour
 		{
 			return;
 		}
-		if (distance < firstPersonThreshold)
+		if (this.distance < this.firstPersonThreshold)
 		{
 			RPG_Animation.instance.GetComponent<Renderer>().enabled = false;
 		}
-		else if (distance < characterFadeThreshold)
+		else if (this.distance >= this.characterFadeThreshold)
 		{
 			RPG_Animation.instance.GetComponent<Renderer>().enabled = true;
-			float num = 1f - (characterFadeThreshold - distance) / (characterFadeThreshold - firstPersonThreshold);
-			if (RPG_Animation.instance.GetComponent<Renderer>().material.color.a != num)
+			if (RPG_Animation.instance.GetComponent<Renderer>().material.color.a != 1f)
 			{
-				RPG_Animation.instance.GetComponent<Renderer>().material.color = new Color(RPG_Animation.instance.GetComponent<Renderer>().material.color.r, RPG_Animation.instance.GetComponent<Renderer>().material.color.g, RPG_Animation.instance.GetComponent<Renderer>().material.color.b, num);
+				Material component = RPG_Animation.instance.GetComponent<Renderer>().material;
+				float single = RPG_Animation.instance.GetComponent<Renderer>().material.color.r;
+				float component1 = RPG_Animation.instance.GetComponent<Renderer>().material.color.g;
+				Color color = RPG_Animation.instance.GetComponent<Renderer>().material.color;
+				component.color = new Color(single, component1, color.b, 1f);
 			}
 		}
 		else
 		{
 			RPG_Animation.instance.GetComponent<Renderer>().enabled = true;
-			if (RPG_Animation.instance.GetComponent<Renderer>().material.color.a != 1f)
+			float single1 = 1f - (this.characterFadeThreshold - this.distance) / (this.characterFadeThreshold - this.firstPersonThreshold);
+			if (RPG_Animation.instance.GetComponent<Renderer>().material.color.a != single1)
 			{
-				RPG_Animation.instance.GetComponent<Renderer>().material.color = new Color(RPG_Animation.instance.GetComponent<Renderer>().material.color.r, RPG_Animation.instance.GetComponent<Renderer>().material.color.g, RPG_Animation.instance.GetComponent<Renderer>().material.color.b, 1f);
+				Material material = RPG_Animation.instance.GetComponent<Renderer>().material;
+				float component2 = RPG_Animation.instance.GetComponent<Renderer>().material.color.r;
+				float single2 = RPG_Animation.instance.GetComponent<Renderer>().material.color.g;
+				Color color1 = RPG_Animation.instance.GetComponent<Renderer>().material.color;
+				material.color = new Color(component2, single2, color1.b, single1);
 			}
 		}
-	}
-
-	private Vector3 GetCameraPosition(float xAxis, float yAxis, float distance)
-	{
-		Vector3 vector = new Vector3(0f, 0f, 0f - distance);
-		Quaternion quaternion = Quaternion.Euler(xAxis, yAxis, 0f);
-		return cameraPivot.position + quaternion * vector;
 	}
 
 	private float CheckCameraClipPlane(Vector3 from, Vector3 to)
 	{
-		float num = -1f;
-		ClipPlaneVertexes clipPlaneAt = GetClipPlaneAt(to);
-		if (Physics.Linecast(from, to, out hitInfo, collisionLayer) && IsIgnorCollider(hitInfo))
+		float single = -1f;
+		RPG_Camera.ClipPlaneVertexes clipPlaneAt = this.GetClipPlaneAt(to);
+		if (Physics.Linecast(from, to, out this.hitInfo, this.collisionLayer) && this.IsIgnorCollider(this.hitInfo))
 		{
-			num = hitInfo.distance - cam.nearClipPlane;
+			single = this.hitInfo.distance - RPG_Camera.cam.nearClipPlane;
 		}
-		else if (Physics.Linecast(from - base.transform.right * halfPlaneWidth + base.transform.up * halfPlaneHeight, clipPlaneAt.UpperLeft, out hitInfo, collisionLayer) && IsIgnorCollider(hitInfo))
+		else if (Physics.Linecast((from - (base.transform.right * RPG_Camera.halfPlaneWidth)) + (base.transform.up * RPG_Camera.halfPlaneHeight), clipPlaneAt.UpperLeft, out this.hitInfo, this.collisionLayer) && this.IsIgnorCollider(this.hitInfo))
 		{
-			if (hitInfo.distance < num || num == -1f)
+			if (this.hitInfo.distance < single || single == -1f)
 			{
-				num = Vector3.Distance(hitInfo.point + base.transform.right * halfPlaneWidth - base.transform.up * halfPlaneHeight, from);
+				single = Vector3.Distance((this.hitInfo.point + (base.transform.right * RPG_Camera.halfPlaneWidth)) - (base.transform.up * RPG_Camera.halfPlaneHeight), from);
 			}
 		}
-		else if (Physics.Linecast(from + base.transform.right * halfPlaneWidth + base.transform.up * halfPlaneHeight, clipPlaneAt.UpperRight, out hitInfo, collisionLayer) && IsIgnorCollider(hitInfo))
+		else if (Physics.Linecast((from + (base.transform.right * RPG_Camera.halfPlaneWidth)) + (base.transform.up * RPG_Camera.halfPlaneHeight), clipPlaneAt.UpperRight, out this.hitInfo, this.collisionLayer) && this.IsIgnorCollider(this.hitInfo))
 		{
-			if (hitInfo.distance < num || num == -1f)
+			if (this.hitInfo.distance < single || single == -1f)
 			{
-				num = Vector3.Distance(hitInfo.point - base.transform.right * halfPlaneWidth - base.transform.up * halfPlaneHeight, from);
+				single = Vector3.Distance((this.hitInfo.point - (base.transform.right * RPG_Camera.halfPlaneWidth)) - (base.transform.up * RPG_Camera.halfPlaneHeight), from);
 			}
 		}
-		else if (Physics.Linecast(from - base.transform.right * halfPlaneWidth - base.transform.up * halfPlaneHeight, clipPlaneAt.LowerLeft, out hitInfo, collisionLayer) && IsIgnorCollider(hitInfo))
+		else if (Physics.Linecast((from - (base.transform.right * RPG_Camera.halfPlaneWidth)) - (base.transform.up * RPG_Camera.halfPlaneHeight), clipPlaneAt.LowerLeft, out this.hitInfo, this.collisionLayer) && this.IsIgnorCollider(this.hitInfo))
 		{
-			if (hitInfo.distance < num || num == -1f)
+			if (this.hitInfo.distance < single || single == -1f)
 			{
-				num = Vector3.Distance(hitInfo.point + base.transform.right * halfPlaneWidth + base.transform.up * halfPlaneHeight, from);
+				single = Vector3.Distance((this.hitInfo.point + (base.transform.right * RPG_Camera.halfPlaneWidth)) + (base.transform.up * RPG_Camera.halfPlaneHeight), from);
 			}
 		}
-		else if (Physics.Linecast(from + base.transform.right * halfPlaneWidth - base.transform.up * halfPlaneHeight, clipPlaneAt.LowerRight, out hitInfo, collisionLayer) && IsIgnorCollider(hitInfo) && (hitInfo.distance < num || num == -1f))
+		else if (Physics.Linecast((from + (base.transform.right * RPG_Camera.halfPlaneWidth)) - (base.transform.up * RPG_Camera.halfPlaneHeight), clipPlaneAt.LowerRight, out this.hitInfo, this.collisionLayer) && this.IsIgnorCollider(this.hitInfo) && (this.hitInfo.distance < single || single == -1f))
 		{
-			num = Vector3.Distance(hitInfo.point - base.transform.right * halfPlaneWidth + base.transform.up * halfPlaneHeight, from);
+			single = Vector3.Distance((this.hitInfo.point - (base.transform.right * RPG_Camera.halfPlaneWidth)) + (base.transform.up * RPG_Camera.halfPlaneHeight), from);
 		}
-		return num;
+		return single;
+	}
+
+	private float ClampAngle(float angle, float min, float max)
+	{
+		while (angle < -360f || angle > 360f)
+		{
+			if (angle < -360f)
+			{
+				angle += 360f;
+			}
+			if (angle <= 360f)
+			{
+				continue;
+			}
+			angle -= 360f;
+		}
+		return Mathf.Clamp(angle, min, max);
+	}
+
+	private Vector3 GetCameraPosition(float xAxis, float yAxis, float distance)
+	{
+		Vector3 vector3 = new Vector3(0f, 0f, -distance);
+		Quaternion quaternion = Quaternion.Euler(xAxis, yAxis, 0f);
+		return this.cameraPivot.position + (quaternion * vector3);
+	}
+
+	public RPG_Camera.ClipPlaneVertexes GetClipPlaneAt(Vector3 pos)
+	{
+		RPG_Camera.ClipPlaneVertexes upperLeft = new RPG_Camera.ClipPlaneVertexes();
+		if (RPG_Camera.cam == null)
+		{
+			return upperLeft;
+		}
+		Transform transforms = RPG_Camera.cam.transform;
+		float single = RPG_Camera.cam.nearClipPlane;
+		upperLeft.UpperLeft = pos - (transforms.right * RPG_Camera.halfPlaneWidth);
+		upperLeft.UpperLeft = upperLeft.UpperLeft + (transforms.up * RPG_Camera.halfPlaneHeight);
+		upperLeft.UpperLeft = upperLeft.UpperLeft + (transforms.forward * single);
+		upperLeft.UpperRight = pos + (transforms.right * RPG_Camera.halfPlaneWidth);
+		upperLeft.UpperRight = upperLeft.UpperRight + (transforms.up * RPG_Camera.halfPlaneHeight);
+		upperLeft.UpperRight = upperLeft.UpperRight + (transforms.forward * single);
+		upperLeft.LowerLeft = pos - (transforms.right * RPG_Camera.halfPlaneWidth);
+		upperLeft.LowerLeft = upperLeft.LowerLeft - (transforms.up * RPG_Camera.halfPlaneHeight);
+		upperLeft.LowerLeft = upperLeft.LowerLeft + (transforms.forward * single);
+		upperLeft.LowerRight = pos + (transforms.right * RPG_Camera.halfPlaneWidth);
+		upperLeft.LowerRight = upperLeft.LowerRight - (transforms.up * RPG_Camera.halfPlaneHeight);
+		upperLeft.LowerRight = upperLeft.LowerRight + (transforms.forward * single);
+		return upperLeft;
+	}
+
+	private void GetDesiredPosition()
+	{
+		this.distance = this.desiredDistance;
+		this.desiredPosition = this.GetCameraPosition(this.mouseYSmooth, this.mouseX, this.distance);
+		this.constraint = false;
+		float single = this.CheckCameraClipPlane(this.cameraPivot.position, this.desiredPosition);
+		if (single != -1f)
+		{
+			this.distance = single;
+			this.desiredPosition = this.GetCameraPosition(this.mouseYSmooth, this.mouseX, this.distance);
+			this.constraint = true;
+		}
+		this.distance -= RPG_Camera.cam.nearClipPlane;
+		if (this.lastDistance < this.distance || !this.constraint)
+		{
+			this.distance = Mathf.SmoothDamp(this.lastDistance, this.distance, ref this.distanceVel, this.camDistanceSpeed);
+		}
+		if (this.distance < this.distanceMin)
+		{
+			this.distance = this.distanceMin;
+		}
+		this.lastDistance = this.distance;
+		this.desiredPosition = this.GetCameraPosition(this.mouseYSmooth, this.mouseX, this.distance);
+		if (this.distance >= 4f || !(this.hitInfo.normal != Vector3.zero))
+		{
+			this.isCameraIntersect = false;
+			if (RPG_Camera.cam.nearClipPlane != this.nearClipPlaneNormal)
+			{
+				RPG_Camera.cam.nearClipPlane = this.nearClipPlaneNormal;
+			}
+		}
+		else
+		{
+			RPG_Camera rPGCamera = this;
+			rPGCamera.desiredPosition = rPGCamera.desiredPosition - (((this.hitInfo.normal * this.offsetY) * (4f - this.distance)) * 0.25f);
+			this.isCameraIntersect = true;
+		}
+	}
+
+	private void GetInput()
+	{
+		bool flag;
+		if ((double)this.distance > 0.1)
+		{
+			this.camBottom = Physics.Linecast(base.transform.position, base.transform.position - (Vector3.up * this.camBottomDistance), this.collisionLayer);
+		}
+		if (!this.camBottom)
+		{
+			flag = false;
+		}
+		else
+		{
+			float single = base.transform.position.y;
+			Vector3 vector3 = this.cameraPivot.transform.position;
+			flag = single - vector3.y <= 0f;
+		}
+		bool flag1 = flag;
+		this.mouseY = this.ClampAngle(this.mouseY, -89.5f, 89.5f);
+		this.mouseXSmooth = Mathf.SmoothDamp(this.mouseXSmooth, this.mouseX, ref this.mouseXVel, this.mouseSmoothingFactor);
+		this.mouseYSmooth = Mathf.SmoothDamp(this.mouseYSmooth, this.mouseY, ref this.mouseYVel, this.mouseSmoothingFactor);
+		if (!flag1)
+		{
+			this.mouseYMin = -89.5f;
+		}
+		else
+		{
+			this.mouseYMin = this.mouseY;
+		}
+		this.mouseYSmooth = this.ClampAngle(this.mouseYSmooth, this.mouseYMin, this.mouseYMax);
+		if (this.desiredDistance > this.distanceMax)
+		{
+			this.desiredDistance = this.distanceMax;
+		}
+		if (this.desiredDistance < this.distanceMin)
+		{
+			this.desiredDistance = this.distanceMin;
+		}
+		this.controlVector = Vector2.zero;
 	}
 
 	private bool IsIgnorCollider(RaycastHit curHitInfo)
@@ -330,49 +334,79 @@ public class RPG_Camera : MonoBehaviour
 		return false;
 	}
 
-	private float ClampAngle(float angle, float min, float max)
+	private void OnDestroy()
 	{
-		while (angle < -360f || angle > 360f)
-		{
-			if (angle < -360f)
-			{
-				angle += 360f;
-			}
-			if (angle > 360f)
-			{
-				angle -= 360f;
-			}
-		}
-		return Mathf.Clamp(angle, min, max);
+		RPG_Camera.cam = null;
 	}
 
-	public ClipPlaneVertexes GetClipPlaneAt(Vector3 pos)
+	private void PositionUpdate()
 	{
-		ClipPlaneVertexes result = default(ClipPlaneVertexes);
-		if (cam == null)
+		base.transform.position = this.desiredPosition;
+		if (this.distance > this.distanceMin)
 		{
-			return result;
+			base.transform.LookAt(this.cameraPivot);
+			Transform vector3 = base.transform;
+			vector3.eulerAngles = vector3.eulerAngles - new Vector3(2f, 0f, 0f);
 		}
-		Transform transform = cam.transform;
-		float nearClipPlane = cam.nearClipPlane;
-		result.UpperLeft = pos - transform.right * halfPlaneWidth;
-		result.UpperLeft += transform.up * halfPlaneHeight;
-		result.UpperLeft += transform.forward * nearClipPlane;
-		result.UpperRight = pos + transform.right * halfPlaneWidth;
-		result.UpperRight += transform.up * halfPlaneHeight;
-		result.UpperRight += transform.forward * nearClipPlane;
-		result.LowerLeft = pos - transform.right * halfPlaneWidth;
-		result.LowerLeft -= transform.up * halfPlaneHeight;
-		result.LowerLeft += transform.forward * nearClipPlane;
-		result.LowerRight = pos + transform.right * halfPlaneWidth;
-		result.LowerRight -= transform.up * halfPlaneHeight;
-		result.LowerRight += transform.forward * nearClipPlane;
-		return result;
 	}
 
 	public void RotateWithCharacter()
 	{
-		float num = Input.GetAxis("Horizontal") * RPG_Controller.instance.turnSpeed;
-		mouseX += num;
+		float axis = Input.GetAxis("Horizontal") * RPG_Controller.instance.turnSpeed;
+		this.mouseX += axis;
+	}
+
+	private void Start()
+	{
+		this.distance = Mathf.Clamp(this.distance, this.distanceMin, this.distanceMax);
+		this.desiredDistance = this.distance;
+		RPG_Camera.halfFieldOfView = RPG_Camera.cam.fieldOfView / 2f * 0.017453292f;
+		RPG_Camera.planeAspect = RPG_Camera.cam.aspect;
+		RPG_Camera.halfPlaneHeight = RPG_Camera.cam.nearClipPlane * Mathf.Tan(RPG_Camera.halfFieldOfView);
+		RPG_Camera.halfPlaneWidth = RPG_Camera.halfPlaneHeight * RPG_Camera.planeAspect;
+		this.mouseY = 15f;
+	}
+
+	private void Update()
+	{
+		if (this.cameraPivot == null)
+		{
+			return;
+		}
+		if (!RotatorKillCam.isDraggin && this.distance < 2f)
+		{
+			RPG_Camera rPGCamera = this;
+			rPGCamera.deltaMouseX = rPGCamera.deltaMouseX + Time.deltaTime * this.speedRotateXfree;
+		}
+		this.curTargetEulerAngles = this.cameraPivot.eulerAngles;
+		this.GetInput();
+		this.GetDesiredPosition();
+		this.PositionUpdate();
+	}
+
+	public void UpdateMouseX()
+	{
+		if (this.cameraPivot == null)
+		{
+			return;
+		}
+		float single = 150f + this.deltaMouseX;
+		Vector3 vector3 = this.cameraPivot.rotation.eulerAngles;
+		this.mouseX = single + vector3.y;
+		while (this.mouseX > 360f)
+		{
+			this.mouseX -= 360f;
+		}
+	}
+
+	public struct ClipPlaneVertexes
+	{
+		public Vector3 UpperLeft;
+
+		public Vector3 UpperRight;
+
+		public Vector3 LowerLeft;
+
+		public Vector3 LowerRight;
 	}
 }

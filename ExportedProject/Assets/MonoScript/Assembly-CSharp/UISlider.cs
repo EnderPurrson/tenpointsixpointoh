@@ -5,55 +5,21 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UISlider : UIProgressBar
 {
-	private enum Direction
-	{
-		Horizontal = 0,
-		Vertical = 1,
-		Upgraded = 2
-	}
-
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Transform foreground;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private float rawValue = 1f;
 
-	[SerializeField]
 	[HideInInspector]
-	private Direction direction = Direction.Upgraded;
+	[SerializeField]
+	private UISlider.Direction direction = UISlider.Direction.Upgraded;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected bool mInverted;
-
-	public bool isColliderEnabled
-	{
-		get
-		{
-			Collider component = GetComponent<Collider>();
-			if (component != null)
-			{
-				return component.enabled;
-			}
-			Collider2D component2 = GetComponent<Collider2D>();
-			return component2 != null && component2.enabled;
-		}
-	}
-
-	[Obsolete("Use 'value' instead")]
-	public float sliderValue
-	{
-		get
-		{
-			return base.value;
-		}
-		set
-		{
-			base.value = value;
-		}
-	}
 
 	[Obsolete("Use 'fillDirection' instead")]
 	public bool inverted
@@ -67,93 +33,134 @@ public class UISlider : UIProgressBar
 		}
 	}
 
-	protected override void Upgrade()
+	public bool isColliderEnabled
 	{
-		if (direction != Direction.Upgraded)
+		get
 		{
-			mValue = rawValue;
-			if (foreground != null)
+			Collider component = base.GetComponent<Collider>();
+			if (component != null)
 			{
-				mFG = foreground.GetComponent<UIWidget>();
+				return component.enabled;
 			}
-			if (direction == Direction.Horizontal)
-			{
-				mFill = (mInverted ? FillDirection.RightToLeft : FillDirection.LeftToRight);
-			}
-			else
-			{
-				mFill = ((!mInverted) ? FillDirection.BottomToTop : FillDirection.TopToBottom);
-			}
-			direction = Direction.Upgraded;
+			Collider2D collider2D = base.GetComponent<Collider2D>();
+			return (collider2D == null ? false : collider2D.enabled);
 		}
 	}
 
-	protected override void OnStart()
+	[Obsolete("Use 'value' instead")]
+	public float sliderValue
 	{
-		GameObject go = ((!(mBG != null) || (!(mBG.GetComponent<Collider>() != null) && !(mBG.GetComponent<Collider2D>() != null))) ? base.gameObject : mBG.gameObject);
-		UIEventListener uIEventListener = UIEventListener.Get(go);
-		uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressBackground));
-		uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragBackground));
-		if (thumb != null && (thumb.GetComponent<Collider>() != null || thumb.GetComponent<Collider2D>() != null) && (mFG == null || thumb != mFG.cachedTransform))
+		get
 		{
-			UIEventListener uIEventListener2 = UIEventListener.Get(thumb.gameObject);
-			uIEventListener2.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener2.onPress, new UIEventListener.BoolDelegate(OnPressForeground));
-			uIEventListener2.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener2.onDrag, new UIEventListener.VectorDelegate(OnDragForeground));
+			return base.@value;
+		}
+		set
+		{
+			base.@value = value;
+		}
+	}
+
+	public UISlider()
+	{
+	}
+
+	protected void OnDragBackground(GameObject go, Vector2 delta)
+	{
+		if (UICamera.currentScheme == UICamera.ControlScheme.Controller)
+		{
+			return;
+		}
+		this.mCam = UICamera.currentCamera;
+		base.@value = base.ScreenToValue(UICamera.lastEventPosition);
+	}
+
+	protected void OnDragForeground(GameObject go, Vector2 delta)
+	{
+		if (UICamera.currentScheme == UICamera.ControlScheme.Controller)
+		{
+			return;
+		}
+		this.mCam = UICamera.currentCamera;
+		base.@value = this.mOffset + base.ScreenToValue(UICamera.lastEventPosition);
+	}
+
+	public override void OnPan(Vector2 delta)
+	{
+		if (base.enabled && this.isColliderEnabled)
+		{
+			base.OnPan(delta);
 		}
 	}
 
 	protected void OnPressBackground(GameObject go, bool isPressed)
 	{
-		if (UICamera.currentScheme != UICamera.ControlScheme.Controller)
+		if (UICamera.currentScheme == UICamera.ControlScheme.Controller)
 		{
-			mCam = UICamera.currentCamera;
-			base.value = ScreenToValue(UICamera.lastEventPosition);
-			if (!isPressed && onDragFinished != null)
-			{
-				onDragFinished();
-			}
+			return;
 		}
-	}
-
-	protected void OnDragBackground(GameObject go, Vector2 delta)
-	{
-		if (UICamera.currentScheme != UICamera.ControlScheme.Controller)
+		this.mCam = UICamera.currentCamera;
+		base.@value = base.ScreenToValue(UICamera.lastEventPosition);
+		if (!isPressed && this.onDragFinished != null)
 		{
-			mCam = UICamera.currentCamera;
-			base.value = ScreenToValue(UICamera.lastEventPosition);
+			this.onDragFinished();
 		}
 	}
 
 	protected void OnPressForeground(GameObject go, bool isPressed)
 	{
-		if (UICamera.currentScheme != UICamera.ControlScheme.Controller)
+		if (UICamera.currentScheme == UICamera.ControlScheme.Controller)
 		{
-			mCam = UICamera.currentCamera;
-			if (isPressed)
-			{
-				mOffset = ((!(mFG == null)) ? (base.value - ScreenToValue(UICamera.lastEventPosition)) : 0f);
-			}
-			else if (onDragFinished != null)
-			{
-				onDragFinished();
-			}
+			return;
+		}
+		this.mCam = UICamera.currentCamera;
+		if (isPressed)
+		{
+			this.mOffset = (this.mFG != null ? base.@value - base.ScreenToValue(UICamera.lastEventPosition) : 0f);
+		}
+		else if (this.onDragFinished != null)
+		{
+			this.onDragFinished();
 		}
 	}
 
-	protected void OnDragForeground(GameObject go, Vector2 delta)
+	protected override void OnStart()
 	{
-		if (UICamera.currentScheme != UICamera.ControlScheme.Controller)
+		UIEventListener boolDelegate = UIEventListener.Get((!(this.mBG != null) || !(this.mBG.GetComponent<Collider>() != null) && !(this.mBG.GetComponent<Collider2D>() != null) ? base.gameObject : this.mBG.gameObject));
+		boolDelegate.onPress += new UIEventListener.BoolDelegate(this.OnPressBackground);
+		boolDelegate.onDrag += new UIEventListener.VectorDelegate(this.OnDragBackground);
+		if (this.thumb != null && (this.thumb.GetComponent<Collider>() != null || this.thumb.GetComponent<Collider2D>() != null) && (this.mFG == null || this.thumb != this.mFG.cachedTransform))
 		{
-			mCam = UICamera.currentCamera;
-			base.value = mOffset + ScreenToValue(UICamera.lastEventPosition);
+			UIEventListener vectorDelegate = UIEventListener.Get(this.thumb.gameObject);
+			vectorDelegate.onPress += new UIEventListener.BoolDelegate(this.OnPressForeground);
+			vectorDelegate.onDrag += new UIEventListener.VectorDelegate(this.OnDragForeground);
 		}
 	}
 
-	public override void OnPan(Vector2 delta)
+	protected override void Upgrade()
 	{
-		if (base.enabled && isColliderEnabled)
+		if (this.direction != UISlider.Direction.Upgraded)
 		{
-			base.OnPan(delta);
+			this.mValue = this.rawValue;
+			if (this.foreground != null)
+			{
+				this.mFG = this.foreground.GetComponent<UIWidget>();
+			}
+			if (this.direction != UISlider.Direction.Horizontal)
+			{
+				this.mFill = (!this.mInverted ? UIProgressBar.FillDirection.BottomToTop : UIProgressBar.FillDirection.TopToBottom);
+			}
+			else
+			{
+				this.mFill = (!this.mInverted ? UIProgressBar.FillDirection.LeftToRight : UIProgressBar.FillDirection.RightToLeft);
+			}
+			this.direction = UISlider.Direction.Upgraded;
 		}
+	}
+
+	private enum Direction
+	{
+		Horizontal,
+		Vertical,
+		Upgraded
 	}
 }

@@ -1,8 +1,18 @@
+using System;
 using UnityEngine;
 
 public class NetworkStartTableOnGUI : MonoBehaviour
 {
 	public NetworkStartTable myTable;
+
+	public NetworkStartTableOnGUI()
+	{
+	}
+
+	private void OnGUI()
+	{
+		this.myTable.MyOnGUI();
+	}
 
 	private void Start()
 	{
@@ -10,10 +20,5 @@ public class NetworkStartTableOnGUI : MonoBehaviour
 
 	private void Update()
 	{
-	}
-
-	private void OnGUI()
-	{
-		myTable.MyOnGUI();
 	}
 }

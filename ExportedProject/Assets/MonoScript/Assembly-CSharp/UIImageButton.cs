@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/UI/Image Button")]
@@ -20,94 +21,103 @@ public class UIImageButton : MonoBehaviour
 		get
 		{
 			Collider component = base.gameObject.GetComponent<Collider>();
-			return (bool)component && component.enabled;
+			return (!component ? false : component.enabled);
 		}
 		set
 		{
 			Collider component = base.gameObject.GetComponent<Collider>();
-			if ((bool)component && component.enabled != value)
+			if (!component)
+			{
+				return;
+			}
+			if (component.enabled != value)
 			{
 				component.enabled = value;
-				UpdateImage();
+				this.UpdateImage();
 			}
 		}
+	}
+
+	public UIImageButton()
+	{
 	}
 
 	private void OnEnable()
 	{
-		if (target == null)
+		if (this.target == null)
 		{
-			target = GetComponentInChildren<UISprite>();
+			this.target = base.GetComponentInChildren<UISprite>();
 		}
-		UpdateImage();
-	}
-
-	private void OnValidate()
-	{
-		if (target != null)
-		{
-			if (string.IsNullOrEmpty(normalSprite))
-			{
-				normalSprite = target.spriteName;
-			}
-			if (string.IsNullOrEmpty(hoverSprite))
-			{
-				hoverSprite = target.spriteName;
-			}
-			if (string.IsNullOrEmpty(pressedSprite))
-			{
-				pressedSprite = target.spriteName;
-			}
-			if (string.IsNullOrEmpty(disabledSprite))
-			{
-				disabledSprite = target.spriteName;
-			}
-		}
-	}
-
-	private void UpdateImage()
-	{
-		if (target != null)
-		{
-			if (isEnabled)
-			{
-				SetSprite((!UICamera.IsHighlighted(base.gameObject)) ? normalSprite : hoverSprite);
-			}
-			else
-			{
-				SetSprite(disabledSprite);
-			}
-		}
+		this.UpdateImage();
 	}
 
 	private void OnHover(bool isOver)
 	{
-		if (isEnabled && target != null)
+		if (this.isEnabled && this.target != null)
 		{
-			SetSprite((!isOver) ? normalSprite : hoverSprite);
+			this.SetSprite((!isOver ? this.normalSprite : this.hoverSprite));
 		}
 	}
 
 	private void OnPress(bool pressed)
 	{
-		if (pressed)
+		if (!pressed)
 		{
-			SetSprite(pressedSprite);
+			this.UpdateImage();
 		}
 		else
 		{
-			UpdateImage();
+			this.SetSprite(this.pressedSprite);
+		}
+	}
+
+	private void OnValidate()
+	{
+		if (this.target != null)
+		{
+			if (string.IsNullOrEmpty(this.normalSprite))
+			{
+				this.normalSprite = this.target.spriteName;
+			}
+			if (string.IsNullOrEmpty(this.hoverSprite))
+			{
+				this.hoverSprite = this.target.spriteName;
+			}
+			if (string.IsNullOrEmpty(this.pressedSprite))
+			{
+				this.pressedSprite = this.target.spriteName;
+			}
+			if (string.IsNullOrEmpty(this.disabledSprite))
+			{
+				this.disabledSprite = this.target.spriteName;
+			}
 		}
 	}
 
 	private void SetSprite(string sprite)
 	{
-		if (!(target.atlas == null) && target.atlas.GetSprite(sprite) != null)
+		if (this.target.atlas == null || this.target.atlas.GetSprite(sprite) == null)
 		{
-			target.spriteName = sprite;
-			if (pixelSnap)
+			return;
+		}
+		this.target.spriteName = sprite;
+		if (this.pixelSnap)
+		{
+			this.target.MakePixelPerfect();
+		}
+	}
+
+	private void UpdateImage()
+	{
+		if (this.target != null)
+		{
+			if (!this.isEnabled)
 			{
-				target.MakePixelPerfect();
+				this.SetSprite(this.disabledSprite);
+			}
+			else
+			{
+				this.SetSprite((!UICamera.IsHighlighted(base.gameObject) ? this.normalSprite : this.hoverSprite));
 			}
 		}
 	}

@@ -1,100 +1,121 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.mas.cpt.ads.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public sealed class LoadingStarted : Jsonable
 	{
-		private static AmazonLogger logger = new AmazonLogger("Pi");
+		private static AmazonLogger logger;
 
-		public bool BooleanValue { get; set; }
-
-		public string ToJson()
+		public bool BooleanValue
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		static LoadingStarted()
 		{
-			//Discarded unreachable code: IL_0023, IL_0035
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("booleanValue", BooleanValue);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			LoadingStarted.logger = new AmazonLogger("Pi");
+		}
+
+		public LoadingStarted()
+		{
 		}
 
 		public static LoadingStarted CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			LoadingStarted loadingStarted;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					LoadingStarted item = new LoadingStarted();
+					if (jsonMap.ContainsKey("booleanValue"))
+					{
+						item.BooleanValue = (bool)jsonMap["booleanValue"];
+					}
+					loadingStarted = item;
 				}
-				LoadingStarted loadingStarted = new LoadingStarted();
-				if (jsonMap.ContainsKey("booleanValue"))
+				else
 				{
-					loadingStarted.BooleanValue = (bool)jsonMap["booleanValue"];
+					loadingStarted = null;
 				}
-				return loadingStarted;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return loadingStarted;
 		}
 
 		public static LoadingStarted CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			LoadingStarted loadingStarted;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				loadingStarted = LoadingStarted.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return loadingStarted;
 		}
 
-		public static Dictionary<string, LoadingStarted> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, LoadingStarted> dictionary = new Dictionary<string, LoadingStarted>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				LoadingStarted value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "booleanValue", this.BooleanValue }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<LoadingStarted> ListFromJson(List<object> array)
 		{
-			List<LoadingStarted> list = new List<LoadingStarted>();
-			foreach (object item in array)
+			List<LoadingStarted> loadingStarteds = new List<LoadingStarted>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				loadingStarteds.Add(LoadingStarted.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return loadingStarteds;
+		}
+
+		public static Dictionary<string, LoadingStarted> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, LoadingStarted> strs = new Dictionary<string, LoadingStarted>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				LoadingStarted loadingStarted = LoadingStarted.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, loadingStarted);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

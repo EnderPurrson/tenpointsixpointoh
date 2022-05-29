@@ -1,16 +1,16 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class PlusMinusController : MonoBehaviour
 {
 	public int stepValue = 1;
 
-	public SaltedInt minValue = default(SaltedInt);
+	public SaltedInt minValue = new SaltedInt();
 
-	public SaltedInt maxValue = default(SaltedInt);
+	public SaltedInt maxValue = new SaltedInt();
 
-	public SaltedInt value = default(SaltedInt);
+	public SaltedInt @value = new SaltedInt();
 
 	public GameObject plusButton;
 
@@ -20,56 +20,62 @@ public class PlusMinusController : MonoBehaviour
 
 	public UILabel headLabel;
 
-	private void Awake()
+	public PlusMinusController()
 	{
-		minValue.Value = 4;
-		maxValue.Value = 8;
-		value.Value = 4;
 	}
 
-	private void Start()
+	private void Awake()
 	{
-		if (plusButton != null)
+		this.minValue.Value = 4;
+		this.maxValue.Value = 8;
+		this.@value.Value = 4;
+	}
+
+	private void HandleMinusButtonClicked(object sender, EventArgs e)
+	{
+		ref SaltedInt value = ref this.@value;
+		value.Value = value.Value - this.stepValue;
+		if (this.@value.Value < this.minValue.Value)
 		{
-			ButtonHandler component = plusButton.GetComponent<ButtonHandler>();
-			if (component != null)
-			{
-				component.Clicked += HandlePlusButtonClicked;
-			}
-		}
-		if (minusButton != null)
-		{
-			ButtonHandler component2 = minusButton.GetComponent<ButtonHandler>();
-			if (component2 != null)
-			{
-				component2.Clicked += HandleMinusButtonClicked;
-			}
+			this.@value.Value = this.minValue.Value;
 		}
 	}
 
 	private void HandlePlusButtonClicked(object sender, EventArgs e)
 	{
-		value.Value += stepValue;
-		if (value.Value > maxValue.Value)
+		ref SaltedInt value = ref this.@value;
+		value.Value = value.Value + this.stepValue;
+		if (this.@value.Value > this.maxValue.Value)
 		{
-			value.Value = maxValue.Value;
+			this.@value.Value = this.maxValue.Value;
 		}
 	}
 
-	private void HandleMinusButtonClicked(object sender, EventArgs e)
+	private void Start()
 	{
-		value.Value -= stepValue;
-		if (value.Value < minValue.Value)
+		if (this.plusButton != null)
 		{
-			value.Value = minValue.Value;
+			ButtonHandler component = this.plusButton.GetComponent<ButtonHandler>();
+			if (component != null)
+			{
+				component.Clicked += new EventHandler(this.HandlePlusButtonClicked);
+			}
+		}
+		if (this.minusButton != null)
+		{
+			ButtonHandler buttonHandler = this.minusButton.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
+			{
+				buttonHandler.Clicked += new EventHandler(this.HandleMinusButtonClicked);
+			}
 		}
 	}
 
 	private void Update()
 	{
-		if (countLabel != null)
+		if (this.countLabel != null)
 		{
-			countLabel.text = value.Value.ToString();
+			this.countLabel.text = this.@value.Value.ToString();
 		}
 	}
 }

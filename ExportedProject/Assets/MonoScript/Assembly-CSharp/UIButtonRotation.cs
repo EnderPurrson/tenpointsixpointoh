@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Button Rotation")]
@@ -15,49 +16,28 @@ public class UIButtonRotation : MonoBehaviour
 
 	private bool mStarted;
 
-	private void Start()
+	public UIButtonRotation()
 	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mRot = tweenTarget.localRotation;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
 	}
 
 	private void OnDisable()
 	{
-		if (mStarted && tweenTarget != null)
+		if (this.mStarted && this.tweenTarget != null)
 		{
-			TweenRotation component = tweenTarget.GetComponent<TweenRotation>();
+			TweenRotation component = this.tweenTarget.GetComponent<TweenRotation>();
 			if (component != null)
 			{
-				component.value = mRot;
+				component.@value = this.mRot;
 				component.enabled = false;
 			}
 		}
 	}
 
-	private void OnPress(bool isPressed)
+	private void OnEnable()
 	{
-		if (base.enabled)
+		if (this.mStarted)
 		{
-			if (!mStarted)
-			{
-				Start();
-			}
-			TweenRotation.Begin(tweenTarget.gameObject, duration, isPressed ? (mRot * Quaternion.Euler(pressed)) : ((!UICamera.IsHighlighted(base.gameObject)) ? mRot : (mRot * Quaternion.Euler(hover)))).method = UITweener.Method.EaseInOut;
+			this.OnHover(UICamera.IsHighlighted(base.gameObject));
 		}
 	}
 
@@ -65,11 +45,34 @@ public class UIButtonRotation : MonoBehaviour
 	{
 		if (base.enabled)
 		{
-			if (!mStarted)
+			if (!this.mStarted)
 			{
-				Start();
+				this.Start();
 			}
-			TweenRotation.Begin(tweenTarget.gameObject, duration, (!isOver) ? mRot : (mRot * Quaternion.Euler(hover))).method = UITweener.Method.EaseInOut;
+			TweenRotation.Begin(this.tweenTarget.gameObject, this.duration, (!isOver ? this.mRot : this.mRot * Quaternion.Euler(this.hover))).method = UITweener.Method.EaseInOut;
+		}
+	}
+
+	private void OnPress(bool isPressed)
+	{
+		Quaternion quaternion;
+		if (base.enabled)
+		{
+			if (!this.mStarted)
+			{
+				this.Start();
+			}
+			GameObject gameObject = this.tweenTarget.gameObject;
+			float single = this.duration;
+			if (!isPressed)
+			{
+				quaternion = (!UICamera.IsHighlighted(base.gameObject) ? this.mRot : this.mRot * Quaternion.Euler(this.hover));
+			}
+			else
+			{
+				quaternion = this.mRot * Quaternion.Euler(this.pressed);
+			}
+			TweenRotation.Begin(gameObject, single, quaternion).method = UITweener.Method.EaseInOut;
 		}
 	}
 
@@ -77,7 +80,20 @@ public class UIButtonRotation : MonoBehaviour
 	{
 		if (base.enabled && (!isSelected || UICamera.currentScheme == UICamera.ControlScheme.Controller))
 		{
-			OnHover(isSelected);
+			this.OnHover(isSelected);
+		}
+	}
+
+	private void Start()
+	{
+		if (!this.mStarted)
+		{
+			this.mStarted = true;
+			if (this.tweenTarget == null)
+			{
+				this.tweenTarget = base.transform;
+			}
+			this.mRot = this.tweenTarget.localRotation;
 		}
 	}
 }

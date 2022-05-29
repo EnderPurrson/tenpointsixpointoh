@@ -1,28 +1,17 @@
+using GooglePlayGames;
 using System;
 
 namespace GooglePlayGames.BasicApi.Multiplayer
 {
 	public class Participant : IComparable<Participant>
 	{
-		public enum ParticipantStatus
-		{
-			NotInvitedYet = 0,
-			Invited = 1,
-			Joined = 2,
-			Declined = 3,
-			Left = 4,
-			Finished = 5,
-			Unresponsive = 6,
-			Unknown = 7
-		}
-
 		private string mDisplayName = string.Empty;
 
 		private string mParticipantId = string.Empty;
 
-		private ParticipantStatus mStatus = ParticipantStatus.Unknown;
+		private Participant.ParticipantStatus mStatus = Participant.ParticipantStatus.Unknown;
 
-		private Player mPlayer;
+		private GooglePlayGames.BasicApi.Multiplayer.Player mPlayer;
 
 		private bool mIsConnectedToRoom;
 
@@ -30,39 +19,7 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mDisplayName;
-			}
-		}
-
-		public string ParticipantId
-		{
-			get
-			{
-				return mParticipantId;
-			}
-		}
-
-		public ParticipantStatus Status
-		{
-			get
-			{
-				return mStatus;
-			}
-		}
-
-		public Player Player
-		{
-			get
-			{
-				return mPlayer;
-			}
-		}
-
-		public bool IsConnectedToRoom
-		{
-			get
-			{
-				return mIsConnectedToRoom;
+				return this.mDisplayName;
 			}
 		}
 
@@ -70,27 +27,54 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mPlayer == null;
+				return this.mPlayer == null;
 			}
 		}
 
-		internal Participant(string displayName, string participantId, ParticipantStatus status, Player player, bool connectedToRoom)
+		public bool IsConnectedToRoom
 		{
-			mDisplayName = displayName;
-			mParticipantId = participantId;
-			mStatus = status;
-			mPlayer = player;
-			mIsConnectedToRoom = connectedToRoom;
+			get
+			{
+				return this.mIsConnectedToRoom;
+			}
 		}
 
-		public override string ToString()
+		public string ParticipantId
 		{
-			return string.Format("[Participant: '{0}' (id {1}), status={2}, player={3}, connected={4}]", mDisplayName, mParticipantId, mStatus.ToString(), (mPlayer != null) ? mPlayer.ToString() : "NULL", mIsConnectedToRoom);
+			get
+			{
+				return this.mParticipantId;
+			}
+		}
+
+		public GooglePlayGames.BasicApi.Multiplayer.Player Player
+		{
+			get
+			{
+				return this.mPlayer;
+			}
+		}
+
+		public Participant.ParticipantStatus Status
+		{
+			get
+			{
+				return this.mStatus;
+			}
+		}
+
+		internal Participant(string displayName, string participantId, Participant.ParticipantStatus status, GooglePlayGames.BasicApi.Multiplayer.Player player, bool connectedToRoom)
+		{
+			this.mDisplayName = displayName;
+			this.mParticipantId = participantId;
+			this.mStatus = status;
+			this.mPlayer = player;
+			this.mIsConnectedToRoom = connectedToRoom;
 		}
 
 		public int CompareTo(Participant other)
 		{
-			return mParticipantId.CompareTo(other.mParticipantId);
+			return this.mParticipantId.CompareTo(other.mParticipantId);
 		}
 
 		public override bool Equals(object obj)
@@ -108,12 +92,32 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 				return false;
 			}
 			Participant participant = (Participant)obj;
-			return mParticipantId.Equals(participant.mParticipantId);
+			return this.mParticipantId.Equals(participant.mParticipantId);
 		}
 
 		public override int GetHashCode()
 		{
-			return (mParticipantId != null) ? mParticipantId.GetHashCode() : 0;
+			return (this.mParticipantId == null ? 0 : this.mParticipantId.GetHashCode());
+		}
+
+		public override string ToString()
+		{
+			object[] str = new object[] { this.mDisplayName, this.mParticipantId, this.mStatus.ToString(), null, null };
+			str[3] = (this.mPlayer != null ? this.mPlayer.ToString() : "NULL");
+			str[4] = this.mIsConnectedToRoom;
+			return string.Format("[Participant: '{0}' (id {1}), status={2}, player={3}, connected={4}]", str);
+		}
+
+		public enum ParticipantStatus
+		{
+			NotInvitedYet,
+			Invited,
+			Joined,
+			Declined,
+			Left,
+			Finished,
+			Unresponsive,
+			Unknown
 		}
 	}
 }

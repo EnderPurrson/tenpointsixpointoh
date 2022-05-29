@@ -1,4 +1,8 @@
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Linq;
 using UnityEngine;
 
@@ -18,54 +22,73 @@ public class DailyQuestBannerHandler : MonoBehaviour
 	[SerializeField]
 	private LazyObject<DailyQuestsBannerController> _controller;
 
-	public static DailyQuestBannerHandler Instance { get; private set; }
+	public static DailyQuestBannerHandler Instance
+	{
+		get;
+		private set;
+	}
+
+	public DailyQuestBannerHandler()
+	{
+	}
 
 	private void Awake()
 	{
-		Instance = this;
-		_controller = new LazyObject<DailyQuestsBannerController>(_prefab.ResourcePath, _windowRoot);
-		ExpController.LevelUpShown += HandleLevelUpShown;
-		if (questsButton != null)
+		DailyQuestBannerHandler.Instance = this;
+		this._controller = new LazyObject<DailyQuestsBannerController>(this._prefab.ResourcePath, this._windowRoot);
+		ExpController.LevelUpShown += new Action(this.HandleLevelUpShown);
+		if (this.questsButton != null)
 		{
-			questsButton.OnClickAction += ShowUI;
+			this.questsButton.OnClickAction += new Action(this.ShowUI);
 		}
-	}
-
-	private void OnDetroy()
-	{
-		ExpController.LevelUpShown -= HandleLevelUpShown;
 	}
 
 	private void HandleLevelUpShown()
 	{
-		if (_controller.ObjectIsLoaded)
+		if (this._controller.ObjectIsLoaded)
 		{
-			_controller.Value.Hide();
-		}
-	}
-
-	public void ShowUI()
-	{
-		if (!_controller.ObjectIsLoaded)
-		{
-			DailyQuestsBannerController value = _controller.Value;
-			int layer = _windowRoot.layer;
-			value.gameObject.layer = layer;
-			foreach (GameObject item in value.gameObject.Descendants())
-			{
-				item.layer = layer;
-			}
-			_controller.Value.inBannerSystem = inBannerSystem;
-		}
-		_controller.Value.Show();
-		if (questsButton != null)
-		{
-			questsButton.SetUI();
+			this._controller.Value.Hide();
 		}
 	}
 
 	public void HideUI()
 	{
-		_controller.Value.Hide();
+		this._controller.Value.Hide();
+	}
+
+	private void OnDetroy()
+	{
+		ExpController.LevelUpShown -= new Action(this.HandleLevelUpShown);
+	}
+
+	public void ShowUI()
+	{
+		if (!this._controller.ObjectIsLoaded)
+		{
+			DailyQuestsBannerController value = this._controller.Value;
+			int num = this._windowRoot.layer;
+			value.gameObject.layer = num;
+			IEnumerator<GameObject> enumerator = value.gameObject.Descendants().GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					enumerator.Current.layer = num;
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			this._controller.Value.inBannerSystem = this.inBannerSystem;
+		}
+		this._controller.Value.Show();
+		if (this.questsButton != null)
+		{
+			this.questsButton.SetUI();
+		}
 	}
 }

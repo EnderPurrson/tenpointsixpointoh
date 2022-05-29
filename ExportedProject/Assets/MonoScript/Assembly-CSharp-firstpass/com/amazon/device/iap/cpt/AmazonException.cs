@@ -9,18 +9,15 @@ namespace com.amazon.device.iap.cpt
 		{
 		}
 
-		public AmazonException(string message)
-			: base(message)
+		public AmazonException(string message) : base(message)
 		{
 		}
 
-		public AmazonException(string message, Exception inner)
-			: base(message, inner)
+		public AmazonException(string message, Exception inner) : base(message, inner)
 		{
 		}
 
-		protected AmazonException(SerializationInfo info, StreamingContext context)
-			: base(info, context)
+		protected AmazonException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 		}
 	}

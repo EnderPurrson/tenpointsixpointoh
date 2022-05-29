@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class ButtonClickSound : MonoBehaviour
@@ -6,25 +7,30 @@ public sealed class ButtonClickSound : MonoBehaviour
 
 	public AudioClip Click;
 
-	private void Start()
+	public ButtonClickSound()
 	{
-		Instance = this;
-		Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	public void PlayClick()
 	{
-		if (Click != null && Defs.isSoundFX)
+		if (this.Click != null && Defs.isSoundFX)
 		{
-			NGUITools.PlaySound(Click);
+			NGUITools.PlaySound(this.Click);
 		}
+	}
+
+	private void Start()
+	{
+		ButtonClickSound.Instance = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	public static void TryPlayClick()
 	{
-		if (!(Instance == null))
+		if (ButtonClickSound.Instance == null)
 		{
-			Instance.PlayClick();
+			return;
 		}
+		ButtonClickSound.Instance.PlayClick();
 	}
 }

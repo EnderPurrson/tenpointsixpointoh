@@ -5,10 +5,10 @@ namespace GooglePlayGames.Native.Cwrapper
 {
 	internal static class InternalHooks
 	{
-		[DllImport("gpg")]
+		[DllImport("gpg", CharSet=CharSet.None, ExactSpelling=false)]
 		internal static extern void InternalHooks_ConfigureForUnityPlugin(HandleRef builder);
 
-		[DllImport("gpg")]
+		[DllImport("gpg", CharSet=CharSet.None, ExactSpelling=false)]
 		internal static extern IntPtr InternalHooks_GetApiClient(HandleRef services);
 	}
 }

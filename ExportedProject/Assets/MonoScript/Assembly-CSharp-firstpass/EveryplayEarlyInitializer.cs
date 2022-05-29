@@ -1,12 +1,17 @@
+using System;
 using UnityEngine;
 
 public class EveryplayEarlyInitializer : MonoBehaviour
 {
+	public EveryplayEarlyInitializer()
+	{
+	}
+
 	[RuntimeInitializeOnLoadMethod]
 	private static void InitializeEveryplayOnStartup()
 	{
-		EveryplaySettings everyplaySettings = (EveryplaySettings)Resources.Load("EveryplaySettings");
-		if (everyplaySettings != null && everyplaySettings.earlyInitializerEnabled && everyplaySettings.IsEnabled && everyplaySettings.IsValid)
+		EveryplaySettings everyplaySetting = (EveryplaySettings)Resources.Load("EveryplaySettings");
+		if (everyplaySetting != null && everyplaySetting.earlyInitializerEnabled && everyplaySetting.IsEnabled && everyplaySetting.IsValid)
 		{
 			Everyplay.Initialize();
 		}

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BonusItemDetailInfo : MonoBehaviour
@@ -12,30 +13,34 @@ public class BonusItemDetailInfo : MonoBehaviour
 
 	public UITexture imageHolder;
 
-	public void SetTitle(string text)
+	public BonusItemDetailInfo()
 	{
-		title.text = text;
-		title1.text = text;
-		title2.text = text;
-	}
-
-	public void SetDescription(string text)
-	{
-		description.text = text;
-	}
-
-	public void SetImage(Texture2D image)
-	{
-		imageHolder.mainTexture = image;
-	}
-
-	public void Show()
-	{
-		base.gameObject.SetActive(true);
 	}
 
 	public void Hide()
 	{
 		base.gameObject.SetActive(false);
+	}
+
+	public void SetDescription(string text)
+	{
+		this.description.text = text;
+	}
+
+	public void SetImage(Texture2D image)
+	{
+		this.imageHolder.mainTexture = image;
+	}
+
+	public void SetTitle(string text)
+	{
+		this.title.text = text;
+		this.title1.text = text;
+		this.title2.text = text;
+	}
+
+	public void Show()
+	{
+		base.gameObject.SetActive(true);
 	}
 }

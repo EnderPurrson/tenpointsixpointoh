@@ -1,16 +1,10 @@
+using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Drag Object")]
+[ExecuteInEditMode]
 public class UIDragObject : MonoBehaviour
 {
-	public enum DragEffect
-	{
-		None = 0,
-		Momentum = 1,
-		MomentumAndSpring = 2
-	}
-
 	public Transform target;
 
 	public UIPanel panelRegion;
@@ -21,15 +15,15 @@ public class UIDragObject : MonoBehaviour
 
 	public UIRect contentRect;
 
-	public DragEffect dragEffect = DragEffect.MomentumAndSpring;
+	public UIDragObject.DragEffect dragEffect = UIDragObject.DragEffect.MomentumAndSpring;
 
 	public float momentumAmount = 35f;
 
 	[SerializeField]
 	protected Vector3 scale = new Vector3(1f, 1f, 0f);
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private float scrollWheelFactor;
 
 	private Plane mPlane;
@@ -54,67 +48,209 @@ public class UIDragObject : MonoBehaviour
 	{
 		get
 		{
-			return scale;
+			return this.scale;
 		}
 		set
 		{
-			scale = value;
+			this.scale = value;
+		}
+	}
+
+	public UIDragObject()
+	{
+	}
+
+	public void CancelMovement()
+	{
+		if (this.target != null)
+		{
+			Vector3 num = this.target.localPosition;
+			num.x = (float)Mathf.RoundToInt(num.x);
+			num.y = (float)Mathf.RoundToInt(num.y);
+			num.z = (float)Mathf.RoundToInt(num.z);
+			this.target.localPosition = num;
+		}
+		this.mTargetPos = (this.target == null ? Vector3.zero : this.target.position);
+		this.mMomentum = Vector3.zero;
+		this.mScroll = Vector3.zero;
+	}
+
+	public void CancelSpring()
+	{
+		SpringPosition component = this.target.GetComponent<SpringPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+	}
+
+	private void FindPanel()
+	{
+		UIPanel uIPanel;
+		if (this.target == null)
+		{
+			uIPanel = null;
+		}
+		else
+		{
+			uIPanel = UIPanel.Find(this.target.transform.parent);
+		}
+		this.panelRegion = uIPanel;
+		if (this.panelRegion == null)
+		{
+			this.restrictWithinPanel = false;
+		}
+	}
+
+	private void LateUpdate()
+	{
+		if (this.target == null)
+		{
+			return;
+		}
+		float single = RealTime.deltaTime;
+		this.mMomentum -= this.mScroll;
+		this.mScroll = NGUIMath.SpringLerp(this.mScroll, Vector3.zero, 20f, single);
+		if (this.mMomentum.magnitude < 0.0001f)
+		{
+			return;
+		}
+		if (this.mPressed)
+		{
+			NGUIMath.SpringDampen(ref this.mMomentum, 9f, single);
+		}
+		else
+		{
+			if (this.panelRegion == null)
+			{
+				this.FindPanel();
+			}
+			this.Move(NGUIMath.SpringDampen(ref this.mMomentum, 9f, single));
+			if (this.restrictWithinPanel && this.panelRegion != null)
+			{
+				this.UpdateBounds();
+				if (!this.panelRegion.ConstrainTargetToBounds(this.target, ref this.mBounds, this.dragEffect == UIDragObject.DragEffect.None))
+				{
+					this.CancelSpring();
+				}
+				else
+				{
+					this.CancelMovement();
+				}
+			}
+			NGUIMath.SpringDampen(ref this.mMomentum, 9f, single);
+			if (this.mMomentum.magnitude < 0.0001f)
+			{
+				this.CancelMovement();
+			}
+		}
+	}
+
+	private void Move(Vector3 worldDelta)
+	{
+		if (this.panelRegion == null)
+		{
+			Transform transforms = this.target;
+			transforms.position = transforms.position + worldDelta;
+		}
+		else
+		{
+			this.mTargetPos += worldDelta;
+			Transform transforms1 = this.target.parent;
+			Rigidbody component = this.target.GetComponent<Rigidbody>();
+			if (transforms1 != null)
+			{
+				Vector3 vector3 = transforms1.worldToLocalMatrix.MultiplyPoint3x4(this.mTargetPos);
+				vector3.x = Mathf.Round(vector3.x);
+				vector3.y = Mathf.Round(vector3.y);
+				if (component == null)
+				{
+					this.target.localPosition = vector3;
+				}
+				else
+				{
+					vector3 = transforms1.localToWorldMatrix.MultiplyPoint3x4(vector3);
+					component.position = vector3;
+				}
+			}
+			else if (component == null)
+			{
+				this.target.position = this.mTargetPos;
+			}
+			else
+			{
+				component.position = this.mTargetPos;
+			}
+			UIScrollView uIScrollView = this.panelRegion.GetComponent<UIScrollView>();
+			if (uIScrollView != null)
+			{
+				uIScrollView.UpdateScrollbars(true);
+			}
+		}
+	}
+
+	private void OnDisable()
+	{
+		this.mStarted = false;
+	}
+
+	private void OnDrag(Vector2 delta)
+	{
+		if (this.mPressed && this.mTouchID == UICamera.currentTouchID && base.enabled && NGUITools.GetActive(base.gameObject) && this.target != null)
+		{
+			UICamera.currentTouch.clickNotification = UICamera.ClickNotification.BasedOnDelta;
+			Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
+			float single = 0f;
+			if (this.mPlane.Raycast(ray, out single))
+			{
+				Vector3 point = ray.GetPoint(single);
+				Vector3 vector3 = point - this.mLastPos;
+				this.mLastPos = point;
+				if (!this.mStarted)
+				{
+					this.mStarted = true;
+					vector3 = Vector3.zero;
+				}
+				if (vector3.x != 0f || vector3.y != 0f)
+				{
+					vector3 = this.target.InverseTransformDirection(vector3);
+					vector3.Scale(this.scale);
+					vector3 = this.target.TransformDirection(vector3);
+				}
+				if (this.dragEffect != UIDragObject.DragEffect.None)
+				{
+					this.mMomentum = Vector3.Lerp(this.mMomentum, this.mMomentum + (vector3 * (0.01f * this.momentumAmount)), 0.67f);
+				}
+				Vector3 vector31 = this.target.localPosition;
+				this.Move(vector3);
+				if (this.restrictWithinPanel)
+				{
+					this.mBounds.center = this.mBounds.center + (this.target.localPosition - vector31);
+					if (this.dragEffect != UIDragObject.DragEffect.MomentumAndSpring && this.panelRegion.ConstrainTargetToBounds(this.target, ref this.mBounds, true))
+					{
+						this.CancelMovement();
+					}
+				}
+			}
 		}
 	}
 
 	private void OnEnable()
 	{
-		if (scrollWheelFactor != 0f)
+		if (this.scrollWheelFactor != 0f)
 		{
-			scrollMomentum = scale * scrollWheelFactor;
-			scrollWheelFactor = 0f;
+			this.scrollMomentum = this.scale * this.scrollWheelFactor;
+			this.scrollWheelFactor = 0f;
 		}
-		if (contentRect == null && target != null && Application.isPlaying)
+		if (this.contentRect == null && this.target != null && Application.isPlaying)
 		{
-			UIWidget component = target.GetComponent<UIWidget>();
+			UIWidget component = this.target.GetComponent<UIWidget>();
 			if (component != null)
 			{
-				contentRect = component;
+				this.contentRect = component;
 			}
 		}
-		mTargetPos = ((!(target != null)) ? Vector3.zero : target.position);
-	}
-
-	private void OnDisable()
-	{
-		mStarted = false;
-	}
-
-	private void FindPanel()
-	{
-		panelRegion = ((!(target != null)) ? null : UIPanel.Find(target.transform.parent));
-		if (panelRegion == null)
-		{
-			restrictWithinPanel = false;
-		}
-	}
-
-	private void UpdateBounds()
-	{
-		if ((bool)contentRect)
-		{
-			Transform cachedTransform = panelRegion.cachedTransform;
-			Matrix4x4 worldToLocalMatrix = cachedTransform.worldToLocalMatrix;
-			Vector3[] worldCorners = contentRect.worldCorners;
-			for (int i = 0; i < 4; i++)
-			{
-				worldCorners[i] = worldToLocalMatrix.MultiplyPoint3x4(worldCorners[i]);
-			}
-			mBounds = new Bounds(worldCorners[0], Vector3.zero);
-			for (int j = 1; j < 4; j++)
-			{
-				mBounds.Encapsulate(worldCorners[j]);
-			}
-		}
-		else
-		{
-			mBounds = NGUIMath.CalculateRelativeWidgetBounds(panelRegion.cachedTransform, target);
-		}
+		this.mTargetPos = (this.target == null ? Vector3.zero : this.target.position);
 	}
 
 	private void OnPress(bool pressed)
@@ -123,191 +259,42 @@ public class UIDragObject : MonoBehaviour
 		{
 			return;
 		}
-		float timeScale = Time.timeScale;
-		if ((timeScale < 0.01f && timeScale != 0f) || !base.enabled || !NGUITools.GetActive(base.gameObject) || !(target != null))
+		float single = Time.timeScale;
+		if (single < 0.01f && single != 0f)
 		{
 			return;
 		}
-		if (pressed)
+		if (base.enabled && NGUITools.GetActive(base.gameObject) && this.target != null)
 		{
-			if (!mPressed)
+			if (pressed)
 			{
-				mTouchID = UICamera.currentTouchID;
-				mPressed = true;
-				mStarted = false;
-				CancelMovement();
-				if (restrictWithinPanel && panelRegion == null)
+				if (!this.mPressed)
 				{
-					FindPanel();
-				}
-				if (restrictWithinPanel)
-				{
-					UpdateBounds();
-				}
-				CancelSpring();
-				Transform transform = UICamera.currentCamera.transform;
-				mPlane = new Plane(((!(panelRegion != null)) ? transform.rotation : panelRegion.cachedTransform.rotation) * Vector3.back, UICamera.lastWorldPosition);
-			}
-		}
-		else if (mPressed && mTouchID == UICamera.currentTouchID)
-		{
-			mPressed = false;
-			if (restrictWithinPanel && dragEffect == DragEffect.MomentumAndSpring && panelRegion.ConstrainTargetToBounds(target, ref mBounds, false))
-			{
-				CancelMovement();
-			}
-		}
-	}
-
-	private void OnDrag(Vector2 delta)
-	{
-		if (!mPressed || mTouchID != UICamera.currentTouchID || !base.enabled || !NGUITools.GetActive(base.gameObject) || !(target != null))
-		{
-			return;
-		}
-		UICamera.currentTouch.clickNotification = UICamera.ClickNotification.BasedOnDelta;
-		Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
-		float enter = 0f;
-		if (!mPlane.Raycast(ray, out enter))
-		{
-			return;
-		}
-		Vector3 point = ray.GetPoint(enter);
-		Vector3 vector = point - mLastPos;
-		mLastPos = point;
-		if (!mStarted)
-		{
-			mStarted = true;
-			vector = Vector3.zero;
-		}
-		if (vector.x != 0f || vector.y != 0f)
-		{
-			vector = target.InverseTransformDirection(vector);
-			vector.Scale(scale);
-			vector = target.TransformDirection(vector);
-		}
-		if (dragEffect != 0)
-		{
-			mMomentum = Vector3.Lerp(mMomentum, mMomentum + vector * (0.01f * momentumAmount), 0.67f);
-		}
-		Vector3 localPosition = target.localPosition;
-		Move(vector);
-		if (restrictWithinPanel)
-		{
-			mBounds.center += target.localPosition - localPosition;
-			if (dragEffect != DragEffect.MomentumAndSpring && panelRegion.ConstrainTargetToBounds(target, ref mBounds, true))
-			{
-				CancelMovement();
-			}
-		}
-	}
-
-	private void Move(Vector3 worldDelta)
-	{
-		if (panelRegion != null)
-		{
-			mTargetPos += worldDelta;
-			Transform parent = target.parent;
-			Rigidbody component = target.GetComponent<Rigidbody>();
-			if (parent != null)
-			{
-				Vector3 vector = parent.worldToLocalMatrix.MultiplyPoint3x4(mTargetPos);
-				vector.x = Mathf.Round(vector.x);
-				vector.y = Mathf.Round(vector.y);
-				if (component != null)
-				{
-					vector = (component.position = parent.localToWorldMatrix.MultiplyPoint3x4(vector));
-				}
-				else
-				{
-					target.localPosition = vector;
+					this.mTouchID = UICamera.currentTouchID;
+					this.mPressed = true;
+					this.mStarted = false;
+					this.CancelMovement();
+					if (this.restrictWithinPanel && this.panelRegion == null)
+					{
+						this.FindPanel();
+					}
+					if (this.restrictWithinPanel)
+					{
+						this.UpdateBounds();
+					}
+					this.CancelSpring();
+					Transform transforms = UICamera.currentCamera.transform;
+					this.mPlane = new Plane((this.panelRegion == null ? transforms.rotation : this.panelRegion.cachedTransform.rotation) * Vector3.back, UICamera.lastWorldPosition);
 				}
 			}
-			else if (component != null)
+			else if (this.mPressed && this.mTouchID == UICamera.currentTouchID)
 			{
-				component.position = mTargetPos;
-			}
-			else
-			{
-				target.position = mTargetPos;
-			}
-			UIScrollView component2 = panelRegion.GetComponent<UIScrollView>();
-			if (component2 != null)
-			{
-				component2.UpdateScrollbars(true);
-			}
-		}
-		else
-		{
-			target.position += worldDelta;
-		}
-	}
-
-	private void LateUpdate()
-	{
-		if (target == null)
-		{
-			return;
-		}
-		float deltaTime = RealTime.deltaTime;
-		mMomentum -= mScroll;
-		mScroll = NGUIMath.SpringLerp(mScroll, Vector3.zero, 20f, deltaTime);
-		if (mMomentum.magnitude < 0.0001f)
-		{
-			return;
-		}
-		if (!mPressed)
-		{
-			if (panelRegion == null)
-			{
-				FindPanel();
-			}
-			Move(NGUIMath.SpringDampen(ref mMomentum, 9f, deltaTime));
-			if (restrictWithinPanel && panelRegion != null)
-			{
-				UpdateBounds();
-				if (panelRegion.ConstrainTargetToBounds(target, ref mBounds, dragEffect == DragEffect.None))
+				this.mPressed = false;
+				if (this.restrictWithinPanel && this.dragEffect == UIDragObject.DragEffect.MomentumAndSpring && this.panelRegion.ConstrainTargetToBounds(this.target, ref this.mBounds, false))
 				{
-					CancelMovement();
-				}
-				else
-				{
-					CancelSpring();
+					this.CancelMovement();
 				}
 			}
-			NGUIMath.SpringDampen(ref mMomentum, 9f, deltaTime);
-			if (mMomentum.magnitude < 0.0001f)
-			{
-				CancelMovement();
-			}
-		}
-		else
-		{
-			NGUIMath.SpringDampen(ref mMomentum, 9f, deltaTime);
-		}
-	}
-
-	public void CancelMovement()
-	{
-		if (target != null)
-		{
-			Vector3 localPosition = target.localPosition;
-			localPosition.x = Mathf.RoundToInt(localPosition.x);
-			localPosition.y = Mathf.RoundToInt(localPosition.y);
-			localPosition.z = Mathf.RoundToInt(localPosition.z);
-			target.localPosition = localPosition;
-		}
-		mTargetPos = ((!(target != null)) ? Vector3.zero : target.position);
-		mMomentum = Vector3.zero;
-		mScroll = Vector3.zero;
-	}
-
-	public void CancelSpring()
-	{
-		SpringPosition component = target.GetComponent<SpringPosition>();
-		if (component != null)
-		{
-			component.enabled = false;
 		}
 	}
 
@@ -315,7 +302,37 @@ public class UIDragObject : MonoBehaviour
 	{
 		if (base.enabled && NGUITools.GetActive(base.gameObject))
 		{
-			mScroll -= scrollMomentum * (delta * 0.05f);
+			UIDragObject uIDragObject = this;
+			uIDragObject.mScroll = uIDragObject.mScroll - (this.scrollMomentum * (delta * 0.05f));
 		}
+	}
+
+	private void UpdateBounds()
+	{
+		if (!this.contentRect)
+		{
+			this.mBounds = NGUIMath.CalculateRelativeWidgetBounds(this.panelRegion.cachedTransform, this.target);
+		}
+		else
+		{
+			Matrix4x4 matrix4x4 = this.panelRegion.cachedTransform.worldToLocalMatrix;
+			Vector3[] vector3Array = this.contentRect.worldCorners;
+			for (int i = 0; i < 4; i++)
+			{
+				vector3Array[i] = matrix4x4.MultiplyPoint3x4(vector3Array[i]);
+			}
+			this.mBounds = new Bounds(vector3Array[0], Vector3.zero);
+			for (int j = 1; j < 4; j++)
+			{
+				this.mBounds.Encapsulate(vector3Array[j]);
+			}
+		}
+	}
+
+	public enum DragEffect
+	{
+		None,
+		Momentum,
+		MomentumAndSpring
 	}
 }

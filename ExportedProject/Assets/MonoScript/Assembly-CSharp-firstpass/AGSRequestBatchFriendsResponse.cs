@@ -6,42 +6,62 @@ public class AGSRequestBatchFriendsResponse : AGSRequestResponse
 {
 	public List<AGSPlayer> friends;
 
+	public AGSRequestBatchFriendsResponse()
+	{
+	}
+
 	public static AGSRequestBatchFriendsResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00ee, IL_0114
+		AGSRequestBatchFriendsResponse blankResponseWithError;
 		try
 		{
 			AGSRequestBatchFriendsResponse aGSRequestBatchFriendsResponse = new AGSRequestBatchFriendsResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestBatchFriendsResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestBatchFriendsResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestBatchFriendsResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestBatchFriendsResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
 			aGSRequestBatchFriendsResponse.friends = new List<AGSPlayer>();
-			if (hashtable.ContainsKey("friends"))
+			if (hashtables.ContainsKey("friends"))
 			{
-				foreach (Hashtable item in hashtable["friends"] as ArrayList)
+				IEnumerator enumerator = (hashtables["friends"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestBatchFriendsResponse.friends.Add(AGSPlayer.fromHashtable(item));
+					while (enumerator.MoveNext())
+					{
+						Hashtable current = (Hashtable)enumerator.Current;
+						aGSRequestBatchFriendsResponse.friends.Add(AGSPlayer.fromHashtable(current));
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			return aGSRequestBatchFriendsResponse;
+			blankResponseWithError = aGSRequestBatchFriendsResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON");
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestBatchFriendsResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", null, 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSRequestBatchFriendsResponse GetBlankResponseWithError(string error, List<string> friendIdsRequested = null, int userData = 0)
 	{
-		AGSRequestBatchFriendsResponse aGSRequestBatchFriendsResponse = new AGSRequestBatchFriendsResponse();
-		aGSRequestBatchFriendsResponse.error = error;
-		aGSRequestBatchFriendsResponse.friends = new List<AGSPlayer>();
+		AGSRequestBatchFriendsResponse aGSRequestBatchFriendsResponse = new AGSRequestBatchFriendsResponse()
+		{
+			error = error,
+			friends = new List<AGSPlayer>()
+		};
 		if (friendIdsRequested != null)
 		{
-			foreach (string item in friendIdsRequested)
+			foreach (string str in friendIdsRequested)
 			{
-				aGSRequestBatchFriendsResponse.friends.Add(AGSPlayer.BlankPlayerWithID(item));
+				aGSRequestBatchFriendsResponse.friends.Add(AGSPlayer.BlankPlayerWithID(str));
 			}
 		}
 		aGSRequestBatchFriendsResponse.userData = userData;
@@ -50,6 +70,6 @@ public class AGSRequestBatchFriendsResponse : AGSRequestResponse
 
 	public static AGSRequestBatchFriendsResponse GetPlatformNotSupportedResponse(List<string> friendIdsRequested, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", friendIdsRequested, userData);
+		return AGSRequestBatchFriendsResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", friendIdsRequested, userData);
 	}
 }

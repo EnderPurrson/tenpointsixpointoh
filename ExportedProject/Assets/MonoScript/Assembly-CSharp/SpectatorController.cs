@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SpectatorController : MonoBehaviour
@@ -7,6 +8,10 @@ public class SpectatorController : MonoBehaviour
 	public GameObject offButton;
 
 	public GameObject spectatorPnl;
+
+	public SpectatorController()
+	{
+	}
 
 	private void Start()
 	{

@@ -1,11 +1,19 @@
-using System;
 using Google.Developers;
+using System;
 
 namespace Com.Google.Android.Gms.Common.Api
 {
 	public class Status : JavaObjWrapper, Result
 	{
 		private const string CLASS_NAME = "com/google/android/gms/common/api/Status";
+
+		public static int CONTENTS_FILE_DESCRIPTOR
+		{
+			get
+			{
+				return JavaObjWrapper.GetStaticIntField("com/google/android/gms/common/api/Status", "CONTENTS_FILE_DESCRIPTOR");
+			}
+		}
 
 		public static object CREATOR
 		{
@@ -23,14 +31,6 @@ namespace Com.Google.Android.Gms.Common.Api
 			}
 		}
 
-		public static int CONTENTS_FILE_DESCRIPTOR
-		{
-			get
-			{
-				return JavaObjWrapper.GetStaticIntField("com/google/android/gms/common/api/Status", "CONTENTS_FILE_DESCRIPTOR");
-			}
-		}
-
 		public static int PARCELABLE_WRITE_RETURN_VALUE
 		{
 			get
@@ -39,94 +39,93 @@ namespace Com.Google.Android.Gms.Common.Api
 			}
 		}
 
-		public Status(IntPtr ptr)
-			: base(ptr)
+		public Status(IntPtr ptr) : base(ptr)
 		{
 		}
 
 		public Status(int arg_int_1, string arg_string_2, object arg_object_3)
 		{
-			CreateInstance("com/google/android/gms/common/api/Status", arg_int_1, arg_string_2, arg_object_3);
+			base.CreateInstance("com/google/android/gms/common/api/Status", new object[] { arg_int_1, arg_string_2, arg_object_3 });
 		}
 
 		public Status(int arg_int_1, string arg_string_2)
 		{
-			CreateInstance("com/google/android/gms/common/api/Status", arg_int_1, arg_string_2);
+			base.CreateInstance("com/google/android/gms/common/api/Status", new object[] { arg_int_1, arg_string_2 });
 		}
 
 		public Status(int arg_int_1)
 		{
-			CreateInstance("com/google/android/gms/common/api/Status", arg_int_1);
-		}
-
-		public bool equals(object arg_object_1)
-		{
-			return InvokeCall<bool>("equals", "(Ljava/lang/Object;)Z", new object[1] { arg_object_1 });
-		}
-
-		public string toString()
-		{
-			return InvokeCall<string>("toString", "()Ljava/lang/String;", new object[0]);
-		}
-
-		public int hashCode()
-		{
-			return InvokeCall<int>("hashCode", "()I", new object[0]);
-		}
-
-		public bool isInterrupted()
-		{
-			return InvokeCall<bool>("isInterrupted", "()Z", new object[0]);
-		}
-
-		public Status getStatus()
-		{
-			return InvokeCall<Status>("getStatus", "()Lcom/google/android/gms/common/api/Status;", new object[0]);
-		}
-
-		public bool isCanceled()
-		{
-			return InvokeCall<bool>("isCanceled", "()Z", new object[0]);
+			base.CreateInstance("com/google/android/gms/common/api/Status", new object[] { arg_int_1 });
 		}
 
 		public int describeContents()
 		{
-			return InvokeCall<int>("describeContents", "()I", new object[0]);
+			return base.InvokeCall<int>("describeContents", "()I", new object[0]);
+		}
+
+		public bool equals(object arg_object_1)
+		{
+			return base.InvokeCall<bool>("equals", "(Ljava/lang/Object;)Z", new object[] { arg_object_1 });
 		}
 
 		public object getResolution()
 		{
-			return InvokeCall<object>("getResolution", "()Landroid/app/PendingIntent;", new object[0]);
+			return base.InvokeCall<object>("getResolution", "()Landroid/app/PendingIntent;", new object[0]);
+		}
+
+		public Status getStatus()
+		{
+			return base.InvokeCall<Status>("getStatus", "()Lcom/google/android/gms/common/api/Status;", new object[0]);
 		}
 
 		public int getStatusCode()
 		{
-			return InvokeCall<int>("getStatusCode", "()I", new object[0]);
+			return base.InvokeCall<int>("getStatusCode", "()I", new object[0]);
 		}
 
 		public string getStatusMessage()
 		{
-			return InvokeCall<string>("getStatusMessage", "()Ljava/lang/String;", new object[0]);
+			return base.InvokeCall<string>("getStatusMessage", "()Ljava/lang/String;", new object[0]);
+		}
+
+		public int hashCode()
+		{
+			return base.InvokeCall<int>("hashCode", "()I", new object[0]);
 		}
 
 		public bool hasResolution()
 		{
-			return InvokeCall<bool>("hasResolution", "()Z", new object[0]);
+			return base.InvokeCall<bool>("hasResolution", "()Z", new object[0]);
 		}
 
-		public void startResolutionForResult(object arg_object_1, int arg_int_2)
+		public bool isCanceled()
 		{
-			InvokeCallVoid("startResolutionForResult", "(Landroid/app/Activity;I)V", arg_object_1, arg_int_2);
+			return base.InvokeCall<bool>("isCanceled", "()Z", new object[0]);
 		}
 
-		public void writeToParcel(object arg_object_1, int arg_int_2)
+		public bool isInterrupted()
 		{
-			InvokeCallVoid("writeToParcel", "(Landroid/os/Parcel;I)V", arg_object_1, arg_int_2);
+			return base.InvokeCall<bool>("isInterrupted", "()Z", new object[0]);
 		}
 
 		public bool isSuccess()
 		{
-			return InvokeCall<bool>("isSuccess", "()Z", new object[0]);
+			return base.InvokeCall<bool>("isSuccess", "()Z", new object[0]);
+		}
+
+		public void startResolutionForResult(object arg_object_1, int arg_int_2)
+		{
+			base.InvokeCallVoid("startResolutionForResult", "(Landroid/app/Activity;I)V", new object[] { arg_object_1, arg_int_2 });
+		}
+
+		public string toString()
+		{
+			return base.InvokeCall<string>("toString", "()Ljava/lang/String;", new object[0]);
+		}
+
+		public void writeToParcel(object arg_object_1, int arg_int_2)
+		{
+			base.InvokeCallVoid("writeToParcel", "(Landroid/os/Parcel;I)V", new object[] { arg_object_1, arg_int_2 });
 		}
 	}
 }

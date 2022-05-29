@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -10,6 +11,8 @@ namespace Rilisoft
 		[NonSerialized]
 		public bool isEnable = true;
 
+		private EventHandler Clicked;
+
 		public bool HasClickedHandlers
 		{
 			get
@@ -18,29 +21,47 @@ namespace Rilisoft
 			}
 		}
 
-		public event EventHandler Clicked;
-
-		private void OnClick()
+		public ButtonHandler()
 		{
-			if (isEnable)
-			{
-				if (ButtonClickSound.Instance != null && !noSound)
-				{
-					ButtonClickSound.Instance.PlayClick();
-				}
-				EventHandler clicked = this.Clicked;
-				if (clicked != null)
-				{
-					clicked(this, EventArgs.Empty);
-				}
-			}
 		}
 
 		public void DoClick()
 		{
-			if (isEnable)
+			if (!this.isEnable)
 			{
-				OnClick();
+				return;
+			}
+			this.OnClick();
+		}
+
+		private void OnClick()
+		{
+			if (!this.isEnable)
+			{
+				return;
+			}
+			if (ButtonClickSound.Instance != null && !this.noSound)
+			{
+				ButtonClickSound.Instance.PlayClick();
+			}
+			EventHandler clicked = this.Clicked;
+			if (clicked != null)
+			{
+				clicked(this, EventArgs.Empty);
+			}
+		}
+
+		public event EventHandler Clicked
+		{
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			add
+			{
+				this.Clicked += value;
+			}
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			remove
+			{
+				this.Clicked -= value;
 			}
 		}
 	}

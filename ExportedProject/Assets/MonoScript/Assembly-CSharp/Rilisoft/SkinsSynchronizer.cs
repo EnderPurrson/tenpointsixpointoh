@@ -1,34 +1,29 @@
+using GooglePlayGames.BasicApi.SavedGame;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using GooglePlayGames.BasicApi.SavedGame;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	internal sealed class SkinsSynchronizer
 	{
-		private static readonly SkinsSynchronizer s_instance = new SkinsSynchronizer();
+		private readonly static SkinsSynchronizer s_instance;
 
-		[CompilerGenerated]
-		private static Func<SkinMemento, string> _003C_003Ef__am_0024cache2;
-
-		[CompilerGenerated]
-		private static Func<SkinMemento, string> _003C_003Ef__am_0024cache3;
-
-		[CompilerGenerated]
-		private static Func<SkinMemento, string> _003C_003Ef__am_0024cache4;
+		private EventHandler Updated;
 
 		public static SkinsSynchronizer Instance
 		{
 			get
 			{
-				return s_instance;
+				return SkinsSynchronizer.s_instance;
 			}
 		}
 
@@ -40,150 +35,13 @@ namespace Rilisoft
 			}
 		}
 
-		public event EventHandler Updated;
+		static SkinsSynchronizer()
+		{
+			SkinsSynchronizer.s_instance = new SkinsSynchronizer();
+		}
 
 		private SkinsSynchronizer()
 		{
-		}
-
-		public Coroutine Pull()
-		{
-			if (!Ready)
-			{
-				return null;
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-			{
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-				{
-					return CoroutineRunner.Instance.StartCoroutine(SyncGoogleCoroutine(true));
-				}
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-				{
-					SyncAmazon();
-				}
-			}
-			return null;
-		}
-
-		public Coroutine Push()
-		{
-			if (!Ready)
-			{
-				return null;
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-			{
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-				{
-					return CoroutineRunner.Instance.StartCoroutine(PushGoogleCoroutine());
-				}
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-				{
-					SyncAmazon();
-				}
-			}
-			return null;
-		}
-
-		public Coroutine Sync()
-		{
-			if (!Ready)
-			{
-				return null;
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-			{
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-				{
-					return CoroutineRunner.Instance.StartCoroutine(SyncGoogleCoroutine(false));
-				}
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-				{
-					SyncAmazon();
-				}
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-			{
-				SyncSkinsAndCapeIos();
-				return null;
-			}
-			return null;
-		}
-
-		private void SyncAmazon()
-		{
-			string callee = string.Format(CultureInfo.InvariantCulture, "{0}.SyncAmazon()", GetType().Name);
-			ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-			try
-			{
-				AGSWhispersyncClient.Synchronize();
-				using (AGSGameDataMap aGSGameDataMap = AGSWhispersyncClient.GetGameData())
-				{
-					EnsureNotNull(aGSGameDataMap, "dataMap");
-					using (AGSSyncableString aGSSyncableString = aGSGameDataMap.GetLatestString("skinsJson"))
-					{
-						EnsureNotNull(aGSSyncableString, "skinsJson");
-						string json = aGSSyncableString.GetValue() ?? "{}";
-						SkinsMemento skinsMemento = JsonUtility.FromJson<SkinsMemento>(json);
-						SkinsMemento skinsMemento2 = LoadLocalSkins();
-						SkinsMemento skinsMemento3 = SkinsMemento.Merge(skinsMemento2, skinsMemento);
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.LogFormat("Local skins: {0}", skinsMemento2);
-							Debug.LogFormat("Cloud skins: {0}", skinsMemento);
-							Debug.LogFormat("Merged skins: {0}", skinsMemento3);
-						}
-						int num = skinsMemento3.DeletedSkins.Distinct().Count();
-						List<SkinMemento> skins = skinsMemento3.Skins;
-						if (_003C_003Ef__am_0024cache2 == null)
-						{
-							_003C_003Ef__am_0024cache2 = _003CSyncAmazon_003Em__586;
-						}
-						int num2 = skins.Select(_003C_003Ef__am_0024cache2).Distinct().Count();
-						long id = skinsMemento3.Cape.Id;
-						int num3 = skinsMemento2.DeletedSkins.Distinct().Count();
-						List<SkinMemento> skins2 = skinsMemento2.Skins;
-						if (_003C_003Ef__am_0024cache3 == null)
-						{
-							_003C_003Ef__am_0024cache3 = _003CSyncAmazon_003Em__587;
-						}
-						int num4 = skins2.Select(_003C_003Ef__am_0024cache3).Distinct().Count();
-						long id2 = skinsMemento2.Cape.Id;
-						if (num3 < num || num4 < num2 || id2 < id)
-						{
-							OverwriteLocalSkins(skinsMemento2, skinsMemento3);
-							EventHandler updated = this.Updated;
-							if (updated != null)
-							{
-								updated(this, EventArgs.Empty);
-							}
-						}
-						int num5 = skinsMemento.DeletedSkins.Distinct().Count();
-						List<SkinMemento> skins3 = skinsMemento.Skins;
-						if (_003C_003Ef__am_0024cache4 == null)
-						{
-							_003C_003Ef__am_0024cache4 = _003CSyncAmazon_003Em__588;
-						}
-						int num6 = skins3.Select(_003C_003Ef__am_0024cache4).Distinct().Count();
-						long id3 = skinsMemento.Cape.Id;
-						if (num5 < num || num6 < num2 || id3 < id)
-						{
-							string val = JsonUtility.ToJson(skinsMemento3);
-							aGSSyncableString.Set(val);
-							AGSWhispersyncClient.Synchronize();
-						}
-					}
-				}
-			}
-			catch (Exception exception)
-			{
-				Debug.LogException(exception);
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
 		}
 
 		private void EnsureNotNull(object value, string name)
@@ -194,196 +52,124 @@ namespace Rilisoft
 			}
 		}
 
-		private IEnumerator SyncGoogleCoroutine(bool pullOnly)
+		private SkinsMemento LoadLocalSkins()
 		{
-			if (!Ready)
-			{
-				yield break;
-			}
-			string thisMethod = string.Format(CultureInfo.InvariantCulture, "{0}.PullGoogleCoroutine('{1}')", GetType().Name, (!pullOnly) ? "sync" : "pull");
-			ScopeLogger scopeLogger = new ScopeLogger(thisMethod, Defs.IsDeveloperBuild && !Application.isEditor);
+			string empty;
+			SkinsMemento skinsMemento;
+			string str = string.Format(CultureInfo.InvariantCulture, "{0}.LoadLocalSkins()", new object[] { this.GetType().Name });
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 			try
 			{
-				SkinsSynchronizerGoogleSavedGameFacade googleSavedGamesFacade = default(SkinsSynchronizerGoogleSavedGameFacade);
-				WaitForSeconds delay = new WaitForSeconds(30f);
-				int i = 0;
-				while (true)
+				string str1 = PlayerPrefs.GetString("DeletedSkins", string.Empty);
+				List<object> objs = Json.Deserialize(str1) as List<object>;
+				List<string> strs = (objs == null ? new List<string>() : objs.OfType<string>().ToList<string>());
+				string str2 = PlayerPrefs.GetString("User Skins", string.Empty);
+				string str3 = PlayerPrefs.GetString("NewUserCape", string.Empty);
+				CapeMemento capeMemento = Tools.DeserializeJson<CapeMemento>(str3);
+				Dictionary<string, object> strs1 = Json.Deserialize(str2) as Dictionary<string, object> ?? new Dictionary<string, object>();
+				List<SkinMemento> skinMementos = new List<SkinMemento>(strs1.Count);
+				if (strs1.Count != 0)
 				{
-					string callee = string.Format(CultureInfo.InvariantCulture, "Pull and wait ({0})", i);
-					using (ScopeLogger logger = new ScopeLogger(thisMethod, callee, Defs.IsDeveloperBuild && !Application.isEditor))
+					string str4 = PlayerPrefs.GetString("User Name Skins", string.Empty);
+					Dictionary<string, object> strs2 = Json.Deserialize(str4) as Dictionary<string, object> ?? new Dictionary<string, object>();
+					foreach (KeyValuePair<string, object> keyValuePair in strs1)
 					{
-						Task<GoogleSavedGameRequestResult<SkinsMemento>> future = googleSavedGamesFacade.Pull();
-						while (!future.IsCompleted)
+						string key = keyValuePair.Key;
+						if (!strs2.TryGetValue<string>(key, out empty))
 						{
-							yield return null;
+							empty = string.Empty;
 						}
-						logger.Dispose();
-						if (future.IsFaulted)
-						{
-							Exception ex = future.Exception.InnerExceptions.FirstOrDefault() ?? future.Exception;
-							Debug.LogWarning("Failed to pull skins with exception: " + ex.Message);
-							yield return delay;
-						}
-						else
-						{
-							SavedGameRequestStatus requestStatus = future.Result.RequestStatus;
-							if (requestStatus == SavedGameRequestStatus.Success)
-							{
-								SkinsMemento cloudSkins = future.Result.Value;
-								SkinsMemento localSkins = LoadLocalSkins();
-								HashSet<string> cloudDeletedSkins = new HashSet<string>(cloudSkins.DeletedSkins);
-								HashSet<string> localDeletedSkins = new HashSet<string>(localSkins.DeletedSkins);
-								HashSet<string> mergedDeletedSkins = new HashSet<string>(cloudDeletedSkins);
-								mergedDeletedSkins.UnionWith(localDeletedSkins);
-								List<SkinMemento> skins = cloudSkins.Skins;
-								if (_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1D == null)
-								{
-									_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1D = _003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Em__589;
-								}
-								HashSet<string> cloudSkinIds = new HashSet<string>(skins.Select(_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1D));
-								List<SkinMemento> skins2 = localSkins.Skins;
-								if (_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1E == null)
-								{
-									_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1E = _003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Em__58A;
-								}
-								HashSet<string> localSkinIds = new HashSet<string>(skins2.Select(_003CSyncGoogleCoroutine_003Ec__Iterator1D1._003C_003Ef__am_0024cache1E));
-								HashSet<string> mergedSkinIds = new HashSet<string>(cloudSkinIds);
-								mergedSkinIds.UnionWith(localSkinIds);
-								CapeMemento chosenCape = CapeMemento.ChooseCape(localSkins.Cape, cloudSkins.Cape);
-								if (localDeletedSkins.Count < mergedDeletedSkins.Count || localSkinIds.Count < mergedSkinIds.Count || localSkins.Cape.Id < chosenCape.Id)
-								{
-									OverwriteLocalSkins(localSkins, cloudSkins);
-									EventHandler handler = this.Updated;
-									if (handler != null)
-									{
-										handler(this, EventArgs.Empty);
-									}
-								}
-								bool cloudDirty = cloudDeletedSkins.Count < mergedDeletedSkins.Count || cloudSkinIds.Count < mergedSkinIds.Count || cloudSkins.Cape.Id < chosenCape.Id;
-								if (Defs.IsDeveloperBuild)
-								{
-									Debug.LogFormat("[Skins] Succeeded to pull skins: {0}, 'pullOnly':{1}, 'conflicted':{2}, 'cloudDirty':{3}", cloudSkins, pullOnly, cloudSkins.Conflicted, cloudDirty);
-								}
-								if (pullOnly || (!cloudSkins.Conflicted && !cloudDirty))
-								{
-									break;
-								}
-								ScopeLogger scopeLogger2 = new ScopeLogger(thisMethod, "PushGoogleCoroutine(conflict)", Defs.IsDeveloperBuild && !Application.isEditor);
-								try
-								{
-									IEnumerator enumerator = PushGoogleCoroutine();
-									while (enumerator.MoveNext())
-									{
-										yield return null;
-									}
-									break;
-								}
-								finally
-								{
-									scopeLogger2.Dispose();
-								}
-							}
-							Debug.LogWarning("Failed to push skins with status: " + requestStatus);
-							yield return delay;
-						}
+						skinMementos.Add(new SkinMemento(key, empty, keyValuePair.Value as string ?? string.Empty));
 					}
-					i++;
+					skinsMemento = new SkinsMemento(skinMementos, strs, capeMemento);
+				}
+				else
+				{
+					UnityEngine.Debug.LogFormat("Deserialized skins are empty: {0}", new object[] { str2 });
+					skinsMemento = new SkinsMemento(skinMementos, strs, capeMemento);
 				}
 			}
 			finally
 			{
 				scopeLogger.Dispose();
 			}
-		}
-
-		internal IEnumerator PushGoogleCoroutine()
-		{
-			if (!Ready)
-			{
-				yield break;
-			}
-			string thisMethod = string.Format(CultureInfo.InvariantCulture, "{0}.PushGoogleCoroutine()", GetType().Name);
-			ScopeLogger scopeLogger = new ScopeLogger(thisMethod, Defs.IsDeveloperBuild && !Application.isEditor);
-			try
-			{
-				SkinsSynchronizerGoogleSavedGameFacade googleSavedGamesFacade = default(SkinsSynchronizerGoogleSavedGameFacade);
-				WaitForSeconds delay = new WaitForSeconds(30f);
-				int i = 0;
-				while (true)
-				{
-					SkinsMemento localSkins = LoadLocalSkins();
-					string localSkinsAsString = localSkins.ToString();
-					string callee = string.Format(CultureInfo.InvariantCulture, "Push and wait {0} ({1})", localSkinsAsString, i);
-					using (ScopeLogger logger = new ScopeLogger(thisMethod, callee, Defs.IsDeveloperBuild && !Application.isEditor))
-					{
-						Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> future = googleSavedGamesFacade.Push(localSkins);
-						while (!future.IsCompleted)
-						{
-							yield return null;
-						}
-						logger.Dispose();
-						if (future.IsFaulted)
-						{
-							Exception ex = future.Exception.InnerExceptions.FirstOrDefault() ?? future.Exception;
-							Debug.LogWarning("Failed to push skins with exception: " + ex.Message);
-							yield return delay;
-						}
-						else
-						{
-							SavedGameRequestStatus requestStatus = future.Result.RequestStatus;
-							if (requestStatus == SavedGameRequestStatus.Success)
-							{
-								if (Defs.IsDeveloperBuild)
-								{
-									ISavedGameMetadata metadata = future.Result.Value;
-									string description = ((metadata == null) ? string.Empty : metadata.Description);
-									Debug.LogFormat("[Skins] Succeeded to push skins {0}: '{1}'", localSkinsAsString, description);
-								}
-								break;
-							}
-							Debug.LogWarning("Failed to push skins with status: " + requestStatus);
-							yield return delay;
-						}
-					}
-					i++;
-				}
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
+			return skinsMemento;
 		}
 
 		private void OverwriteLocalSkins(SkinsMemento localSkins, SkinsMemento cloudSkins)
 		{
-			HashSet<string> hashSet = new HashSet<string>(localSkins.DeletedSkins.Concat(cloudSkins.DeletedSkins));
-			Dictionary<string, string> dictionary = new Dictionary<string, string>(localSkins.Skins.Count);
-			Dictionary<string, string> dictionary2 = new Dictionary<string, string>(localSkins.Skins.Count);
-			foreach (SkinMemento skin in cloudSkins.Skins)
+			HashSet<string> strs = new HashSet<string>(localSkins.DeletedSkins.Concat<string>(cloudSkins.DeletedSkins));
+			Dictionary<string, string> skin = new Dictionary<string, string>(localSkins.Skins.Count);
+			Dictionary<string, string> name = new Dictionary<string, string>(localSkins.Skins.Count);
+			foreach (SkinMemento skinMemento in cloudSkins.Skins)
 			{
-				if (!hashSet.Contains(skin.Id))
+				if (!strs.Contains(skinMemento.Id))
 				{
-					dictionary[skin.Id] = skin.Skin;
-					dictionary2[skin.Id] = skin.Name;
+					skin[skinMemento.Id] = skinMemento.Skin;
+					name[skinMemento.Id] = skinMemento.Name;
 				}
 			}
-			foreach (SkinMemento skin2 in localSkins.Skins)
+			foreach (SkinMemento skin1 in localSkins.Skins)
 			{
-				if (!hashSet.Contains(skin2.Id))
+				if (!strs.Contains(skin1.Id))
 				{
-					dictionary[skin2.Id] = skin2.Skin;
-					dictionary2[skin2.Id] = skin2.Name;
+					skin[skin1.Id] = skin1.Skin;
+					name[skin1.Id] = skin1.Name;
 				}
 			}
-			string value = Json.Serialize(dictionary);
-			PlayerPrefs.SetString("User Skins", value);
-			string value2 = Json.Serialize(dictionary2);
-			PlayerPrefs.SetString("User Name Skins", value2);
+			PlayerPrefs.SetString("User Skins", Json.Serialize(skin));
+			PlayerPrefs.SetString("User Name Skins", Json.Serialize(name));
 			CapeMemento capeMemento = CapeMemento.ChooseCape(localSkins.Cape, cloudSkins.Cape);
-			string value3 = JsonUtility.ToJson(capeMemento);
-			PlayerPrefs.SetString("NewUserCape", value3);
-			RefreshGui(dictionary, dictionary2, capeMemento);
+			PlayerPrefs.SetString("NewUserCape", JsonUtility.ToJson(capeMemento));
+			this.RefreshGui(skin, name, capeMemento);
 			PlayerPrefs.Save();
+		}
+
+		public Coroutine Pull()
+		{
+			if (!this.Ready)
+			{
+				return null;
+			}
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			{
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				{
+					return CoroutineRunner.Instance.StartCoroutine(this.SyncGoogleCoroutine(true));
+				}
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+				{
+					this.SyncAmazon();
+				}
+			}
+			return null;
+		}
+
+		public Coroutine Push()
+		{
+			if (!this.Ready)
+			{
+				return null;
+			}
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			{
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				{
+					return CoroutineRunner.Instance.StartCoroutine(this.PushGoogleCoroutine());
+				}
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+				{
+					this.SyncAmazon();
+				}
+			}
+			return null;
+		}
+
+		[DebuggerHidden]
+		internal IEnumerator PushGoogleCoroutine()
+		{
+			SkinsSynchronizer.u003cPushGoogleCoroutineu003ec__Iterator1D2 variable = null;
+			return variable;
 		}
 
 		private void RefreshGui(Dictionary<string, string> skins, Dictionary<string, string> skinNames, CapeMemento cape)
@@ -396,53 +182,103 @@ namespace Rilisoft
 			{
 				if (!SkinsController.skinsForPers.ContainsKey(skin.Key))
 				{
-					Texture2D value = SkinsController.TextureFromString(skin.Value);
-					SkinsController.skinsForPers.Add(skin.Key, value);
+					Texture2D texture2D = SkinsController.TextureFromString(skin.Value, 64, 32);
+					SkinsController.skinsForPers.Add(skin.Key, texture2D);
 				}
 			}
 			foreach (KeyValuePair<string, string> skinName in skinNames)
 			{
 				SkinsController.skinsNamesForPers[skinName.Key] = skinName.Value;
 			}
-			SkinsController.capeUserTexture = SkinsController.TextureFromString(cape.Cape, 32);
-			ShopNGUIController.sharedShop.ReloadCarousel();
+			SkinsController.capeUserTexture = SkinsController.TextureFromString(cape.Cape, 32, 32);
+			ShopNGUIController.sharedShop.ReloadCarousel(null);
 		}
 
-		private SkinsMemento LoadLocalSkins()
+		public Coroutine Sync()
 		{
-			//Discarded unreachable code: IL_01b6
-			string callee = string.Format(CultureInfo.InvariantCulture, "{0}.LoadLocalSkins()", GetType().Name);
-			ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+			if (!this.Ready)
+			{
+				return null;
+			}
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			{
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				{
+					return CoroutineRunner.Instance.StartCoroutine(this.SyncGoogleCoroutine(false));
+				}
+				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+				{
+					this.SyncAmazon();
+				}
+			}
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer)
+			{
+				return null;
+			}
+			this.SyncSkinsAndCapeIos();
+			return null;
+		}
+
+		private void SyncAmazon()
+		{
+			string str = string.Format(CultureInfo.InvariantCulture, "{0}.SyncAmazon()", new object[] { this.GetType().Name });
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 			try
 			{
-				string @string = PlayerPrefs.GetString("DeletedSkins", string.Empty);
-				List<object> list = Json.Deserialize(@string) as List<object>;
-				List<string> deletedSkins = ((list == null) ? new List<string>() : list.OfType<string>().ToList());
-				string string2 = PlayerPrefs.GetString("User Skins", string.Empty);
-				string string3 = PlayerPrefs.GetString("NewUserCape", string.Empty);
-				CapeMemento cape = Tools.DeserializeJson<CapeMemento>(string3);
-				Dictionary<string, object> dictionary = (Json.Deserialize(string2) as Dictionary<string, object>) ?? new Dictionary<string, object>();
-				List<SkinMemento> list2 = new List<SkinMemento>(dictionary.Count);
-				if (dictionary.Count == 0)
+				try
 				{
-					Debug.LogFormat("Deserialized skins are empty: {0}", string2);
-					return new SkinsMemento(list2, deletedSkins, cape);
-				}
-				string string4 = PlayerPrefs.GetString("User Name Skins", string.Empty);
-				Dictionary<string, object> dict = (Json.Deserialize(string4) as Dictionary<string, object>) ?? new Dictionary<string, object>();
-				foreach (KeyValuePair<string, object> item2 in dictionary)
-				{
-					string key = item2.Key;
-					string value;
-					if (!dict.TryGetValue<string>(key, out value))
+					AGSWhispersyncClient.Synchronize();
+					using (AGSGameDataMap gameData = AGSWhispersyncClient.GetGameData())
 					{
-						value = string.Empty;
+						this.EnsureNotNull(gameData, "dataMap");
+						using (AGSSyncableString latestString = gameData.GetLatestString("skinsJson"))
+						{
+							this.EnsureNotNull(latestString, "skinsJson");
+							SkinsMemento skinsMemento = JsonUtility.FromJson<SkinsMemento>(latestString.GetValue() ?? "{}");
+							SkinsMemento skinsMemento1 = this.LoadLocalSkins();
+							SkinsMemento skinsMemento2 = SkinsMemento.Merge(skinsMemento1, skinsMemento);
+							if (Defs.IsDeveloperBuild)
+							{
+								UnityEngine.Debug.LogFormat("Local skins: {0}", new object[] { skinsMemento1 });
+								UnityEngine.Debug.LogFormat("Cloud skins: {0}", new object[] { skinsMemento });
+								UnityEngine.Debug.LogFormat("Merged skins: {0}", new object[] { skinsMemento2 });
+							}
+							int num = skinsMemento2.DeletedSkins.Distinct<string>().Count<string>();
+							int num1 = (
+								from s in skinsMemento2.Skins
+								select s.Id).Distinct<string>().Count<string>();
+							long id = skinsMemento2.Cape.Id;
+							int num2 = skinsMemento1.DeletedSkins.Distinct<string>().Count<string>();
+							int num3 = (
+								from s in skinsMemento1.Skins
+								select s.Id).Distinct<string>().Count<string>();
+							long id1 = skinsMemento1.Cape.Id;
+							if ((num2 < num || num3 < num1 ? true : id1 < id))
+							{
+								this.OverwriteLocalSkins(skinsMemento1, skinsMemento2);
+								EventHandler updated = this.Updated;
+								if (updated != null)
+								{
+									updated(this, EventArgs.Empty);
+								}
+							}
+							int num4 = skinsMemento.DeletedSkins.Distinct<string>().Count<string>();
+							int num5 = (
+								from s in skinsMemento.Skins
+								select s.Id).Distinct<string>().Count<string>();
+							long id2 = skinsMemento.Cape.Id;
+							if ((num4 < num || num5 < num1 ? true : id2 < id))
+							{
+								latestString.Set(JsonUtility.ToJson(skinsMemento2));
+								AGSWhispersyncClient.Synchronize();
+							}
+						}
 					}
-					string skin = (item2.Value as string) ?? string.Empty;
-					SkinMemento item = new SkinMemento(key, value, skin);
-					list2.Add(item);
 				}
-				return new SkinsMemento(list2, deletedSkins, cape);
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogException(exception);
+				}
 			}
 			finally
 			{
@@ -450,29 +286,33 @@ namespace Rilisoft
 			}
 		}
 
+		[DebuggerHidden]
+		private IEnumerator SyncGoogleCoroutine(bool pullOnly)
+		{
+			SkinsSynchronizer.u003cSyncGoogleCoroutineu003ec__Iterator1D1 variable = null;
+			return variable;
+		}
+
 		private void SyncSkinsAndCapeIos()
 		{
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer && !Storager.ICloudAvailable)
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
 			{
+				!Storager.ICloudAvailable;
 			}
 		}
 
-		[CompilerGenerated]
-		private static string _003CSyncAmazon_003Em__586(SkinMemento s)
+		public event EventHandler Updated
 		{
-			return s.Id;
-		}
-
-		[CompilerGenerated]
-		private static string _003CSyncAmazon_003Em__587(SkinMemento s)
-		{
-			return s.Id;
-		}
-
-		[CompilerGenerated]
-		private static string _003CSyncAmazon_003Em__588(SkinMemento s)
-		{
-			return s.Id;
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			add
+			{
+				this.Updated += value;
+			}
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			remove
+			{
+				this.Updated -= value;
+			}
 		}
 	}
 }

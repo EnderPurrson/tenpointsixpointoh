@@ -1,58 +1,14 @@
+using Rilisoft;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 internal sealed class ChooseLevel : MonoBehaviour
 {
-	private sealed class LevelInfo
-	{
-		public bool Enabled { get; set; }
-
-		public string Name { get; set; }
-
-		public int StarGainedCount { get; set; }
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CInitializeNextButton_003Ec__AnonStorey1DF
-	{
-		internal LevelInfo level;
-
-		internal ChooseLevel _003C_003Ef__this;
-
-		internal void _003C_003Em__10(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.HandleLevelButton(level.Name);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CInitializeLevelButtons_003Ec__AnonStorey1E0
-	{
-		internal string levelName;
-
-		internal ChooseLevel _003C_003Ef__this;
-
-		internal void _003C_003Em__12(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.HandleLevelButton(levelName);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CInitializeLevelInfos_003Ec__AnonStorey1E1
-	{
-		internal string boxName;
-
-		internal bool _003C_003Em__13(LevelBox b)
-		{
-			return b.name == boxName;
-		}
-	}
-
 	public GameObject BonusGun3Box;
 
 	public GameObject panel;
@@ -97,114 +53,311 @@ internal sealed class ChooseLevel : MonoBehaviour
 
 	private string _gainedStarCount = string.Empty;
 
-	private IList<LevelInfo> _levelInfos = new List<LevelInfo>();
+	private IList<ChooseLevel.LevelInfo> _levelInfos = new List<ChooseLevel.LevelInfo>();
 
 	public ShopNGUIController _shopInstance;
 
 	private float _timeWhenShopWasClosed;
 
-	[CompilerGenerated]
-	private static Predicate<LevelBox> _003C_003Ef__am_0024cache19;
-
-	[CompilerGenerated]
-	private static Func<LevelInfo, bool> _003C_003Ef__am_0024cache1A;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache1B;
-
-	private void Start()
+	static ChooseLevel()
 	{
-		ActivityIndicator.IsActiveIndicator = false;
-		WeaponManager.RefreshExpControllers();
-		QuestSystem.Instance.SaveQuestProgressIfDirty();
-		StoreKitEventListener.State.PurchaseKey = "In Map";
-		StoreKitEventListener.State.Parameters.Clear();
-		sharedChooseLevel = this;
-		_timeStarted = Time.realtimeSinceStartup;
-		bool draggableLayout = false;
-		List<LevelBox> campaignBoxes = LevelBox.campaignBoxes;
-		if (_003C_003Ef__am_0024cache19 == null)
+	}
+
+	public ChooseLevel()
+	{
+	}
+
+	public static string GetGainStarsString()
+	{
+		return ChooseLevel.InitializeGainStarCount(ChooseLevel.InitializeLevelInfos(false));
+	}
+
+	private void HandleBackButton(object sender, EventArgs args)
+	{
+		if (this._shopInstance != null)
 		{
-			_003C_003Ef__am_0024cache19 = _003CStart_003Em__D;
+			return;
 		}
-		_boxIndex = campaignBoxes.FindIndex(_003C_003Ef__am_0024cache19);
-		if (_boxIndex == -1)
+		if (Time.time - this._timeWhenShopWasClosed < 1f)
 		{
-			Debug.LogWarning("Box not found in list!");
-			throw new InvalidOperationException("Box not found in list!");
+			return;
 		}
-		IList<LevelInfo> levelInfos;
-		if (true)
+		MenuBackgroundMusic.keepPlaying = true;
+		LoadConnectScene.textureToShow = null;
+		LoadConnectScene.sceneToLoad = "CampaignChooseBox";
+		LoadConnectScene.noteToShow = null;
+		Application.LoadLevel(Defs.PromSceneName);
+	}
+
+	private void HandleLevelButton(string levelName)
+	{
+		if (this._shopInstance != null)
 		{
-			IList<LevelInfo> list = InitializeLevelInfos(draggableLayout);
-			levelInfos = list;
+			return;
 		}
-		else
+		if (Time.realtimeSinceStartup - this._timeStarted < 0.15f)
 		{
-			levelInfos = InitializeLevelInfosWithTestData(draggableLayout);
+			return;
 		}
-		_levelInfos = levelInfos;
-		_gainedStarCount = InitializeGainStarCount(_levelInfos);
-		if (CurrentCampaignGame.boXName == "Real")
+		CurrentCampaignGame.levelSceneName = levelName;
+		WeaponManager.sharedManager.Reset(0);
+		FlurryPluginWrapper.LogLevelPressed(CurrentCampaignGame.levelSceneName);
+		LevelArt.endOfBox = false;
+		Singleton<SceneLoader>.Instance.LoadScene((!LevelArt.ShouldShowArts ? "CampaignLoading" : "LevelArt"), LoadSceneMode.Single);
+	}
+
+	private void HandleResumeFromShop()
+	{
+		this.panel.gameObject.SetActive(true);
+		if (this._shopInstance != null)
 		{
-			_boxLevelButtons = boxOneLevelButtons;
-			backgroundHolder.SetActive(true);
-		}
-		else if (CurrentCampaignGame.boXName == "minecraft")
-		{
-			_boxLevelButtons = boxTwoLevelButtons;
-			backgroundHolder_2.SetActive(true);
-		}
-		else if (CurrentCampaignGame.boXName == "Crossed")
-		{
-			_boxLevelButtons = boxThreeLevelButtons;
-			backgroundHolder_3.SetActive(true);
-			string[] array = Storager.getString(Defs.WeaponsGotInCampaign, false).Split('#');
-			for (int i = 0; i < array.Length; i++)
+			ShopNGUIController.GuiActive = false;
+			if (ExperienceController.sharedController != null && ExpController.Instance != null)
 			{
-				if (array[i] == null)
+				ExperienceController.sharedController.isShowRanks = false;
+				ExpController.Instance.InterfaceEnabled = false;
+			}
+			this._shopInstance.resumeAction = () => {
+			};
+			this._shopInstance = null;
+			this._timeWhenShopWasClosed = Time.time;
+		}
+	}
+
+	private void HandleShopButton(object sender, EventArgs args)
+	{
+		if (this._shopInstance == null)
+		{
+			this._shopInstance = ShopNGUIController.sharedShop;
+			if (this._shopInstance != null)
+			{
+				this._shopInstance.SetInGame(false);
+				ShopNGUIController.GuiActive = true;
+				if (this.shopButtonSound != null && Defs.isSoundFX)
 				{
-					array[i] = string.Empty;
+					NGUITools.PlaySound(this.shopButtonSound);
+				}
+				this.panel.gameObject.SetActive(false);
+				this._shopInstance.resumeAction = new Action(this.HandleResumeFromShop);
+			}
+		}
+	}
+
+	private void InitializeFixedDisplay()
+	{
+		if (this.backButton != null)
+		{
+			this.backButton.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleBackButton);
+		}
+		if (this.shopButton != null)
+		{
+			this.shopButton.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleShopButton);
+		}
+		if (this.gainedStarCountLabel != null)
+		{
+			this.gainedStarCountLabel.GetComponent<UILabel>().text = this._gainedStarCount;
+		}
+	}
+
+	private static string InitializeGainStarCount(IList<ChooseLevel.LevelInfo> levelInfos)
+	{
+		int count = 3 * levelInfos.Count;
+		int starGainedCount = 0;
+		IEnumerator<ChooseLevel.LevelInfo> enumerator = levelInfos.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				starGainedCount += enumerator.Current.StarGainedCount;
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		return string.Format("{0}/{1}", starGainedCount, count);
+	}
+
+	private void InitializeLevelButtons()
+	{
+		if (this.starEnabledPrototypes != null)
+		{
+			GameObject[] gameObjectArray = this.starEnabledPrototypes;
+			for (int i = 0; i < (int)gameObjectArray.Length; i++)
+			{
+				GameObject gameObject = gameObjectArray[i];
+				if (gameObject != null)
+				{
+					gameObject.SetActive(false);
 				}
 			}
-			BonusGun3Box.SetActive(array == null || !array.Contains(WeaponManager.BugGunWN));
 		}
-		else
+		if (this.starDisabledPrototypes != null)
 		{
-			Debug.LogWarning("Unknown box: " + CurrentCampaignGame.boXName);
+			GameObject[] gameObjectArray1 = this.starDisabledPrototypes;
+			for (int j = 0; j < (int)gameObjectArray1.Length; j++)
+			{
+				GameObject gameObject1 = gameObjectArray1[j];
+				if (gameObject1 != null)
+				{
+					gameObject1.SetActive(false);
+				}
+			}
 		}
-		InitializeLevelButtons();
-		InitializeFixedDisplay();
-		InitializeNextButton(_levelInfos, nextButton);
-		CampaignProgress.SaveCampaignProgress();
-		if (Application.platform != RuntimePlatform.IPhonePlayer)
+		if (this.boxContents == null)
 		{
-			PlayerPrefs.Save();
+			throw new InvalidOperationException("boxContents == 0");
+		}
+		for (int k = 0; k != (int)this.boxContents.Length; k++)
+		{
+			this.boxContents[k].SetActive(k == this._boxIndex);
+		}
+		if (this._boxLevelButtons == null)
+		{
+			throw new InvalidOperationException("Box level buttons are null.");
+		}
+		GameObject[] gameObjectArray2 = this._boxLevelButtons;
+		for (int l = 0; l < (int)gameObjectArray2.Length; l++)
+		{
+			GameObject gameObject2 = gameObjectArray2[l];
+			if (gameObject2 != null)
+			{
+				UIButton component = gameObject2.GetComponent<UIButton>();
+				if (component != null)
+				{
+					component.isEnabled = false;
+				}
+			}
+		}
+		int num = Math.Min(this._levelInfos.Count, (int)this._boxLevelButtons.Length);
+		for (int m = 0; m != num; m++)
+		{
+			ChooseLevel.LevelInfo item = this._levelInfos[m];
+			GameObject enabled = this._boxLevelButtons[m];
+			enabled.transform.parent = enabled.transform.parent;
+			enabled.GetComponent<UIButton>().isEnabled = item.Enabled;
+			UISprite componentInChildren = enabled.GetComponentInChildren<UISprite>();
+			if (componentInChildren != null)
+			{
+				UILabel uILabel = componentInChildren.GetComponentInChildren<UILabel>();
+				if (uILabel != null)
+				{
+					uILabel.applyGradient = item.Enabled;
+				}
+				else
+				{
+					Debug.LogWarning("Could not find caption of level button.");
+				}
+			}
+			else
+			{
+				Debug.LogWarning("Could not find background of level button.");
+			}
+			enabled.AddComponent<ButtonHandler>();
+			string name = item.Name;
+			enabled.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.HandleLevelButton(name));
+			enabled.SetActive(true);
+			for (int n = 0; n != (int)this.starEnabledPrototypes.Length; n++)
+			{
+				if (item.Enabled)
+				{
+					GameObject gameObject3 = this.starEnabledPrototypes[n];
+					if (gameObject3 != null)
+					{
+						GameObject starGainedCount = UnityEngine.Object.Instantiate<GameObject>(gameObject3);
+						starGainedCount.transform.parent = enabled.transform;
+						starGainedCount.GetComponent<UIToggle>().@value = n < item.StarGainedCount;
+						starGainedCount.transform.localPosition = gameObject3.transform.localPosition;
+						starGainedCount.transform.localScale = gameObject3.transform.localScale;
+						starGainedCount.SetActive(true);
+					}
+				}
+			}
+		}
+		GameObject[] gameObjectArray3 = this.starEnabledPrototypes;
+		for (int o = 0; o < (int)gameObjectArray3.Length; o++)
+		{
+			GameObject gameObject4 = gameObjectArray3[o];
+			if (gameObject4 != null)
+			{
+				UnityEngine.Object.Destroy(gameObject4);
+			}
+		}
+		GameObject[] gameObjectArray4 = this.starDisabledPrototypes;
+		for (int p = 0; p < (int)gameObjectArray4.Length; p++)
+		{
+			GameObject gameObject5 = gameObjectArray4[p];
+			if (gameObject5 != null)
+			{
+				UnityEngine.Object.Destroy(gameObject5);
+			}
 		}
 	}
 
-	private void OnEnable()
+	private static IList<ChooseLevel.LevelInfo> InitializeLevelInfos(bool draggableLayout = false)
 	{
-		if (_backSubscription != null)
+		Dictionary<string, int> strs;
+		List<ChooseLevel.LevelInfo> levelInfos = new List<ChooseLevel.LevelInfo>();
+		string str = CurrentCampaignGame.boXName;
+		int num = LevelBox.campaignBoxes.FindIndex((LevelBox b) => b.name == str);
+		if (num == -1)
 		{
-			_backSubscription.Dispose();
+			Debug.LogWarning("Box not found in list!");
+			return levelInfos;
 		}
-		_backSubscription = BackSystem.Instance.Register(_003COnEnable_003Em__E, "Choose Level");
+		List<CampaignLevel> item = LevelBox.campaignBoxes[num].levels;
+		if (!CampaignProgress.boxesLevelsAndStars.TryGetValue(str, out strs))
+		{
+			Debug.LogWarning(string.Concat("Box not found in dictionary: ", str));
+			strs = new Dictionary<string, int>();
+		}
+		for (int i = 0; i != item.Count; i++)
+		{
+			string item1 = item[i].sceneName;
+			int num1 = 0;
+			strs.TryGetValue(item1, out num1);
+			ChooseLevel.LevelInfo levelInfo = new ChooseLevel.LevelInfo()
+			{
+				Enabled = i <= strs.Count,
+				Name = item1,
+				StarGainedCount = num1
+			};
+			levelInfos.Add(levelInfo);
+		}
+		return levelInfos;
 	}
 
-	private void OnDisable()
+	private static IList<ChooseLevel.LevelInfo> InitializeLevelInfosWithTestData(bool draggableLayout = false)
 	{
-		if (_backSubscription != null)
+		List<ChooseLevel.LevelInfo> levelInfos = new List<ChooseLevel.LevelInfo>();
+		ChooseLevel.LevelInfo levelInfo = new ChooseLevel.LevelInfo()
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
+			Enabled = true,
+			Name = "Cementery",
+			StarGainedCount = 1
+		};
+		levelInfos.Add(levelInfo);
+		levelInfo = new ChooseLevel.LevelInfo()
+		{
+			Enabled = true,
+			Name = "City",
+			StarGainedCount = 3
+		};
+		levelInfos.Add(levelInfo);
+		levelInfo = new ChooseLevel.LevelInfo()
+		{
+			Enabled = false,
+			Name = "Hospital"
+		};
+		levelInfos.Add(levelInfo);
+		return levelInfos;
 	}
 
-	private void InitializeNextButton(IList<LevelInfo> levels, ButtonHandler nextButton)
+	private void InitializeNextButton(IList<ChooseLevel.LevelInfo> levels, ButtonHandler nextButton)
 	{
-		_003CInitializeNextButton_003Ec__AnonStorey1DF _003CInitializeNextButton_003Ec__AnonStorey1DF = new _003CInitializeNextButton_003Ec__AnonStorey1DF();
-		_003CInitializeNextButton_003Ec__AnonStorey1DF._003C_003Ef__this = this;
 		if (levels == null)
 		{
 			throw new ArgumentNullException("levels");
@@ -213,316 +366,120 @@ internal sealed class ChooseLevel : MonoBehaviour
 		{
 			throw new ArgumentNullException("nextButton");
 		}
-		if (_003C_003Ef__am_0024cache1A == null)
+		ChooseLevel.LevelInfo levelInfo = levels.LastOrDefault<ChooseLevel.LevelInfo>((ChooseLevel.LevelInfo l) => (!l.Enabled ? false : l.StarGainedCount == 0));
+		nextButton.gameObject.SetActive(levelInfo != null);
+		if (levelInfo != null)
 		{
-			_003C_003Ef__am_0024cache1A = _003CInitializeNextButton_003Em__F;
+			nextButton.Clicked += new EventHandler((object sender, EventArgs e) => this.HandleLevelButton(levelInfo.Name));
 		}
-		_003CInitializeNextButton_003Ec__AnonStorey1DF.level = levels.LastOrDefault(_003C_003Ef__am_0024cache1A);
-		nextButton.gameObject.SetActive(_003CInitializeNextButton_003Ec__AnonStorey1DF.level != null);
-		if (_003CInitializeNextButton_003Ec__AnonStorey1DF.level != null)
-		{
-			nextButton.Clicked += _003CInitializeNextButton_003Ec__AnonStorey1DF._003C_003Em__10;
-		}
-	}
-
-	private void InitializeFixedDisplay()
-	{
-		if (backButton != null)
-		{
-			backButton.GetComponent<ButtonHandler>().Clicked += HandleBackButton;
-		}
-		if (shopButton != null)
-		{
-			shopButton.GetComponent<ButtonHandler>().Clicked += HandleShopButton;
-		}
-		if (gainedStarCountLabel != null)
-		{
-			gainedStarCountLabel.GetComponent<UILabel>().text = _gainedStarCount;
-		}
-	}
-
-	private void HandleBackButton(object sender, EventArgs args)
-	{
-		if (!(_shopInstance != null) && !(Time.time - _timeWhenShopWasClosed < 1f))
-		{
-			MenuBackgroundMusic.keepPlaying = true;
-			LoadConnectScene.textureToShow = null;
-			LoadConnectScene.sceneToLoad = "CampaignChooseBox";
-			LoadConnectScene.noteToShow = null;
-			Application.LoadLevel(Defs.PromSceneName);
-		}
-	}
-
-	private void HandleShopButton(object sender, EventArgs args)
-	{
-		if (!(_shopInstance == null))
-		{
-			return;
-		}
-		_shopInstance = ShopNGUIController.sharedShop;
-		if (_shopInstance != null)
-		{
-			_shopInstance.SetInGame(false);
-			ShopNGUIController.GuiActive = true;
-			if (shopButtonSound != null && Defs.isSoundFX)
-			{
-				NGUITools.PlaySound(shopButtonSound);
-			}
-			panel.gameObject.SetActive(false);
-			_shopInstance.resumeAction = HandleResumeFromShop;
-		}
-	}
-
-	private void HandleResumeFromShop()
-	{
-		panel.gameObject.SetActive(true);
-		if (_shopInstance != null)
-		{
-			ShopNGUIController.GuiActive = false;
-			if (ExperienceController.sharedController != null && ExpController.Instance != null)
-			{
-				ExperienceController.sharedController.isShowRanks = false;
-				ExpController.Instance.InterfaceEnabled = false;
-			}
-			ShopNGUIController shopInstance = _shopInstance;
-			if (_003C_003Ef__am_0024cache1B == null)
-			{
-				_003C_003Ef__am_0024cache1B = _003CHandleResumeFromShop_003Em__11;
-			}
-			shopInstance.resumeAction = _003C_003Ef__am_0024cache1B;
-			_shopInstance = null;
-			_timeWhenShopWasClosed = Time.time;
-		}
-	}
-
-	private void InitializeLevelButtons()
-	{
-		if (starEnabledPrototypes != null)
-		{
-			GameObject[] array = starEnabledPrototypes;
-			foreach (GameObject gameObject in array)
-			{
-				if (gameObject != null)
-				{
-					gameObject.SetActive(false);
-				}
-			}
-		}
-		if (starDisabledPrototypes != null)
-		{
-			GameObject[] array2 = starDisabledPrototypes;
-			foreach (GameObject gameObject2 in array2)
-			{
-				if (gameObject2 != null)
-				{
-					gameObject2.SetActive(false);
-				}
-			}
-		}
-		if (boxContents != null)
-		{
-			for (int k = 0; k != boxContents.Length; k++)
-			{
-				boxContents[k].SetActive(k == _boxIndex);
-			}
-			if (_boxLevelButtons == null)
-			{
-				throw new InvalidOperationException("Box level buttons are null.");
-			}
-			GameObject[] boxLevelButtons = _boxLevelButtons;
-			foreach (GameObject gameObject3 in boxLevelButtons)
-			{
-				if (gameObject3 != null)
-				{
-					UIButton component = gameObject3.GetComponent<UIButton>();
-					if (component != null)
-					{
-						component.isEnabled = false;
-					}
-				}
-			}
-			int num = Math.Min(_levelInfos.Count, _boxLevelButtons.Length);
-			for (int m = 0; m != num; m++)
-			{
-				_003CInitializeLevelButtons_003Ec__AnonStorey1E0 _003CInitializeLevelButtons_003Ec__AnonStorey1E = new _003CInitializeLevelButtons_003Ec__AnonStorey1E0();
-				_003CInitializeLevelButtons_003Ec__AnonStorey1E._003C_003Ef__this = this;
-				LevelInfo levelInfo = _levelInfos[m];
-				GameObject gameObject4 = _boxLevelButtons[m];
-				gameObject4.transform.parent = gameObject4.transform.parent;
-				gameObject4.GetComponent<UIButton>().isEnabled = levelInfo.Enabled;
-				UISprite componentInChildren = gameObject4.GetComponentInChildren<UISprite>();
-				if (componentInChildren == null)
-				{
-					Debug.LogWarning("Could not find background of level button.");
-				}
-				else
-				{
-					UILabel componentInChildren2 = componentInChildren.GetComponentInChildren<UILabel>();
-					if (componentInChildren2 == null)
-					{
-						Debug.LogWarning("Could not find caption of level button.");
-					}
-					else
-					{
-						componentInChildren2.applyGradient = levelInfo.Enabled;
-					}
-				}
-				gameObject4.AddComponent<ButtonHandler>();
-				_003CInitializeLevelButtons_003Ec__AnonStorey1E.levelName = levelInfo.Name;
-				gameObject4.GetComponent<ButtonHandler>().Clicked += _003CInitializeLevelButtons_003Ec__AnonStorey1E._003C_003Em__12;
-				gameObject4.SetActive(true);
-				for (int n = 0; n != starEnabledPrototypes.Length; n++)
-				{
-					if (levelInfo.Enabled)
-					{
-						GameObject gameObject5 = starEnabledPrototypes[n];
-						if (!(gameObject5 == null))
-						{
-							GameObject gameObject6 = UnityEngine.Object.Instantiate(gameObject5);
-							gameObject6.transform.parent = gameObject4.transform;
-							gameObject6.GetComponent<UIToggle>().value = n < levelInfo.StarGainedCount;
-							gameObject6.transform.localPosition = gameObject5.transform.localPosition;
-							gameObject6.transform.localScale = gameObject5.transform.localScale;
-							gameObject6.SetActive(true);
-						}
-					}
-				}
-			}
-			GameObject[] array3 = starEnabledPrototypes;
-			foreach (GameObject gameObject7 in array3)
-			{
-				if (gameObject7 != null)
-				{
-					UnityEngine.Object.Destroy(gameObject7);
-				}
-			}
-			GameObject[] array4 = starDisabledPrototypes;
-			foreach (GameObject gameObject8 in array4)
-			{
-				if (gameObject8 != null)
-				{
-					UnityEngine.Object.Destroy(gameObject8);
-				}
-			}
-			return;
-		}
-		throw new InvalidOperationException("boxContents == 0");
-	}
-
-	private void HandleLevelButton(string levelName)
-	{
-		if (!(_shopInstance != null) && !(Time.realtimeSinceStartup - _timeStarted < 0.15f))
-		{
-			CurrentCampaignGame.levelSceneName = levelName;
-			WeaponManager.sharedManager.Reset();
-			FlurryPluginWrapper.LogLevelPressed(CurrentCampaignGame.levelSceneName);
-			LevelArt.endOfBox = false;
-			Singleton<SceneLoader>.Instance.LoadScene((!LevelArt.ShouldShowArts) ? "CampaignLoading" : "LevelArt");
-		}
-	}
-
-	private static IList<LevelInfo> InitializeLevelInfosWithTestData(bool draggableLayout = false)
-	{
-		List<LevelInfo> list = new List<LevelInfo>();
-		list.Add(new LevelInfo
-		{
-			Enabled = true,
-			Name = "Cementery",
-			StarGainedCount = 1
-		});
-		list.Add(new LevelInfo
-		{
-			Enabled = true,
-			Name = "City",
-			StarGainedCount = 3
-		});
-		list.Add(new LevelInfo
-		{
-			Enabled = false,
-			Name = "Hospital"
-		});
-		return list;
-	}
-
-	private static IList<LevelInfo> InitializeLevelInfos(bool draggableLayout = false)
-	{
-		_003CInitializeLevelInfos_003Ec__AnonStorey1E1 _003CInitializeLevelInfos_003Ec__AnonStorey1E = new _003CInitializeLevelInfos_003Ec__AnonStorey1E1();
-		List<LevelInfo> list = new List<LevelInfo>();
-		_003CInitializeLevelInfos_003Ec__AnonStorey1E.boxName = CurrentCampaignGame.boXName;
-		int num = LevelBox.campaignBoxes.FindIndex(_003CInitializeLevelInfos_003Ec__AnonStorey1E._003C_003Em__13);
-		if (num == -1)
-		{
-			Debug.LogWarning("Box not found in list!");
-			return list;
-		}
-		LevelBox levelBox = LevelBox.campaignBoxes[num];
-		List<CampaignLevel> levels = levelBox.levels;
-		Dictionary<string, int> value;
-		if (!CampaignProgress.boxesLevelsAndStars.TryGetValue(_003CInitializeLevelInfos_003Ec__AnonStorey1E.boxName, out value))
-		{
-			Debug.LogWarning("Box not found in dictionary: " + _003CInitializeLevelInfos_003Ec__AnonStorey1E.boxName);
-			value = new Dictionary<string, int>();
-		}
-		for (int i = 0; i != levels.Count; i++)
-		{
-			string sceneName = levels[i].sceneName;
-			int value2 = 0;
-			value.TryGetValue(sceneName, out value2);
-			LevelInfo levelInfo = new LevelInfo();
-			levelInfo.Enabled = i <= value.Count;
-			levelInfo.Name = sceneName;
-			levelInfo.StarGainedCount = value2;
-			LevelInfo item = levelInfo;
-			list.Add(item);
-		}
-		return list;
-	}
-
-	private static string InitializeGainStarCount(IList<LevelInfo> levelInfos)
-	{
-		int num = 3 * levelInfos.Count;
-		int num2 = 0;
-		foreach (LevelInfo levelInfo in levelInfos)
-		{
-			num2 += levelInfo.StarGainedCount;
-		}
-		return string.Format("{0}/{1}", num2, num);
-	}
-
-	public static string GetGainStarsString()
-	{
-		IList<LevelInfo> levelInfos = InitializeLevelInfos();
-		return InitializeGainStarCount(levelInfos);
 	}
 
 	private void OnDestroy()
 	{
-		sharedChooseLevel = null;
+		ChooseLevel.sharedChooseLevel = null;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CStart_003Em__D(LevelBox b)
+	private void OnDisable()
 	{
-		return b.name == CurrentCampaignGame.boXName;
-	}
-
-	[CompilerGenerated]
-	private void _003COnEnable_003Em__E()
-	{
-		if (_shopInstance == null)
+		if (this._backSubscription != null)
 		{
-			HandleBackButton(this, EventArgs.Empty);
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CInitializeNextButton_003Em__F(LevelInfo l)
+	private void OnEnable()
 	{
-		return l.Enabled && l.StarGainedCount == 0;
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => {
+			if (this._shopInstance == null)
+			{
+				this.HandleBackButton(this, EventArgs.Empty);
+			}
+		}, "Choose Level");
 	}
 
-	[CompilerGenerated]
-	private static void _003CHandleResumeFromShop_003Em__11()
+	private void Start()
 	{
+		ActivityIndicator.IsActiveIndicator = false;
+		WeaponManager.RefreshExpControllers();
+		QuestSystem.Instance.SaveQuestProgressIfDirty();
+		StoreKitEventListener.State.PurchaseKey = "In Map";
+		StoreKitEventListener.State.Parameters.Clear();
+		ChooseLevel.sharedChooseLevel = this;
+		this._timeStarted = Time.realtimeSinceStartup;
+		bool flag = false;
+		this._boxIndex = LevelBox.campaignBoxes.FindIndex((LevelBox b) => b.name == CurrentCampaignGame.boXName);
+		if (this._boxIndex == -1)
+		{
+			Debug.LogWarning("Box not found in list!");
+			throw new InvalidOperationException("Box not found in list!");
+		}
+		this._levelInfos = (false ? ChooseLevel.InitializeLevelInfosWithTestData(flag) : ChooseLevel.InitializeLevelInfos(flag));
+		this._gainedStarCount = ChooseLevel.InitializeGainStarCount(this._levelInfos);
+		if (CurrentCampaignGame.boXName == "Real")
+		{
+			this._boxLevelButtons = this.boxOneLevelButtons;
+			this.backgroundHolder.SetActive(true);
+		}
+		else if (CurrentCampaignGame.boXName == "minecraft")
+		{
+			this._boxLevelButtons = this.boxTwoLevelButtons;
+			this.backgroundHolder_2.SetActive(true);
+		}
+		else if (CurrentCampaignGame.boXName != "Crossed")
+		{
+			Debug.LogWarning(string.Concat("Unknown box: ", CurrentCampaignGame.boXName));
+		}
+		else
+		{
+			this._boxLevelButtons = this.boxThreeLevelButtons;
+			this.backgroundHolder_3.SetActive(true);
+			string[] empty = Storager.getString(Defs.WeaponsGotInCampaign, false).Split(new char[] { '#' });
+			for (int i = 0; i < (int)empty.Length; i++)
+			{
+				if (empty[i] == null)
+				{
+					empty[i] = string.Empty;
+				}
+			}
+			this.BonusGun3Box.SetActive((empty == null ? 0 : (int)empty.Contains<string>(WeaponManager.BugGunWN)) == 0);
+		}
+		this.InitializeLevelButtons();
+		this.InitializeFixedDisplay();
+		this.InitializeNextButton(this._levelInfos, this.nextButton);
+		CampaignProgress.SaveCampaignProgress();
+		if (Application.platform != RuntimePlatform.IPhonePlayer)
+		{
+			PlayerPrefs.Save();
+		}
+	}
+
+	private sealed class LevelInfo
+	{
+		public bool Enabled
+		{
+			get;
+			set;
+		}
+
+		public string Name
+		{
+			get;
+			set;
+		}
+
+		public int StarGainedCount
+		{
+			get;
+			set;
+		}
+
+		public LevelInfo()
+		{
+		}
 	}
 }

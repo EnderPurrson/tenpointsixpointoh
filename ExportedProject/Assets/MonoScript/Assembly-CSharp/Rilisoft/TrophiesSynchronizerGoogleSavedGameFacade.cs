@@ -1,71 +1,166 @@
-using System;
-using System.Globalization;
-using System.Text;
-using System.Threading.Tasks;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.SavedGame;
+using System;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	public struct TrophiesSynchronizerGoogleSavedGameFacade
 	{
+		public const string Filename = "Trophies";
+
+		private const string SavedGameClientIsNullMessage = "SavedGameClient is null.";
+
+		private static ISavedGameClient SavedGame
+		{
+			get
+			{
+				ISavedGameClient savedGame;
+				try
+				{
+					if (PlayGamesPlatform.Instance != null)
+					{
+						savedGame = PlayGamesPlatform.Instance.SavedGame;
+					}
+					else
+					{
+						savedGame = null;
+					}
+				}
+				catch (NullReferenceException nullReferenceException)
+				{
+					savedGame = null;
+				}
+				return savedGame;
+			}
+		}
+
+		public Task<GoogleSavedGameRequestResult<TrophiesMemento>> Pull()
+		{
+			Task<GoogleSavedGameRequestResult<TrophiesMemento>> task;
+			string str = string.Concat(this.GetType().Name, ".Pull()");
+			ScopeLogger scopeLogger = new ScopeLogger(str, (!Defs.IsDeveloperBuild ? false : !Application.isEditor));
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>>();
+				TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = new TrophiesSynchronizerGoogleSavedGameFacade.PullCallback(taskCompletionSource);
+				if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
+				{
+					ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+					try
+					{
+						TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = pullCallback;
+						TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(pullCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+					}
+					finally
+					{
+						scopeLogger1.Dispose();
+					}
+					task = taskCompletionSource.Task;
+				}
+				else
+				{
+					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					task = taskCompletionSource.Task;
+				}
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
+		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(TrophiesMemento trophies)
+		{
+			Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> task;
+			string str = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", new object[] { this.GetType().Name, trophies });
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
+				TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = new TrophiesSynchronizerGoogleSavedGameFacade.PushCallback(trophies, taskCompletionSource);
+				if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
+				{
+					ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+					try
+					{
+						TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = pushCallback;
+						TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(pushCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+					}
+					finally
+					{
+						scopeLogger1.Dispose();
+					}
+					task = taskCompletionSource.Task;
+				}
+				else
+				{
+					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					task = taskCompletionSource.Task;
+				}
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
 		private abstract class Callback
 		{
 			protected TrophiesMemento? _resolvedTrophies;
 
-			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
+			protected Callback()
+			{
+			}
 
 			protected abstract void HandleAuthenticationCompleted(bool succeeded);
 
-			protected abstract void TrySetException(Exception ex);
+			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
 
 			internal void HandleOpenConflict(IConflictResolver resolver, ISavedGameMetadata original, byte[] originalData, ISavedGameMetadata unmerged, byte[] unmergedData)
 			{
-				//Discarded unreachable code: IL_019e
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenConflict('{1}', '{2}')", GetType().Name, original.Description, unmerged.Description);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenConflict('{1}', '{2}')", new object[] { this.GetType().Name, original.Description, unmerged.Description });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
-					if (SavedGame == null)
+					if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					TrophiesMemento trophiesMemento = ParseTrophies(originalData);
-					TrophiesMemento trophiesMemento2 = ParseTrophies(unmergedData);
-					if (Defs.IsDeveloperBuild)
-					{
-						Debug.LogFormat("[Trophies] Original: {0}, unmerged: {1}", trophiesMemento, trophiesMemento2);
-					}
-					if (trophiesMemento.TrophiesNegative >= trophiesMemento2.TrophiesNegative && trophiesMemento.TrophiesPositive >= trophiesMemento2.TrophiesPositive)
-					{
-						resolver.ChooseMetadata(original);
-						_resolvedTrophies = MergeWithResolved(trophiesMemento, false);
-					}
-					else if (trophiesMemento.TrophiesNegative <= trophiesMemento2.TrophiesNegative && trophiesMemento.TrophiesPositive <= trophiesMemento2.TrophiesPositive)
-					{
-						resolver.ChooseMetadata(unmerged);
-						_resolvedTrophies = MergeWithResolved(trophiesMemento2, false);
-					}
-					else
-					{
-						ISavedGameMetadata savedGameMetadata;
-						if (trophiesMemento.Trophies >= trophiesMemento2.Trophies)
+						TrophiesMemento trophiesMemento = TrophiesSynchronizerGoogleSavedGameFacade.Callback.ParseTrophies(originalData);
+						TrophiesMemento trophiesMemento1 = TrophiesSynchronizerGoogleSavedGameFacade.Callback.ParseTrophies(unmergedData);
+						if (Defs.IsDeveloperBuild)
 						{
-							savedGameMetadata = original;
+							Debug.LogFormat("[Trophies] Original: {0}, unmerged: {1}", new object[] { trophiesMemento, trophiesMemento1 });
+						}
+						if (trophiesMemento.TrophiesNegative >= trophiesMemento1.TrophiesNegative && trophiesMemento.TrophiesPositive >= trophiesMemento1.TrophiesPositive)
+						{
+							resolver.ChooseMetadata(original);
+							this._resolvedTrophies = new TrophiesMemento?(this.MergeWithResolved(trophiesMemento, false));
+						}
+						else if (trophiesMemento.TrophiesNegative > trophiesMemento1.TrophiesNegative || trophiesMemento.TrophiesPositive > trophiesMemento1.TrophiesPositive)
+						{
+							resolver.ChooseMetadata((trophiesMemento.Trophies < trophiesMemento1.Trophies ? unmerged : original));
+							TrophiesMemento trophiesMemento2 = TrophiesMemento.Merge(trophiesMemento, trophiesMemento1);
+							this._resolvedTrophies = new TrophiesMemento?(this.MergeWithResolved(trophiesMemento2, true));
 						}
 						else
 						{
-							savedGameMetadata = unmerged;
+							resolver.ChooseMetadata(unmerged);
+							this._resolvedTrophies = new TrophiesMemento?(this.MergeWithResolved(trophiesMemento1, false));
 						}
-						ISavedGameMetadata chosenMetadata = savedGameMetadata;
-						resolver.ChooseMetadata(chosenMetadata);
-						TrophiesMemento trophies = TrophiesMemento.Merge(trophiesMemento, trophiesMemento2);
-						_resolvedTrophies = MergeWithResolved(trophies, true);
+						TrophiesSynchronizerGoogleSavedGameFacade.Callback callback = this;
+						TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(callback.HandleOpenCompleted));
 					}
-					SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, HandleOpenConflict, HandleOpenCompleted);
+					else
+					{
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					}
 				}
 				finally
 				{
@@ -75,40 +170,204 @@ namespace Rilisoft
 
 			protected TrophiesMemento MergeWithResolved(TrophiesMemento trophies, bool forceConflicted)
 			{
-				TrophiesMemento result = ((!_resolvedTrophies.HasValue) ? trophies : TrophiesMemento.Merge(_resolvedTrophies.Value, trophies));
-				if (forceConflicted)
+				TrophiesMemento trophiesMemento = (!this._resolvedTrophies.HasValue ? trophies : TrophiesMemento.Merge(this._resolvedTrophies.Value, trophies));
+				if (!forceConflicted)
 				{
-					return new TrophiesMemento(result.TrophiesNegative, result.TrophiesPositive, true);
+					return trophiesMemento;
 				}
-				return result;
+				return new TrophiesMemento(trophiesMemento.TrophiesNegative, trophiesMemento.TrophiesPositive, true);
 			}
 
 			protected static TrophiesMemento ParseTrophies(byte[] data)
 			{
-				//Discarded unreachable code: IL_0043, IL_0086
-				if (data != null && data.Length > 0)
+				TrophiesMemento trophiesMemento;
+				if (data == null || (int)data.Length <= 0)
 				{
-					string @string = Encoding.UTF8.GetString(data, 0, data.Length);
-					if (string.IsNullOrEmpty(@string))
+					return new TrophiesMemento();
+				}
+				string str = Encoding.UTF8.GetString(data, 0, (int)data.Length);
+				if (string.IsNullOrEmpty(str))
+				{
+					return new TrophiesMemento();
+				}
+				try
+				{
+					trophiesMemento = JsonUtility.FromJson<TrophiesMemento>(str);
+				}
+				catch (ArgumentException argumentException1)
+				{
+					ArgumentException argumentException = argumentException1;
+					Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", new object[] { typeof(TrophiesMemento).Name, str });
+					Debug.LogException(argumentException);
+					trophiesMemento = new TrophiesMemento();
+				}
+				return trophiesMemento;
+			}
+
+			protected abstract void TrySetException(Exception ex);
+		}
+
+		private sealed class PullCallback : TrophiesSynchronizerGoogleSavedGameFacade.Callback
+		{
+			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> _promise;
+
+			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> promise)
+			{
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>>();
+			}
+
+			protected override void HandleAuthenticationCompleted(bool succeeded)
+			{
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.HandleAuthenticationCompleted({1})", new object[] { base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					if (!succeeded)
 					{
-						return default(TrophiesMemento);
+						TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> taskCompletionSource = this._promise;
+						TrophiesMemento trophiesMemento = new TrophiesMemento();
+						taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(SavedGameRequestStatus.AuthenticationError, trophiesMemento));
 					}
-					try
+					else if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						return JsonUtility.FromJson<TrophiesMemento>(@string);
+						TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+						TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback.HandleOpenCompleted));
 					}
-					catch (ArgumentException exception)
+					else
 					{
-						Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", typeof(TrophiesMemento).Name, @string);
-						Debug.LogException(exception);
-						return default(TrophiesMemento);
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
 					}
 				}
-				return default(TrophiesMemento);
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
+			{
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenCompleted('{1}', '{2}')", new object[] { base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
+				try
+				{
+					if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
+					{
+						switch (requestStatus)
+						{
+							case SavedGameRequestStatus.AuthenticationError:
+							{
+								GpgFacade instance = GpgFacade.Instance;
+								TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+								instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+								break;
+							}
+							case SavedGameRequestStatus.InternalError:
+							case 0:
+							{
+								TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> taskCompletionSource = this._promise;
+								TrophiesMemento trophiesMemento = new TrophiesMemento();
+								taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, trophiesMemento));
+								break;
+							}
+							case SavedGameRequestStatus.TimeoutError:
+							{
+								TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = this;
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+								break;
+							}
+							case SavedGameRequestStatus.Success:
+							{
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.ReadBinaryData(metadata, new Action<SavedGameRequestStatus, byte[]>(this.HandleReadCompleted));
+								break;
+							}
+							default:
+							{
+								goto case 0;
+							}
+						}
+					}
+					else
+					{
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
+			{
+				CultureInfo invariantCulture = CultureInfo.InvariantCulture;
+				object[] name = new object[] { base.GetType().Name, requestStatus, null };
+				name[2] = (data == null ? 0 : (int)data.Length);
+				string str = string.Format(invariantCulture, "{0}.HandleReadCompleted('{1}', {2})", name);
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					switch (requestStatus)
+					{
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+							instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						case 0:
+						{
+							TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> taskCompletionSource = this._promise;
+							TrophiesMemento trophiesMemento = new TrophiesMemento();
+							taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, trophiesMemento));
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
+							{
+								TrophiesSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = this;
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+								break;
+							}
+							else
+							{
+								this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+								return;
+							}
+						}
+						case SavedGameRequestStatus.Success:
+						{
+							TrophiesMemento trophiesMemento1 = TrophiesSynchronizerGoogleSavedGameFacade.Callback.ParseTrophies(data);
+							if (Defs.IsDeveloperBuild)
+							{
+								Debug.LogFormat("[Trophies] Incoming: {0}", new object[] { trophiesMemento1 });
+							}
+							TrophiesMemento trophiesMemento2 = base.MergeWithResolved(trophiesMemento1, false);
+							this._promise.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, trophiesMemento2));
+							break;
+						}
+						default:
+						{
+							goto case 0;
+						}
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			protected override void TrySetException(Exception ex)
+			{
+				this._promise.TrySetException(ex);
 			}
 		}
 
-		private sealed class PushCallback : Callback
+		private sealed class PushCallback : TrophiesSynchronizerGoogleSavedGameFacade.Callback
 		{
 			private readonly TrophiesMemento _trophies;
 
@@ -116,179 +375,143 @@ namespace Rilisoft
 
 			public PushCallback(TrophiesMemento trophies, TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> promise)
 			{
-				_trophies = trophies;
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
-			}
-
-			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
-			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenCompleted('{1}', '{2}')", GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					if (SavedGame == null)
-					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						TrophiesMemento trophiesMemento = MergeWithResolved(_trophies, false);
-						string text2 = (trophiesMemento.Conflicted ? "resolved" : ((!_resolvedTrophies.HasValue) ? "none" : "trivial"));
-						string description = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", SystemInfo.deviceModel, text2);
-						SavedGameMetadataUpdate updateForMetadata = default(SavedGameMetadataUpdate.Builder).WithUpdatedDescription(description).Build();
-						string s = JsonUtility.ToJson(trophiesMemento);
-						byte[] bytes = Encoding.UTF8.GetBytes(s);
-						SavedGame.CommitUpdate(metadata, updateForMetadata, bytes, HandleCommitCompleted);
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
+				this._trophies = trophies;
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
 			}
 
 			protected override void HandleAuthenticationCompleted(bool succeeded)
 			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleAuthenticationCompleted({1})", GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.HandleAuthenticationCompleted({1})", new object[] { base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
 					if (!succeeded)
 					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
+						this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
 					}
-					else if (SavedGame == null)
+					else if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
+						TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+						TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback.HandleOpenCompleted));
 					}
 					else
 					{
-						SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
 					}
 				}
 				finally
 				{
 					scopeLogger.Dispose();
 				}
-			}
-
-			protected override void TrySetException(Exception ex)
-			{
-				_promise.TrySetException(ex);
 			}
 
 			private void HandleCommitCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleCommitCompleted('{1}', '{2}')", GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.HandleCommitCompleted('{1}', '{2}')", new object[] { base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
 				try
 				{
 					switch (requestStatus)
 					{
-					case SavedGameRequestStatus.TimeoutError:
-						if (SavedGame == null)
+						case SavedGameRequestStatus.AuthenticationError:
 						{
-							TrySetException(new InvalidOperationException("SavedGameClient is null."));
+							GpgFacade instance = GpgFacade.Instance;
+							TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+							instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+							break;
 						}
-						else
+						case SavedGameRequestStatus.InternalError:
 						{
-							SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
+							GoogleSavedGameRequestResult<ISavedGameMetadata> googleSavedGameRequestResult = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
+							this._promise.TrySetResult(googleSavedGameRequestResult);
+							break;
 						}
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-					{
-						GoogleSavedGameRequestResult<ISavedGameMetadata> result = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
-						_promise.TrySetResult(result);
-						break;
-					}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
+							{
+								TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = this;
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+								break;
+							}
+							else
+							{
+								this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+								return;
+							}
+						}
+						default:
+						{
+							goto case SavedGameRequestStatus.InternalError;
+						}
 					}
 				}
 				finally
 				{
 					scopeLogger.Dispose();
 				}
-			}
-		}
-
-		private sealed class PullCallback : Callback
-		{
-			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> _promise;
-
-			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> promise)
-			{
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>>();
 			}
 
 			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenCompleted('{1}', '{2}')", GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str;
+				string str1 = (metadata == null ? string.Empty : metadata.Description);
+				string str2 = string.Format(CultureInfo.InvariantCulture, "{0}.HandleOpenCompleted('{1}', '{2}')", new object[] { base.GetType().Name, requestStatus, str1 });
+				ScopeLogger scopeLogger = new ScopeLogger(str2, Defs.IsDeveloperBuild);
 				try
 				{
-					if (SavedGame == null)
+					if (TrophiesSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-						SavedGame.ReadBinaryData(metadata, HandleReadCompleted);
-						break;
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, default(TrophiesMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-
-			protected override void HandleAuthenticationCompleted(bool succeeded)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleAuthenticationCompleted({1})", GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					if (!succeeded)
-					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(SavedGameRequestStatus.AuthenticationError, default(TrophiesMemento)));
-					}
-					else if (SavedGame == null)
-					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
+						switch (requestStatus)
+						{
+							case SavedGameRequestStatus.AuthenticationError:
+							{
+								GpgFacade instance = GpgFacade.Instance;
+								TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+								instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+								break;
+							}
+							case SavedGameRequestStatus.InternalError:
+							case 0:
+							{
+								this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
+								break;
+							}
+							case SavedGameRequestStatus.TimeoutError:
+							{
+								TrophiesSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = this;
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+								break;
+							}
+							case SavedGameRequestStatus.Success:
+							{
+								TrophiesMemento trophiesMemento = base.MergeWithResolved(this._trophies, false);
+								if (!trophiesMemento.Conflicted)
+								{
+									str = (!this._resolvedTrophies.HasValue ? "none" : "trivial");
+								}
+								else
+								{
+									str = "resolved";
+								}
+								string str3 = str;
+								string str4 = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", new object[] { SystemInfo.deviceModel, str3 });
+								SavedGameMetadataUpdate savedGameMetadataUpdate = (new SavedGameMetadataUpdate.Builder()).WithUpdatedDescription(str4).Build();
+								string json = JsonUtility.ToJson(trophiesMemento);
+								byte[] bytes = Encoding.UTF8.GetBytes(json);
+								TrophiesSynchronizerGoogleSavedGameFacade.SavedGame.CommitUpdate(metadata, savedGameMetadataUpdate, bytes, new Action<SavedGameRequestStatus, ISavedGameMetadata>(this.HandleCommitCompleted));
+								break;
+							}
+							default:
+							{
+								goto case 0;
+							}
+						}
 					}
 					else
 					{
-						SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
 					}
 				}
 				finally
@@ -299,136 +522,7 @@ namespace Rilisoft
 
 			protected override void TrySetException(Exception ex)
 			{
-				_promise.TrySetException(ex);
-			}
-
-			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.HandleReadCompleted('{1}', {2})", GetType().Name, requestStatus, (data != null) ? data.Length : 0);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						TrophiesMemento trophiesMemento = Callback.ParseTrophies(data);
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.LogFormat("[Trophies] Incoming: {0}", trophiesMemento);
-						}
-						TrophiesMemento value = MergeWithResolved(trophiesMemento, false);
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, value));
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						if (SavedGame == null)
-						{
-							TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						}
-						else
-						{
-							SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						}
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<TrophiesMemento>(requestStatus, default(TrophiesMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-		}
-
-		public const string Filename = "Trophies";
-
-		private const string SavedGameClientIsNullMessage = "SavedGameClient is null.";
-
-		private static ISavedGameClient SavedGame
-		{
-			get
-			{
-				//Discarded unreachable code: IL_0021, IL_002e
-				try
-				{
-					if (PlayGamesPlatform.Instance == null)
-					{
-						return null;
-					}
-					return PlayGamesPlatform.Instance.SavedGame;
-				}
-				catch (NullReferenceException)
-				{
-					return null;
-				}
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<TrophiesMemento>> Pull()
-		{
-			//Discarded unreachable code: IL_00c8
-			string text = GetType().Name + ".Pull()";
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild && !Application.isEditor);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<TrophiesMemento>>();
-				PullCallback pullCallback = new PullCallback(taskCompletionSource);
-				if (SavedGame == null)
-				{
-					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
-					return taskCompletionSource.Task;
-				}
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, pullCallback.HandleOpenConflict, pullCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(TrophiesMemento trophies)
-		{
-			//Discarded unreachable code: IL_00d0
-			string text = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", GetType().Name, trophies);
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
-				PushCallback pushCallback = new PushCallback(trophies, taskCompletionSource);
-				if (SavedGame == null)
-				{
-					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
-					return taskCompletionSource.Task;
-				}
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					SavedGame.OpenWithManualConflictResolution("Trophies", DataSource.ReadNetworkOnly, true, pushCallback.HandleOpenConflict, pushCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
+				this._promise.TrySetException(ex);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,30 +10,13 @@ namespace Rilisoft
 {
 	public class LicenseVerificationManager : MonoBehaviour, IDisposable
 	{
-		[CompilerGenerated]
-		private sealed class _003CVerify_003Ec__AnonStorey2CA
-		{
-			internal AndroidJavaObject lvlCheck;
-
-			internal int nonce;
-
-			internal Action<VerificationEventArgs> completionHandler;
-
-			internal LicenseVerificationManager _003C_003Ef__this;
-
-			internal void _003C_003Em__386()
-			{
-				_003C_003Ef__this.Process(lvlCheck, nonce, completionHandler);
-			}
-		}
-
 		public TextAsset serviceBinder;
 
 		public string publicKeyModulusBase64;
 
 		public string publicKeyExponentBase64;
 
-		private static readonly SHA1 _dummy = new SHA1CryptoServiceProvider();
+		private readonly static SHA1 _dummy;
 
 		private AndroidJavaObject _activity;
 
@@ -44,181 +28,36 @@ namespace Rilisoft
 
 		private readonly System.Random _prng = new System.Random();
 
-		private RSAParameters _publicKey = default(RSAParameters);
+		private RSAParameters _publicKey = new RSAParameters();
 
-		private void OnDestroy()
+		static LicenseVerificationManager()
 		{
-			Dispose();
+			LicenseVerificationManager._dummy = new SHA1CryptoServiceProvider();
 		}
 
-		private void Start()
+		public LicenseVerificationManager()
 		{
-			Debug.LogFormat("> {0}.Start()", GetType().Name);
-			try
-			{
-				if (serviceBinder == null || string.IsNullOrEmpty(publicKeyModulusBase64) || string.IsNullOrEmpty(publicKeyExponentBase64))
-				{
-					Debug.LogWarning("Object not properly initialized.");
-					return;
-				}
-				_publicKey.Modulus = Convert.FromBase64String(publicKeyModulusBase64);
-				_publicKey.Exponent = Convert.FromBase64String(publicKeyExponentBase64);
-				bool flag = false;
-				try
-				{
-					if (Application.platform == RuntimePlatform.Android)
-					{
-						flag = new AndroidJavaClass("android.os.Build").GetRawClass() != IntPtr.Zero;
-					}
-				}
-				catch (Exception message)
-				{
-					Debug.LogWarning(message);
-				}
-				if (!flag)
-				{
-					Debug.LogWarning("Not running on Android.");
-					return;
-				}
-				Debug.LogFormat("{0}.Start() > LoadServiceBinder()", GetType().Name);
-				try
-				{
-					LoadServiceBinder();
-				}
-				finally
-				{
-					Debug.LogFormat("{0}.Start() < LoadServiceBinder()", GetType().Name);
-				}
-				_disposed = false;
-			}
-			finally
-			{
-				Debug.LogFormat("< {0}.Start()", GetType().Name);
-			}
 		}
 
 		public void Dispose()
 		{
-			if (!_disposed)
+			if (this._disposed)
 			{
-				Resources.UnloadAsset(serviceBinder);
-				serviceBinder = null;
-				if (_activity != null)
-				{
-					_activity.Dispose();
-					_activity = null;
-				}
-				if (_lvlCheckType != null)
-				{
-					_lvlCheckType.Dispose();
-					_lvlCheckType = null;
-				}
-				_disposed = true;
+				return;
 			}
-		}
-
-		public void Verify(Action<VerificationEventArgs> completionHandler)
-		{
-			_003CVerify_003Ec__AnonStorey2CA _003CVerify_003Ec__AnonStorey2CA = new _003CVerify_003Ec__AnonStorey2CA();
-			_003CVerify_003Ec__AnonStorey2CA.completionHandler = completionHandler;
-			_003CVerify_003Ec__AnonStorey2CA._003C_003Ef__this = this;
-			if (_disposed)
+			Resources.UnloadAsset(this.serviceBinder);
+			this.serviceBinder = null;
+			if (this._activity != null)
 			{
-				Debug.LogWarningFormat("Object disposed: {0}", GetType().Name);
+				this._activity.Dispose();
+				this._activity = null;
 			}
-			else if (_003CVerify_003Ec__AnonStorey2CA.completionHandler == null)
+			if (this._lvlCheckType != null)
 			{
-				Debug.LogWarning("Completion handler should not be null.");
+				this._lvlCheckType.Dispose();
+				this._lvlCheckType = null;
 			}
-			else if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-			{
-				_003CVerify_003Ec__AnonStorey2CA.nonce = _prng.Next();
-				object[] args = new object[1] { new AndroidJavaObject[1] { _activity } };
-				if (_lvlCheckType == null)
-				{
-					Debug.LogWarning("LvlCheck is null.");
-					return;
-				}
-				AndroidJavaObject[] array = _lvlCheckType.Call<AndroidJavaObject[]>("getConstructors", new object[0]);
-				_003CVerify_003Ec__AnonStorey2CA.lvlCheck = array[0].Call<AndroidJavaObject>("newInstance", args);
-				_003CVerify_003Ec__AnonStorey2CA.lvlCheck.Call("create", _003CVerify_003Ec__AnonStorey2CA.nonce, new AndroidJavaRunnable(_003CVerify_003Ec__AnonStorey2CA._003C_003Em__386));
-			}
-		}
-
-		private void Process(AndroidJavaObject lvlCheck, int nonce, Action<VerificationEventArgs> completionHandler)
-		{
-			//Discarded unreachable code: IL_011a
-			Debug.LogFormat("> {0}.Process()", GetType().Name);
-			try
-			{
-				int num = lvlCheck.Get<int>("_arg0");
-				string text = lvlCheck.Get<string>("_arg1");
-				string text2 = lvlCheck.Get<string>("_arg2");
-				VerificationEventArgs verificationEventArgs = new VerificationEventArgs();
-				verificationEventArgs.ReceivedResponseCode = (ResponseCode)num;
-				verificationEventArgs.SentNonce = nonce;
-				verificationEventArgs.SentPackageName = _packageName;
-				VerificationEventArgs verificationEventArgs2 = verificationEventArgs;
-				if (num < 0 || string.IsNullOrEmpty(text) || string.IsNullOrEmpty(text2))
-				{
-					verificationEventArgs2.ErrorCode = VerificationErrorCode.BadResonceOrMessageOrSignature;
-					completionHandler(verificationEventArgs2);
-				}
-				else
-				{
-					try
-					{
-						byte[] bytes = Encoding.UTF8.GetBytes(text);
-						byte[] rgbSignature = Convert.FromBase64String(text2);
-						RSACryptoServiceProvider rSACryptoServiceProvider = new RSACryptoServiceProvider();
-						rSACryptoServiceProvider.ImportParameters(_publicKey);
-						SHA1Managed sHA1Managed = new SHA1Managed();
-						if (!rSACryptoServiceProvider.VerifyHash(sHA1Managed.ComputeHash(bytes), CryptoConfig.MapNameToOID("SHA1"), rgbSignature))
-						{
-							verificationEventArgs2.ErrorCode = VerificationErrorCode.InvalidSignature;
-							completionHandler(verificationEventArgs2);
-							goto IL_01ee;
-						}
-					}
-					catch (FormatException)
-					{
-						verificationEventArgs2.ErrorCode = VerificationErrorCode.FormatError;
-						completionHandler(verificationEventArgs2);
-						goto IL_01ee;
-					}
-					int num2 = text.IndexOf(':');
-					string text3 = ((num2 != -1) ? text.Substring(0, num2) : text);
-					string[] array = text3.Split('|');
-					if (array.Length < 6)
-					{
-						verificationEventArgs2.ErrorCode = VerificationErrorCode.InsufficientFieldCount;
-						completionHandler(verificationEventArgs2);
-					}
-					else
-					{
-						if (array[0].CompareTo(num.ToString()) == 0)
-						{
-							verificationEventArgs2.ReceivedNonce = Convert.ToInt32(array[1]);
-							verificationEventArgs2.ReceivedPackageName = array[2];
-							verificationEventArgs2.ReceivedVersionCode = Convert.ToInt32(array[3]);
-							verificationEventArgs2.ReceivedUserId = array[4];
-							verificationEventArgs2.ReceivedTimestamp = Convert.ToInt64(array[5]);
-							lvlCheck.Dispose();
-							completionHandler(verificationEventArgs2);
-							return;
-						}
-						verificationEventArgs2.ErrorCode = VerificationErrorCode.ResponceMismatch;
-						completionHandler(verificationEventArgs2);
-					}
-				}
-				goto IL_01ee;
-				IL_01ee:
-				Debug.LogWarningFormat("Response code: {0}    Message: '{1}'    Signature: '{2}'", num, text, text2);
-			}
-			finally
-			{
-				Debug.LogFormat("< {0}.Process()", GetType().Name);
-			}
+			this._disposed = true;
 		}
 
 		private void LoadServiceBinder()
@@ -227,32 +66,190 @@ namespace Rilisoft
 			{
 				return;
 			}
-			_activity = AndroidSystem.Instance.CurrentActivity;
-			_packageName = _activity.Call<string>("getPackageName", new object[0]);
+			this._activity = AndroidSystem.Instance.CurrentActivity;
+			this._packageName = this._activity.Call<string>("getPackageName", new object[0]);
 			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
 			{
-				Debug.LogFormat("{0}.LoadServiceBinder(): Skipping when target platform is Amazon.", GetType().Name);
+				Debug.LogFormat("{0}.LoadServiceBinder(): Skipping when target platform is Amazon.", new object[] { base.GetType().Name });
 				return;
 			}
-			string text = Path.Combine(_activity.Call<AndroidJavaObject>("getCacheDir", new object[0]).Call<string>("getPath", new object[0]), _packageName);
+			string str = Path.Combine(this._activity.Call<AndroidJavaObject>("getCacheDir", new object[0]).Call<string>("getPath", new object[0]), this._packageName);
 			if (Defs.IsDeveloperBuild)
 			{
-				Debug.LogFormat("Cache directory: {0}", text);
+				Debug.LogFormat("Cache directory: {0}", new object[] { str });
 			}
-			byte[] bytes = serviceBinder.bytes;
-			Directory.CreateDirectory(text);
-			File.WriteAllBytes(text + "/classes.jar", bytes);
-			Directory.CreateDirectory(text + "/odex");
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("dalvik.system.DexClassLoader", text + "/classes.jar", text + "/odex", null, _activity.Call<AndroidJavaObject>("getClassLoader", new object[0])))
+			byte[] numArray = this.serviceBinder.bytes;
+			Directory.CreateDirectory(str);
+			File.WriteAllBytes(string.Concat(str, "/classes.jar"), numArray);
+			Directory.CreateDirectory(string.Concat(str, "/odex"));
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("dalvik.system.DexClassLoader", new object[] { string.Concat(str, "/classes.jar"), string.Concat(str, "/odex"), null, this._activity.Call<AndroidJavaObject>("getClassLoader", new object[0]) }))
 			{
-				_lvlCheckType = androidJavaObject.Call<AndroidJavaObject>("findClass", new object[1] { "com.unity3d.plugin.lvl.ServiceBinder" });
+				this._lvlCheckType = androidJavaObject.Call<AndroidJavaObject>("findClass", new object[] { "com.unity3d.plugin.lvl.ServiceBinder" });
 			}
-			if (_lvlCheckType == null)
+			if (this._lvlCheckType == null)
 			{
 				Debug.Log("Could not instantiate ServiceBinder.");
-				Dispose();
+				this.Dispose();
 			}
-			Directory.Delete(text, true);
+			Directory.Delete(str, true);
+		}
+
+		private void OnDestroy()
+		{
+			this.Dispose();
+		}
+
+		private void Process(AndroidJavaObject lvlCheck, int nonce, Action<VerificationEventArgs> completionHandler)
+		{
+			Debug.LogFormat("> {0}.Process()", new object[] { base.GetType().Name });
+			try
+			{
+				int num = lvlCheck.Get<int>("_arg0");
+				string str = lvlCheck.Get<string>("_arg1");
+				string str1 = lvlCheck.Get<string>("_arg2");
+				VerificationEventArgs verificationEventArg = new VerificationEventArgs()
+				{
+					ReceivedResponseCode = (ResponseCode)num,
+					SentNonce = nonce,
+					SentPackageName = this._packageName
+				};
+				VerificationEventArgs num1 = verificationEventArg;
+				if (num < 0 || string.IsNullOrEmpty(str) || string.IsNullOrEmpty(str1))
+				{
+					num1.ErrorCode = VerificationErrorCode.BadResonceOrMessageOrSignature;
+					completionHandler(num1);
+				}
+				else
+				{
+					try
+					{
+						byte[] bytes = Encoding.UTF8.GetBytes(str);
+						byte[] numArray = Convert.FromBase64String(str1);
+						RSACryptoServiceProvider rSACryptoServiceProvider = new RSACryptoServiceProvider();
+						rSACryptoServiceProvider.ImportParameters(this._publicKey);
+						if (!rSACryptoServiceProvider.VerifyHash((new SHA1Managed()).ComputeHash(bytes), CryptoConfig.MapNameToOID("SHA1"), numArray))
+						{
+							num1.ErrorCode = VerificationErrorCode.InvalidSignature;
+							completionHandler(num1);
+							goto Label1;
+						}
+					}
+					catch (FormatException formatException)
+					{
+						num1.ErrorCode = VerificationErrorCode.FormatError;
+						completionHandler(num1);
+						goto Label1;
+					}
+					int num2 = str.IndexOf(':');
+					string[] strArrays = ((num2 != -1 ? str.Substring(0, num2) : str)).Split(new char[] { '|' });
+					if ((int)strArrays.Length < 6)
+					{
+						num1.ErrorCode = VerificationErrorCode.InsufficientFieldCount;
+						completionHandler(num1);
+					}
+					else if (strArrays[0].CompareTo(num.ToString()) == 0)
+					{
+						num1.ReceivedNonce = Convert.ToInt32(strArrays[1]);
+						num1.ReceivedPackageName = strArrays[2];
+						num1.ReceivedVersionCode = Convert.ToInt32(strArrays[3]);
+						num1.ReceivedUserId = strArrays[4];
+						num1.ReceivedTimestamp = Convert.ToInt64(strArrays[5]);
+						lvlCheck.Dispose();
+						completionHandler(num1);
+						return;
+					}
+					else
+					{
+						num1.ErrorCode = VerificationErrorCode.ResponceMismatch;
+						completionHandler(num1);
+					}
+				}
+			Label1:
+				object[] objArray = new object[] { num, str, str1 };
+				Debug.LogWarningFormat("Response code: {0}    Message: '{1}'    Signature: '{2}'", objArray);
+			}
+			finally
+			{
+				Debug.LogFormat("< {0}.Process()", new object[] { base.GetType().Name });
+			}
+		}
+
+		private void Start()
+		{
+			Debug.LogFormat("> {0}.Start()", new object[] { base.GetType().Name });
+			try
+			{
+				if (this.serviceBinder == null || string.IsNullOrEmpty(this.publicKeyModulusBase64) || string.IsNullOrEmpty(this.publicKeyExponentBase64))
+				{
+					Debug.LogWarning("Object not properly initialized.");
+				}
+				else
+				{
+					this._publicKey.Modulus = Convert.FromBase64String(this.publicKeyModulusBase64);
+					this._publicKey.Exponent = Convert.FromBase64String(this.publicKeyExponentBase64);
+					bool rawClass = false;
+					try
+					{
+						if (Application.platform == RuntimePlatform.Android)
+						{
+							rawClass = (new AndroidJavaClass("android.os.Build")).GetRawClass() != IntPtr.Zero;
+						}
+					}
+					catch (Exception exception)
+					{
+						Debug.LogWarning(exception);
+					}
+					if (rawClass)
+					{
+						Debug.LogFormat("{0}.Start() > LoadServiceBinder()", new object[] { base.GetType().Name });
+						try
+						{
+							this.LoadServiceBinder();
+						}
+						finally
+						{
+							Debug.LogFormat("{0}.Start() < LoadServiceBinder()", new object[] { base.GetType().Name });
+						}
+						this._disposed = false;
+					}
+					else
+					{
+						Debug.LogWarning("Not running on Android.");
+					}
+				}
+			}
+			finally
+			{
+				Debug.LogFormat("< {0}.Start()", new object[] { base.GetType().Name });
+			}
+		}
+
+		public void Verify(Action<VerificationEventArgs> completionHandler)
+		{
+			if (this._disposed)
+			{
+				Debug.LogWarningFormat("Object disposed: {0}", new object[] { base.GetType().Name });
+				return;
+			}
+			if (completionHandler == null)
+			{
+				Debug.LogWarning("Completion handler should not be null.");
+				return;
+			}
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
+			{
+				return;
+			}
+			int num = this._prng.Next();
+			object[] objArray = new object[] { new AndroidJavaObject[] { this._activity } };
+			if (this._lvlCheckType == null)
+			{
+				Debug.LogWarning("LvlCheck is null.");
+				return;
+			}
+			AndroidJavaObject[] androidJavaObjectArray = this._lvlCheckType.Call<AndroidJavaObject[]>("getConstructors", new object[0]);
+			AndroidJavaObject androidJavaObject = androidJavaObjectArray[0].Call<AndroidJavaObject>("newInstance", objArray);
+			androidJavaObject.Call("create", new object[] { num, new AndroidJavaRunnable(() => this.Process(androidJavaObject, num, completionHandler)) });
 		}
 	}
 }

@@ -1,3 +1,6 @@
+using System;
+using System.Reflection;
+
 namespace SimpleJSON
 {
 	internal class JSONLazyCreator : JSONNode
@@ -5,6 +8,78 @@ namespace SimpleJSON
 		private JSONNode m_Node;
 
 		private string m_Key;
+
+		public override JSONArray AsArray
+		{
+			get
+			{
+				JSONArray jSONArrays = new JSONArray();
+				this.Set(jSONArrays);
+				return jSONArrays;
+			}
+		}
+
+		public override bool AsBool
+		{
+			get
+			{
+				this.Set(new JSONData(false));
+				return false;
+			}
+			set
+			{
+				this.Set(new JSONData(value));
+			}
+		}
+
+		public override double AsDouble
+		{
+			get
+			{
+				this.Set(new JSONData(0));
+				return 0;
+			}
+			set
+			{
+				this.Set(new JSONData(value));
+			}
+		}
+
+		public override float AsFloat
+		{
+			get
+			{
+				this.Set(new JSONData(0f));
+				return 0f;
+			}
+			set
+			{
+				this.Set(new JSONData(value));
+			}
+		}
+
+		public override int AsInt
+		{
+			get
+			{
+				this.Set(new JSONData(0));
+				return 0;
+			}
+			set
+			{
+				this.Set(new JSONData(value));
+			}
+		}
+
+		public override JSONClass AsObject
+		{
+			get
+			{
+				JSONClass jSONClasses = new JSONClass();
+				this.Set(jSONClasses);
+				return jSONClasses;
+			}
+		}
 
 		public override JSONNode this[int aIndex]
 		{
@@ -14,9 +89,10 @@ namespace SimpleJSON
 			}
 			set
 			{
-				JSONArray jSONArray = new JSONArray();
-				jSONArray.Add(value);
-				Set(jSONArray);
+				this.Set(new JSONArray()
+				{
+					value
+				});
 			}
 		}
 
@@ -28,129 +104,39 @@ namespace SimpleJSON
 			}
 			set
 			{
-				JSONClass jSONClass = new JSONClass();
-				jSONClass.Add(aKey, value);
-				Set(jSONClass);
-			}
-		}
-
-		public override int AsInt
-		{
-			get
-			{
-				JSONData aVal = new JSONData(0);
-				Set(aVal);
-				return 0;
-			}
-			set
-			{
-				JSONData aVal = new JSONData(value);
-				Set(aVal);
-			}
-		}
-
-		public override float AsFloat
-		{
-			get
-			{
-				JSONData aVal = new JSONData(0f);
-				Set(aVal);
-				return 0f;
-			}
-			set
-			{
-				JSONData aVal = new JSONData(value);
-				Set(aVal);
-			}
-		}
-
-		public override double AsDouble
-		{
-			get
-			{
-				JSONData aVal = new JSONData(0.0);
-				Set(aVal);
-				return 0.0;
-			}
-			set
-			{
-				JSONData aVal = new JSONData(value);
-				Set(aVal);
-			}
-		}
-
-		public override bool AsBool
-		{
-			get
-			{
-				JSONData aVal = new JSONData(false);
-				Set(aVal);
-				return false;
-			}
-			set
-			{
-				JSONData aVal = new JSONData(value);
-				Set(aVal);
-			}
-		}
-
-		public override JSONArray AsArray
-		{
-			get
-			{
-				JSONArray jSONArray = new JSONArray();
-				Set(jSONArray);
-				return jSONArray;
-			}
-		}
-
-		public override JSONClass AsObject
-		{
-			get
-			{
-				JSONClass jSONClass = new JSONClass();
-				Set(jSONClass);
-				return jSONClass;
+				this.Set(new JSONClass()
+				{
+					{ aKey, value }
+				});
 			}
 		}
 
 		public JSONLazyCreator(JSONNode aNode)
 		{
-			m_Node = aNode;
-			m_Key = null;
+			this.m_Node = aNode;
+			this.m_Key = null;
 		}
 
 		public JSONLazyCreator(JSONNode aNode, string aKey)
 		{
-			m_Node = aNode;
-			m_Key = aKey;
-		}
-
-		private void Set(JSONNode aVal)
-		{
-			if (m_Key == null)
-			{
-				m_Node.Add(aVal);
-			}
-			else
-			{
-				m_Node.Add(m_Key, aVal);
-			}
-			m_Node = null;
+			this.m_Node = aNode;
+			this.m_Key = aKey;
 		}
 
 		public override void Add(JSONNode aItem)
 		{
-			JSONArray jSONArray = new JSONArray();
-			jSONArray.Add(aItem);
-			Set(jSONArray);
+			this.Set(new JSONArray()
+			{
+				aItem
+			});
 		}
 
 		public override void Add(string aKey, JSONNode aItem)
 		{
-			JSONClass jSONClass = new JSONClass();
-			jSONClass.Add(aKey, aItem);
-			Set(jSONClass);
+			this.Set(new JSONClass()
+			{
+				{ aKey, aItem }
+			});
 		}
 
 		public override bool Equals(object obj)
@@ -167,16 +153,6 @@ namespace SimpleJSON
 			return base.GetHashCode();
 		}
 
-		public override string ToString()
-		{
-			return string.Empty;
-		}
-
-		public override string ToString(string aPrefix)
-		{
-			return string.Empty;
-		}
-
 		public static bool operator ==(JSONLazyCreator a, object b)
 		{
 			if (b == null)
@@ -189,6 +165,29 @@ namespace SimpleJSON
 		public static bool operator !=(JSONLazyCreator a, object b)
 		{
 			return !(a == b);
+		}
+
+		private void Set(JSONNode aVal)
+		{
+			if (this.m_Key != null)
+			{
+				this.m_Node.Add(this.m_Key, aVal);
+			}
+			else
+			{
+				this.m_Node.Add(aVal);
+			}
+			this.m_Node = null;
+		}
+
+		public override string ToString()
+		{
+			return string.Empty;
+		}
+
+		public override string ToString(string aPrefix)
+		{
+			return string.Empty;
 		}
 	}
 }

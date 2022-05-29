@@ -1,37 +1,24 @@
+using GooglePlayGames.BasicApi;
 using System;
 using System.Runtime.CompilerServices;
-using GooglePlayGames.BasicApi;
 using UnityEngine.SocialPlatforms;
 
 namespace GooglePlayGames
 {
 	public class PlayGamesLocalUser : PlayGamesUserProfile, IUserProfile, ILocalUser
 	{
-		[CompilerGenerated]
-		private sealed class _003CGetStats_003Ec__AnonStorey1F7
-		{
-			internal Action<CommonStatusCodes, PlayerStats> callback;
-
-			internal PlayGamesLocalUser _003C_003Ef__this;
-
-			internal void _003C_003Em__7A(CommonStatusCodes rc, PlayerStats stats)
-			{
-				_003C_003Ef__this.mStats = stats;
-				callback(rc, stats);
-			}
-		}
-
 		internal PlayGamesPlatform mPlatform;
 
 		private string emailAddress;
 
 		private PlayerStats mStats;
 
-		public IUserProfile[] friends
+		[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
+		public string accessToken
 		{
 			get
 			{
-				return mPlatform.GetFriends();
+				return (!this.authenticated ? string.Empty : this.mPlatform.GetAccessToken());
 			}
 		}
 
@@ -39,32 +26,45 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return mPlatform.IsAuthenticated();
+				return this.mPlatform.IsAuthenticated();
 			}
 		}
 
-		public bool underage
+		public new string AvatarURL
 		{
 			get
 			{
-				return true;
-			}
-		}
-
-		public new string userName
-		{
-			get
-			{
-				string text = string.Empty;
-				if (authenticated)
+				string empty = string.Empty;
+				if (this.authenticated)
 				{
-					text = mPlatform.GetUserDisplayName();
-					if (!base.userName.Equals(text))
+					empty = this.mPlatform.GetUserImageUrl();
+					if (!base.id.Equals(empty))
 					{
-						ResetIdentity(text, mPlatform.GetUserId(), mPlatform.GetUserImageUrl());
+						base.ResetIdentity(this.mPlatform.GetUserDisplayName(), this.mPlatform.GetUserId(), empty);
 					}
 				}
-				return text;
+				return empty;
+			}
+		}
+
+		public string Email
+		{
+			get
+			{
+				if (this.authenticated && string.IsNullOrEmpty(this.emailAddress))
+				{
+					this.emailAddress = this.mPlatform.GetUserEmail();
+					this.emailAddress = this.emailAddress ?? string.Empty;
+				}
+				return (!this.authenticated ? string.Empty : this.emailAddress);
+			}
+		}
+
+		public IUserProfile[] friends
+		{
+			get
+			{
+				return this.mPlatform.GetFriends();
 			}
 		}
 
@@ -72,25 +72,16 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				string text = string.Empty;
-				if (authenticated)
+				string empty = string.Empty;
+				if (this.authenticated)
 				{
-					text = mPlatform.GetUserId();
-					if (!base.id.Equals(text))
+					empty = this.mPlatform.GetUserId();
+					if (!base.id.Equals(empty))
 					{
-						ResetIdentity(mPlatform.GetUserDisplayName(), text, mPlatform.GetUserImageUrl());
+						base.ResetIdentity(this.mPlatform.GetUserDisplayName(), empty, this.mPlatform.GetUserImageUrl());
 					}
 				}
-				return text;
-			}
-		}
-
-		[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
-		public string accessToken
-		{
-			get
-			{
-				return (!authenticated) ? string.Empty : mPlatform.GetAccessToken();
+				return empty;
 			}
 		}
 
@@ -110,85 +101,79 @@ namespace GooglePlayGames
 			}
 		}
 
-		public new string AvatarURL
+		public bool underage
 		{
 			get
 			{
-				string text = string.Empty;
-				if (authenticated)
+				return true;
+			}
+		}
+
+		public new string userName
+		{
+			get
+			{
+				string empty = string.Empty;
+				if (this.authenticated)
 				{
-					text = mPlatform.GetUserImageUrl();
-					if (!base.id.Equals(text))
+					empty = this.mPlatform.GetUserDisplayName();
+					if (!base.userName.Equals(empty))
 					{
-						ResetIdentity(mPlatform.GetUserDisplayName(), mPlatform.GetUserId(), text);
+						base.ResetIdentity(empty, this.mPlatform.GetUserId(), this.mPlatform.GetUserImageUrl());
 					}
 				}
-				return text;
+				return empty;
 			}
 		}
 
-		public string Email
+		internal PlayGamesLocalUser(PlayGamesPlatform plaf) : base("localUser", string.Empty, string.Empty)
 		{
-			get
-			{
-				if (authenticated && string.IsNullOrEmpty(emailAddress))
-				{
-					emailAddress = mPlatform.GetUserEmail();
-					emailAddress = emailAddress ?? string.Empty;
-				}
-				return (!authenticated) ? string.Empty : emailAddress;
-			}
-		}
-
-		internal PlayGamesLocalUser(PlayGamesPlatform plaf)
-			: base("localUser", string.Empty, string.Empty)
-		{
-			mPlatform = plaf;
-			emailAddress = null;
-			mStats = null;
+			this.mPlatform = plaf;
+			this.emailAddress = null;
+			this.mStats = null;
 		}
 
 		public void Authenticate(Action<bool> callback)
 		{
-			mPlatform.Authenticate(callback);
+			this.mPlatform.Authenticate(callback);
 		}
 
 		public void Authenticate(Action<bool> callback, bool silent)
 		{
-			mPlatform.Authenticate(callback, silent);
-		}
-
-		public void LoadFriends(Action<bool> callback)
-		{
-			mPlatform.LoadFriends(this, callback);
+			this.mPlatform.Authenticate(callback, silent);
 		}
 
 		[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
 		public void GetIdToken(Action<string> idTokenCallback)
 		{
-			if (authenticated)
+			if (!this.authenticated)
 			{
-				mPlatform.GetIdToken(idTokenCallback);
+				idTokenCallback(null);
 			}
 			else
 			{
-				idTokenCallback(null);
+				this.mPlatform.GetIdToken(idTokenCallback);
 			}
 		}
 
 		public void GetStats(Action<CommonStatusCodes, PlayerStats> callback)
 		{
-			_003CGetStats_003Ec__AnonStorey1F7 _003CGetStats_003Ec__AnonStorey1F = new _003CGetStats_003Ec__AnonStorey1F7();
-			_003CGetStats_003Ec__AnonStorey1F.callback = callback;
-			_003CGetStats_003Ec__AnonStorey1F._003C_003Ef__this = this;
-			if (mStats == null || !mStats.Valid)
+			if (this.mStats == null || !this.mStats.Valid)
 			{
-				mPlatform.GetPlayerStats(_003CGetStats_003Ec__AnonStorey1F._003C_003Em__7A);
+				this.mPlatform.GetPlayerStats((CommonStatusCodes rc, PlayerStats stats) => {
+					this.mStats = stats;
+					callback(rc, stats);
+				});
 			}
 			else
 			{
-				_003CGetStats_003Ec__AnonStorey1F.callback(CommonStatusCodes.Success, mStats);
+				callback(0, this.mStats);
 			}
+		}
+
+		public void LoadFriends(Action<bool> callback)
+		{
+			this.mPlatform.LoadFriends(this, callback);
 		}
 	}
 }

@@ -1,26 +1,41 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public sealed class KillMonsterEventArgs : EventArgs
 	{
-		public ShopNGUIController.CategoryNames WeaponSlot { get; set; }
+		public bool Campaign
+		{
+			get;
+			set;
+		}
 
-		public bool Campaign { get; set; }
+		public ShopNGUIController.CategoryNames WeaponSlot
+		{
+			get;
+			set;
+		}
+
+		public KillMonsterEventArgs()
+		{
+		}
 
 		public Dictionary<string, object> ToJson()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("weaponSlot", WeaponSlot);
-			dictionary.Add("campaign", Campaign);
-			return dictionary;
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "weaponSlot", this.WeaponSlot },
+				{ "campaign", this.Campaign }
+			};
+			return strs;
 		}
 
 		public override string ToString()
 		{
-			return Json.Serialize(ToJson());
+			return Json.Serialize(this.ToJson());
 		}
 	}
 }

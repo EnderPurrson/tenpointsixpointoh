@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class EveryplayAnimatedThumbnail : MonoBehaviour
@@ -15,99 +19,94 @@ public class EveryplayAnimatedThumbnail : MonoBehaviour
 
 	private float blend;
 
-	private void Awake()
+	public EveryplayAnimatedThumbnail()
 	{
-		mainRenderer = GetComponent<Renderer>();
 	}
 
-	private void Start()
+	private void Awake()
 	{
-		thumbnailPool = (EveryplayThumbnailPool)Object.FindObjectOfType(typeof(EveryplayThumbnailPool));
-		if ((bool)thumbnailPool)
-		{
-			defaultTexture = mainRenderer.material.mainTexture;
-			ResetThumbnail();
-		}
-		else
-		{
-			Debug.Log("Everyplay thumbnail pool not found or no material was defined!");
-		}
+		this.mainRenderer = base.GetComponent<Renderer>();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator CrossfadeTransition()
+	{
+		EveryplayAnimatedThumbnail.u003cCrossfadeTransitionu003ec__Iterator4 variable = null;
+		return variable;
 	}
 
 	private void OnDestroy()
 	{
-		StopTransitions();
+		this.StopTransitions();
 	}
 
 	private void OnDisable()
 	{
-		StopTransitions();
+		this.StopTransitions();
 	}
 
 	private void ResetThumbnail()
 	{
-		currentIndex = -1;
-		StopTransitions();
-		blend = 0f;
-		mainRenderer.material.SetFloat("_Blend", blend);
-		if (mainRenderer.material.mainTexture != defaultTexture)
+		this.currentIndex = -1;
+		this.StopTransitions();
+		this.blend = 0f;
+		this.mainRenderer.material.SetFloat("_Blend", this.blend);
+		if (this.mainRenderer.material.mainTexture != this.defaultTexture)
 		{
-			mainRenderer.material.mainTextureScale = Vector2.one;
-			mainRenderer.material.mainTexture = defaultTexture;
+			this.mainRenderer.material.mainTextureScale = Vector2.one;
+			this.mainRenderer.material.mainTexture = this.defaultTexture;
 		}
 	}
 
-	private IEnumerator CrossfadeTransition()
+	private void Start()
 	{
-		while (blend < 1f && transitionInProgress)
+		this.thumbnailPool = (EveryplayThumbnailPool)UnityEngine.Object.FindObjectOfType(typeof(EveryplayThumbnailPool));
+		if (!this.thumbnailPool)
 		{
-			blend += 0.1f;
-			mainRenderer.material.SetFloat("_Blend", blend);
-			yield return new WaitForSeconds(0.025f);
+			UnityEngine.Debug.Log("Everyplay thumbnail pool not found or no material was defined!");
 		}
-		mainRenderer.material.mainTexture = mainRenderer.material.GetTexture("_MainTex2");
-		mainRenderer.material.mainTextureScale = mainRenderer.material.GetTextureScale("_MainTex2");
-		blend = 0f;
-		mainRenderer.material.SetFloat("_Blend", blend);
-		transitionInProgress = false;
+		else
+		{
+			this.defaultTexture = this.mainRenderer.material.mainTexture;
+			this.ResetThumbnail();
+		}
 	}
 
 	private void StopTransitions()
 	{
-		transitionInProgress = false;
-		StopAllCoroutines();
+		this.transitionInProgress = false;
+		base.StopAllCoroutines();
 	}
 
 	private void Update()
 	{
-		if (!thumbnailPool || transitionInProgress)
+		if (this.thumbnailPool && !this.transitionInProgress)
 		{
-			return;
-		}
-		if (thumbnailPool.availableThumbnailCount > 0)
-		{
-			if (currentIndex < 0)
+			if (this.thumbnailPool.availableThumbnailCount <= 0)
 			{
-				currentIndex = 0;
-				mainRenderer.material.mainTextureScale = thumbnailPool.thumbnailScale;
-				mainRenderer.material.mainTexture = thumbnailPool.thumbnailTextures[currentIndex];
-			}
-			else if (thumbnailPool.availableThumbnailCount > 1 && Time.frameCount % 50 == 0)
-			{
-				currentIndex++;
-				if (currentIndex >= thumbnailPool.availableThumbnailCount)
+				if (this.currentIndex >= 0)
 				{
-					currentIndex = 0;
+					this.ResetThumbnail();
 				}
-				mainRenderer.material.SetTextureScale("_MainTex2", thumbnailPool.thumbnailScale);
-				mainRenderer.material.SetTexture("_MainTex2", thumbnailPool.thumbnailTextures[currentIndex]);
-				transitionInProgress = true;
-				StartCoroutine("CrossfadeTransition");
 			}
-		}
-		else if (currentIndex >= 0)
-		{
-			ResetThumbnail();
+			else if (this.currentIndex < 0)
+			{
+				this.currentIndex = 0;
+				this.mainRenderer.material.mainTextureScale = this.thumbnailPool.thumbnailScale;
+				this.mainRenderer.material.mainTexture = this.thumbnailPool.thumbnailTextures[this.currentIndex];
+			}
+			else if (this.thumbnailPool.availableThumbnailCount > 1 && Time.frameCount % 50 == 0)
+			{
+				this.currentIndex++;
+				if (this.currentIndex >= this.thumbnailPool.availableThumbnailCount)
+				{
+					this.currentIndex = 0;
+				}
+				this.mainRenderer.material.SetTextureScale("_MainTex2", this.thumbnailPool.thumbnailScale);
+				this.mainRenderer.material.SetTexture("_MainTex2", this.thumbnailPool.thumbnailTextures[this.currentIndex]);
+				this.transitionInProgress = true;
+				base.StartCoroutine("CrossfadeTransition");
+			}
 		}
 	}
 }

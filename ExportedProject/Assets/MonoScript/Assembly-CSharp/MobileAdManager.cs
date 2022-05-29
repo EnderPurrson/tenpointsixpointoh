@@ -1,40 +1,20 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 internal sealed class MobileAdManager
 {
-	public enum Type
-	{
-		Image = 0,
-		Video = 1
-	}
-
-	public enum State
-	{
-		None = 0,
-		Idle = 1,
-		Loaded = 2
-	}
-
-	internal enum SampleGroup
-	{
-		Unknown = 0,
-		Video = 1,
-		Image = 2
-	}
-
 	internal const string TextInterstitialUnitId = "ca-app-pub-5590536419057381/7885668153";
 
 	internal const string DefaultImageInterstitialUnitId = "ca-app-pub-5590536419057381/1950086558";
 
 	internal const string DefaultVideoInterstitialUnitId = "ca-app-pub-5590536419057381/2096360557";
 
-	private static byte[] _guid = new byte[0];
+	private static byte[] _guid;
 
 	private int _imageAdUnitIdIndex;
 
@@ -44,102 +24,17 @@ internal sealed class MobileAdManager
 
 	private int _videoIdGroupIndex;
 
-	private static readonly Lazy<MobileAdManager> _instance;
+	private readonly static Lazy<MobileAdManager> _instance;
 
-	[CompilerGenerated]
-	private static Func<MobileAdManager> _003C_003Ef__am_0024cache9;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheA;
-
-	public static MobileAdManager Instance
+	private List<string> AdmobImageAdUnitIds
 	{
 		get
 		{
-			return _instance.Value;
-		}
-	}
-
-	public State ImageInterstitialState
-	{
-		get
-		{
-			throw new NotSupportedException();
-		}
-	}
-
-	public State VideoInterstitialState
-	{
-		get
-		{
-			throw new NotSupportedException();
-		}
-	}
-
-	public string ImageAdFailedToLoadMessage { get; private set; }
-
-	public string VideoAdFailedToLoadMessage { get; private set; }
-
-	internal bool SuppressShowOnReturnFromPause { get; set; }
-
-	internal static byte[] GuidBytes
-	{
-		get
-		{
-			if (_guid != null && _guid.Length > 0)
+			if (PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0)
 			{
-				return _guid;
+				return PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds;
 			}
-			if (PlayerPrefs.HasKey("Guid"))
-			{
-				try
-				{
-					_guid = new Guid(PlayerPrefs.GetString("Guid")).ToByteArray();
-				}
-				catch
-				{
-					Guid guid = Guid.NewGuid();
-					_guid = guid.ToByteArray();
-					PlayerPrefs.SetString("Guid", guid.ToString("D"));
-					PlayerPrefs.Save();
-				}
-			}
-			else
-			{
-				Guid guid2 = Guid.NewGuid();
-				_guid = guid2.ToByteArray();
-				PlayerPrefs.SetString("Guid", guid2.ToString("D"));
-				PlayerPrefs.Save();
-			}
-			return _guid;
-		}
-	}
-
-	private string ImageInterstitialUnitId
-	{
-		get
-		{
-			if (PromoActionsManager.MobileAdvert == null || PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0)
-			{
-				return "ca-app-pub-5590536419057381/1950086558";
-			}
-			return AdmobImageAdUnitIds[_imageAdUnitIdIndex % AdmobImageAdUnitIds.Count];
-		}
-	}
-
-	private string VideoInterstitialUnitId
-	{
-		get
-		{
-			if (PromoActionsManager.MobileAdvert == null)
-			{
-				return "ca-app-pub-5590536419057381/2096360557";
-			}
-			if (AdmobVideoAdUnitIds.Count == 0)
-			{
-				return (!string.IsNullOrEmpty(PromoActionsManager.MobileAdvert.AdmobVideoAdUnitId)) ? PromoActionsManager.MobileAdvert.AdmobVideoAdUnitId : "ca-app-pub-5590536419057381/2096360557";
-			}
-			return AdmobVideoAdUnitIds[_videoAdUnitIdIndex % AdmobVideoAdUnitIds.Count];
+			return PromoActionsManager.MobileAdvert.AdmobImageIdGroups[this._imageIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count];
 		}
 	}
 
@@ -151,59 +46,293 @@ internal sealed class MobileAdManager
 			{
 				return PromoActionsManager.MobileAdvert.AdmobVideoAdUnitIds;
 			}
-			return PromoActionsManager.MobileAdvert.AdmobVideoIdGroups[_videoIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count];
+			return PromoActionsManager.MobileAdvert.AdmobVideoIdGroups[this._videoIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count];
 		}
 	}
 
-	private List<string> AdmobImageAdUnitIds
+	internal static byte[] GuidBytes
 	{
 		get
 		{
-			if (PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0)
+			if (MobileAdManager._guid != null && (int)MobileAdManager._guid.Length > 0)
 			{
-				return PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds;
+				return MobileAdManager._guid;
 			}
-			return PromoActionsManager.MobileAdvert.AdmobImageIdGroups[_imageIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count];
+			if (!PlayerPrefs.HasKey("Guid"))
+			{
+				Guid guid = Guid.NewGuid();
+				MobileAdManager._guid = guid.ToByteArray();
+				PlayerPrefs.SetString("Guid", guid.ToString("D"));
+				PlayerPrefs.Save();
+			}
+			else
+			{
+				try
+				{
+					Guid guid1 = new Guid(PlayerPrefs.GetString("Guid"));
+					MobileAdManager._guid = guid1.ToByteArray();
+				}
+				catch
+				{
+					Guid guid2 = Guid.NewGuid();
+					MobileAdManager._guid = guid2.ToByteArray();
+					PlayerPrefs.SetString("Guid", guid2.ToString("D"));
+					PlayerPrefs.Save();
+				}
+			}
+			return MobileAdManager._guid;
 		}
+	}
+
+	public string ImageAdFailedToLoadMessage
+	{
+		get;
+		private set;
 	}
 
 	internal int ImageAdUnitIndexClamped
 	{
 		get
 		{
-			if (AdmobImageAdUnitIds.Count == 0)
+			if (this.AdmobImageAdUnitIds.Count == 0)
 			{
 				return -1;
 			}
-			return _imageAdUnitIdIndex % AdmobImageAdUnitIds.Count;
+			return this._imageAdUnitIdIndex % this.AdmobImageAdUnitIds.Count;
 		}
+	}
+
+	public MobileAdManager.State ImageInterstitialState
+	{
+		get
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	private string ImageInterstitialUnitId
+	{
+		get
+		{
+			if (PromoActionsManager.MobileAdvert == null || PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0)
+			{
+				return "ca-app-pub-5590536419057381/1950086558";
+			}
+			string item = this.AdmobImageAdUnitIds[this._imageAdUnitIdIndex % this.AdmobImageAdUnitIds.Count];
+			return item;
+		}
+	}
+
+	public static MobileAdManager Instance
+	{
+		get
+		{
+			return MobileAdManager._instance.Value;
+		}
+	}
+
+	internal bool SuppressShowOnReturnFromPause
+	{
+		get;
+		set;
+	}
+
+	public string VideoAdFailedToLoadMessage
+	{
+		get;
+		private set;
 	}
 
 	internal int VideoAdUnitIndexClamped
 	{
 		get
 		{
-			if (AdmobVideoAdUnitIds.Count == 0)
+			if (this.AdmobVideoAdUnitIds.Count == 0)
 			{
 				return -1;
 			}
-			return _videoAdUnitIdIndex % AdmobVideoAdUnitIds.Count;
+			return this._videoAdUnitIdIndex % this.AdmobVideoAdUnitIds.Count;
 		}
 	}
 
-	private MobileAdManager()
+	public MobileAdManager.State VideoInterstitialState
 	{
-		ImageAdFailedToLoadMessage = string.Empty;
-		VideoAdFailedToLoadMessage = string.Empty;
+		get
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	private string VideoInterstitialUnitId
+	{
+		get
+		{
+			if (PromoActionsManager.MobileAdvert == null)
+			{
+				return "ca-app-pub-5590536419057381/2096360557";
+			}
+			if (this.AdmobVideoAdUnitIds.Count == 0)
+			{
+				return (!string.IsNullOrEmpty(PromoActionsManager.MobileAdvert.AdmobVideoAdUnitId) ? PromoActionsManager.MobileAdvert.AdmobVideoAdUnitId : "ca-app-pub-5590536419057381/2096360557");
+			}
+			return this.AdmobVideoAdUnitIds[this._videoAdUnitIdIndex % this.AdmobVideoAdUnitIds.Count];
+		}
 	}
 
 	static MobileAdManager()
 	{
-		if (_003C_003Ef__am_0024cache9 == null)
+		MobileAdManager._guid = new byte[0];
+		MobileAdManager._instance = new Lazy<MobileAdManager>(() => new MobileAdManager());
+	}
+
+	private MobileAdManager()
+	{
+		this.ImageAdFailedToLoadMessage = string.Empty;
+		this.VideoAdFailedToLoadMessage = string.Empty;
+	}
+
+	internal static bool AdIsApplicable(MobileAdManager.Type adType)
+	{
+		return MobileAdManager.AdIsApplicable(adType, false);
+	}
+
+	internal static bool AdIsApplicable(MobileAdManager.Type adType, bool verbose)
+	{
+		if (PromoActionsManager.MobileAdvert != null)
 		{
-			_003C_003Ef__am_0024cache9 = _003C_instance_003Em__38A;
+			return MobileAdManager.UserPredicate(adType, verbose, false, false);
 		}
-		_instance = new Lazy<MobileAdManager>(_003C_003Ef__am_0024cache9);
+		if (verbose)
+		{
+			Debug.LogWarningFormat("AdIsApplicable ({0}): false, because PromoActionsManager.MobileAdvert == null", new object[] { adType });
+		}
+		return false;
+	}
+
+	public void DestroyImageInterstitial()
+	{
+	}
+
+	private void DestroyImageInterstitialCore()
+	{
+	}
+
+	public void DestroyVideoInterstitial()
+	{
+	}
+
+	private void DestroyVideoInterstitialCore()
+	{
+	}
+
+	internal static MobileAdManager.SampleGroup GetSempleGroup()
+	{
+		return (MobileAdManager.GuidBytes[0] % 2 != 0 ? MobileAdManager.SampleGroup.Video : MobileAdManager.SampleGroup.Image);
+	}
+
+	private static bool IsLongTimeShowBaner()
+	{
+		DateTime dateTime;
+		string str = PlayerPrefs.GetString(Defs.LastTimeShowBanerKey, string.Empty);
+		if (string.IsNullOrEmpty(str))
+		{
+			return true;
+		}
+		if (!DateTime.TryParse(str, out dateTime))
+		{
+			return false;
+		}
+		TimeSpan utcNow = DateTime.UtcNow - dateTime;
+		return utcNow.TotalSeconds > (double)PromoActionsManager.MobileAdvert.TimeoutBetweenShowInterstitial;
+	}
+
+	private static bool IsNewUser()
+	{
+		if (PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 1) > PromoActionsManager.MobileAdvert.CountSessionNewPlayer)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public static bool IsNewUserOldMetod()
+	{
+		DateTimeOffset dateTimeOffset;
+		string str = PlayerPrefs.GetString("First Launch (Advertisement)", string.Empty);
+		if (string.IsNullOrEmpty(str) || !DateTimeOffset.TryParse(str, out dateTimeOffset))
+		{
+			return true;
+		}
+		return (DateTimeOffset.Now - dateTimeOffset).TotalDays < 7;
+	}
+
+	public static bool IsPayingUser()
+	{
+		return FlurryPluginWrapper.IsPayingUser();
+	}
+
+	private void LogToFlurry(string eventName, string context)
+	{
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ "Menu", context }
+		};
+		if (ExperienceController.sharedController != null)
+		{
+			strs.Add("Levels", ExperienceController.sharedController.currentLevel.ToString());
+		}
+		if (ExpController.Instance != null)
+		{
+			strs.Add("Tiers", ExpController.Instance.OurTier.ToString());
+		}
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, strs, true);
+	}
+
+	internal static void RefreshBytes()
+	{
+		Guid guid = new Guid(MobileAdManager._guid);
+		PlayerPrefs.SetString("Guid", guid.ToString("D"));
+		PlayerPrefs.Save();
+	}
+
+	internal static string RemovePrefix(string s)
+	{
+		if (string.IsNullOrEmpty(s))
+		{
+			return string.Empty;
+		}
+		int num = s.IndexOf('/');
+		return (num <= 0 ? s : s.Remove(0, num));
+	}
+
+	internal bool ResetImageAdUnitId()
+	{
+		int num = this._imageAdUnitIdIndex;
+		string imageInterstitialUnitId = this.ImageInterstitialUnitId;
+		int num1 = this._imageIdGroupIndex;
+		this._imageAdUnitIdIndex = 0;
+		this._imageIdGroupIndex = 0;
+		if (Defs.IsDeveloperBuild)
+		{
+			string str = string.Format("Resetting image ad unit id from {0} to {1}; group index from {2} to 0", num, this._imageAdUnitIdIndex, num1);
+			Debug.Log(str);
+		}
+		return true;
+	}
+
+	internal bool ResetVideoAdUnitId()
+	{
+		int num = this._videoAdUnitIdIndex;
+		string videoInterstitialUnitId = this.VideoInterstitialUnitId;
+		int num1 = this._videoIdGroupIndex;
+		this._videoAdUnitIdIndex = 0;
+		this._videoIdGroupIndex = 0;
+		if (Defs.IsDeveloperBuild)
+		{
+			string str = string.Format("Resetting video group from {0} to {1}", num1, this._videoIdGroupIndex);
+			Debug.Log(str);
+		}
+		return true;
 	}
 
 	public void ShowImageInterstitial(string context)
@@ -216,267 +345,139 @@ internal sealed class MobileAdManager
 
 	public void ShowVideoInterstitial(string context)
 	{
-		if (_003C_003Ef__am_0024cacheA == null)
-		{
-			_003C_003Ef__am_0024cacheA = _003CShowVideoInterstitial_003Em__38B;
-		}
-		ShowVideoInterstitial(context, _003C_003Ef__am_0024cacheA);
-	}
-
-	public void DestroyImageInterstitial()
-	{
-	}
-
-	public void DestroyVideoInterstitial()
-	{
-	}
-
-	private void DestroyImageInterstitialCore()
-	{
-	}
-
-	private void DestroyVideoInterstitialCore()
-	{
-	}
-
-	internal static bool AdIsApplicable(Type adType)
-	{
-		return AdIsApplicable(adType, false);
-	}
-
-	internal static bool AdIsApplicable(Type adType, bool verbose)
-	{
-		if (PromoActionsManager.MobileAdvert == null)
-		{
-			if (verbose)
-			{
-				Debug.LogWarningFormat("AdIsApplicable ({0}): false, because PromoActionsManager.MobileAdvert == null", adType);
-			}
-			return false;
-		}
-		return UserPredicate(adType, verbose);
-	}
-
-	public static bool UserPredicate(Type adType, bool verbose, bool showToPaying = false, bool showToNew = false)
-	{
-		bool flag = IsNewUser();
-		bool flag2 = IsPayingUser();
-		bool flag9;
-		if (adType == Type.Video)
-		{
-			int lobbyLevel = ExpController.LobbyLevel;
-			bool flag3 = lobbyLevel >= 3;
-			bool flag4 = PromoActionsManager.MobileAdvert != null && PromoActionsManager.MobileAdvert.VideoEnabled;
-			bool flag5 = PromoActionsManager.MobileAdvert != null && PromoActionsManager.MobileAdvert.VideoShowPaying;
-			bool flag6 = PromoActionsManager.MobileAdvert != null && PromoActionsManager.MobileAdvert.VideoShowNonpaying;
-			bool flag7 = (flag2 && flag5) || (!flag2 && flag6);
-			bool flag8 = PlayerPrefs.GetInt("CountRunMenu", 0) >= 3;
-			flag9 = flag4 && flag8 && flag7 && flag3;
-			if (verbose)
-			{
-				Debug.LogFormat("AdIsApplicable ({0}): {1}    Paying: {2},  Need to show: {3},  Session count satisfied: {4},  Lobby level: {5}", adType, flag9, flag2, (!flag2) ? flag6 : flag5, flag8, lobbyLevel);
-			}
-		}
-		else
-		{
-			bool flag10 = IsLongTimeShowBaner();
-			flag9 = PromoActionsManager.MobileAdvert != null && PromoActionsManager.MobileAdvert.ImageEnabled && (!flag || showToNew) && (!flag2 || showToPaying) && flag10;
-			if (verbose)
-			{
-				Dictionary<string, bool> dictionary = new Dictionary<string, bool>(6);
-				dictionary.Add("ImageEnabled", PromoActionsManager.MobileAdvert != null && PromoActionsManager.MobileAdvert.ImageEnabled);
-				dictionary.Add("isNewUser", flag);
-				dictionary.Add("showToNew", showToNew);
-				dictionary.Add("isPayingUser", flag2);
-				dictionary.Add("showToPaying", showToPaying);
-				dictionary.Add("longTimeShowBanner", flag10);
-				Dictionary<string, bool> obj = dictionary;
-				string message = string.Format("AdIsApplicable ({0}): {1}    Details: {2}", adType, flag9, Json.Serialize(obj));
-				Debug.Log(message);
-			}
-		}
-		return flag9;
-	}
-
-	internal static void RefreshBytes()
-	{
-		PlayerPrefs.SetString("Guid", new Guid(_guid).ToString("D"));
-		PlayerPrefs.Save();
-	}
-
-	internal static SampleGroup GetSempleGroup()
-	{
-		byte b = GuidBytes[0];
-		return ((int)b % 2 != 0) ? SampleGroup.Video : SampleGroup.Image;
-	}
-
-	private void LogToFlurry(string eventName, string context)
-	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Menu", context);
-		Dictionary<string, string> dictionary2 = dictionary;
-		if (ExperienceController.sharedController != null)
-		{
-			dictionary2.Add("Levels", ExperienceController.sharedController.currentLevel.ToString());
-		}
-		if (ExpController.Instance != null)
-		{
-			dictionary2.Add("Tiers", ExpController.Instance.OurTier.ToString());
-		}
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, dictionary2);
-	}
-
-	public static bool IsNewUserOldMetod()
-	{
-		string @string = PlayerPrefs.GetString("First Launch (Advertisement)", string.Empty);
-		DateTimeOffset result;
-		if (!string.IsNullOrEmpty(@string) && DateTimeOffset.TryParse(@string, out result))
-		{
-			return (DateTimeOffset.Now - result).TotalDays < 7.0;
-		}
-		return true;
-	}
-
-	private static bool IsLongTimeShowBaner()
-	{
-		string @string = PlayerPrefs.GetString(Defs.LastTimeShowBanerKey, string.Empty);
-		if (string.IsNullOrEmpty(@string))
-		{
-			return true;
-		}
-		DateTime result;
-		if (!DateTime.TryParse(@string, out result))
-		{
-			return false;
-		}
-		DateTime utcNow = DateTime.UtcNow;
-		double totalSeconds = (utcNow - result).TotalSeconds;
-		return totalSeconds > (double)PromoActionsManager.MobileAdvert.TimeoutBetweenShowInterstitial;
-	}
-
-	private static bool IsNewUser()
-	{
-		int @int = PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 1);
-		if (@int > PromoActionsManager.MobileAdvert.CountSessionNewPlayer)
-		{
-			return false;
-		}
-		return true;
-	}
-
-	public static bool IsPayingUser()
-	{
-		return FlurryPluginWrapper.IsPayingUser();
+		this.ShowVideoInterstitial(context, () => {
+		});
 	}
 
 	internal bool SwitchImageAdUnitId()
 	{
-		int imageAdUnitIdIndex = _imageAdUnitIdIndex;
-		string imageInterstitialUnitId = ImageInterstitialUnitId;
-		_imageAdUnitIdIndex++;
+		int num = this._imageAdUnitIdIndex;
+		string imageInterstitialUnitId = this.ImageInterstitialUnitId;
+		this._imageAdUnitIdIndex++;
 		if (Defs.IsDeveloperBuild)
 		{
-			string message = string.Format("Switching image ad unit id from {0} ({1}) to {2} ({3})", imageAdUnitIdIndex, RemovePrefix(imageInterstitialUnitId), _imageAdUnitIdIndex, RemovePrefix(ImageInterstitialUnitId));
-			Debug.Log(message);
+			Debug.Log(string.Format("Switching image ad unit id from {0} ({1}) to {2} ({3})", new object[] { num, MobileAdManager.RemovePrefix(imageInterstitialUnitId), this._imageAdUnitIdIndex, MobileAdManager.RemovePrefix(this.ImageInterstitialUnitId) }));
 		}
-		return PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0 || _imageAdUnitIdIndex % PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0;
-	}
-
-	internal bool SwitchVideoAdUnitId()
-	{
-		int videoAdUnitIdIndex = _videoAdUnitIdIndex;
-		string videoInterstitialUnitId = VideoInterstitialUnitId;
-		_videoAdUnitIdIndex++;
-		if (Defs.IsDeveloperBuild)
-		{
-			string message = string.Format("Switching video ad unit id from {0} ({1}) to {2} ({3}); group index {4}", videoAdUnitIdIndex, RemovePrefix(videoInterstitialUnitId), _videoAdUnitIdIndex, RemovePrefix(VideoInterstitialUnitId), _videoIdGroupIndex);
-			Debug.Log(message);
-		}
-		return AdmobVideoAdUnitIds.Count == 0 || _videoAdUnitIdIndex % AdmobVideoAdUnitIds.Count == 0;
+		return (PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0 ? true : this._imageAdUnitIdIndex % PromoActionsManager.MobileAdvert.AdmobImageAdUnitIds.Count == 0);
 	}
 
 	internal bool SwitchImageIdGroup()
 	{
-		int imageIdGroupIndex = _imageIdGroupIndex;
-		List<string> obj = AdmobImageAdUnitIds.Select(RemovePrefix).ToList();
-		string text = Json.Serialize(obj);
-		_imageIdGroupIndex++;
-		_imageAdUnitIdIndex = 0;
-		List<string> obj2 = AdmobImageAdUnitIds.Select(RemovePrefix).ToList();
-		string text2 = Json.Serialize(obj2);
+		int num = this._imageIdGroupIndex;
+		List<string> list = this.AdmobImageAdUnitIds.Select<string, string>(new Func<string, string>(MobileAdManager.RemovePrefix)).ToList<string>();
+		string str = Json.Serialize(list);
+		this._imageIdGroupIndex++;
+		this._imageAdUnitIdIndex = 0;
+		List<string> strs = this.AdmobImageAdUnitIds.Select<string, string>(new Func<string, string>(MobileAdManager.RemovePrefix)).ToList<string>();
+		string str1 = Json.Serialize(strs);
 		if (Defs.IsDeveloperBuild)
 		{
-			string message = string.Format("Switching image id group from {0} ({1}) to {2} ({3})", imageIdGroupIndex, text, _imageIdGroupIndex, text2);
-			Debug.Log(message);
+			Debug.Log(string.Format("Switching image id group from {0} ({1}) to {2} ({3})", new object[] { num, str, this._imageIdGroupIndex, str1 }));
 		}
-		return PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0 || _imageIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0;
+		return (PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0 ? true : this._imageIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobImageIdGroups.Count == 0);
+	}
+
+	internal bool SwitchVideoAdUnitId()
+	{
+		int num = this._videoAdUnitIdIndex;
+		string videoInterstitialUnitId = this.VideoInterstitialUnitId;
+		this._videoAdUnitIdIndex++;
+		if (Defs.IsDeveloperBuild)
+		{
+			Debug.Log(string.Format("Switching video ad unit id from {0} ({1}) to {2} ({3}); group index {4}", new object[] { num, MobileAdManager.RemovePrefix(videoInterstitialUnitId), this._videoAdUnitIdIndex, MobileAdManager.RemovePrefix(this.VideoInterstitialUnitId), this._videoIdGroupIndex }));
+		}
+		return (this.AdmobVideoAdUnitIds.Count == 0 ? true : this._videoAdUnitIdIndex % this.AdmobVideoAdUnitIds.Count == 0);
 	}
 
 	internal bool SwitchVideoIdGroup()
 	{
-		int videoIdGroupIndex = _videoIdGroupIndex;
-		List<string> obj = AdmobVideoAdUnitIds.Select(RemovePrefix).ToList();
-		string text = Json.Serialize(obj);
-		_videoIdGroupIndex++;
-		_videoAdUnitIdIndex = 0;
-		List<string> obj2 = AdmobVideoAdUnitIds.Select(RemovePrefix).ToList();
-		string text2 = Json.Serialize(obj2);
+		int num = this._videoIdGroupIndex;
+		List<string> list = this.AdmobVideoAdUnitIds.Select<string, string>(new Func<string, string>(MobileAdManager.RemovePrefix)).ToList<string>();
+		string str = Json.Serialize(list);
+		this._videoIdGroupIndex++;
+		this._videoAdUnitIdIndex = 0;
+		List<string> strs = this.AdmobVideoAdUnitIds.Select<string, string>(new Func<string, string>(MobileAdManager.RemovePrefix)).ToList<string>();
+		string str1 = Json.Serialize(strs);
 		if (Defs.IsDeveloperBuild)
 		{
-			string message = string.Format("Switching video id group from {0} ({1}) to {2} ({3})", videoIdGroupIndex, text, _videoIdGroupIndex, text2);
-			Debug.Log(message);
+			Debug.Log(string.Format("Switching video id group from {0} ({1}) to {2} ({3})", new object[] { num, str, this._videoIdGroupIndex, str1 }));
 		}
-		return PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count == 0 || _videoIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count == 0;
+		return (PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count == 0 ? true : this._videoIdGroupIndex % PromoActionsManager.MobileAdvert.AdmobVideoIdGroups.Count == 0);
 	}
 
-	internal static string RemovePrefix(string s)
+	public static bool UserPredicate(MobileAdManager.Type adType, bool verbose, bool showToPaying = false, bool showToNew = false)
 	{
-		if (string.IsNullOrEmpty(s))
+		bool flag;
+		bool flag1;
+		bool flag2 = MobileAdManager.IsNewUser();
+		bool flag3 = MobileAdManager.IsPayingUser();
+		if (adType != MobileAdManager.Type.Video)
 		{
-			return string.Empty;
+			bool flag4 = MobileAdManager.IsLongTimeShowBaner();
+			flag = (PromoActionsManager.MobileAdvert == null || !PromoActionsManager.MobileAdvert.ImageEnabled || flag2 && !showToNew || flag3 && !showToPaying ? false : flag4);
+			if (verbose)
+			{
+				Dictionary<string, bool> strs = new Dictionary<string, bool>(6)
+				{
+					{ "ImageEnabled", (PromoActionsManager.MobileAdvert == null ? false : PromoActionsManager.MobileAdvert.ImageEnabled) },
+					{ "isNewUser", flag2 },
+					{ "showToNew", showToNew },
+					{ "isPayingUser", flag3 },
+					{ "showToPaying", showToPaying },
+					{ "longTimeShowBanner", flag4 }
+				};
+				Dictionary<string, bool> strs1 = strs;
+				string str = string.Format("AdIsApplicable ({0}): {1}    Details: {2}", adType, flag, Json.Serialize(strs1));
+				Debug.Log(str);
+			}
 		}
-		int num = s.IndexOf('/');
-		return (num <= 0) ? s : s.Remove(0, num);
-	}
-
-	internal bool ResetVideoAdUnitId()
-	{
-		int videoAdUnitIdIndex = _videoAdUnitIdIndex;
-		string videoInterstitialUnitId = VideoInterstitialUnitId;
-		int videoIdGroupIndex = _videoIdGroupIndex;
-		_videoAdUnitIdIndex = 0;
-		_videoIdGroupIndex = 0;
-		if (Defs.IsDeveloperBuild)
+		else
 		{
-			string message = string.Format("Resetting video group from {0} to {1}", videoIdGroupIndex, _videoIdGroupIndex);
-			Debug.Log(message);
+			int lobbyLevel = ExpController.LobbyLevel;
+			bool flag5 = lobbyLevel >= 3;
+			bool flag6 = (PromoActionsManager.MobileAdvert == null ? false : PromoActionsManager.MobileAdvert.VideoEnabled);
+			bool flag7 = (PromoActionsManager.MobileAdvert == null ? false : PromoActionsManager.MobileAdvert.VideoShowPaying);
+			bool flag8 = (PromoActionsManager.MobileAdvert == null ? false : PromoActionsManager.MobileAdvert.VideoShowNonpaying);
+			if (!flag3 || !flag7)
+			{
+				flag1 = (flag3 ? false : flag8);
+			}
+			else
+			{
+				flag1 = true;
+			}
+			bool flag9 = flag1;
+			bool num = PlayerPrefs.GetInt("CountRunMenu", 0) >= 3;
+			flag = (!flag6 || !num || !flag9 ? false : flag5);
+			if (verbose)
+			{
+				object[] objArray = new object[] { adType, flag, flag3, null, null, null };
+				objArray[3] = (!flag3 ? flag8 : flag7);
+				objArray[4] = num;
+				objArray[5] = lobbyLevel;
+				Debug.LogFormat("AdIsApplicable ({0}): {1}    Paying: {2},  Need to show: {3},  Session count satisfied: {4},  Lobby level: {5}", objArray);
+			}
 		}
-		return true;
+		return flag;
 	}
 
-	internal bool ResetImageAdUnitId()
+	internal enum SampleGroup
 	{
-		int imageAdUnitIdIndex = _imageAdUnitIdIndex;
-		string imageInterstitialUnitId = ImageInterstitialUnitId;
-		int imageIdGroupIndex = _imageIdGroupIndex;
-		_imageAdUnitIdIndex = 0;
-		_imageIdGroupIndex = 0;
-		if (Defs.IsDeveloperBuild)
-		{
-			string message = string.Format("Resetting image ad unit id from {0} to {1}; group index from {2} to 0", imageAdUnitIdIndex, _imageAdUnitIdIndex, imageIdGroupIndex);
-			Debug.Log(message);
-		}
-		return true;
+		Unknown,
+		Video,
+		Image
 	}
 
-	[CompilerGenerated]
-	private static MobileAdManager _003C_instance_003Em__38A()
+	public enum State
 	{
-		return new MobileAdManager();
+		None,
+		Idle,
+		Loaded
 	}
 
-	[CompilerGenerated]
-	private static void _003CShowVideoInterstitial_003Em__38B()
+	public enum Type
 	{
+		Image,
+		Video
 	}
 }

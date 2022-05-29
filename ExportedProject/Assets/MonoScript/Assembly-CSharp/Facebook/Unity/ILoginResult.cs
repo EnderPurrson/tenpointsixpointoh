@@ -2,6 +2,9 @@ namespace Facebook.Unity
 {
 	public interface ILoginResult : IResult
 	{
-		AccessToken AccessToken { get; }
+		Facebook.Unity.AccessToken AccessToken
+		{
+			get;
+		}
 	}
 }

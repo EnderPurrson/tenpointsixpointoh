@@ -1,98 +1,114 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class SkuInput : Jsonable
 	{
-		public string Sku { get; set; }
-
-		public string ToJson()
+		public string Sku
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public SkuInput()
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("sku", Sku);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
 		}
 
 		public static SkuInput CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			SkuInput skuInput;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					SkuInput item = new SkuInput();
+					if (jsonMap.ContainsKey("sku"))
+					{
+						item.Sku = (string)jsonMap["sku"];
+					}
+					skuInput = item;
 				}
-				SkuInput skuInput = new SkuInput();
-				if (jsonMap.ContainsKey("sku"))
+				else
 				{
-					skuInput.Sku = (string)jsonMap["sku"];
+					skuInput = null;
 				}
-				return skuInput;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return skuInput;
 		}
 
 		public static SkuInput CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			SkuInput skuInput;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				skuInput = SkuInput.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return skuInput;
 		}
 
-		public static Dictionary<string, SkuInput> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, SkuInput> dictionary = new Dictionary<string, SkuInput>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				SkuInput value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "sku", this.Sku }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<SkuInput> ListFromJson(List<object> array)
 		{
-			List<SkuInput> list = new List<SkuInput>();
-			foreach (object item in array)
+			List<SkuInput> skuInputs = new List<SkuInput>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				skuInputs.Add(SkuInput.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return skuInputs;
+		}
+
+		public static Dictionary<string, SkuInput> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, SkuInput> strs = new Dictionary<string, SkuInput>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				SkuInput skuInput = SkuInput.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, skuInput);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

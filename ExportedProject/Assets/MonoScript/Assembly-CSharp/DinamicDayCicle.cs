@@ -1,4 +1,9 @@
+using ExitGames.Client.Photon;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class DinamicDayCicle : MonoBehaviour
@@ -17,100 +22,80 @@ public class DinamicDayCicle : MonoBehaviour
 
 	private float timeDelta;
 
-	private void Start()
+	public DinamicDayCicle()
 	{
-		ResetColors();
-		StartCoroutine(MatColorChange());
 	}
 
-	private void Update()
+	[DebuggerHidden]
+	private IEnumerator MatColorChange()
 	{
-		if (TimeGameController.sharedController != null && PhotonNetwork.room != null && !string.IsNullOrEmpty(ConnectSceneNGUIController.maxKillProperty))
-		{
-			if (!PhotonNetwork.room.customProperties.ContainsKey(ConnectSceneNGUIController.maxKillProperty))
-			{
-				return;
-			}
-			int result = -1;
-			int.TryParse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString(), out result);
-			if (result < 0)
-			{
-				ResetColors();
-				return;
-			}
-			matchTime = (float)result * 60f;
-			if (!((float)TimeGameController.sharedController.timerToEndMatch < matchTime))
-			{
-				return;
-			}
-			timeDelta = matchTime - (float)TimeGameController.sharedController.timerToEndMatch;
-			if (matchTime == timeDelta)
-			{
-				return;
-			}
-			MaterialToChange[] array = matToChange;
-			foreach (MaterialToChange materialToChange in array)
-			{
-				cicleTime = matchTime / (float)materialToChange.cicleColors.Length;
-				currentCicle = Mathf.FloorToInt(timeDelta / matchTime * (float)materialToChange.cicleColors.Length);
-				nextCicle = Mathf.Min(currentCicle + 1, materialToChange.cicleColors.Length - 1);
-				lerpFactor = (timeDelta - cicleTime * (float)currentCicle) / cicleTime;
-				if (materialToChange.changecolor && currentCicle < materialToChange.cicleColors.Length)
-				{
-					materialToChange.currentColor = Color.Lerp(materialToChange.cicleColors[currentCicle], materialToChange.cicleColors[nextCicle], lerpFactor);
-				}
-				if (materialToChange.cicleLerp != null && materialToChange.cicleLerp.Length == materialToChange.cicleColors.Length && currentCicle < materialToChange.cicleColors.Length)
-				{
-					materialToChange.currentLerp = Mathf.Lerp(materialToChange.cicleLerp[currentCicle], materialToChange.cicleLerp[nextCicle], lerpFactor);
-				}
-			}
-		}
-		else
-		{
-			ResetColors();
-		}
+		DinamicDayCicle.u003cMatColorChangeu003ec__Iterator22 variable = null;
+		return variable;
 	}
 
 	private void ResetColors()
 	{
-		MaterialToChange[] array = matToChange;
-		foreach (MaterialToChange materialToChange in array)
+		MaterialToChange[] materialToChangeArray = this.matToChange;
+		for (int i = 0; i < (int)materialToChangeArray.Length; i++)
 		{
+			MaterialToChange materialToChange = materialToChangeArray[i];
 			if (materialToChange.changecolor)
 			{
 				materialToChange.currentColor = materialToChange.cicleColors[0];
 			}
-			if (materialToChange.cicleLerp != null && materialToChange.cicleLerp.Length == materialToChange.cicleColors.Length)
+			if (materialToChange.cicleLerp != null && (int)materialToChange.cicleLerp.Length == (int)materialToChange.cicleColors.Length)
 			{
 				materialToChange.currentLerp = materialToChange.cicleLerp[0];
 			}
 		}
 	}
 
-	private IEnumerator MatColorChange()
+	private void Start()
 	{
-		while (true)
+		this.ResetColors();
+		base.StartCoroutine(this.MatColorChange());
+	}
+
+	private void Update()
+	{
+		if (!(TimeGameController.sharedController != null) || PhotonNetwork.room == null || string.IsNullOrEmpty(ConnectSceneNGUIController.maxKillProperty))
 		{
-			if (matchTime != timeDelta)
+			this.ResetColors();
+		}
+		else if (PhotonNetwork.room.customProperties.ContainsKey(ConnectSceneNGUIController.maxKillProperty))
+		{
+			int num = -1;
+			int.TryParse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString(), out num);
+			if (num < 0)
 			{
-				MaterialToChange[] array = matToChange;
-				foreach (MaterialToChange mTCh in array)
+				this.ResetColors();
+				return;
+			}
+			this.matchTime = (float)num * 60f;
+			if ((float)TimeGameController.sharedController.timerToEndMatch < this.matchTime)
+			{
+				this.timeDelta = this.matchTime - (float)TimeGameController.sharedController.timerToEndMatch;
+				if (this.matchTime != this.timeDelta)
 				{
-					Material[] materials = mTCh.materials;
-					foreach (Material mat in materials)
+					MaterialToChange[] materialToChangeArray = this.matToChange;
+					for (int i = 0; i < (int)materialToChangeArray.Length; i++)
 					{
-						if (mTCh.changecolor)
+						MaterialToChange materialToChange = materialToChangeArray[i];
+						this.cicleTime = this.matchTime / (float)((int)materialToChange.cicleColors.Length);
+						this.currentCicle = Mathf.FloorToInt(this.timeDelta / this.matchTime * (float)((int)materialToChange.cicleColors.Length));
+						this.nextCicle = Mathf.Min(this.currentCicle + 1, (int)materialToChange.cicleColors.Length - 1);
+						this.lerpFactor = (this.timeDelta - this.cicleTime * (float)this.currentCicle) / this.cicleTime;
+						if (materialToChange.changecolor && this.currentCicle < (int)materialToChange.cicleColors.Length)
 						{
-							mat.color = mTCh.currentColor;
+							materialToChange.currentColor = Color.Lerp(materialToChange.cicleColors[this.currentCicle], materialToChange.cicleColors[this.nextCicle], this.lerpFactor);
 						}
-						if (mat.HasProperty("_Lerp"))
+						if (materialToChange.cicleLerp != null && (int)materialToChange.cicleLerp.Length == (int)materialToChange.cicleColors.Length && this.currentCicle < (int)materialToChange.cicleColors.Length)
 						{
-							mat.SetFloat("_Lerp", mTCh.currentLerp);
+							materialToChange.currentLerp = Mathf.Lerp(materialToChange.cicleLerp[this.currentCicle], materialToChange.cicleLerp[this.nextCicle], this.lerpFactor);
 						}
 					}
 				}
 			}
-			yield return new WaitForSeconds(0.5f);
 		}
 	}
 }

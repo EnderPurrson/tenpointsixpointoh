@@ -28,7 +28,7 @@ public sealed class BonusItem : MonoBehaviour
 
 	public BonusController.TypeBonus type;
 
-	public double expireTime = -1.0;
+	public double expireTime = -1;
 
 	public bool isTimeBonus;
 
@@ -36,223 +36,255 @@ public sealed class BonusItem : MonoBehaviour
 
 	public int myIndex;
 
-	private void Awake()
+	public BonusItem()
 	{
-		isMulti = Defs.isMulti;
-		isInet = Defs.isInet;
-		isCOOP = Defs.isCOOP;
-	}
-
-	private void Start()
-	{
-		_weaponManager = WeaponManager.sharedManager;
-		if (!Defs.isMulti)
-		{
-			player = GameObject.FindGameObjectWithTag("Player");
-			if (player != null)
-			{
-				playerMoveC = player.GetComponent<SkinName>().playerMoveC;
-			}
-			else
-			{
-				Debug.LogWarning("BonusItem.Start(): player == null");
-			}
-		}
-		else
-		{
-			player = _weaponManager.myPlayer;
-			playerMoveC = _weaponManager.myPlayerMoveC;
-		}
 	}
 
 	public void ActivateBonus(BonusController.TypeBonus type, Vector3 position, double expireTime, int zoneNumber, int index)
 	{
-		if (!isActive)
+		if (this.isActive)
 		{
-			this.type = type;
-			base.transform.position = position;
-			SetModel();
-			mySpawnNumber = zoneNumber;
-			myIndex = index;
-			if (expireTime != -1.0)
-			{
-				isTimeBonus = true;
-				this.expireTime = expireTime;
-			}
-			else
-			{
-				isTimeBonus = false;
-				this.expireTime = -1.0;
-			}
-			isActive = true;
+			return;
 		}
+		this.type = type;
+		base.transform.position = position;
+		this.SetModel(true);
+		this.mySpawnNumber = zoneNumber;
+		this.myIndex = index;
+		if (expireTime == -1)
+		{
+			this.isTimeBonus = false;
+			this.expireTime = -1;
+		}
+		else
+		{
+			this.isTimeBonus = true;
+			this.expireTime = expireTime;
+		}
+		this.isActive = true;
 	}
 
-	private void SetModel(bool show = true)
+	private void Awake()
 	{
-		itemMdls[(int)type].SetActive(show);
+		this.isMulti = Defs.isMulti;
+		this.isInet = Defs.isInet;
+		this.isCOOP = Defs.isCOOP;
 	}
 
 	public void DeactivateBonus()
 	{
-		isPickedUp = false;
-		playerPicked = null;
-		isActive = false;
+		this.isPickedUp = false;
+		this.playerPicked = null;
+		this.isActive = false;
 		base.transform.position = Vector3.down * 100f;
-		SetModel(false);
+		this.SetModel(false);
 	}
 
 	public void PickupBonus(PhotonPlayer player)
 	{
-		isPickedUp = true;
-		playerPicked = player;
+		this.isPickedUp = true;
+		this.playerPicked = player;
 		base.transform.position = Vector3.down * 100f;
-		SetModel(false);
+		this.SetModel(false);
+	}
+
+	private void SetModel(bool show = true)
+	{
+		this.itemMdls[(int)this.type].SetActive(show);
+	}
+
+	private void Start()
+	{
+		this._weaponManager = WeaponManager.sharedManager;
+		if (Defs.isMulti)
+		{
+			this.player = this._weaponManager.myPlayer;
+			this.playerMoveC = this._weaponManager.myPlayerMoveC;
+		}
+		else
+		{
+			this.player = GameObject.FindGameObjectWithTag("Player");
+			if (this.player == null)
+			{
+				Debug.LogWarning("BonusItem.Start(): player == null");
+			}
+			else
+			{
+				this.playerMoveC = this.player.GetComponent<SkinName>().playerMoveC;
+			}
+		}
 	}
 
 	private void Update()
 	{
-		if (!isActive)
+		if (!this.isActive)
 		{
 			return;
 		}
-		if (isMulti)
+		if (this.isMulti)
 		{
-			if (player == null)
+			if (this.player == null)
 			{
-				player = _weaponManager.myPlayer;
-				playerMoveC = _weaponManager.myPlayerMoveC;
+				this.player = this._weaponManager.myPlayer;
+				this.playerMoveC = this._weaponManager.myPlayerMoveC;
 			}
 		}
-		else if (player == null || playerMoveC == null || playerMoveC.isKilled || (playerMoveC.inGameGUI != null && (playerMoveC.inGameGUI.pausePanel.activeSelf || playerMoveC.inGameGUI.blockedCollider.activeSelf)) || ShopNGUIController.GuiActive || BankController.Instance.uiRoot.gameObject.activeInHierarchy)
+		else if (this.player == null || this.playerMoveC == null || this.playerMoveC.isKilled || this.playerMoveC.inGameGUI != null && (this.playerMoveC.inGameGUI.pausePanel.activeSelf || this.playerMoveC.inGameGUI.blockedCollider.activeSelf) || ShopNGUIController.GuiActive || BankController.Instance.uiRoot.gameObject.activeInHierarchy)
 		{
 			return;
 		}
-		if (isTimeBonus && ((PhotonNetwork.isMasterClient && Defs.isInet && PhotonNetwork.time > expireTime) || (!Defs.isInet && Network.time > expireTime)))
+		if (this.isTimeBonus && (PhotonNetwork.isMasterClient && Defs.isInet && PhotonNetwork.time > this.expireTime || !Defs.isInet && Network.time > this.expireTime))
 		{
-			BonusController.sharedController.RemoveBonus(myIndex);
+			BonusController.sharedController.RemoveBonus(this.myIndex);
+			return;
 		}
-		else
+		if (this.player == null || this.playerMoveC == null || this.playerMoveC.isKilled)
 		{
-			if (player == null || playerMoveC == null || playerMoveC.isKilled)
-			{
-				return;
-			}
-			float num = Vector3.SqrMagnitude(base.transform.position - player.transform.position);
-			if (!(num < 4f))
-			{
-				return;
-			}
+			return;
+		}
+		if (Vector3.SqrMagnitude(base.transform.position - this.player.transform.position) < 4f)
+		{
 			bool flag = false;
-			switch (type)
+			switch (this.type)
 			{
-			case BonusController.TypeBonus.Ammo:
-				if (!_weaponManager.AddAmmoForAllGuns())
+				case BonusController.TypeBonus.Ammo:
 				{
-					GlobalGameController.Score += Defs.ScoreForSurplusAmmo;
-				}
-				flag = true;
-				if (Defs.isMulti)
-				{
-					playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Ammo);
-				}
-				break;
-			case BonusController.TypeBonus.Health:
-				if (playerMoveC.CurHealth == playerMoveC.MaxHealth)
-				{
-					if (!isMulti || isCOOP)
+					if (!this._weaponManager.AddAmmoForAllGuns())
 					{
-						GlobalGameController.Score += 100;
+						GlobalGameController.Score = GlobalGameController.Score + Defs.ScoreForSurplusAmmo;
 					}
 					flag = true;
-					break;
-				}
-				playerMoveC.CurHealth += playerMoveC.MaxHealth / 2f;
-				if (playerMoveC.CurHealth > playerMoveC.MaxHealth)
-				{
-					playerMoveC.CurHealth = playerMoveC.MaxHealth;
-				}
-				flag = true;
-				if (Defs.isMulti)
-				{
-					playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Health);
-				}
-				break;
-			case BonusController.TypeBonus.Armor:
-				if (playerMoveC.curArmor + 1f > playerMoveC.MaxArmor)
-				{
-					if (!isMulti || isCOOP)
+					if (Defs.isMulti)
 					{
-						GlobalGameController.Score += 100;
+						this.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Ammo);
 					}
+					goto case BonusController.TypeBonus.Chest;
 				}
-				else
+				case BonusController.TypeBonus.Health:
 				{
-					playerMoveC.curArmor += 1f;
-				}
-				flag = true;
-				if (Defs.isMulti)
-				{
-					playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Armor);
-				}
-				break;
-			case BonusController.TypeBonus.Grenade:
-				if (WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount < 10)
-				{
-					WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount++;
-				}
-				if (Defs.isMulti)
-				{
-					playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Grenade);
-				}
-				flag = true;
-				break;
-			case BonusController.TypeBonus.Mech:
-				if (playerMoveC.myCurrentWeaponSounds != null && !playerMoveC.myCurrentWeaponSounds.isGrenadeWeapon && !playerMoveC.isGrenadePress && !ShopNGUIController.GuiActive && (Pauser.sharedPauser == null || !Pauser.sharedPauser.paused) && !playerMoveC.isImmortality)
-				{
-					PotionsController.sharedController.ActivatePotion("Mech", playerMoveC, new Dictionary<string, object>(), true);
-					flag = true;
-				}
-				break;
-			case BonusController.TypeBonus.JetPack:
-				PotionsController.sharedController.ActivatePotion("Jetpack", playerMoveC, new Dictionary<string, object>(), true);
-				flag = true;
-				break;
-			case BonusController.TypeBonus.Invisible:
-				PotionsController.sharedController.ActivatePotion("InvisibilityPotion", playerMoveC, new Dictionary<string, object>(), true);
-				flag = true;
-				break;
-			case BonusController.TypeBonus.Turret:
-				if (playerMoveC.myCurrentWeaponSounds != null && !playerMoveC.myCurrentWeaponSounds.isGrenadeWeapon && InGameGUI.sharedInGameGUI != null && !InGameGUI.sharedInGameGUI.turretPanel.activeSelf && !playerMoveC.isGrenadePress && !ShopNGUIController.GuiActive && (Pauser.sharedPauser == null || !Pauser.sharedPauser.paused) && !playerMoveC.isImmortality)
-				{
-					if (PotionsController.sharedController.PotionIsActive("Turret"))
+					if (this.playerMoveC.CurHealth != this.playerMoveC.MaxHealth)
 					{
-						PotionsController.sharedController.ActivatePotion("Turret", playerMoveC, new Dictionary<string, object>(), true);
+						Player_move_c curHealth = this.playerMoveC;
+						curHealth.CurHealth = curHealth.CurHealth + this.playerMoveC.MaxHealth / 2f;
+						if (this.playerMoveC.CurHealth > this.playerMoveC.MaxHealth)
+						{
+							this.playerMoveC.CurHealth = this.playerMoveC.MaxHealth;
+						}
+						flag = true;
+						if (Defs.isMulti)
+						{
+							this.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Health);
+						}
+						goto case BonusController.TypeBonus.Chest;
 					}
 					else
 					{
-						InGameGUI.sharedInGameGUI.ShowTurretInterface();
+						if (!this.isMulti || this.isCOOP)
+						{
+							GlobalGameController.Score = GlobalGameController.Score + 100;
+						}
+						flag = true;
+						goto case BonusController.TypeBonus.Chest;
+					}
+				}
+				case BonusController.TypeBonus.Armor:
+				{
+					if (this.playerMoveC.curArmor + 1f <= this.playerMoveC.MaxArmor)
+					{
+						Player_move_c playerMoveC = this.playerMoveC;
+						playerMoveC.curArmor = playerMoveC.curArmor + 1f;
+					}
+					else if (!this.isMulti || this.isCOOP)
+					{
+						GlobalGameController.Score = GlobalGameController.Score + 100;
 					}
 					flag = true;
+					if (Defs.isMulti)
+					{
+						this.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Armor);
+					}
+					goto case BonusController.TypeBonus.Chest;
 				}
-				break;
-			case BonusController.TypeBonus.Gem:
-				flag = true;
-				break;
-			}
-			if (flag)
-			{
-				if (Defs.isSoundFX)
+				case BonusController.TypeBonus.Chest:
 				{
-					playerMoveC.gameObject.GetComponent<AudioSource>().PlayOneShot(itemSounds[(int)type]);
+					if (!flag)
+					{
+						break;
+					}
+					if (Defs.isSoundFX)
+					{
+						this.playerMoveC.gameObject.GetComponent<AudioSource>().PlayOneShot(this.itemSounds[(int)this.type]);
+					}
+					if (this.type != BonusController.TypeBonus.Gem)
+					{
+						BonusController.sharedController.RemoveBonus(this.myIndex);
+						break;
+					}
+					else
+					{
+						BonusController.sharedController.GetAndRemoveBonus(this.myIndex);
+						break;
+					}
 				}
-				if (type == BonusController.TypeBonus.Gem)
+				case BonusController.TypeBonus.Grenade:
 				{
-					BonusController.sharedController.GetAndRemoveBonus(myIndex);
+					if (WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount < 10)
+					{
+						Player_move_c grenadeCount = WeaponManager.sharedManager.myPlayerMoveC;
+						grenadeCount.GrenadeCount = grenadeCount.GrenadeCount + 1;
+					}
+					if (Defs.isMulti)
+					{
+						this.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Grenade);
+					}
+					flag = true;
+					goto case BonusController.TypeBonus.Chest;
 				}
-				else
+				case BonusController.TypeBonus.Mech:
 				{
-					BonusController.sharedController.RemoveBonus(myIndex);
+					if (this.playerMoveC.myCurrentWeaponSounds != null && !this.playerMoveC.myCurrentWeaponSounds.isGrenadeWeapon && !this.playerMoveC.isGrenadePress && !ShopNGUIController.GuiActive && (Pauser.sharedPauser == null || !Pauser.sharedPauser.paused) && !this.playerMoveC.isImmortality)
+					{
+						PotionsController.sharedController.ActivatePotion("Mech", this.playerMoveC, new Dictionary<string, object>(), true);
+						flag = true;
+					}
+					goto case BonusController.TypeBonus.Chest;
+				}
+				case BonusController.TypeBonus.JetPack:
+				{
+					PotionsController.sharedController.ActivatePotion("Jetpack", this.playerMoveC, new Dictionary<string, object>(), true);
+					flag = true;
+					goto case BonusController.TypeBonus.Chest;
+				}
+				case BonusController.TypeBonus.Invisible:
+				{
+					PotionsController.sharedController.ActivatePotion("InvisibilityPotion", this.playerMoveC, new Dictionary<string, object>(), true);
+					flag = true;
+					goto case BonusController.TypeBonus.Chest;
+				}
+				case BonusController.TypeBonus.Turret:
+				{
+					if (this.playerMoveC.myCurrentWeaponSounds != null && !this.playerMoveC.myCurrentWeaponSounds.isGrenadeWeapon && InGameGUI.sharedInGameGUI != null && !InGameGUI.sharedInGameGUI.turretPanel.activeSelf && !this.playerMoveC.isGrenadePress && !ShopNGUIController.GuiActive && (Pauser.sharedPauser == null || !Pauser.sharedPauser.paused) && !this.playerMoveC.isImmortality)
+					{
+						if (!PotionsController.sharedController.PotionIsActive("Turret"))
+						{
+							InGameGUI.sharedInGameGUI.ShowTurretInterface();
+						}
+						else
+						{
+							PotionsController.sharedController.ActivatePotion("Turret", this.playerMoveC, new Dictionary<string, object>(), true);
+						}
+						flag = true;
+					}
+					goto case BonusController.TypeBonus.Chest;
+				}
+				case BonusController.TypeBonus.Gem:
+				{
+					flag = true;
+					goto case BonusController.TypeBonus.Chest;
+				}
+				default:
+				{
+					goto case BonusController.TypeBonus.Chest;
 				}
 			}
 		}

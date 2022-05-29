@@ -1,7 +1,11 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class AutoFade : MonoBehaviour
 {
@@ -17,38 +21,49 @@ public class AutoFade : MonoBehaviour
 
 	private float killedTime;
 
-	private static AutoFade Instance
-	{
-		get
-		{
-			if (m_Instance == null)
-			{
-				m_Instance = new GameObject("AutoFade").AddComponent<AutoFade>();
-			}
-			return m_Instance;
-		}
-	}
-
 	public static bool Fading
 	{
 		get
 		{
-			return Instance.m_Fading;
+			return AutoFade.Instance.m_Fading;
 		}
+	}
+
+	private static AutoFade Instance
+	{
+		get
+		{
+			if (AutoFade.m_Instance == null)
+			{
+				AutoFade.m_Instance = (new GameObject("AutoFade")).AddComponent<AutoFade>();
+			}
+			return AutoFade.m_Instance;
+		}
+	}
+
+	static AutoFade()
+	{
+	}
+
+	public AutoFade()
+	{
 	}
 
 	private void Awake()
 	{
 		UnityEngine.Object.DontDestroyOnLoad(this);
-		m_Instance = this;
-		Shader shader = Shader.Find("Mobile/Particles/Alpha Blended");
-		m_Material = new Material(shader);
+		AutoFade.m_Instance = this;
+		this.m_Material = new Material(Shader.Find("Mobile/Particles/Alpha Blended"));
 	}
 
 	private void DrawQuad(Color aColor, float aAlpha)
 	{
 		aColor.a = aAlpha;
-		if (m_Material.SetPass(0))
+		if (!this.m_Material.SetPass(0))
+		{
+			UnityEngine.Debug.LogWarning("Couldnot set pass for material.");
+		}
+		else
 		{
 			GL.PushMatrix();
 			GL.LoadOrtho();
@@ -61,73 +76,40 @@ public class AutoFade : MonoBehaviour
 			GL.End();
 			GL.PopMatrix();
 		}
-		else
-		{
-			Debug.LogWarning("Couldnot set pass for material.");
-		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerator Fade(float aFadeOutTime, float aFadeInTime, Color aColor, bool collectGrabage)
 	{
-		float t = 0f;
-		while (t < 1f)
-		{
-			yield return new WaitForEndOfFrame();
-			t = Mathf.Clamp01(t + Time.deltaTime / aFadeOutTime);
-			DrawQuad(aColor, t);
-		}
-		if (collectGrabage)
-		{
-			GC.Collect();
-		}
-		if (isLoadScene)
-		{
-			if (m_LevelName != string.Empty)
-			{
-				Singleton<SceneLoader>.Instance.LoadScene(m_LevelName);
-			}
-		}
-		else
-		{
-			while (killedTime > 0f)
-			{
-				killedTime -= Time.deltaTime;
-				DrawQuad(aColor, t);
-				yield return new WaitForEndOfFrame();
-			}
-		}
-		while (t > 0f && !(Mathf.Abs(aFadeInTime) < 1E-06f))
-		{
-			t = Mathf.Clamp01(t - Time.deltaTime / aFadeInTime);
-			DrawQuad(aColor, t);
-			yield return new WaitForEndOfFrame();
-		}
-		m_Fading = false;
-	}
-
-	private void StartFade(float aFadeOutTime, float aFadeInTime, Color aColor, bool collectGarbage = false)
-	{
-		m_Fading = true;
-		StartCoroutine(Fade(aFadeOutTime, aFadeInTime, aColor, collectGarbage));
-	}
-
-	public static void LoadLevel(string aLevelName, float aFadeOutTime, float aFadeInTime, Color aColor)
-	{
-		if (!Fading)
-		{
-			Instance.isLoadScene = true;
-			Instance.m_LevelName = aLevelName;
-			Instance.StartFade(aFadeOutTime, aFadeInTime, aColor);
-		}
+		AutoFade.u003cFadeu003ec__Iterator106 variable = null;
+		return variable;
 	}
 
 	public static void fadeKilled(float aFadeOutTime, float aFadeKilledTime, float aFadeInTime, Color aColor)
 	{
-		if (!Fading)
+		if (AutoFade.Fading)
 		{
-			Instance.isLoadScene = false;
-			Instance.killedTime = aFadeKilledTime;
-			Instance.StartFade(aFadeOutTime, aFadeInTime, aColor, true);
+			return;
 		}
+		AutoFade.Instance.isLoadScene = false;
+		AutoFade.Instance.killedTime = aFadeKilledTime;
+		AutoFade.Instance.StartFade(aFadeOutTime, aFadeInTime, aColor, true);
+	}
+
+	public static void LoadLevel(string aLevelName, float aFadeOutTime, float aFadeInTime, Color aColor)
+	{
+		if (AutoFade.Fading)
+		{
+			return;
+		}
+		AutoFade.Instance.isLoadScene = true;
+		AutoFade.Instance.m_LevelName = aLevelName;
+		AutoFade.Instance.StartFade(aFadeOutTime, aFadeInTime, aColor, false);
+	}
+
+	private void StartFade(float aFadeOutTime, float aFadeInTime, Color aColor, bool collectGarbage = false)
+	{
+		this.m_Fading = true;
+		base.StartCoroutine(this.Fade(aFadeOutTime, aFadeInTime, aColor, collectGarbage));
 	}
 }

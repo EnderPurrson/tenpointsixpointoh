@@ -1,16 +1,19 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Rilisoft;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 internal sealed class LevelArt : MonoBehaviour
 {
 	private const int ComicsOnScreen = 4;
 
-	public static readonly bool ShouldShowArts = true;
+	public readonly static bool ShouldShowArts;
 
 	public GUIStyle startButton;
 
@@ -44,132 +47,53 @@ internal sealed class LevelArt : MonoBehaviour
 
 	private bool _needShowSubtitle;
 
-	[Obsolete("Use ComicsCampaign via uGUI instead of this class.")]
-	private void Start()
+	static LevelArt()
 	{
-		_needShowSubtitle = LocalizationStore.CurrentLanguage != "English";
-		labelsStyle.font = LocalizationStore.GetFontByLocalize("Key_04B_03");
-		labelsStyle.fontSize = Mathf.RoundToInt(20f * Defs.Coef);
-		if (Resources.Load<Texture>(_NameForNumber(5)) != null)
-		{
-			_countOfComics *= 2;
-		}
-		StartCoroutine("ShowArts");
-		_backgroundComics = Resources.Load<Texture>("Arts_background_" + CurrentCampaignGame.boXName);
-		if (endOfBox)
-		{
-			string[] array = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
-			string[] array2 = array;
-			foreach (string text in array2)
-			{
-				if (text.Equals(CurrentCampaignGame.boXName))
-				{
-					_isFirstLaunch = false;
-					break;
-				}
-			}
-		}
-		else
-		{
-			string[] array3 = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
-			string[] array4 = array3;
-			foreach (string text2 in array4)
-			{
-				if (text2.Equals(CurrentCampaignGame.levelSceneName))
-				{
-					_isFirstLaunch = false;
-					break;
-				}
-			}
-		}
-		_isShowButton = !_isFirstLaunch;
+		LevelArt.ShouldShowArts = true;
 	}
 
-	private void GoToLevel()
+	public LevelArt()
 	{
-		if (endOfBox)
-		{
-			string[] array = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
-			if (Array.IndexOf(array, CurrentCampaignGame.boXName) == -1)
-			{
-				List<string> list = new List<string>();
-				string[] array2 = array;
-				foreach (string item in array2)
-				{
-					list.Add(item);
-				}
-				list.Add(CurrentCampaignGame.boXName);
-				Save.SaveStringArray(Defs.ArtBoxS, list.ToArray());
-			}
-		}
-		else
-		{
-			string[] array3 = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
-			if (!endOfBox && Array.IndexOf(array3, CurrentCampaignGame.levelSceneName) == -1)
-			{
-				List<string> list2 = new List<string>();
-				string[] array4 = array3;
-				foreach (string item2 in array4)
-				{
-					list2.Add(item2);
-				}
-				list2.Add(CurrentCampaignGame.levelSceneName);
-				Save.SaveStringArray(Defs.ArtLevsS, list2.ToArray());
-			}
-		}
-		Singleton<SceneLoader>.Instance.LoadScene((!endOfBox) ? "CampaignLoading" : "ChooseLevel");
 	}
 
 	private string _NameForNumber(int num)
 	{
-		return ResPath.Combine("Arts", ResPath.Combine((!endOfBox) ? CurrentCampaignGame.levelSceneName : CurrentCampaignGame.boXName, num.ToString()));
+		return ResPath.Combine("Arts", ResPath.Combine((!LevelArt.endOfBox ? CurrentCampaignGame.levelSceneName : CurrentCampaignGame.boXName), num.ToString()));
 	}
 
-	[Obfuscation(Exclude = true)]
-	private IEnumerator ShowArts()
+	private void GoToLevel()
 	{
-		string pathToComicsTexture = string.Empty;
-		Texture newComicsTexture = null;
-		do
+		if (!LevelArt.endOfBox)
 		{
-			newComicsTexture = null;
-			_currentComicsImageIndex++;
-			pathToComicsTexture = _NameForNumber(_currentComicsImageIndex);
-			newComicsTexture = Resources.Load<Texture>(pathToComicsTexture);
-			if (newComicsTexture != null)
+			string[] strArrays = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
+			if (!LevelArt.endOfBox && Array.IndexOf<string>(strArrays, CurrentCampaignGame.levelSceneName) == -1)
 			{
-				if (_comicsTextures.Count == 4)
+				List<string> strs = new List<string>();
+				string[] strArrays1 = strArrays;
+				for (int i = 0; i < (int)strArrays1.Length; i++)
 				{
-					_comicsTextures.Clear();
+					strs.Add(strArrays1[i]);
 				}
-				_comicsTextures.Add(newComicsTexture);
-				string localizationKey = ((!endOfBox) ? string.Format("{0}_{1}", CurrentCampaignGame.levelSceneName, _currentComicsImageIndex - 1) : string.Format("{0}_{1}", CurrentCampaignGame.boXName, _currentComicsImageIndex - 1));
-				_currentSubtitle = LocalizationStore.Get(localizationKey) ?? string.Empty;
-				if (localizationKey.Equals(_currentSubtitle))
-				{
-					_currentSubtitle = string.Empty;
-				}
-				Resources.UnloadUnusedAssets();
-				_alphaForComics = 0f;
-				float prevTime = Time.time;
-				float startTime = Time.time;
-				do
-				{
-					yield return new WaitForEndOfFrame();
-					_alphaForComics += (Time.time - prevTime) / _delayShowComics;
-					prevTime = Time.time;
-				}
-				while (Time.time - startTime < _delayShowComics && !_isSkipComics);
-				_isSkipComics = false;
-				_alphaForComics = 1f;
-				continue;
+				strs.Add(CurrentCampaignGame.levelSceneName);
+				Save.SaveStringArray(Defs.ArtLevsS, strs.ToArray());
 			}
-			GoToLevel();
-			yield break;
 		}
-		while (newComicsTexture != null && _currentComicsImageIndex % 4 != 0);
-		yield return new WaitForSeconds(_delayShowComics);
-		_isShowButton = true;
+		else
+		{
+			string[] strArrays2 = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
+			if (Array.IndexOf<string>(strArrays2, CurrentCampaignGame.boXName) == -1)
+			{
+				List<string> strs1 = new List<string>();
+				string[] strArrays3 = strArrays2;
+				for (int j = 0; j < (int)strArrays3.Length; j++)
+				{
+					strs1.Add(strArrays3[j]);
+				}
+				strs1.Add(CurrentCampaignGame.boXName);
+				Save.SaveStringArray(Defs.ArtBoxS, strs1.ToArray());
+			}
+		}
+		Singleton<SceneLoader>.Instance.LoadScene((!LevelArt.endOfBox ? "CampaignLoading" : "ChooseLevel"), LoadSceneMode.Single);
 	}
 
 	[Obsolete("Use ComicsCampaign via uGUI instead of this class.")]
@@ -177,26 +101,83 @@ internal sealed class LevelArt : MonoBehaviour
 	{
 	}
 
+	[DebuggerHidden]
+	[Obfuscation(Exclude=true)]
+	private IEnumerator ShowArts()
+	{
+		LevelArt.u003cShowArtsu003ec__IteratorA4 variable = null;
+		return variable;
+	}
+
+	[Obsolete("Use ComicsCampaign via uGUI instead of this class.")]
+	private void Start()
+	{
+		this._needShowSubtitle = LocalizationStore.CurrentLanguage != "English";
+		this.labelsStyle.font = LocalizationStore.GetFontByLocalize("Key_04B_03");
+		this.labelsStyle.fontSize = Mathf.RoundToInt(20f * Defs.Coef);
+		if (Resources.Load<Texture>(this._NameForNumber(5)) != null)
+		{
+			this._countOfComics *= 2;
+		}
+		base.StartCoroutine("ShowArts");
+		this._backgroundComics = Resources.Load<Texture>(string.Concat("Arts_background_", CurrentCampaignGame.boXName));
+		if (!LevelArt.endOfBox)
+		{
+			string[] strArrays = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
+			int num = 0;
+			while (num < (int)strArrays.Length)
+			{
+				if (!strArrays[num].Equals(CurrentCampaignGame.levelSceneName))
+				{
+					num++;
+				}
+				else
+				{
+					this._isFirstLaunch = false;
+					break;
+				}
+			}
+		}
+		else
+		{
+			string[] strArrays1 = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
+			int num1 = 0;
+			while (num1 < (int)strArrays1.Length)
+			{
+				if (!strArrays1[num1].Equals(CurrentCampaignGame.boXName))
+				{
+					num1++;
+				}
+				else
+				{
+					this._isFirstLaunch = false;
+					break;
+				}
+			}
+		}
+		this._isShowButton = !this._isFirstLaunch;
+	}
+
 	public static string WrappedText(string text)
 	{
 		int num = 30;
 		StringBuilder stringBuilder = new StringBuilder();
+		int num1 = 0;
 		int num2 = 0;
-		int num3 = 0;
-		while (num2 < text.Length)
+		while (num1 < text.Length)
 		{
-			stringBuilder.Append(text[num2]);
-			if (text[num2] == '\n')
+			stringBuilder.Append(text[num1]);
+			if (text[num1] == '\n')
 			{
 				stringBuilder.Append('\n');
 			}
-			if (num3 >= num && text[num2] == ' ')
+			if (num2 >= num && text[num1] == ' ')
 			{
 				stringBuilder.Append("\n\n");
-				num3 = 0;
+				num2 = 0;
 			}
+			num1++;
 			num2++;
-			num3++;
 		}
 		return stringBuilder.ToString();
 	}

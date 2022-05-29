@@ -5,36 +5,43 @@ public class AGSUpdateAchievementResponse : AGSRequestResponse
 {
 	public string achievementId;
 
+	public AGSUpdateAchievementResponse()
+	{
+	}
+
 	public static AGSUpdateAchievementResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00a5, IL_00cc
+		AGSUpdateAchievementResponse blankResponseWithError;
 		try
 		{
 			AGSUpdateAchievementResponse aGSUpdateAchievementResponse = new AGSUpdateAchievementResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSUpdateAchievementResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSUpdateAchievementResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
-			aGSUpdateAchievementResponse.achievementId = ((!hashtable.ContainsKey("achievementId")) ? string.Empty : hashtable["achievementId"].ToString());
-			return aGSUpdateAchievementResponse;
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSUpdateAchievementResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSUpdateAchievementResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
+			aGSUpdateAchievementResponse.achievementId = (!hashtables.ContainsKey("achievementId") ? string.Empty : hashtables["achievementId"].ToString());
+			blankResponseWithError = aGSUpdateAchievementResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty);
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSUpdateAchievementResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSUpdateAchievementResponse GetBlankResponseWithError(string error, string achievementId = "", int userData = 0)
 	{
-		AGSUpdateAchievementResponse aGSUpdateAchievementResponse = new AGSUpdateAchievementResponse();
-		aGSUpdateAchievementResponse.error = error;
-		aGSUpdateAchievementResponse.userData = userData;
-		aGSUpdateAchievementResponse.achievementId = achievementId;
+		AGSUpdateAchievementResponse aGSUpdateAchievementResponse = new AGSUpdateAchievementResponse()
+		{
+			error = error,
+			userData = userData,
+			achievementId = achievementId
+		};
 		return aGSUpdateAchievementResponse;
 	}
 
 	public static AGSUpdateAchievementResponse GetPlatformNotSupportedResponse(string achievementId, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", achievementId, userData);
+		return AGSUpdateAchievementResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", achievementId, userData);
 	}
 }

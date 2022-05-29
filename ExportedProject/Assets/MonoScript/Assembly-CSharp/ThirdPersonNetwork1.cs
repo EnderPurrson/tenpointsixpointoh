@@ -1,21 +1,9 @@
 using Photon;
+using System;
 using UnityEngine;
 
 public class ThirdPersonNetwork1 : Photon.MonoBehaviour
 {
-	private struct MovementHistoryEntry
-	{
-		public Vector3 playerPos;
-
-		public Quaternion playerRot;
-
-		public int anim;
-
-		public bool weAreSteals;
-
-		public double timeStamp;
-	}
-
 	private ThirdPersonCamera cameraScript;
 
 	private ThirdPersonController controllerScript;
@@ -42,7 +30,7 @@ public class ThirdPersonNetwork1 : Photon.MonoBehaviour
 
 	private double myTime;
 
-	private MovementHistoryEntry[] movementHistory;
+	private ThirdPersonNetwork1.MovementHistoryEntry[] movementHistory;
 
 	private int historyLengh = 5;
 
@@ -64,234 +52,262 @@ public class ThirdPersonNetwork1 : Photon.MonoBehaviour
 
 	private bool isFirstHistoryFull;
 
+	public ThirdPersonNetwork1()
+	{
+	}
+
+	private void AddNewSnapshot(Vector3 playerPos, Quaternion playerRot, double timeStamp, int _anim, bool _weAreSteals)
+	{
+		for (int i = (int)this.movementHistory.Length - 1; i > 0; i--)
+		{
+			this.movementHistory[i] = this.movementHistory[i - 1];
+		}
+		this.movementHistory[0].playerPos = playerPos;
+		this.movementHistory[0].playerRot = playerRot;
+		this.movementHistory[0].timeStamp = timeStamp;
+		this.movementHistory[0].anim = _anim;
+		this.movementHistory[0].weAreSteals = _weAreSteals;
+		if (this.isHitoryClear && this.movementHistory[(int)this.movementHistory.Length - 1].timeStamp > this.myTime)
+		{
+			this.isHitoryClear = false;
+			this.myTime = this.movementHistory[(int)this.movementHistory.Length - 1].timeStamp;
+			if (!this.isFirstHistoryFull)
+			{
+				this.myTransform.position = this.movementHistory[(int)this.movementHistory.Length - 1].playerPos;
+				this.myTransform.rotation = this.movementHistory[(int)this.movementHistory.Length - 1].playerRot;
+				this.isFirstHistoryFull = true;
+			}
+		}
+	}
+
 	private void Awake()
 	{
 		if (!Defs.isMulti)
 		{
 			base.enabled = false;
 		}
-		myTransform = base.transform;
-		correctPlayerPos = new Vector3(0f, -10000f, 0f);
-		movementHistory = new MovementHistoryEntry[historyLengh];
-		for (int i = 0; i < historyLengh; i++)
+		this.myTransform = base.transform;
+		this.correctPlayerPos = new Vector3(0f, -10000f, 0f);
+		this.movementHistory = new ThirdPersonNetwork1.MovementHistoryEntry[this.historyLengh];
+		for (int i = 0; i < this.historyLengh; i++)
 		{
-			movementHistory[i].timeStamp = 0.0;
+			this.movementHistory[i].timeStamp = 0;
 		}
-		myTime = 1.0;
-	}
-
-	private void Start()
-	{
-		if ((Defs.isInet && base.photonView.isMine) || (!Defs.isInet && GetComponent<NetworkView>().isMine))
-		{
-			isMine = true;
-		}
+		this.myTime = 1;
 	}
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
 		if (stream.isWriting)
 		{
-			iskilled = playerMovec.isKilled;
-			if (playerMovec.CurHealth <= 0f)
+			this.iskilled = this.playerMovec.isKilled;
+			if (this.playerMovec.CurHealth <= 0f)
 			{
-				iskilled = true;
+				this.iskilled = true;
 			}
-			stream.SendNext(myTransform.position);
-			stream.SendNext(myTransform.rotation.eulerAngles.y);
-			stream.SendNext(iskilled);
+			stream.SendNext(this.myTransform.position);
+			stream.SendNext(this.myTransform.rotation.eulerAngles.y);
+			stream.SendNext(this.iskilled);
 			stream.SendNext(PhotonNetwork.time);
-			stream.SendNext(myAnim);
+			stream.SendNext(this.myAnim);
 			stream.SendNext(EffectsController.WeAreStealth);
-			stream.SendNext(playerMovec.isImmortality);
-			stream.SendNext(isTeleported);
-			isTeleported = false;
+			stream.SendNext(this.playerMovec.isImmortality);
+			stream.SendNext(this.isTeleported);
+			this.isTeleported = false;
 		}
-		else if (!isFirstSnapshot)
+		else if (this.isFirstSnapshot)
 		{
-			correctPlayerPos = (Vector3)stream.ReceiveNext();
-			correctPlayerRot = Quaternion.Euler(0f, (float)stream.ReceiveNext(), 0f);
-			oldIsKilled = iskilled;
-			iskilled = (bool)stream.ReceiveNext();
-			playerMovec.isKilled = iskilled;
-			int num = 0;
-			bool flag = false;
-			correctPlayerTime = (double)stream.ReceiveNext();
-			if (iskilled || Mathf.Abs((float)myTime - (float)correctPlayerTime) > 1000f)
-			{
-				isHitoryClear = true;
-				myTime = correctPlayerTime;
-			}
-			num = (int)stream.ReceiveNext();
-			flag = (bool)stream.ReceiveNext();
-			playerMovec.isImmortality = (bool)stream.ReceiveNext();
-			isTeleported = (bool)stream.ReceiveNext();
-			if (isTeleported)
-			{
-				oldIsKilled = true;
-			}
-			AddNewSnapshot(correctPlayerPos, correctPlayerRot, correctPlayerTime, num, flag);
+			this.isFirstSnapshot = false;
 		}
 		else
 		{
-			isFirstSnapshot = false;
+			this.correctPlayerPos = (Vector3)stream.ReceiveNext();
+			this.correctPlayerRot = Quaternion.Euler(0f, (float)stream.ReceiveNext(), 0f);
+			this.oldIsKilled = this.iskilled;
+			this.iskilled = (bool)stream.ReceiveNext();
+			this.playerMovec.isKilled = this.iskilled;
+			int num = 0;
+			bool flag = false;
+			this.correctPlayerTime = (double)stream.ReceiveNext();
+			if (this.iskilled || Mathf.Abs((float)this.myTime - (float)this.correctPlayerTime) > 1000f)
+			{
+				this.isHitoryClear = true;
+				this.myTime = this.correctPlayerTime;
+			}
+			num = (int)stream.ReceiveNext();
+			flag = (bool)stream.ReceiveNext();
+			this.playerMovec.isImmortality = (bool)stream.ReceiveNext();
+			this.isTeleported = (bool)stream.ReceiveNext();
+			if (this.isTeleported)
+			{
+				this.oldIsKilled = true;
+			}
+			this.AddNewSnapshot(this.correctPlayerPos, this.correctPlayerRot, this.correctPlayerTime, num, flag);
 		}
 	}
 
 	private void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			Vector3 value = myTransform.position;
-			Quaternion value2 = myTransform.rotation;
-			stream.Serialize(ref value);
-			stream.Serialize(ref value2);
-			iskilled = playerMovec.isKilled;
-			stream.Serialize(ref iskilled);
-			float value3 = (float)Network.time;
-			stream.Serialize(ref value3);
-			int value4 = myAnim;
-			stream.Serialize(ref value4);
-			bool value5 = EffectsController.WeAreStealth;
-			stream.Serialize(ref value5);
-			bool value6 = playerMovec.isImmortality;
-			stream.Serialize(ref value6);
-			stream.Serialize(ref isTeleported);
-			isTeleported = false;
-			return;
+			Vector3 vector3 = Vector3.zero;
+			Quaternion quaternion = Quaternion.identity;
+			float single = 0f;
+			stream.Serialize(ref vector3);
+			stream.Serialize(ref quaternion);
+			this.correctPlayerPos = vector3;
+			this.correctPlayerRot = quaternion;
+			this.oldIsKilled = this.iskilled;
+			stream.Serialize(ref this.iskilled);
+			this.playerMovec.isKilled = this.iskilled;
+			stream.Serialize(ref single);
+			this.correctPlayerTime = (double)single;
+			if (this.iskilled)
+			{
+				this.isHitoryClear = true;
+				this.myTime = this.correctPlayerTime;
+			}
+			int num = 0;
+			stream.Serialize(ref num);
+			bool flag = false;
+			stream.Serialize(ref flag);
+			bool flag1 = false;
+			stream.Serialize(ref flag1);
+			this.playerMovec.isImmortality = flag1;
+			stream.Serialize(ref this.isTeleported);
+			if (this.isTeleported)
+			{
+				this.oldIsKilled = true;
+			}
+			this.AddNewSnapshot(this.correctPlayerPos, this.correctPlayerRot, this.correctPlayerTime, num, flag);
 		}
-		Vector3 value7 = Vector3.zero;
-		Quaternion value8 = Quaternion.identity;
-		float value9 = 0f;
-		stream.Serialize(ref value7);
-		stream.Serialize(ref value8);
-		correctPlayerPos = value7;
-		correctPlayerRot = value8;
-		oldIsKilled = iskilled;
-		stream.Serialize(ref iskilled);
-		playerMovec.isKilled = iskilled;
-		stream.Serialize(ref value9);
-		correctPlayerTime = value9;
-		if (iskilled)
+		else
 		{
-			isHitoryClear = true;
-			myTime = correctPlayerTime;
+			Vector3 vector31 = this.myTransform.position;
+			Quaternion quaternion1 = this.myTransform.rotation;
+			stream.Serialize(ref vector31);
+			stream.Serialize(ref quaternion1);
+			this.iskilled = this.playerMovec.isKilled;
+			stream.Serialize(ref this.iskilled);
+			float single1 = (float)Network.time;
+			stream.Serialize(ref single1);
+			int num1 = this.myAnim;
+			stream.Serialize(ref num1);
+			bool weAreStealth = EffectsController.WeAreStealth;
+			stream.Serialize(ref weAreStealth);
+			bool flag2 = this.playerMovec.isImmortality;
+			stream.Serialize(ref flag2);
+			stream.Serialize(ref this.isTeleported);
+			this.isTeleported = false;
 		}
-		int value10 = 0;
-		stream.Serialize(ref value10);
-		bool value11 = false;
-		stream.Serialize(ref value11);
-		bool value12 = false;
-		stream.Serialize(ref value12);
-		playerMovec.isImmortality = value12;
-		stream.Serialize(ref isTeleported);
-		if (isTeleported)
+	}
+
+	private void Start()
+	{
+		if (Defs.isInet && base.photonView.isMine || !Defs.isInet && base.GetComponent<NetworkView>().isMine)
 		{
-			oldIsKilled = true;
+			this.isMine = true;
 		}
-		AddNewSnapshot(correctPlayerPos, correctPlayerRot, correctPlayerTime, value10, value11);
 	}
 
 	public void StartAngel()
 	{
-		isStartAngel = true;
+		this.isStartAngel = true;
 	}
 
 	private void Update()
 	{
-		if (isMine)
+		double num;
+		if (!this.isMine)
 		{
-			return;
-		}
-		if (!playerMovec.isWeaponSet && myTransform.position.y > -8000f)
-		{
-			myTransform.position = new Vector3(0f, -10000f, 0f);
-			return;
-		}
-		if (iskilled)
-		{
-			if (!oldIsKilled)
+			if (!this.playerMovec.isWeaponSet && this.myTransform.position.y > -8000f)
 			{
-				oldIsKilled = iskilled;
-				isStartAngel = false;
+				this.myTransform.position = new Vector3(0f, -10000f, 0f);
+				return;
 			}
-			if (myTransform.position.y > -8000f)
+			if (this.iskilled)
 			{
-				myTransform.position = new Vector3(0f, -10000f, 0f);
-			}
-		}
-		else if (!oldIsKilled && !isHitoryClear && (sglajEnabled || sglajEnabledVidos || playerMovec.isInvisible))
-		{
-			double num = ((!(myTime + (double)Time.deltaTime < movementHistory[movementHistory.Length - 1].timeStamp)) ? (myTime + (double)Time.deltaTime) : (myTime + (double)(Time.deltaTime * 1.5f)));
-			int num2 = 0;
-			for (int i = 0; i < movementHistory.Length && movementHistory[i].timeStamp > myTime; i++)
-			{
-				num2 = i;
-			}
-			if (num2 == 0)
-			{
-				isHitoryClear = true;
-			}
-			if (movementHistory[num2].timeStamp - myTime > 4.0 && num2 > 0)
-			{
-				num2--;
-				myTransform.position = movementHistory[num2].playerPos;
-				myTransform.rotation = movementHistory[num2].playerRot;
-				myTime = movementHistory[num2].timeStamp;
-			}
-			else
-			{
-				float t = (float)((num - myTime) / (movementHistory[num2].timeStamp - myTime));
-				myTransform.position = Vector3.Lerp(myTransform.position, movementHistory[num2].playerPos, t);
-				if (!Device.isPixelGunLow)
+				if (!this.oldIsKilled)
 				{
-					myTransform.rotation = Quaternion.Lerp(myTransform.rotation, movementHistory[num2].playerRot, t);
+					this.oldIsKilled = this.iskilled;
+					this.isStartAngel = false;
+				}
+				if (this.myTransform.position.y > -8000f)
+				{
+					this.myTransform.position = new Vector3(0f, -10000f, 0f);
+				}
+			}
+			else if (!this.oldIsKilled && !this.isHitoryClear && (this.sglajEnabled || this.sglajEnabledVidos || this.playerMovec.isInvisible))
+			{
+				num = (this.myTime + (double)Time.deltaTime >= this.movementHistory[(int)this.movementHistory.Length - 1].timeStamp ? this.myTime + (double)Time.deltaTime : this.myTime + (double)(Time.deltaTime * 1.5f));
+				int num1 = 0;
+				int num2 = 0;
+				while (num2 < (int)this.movementHistory.Length)
+				{
+					if (this.movementHistory[num2].timeStamp <= this.myTime)
+					{
+						break;
+					}
+					else
+					{
+						num1 = num2;
+						num2++;
+					}
+				}
+				if (num1 == 0)
+				{
+					this.isHitoryClear = true;
+				}
+				if (this.movementHistory[num1].timeStamp - this.myTime <= 4 || num1 <= 0)
+				{
+					float single = (float)((num - this.myTime) / (this.movementHistory[num1].timeStamp - this.myTime));
+					this.myTransform.position = Vector3.Lerp(this.myTransform.position, this.movementHistory[num1].playerPos, single);
+					if (Device.isPixelGunLow)
+					{
+						this.myTransform.rotation = this.movementHistory[num1].playerRot;
+					}
+					else
+					{
+						this.myTransform.rotation = Quaternion.Lerp(this.myTransform.rotation, this.movementHistory[num1].playerRot, single);
+					}
+					this.myTime = num;
+					if (this.myAnim != this.movementHistory[num1].anim)
+					{
+						this.skinName.SetAnim(this.movementHistory[num1].anim, this.movementHistory[num1].weAreSteals);
+						this.myAnim = this.movementHistory[num1].anim;
+					}
 				}
 				else
 				{
-					myTransform.rotation = movementHistory[num2].playerRot;
-				}
-				myTime = num;
-				if (myAnim != movementHistory[num2].anim)
-				{
-					skinName.SetAnim(movementHistory[num2].anim, movementHistory[num2].weAreSteals);
-					myAnim = movementHistory[num2].anim;
+					num1--;
+					this.myTransform.position = this.movementHistory[num1].playerPos;
+					this.myTransform.rotation = this.movementHistory[num1].playerRot;
+					this.myTime = this.movementHistory[num1].timeStamp;
 				}
 			}
-		}
-		else if (!isHitoryClear)
-		{
-			myTransform.position = movementHistory[movementHistory.Length - 1].playerPos;
-			myTransform.rotation = movementHistory[movementHistory.Length - 1].playerRot;
-			myTime = movementHistory[movementHistory.Length - 1].timeStamp;
-		}
-		if (isStartAngel && myTransform.position.y > -8000f)
-		{
-			myTransform.position = new Vector3(0f, -10000f, 0f);
+			else if (!this.isHitoryClear)
+			{
+				this.myTransform.position = this.movementHistory[(int)this.movementHistory.Length - 1].playerPos;
+				this.myTransform.rotation = this.movementHistory[(int)this.movementHistory.Length - 1].playerRot;
+				this.myTime = this.movementHistory[(int)this.movementHistory.Length - 1].timeStamp;
+			}
+			if (this.isStartAngel && this.myTransform.position.y > -8000f)
+			{
+				this.myTransform.position = new Vector3(0f, -10000f, 0f);
+			}
 		}
 	}
 
-	private void AddNewSnapshot(Vector3 playerPos, Quaternion playerRot, double timeStamp, int _anim, bool _weAreSteals)
+	private struct MovementHistoryEntry
 	{
-		for (int num = movementHistory.Length - 1; num > 0; num--)
-		{
-			movementHistory[num] = movementHistory[num - 1];
-		}
-		movementHistory[0].playerPos = playerPos;
-		movementHistory[0].playerRot = playerRot;
-		movementHistory[0].timeStamp = timeStamp;
-		movementHistory[0].anim = _anim;
-		movementHistory[0].weAreSteals = _weAreSteals;
-		if (isHitoryClear && movementHistory[movementHistory.Length - 1].timeStamp > myTime)
-		{
-			isHitoryClear = false;
-			myTime = movementHistory[movementHistory.Length - 1].timeStamp;
-			if (!isFirstHistoryFull)
-			{
-				myTransform.position = movementHistory[movementHistory.Length - 1].playerPos;
-				myTransform.rotation = movementHistory[movementHistory.Length - 1].playerRot;
-				isFirstHistoryFull = true;
-			}
-		}
+		public Vector3 playerPos;
+
+		public Quaternion playerRot;
+
+		public int anim;
+
+		public bool weAreSteals;
+
+		public double timeStamp;
 	}
 }

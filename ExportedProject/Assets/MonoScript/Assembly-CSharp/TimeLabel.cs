@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TimeLabel : MonoBehaviour
@@ -16,61 +17,63 @@ public class TimeLabel : MonoBehaviour
 
 	private float startTime = 11f;
 
+	public TimeLabel()
+	{
+	}
+
 	private void Start()
 	{
 		base.gameObject.SetActive(Defs.isMulti);
-		_label = GetComponent<UILabel>();
+		this._label = base.GetComponent<UILabel>();
 	}
 
 	private void Update()
 	{
-		if (!InGameGUI.sharedInGameGUI || !_label)
+		if (InGameGUI.sharedInGameGUI && this._label)
 		{
-			return;
-		}
-		_label.text = InGameGUI.sharedInGameGUI.timeLeft();
-		if (Defs.isHunger)
-		{
-			return;
-		}
-		float num = (float)TimeGameController.sharedController.timerToEndMatch;
-		if (num <= startTime)
-		{
-			float num2 = Mathf.Round(num) - num;
-			blink = num2 > 0f;
-			_label.transform.localScale = Vector3.MoveTowards(_label.transform.localScale, (!blink) ? Vector3.one : (Vector3.one * Mathf.Min(1.4f + (startTime - num) / 20f, 2f)), (!blink) ? (2.4f * Time.deltaTime) : (12f * Time.deltaTime));
-			_label.color = ((!blink) ? Color.white : Color.red);
-			_label.GetComponentInChildren<TweenRotation>().enabled = true;
-			_label.GetComponentInChildren<TweenRotation>().PlayForward();
-			if (Defs.isSoundFX)
+			this._label.text = InGameGUI.sharedInGameGUI.timeLeft();
+			if (!Defs.isHunger)
 			{
-				timerSound.enabled = true;
+				float single = (float)TimeGameController.sharedController.timerToEndMatch;
+				if (single > this.startTime)
+				{
+					this.timerParticles.gameObject.SetActive(false);
+					this.timerSound.enabled = false;
+					this._label.color = Color.white;
+					this._label.transform.localScale = Vector3.one;
+					this._label.GetComponentInChildren<TweenRotation>().ResetToBeginning();
+					this._label.GetComponentInChildren<TweenRotation>().enabled = false;
+				}
+				else
+				{
+					float single1 = Mathf.Round(single) - single;
+					this.blink = single1 > 0f;
+					this._label.transform.localScale = Vector3.MoveTowards(this._label.transform.localScale, (!this.blink ? Vector3.one : Vector3.one * Mathf.Min(1.4f + (this.startTime - single) / 20f, 2f)), (!this.blink ? 2.4f * Time.deltaTime : 12f * Time.deltaTime));
+					this._label.color = (!this.blink ? Color.white : Color.red);
+					this._label.GetComponentInChildren<TweenRotation>().enabled = true;
+					this._label.GetComponentInChildren<TweenRotation>().PlayForward();
+					if (Defs.isSoundFX)
+					{
+						this.timerSound.enabled = true;
+					}
+					this.timerSound.loop = true;
+					if (!(PauseGUIController.Instance != null) || !PauseGUIController.Instance.IsPaused)
+					{
+						this.timerParticles.gameObject.SetActive(true);
+					}
+					else
+					{
+						this.timerParticles.gameObject.SetActive(false);
+					}
+					ParticleSystem.TextureSheetAnimationModule minMaxCurve = this.timerParticles.textureSheetAnimation;
+					ParticleSystemCurveMode particleSystemCurveMode = minMaxCurve.frameOverTime.mode;
+					minMaxCurve.frameOverTime = new ParticleSystem.MinMaxCurve((single - 1f) / 9f);
+					if (single < 1f)
+					{
+						this.timerParticles.gameObject.SetActive(false);
+					}
+				}
 			}
-			timerSound.loop = true;
-			if (PauseGUIController.Instance != null && PauseGUIController.Instance.IsPaused)
-			{
-				timerParticles.gameObject.SetActive(false);
-			}
-			else
-			{
-				timerParticles.gameObject.SetActive(true);
-			}
-			ParticleSystem.TextureSheetAnimationModule textureSheetAnimation = timerParticles.textureSheetAnimation;
-			ParticleSystemCurveMode mode = textureSheetAnimation.frameOverTime.mode;
-			textureSheetAnimation.frameOverTime = new ParticleSystem.MinMaxCurve((num - 1f) / 9f);
-			if (num < 1f)
-			{
-				timerParticles.gameObject.SetActive(false);
-			}
-		}
-		else
-		{
-			timerParticles.gameObject.SetActive(false);
-			timerSound.enabled = false;
-			_label.color = Color.white;
-			_label.transform.localScale = Vector3.one;
-			_label.GetComponentInChildren<TweenRotation>().ResetToBeginning();
-			_label.GetComponentInChildren<TweenRotation>().enabled = false;
 		}
 	}
 }

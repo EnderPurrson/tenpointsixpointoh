@@ -8,28 +8,6 @@ namespace Rilisoft
 {
 	public class DirectionViewer : MonoBehaviour
 	{
-		[CompilerGenerated]
-		private sealed class _003CLookToMe_003Ec__AnonStorey276
-		{
-			internal DirectionViewerTarget target;
-
-			internal bool _003C_003Em__175(DirectionPointer p)
-			{
-				return p.Target == target;
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CForgetMe_003Ec__AnonStorey277
-		{
-			internal DirectionViewerTarget target;
-
-			internal bool _003C_003Em__176(DirectionPointer p)
-			{
-				return p.Target == target;
-			}
-		}
-
 		[SerializeField]
 		private UIPanel _panel;
 
@@ -43,76 +21,37 @@ namespace Rilisoft
 
 		private List<DirectionPointer> _activePointers = new List<DirectionPointer>();
 
-		public static DirectionViewer Instance { get; private set; }
+		public static DirectionViewer Instance
+		{
+			get;
+			private set;
+		}
+
+		public DirectionViewer()
+		{
+		}
 
 		private void Awake()
 		{
-			if (Instance != null)
+			if (DirectionViewer.Instance != null)
 			{
 				return;
 			}
-			Instance = this;
-			_activePointers.Clear();
-			_freePointers.Clear();
-			List<DirectionPointer> list = GetComponentsInChildren<DirectionPointer>(true).ToList();
-			foreach (DirectionPointer item in list)
+			DirectionViewer.Instance = this;
+			this._activePointers.Clear();
+			this._freePointers.Clear();
+			foreach (DirectionPointer list in base.GetComponentsInChildren<DirectionPointer>(true).ToList<DirectionPointer>())
 			{
-				if (_freePointers.ContainsKey(item.ForPointerType))
+				if (!this._freePointers.ContainsKey(list.ForPointerType))
 				{
-					_freePointers[item.ForPointerType].Enqueue(item);
-					continue;
+					Queue<DirectionPointer> directionPointers = new Queue<DirectionPointer>();
+					directionPointers.Enqueue(list);
+					this._freePointers.Add(list.ForPointerType, directionPointers);
 				}
-				Queue<DirectionPointer> queue = new Queue<DirectionPointer>();
-				queue.Enqueue(item);
-				_freePointers.Add(item.ForPointerType, queue);
-			}
-		}
-
-		private void OnDisable()
-		{
-			_activePointers.ForEach(_003COnDisable_003Em__174);
-		}
-
-		private void LateUpdate()
-		{
-			if (!(WeaponManager.sharedManager == null))
-			{
-				_activePointers.ForEach(SetPointerState);
-			}
-		}
-
-		public void LookToMe(DirectionViewerTarget target)
-		{
-			_003CLookToMe_003Ec__AnonStorey276 _003CLookToMe_003Ec__AnonStorey = new _003CLookToMe_003Ec__AnonStorey276();
-			_003CLookToMe_003Ec__AnonStorey.target = target;
-			if (!(_003CLookToMe_003Ec__AnonStorey.target == null) && !_activePointers.Any(_003CLookToMe_003Ec__AnonStorey._003C_003Em__175) && _freePointers.ContainsKey(_003CLookToMe_003Ec__AnonStorey.target.Type) && _freePointers[_003CLookToMe_003Ec__AnonStorey.target.Type].Any())
-			{
-				DirectionPointer directionPointer = _freePointers[_003CLookToMe_003Ec__AnonStorey.target.Type].Dequeue();
-				_activePointers.Add(directionPointer);
-				directionPointer.TurnOn(_003CLookToMe_003Ec__AnonStorey.target);
-			}
-		}
-
-		public void ForgetMe(DirectionViewerTarget target)
-		{
-			_003CForgetMe_003Ec__AnonStorey277 _003CForgetMe_003Ec__AnonStorey = new _003CForgetMe_003Ec__AnonStorey277();
-			_003CForgetMe_003Ec__AnonStorey.target = target;
-			DirectionPointer directionPointer = _activePointers.FirstOrDefault(_003CForgetMe_003Ec__AnonStorey._003C_003Em__176);
-			if (!(directionPointer == null))
-			{
-				directionPointer.TurnOff();
-				_activePointers.Remove(directionPointer);
-				_freePointers[directionPointer.ForPointerType].Enqueue(directionPointer);
-			}
-		}
-
-		private void ForgetPointer(DirectionPointer pointer)
-		{
-			pointer.TurnOff();
-			if (_activePointers.Contains(pointer))
-			{
-				_activePointers.Remove(pointer);
-				_freePointers[pointer.ForPointerType].Enqueue(pointer);
+				else
+				{
+					this._freePointers[list.ForPointerType].Enqueue(list);
+				}
 			}
 		}
 
@@ -122,12 +61,72 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			return (WeaponManager.sharedManager.myPlayer.transform.position - poiner.Transform.position).sqrMagnitude < Mathf.Pow(_lookRadius, 2f);
+			Vector3 transform = WeaponManager.sharedManager.myPlayer.transform.position - poiner.Transform.position;
+			return transform.sqrMagnitude < Mathf.Pow(this._lookRadius, 2f);
+		}
+
+		public void ForgetMe(DirectionViewerTarget target)
+		{
+			DirectionPointer directionPointer = this._activePointers.FirstOrDefault<DirectionPointer>((DirectionPointer p) => p.Target == target);
+			if (directionPointer == null)
+			{
+				return;
+			}
+			directionPointer.TurnOff();
+			this._activePointers.Remove(directionPointer);
+			this._freePointers[directionPointer.ForPointerType].Enqueue(directionPointer);
+		}
+
+		private void ForgetPointer(DirectionPointer pointer)
+		{
+			pointer.TurnOff();
+			if (!this._activePointers.Contains(pointer))
+			{
+				return;
+			}
+			this._activePointers.Remove(pointer);
+			this._freePointers[pointer.ForPointerType].Enqueue(pointer);
+		}
+
+		private float GetAngle(Transform from, Vector3 target, Vector3 n)
+		{
+			Vector3 vector3 = from.forward;
+			Vector3 vector31 = target - from.position;
+			return Mathf.Atan2(Vector3.Dot(n, Vector3.Cross(vector3, vector31)), Vector3.Dot(vector3, vector31)) * 57.29578f;
+		}
+
+		private void LateUpdate()
+		{
+			if (WeaponManager.sharedManager == null)
+			{
+				return;
+			}
+			this._activePointers.ForEach(new Action<DirectionPointer>(this.SetPointerState));
+		}
+
+		public void LookToMe(DirectionViewerTarget target)
+		{
+			if (target == null || this._activePointers.Any<DirectionPointer>((DirectionPointer p) => p.Target == target))
+			{
+				return;
+			}
+			if (!this._freePointers.ContainsKey(target.Type) || !this._freePointers[target.Type].Any<DirectionPointer>())
+			{
+				return;
+			}
+			DirectionPointer directionPointer = this._freePointers[target.Type].Dequeue();
+			this._activePointers.Add(directionPointer);
+			directionPointer.TurnOn(target);
+		}
+
+		private void OnDisable()
+		{
+			this._activePointers.ForEach((DirectionPointer p) => this.ForgetPointer(p));
 		}
 
 		private void SetPointerState(DirectionPointer pointer)
 		{
-			if (!CheckDistance(pointer.Target))
+			if (!this.CheckDistance(pointer.Target))
 			{
 				pointer.OutOfRange = true;
 				pointer.Hide();
@@ -138,22 +137,12 @@ namespace Rilisoft
 				pointer.OutOfRange = false;
 				pointer.TurnOn(pointer.Target);
 			}
-			float angle = GetAngle(NickLabelController.currentCamera.transform, pointer.Target.transform.position, Vector3.up);
-			Vector3 localPosition = new Vector3(_radius * Mathf.Sin(angle * ((float)Math.PI / 180f)), _radius * Mathf.Cos(angle * ((float)Math.PI / 180f)), pointer.transform.position.z);
-			pointer.transform.localPosition = localPosition;
-		}
-
-		private float GetAngle(Transform from, Vector3 target, Vector3 n)
-		{
-			Vector3 forward = from.forward;
-			Vector3 rhs = target - from.position;
-			return Mathf.Atan2(Vector3.Dot(n, Vector3.Cross(forward, rhs)), Vector3.Dot(forward, rhs)) * 57.29578f;
-		}
-
-		[CompilerGenerated]
-		private void _003COnDisable_003Em__174(DirectionPointer p)
-		{
-			ForgetPointer(p);
+			float angle = this.GetAngle(NickLabelController.currentCamera.transform, pointer.Target.transform.position, Vector3.up);
+			float single = this._radius * Mathf.Sin(angle * 0.017453292f);
+			float single1 = this._radius * Mathf.Cos(angle * 0.017453292f);
+			Vector3 vector3 = pointer.transform.position;
+			Vector3 vector31 = new Vector3(single, single1, vector3.z);
+			pointer.transform.localPosition = vector31;
 		}
 	}
 }

@@ -11,5 +11,9 @@ namespace I2.Loc
 
 		[NonSerialized]
 		public bool Compressed;
+
+		public LanguageData()
+		{
+		}
 	}
 }

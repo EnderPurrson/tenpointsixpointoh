@@ -1,23 +1,14 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Rilisoft;
-using Rilisoft.MiniJson;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PremiumAccountController : MonoBehaviour
 {
-	public enum AccountType
-	{
-		OneDay = 0,
-		ThreeDay = 1,
-		SevenDays = 2,
-		Month = 3,
-		None = 4
-	}
-
-	public delegate void OnAccountChangedDelegate();
-
 	private const float PremInfoTimeout = 1200f;
 
 	private DateTime _timeStart;
@@ -38,17 +29,29 @@ public class PremiumAccountController : MonoBehaviour
 
 	private float _premGetInfoStartTime;
 
-	public static PremiumAccountController Instance { get; private set; }
+	public static bool AccountHasExpired
+	{
+		get;
+		set;
+	}
 
-	public bool isAccountActive { get; private set; }
+	public static PremiumAccountController Instance
+	{
+		get;
+		private set;
+	}
 
-	public static bool AccountHasExpired { get; set; }
+	public bool isAccountActive
+	{
+		get;
+		private set;
+	}
 
 	public int RewardCoeff
 	{
 		get
 		{
-			return (!isAccountActive) ? 1 : 2;
+			return (!this.isAccountActive ? 1 : 2);
 		}
 	}
 
@@ -56,229 +59,60 @@ public class PremiumAccountController : MonoBehaviour
 	{
 		get
 		{
-			if (Instance == null)
+			if (PremiumAccountController.Instance == null)
 			{
-				Debug.LogError("VirtualCurrencyMultiplier Instance == null");
+				UnityEngine.Debug.LogError("VirtualCurrencyMultiplier Instance == null");
 				return 1f;
 			}
-			switch (Instance.GetCurrentAccount())
+			PremiumAccountController.AccountType currentAccount = PremiumAccountController.Instance.GetCurrentAccount();
+			if (currentAccount == PremiumAccountController.AccountType.SevenDays)
 			{
-			case AccountType.SevenDays:
 				return 1.05f;
-			case AccountType.Month:
-				return 1.1f;
-			default:
-				return 1f;
 			}
-		}
-	}
-
-	public static event OnAccountChangedDelegate OnAccountChanged;
-
-	public static bool MapAvailableDueToPremiumAccount(string mapName)
-	{
-		if (mapName == null || Instance == null)
-		{
-			return false;
-		}
-		return Defs.PremiumMaps != null && Defs.PremiumMaps.ContainsKey(mapName) && Instance.isAccountActive;
-	}
-
-	private void Start()
-	{
-		Instance = this;
-		_timeToEndAccount = default(TimeSpan);
-		_additionalAccountDays = GetAllTimeOtherAccountFromHistory();
-		isAccountActive = CheckInitializeCurrentAccount();
-		CheckTimeHack();
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		StartCoroutine(GetPremInfoLoop());
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		if (pause)
-		{
-			UpdateLastLoggedTime();
-			yield break;
-		}
-		CheckTimeHack();
-		yield return null;
-		yield return null;
-		yield return null;
-		StartCoroutine(DownloadPremInfo());
-	}
-
-	private void Destroy()
-	{
-		UpdateLastLoggedTime();
-		Instance = null;
-	}
-
-	private void CheckTimeHack()
-	{
-		_lastLoggedAccountTime = GetLastLoggedTime();
-		if (_lastLoggedAccountTime != 0L && PromoActionsManager.CurrentUnixTime < _lastLoggedAccountTime)
-		{
-			StopAccountsWork();
-		}
-	}
-
-	private long GetLastLoggedTime()
-	{
-		if (!isAccountActive)
-		{
-			return 0L;
-		}
-		if (!Storager.hasKey("LastLoggedTimePremiumAccount"))
-		{
-			return 0L;
-		}
-		string @string = Storager.getString("LastLoggedTimePremiumAccount", false);
-		long result;
-		long.TryParse(@string, out result);
-		return result;
-	}
-
-	private void UpdateLastLoggedTime()
-	{
-		if (isAccountActive)
-		{
-			Storager.setString("LastLoggedTimePremiumAccount", PromoActionsManager.CurrentUnixTime.ToString(), false);
-		}
-	}
-
-	private bool CheckInitializeCurrentAccount()
-	{
-		DateTime parsedDate = default(DateTime);
-		bool flag = Tools.ParseDateTimeFromPlayerPrefs("StartTimePremiumAccount", out parsedDate);
-		DateTime parsedDate2 = default(DateTime);
-		bool flag2 = Tools.ParseDateTimeFromPlayerPrefs("EndTimePremiumAccount", out parsedDate2);
-		if (!flag || !flag2)
-		{
-			return false;
-		}
-		_timeStart = parsedDate;
-		_timeEnd = parsedDate2;
-		return true;
-	}
-
-	private void Update()
-	{
-		if (isAccountActive && Time.realtimeSinceStartup - _lastCheckTime >= 1f)
-		{
-			_timeToEndAccount = _timeEnd - DateTime.UtcNow;
-			isAccountActive = DateTime.UtcNow <= _timeEnd;
-			if (!isAccountActive)
+			if (currentAccount == PremiumAccountController.AccountType.Month)
 			{
-				ChangeCurrentAccount();
+				return 1.1f;
 			}
-			_lastCheckTime = Time.realtimeSinceStartup;
+			return 1f;
 		}
 	}
 
-	private void ChangeCurrentAccount()
+	public PremiumAccountController()
 	{
-		if (!ChangeAccountOnNext())
-		{
-			StopAccountsWork();
-		}
 	}
 
-	private DateTime GetTimeEndAccount(DateTime startTime, AccountType accountType)
+	private void AddBoughtAccountInHistory(PremiumAccountController.AccountType accountType)
 	{
-		DateTime result = startTime;
-		switch (accountType)
-		{
-		case AccountType.OneDay:
-			result = result.AddDays(1.0);
-			break;
-		case AccountType.ThreeDay:
-			result = result.AddDays(3.0);
-			break;
-		case AccountType.SevenDays:
-			result = result.AddDays(7.0);
-			break;
-		case AccountType.Month:
-			result = result.AddDays(30.0);
-			break;
-		}
-		return result;
+		string str = Storager.getString("BuyHistoryPremiumAccount", false);
+		str = (!string.IsNullOrEmpty(str) ? string.Concat(str, string.Format(",{0}", (int)accountType)) : string.Format("{0}", (int)accountType));
+		Storager.setString("BuyHistoryPremiumAccount", str, false);
 	}
 
-	public void BuyAccount(AccountType accountType)
+	public void BuyAccount(PremiumAccountController.AccountType accountType)
 	{
-		AccountType currentAccount = GetCurrentAccount();
-		if (currentAccount == AccountType.None)
+		if (this.GetCurrentAccount() == PremiumAccountController.AccountType.None)
 		{
-			StartNewAccount(accountType);
+			this.StartNewAccount(accountType);
 		}
-		AddBoughtAccountInHistory(accountType);
-		_additionalAccountDays = GetAllTimeOtherAccountFromHistory();
-		AccountHasExpired = false;
+		this.AddBoughtAccountInHistory(accountType);
+		this._additionalAccountDays = this.GetAllTimeOtherAccountFromHistory();
+		PremiumAccountController.AccountHasExpired = false;
 		if (Application.platform != RuntimePlatform.IPhonePlayer)
 		{
 			PlayerPrefs.Save();
 		}
 	}
 
-	private void StartNewAccount(AccountType accountType)
-	{
-		isAccountActive = true;
-		_timeStart = DateTime.UtcNow;
-		Storager.setString("StartTimePremiumAccount", _timeStart.ToString("s"), false);
-		_timeEnd = GetTimeEndAccount(_timeStart, accountType);
-		Storager.setString("EndTimePremiumAccount", _timeEnd.ToString("s"), false);
-	}
-
-	private void AddBoughtAccountInHistory(AccountType accountType)
-	{
-		string @string = Storager.getString("BuyHistoryPremiumAccount", false);
-		@string = ((!string.IsNullOrEmpty(@string)) ? (@string + string.Format(",{0}", (int)accountType)) : string.Format("{0}", (int)accountType));
-		Storager.setString("BuyHistoryPremiumAccount", @string, false);
-	}
-
-	private void DeleteBoughtAccountFromHistory()
-	{
-		string @string = Storager.getString("BuyHistoryPremiumAccount", false);
-		if (!string.IsNullOrEmpty(@string))
-		{
-			int num = @string.IndexOf(',');
-			@string = ((num <= 0) ? string.Empty : @string.Remove(0, num + 1));
-			Storager.setString("BuyHistoryPremiumAccount", @string, false);
-		}
-	}
-
-	public AccountType GetCurrentAccount()
-	{
-		string @string = Storager.getString("BuyHistoryPremiumAccount", false);
-		if (string.IsNullOrEmpty(@string))
-		{
-			return AccountType.None;
-		}
-		string[] array = @string.Split(',');
-		if (array.Length == 0)
-		{
-			return AccountType.None;
-		}
-		int result = 0;
-		if (!int.TryParse(array[0], out result))
-		{
-			return AccountType.None;
-		}
-		return (AccountType)result;
-	}
-
 	private bool ChangeAccountOnNext()
 	{
-		DeleteBoughtAccountFromHistory();
-		_additionalAccountDays = GetAllTimeOtherAccountFromHistory();
-		AccountType currentAccount = GetCurrentAccount();
-		if (currentAccount == AccountType.None)
+		this.DeleteBoughtAccountFromHistory();
+		this._additionalAccountDays = this.GetAllTimeOtherAccountFromHistory();
+		PremiumAccountController.AccountType currentAccount = this.GetCurrentAccount();
+		if (currentAccount == PremiumAccountController.AccountType.None)
 		{
 			return false;
 		}
-		StartNewAccount(currentAccount);
+		this.StartNewAccount(currentAccount);
 		if (PremiumAccountController.OnAccountChanged != null)
 		{
 			PremiumAccountController.OnAccountChanged();
@@ -290,9 +124,269 @@ public class PremiumAccountController : MonoBehaviour
 		return true;
 	}
 
+	private void ChangeCurrentAccount()
+	{
+		if (!this.ChangeAccountOnNext())
+		{
+			this.StopAccountsWork();
+		}
+	}
+
+	private bool CheckInitializeCurrentAccount()
+	{
+		DateTime dateTime = new DateTime();
+		bool flag = Tools.ParseDateTimeFromPlayerPrefs("StartTimePremiumAccount", out dateTime);
+		DateTime dateTime1 = new DateTime();
+		bool flag1 = Tools.ParseDateTimeFromPlayerPrefs("EndTimePremiumAccount", out dateTime1);
+		if (!flag || !flag1)
+		{
+			return false;
+		}
+		this._timeStart = dateTime;
+		this._timeEnd = dateTime1;
+		return true;
+	}
+
+	private void CheckTimeHack()
+	{
+		this._lastLoggedAccountTime = this.GetLastLoggedTime();
+		if (this._lastLoggedAccountTime != 0 && PromoActionsManager.CurrentUnixTime < this._lastLoggedAccountTime)
+		{
+			this.StopAccountsWork();
+		}
+	}
+
+	private void DeleteBoughtAccountFromHistory()
+	{
+		string str = Storager.getString("BuyHistoryPremiumAccount", false);
+		if (string.IsNullOrEmpty(str))
+		{
+			return;
+		}
+		int num = str.IndexOf(',');
+		str = (num <= 0 ? string.Empty : str.Remove(0, num + 1));
+		Storager.setString("BuyHistoryPremiumAccount", str, false);
+	}
+
+	private void Destroy()
+	{
+		this.UpdateLastLoggedTime();
+		PremiumAccountController.Instance = null;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DownloadPremInfo()
+	{
+		PremiumAccountController.u003cDownloadPremInfou003ec__Iterator17A variable = null;
+		return variable;
+	}
+
+	private int GetAllTimeOtherAccountFromHistory()
+	{
+		string str = Storager.getString("BuyHistoryPremiumAccount", false);
+		if (string.IsNullOrEmpty(str))
+		{
+			return 0;
+		}
+		string[] strArrays = str.Split(new char[] { ',' });
+		if ((int)strArrays.Length == 0)
+		{
+			return 0;
+		}
+		int num = 0;
+		int daysAccountByType = 0;
+		for (int i = 1; i < (int)strArrays.Length; i++)
+		{
+			int.TryParse(strArrays[i], out num);
+			daysAccountByType += this.GetDaysAccountByType(num);
+		}
+		return daysAccountByType;
+	}
+
+	public PremiumAccountController.AccountType GetCurrentAccount()
+	{
+		string str = Storager.getString("BuyHistoryPremiumAccount", false);
+		if (string.IsNullOrEmpty(str))
+		{
+			return PremiumAccountController.AccountType.None;
+		}
+		string[] strArrays = str.Split(new char[] { ',' });
+		if ((int)strArrays.Length == 0)
+		{
+			return PremiumAccountController.AccountType.None;
+		}
+		int num = 0;
+		if (!int.TryParse(strArrays[0], out num))
+		{
+			return PremiumAccountController.AccountType.None;
+		}
+		return (PremiumAccountController.AccountType)num;
+	}
+
+	private int GetDaysAccountByType(int codeAccount)
+	{
+		switch (codeAccount)
+		{
+			case 0:
+			{
+				return 1;
+			}
+			case 1:
+			{
+				return 3;
+			}
+			case 2:
+			{
+				return 7;
+			}
+			case 3:
+			{
+				return 30;
+			}
+		}
+		return 0;
+	}
+
+	public int GetDaysToEndAllAccounts()
+	{
+		return this._countCeilDays + this._additionalAccountDays;
+	}
+
+	private long GetLastLoggedTime()
+	{
+		long num;
+		if (!this.isAccountActive)
+		{
+			return (long)0;
+		}
+		if (!Storager.hasKey("LastLoggedTimePremiumAccount"))
+		{
+			return (long)0;
+		}
+		string str = Storager.getString("LastLoggedTimePremiumAccount", false);
+		long.TryParse(str, out num);
+		return num;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetPremInfoLoop()
+	{
+		PremiumAccountController.u003cGetPremInfoLoopu003ec__Iterator179 variable = null;
+		return variable;
+	}
+
+	public int GetRewardCoeffByActiveOrActiveBeforeMatch()
+	{
+		return (!this.IsActiveOrWasActiveBeforeStartMatch() ? 1 : 2);
+	}
+
+	private DateTime GetTimeEndAccount(DateTime startTime, PremiumAccountController.AccountType accountType)
+	{
+		DateTime dateTime = startTime;
+		switch (accountType)
+		{
+			case PremiumAccountController.AccountType.OneDay:
+			{
+				dateTime = dateTime.AddDays(1);
+				break;
+			}
+			case PremiumAccountController.AccountType.ThreeDay:
+			{
+				dateTime = dateTime.AddDays(3);
+				break;
+			}
+			case PremiumAccountController.AccountType.SevenDays:
+			{
+				dateTime = dateTime.AddDays(7);
+				break;
+			}
+			case PremiumAccountController.AccountType.Month:
+			{
+				dateTime = dateTime.AddDays(30);
+				break;
+			}
+		}
+		return dateTime;
+	}
+
+	public string GetTimeToEndAllAccounts()
+	{
+		if (!this.isAccountActive)
+		{
+			return string.Empty;
+		}
+		TimeSpan timeSpan = this._timeToEndAccount.Add(TimeSpan.FromDays((double)this._additionalAccountDays));
+		if (timeSpan.Days <= 0)
+		{
+			return string.Format("{0:00}:{1:00}:{2:00}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
+		}
+		string str = "Days";
+		this._countCeilDays = Mathf.CeilToInt((float)this._timeToEndAccount.TotalDays) + this._additionalAccountDays;
+		return string.Format("{0}: {1}", str, this._countCeilDays);
+	}
+
+	public bool IsActiveOrWasActiveBeforeStartMatch()
+	{
+		Player_move_c playerMoveC;
+		if (this.isAccountActive)
+		{
+			return true;
+		}
+		if (WeaponManager.sharedManager != null)
+		{
+			playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
+		}
+		else
+		{
+			playerMoveC = null;
+		}
+		Player_move_c playerMoveC1 = playerMoveC;
+		if (playerMoveC1 == null)
+		{
+			return false;
+		}
+		return playerMoveC1.isNeedTakePremiumAccountRewards;
+	}
+
+	public static bool MapAvailableDueToPremiumAccount(string mapName)
+	{
+		if (mapName == null || PremiumAccountController.Instance == null)
+		{
+			return false;
+		}
+		return (Defs.PremiumMaps == null || !Defs.PremiumMaps.ContainsKey(mapName) ? false : PremiumAccountController.Instance.isAccountActive);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		PremiumAccountController.u003cOnApplicationPauseu003ec__Iterator178 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		PremiumAccountController.Instance = this;
+		this._timeToEndAccount = new TimeSpan();
+		this._additionalAccountDays = this.GetAllTimeOtherAccountFromHistory();
+		this.isAccountActive = this.CheckInitializeCurrentAccount();
+		this.CheckTimeHack();
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		base.StartCoroutine(this.GetPremInfoLoop());
+	}
+
+	private void StartNewAccount(PremiumAccountController.AccountType accountType)
+	{
+		this.isAccountActive = true;
+		this._timeStart = DateTime.UtcNow;
+		Storager.setString("StartTimePremiumAccount", this._timeStart.ToString("s"), false);
+		this._timeEnd = this.GetTimeEndAccount(this._timeStart, accountType);
+		Storager.setString("EndTimePremiumAccount", this._timeEnd.ToString("s"), false);
+	}
+
 	private void StopAccountsWork()
 	{
-		isAccountActive = false;
+		this.isAccountActive = false;
 		if (PremiumAccountController.OnAccountChanged != null)
 		{
 			PremiumAccountController.OnAccountChanged();
@@ -300,152 +394,49 @@ public class PremiumAccountController : MonoBehaviour
 		Storager.setString("StartTimePremiumAccount", string.Empty, false);
 		Storager.setString("EndTimePremiumAccount", string.Empty, false);
 		Storager.setString("BuyHistoryPremiumAccount", string.Empty, false);
-		_timeToEndAccount = TimeSpan.FromMinutes(0.0);
-		_additionalAccountDays = 0;
-		_countCeilDays = 0;
-		AccountHasExpired = true;
+		this._timeToEndAccount = TimeSpan.FromMinutes(0);
+		this._additionalAccountDays = 0;
+		this._countCeilDays = 0;
+		PremiumAccountController.AccountHasExpired = true;
 	}
 
-	private int GetDaysAccountByType(int codeAccount)
+	private void Update()
 	{
-		switch (codeAccount)
+		if (!this.isAccountActive)
 		{
-		case 0:
-			return 1;
-		case 1:
-			return 3;
-		case 2:
-			return 7;
-		case 3:
-			return 30;
-		default:
-			return 0;
+			return;
 		}
-	}
-
-	private int GetAllTimeOtherAccountFromHistory()
-	{
-		string @string = Storager.getString("BuyHistoryPremiumAccount", false);
-		if (string.IsNullOrEmpty(@string))
+		if (Time.realtimeSinceStartup - this._lastCheckTime >= 1f)
 		{
-			return 0;
-		}
-		string[] array = @string.Split(',');
-		if (array.Length == 0)
-		{
-			return 0;
-		}
-		int result = 0;
-		int num = 0;
-		for (int i = 1; i < array.Length; i++)
-		{
-			int.TryParse(array[i], out result);
-			num += GetDaysAccountByType(result);
-		}
-		return num;
-	}
-
-	public string GetTimeToEndAllAccounts()
-	{
-		if (!isAccountActive)
-		{
-			return string.Empty;
-		}
-		TimeSpan timeSpan = _timeToEndAccount.Add(TimeSpan.FromDays(_additionalAccountDays));
-		if (timeSpan.Days > 0)
-		{
-			string arg = "Days";
-			_countCeilDays = Mathf.CeilToInt((float)_timeToEndAccount.TotalDays) + _additionalAccountDays;
-			return string.Format("{0}: {1}", arg, _countCeilDays);
-		}
-		return string.Format("{0:00}:{1:00}:{2:00}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-	}
-
-	public int GetDaysToEndAllAccounts()
-	{
-		return _countCeilDays + _additionalAccountDays;
-	}
-
-	private IEnumerator GetPremInfoLoop()
-	{
-		while (!TrainingController.TrainingCompleted)
-		{
-			yield return null;
-		}
-		while (true)
-		{
-			yield return StartCoroutine(DownloadPremInfo());
-			while (Time.realtimeSinceStartup - _premGetInfoStartTime < 1200f)
+			this._timeToEndAccount = this._timeEnd - DateTime.UtcNow;
+			this.isAccountActive = DateTime.UtcNow <= this._timeEnd;
+			if (!this.isAccountActive)
 			{
-				yield return null;
+				this.ChangeCurrentAccount();
 			}
+			this._lastCheckTime = Time.realtimeSinceStartup;
 		}
 	}
 
-	private IEnumerator DownloadPremInfo()
+	private void UpdateLastLoggedTime()
 	{
-		if (_isGetPremInfoRunning)
+		if (!this.isAccountActive)
 		{
-			yield break;
+			return;
 		}
-		_premGetInfoStartTime = Time.realtimeSinceStartup;
-		_isGetPremInfoRunning = true;
-		if (string.IsNullOrEmpty(URLs.PremiumAccount))
-		{
-			_isGetPremInfoRunning = false;
-			yield break;
-		}
-		WWW response = Tools.CreateWwwIfNotConnected(URLs.PremiumAccount);
-		if (response == null)
-		{
-			_isGetPremInfoRunning = false;
-			yield break;
-		}
-		yield return response;
-		string responseText = URLs.Sanitize(response);
-		if (!string.IsNullOrEmpty(response.error))
-		{
-			Debug.LogWarningFormat("Premium Account response error: {0}", response.error);
-			_isGetPremInfoRunning = false;
-			yield break;
-		}
-		if (string.IsNullOrEmpty(responseText))
-		{
-			Debug.LogWarning("Prem response is empty");
-			_isGetPremInfoRunning = false;
-			yield break;
-		}
-		object premInfoObj = Json.Deserialize(responseText);
-		Dictionary<string, object> premInfo = premInfoObj as Dictionary<string, object>;
-		if (premInfo == null)
-		{
-			Debug.LogWarning("Prem response is bad");
-			_isGetPremInfoRunning = false;
-			yield break;
-		}
-		if (premInfo.ContainsKey("enable"))
-		{
-			Storager.setInt(val: ((long)premInfo["enable"] == 1) ? 1 : 0, key: Defs.PremiumEnabledFromServer, useICloud: false);
-		}
-		_isGetPremInfoRunning = false;
+		Storager.setString("LastLoggedTimePremiumAccount", PromoActionsManager.CurrentUnixTime.ToString(), false);
 	}
 
-	public bool IsActiveOrWasActiveBeforeStartMatch()
+	public static event PremiumAccountController.OnAccountChangedDelegate OnAccountChanged;
+
+	public enum AccountType
 	{
-		if (isAccountActive)
-		{
-			return true;
-		}
-		Player_move_c player_move_c = ((!(WeaponManager.sharedManager == null)) ? WeaponManager.sharedManager.myPlayerMoveC : null);
-		if (player_move_c == null)
-		{
-			return false;
-		}
-		return player_move_c.isNeedTakePremiumAccountRewards;
+		OneDay,
+		ThreeDay,
+		SevenDays,
+		Month,
+		None
 	}
 
-	public int GetRewardCoeffByActiveOrActiveBeforeMatch()
-	{
-		return (!IsActiveOrWasActiveBeforeStartMatch()) ? 1 : 2;
-	}
+	public delegate void OnAccountChangedDelegate();
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class synchCamAndPlayer : MonoBehaviour
@@ -14,31 +15,8 @@ internal sealed class synchCamAndPlayer : MonoBehaviour
 
 	private Transform myTransform;
 
-	private void Start()
+	public synchCamAndPlayer()
 	{
-		myTransform = base.transform;
-		isMulti = Defs.isMulti;
-		isInet = Defs.isInet;
-		photonView = base.transform.parent.GetComponent<PhotonView>();
-		if (isMulti)
-		{
-			if (!isInet)
-			{
-				isMine = base.transform.parent.GetComponent<NetworkView>().isMine;
-			}
-			else
-			{
-				isMine = photonView.isMine;
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			base.enabled = false;
-		}
-		else
-		{
-			SendMessage("SetActiveFalse");
-		}
 	}
 
 	private void invokeStart()
@@ -49,8 +27,35 @@ internal sealed class synchCamAndPlayer : MonoBehaviour
 	{
 	}
 
+	private void Start()
+	{
+		this.myTransform = base.transform;
+		this.isMulti = Defs.isMulti;
+		this.isInet = Defs.isInet;
+		this.photonView = base.transform.parent.GetComponent<PhotonView>();
+		if (this.isMulti)
+		{
+			if (this.isInet)
+			{
+				this.isMine = this.photonView.isMine;
+			}
+			else
+			{
+				this.isMine = base.transform.parent.GetComponent<NetworkView>().isMine;
+			}
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			base.enabled = false;
+		}
+		else
+		{
+			base.SendMessage("SetActiveFalse");
+		}
+	}
+
 	private void Update()
 	{
-		myTransform.rotation = gameObjectPlayerTrasform.rotation;
+		this.myTransform.rotation = this.gameObjectPlayerTrasform.rotation;
 	}
 }

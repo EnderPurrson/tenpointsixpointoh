@@ -6,43 +6,63 @@ public class AGSRequestFriendIdsResponse : AGSRequestResponse
 {
 	public List<string> friendIds;
 
+	public AGSRequestFriendIdsResponse()
+	{
+	}
+
 	public static AGSRequestFriendIdsResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00e9, IL_010e
+		AGSRequestFriendIdsResponse blankResponseWithError;
 		try
 		{
 			AGSRequestFriendIdsResponse aGSRequestFriendIdsResponse = new AGSRequestFriendIdsResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestFriendIdsResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestFriendIdsResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestFriendIdsResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestFriendIdsResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
 			aGSRequestFriendIdsResponse.friendIds = new List<string>();
-			if (hashtable.ContainsKey("friendIds"))
+			if (hashtables.ContainsKey("friendIds"))
 			{
-				foreach (string item in hashtable["friendIds"] as ArrayList)
+				IEnumerator enumerator = (hashtables["friendIds"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestFriendIdsResponse.friendIds.Add(item);
+					while (enumerator.MoveNext())
+					{
+						string current = (string)enumerator.Current;
+						aGSRequestFriendIdsResponse.friendIds.Add(current);
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			return aGSRequestFriendIdsResponse;
+			blankResponseWithError = aGSRequestFriendIdsResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON");
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestFriendIdsResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSRequestFriendIdsResponse GetBlankResponseWithError(string error, int userData = 0)
 	{
-		AGSRequestFriendIdsResponse aGSRequestFriendIdsResponse = new AGSRequestFriendIdsResponse();
-		aGSRequestFriendIdsResponse.error = error;
-		aGSRequestFriendIdsResponse.userData = userData;
-		aGSRequestFriendIdsResponse.friendIds = new List<string>();
+		AGSRequestFriendIdsResponse aGSRequestFriendIdsResponse = new AGSRequestFriendIdsResponse()
+		{
+			error = error,
+			userData = userData,
+			friendIds = new List<string>()
+		};
 		return aGSRequestFriendIdsResponse;
 	}
 
 	public static AGSRequestFriendIdsResponse GetPlatformNotSupportedResponse(int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
+		return AGSRequestFriendIdsResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
 	}
 }

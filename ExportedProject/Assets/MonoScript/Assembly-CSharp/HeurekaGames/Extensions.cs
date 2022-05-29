@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -9,19 +10,59 @@ namespace HeurekaGames
 {
 	public static class Extensions
 	{
-		public static Vector2 YZ(this Vector3 v)
+		public static T Add<T>(this Enum type, T value)
 		{
-			return new Vector2(v.x, v.z);
+			T t;
+			try
+			{
+				t = (T)(object)((int)type | (int)(object)value);
+			}
+			catch (Exception exception1)
+			{
+				Exception exception = exception1;
+				throw new ArgumentException(string.Format("Could not append value from enumerated type '{0}'.", typeof(T).Name), exception);
+			}
+			return t;
 		}
 
-		public static Vector2[] YZ(this Vector3[] v)
+		public static void CastList<T>(this List<T> targetList)
 		{
-			Vector2[] array = new Vector2[v.Length];
-			for (int i = 0; i < v.Length; i++)
+			targetList = targetList.Cast<T>().ToList<T>();
+		}
+
+		public static bool Has<T>(this Enum type, T value)
+		{
+			bool flag;
+			try
 			{
-				array[i] = new Vector2(v[i].x, v[i].z);
+				flag = ((int)type & (int)(object)value) == (int)(object)value;
 			}
-			return array;
+			catch
+			{
+				flag = false;
+			}
+			return flag;
+		}
+
+		public static bool Is<T>(this Enum type, T value)
+		{
+			bool flag;
+			try
+			{
+				flag = (int)type == (int)(object)value;
+			}
+			catch
+			{
+				flag = false;
+			}
+			return flag;
+		}
+
+		public static Color ModifiedAlpha(this Color color, float alpha)
+		{
+			Color color1 = color;
+			color1.a = alpha;
+			return color1;
 		}
 
 		public static float Remap(this float value, float from1, float to1, float from2, float to2)
@@ -29,97 +70,66 @@ namespace HeurekaGames
 			return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
 		}
 
+		public static T Remove<T>(this Enum type, T value)
+		{
+			T t;
+			try
+			{
+				t = (T)(object)((int)type & ~(int)(object)value);
+			}
+			catch (Exception exception1)
+			{
+				Exception exception = exception1;
+				throw new ArgumentException(string.Format("Could not remove value from enumerated type '{0}'.", typeof(T).Name), exception);
+			}
+			return t;
+		}
+
+		public static void SetComponentRecursively<T>(this GameObject gameObject, bool tf)
+		where T : Component
+		{
+			T[] componentsInChildren = gameObject.GetComponentsInChildren<T>();
+			for (int i = 0; i < (int)componentsInChildren.Length; i++)
+			{
+				T t = componentsInChildren[i];
+				try
+				{
+					PropertyInfo property = typeof(T).GetProperty("enabled");
+					if (property == null || !property.CanWrite)
+					{
+						Console.WriteLine("BLABLA");
+						Debug.Log("Property does not exist, or cannot write");
+					}
+					else
+					{
+						property.SetValue(t, tf, null);
+					}
+				}
+				catch (NullReferenceException nullReferenceException)
+				{
+					Debug.Log(string.Concat("The property does not exist in MyClass.", nullReferenceException.Message));
+				}
+			}
+		}
+
 		public static string ToCamelCase(this string camelCaseString)
 		{
 			return Regex.Replace(camelCaseString, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ").Trim();
 		}
 
-		public static void SetComponentRecursively<T>(this GameObject gameObject, bool tf) where T : Component
+		public static Vector2 YZ(this Vector3 v)
 		{
-			T[] componentsInChildren = gameObject.GetComponentsInChildren<T>();
-			T[] array = componentsInChildren;
-			foreach (T obj in array)
-			{
-				try
-				{
-					PropertyInfo property = typeof(T).GetProperty("enabled");
-					if (property != null && property.CanWrite)
-					{
-						property.SetValue(obj, tf, null);
-						continue;
-					}
-					Console.WriteLine("BLABLA");
-					Debug.Log("Property does not exist, or cannot write");
-				}
-				catch (NullReferenceException ex)
-				{
-					Debug.Log("The property does not exist in MyClass." + ex.Message);
-				}
-			}
+			return new Vector2(v.x, v.z);
 		}
 
-		public static void CastList<T>(this List<T> targetList)
+		public static Vector2[] YZ(this Vector3[] v)
 		{
-			targetList = targetList.Cast<T>().ToList();
-		}
-
-		public static bool Has<T>(this Enum type, T value)
-		{
-			//Discarded unreachable code: IL_0025, IL_0032
-			try
+			Vector2[] vector2 = new Vector2[(int)v.Length];
+			for (int i = 0; i < (int)v.Length; i++)
 			{
-				return ((int)(object)type & (int)(object)value) == (int)(object)value;
+				vector2[i] = new Vector2(v[i].x, v[i].z);
 			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		public static bool Is<T>(this Enum type, T value)
-		{
-			//Discarded unreachable code: IL_0019, IL_0026
-			try
-			{
-				return (int)(object)type == (int)(object)value;
-			}
-			catch
-			{
-				return false;
-			}
-		}
-
-		public static T Add<T>(this Enum type, T value)
-		{
-			//Discarded unreachable code: IL_0022, IL_0048
-			try
-			{
-				return (T)(object)((int)(object)type | (int)(object)value);
-			}
-			catch (Exception innerException)
-			{
-				throw new ArgumentException(string.Format("Could not append value from enumerated type '{0}'.", typeof(T).Name), innerException);
-			}
-		}
-
-		public static T Remove<T>(this Enum type, T value)
-		{
-			//Discarded unreachable code: IL_0023, IL_0049
-			try
-			{
-				return (T)(object)((int)(object)type & ~(int)(object)value);
-			}
-			catch (Exception innerException)
-			{
-				throw new ArgumentException(string.Format("Could not remove value from enumerated type '{0}'.", typeof(T).Name), innerException);
-			}
-		}
-
-		public static Color ModifiedAlpha(this Color color, float alpha)
-		{
-			Color result = color;
-			result.a = alpha;
-			return result;
+			return vector2;
 		}
 	}
 }

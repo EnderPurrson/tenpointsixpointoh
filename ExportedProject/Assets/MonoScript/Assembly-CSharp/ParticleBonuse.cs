@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ParticleBonuse : MonoBehaviour
@@ -6,21 +7,25 @@ public class ParticleBonuse : MonoBehaviour
 
 	public float timer = -1f;
 
-	private void Update()
+	public ParticleBonuse()
 	{
-		if (timer > 0f)
-		{
-			timer -= Time.deltaTime;
-			if (timer < 0f)
-			{
-				base.gameObject.SetActive(false);
-			}
-		}
 	}
 
 	public void ShowParticle()
 	{
 		base.gameObject.SetActive(true);
-		timer = maxTimer;
+		this.timer = this.maxTimer;
+	}
+
+	private void Update()
+	{
+		if (this.timer > 0f)
+		{
+			this.timer -= Time.deltaTime;
+			if (this.timer < 0f)
+			{
+				base.gameObject.SetActive(false);
+			}
+		}
 	}
 }

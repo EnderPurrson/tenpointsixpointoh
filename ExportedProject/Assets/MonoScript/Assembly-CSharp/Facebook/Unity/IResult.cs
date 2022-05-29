@@ -1,15 +1,28 @@
+using System;
 using System.Collections.Generic;
 
 namespace Facebook.Unity
 {
 	public interface IResult
 	{
-		string Error { get; }
+		bool Cancelled
+		{
+			get;
+		}
 
-		IDictionary<string, object> ResultDictionary { get; }
+		string Error
+		{
+			get;
+		}
 
-		string RawResult { get; }
+		string RawResult
+		{
+			get;
+		}
 
-		bool Cancelled { get; }
+		IDictionary<string, object> ResultDictionary
+		{
+			get;
+		}
 	}
 }

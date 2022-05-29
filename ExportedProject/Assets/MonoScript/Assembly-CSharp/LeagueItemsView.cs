@@ -1,30 +1,13 @@
+using Rilisoft;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 [RequireComponent(typeof(UIGrid))]
 public class LeagueItemsView : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CGetStatesForItem_003Ec__AnonStorey2CD
-	{
-		internal Dictionary<Wear.LeagueItemState, List<string>> items;
-
-		internal string itemId;
-
-		internal List<Wear.LeagueItemState> res;
-
-		internal void _003C_003Em__396(Wear.LeagueItemState val)
-		{
-			if (items[val].Contains(itemId))
-			{
-				res.Add(val);
-			}
-		}
-	}
-
 	[SerializeField]
 	private UILabel _headerText;
 
@@ -32,42 +15,50 @@ public class LeagueItemsView : MonoBehaviour
 
 	private LeagueItemStot[] _slots;
 
-	private void Awake()
+	public LeagueItemsView()
 	{
-		_grid = GetComponent<UIGrid>();
-		_slots = GetComponentsInChildren<LeagueItemStot>(true);
 	}
 
-	public void Repaint(RatingSystem.RatingLeague league)
+	private void Awake()
 	{
-		List<string> list = Wear.LeagueItemsByLeagues()[league];
-		_headerText.gameObject.SetActive(list.Any());
-		int num = 0;
-		LeagueItemStot[] slots = _slots;
-		foreach (LeagueItemStot leagueItemStot in slots)
-		{
-			if (list.Count() > num)
-			{
-				string itemId = list[num];
-				List<Wear.LeagueItemState> statesForItem = GetStatesForItem(itemId);
-				leagueItemStot.Set(itemId, statesForItem.Contains(Wear.LeagueItemState.Open), statesForItem.Contains(Wear.LeagueItemState.Purchased));
-			}
-			else
-			{
-				leagueItemStot.Hide();
-			}
-			num++;
-		}
-		_grid.Reposition();
+		this._grid = base.GetComponent<UIGrid>();
+		this._slots = base.GetComponentsInChildren<LeagueItemStot>(true);
 	}
 
 	private List<Wear.LeagueItemState> GetStatesForItem(string itemId)
 	{
-		_003CGetStatesForItem_003Ec__AnonStorey2CD _003CGetStatesForItem_003Ec__AnonStorey2CD = new _003CGetStatesForItem_003Ec__AnonStorey2CD();
-		_003CGetStatesForItem_003Ec__AnonStorey2CD.itemId = itemId;
-		_003CGetStatesForItem_003Ec__AnonStorey2CD.res = new List<Wear.LeagueItemState>();
-		_003CGetStatesForItem_003Ec__AnonStorey2CD.items = Wear.LeagueItems();
-		RiliExtensions.ForEachEnum<Wear.LeagueItemState>(_003CGetStatesForItem_003Ec__AnonStorey2CD._003C_003Em__396);
-		return _003CGetStatesForItem_003Ec__AnonStorey2CD.res;
+		List<Wear.LeagueItemState> leagueItemStates = new List<Wear.LeagueItemState>();
+		Dictionary<Wear.LeagueItemState, List<string>> leagueItemStates1 = Wear.LeagueItems();
+		RiliExtensions.ForEachEnum<Wear.LeagueItemState>((Wear.LeagueItemState val) => {
+			if (leagueItemStates1[val].Contains(itemId))
+			{
+				leagueItemStates.Add(val);
+			}
+		});
+		return leagueItemStates;
+	}
+
+	public void Repaint(RatingSystem.RatingLeague league)
+	{
+		List<string> item = Wear.LeagueItemsByLeagues()[league];
+		this._headerText.gameObject.SetActive(item.Any<string>());
+		int num = 0;
+		LeagueItemStot[] leagueItemStotArray = this._slots;
+		for (int i = 0; i < (int)leagueItemStotArray.Length; i++)
+		{
+			LeagueItemStot leagueItemStot = leagueItemStotArray[i];
+			if (item.Count<string>() <= num)
+			{
+				leagueItemStot.Hide();
+			}
+			else
+			{
+				string str = item[num];
+				List<Wear.LeagueItemState> statesForItem = this.GetStatesForItem(str);
+				leagueItemStot.Set(str, statesForItem.Contains(Wear.LeagueItemState.Open), statesForItem.Contains(Wear.LeagueItemState.Purchased));
+			}
+			num++;
+		}
+		this._grid.Reposition();
 	}
 }

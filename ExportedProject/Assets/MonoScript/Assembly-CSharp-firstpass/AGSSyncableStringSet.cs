@@ -4,64 +4,63 @@ using UnityEngine;
 
 public class AGSSyncableStringSet : AGSSyncable
 {
-	public AGSSyncableStringSet(AmazonJavaWrapper javaObject)
-		: base(javaObject)
+	public AGSSyncableStringSet(AmazonJavaWrapper javaObject) : base(javaObject)
 	{
 	}
 
-	public AGSSyncableStringSet(AndroidJavaObject javaObject)
-		: base(javaObject)
+	public AGSSyncableStringSet(AndroidJavaObject javaObject) : base(javaObject)
 	{
 	}
 
 	public void Add(string val)
 	{
-		javaObject.Call("add", val);
+		this.javaObject.Call("add", new object[] { val });
 	}
 
 	public void Add(string val, Dictionary<string, string> metadata)
 	{
-		javaObject.Call("add", val, DictionaryToAndroidHashMap(metadata));
-	}
-
-	public AGSSyncableStringElement Get(string val)
-	{
-		return GetAGSSyncable<AGSSyncableStringElement>(SyncableMethod.getStringSet, val);
+		this.javaObject.Call("add", new object[] { val, base.DictionaryToAndroidHashMap(metadata) });
 	}
 
 	public bool Contains(string val)
 	{
-		return javaObject.Call<bool>("contains", new object[1] { val });
+		return this.javaObject.Call<bool>("contains", new object[] { val });
 	}
 
-	public bool IsSet()
+	public AGSSyncableStringElement Get(string val)
 	{
-		return javaObject.Call<bool>("isSet", new object[0]);
+		return base.GetAGSSyncable<AGSSyncableStringElement>(AGSSyncable.SyncableMethod.getStringSet, val);
 	}
 
 	public HashSet<AGSSyncableStringElement> GetValues()
 	{
 		AndroidJNI.PushLocalFrame(10);
-		HashSet<AGSSyncableStringElement> hashSet = new HashSet<AGSSyncableStringElement>();
-		AndroidJavaObject androidJavaObject = javaObject.Call<AndroidJavaObject>("getValues", new object[0]);
+		HashSet<AGSSyncableStringElement> aGSSyncableStringElements = new HashSet<AGSSyncableStringElement>();
+		AndroidJavaObject androidJavaObject = this.javaObject.Call<AndroidJavaObject>("getValues", new object[0]);
 		if (androidJavaObject == null)
 		{
-			return hashSet;
+			return aGSSyncableStringElements;
 		}
-		AndroidJavaObject androidJavaObject2 = androidJavaObject.Call<AndroidJavaObject>("iterator", new object[0]);
-		if (androidJavaObject2 == null)
+		AndroidJavaObject androidJavaObject1 = androidJavaObject.Call<AndroidJavaObject>("iterator", new object[0]);
+		if (androidJavaObject1 == null)
 		{
-			return hashSet;
+			return aGSSyncableStringElements;
 		}
-		while (androidJavaObject2.Call<bool>("hasNext", new object[0]))
+		while (androidJavaObject1.Call<bool>("hasNext", new object[0]))
 		{
-			AndroidJavaObject androidJavaObject3 = androidJavaObject2.Call<AndroidJavaObject>("next", new object[0]);
-			if (androidJavaObject3 != null)
+			AndroidJavaObject androidJavaObject2 = androidJavaObject1.Call<AndroidJavaObject>("next", new object[0]);
+			if (androidJavaObject2 == null)
 			{
-				hashSet.Add(new AGSSyncableStringElement(androidJavaObject3));
+				continue;
 			}
+			aGSSyncableStringElements.Add(new AGSSyncableStringElement(androidJavaObject2));
 		}
 		AndroidJNI.PopLocalFrame(IntPtr.Zero);
-		return hashSet;
+		return aGSSyncableStringElements;
+	}
+
+	public bool IsSet()
+	{
+		return this.javaObject.Call<bool>("isSet", new object[0]);
 	}
 }

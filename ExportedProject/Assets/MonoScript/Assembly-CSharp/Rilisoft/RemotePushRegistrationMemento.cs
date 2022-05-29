@@ -20,7 +20,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return registrationId ?? string.Empty;
+				return this.registrationId ?? string.Empty;
 			}
 		}
 
@@ -28,7 +28,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return registrationTime ?? string.Empty;
+				return this.registrationTime ?? string.Empty;
 			}
 		}
 
@@ -36,7 +36,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return version ?? string.Empty;
+				return this.version ?? string.Empty;
 			}
 		}
 
@@ -49,15 +49,15 @@ namespace Rilisoft
 
 		public bool Equals(RemotePushRegistrationMemento other)
 		{
-			if (RegistrationTime != other.RegistrationTime)
+			if (this.RegistrationTime != other.RegistrationTime)
 			{
 				return false;
 			}
-			if (Version != other.Version)
+			if (this.Version != other.Version)
 			{
 				return false;
 			}
-			if (RegistrationId != other.RegistrationId)
+			if (this.RegistrationId != other.RegistrationId)
 			{
 				return false;
 			}
@@ -70,13 +70,12 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			RemotePushRegistrationMemento other = (RemotePushRegistrationMemento)obj;
-			return Equals(other);
+			return this.Equals((RemotePushRegistrationMemento)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return RegistrationTime.GetHashCode() ^ Version.GetHashCode() ^ RegistrationId.GetHashCode();
+			return this.RegistrationTime.GetHashCode() ^ this.Version.GetHashCode() ^ this.RegistrationId.GetHashCode();
 		}
 	}
 }

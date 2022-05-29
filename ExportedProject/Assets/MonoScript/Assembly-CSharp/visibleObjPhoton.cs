@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class visibleObjPhoton : MonoBehaviour
@@ -5,6 +6,10 @@ public class visibleObjPhoton : MonoBehaviour
 	public ThirdPersonNetwork1 lerpScript;
 
 	public bool isVisible;
+
+	public visibleObjPhoton()
+	{
+	}
 
 	private void Awake()
 	{
@@ -14,25 +19,25 @@ public class visibleObjPhoton : MonoBehaviour
 		}
 	}
 
-	private void Start()
+	private void OnBecameInvisible()
 	{
+		this.isVisible = false;
+		if (this.lerpScript != null)
+		{
+			this.lerpScript.sglajEnabled = false;
+		}
 	}
 
 	private void OnBecameVisible()
 	{
-		isVisible = true;
-		if (lerpScript != null)
+		this.isVisible = true;
+		if (this.lerpScript != null)
 		{
-			lerpScript.sglajEnabled = true;
+			this.lerpScript.sglajEnabled = true;
 		}
 	}
 
-	private void OnBecameInvisible()
+	private void Start()
 	{
-		isVisible = false;
-		if (lerpScript != null)
-		{
-			lerpScript.sglajEnabled = false;
-		}
 	}
 }

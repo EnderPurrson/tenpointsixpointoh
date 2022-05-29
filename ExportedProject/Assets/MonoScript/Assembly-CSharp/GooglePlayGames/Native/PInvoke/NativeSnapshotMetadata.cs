@@ -1,27 +1,19 @@
+using GooglePlayGames.BasicApi.SavedGame;
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.BasicApi.SavedGame;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeSnapshotMetadata : BaseReferenceHolder, ISavedGameMetadata
 	{
-		public bool IsOpen
+		public string CoverImageURL
 		{
 			get
 			{
-				return SnapshotMetadata.SnapshotMetadata_IsOpen(SelfPtr());
-			}
-		}
-
-		public string Filename
-		{
-			get
-			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_Filename_003Em__153);
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => SnapshotMetadata.SnapshotMetadata_CoverImageURL(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
@@ -29,28 +21,23 @@ namespace GooglePlayGames.Native.PInvoke
 		{
 			get
 			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_Description_003Em__154);
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => SnapshotMetadata.SnapshotMetadata_Description(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
-		public string CoverImageURL
+		public string Filename
 		{
 			get
 			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_CoverImageURL_003Em__155);
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => SnapshotMetadata.SnapshotMetadata_FileName(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
-		public TimeSpan TotalTimePlayed
+		public bool IsOpen
 		{
 			get
 			{
-				long num = SnapshotMetadata.SnapshotMetadata_PlayedTime(SelfPtr());
-				if (num < 0)
-				{
-					return TimeSpan.FromMilliseconds(0.0);
-				}
-				return TimeSpan.FromMilliseconds(num);
+				return SnapshotMetadata.SnapshotMetadata_IsOpen(base.SelfPtr());
 			}
 		}
 
@@ -58,45 +45,39 @@ namespace GooglePlayGames.Native.PInvoke
 		{
 			get
 			{
-				return PInvokeUtilities.FromMillisSinceUnixEpoch(SnapshotMetadata.SnapshotMetadata_LastModifiedTime(SelfPtr()));
+				return PInvokeUtilities.FromMillisSinceUnixEpoch(SnapshotMetadata.SnapshotMetadata_LastModifiedTime(base.SelfPtr()));
 			}
 		}
 
-		internal NativeSnapshotMetadata(IntPtr selfPointer)
-			: base(selfPointer)
+		public TimeSpan TotalTimePlayed
 		{
-		}
-
-		public override string ToString()
-		{
-			if (IsDisposed())
+			get
 			{
-				return "[NativeSnapshotMetadata: DELETED]";
+				long num = SnapshotMetadata.SnapshotMetadata_PlayedTime(base.SelfPtr());
+				if (num < (long)0)
+				{
+					return TimeSpan.FromMilliseconds(0);
+				}
+				return TimeSpan.FromMilliseconds((double)num);
 			}
-			return string.Format("[NativeSnapshotMetadata: IsOpen={0}, Filename={1}, Description={2}, CoverImageUrl={3}, TotalTimePlayed={4}, LastModifiedTimestamp={5}]", IsOpen, Filename, Description, CoverImageURL, TotalTimePlayed, LastModifiedTimestamp);
+		}
+
+		internal NativeSnapshotMetadata(IntPtr selfPointer) : base(selfPointer)
+		{
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
 		{
-			SnapshotMetadata.SnapshotMetadata_Dispose(SelfPtr());
+			SnapshotMetadata.SnapshotMetadata_Dispose(base.SelfPtr());
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003Cget_Filename_003Em__153(StringBuilder out_string, UIntPtr out_size)
+		public override string ToString()
 		{
-			return SnapshotMetadata.SnapshotMetadata_FileName(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_Description_003Em__154(StringBuilder out_string, UIntPtr out_size)
-		{
-			return SnapshotMetadata.SnapshotMetadata_Description(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_CoverImageURL_003Em__155(StringBuilder out_string, UIntPtr out_size)
-		{
-			return SnapshotMetadata.SnapshotMetadata_CoverImageURL(SelfPtr(), out_string, out_size);
+			if (base.IsDisposed())
+			{
+				return "[NativeSnapshotMetadata: DELETED]";
+			}
+			return string.Format("[NativeSnapshotMetadata: IsOpen={0}, Filename={1}, Description={2}, CoverImageUrl={3}, TotalTimePlayed={4}, LastModifiedTimestamp={5}]", new object[] { this.IsOpen, this.Filename, this.Description, this.CoverImageURL, this.TotalTimePlayed, this.LastModifiedTimestamp });
 		}
 	}
 }

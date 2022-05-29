@@ -9,46 +9,50 @@ public class UniPasteBoard
 	{
 		get
 		{
-			if (_javaClass == null)
+			if (UniPasteBoard._javaClass == null)
 			{
 				try
 				{
-					_javaClass = new AndroidJavaClass("com.onevcat.UniPasteBoard.PasteBoard");
+					UniPasteBoard._javaClass = new AndroidJavaClass("com.onevcat.UniPasteBoard.PasteBoard");
 				}
-				catch (Exception ex)
+				catch (Exception exception)
 				{
-					Debug.Log(ex.ToString());
+					Debug.Log(exception.ToString());
 				}
 			}
-			return _javaClass;
+			return UniPasteBoard._javaClass;
+		}
+	}
+
+	public UniPasteBoard()
+	{
+	}
+
+	private static string androidGetClipBoardString()
+	{
+		string str = null;
+		if (UniPasteBoard.JavaClass != null)
+		{
+			str = UniPasteBoard.JavaClass.CallStatic<string>("getClipBoardString", new object[0]);
+		}
+		return str;
+	}
+
+	private static void androidSetClipBoardString(string text)
+	{
+		if (UniPasteBoard.JavaClass != null)
+		{
+			UniPasteBoard.JavaClass.CallStatic("setClipBoardString", new object[] { text });
 		}
 	}
 
 	public static string GetClipBoardString()
 	{
-		return androidGetClipBoardString();
+		return UniPasteBoard.androidGetClipBoardString();
 	}
 
 	public static void SetClipBoardString(string text)
 	{
-		androidSetClipBoardString(text);
-	}
-
-	private static string androidGetClipBoardString()
-	{
-		string result = null;
-		if (JavaClass != null)
-		{
-			result = JavaClass.CallStatic<string>("getClipBoardString", new object[0]);
-		}
-		return result;
-	}
-
-	private static void androidSetClipBoardString(string text)
-	{
-		if (JavaClass != null)
-		{
-			JavaClass.CallStatic("setClipBoardString", text);
-		}
+		UniPasteBoard.androidSetClipBoardString(text);
 	}
 }

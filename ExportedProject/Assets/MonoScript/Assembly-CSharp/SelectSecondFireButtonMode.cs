@@ -1,5 +1,4 @@
 using System;
-using Rilisoft;
 using UnityEngine;
 
 public class SelectSecondFireButtonMode : MonoBehaviour
@@ -10,19 +9,13 @@ public class SelectSecondFireButtonMode : MonoBehaviour
 
 	public UIToggle offSniperModeButton;
 
-	private void Start()
+	public SelectSecondFireButtonMode()
 	{
-		sniperModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += HandleSniperClicked;
-		onModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += HandleOnClicked;
-		offSniperModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += HandleOffClicked;
-		sniperModeButton.value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Sniper;
-		onModeButton.value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.On;
-		offSniperModeButton.value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Off;
 	}
 
-	private void HandleSniperClicked(object sender, EventArgs e)
+	private void HandleOffClicked(object sender, EventArgs e)
 	{
-		Defs.gameSecondFireButtonMode = Defs.GameSecondFireButtonMode.Sniper;
+		Defs.gameSecondFireButtonMode = Defs.GameSecondFireButtonMode.Off;
 		PlayerPrefs.SetInt("GameSecondFireButtonMode", (int)Defs.gameSecondFireButtonMode);
 	}
 
@@ -32,9 +25,19 @@ public class SelectSecondFireButtonMode : MonoBehaviour
 		PlayerPrefs.SetInt("GameSecondFireButtonMode", (int)Defs.gameSecondFireButtonMode);
 	}
 
-	private void HandleOffClicked(object sender, EventArgs e)
+	private void HandleSniperClicked(object sender, EventArgs e)
 	{
-		Defs.gameSecondFireButtonMode = Defs.GameSecondFireButtonMode.Off;
+		Defs.gameSecondFireButtonMode = Defs.GameSecondFireButtonMode.Sniper;
 		PlayerPrefs.SetInt("GameSecondFireButtonMode", (int)Defs.gameSecondFireButtonMode);
+	}
+
+	private void Start()
+	{
+		this.sniperModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleSniperClicked);
+		this.onModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleOnClicked);
+		this.offSniperModeButton.gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleOffClicked);
+		this.sniperModeButton.@value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Sniper;
+		this.onModeButton.@value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.On;
+		this.offSniperModeButton.@value = Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Off;
 	}
 }

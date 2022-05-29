@@ -1,5 +1,7 @@
-using System.Globalization;
 using GooglePlayGames.BasicApi.SavedGame;
+using System;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
@@ -11,7 +13,7 @@ namespace Rilisoft
 			{
 				return "<null>";
 			}
-			return string.Format(CultureInfo.InvariantCulture, "{0} ({1:s})", metadata.Description, metadata.LastModifiedTimestamp);
+			return string.Format(CultureInfo.InvariantCulture, "{0} ({1:s})", new object[] { metadata.Description, metadata.LastModifiedTimestamp });
 		}
 	}
 }

@@ -1,5 +1,9 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class CameraTouchControlScheme_LowPassFilter : CameraTouchControlScheme
@@ -20,109 +24,114 @@ public sealed class CameraTouchControlScheme_LowPassFilter : CameraTouchControlS
 
 	private Vector2? _azimuthTilt;
 
-	public override void OnPress(bool isDown)
+	public CameraTouchControlScheme_LowPassFilter()
 	{
-		if (isDown)
-		{
-			_accumulatedDrag = Vector2.zero;
-			_unfilteredAccumulatedDrag = Vector2.zero;
-		}
-		else
-		{
-			_accumulatedDrag = null;
-			_unfilteredAccumulatedDrag = null;
-		}
-		firstDrag = isDown;
-		limitDrag = isDown;
-		if (isDown)
-		{
-			if ((bool)JoystickController.rightJoystick)
-			{
-				JoystickController.rightJoystick.StartCoroutine(CancelLimitDrag());
-			}
-		}
-		else if ((bool)JoystickController.rightJoystick)
-		{
-			JoystickController.rightJoystick.StopCoroutine(CancelLimitDrag());
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private IEnumerator CancelLimitDrag()
-	{
-		yield return new WaitForSeconds(dragClampInterval);
-		limitDrag = false;
-	}
-
-	public override void OnDrag(Vector2 delta)
-	{
-		if (!firstDrag)
-		{
-			_deltaPosition = delta;
-		}
-		firstDrag = false;
-		if (limitDrag)
-		{
-			limitDrag = false;
-			if ((bool)JoystickController.rightJoystick)
-			{
-				JoystickController.rightJoystick.StopCoroutine(CancelLimitDrag());
-			}
-			_deltaPosition = Vector2.ClampMagnitude(delta, dragClamp);
-		}
-		if (_accumulatedDrag.HasValue && _unfilteredAccumulatedDrag.HasValue)
-		{
-			Vector2 deltaPosition = _deltaPosition;
-			Vector2 vector = _unfilteredAccumulatedDrag.Value + deltaPosition;
-			Vector2 value = _accumulatedDrag.Value;
-			Vector2 value2 = Vector2.Lerp(value, vector, lerpCoeff);
-			_accumulatedDrag = value2;
-			_unfilteredAccumulatedDrag = vector;
-		}
-		WeaponManager.sharedManager.myPlayerMoveC.mySkinName.MoveCamera(_deltaPosition);
-		Reset();
-	}
-
-	public override void Reset()
-	{
-		_deltaPosition = Vector2.zero;
-		_accumulatedDrag = null;
-		_unfilteredAccumulatedDrag = null;
 	}
 
 	public override void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
 	{
-		if (_accumulatedDrag.HasValue)
+		if (!this._accumulatedDrag.HasValue)
 		{
-			if (_azimuthTilt.HasValue)
-			{
-				Vector2 value = _accumulatedDrag.Value;
-				float num = sensitivity / 30f;
-				yawTransform.rotation = Quaternion.Euler(0f, _azimuthTilt.Value.x + value.x * num, 0f);
-				float num2 = _azimuthTilt.Value.y;
-				if (num2 > 180f)
-				{
-					num2 -= 360f;
-				}
-				float num3 = num2 + value.y * ((!invert) ? (-1f) : 1f) * num;
-				if (num3 > 80f)
-				{
-					num3 = 80f;
-				}
-				if (num3 < -65f)
-				{
-					num3 = -65f;
-				}
-				pitchTransform.localRotation = Quaternion.Euler(num3, 0f, 0f);
-			}
-			else
-			{
-				_azimuthTilt = new Vector2(yawTransform.rotation.eulerAngles.y, pitchTransform.localEulerAngles.x);
-			}
+			this._azimuthTilt = null;
+		}
+		else if (!this._azimuthTilt.HasValue)
+		{
+			float single = yawTransform.rotation.eulerAngles.y;
+			Vector3 vector3 = pitchTransform.localEulerAngles;
+			this._azimuthTilt = new Vector2?(new Vector2(single, vector3.x));
 		}
 		else
 		{
-			_azimuthTilt = null;
+			Vector2 value = this._accumulatedDrag.Value;
+			float single1 = sensitivity / 30f;
+			Vector2 vector2 = this._azimuthTilt.Value;
+			yawTransform.rotation = Quaternion.Euler(0f, vector2.x + value.x * single1, 0f);
+			float value1 = this._azimuthTilt.Value.y;
+			if (value1 > 180f)
+			{
+				value1 -= 360f;
+			}
+			float single2 = value1 + value.y * (!invert ? -1f : 1f) * single1;
+			if (single2 > 80f)
+			{
+				single2 = 80f;
+			}
+			if (single2 < -65f)
+			{
+				single2 = -65f;
+			}
+			pitchTransform.localRotation = Quaternion.Euler(single2, 0f, 0f);
 		}
+	}
+
+	[DebuggerHidden]
+	[Obfuscation(Exclude=true)]
+	private IEnumerator CancelLimitDrag()
+	{
+		CameraTouchControlScheme_LowPassFilter.u003cCancelLimitDragu003ec__Iterator1B4 variable = null;
+		return variable;
+	}
+
+	public override void OnDrag(Vector2 delta)
+	{
+		if (!this.firstDrag)
+		{
+			this._deltaPosition = delta;
+		}
+		this.firstDrag = false;
+		if (this.limitDrag)
+		{
+			this.limitDrag = false;
+			if (JoystickController.rightJoystick)
+			{
+				JoystickController.rightJoystick.StopCoroutine(this.CancelLimitDrag());
+			}
+			this._deltaPosition = Vector2.ClampMagnitude(delta, this.dragClamp);
+		}
+		if (this._accumulatedDrag.HasValue && this._unfilteredAccumulatedDrag.HasValue)
+		{
+			Vector2 vector2 = this._deltaPosition;
+			Vector2 value = this._unfilteredAccumulatedDrag.Value + vector2;
+			Vector2 value1 = this._accumulatedDrag.Value;
+			Vector2 vector21 = Vector2.Lerp(value1, value, this.lerpCoeff);
+			this._accumulatedDrag = new Vector2?(vector21);
+			this._unfilteredAccumulatedDrag = new Vector2?(value);
+		}
+		WeaponManager.sharedManager.myPlayerMoveC.mySkinName.MoveCamera(this._deltaPosition);
+		this.Reset();
+	}
+
+	public override void OnPress(bool isDown)
+	{
+		if (!isDown)
+		{
+			this._accumulatedDrag = null;
+			this._unfilteredAccumulatedDrag = null;
+		}
+		else
+		{
+			this._accumulatedDrag = new Vector2?(Vector2.zero);
+			this._unfilteredAccumulatedDrag = new Vector2?(Vector2.zero);
+		}
+		this.firstDrag = isDown;
+		this.limitDrag = isDown;
+		if (isDown)
+		{
+			if (JoystickController.rightJoystick)
+			{
+				JoystickController.rightJoystick.StartCoroutine(this.CancelLimitDrag());
+			}
+		}
+		else if (JoystickController.rightJoystick)
+		{
+			JoystickController.rightJoystick.StopCoroutine(this.CancelLimitDrag());
+		}
+	}
+
+	public override void Reset()
+	{
+		this._deltaPosition = Vector2.zero;
+		this._accumulatedDrag = null;
+		this._unfilteredAccumulatedDrag = null;
 	}
 }

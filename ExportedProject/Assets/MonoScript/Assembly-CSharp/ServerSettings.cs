@@ -1,21 +1,12 @@
+using ExitGames.Client.Photon;
 using System;
 using System.Collections.Generic;
-using ExitGames.Client.Photon;
 using UnityEngine;
 
 [Serializable]
 public class ServerSettings : ScriptableObject
 {
-	public enum HostingOption
-	{
-		NotSet = 0,
-		PhotonCloud = 1,
-		SelfHosted = 2,
-		OfflineMode = 3,
-		BestRegion = 4
-	}
-
-	public HostingOption HostType;
+	public ServerSettings.HostingOption HostType;
 
 	public ConnectionProtocol Protocol;
 
@@ -27,7 +18,7 @@ public class ServerSettings : ScriptableObject
 
 	public CloudRegionCode PreferredRegion;
 
-	public CloudRegionFlag EnabledRegions = (CloudRegionFlag)(-1);
+	public CloudRegionFlag EnabledRegions = CloudRegionFlag.eu | CloudRegionFlag.us | CloudRegionFlag.asia | CloudRegionFlag.jp | CloudRegionFlag.au | CloudRegionFlag.usw | CloudRegionFlag.sa | CloudRegionFlag.cae;
 
 	public bool JoinLobby;
 
@@ -38,35 +29,48 @@ public class ServerSettings : ScriptableObject
 	[HideInInspector]
 	public bool DisableAutoOpenWizard;
 
-	public void UseCloudBestRegion(string cloudAppid)
+	public ServerSettings()
 	{
-		HostType = HostingOption.BestRegion;
-		AppID = cloudAppid;
-	}
-
-	public void UseCloud(string cloudAppid)
-	{
-		HostType = HostingOption.PhotonCloud;
-		AppID = cloudAppid;
-	}
-
-	public void UseCloud(string cloudAppid, CloudRegionCode code)
-	{
-		HostType = HostingOption.PhotonCloud;
-		AppID = cloudAppid;
-		PreferredRegion = code;
-	}
-
-	public void UseMyServer(string serverAddress, int serverPort, string application)
-	{
-		HostType = HostingOption.SelfHosted;
-		AppID = ((application == null) ? "master" : application);
-		ServerAddress = serverAddress;
-		ServerPort = serverPort;
 	}
 
 	public override string ToString()
 	{
-		return string.Concat("ServerSettings: ", HostType, " ", ServerAddress);
+		return string.Concat(new object[] { "ServerSettings: ", this.HostType, " ", this.ServerAddress });
+	}
+
+	public void UseCloud(string cloudAppid)
+	{
+		this.HostType = ServerSettings.HostingOption.PhotonCloud;
+		this.AppID = cloudAppid;
+	}
+
+	public void UseCloud(string cloudAppid, CloudRegionCode code)
+	{
+		this.HostType = ServerSettings.HostingOption.PhotonCloud;
+		this.AppID = cloudAppid;
+		this.PreferredRegion = code;
+	}
+
+	public void UseCloudBestRegion(string cloudAppid)
+	{
+		this.HostType = ServerSettings.HostingOption.BestRegion;
+		this.AppID = cloudAppid;
+	}
+
+	public void UseMyServer(string serverAddress, int serverPort, string application)
+	{
+		this.HostType = ServerSettings.HostingOption.SelfHosted;
+		this.AppID = (application == null ? "master" : application);
+		this.ServerAddress = serverAddress;
+		this.ServerPort = serverPort;
+	}
+
+	public enum HostingOption
+	{
+		NotSet,
+		PhotonCloud,
+		SelfHosted,
+		OfflineMode,
+		BestRegion
 	}
 }

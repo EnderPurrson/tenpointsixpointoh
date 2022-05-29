@@ -1,32 +1,32 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class EveryplayWrapper
 {
-	public enum State
-	{
-		Initial = 0,
-		Recording = 1,
-		Paused = 2,
-		Idle = 3
-	}
-
-	private State _currenState;
+	private EveryplayWrapper.State _currenState;
 
 	private static EveryplayWrapper _instance;
 
 	private Stopwatch _stopwatch = new Stopwatch();
 
+	public EveryplayWrapper.State CurrentState
+	{
+		get
+		{
+			return this._currenState;
+		}
+	}
+
 	public TimeSpan Elapsed
 	{
 		get
 		{
-			return _stopwatch.Elapsed;
+			return this._stopwatch.Elapsed;
 		}
 	}
 
@@ -34,15 +34,7 @@ public sealed class EveryplayWrapper
 	{
 		get
 		{
-			return _stopwatch.ElapsedMilliseconds;
-		}
-	}
-
-	public State CurrentState
-	{
-		get
-		{
-			return _currenState;
+			return this._stopwatch.ElapsedMilliseconds;
 		}
 	}
 
@@ -50,12 +42,136 @@ public sealed class EveryplayWrapper
 	{
 		get
 		{
-			if (_instance == null)
+			if (EveryplayWrapper._instance == null)
 			{
-				_instance = new EveryplayWrapper();
+				EveryplayWrapper._instance = new EveryplayWrapper();
 			}
-			return _instance;
+			return EveryplayWrapper._instance;
 		}
+	}
+
+	public EveryplayWrapper()
+	{
+	}
+
+	private void CheckCommand(string command, params EveryplayWrapper.State[] expectedStates)
+	{
+		if (Array.FindIndex<EveryplayWrapper.State>(expectedStates, (EveryplayWrapper.State s) => s == this.CurrentState) != -1)
+		{
+			string str = string.Format("{0} command in valid state {1}.", command, this.CurrentState);
+			UnityEngine.Debug.Log(str);
+		}
+		else
+		{
+			string str1 = string.Format("{0} command in invalid state {1}.", command, this.CurrentState);
+			UnityEngine.Debug.LogError(str1);
+		}
+	}
+
+	public bool CheckState()
+	{
+		bool flag = true;
+		switch (this.CurrentState)
+		{
+			case EveryplayWrapper.State.Initial:
+			{
+				if (this.IsRecording())
+				{
+					string str = string.Format("Everyplay.IsRecording() in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str);
+					flag = false;
+				}
+				if (this._stopwatch.IsRunning)
+				{
+					string str1 = string.Format("Stopwatch.IsRunning in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str1);
+					flag = false;
+				}
+				break;
+			}
+			case EveryplayWrapper.State.Recording:
+			{
+				if (!this.IsRecording())
+				{
+					string str2 = string.Format("!Everyplay.IsRecording() in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str2);
+					flag = false;
+				}
+				if (this.IsPaused())
+				{
+					string str3 = string.Format("Everyplay.IsPaused() in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str3);
+					flag = false;
+				}
+				if (!this._stopwatch.IsRunning)
+				{
+					string str4 = string.Format("!Stopwatch.IsRunning in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str4);
+					flag = false;
+				}
+				break;
+			}
+			case EveryplayWrapper.State.Paused:
+			{
+				if (!this.IsPaused())
+				{
+					string str5 = string.Format("!Everyplay.IsPaused() in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str5);
+					flag = false;
+				}
+				if (this._stopwatch.IsRunning)
+				{
+					string str6 = string.Format("Stopwatch.IsRunning in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str6);
+					flag = false;
+				}
+				break;
+			}
+			case EveryplayWrapper.State.Idle:
+			{
+				if (this.IsRecording())
+				{
+					string str7 = string.Format("Everyplay.IsRecording() in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str7);
+					flag = false;
+				}
+				if (this._stopwatch.IsRunning)
+				{
+					string str8 = string.Format("Stopwatch.IsRunning in {0} state.", this.CurrentState);
+					UnityEngine.Debug.LogError(str8);
+					flag = false;
+				}
+				break;
+			}
+		}
+		return flag;
+	}
+
+	public bool IsPaused()
+	{
+		if (!this.IsSupported())
+		{
+			return false;
+		}
+		return Everyplay.IsPaused();
+	}
+
+	public bool IsRecording()
+	{
+		if (!this.IsSupported())
+		{
+			return false;
+		}
+		return Everyplay.IsRecording();
+	}
+
+	public bool IsRecordingSupported()
+	{
+		if (!this.IsSupported())
+		{
+			return false;
+		}
+		return Everyplay.IsRecordingSupported();
 	}
 
 	public bool IsSupported()
@@ -67,186 +183,82 @@ public sealed class EveryplayWrapper
 		return Everyplay.IsSupported();
 	}
 
-	public bool IsRecordingSupported()
-	{
-		if (!IsSupported())
-		{
-			return false;
-		}
-		return Everyplay.IsRecordingSupported();
-	}
-
-	public bool IsPaused()
-	{
-		if (!IsSupported())
-		{
-			return false;
-		}
-		return Everyplay.IsPaused();
-	}
-
-	public bool IsRecording()
-	{
-		if (!IsSupported())
-		{
-			return false;
-		}
-		return Everyplay.IsRecording();
-	}
-
 	public void Pause()
 	{
-		if (IsSupported())
+		if (!this.IsSupported())
 		{
-			CheckCommand("Pause", State.Recording);
-			Everyplay.PauseRecording();
-			_currenState = State.Paused;
-			_stopwatch.Stop();
+			return;
 		}
+		this.CheckCommand("Pause", new EveryplayWrapper.State[] { EveryplayWrapper.State.Recording });
+		Everyplay.PauseRecording();
+		this._currenState = EveryplayWrapper.State.Paused;
+		this._stopwatch.Stop();
 	}
 
 	public void Record()
 	{
-		if (IsSupported())
+		if (!this.IsSupported())
 		{
-			CheckCommand("Record", State.Initial, State.Idle);
-			Everyplay.StartRecording();
-			_currenState = State.Recording;
-			_stopwatch.Reset();
-			_stopwatch.Start();
+			return;
 		}
+		this.CheckCommand("Record", new EveryplayWrapper.State[] { EveryplayWrapper.State.Initial, EveryplayWrapper.State.Idle });
+		Everyplay.StartRecording();
+		this._currenState = EveryplayWrapper.State.Recording;
+		this._stopwatch.Reset();
+		this._stopwatch.Start();
 	}
 
 	public void Resume()
 	{
-		if (IsSupported())
+		if (!this.IsSupported())
 		{
-			CheckCommand("Resume", State.Paused);
-			Everyplay.ResumeRecording();
-			_currenState = State.Recording;
-			_stopwatch.Start();
+			return;
 		}
-	}
-
-	public void Share()
-	{
-		if (IsSupported())
-		{
-			CheckCommand("Share", State.Idle);
-			Everyplay.ShowSharingModal();
-		}
-	}
-
-	public void Stop()
-	{
-		if (IsSupported())
-		{
-			CheckCommand("Stop", State.Recording, State.Paused);
-			string text = SceneManager.GetActiveScene().name ?? string.Empty;
-			UnityEngine.Debug.LogFormat("Trying to add metadata to shared video.    Map: '{0}'", text);
-			Everyplay.SetMetadata("map", text);
-			Everyplay.StopRecording();
-			_currenState = State.Idle;
-			_stopwatch.Stop();
-		}
+		this.CheckCommand("Resume", new EveryplayWrapper.State[] { EveryplayWrapper.State.Paused });
+		Everyplay.ResumeRecording();
+		this._currenState = EveryplayWrapper.State.Recording;
+		this._stopwatch.Start();
 	}
 
 	public void SetMetadata(Dictionary<string, object> dict)
 	{
-		if (IsSupported())
+		if (!this.IsSupported())
 		{
-			Everyplay.SetMetadata(dict);
+			return;
 		}
+		Everyplay.SetMetadata(dict);
 	}
 
-	public bool CheckState()
+	public void Share()
 	{
-		bool result = true;
-		switch (CurrentState)
+		if (!this.IsSupported())
 		{
-		case State.Initial:
-			if (IsRecording())
-			{
-				string message8 = string.Format("Everyplay.IsRecording() in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message8);
-				result = false;
-			}
-			if (_stopwatch.IsRunning)
-			{
-				string message9 = string.Format("Stopwatch.IsRunning in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message9);
-				result = false;
-			}
-			break;
-		case State.Recording:
-			if (!IsRecording())
-			{
-				string message3 = string.Format("!Everyplay.IsRecording() in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message3);
-				result = false;
-			}
-			if (IsPaused())
-			{
-				string message4 = string.Format("Everyplay.IsPaused() in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message4);
-				result = false;
-			}
-			if (!_stopwatch.IsRunning)
-			{
-				string message5 = string.Format("!Stopwatch.IsRunning in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message5);
-				result = false;
-			}
-			break;
-		case State.Paused:
-			if (!IsPaused())
-			{
-				string message6 = string.Format("!Everyplay.IsPaused() in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message6);
-				result = false;
-			}
-			if (_stopwatch.IsRunning)
-			{
-				string message7 = string.Format("Stopwatch.IsRunning in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message7);
-				result = false;
-			}
-			break;
-		case State.Idle:
-			if (IsRecording())
-			{
-				string message = string.Format("Everyplay.IsRecording() in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message);
-				result = false;
-			}
-			if (_stopwatch.IsRunning)
-			{
-				string message2 = string.Format("Stopwatch.IsRunning in {0} state.", CurrentState);
-				UnityEngine.Debug.LogError(message2);
-				result = false;
-			}
-			break;
+			return;
 		}
-		return result;
+		this.CheckCommand("Share", new EveryplayWrapper.State[] { EveryplayWrapper.State.Idle });
+		Everyplay.ShowSharingModal();
 	}
 
-	private void CheckCommand(string command, params State[] expectedStates)
+	public void Stop()
 	{
-		if (Array.FindIndex(expectedStates, _003CCheckCommand_003Em__28A) == -1)
+		if (!this.IsSupported())
 		{
-			string message = string.Format("{0} command in invalid state {1}.", command, CurrentState);
-			UnityEngine.Debug.LogError(message);
+			return;
 		}
-		else
-		{
-			string message2 = string.Format("{0} command in valid state {1}.", command, CurrentState);
-			UnityEngine.Debug.Log(message2);
-		}
+		this.CheckCommand("Stop", new EveryplayWrapper.State[] { EveryplayWrapper.State.Recording, EveryplayWrapper.State.Paused });
+		string activeScene = SceneManager.GetActiveScene().name ?? string.Empty;
+		UnityEngine.Debug.LogFormat("Trying to add metadata to shared video.    Map: '{0}'", new object[] { activeScene });
+		Everyplay.SetMetadata("map", activeScene);
+		Everyplay.StopRecording();
+		this._currenState = EveryplayWrapper.State.Idle;
+		this._stopwatch.Stop();
 	}
 
-	[CompilerGenerated]
-	private bool _003CCheckCommand_003Em__28A(State s)
+	public enum State
 	{
-		return s == CurrentState;
+		Initial,
+		Recording,
+		Paused,
+		Idle
 	}
 }

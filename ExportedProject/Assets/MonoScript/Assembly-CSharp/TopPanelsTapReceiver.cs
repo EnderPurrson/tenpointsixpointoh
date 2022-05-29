@@ -4,23 +4,14 @@ using UnityEngine;
 
 public class TopPanelsTapReceiver : MonoBehaviour
 {
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache1;
-
-	public static event Action OnClicked;
-
 	static TopPanelsTapReceiver()
 	{
-		if (_003C_003Ef__am_0024cache1 == null)
-		{
-			_003C_003Ef__am_0024cache1 = _003COnClicked_003Em__58D;
-		}
-		TopPanelsTapReceiver.OnClicked = _003C_003Ef__am_0024cache1;
+		TopPanelsTapReceiver.OnClicked = () => {
+		};
 	}
 
-	private void Start()
+	public TopPanelsTapReceiver()
 	{
-		base.gameObject.SetActive(Defs.isMulti);
 	}
 
 	private void OnClick()
@@ -29,8 +20,10 @@ public class TopPanelsTapReceiver : MonoBehaviour
 		TopPanelsTapReceiver.OnClicked();
 	}
 
-	[CompilerGenerated]
-	private static void _003COnClicked_003Em__58D()
+	private void Start()
 	{
+		base.gameObject.SetActive(Defs.isMulti);
 	}
+
+	public static event Action OnClicked;
 }

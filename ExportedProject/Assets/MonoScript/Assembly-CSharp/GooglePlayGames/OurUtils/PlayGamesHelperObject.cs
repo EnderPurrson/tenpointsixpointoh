@@ -2,52 +2,54 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
 
 namespace GooglePlayGames.OurUtils
 {
 	public class PlayGamesHelperObject : MonoBehaviour
 	{
-		[CompilerGenerated]
-		private sealed class _003CRunCoroutine_003Ec__AnonStorey1FE
-		{
-			internal IEnumerator action;
+		private static PlayGamesHelperObject instance;
 
-			internal void _003C_003Em__81()
-			{
-				instance.StartCoroutine(action);
-			}
-		}
+		private static bool sIsDummy;
 
-		private static PlayGamesHelperObject instance = null;
-
-		private static bool sIsDummy = false;
-
-		private static List<Action> sQueue = new List<Action>();
+		private static List<Action> sQueue;
 
 		private List<Action> localQueue = new List<Action>();
 
-		private static volatile bool sQueueEmpty = true;
+		private static volatile bool sQueueEmpty;
 
-		private static List<Action<bool>> sPauseCallbackList = new List<Action<bool>>();
+		private static List<Action<bool>> sPauseCallbackList;
 
-		private static List<Action<bool>> sFocusCallbackList = new List<Action<bool>>();
+		private static List<Action<bool>> sFocusCallbackList;
 
-		public static void CreateObject()
+		static PlayGamesHelperObject()
 		{
-			if (!(instance != null))
+			PlayGamesHelperObject.instance = null;
+			PlayGamesHelperObject.sIsDummy = false;
+			PlayGamesHelperObject.sQueue = new List<Action>();
+			PlayGamesHelperObject.sQueueEmpty = true;
+			PlayGamesHelperObject.sPauseCallbackList = new List<Action<bool>>();
+			PlayGamesHelperObject.sFocusCallbackList = new List<Action<bool>>();
+		}
+
+		public PlayGamesHelperObject()
+		{
+		}
+
+		public static void AddFocusCallback(Action<bool> callback)
+		{
+			if (!PlayGamesHelperObject.sFocusCallbackList.Contains(callback))
 			{
-				if (Application.isPlaying)
-				{
-					GameObject gameObject = new GameObject("PlayGames_QueueRunner");
-					UnityEngine.Object.DontDestroyOnLoad(gameObject);
-					instance = gameObject.AddComponent<PlayGamesHelperObject>();
-				}
-				else
-				{
-					instance = new PlayGamesHelperObject();
-					sIsDummy = true;
-				}
+				PlayGamesHelperObject.sFocusCallbackList.Add(callback);
+			}
+		}
+
+		public static void AddPauseCallback(Action<bool> callback)
+		{
+			if (!PlayGamesHelperObject.sPauseCallbackList.Contains(callback))
+			{
+				PlayGamesHelperObject.sPauseCallbackList.Add(callback);
 			}
 		}
 
@@ -56,113 +58,130 @@ namespace GooglePlayGames.OurUtils
 			UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 		}
 
-		public void OnDisable()
+		public static void CreateObject()
 		{
-			if (instance == this)
-			{
-				instance = null;
-			}
-		}
-
-		public static void RunCoroutine(IEnumerator action)
-		{
-			_003CRunCoroutine_003Ec__AnonStorey1FE _003CRunCoroutine_003Ec__AnonStorey1FE = new _003CRunCoroutine_003Ec__AnonStorey1FE();
-			_003CRunCoroutine_003Ec__AnonStorey1FE.action = action;
-			if (instance != null)
-			{
-				RunOnGameThread(_003CRunCoroutine_003Ec__AnonStorey1FE._003C_003Em__81);
-			}
-		}
-
-		public static void RunOnGameThread(Action action)
-		{
-			if (action == null)
-			{
-				throw new ArgumentNullException("action");
-			}
-			if (sIsDummy)
+			if (PlayGamesHelperObject.instance != null)
 			{
 				return;
 			}
-			lock (sQueue)
+			if (!Application.isPlaying)
 			{
-				sQueue.Add(action);
-				sQueueEmpty = false;
+				PlayGamesHelperObject.instance = new PlayGamesHelperObject();
+				PlayGamesHelperObject.sIsDummy = true;
 			}
-		}
-
-		public void Update()
-		{
-			if (!sIsDummy && !sQueueEmpty)
+			else
 			{
-				localQueue.Clear();
-				lock (sQueue)
-				{
-					localQueue.AddRange(sQueue);
-					sQueue.Clear();
-					sQueueEmpty = true;
-				}
-				for (int i = 0; i < localQueue.Count; i++)
-				{
-					localQueue[i]();
-				}
+				GameObject gameObject = new GameObject("PlayGames_QueueRunner");
+				UnityEngine.Object.DontDestroyOnLoad(gameObject);
+				PlayGamesHelperObject.instance = gameObject.AddComponent<PlayGamesHelperObject>();
 			}
 		}
 
 		public void OnApplicationFocus(bool focused)
 		{
-			foreach (Action<bool> sFocusCallback in sFocusCallbackList)
+			foreach (Action<bool> action in PlayGamesHelperObject.sFocusCallbackList)
 			{
 				try
 				{
-					sFocusCallback(focused);
+					action(focused);
 				}
-				catch (Exception ex)
+				catch (Exception exception1)
 				{
-					Debug.LogError("Exception in OnApplicationFocus:" + ex.Message + "\n" + ex.StackTrace);
+					Exception exception = exception1;
+					Debug.LogError(string.Concat("Exception in OnApplicationFocus:", exception.Message, "\n", exception.StackTrace));
 				}
 			}
 		}
 
 		public void OnApplicationPause(bool paused)
 		{
-			foreach (Action<bool> sPauseCallback in sPauseCallbackList)
+			foreach (Action<bool> action in PlayGamesHelperObject.sPauseCallbackList)
 			{
 				try
 				{
-					sPauseCallback(paused);
+					action(paused);
 				}
-				catch (Exception ex)
+				catch (Exception exception1)
 				{
-					Debug.LogError("Exception in OnApplicationPause:" + ex.Message + "\n" + ex.StackTrace);
+					Exception exception = exception1;
+					Debug.LogError(string.Concat("Exception in OnApplicationPause:", exception.Message, "\n", exception.StackTrace));
 				}
 			}
 		}
 
-		public static void AddFocusCallback(Action<bool> callback)
+		public void OnDisable()
 		{
-			if (!sFocusCallbackList.Contains(callback))
+			if (PlayGamesHelperObject.instance == this)
 			{
-				sFocusCallbackList.Add(callback);
+				PlayGamesHelperObject.instance = null;
 			}
 		}
 
 		public static bool RemoveFocusCallback(Action<bool> callback)
 		{
-			return sFocusCallbackList.Remove(callback);
-		}
-
-		public static void AddPauseCallback(Action<bool> callback)
-		{
-			if (!sPauseCallbackList.Contains(callback))
-			{
-				sPauseCallbackList.Add(callback);
-			}
+			return PlayGamesHelperObject.sFocusCallbackList.Remove(callback);
 		}
 
 		public static bool RemovePauseCallback(Action<bool> callback)
 		{
-			return sPauseCallbackList.Remove(callback);
+			return PlayGamesHelperObject.sPauseCallbackList.Remove(callback);
+		}
+
+		public static void RunCoroutine(IEnumerator action)
+		{
+			if (PlayGamesHelperObject.instance != null)
+			{
+				PlayGamesHelperObject.RunOnGameThread(() => PlayGamesHelperObject.instance.StartCoroutine(action));
+			}
+		}
+
+		public static void RunOnGameThread(Action action)
+		{
+			// 
+			// Current member / type: System.Void GooglePlayGames.OurUtils.PlayGamesHelperObject::RunOnGameThread(System.Action)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void RunOnGameThread(System.Action)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
+		}
+
+		public void Update()
+		{
+			if (PlayGamesHelperObject.sIsDummy || PlayGamesHelperObject.sQueueEmpty)
+			{
+				return;
+			}
+			this.localQueue.Clear();
+			List<Action> actions = PlayGamesHelperObject.sQueue;
+			Monitor.Enter(actions);
+			try
+			{
+				this.localQueue.AddRange(PlayGamesHelperObject.sQueue);
+				PlayGamesHelperObject.sQueue.Clear();
+				PlayGamesHelperObject.sQueueEmpty = true;
+			}
+			finally
+			{
+				Monitor.Exit(actions);
+			}
+			for (int i = 0; i < this.localQueue.Count; i++)
+			{
+				this.localQueue[i]();
+			}
 		}
 	}
 }

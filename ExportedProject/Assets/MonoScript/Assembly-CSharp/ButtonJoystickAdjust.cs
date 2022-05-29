@@ -27,102 +27,117 @@ public class ButtonJoystickAdjust : MonoBehaviour
 
 	private Vector3? _nonClampedPosition;
 
-	private void Start()
+	public ButtonJoystickAdjust()
 	{
-		if (ZoneBottonRight == null || ZoneTopLeft == null)
+	}
+
+	public Vector2 GetJoystickPosition()
+	{
+		Vector3 vector3 = base.transform.localPosition;
+		return new Vector2(vector3.x, vector3.y);
+	}
+
+	public bool IsDrag()
+	{
+		bool flag = this._isDrag;
+		this._isDrag = false;
+		return flag;
+	}
+
+	private void LateUpdate()
+	{
+		if (this.IsPress)
 		{
-			_isZone = false;
+			if (this._curTimeBlink >= 0f)
+			{
+				this._curTimeBlink -= Time.deltaTime;
+			}
+			else
+			{
+				if (!this._isHidden)
+				{
+					TweenAlpha.Begin(base.gameObject, this.TimeBlink, 0.1f);
+					this._isHidden = true;
+				}
+				else
+				{
+					TweenAlpha.Begin(base.gameObject, this.TimeBlink, 0.9f);
+					this._isHidden = false;
+				}
+				this._curTimeBlink = this.TimeBlink;
+			}
+			this._isDragLate = false;
+		}
+		else if (!this._isDragLate)
+		{
+			TweenAlpha.Begin(base.gameObject, 0.5f, 1f);
+			this._isHidden = false;
+			this._curTimeBlink = this.TimeBlink;
+			this._isDragLate = true;
 		}
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
 		delta /= Defs.Coef;
-		_isDrag = true;
-		if (_isZone)
+		this._isDrag = true;
+		if (!this._isZone)
 		{
-			Vector3 localPosition = ZoneTopLeft.transform.localPosition;
-			Vector3 localPosition2 = ZoneBottonRight.transform.localPosition;
-			if (_nonClampedPosition.HasValue)
-			{
-				_nonClampedPosition = new Vector3(_nonClampedPosition.Value.x + delta.x, _nonClampedPosition.Value.y + delta.y, 0f);
-				Vector3 localPosition3 = new Vector3(Mathf.Clamp(_nonClampedPosition.Value.x, localPosition.x, localPosition2.x), Mathf.Clamp(_nonClampedPosition.Value.y, localPosition2.y, localPosition.y), _nonClampedPosition.Value.z);
-				base.transform.localPosition = localPosition3;
-			}
+			float single = base.transform.localPosition.x + delta.x;
+			Vector3 vector3 = base.transform.localPosition;
+			Vector3 vector31 = new Vector3(single, vector3.y + delta.y, 0f);
+			base.transform.localPosition = vector31;
 		}
 		else
 		{
-			Vector3 localPosition4 = new Vector3(base.transform.localPosition.x + delta.x, base.transform.localPosition.y + delta.y, 0f);
-			base.transform.localPosition = localPosition4;
+			Vector3 zoneTopLeft = this.ZoneTopLeft.transform.localPosition;
+			Vector3 zoneBottonRight = this.ZoneBottonRight.transform.localPosition;
+			if (this._nonClampedPosition.HasValue)
+			{
+				float value = this._nonClampedPosition.Value.x + delta.x;
+				Vector3 value1 = this._nonClampedPosition.Value;
+				this._nonClampedPosition = new Vector3?(new Vector3(value, value1.y + delta.y, 0f));
+				Vector3 value2 = this._nonClampedPosition.Value;
+				float single1 = Mathf.Clamp(value2.x, zoneTopLeft.x, zoneBottonRight.x);
+				Vector3 vector32 = this._nonClampedPosition.Value;
+				float single2 = Mathf.Clamp(vector32.y, zoneBottonRight.y, zoneTopLeft.y);
+				Vector3 value3 = this._nonClampedPosition.Value;
+				Vector3 vector33 = new Vector3(single1, single2, value3.z);
+				base.transform.localPosition = vector33;
+			}
 		}
 	}
 
 	private void OnPress(bool isDown)
 	{
-		IsPress = isDown;
-		if (isDown)
+		this.IsPress = isDown;
+		if (!isDown)
 		{
-			_nonClampedPosition = new Vector3(base.transform.localPosition.x, base.transform.localPosition.y, 0f);
-			EventHandler<EventArgs> pressedDown = PressedDown;
+			this._nonClampedPosition = null;
+		}
+		else
+		{
+			float single = base.transform.localPosition.x;
+			Vector3 vector3 = base.transform.localPosition;
+			this._nonClampedPosition = new Vector3?(new Vector3(single, vector3.y, 0f));
+			EventHandler<EventArgs> pressedDown = ButtonJoystickAdjust.PressedDown;
 			if (pressedDown != null)
 			{
 				pressedDown(base.gameObject, EventArgs.Empty);
 			}
 		}
-		else
-		{
-			_nonClampedPosition = null;
-		}
-	}
-
-	private void LateUpdate()
-	{
-		if (IsPress)
-		{
-			if (_curTimeBlink < 0f)
-			{
-				if (_isHidden)
-				{
-					TweenAlpha.Begin(base.gameObject, TimeBlink, 0.9f);
-					_isHidden = false;
-				}
-				else
-				{
-					TweenAlpha.Begin(base.gameObject, TimeBlink, 0.1f);
-					_isHidden = true;
-				}
-				_curTimeBlink = TimeBlink;
-			}
-			else
-			{
-				_curTimeBlink -= Time.deltaTime;
-			}
-			_isDragLate = false;
-		}
-		else if (!_isDragLate)
-		{
-			TweenAlpha.Begin(base.gameObject, 0.5f, 1f);
-			_isHidden = false;
-			_curTimeBlink = TimeBlink;
-			_isDragLate = true;
-		}
-	}
-
-	public bool IsDrag()
-	{
-		bool isDrag = _isDrag;
-		_isDrag = false;
-		return isDrag;
-	}
-
-	public Vector2 GetJoystickPosition()
-	{
-		Vector3 localPosition = base.transform.localPosition;
-		return new Vector2(localPosition.x, localPosition.y);
 	}
 
 	public void SetJoystickPosition(Vector2 position)
 	{
 		base.transform.localPosition = position;
+	}
+
+	private void Start()
+	{
+		if (this.ZoneBottonRight == null || this.ZoneTopLeft == null)
+		{
+			this._isZone = false;
+		}
 	}
 }

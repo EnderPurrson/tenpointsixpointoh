@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Facebook.Unity.Mobile.Android
@@ -8,14 +9,18 @@ namespace Facebook.Unity.Mobile.Android
 
 		private AndroidJavaClass facebookJavaClass = new AndroidJavaClass("com.facebook.unity.FB");
 
+		public FBJavaClass()
+		{
+		}
+
 		public T CallStatic<T>(string methodName)
 		{
-			return facebookJavaClass.CallStatic<T>(methodName, new object[0]);
+			return this.facebookJavaClass.CallStatic<T>(methodName, new object[0]);
 		}
 
 		public void CallStatic(string methodName, params object[] args)
 		{
-			facebookJavaClass.CallStatic(methodName, args);
+			this.facebookJavaClass.CallStatic(methodName, args);
 		}
 	}
 }

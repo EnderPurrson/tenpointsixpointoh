@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,6 +31,10 @@ public class RewardWindowAfterMatch : MonoBehaviour
 	public GameObject coinsMultiplierContainer;
 
 	public GameObject expMultiplierContainer;
+
+	public RewardWindowAfterMatch()
+	{
+	}
 
 	private void Start()
 	{

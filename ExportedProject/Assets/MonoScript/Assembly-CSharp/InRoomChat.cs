@@ -1,5 +1,6 @@
-using System.Collections.Generic;
 using Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -17,68 +18,77 @@ public class InRoomChat : Photon.MonoBehaviour
 
 	private Vector2 scrollPos = Vector2.zero;
 
-	public static readonly string ChatRPC = "Chat";
+	public readonly static string ChatRPC;
 
-	public void Start()
+	static InRoomChat()
 	{
-		if (AlignBottom)
+		InRoomChat.ChatRPC = "Chat";
+	}
+
+	public InRoomChat()
+	{
+	}
+
+	public void AddLine(string newLine)
+	{
+		this.messages.Add(newLine);
+	}
+
+	[PunRPC]
+	public void Chat(string newLine, PhotonMessageInfo mi)
+	{
+		string str = "anonymous";
+		if (mi != null && mi.sender != null)
 		{
-			GuiRect.y = (float)Screen.height - GuiRect.height;
+			str = (string.IsNullOrEmpty(mi.sender.name) ? string.Concat("player ", mi.sender.ID) : mi.sender.name);
 		}
+		this.messages.Add(string.Concat(str, ": ", newLine));
 	}
 
 	public void OnGUI()
 	{
-		if (!IsVisible || !PhotonNetwork.inRoom)
+		if (!this.IsVisible || !PhotonNetwork.inRoom)
 		{
 			return;
 		}
 		if (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.KeypadEnter || Event.current.keyCode == KeyCode.Return))
 		{
-			if (!string.IsNullOrEmpty(inputLine))
+			if (!string.IsNullOrEmpty(this.inputLine))
 			{
-				base.photonView.RPC("Chat", PhotonTargets.All, inputLine);
-				inputLine = string.Empty;
+				base.photonView.RPC("Chat", PhotonTargets.All, new object[] { this.inputLine });
+				this.inputLine = string.Empty;
 				GUI.FocusControl(string.Empty);
 				return;
 			}
 			GUI.FocusControl("ChatInput");
 		}
 		GUI.SetNextControlName(string.Empty);
-		GUILayout.BeginArea(GuiRect);
-		scrollPos = GUILayout.BeginScrollView(scrollPos);
+		GUILayout.BeginArea(this.GuiRect);
+		this.scrollPos = GUILayout.BeginScrollView(this.scrollPos, new GUILayoutOption[0]);
 		GUILayout.FlexibleSpace();
-		for (int num = messages.Count - 1; num >= 0; num--)
+		for (int i = this.messages.Count - 1; i >= 0; i--)
 		{
-			GUILayout.Label(messages[num]);
+			GUILayout.Label(this.messages[i], new GUILayoutOption[0]);
 		}
 		GUILayout.EndScrollView();
-		GUILayout.BeginHorizontal();
+		GUILayout.BeginHorizontal(new GUILayoutOption[0]);
 		GUI.SetNextControlName("ChatInput");
-		inputLine = GUILayout.TextField(inputLine);
-		if (GUILayout.Button("Send", GUILayout.ExpandWidth(false)))
+		this.inputLine = GUILayout.TextField(this.inputLine, new GUILayoutOption[0]);
+		if (GUILayout.Button("Send", new GUILayoutOption[] { GUILayout.ExpandWidth(false) }))
 		{
-			base.photonView.RPC("Chat", PhotonTargets.All, inputLine);
-			inputLine = string.Empty;
+			base.photonView.RPC("Chat", PhotonTargets.All, new object[] { this.inputLine });
+			this.inputLine = string.Empty;
 			GUI.FocusControl(string.Empty);
 		}
 		GUILayout.EndHorizontal();
 		GUILayout.EndArea();
 	}
 
-	[PunRPC]
-	public void Chat(string newLine, PhotonMessageInfo mi)
+	public void Start()
 	{
-		string text = "anonymous";
-		if (mi != null && mi.sender != null)
+		if (this.AlignBottom)
 		{
-			text = (string.IsNullOrEmpty(mi.sender.name) ? ("player " + mi.sender.ID) : mi.sender.name);
+			this.GuiRect.y = (float)Screen.height - this.GuiRect.height;
 		}
-		messages.Add(text + ": " + newLine);
-	}
-
-	public void AddLine(string newLine)
-	{
-		messages.Add(newLine);
 	}
 }

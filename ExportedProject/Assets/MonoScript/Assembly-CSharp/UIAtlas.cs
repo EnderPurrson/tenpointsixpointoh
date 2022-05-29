@@ -6,14 +6,501 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Atlas")]
 public class UIAtlas : MonoBehaviour
 {
+	[HideInInspector]
+	[SerializeField]
+	private Material material;
+
+	[HideInInspector]
+	[SerializeField]
+	private List<UISpriteData> mSprites = new List<UISpriteData>();
+
+	[HideInInspector]
+	[SerializeField]
+	private float mPixelSize = 1f;
+
+	[HideInInspector]
+	[SerializeField]
+	private UIAtlas mReplacement;
+
+	[HideInInspector]
+	[SerializeField]
+	private UIAtlas.Coordinates mCoordinates;
+
+	[HideInInspector]
+	[SerializeField]
+	private List<UIAtlas.Sprite> sprites = new List<UIAtlas.Sprite>();
+
+	private int mPMA = -1;
+
+	private Dictionary<string, int> mSpriteIndices = new Dictionary<string, int>();
+
+	public float pixelSize
+	{
+		get
+		{
+			return (this.mReplacement == null ? this.mPixelSize : this.mReplacement.pixelSize);
+		}
+		set
+		{
+			if (this.mReplacement == null)
+			{
+				float single = Mathf.Clamp(value, 0.25f, 4f);
+				if (this.mPixelSize != single)
+				{
+					this.mPixelSize = single;
+					this.MarkAsChanged();
+				}
+			}
+			else
+			{
+				this.mReplacement.pixelSize = value;
+			}
+		}
+	}
+
+	public bool premultipliedAlpha
+	{
+		get
+		{
+			if (this.mReplacement != null)
+			{
+				return this.mReplacement.premultipliedAlpha;
+			}
+			if (this.mPMA == -1)
+			{
+				Material material = this.spriteMaterial;
+				this.mPMA = (!(material != null) || !(material.shader != null) || !material.shader.name.Contains("Premultiplied") ? 0 : 1);
+			}
+			return this.mPMA == 1;
+		}
+	}
+
+	public UIAtlas replacement
+	{
+		get
+		{
+			return this.mReplacement;
+		}
+		set
+		{
+			UIAtlas uIAtla = value;
+			if (uIAtla == this)
+			{
+				uIAtla = null;
+			}
+			if (this.mReplacement != uIAtla)
+			{
+				if (uIAtla != null && uIAtla.replacement == this)
+				{
+					uIAtla.replacement = null;
+				}
+				if (this.mReplacement != null)
+				{
+					this.MarkAsChanged();
+				}
+				this.mReplacement = uIAtla;
+				if (uIAtla != null)
+				{
+					this.material = null;
+				}
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public List<UISpriteData> spriteList
+	{
+		get
+		{
+			if (this.mReplacement != null)
+			{
+				return this.mReplacement.spriteList;
+			}
+			if (this.mSprites.Count == 0)
+			{
+				this.Upgrade();
+			}
+			return this.mSprites;
+		}
+		set
+		{
+			if (this.mReplacement == null)
+			{
+				this.mSprites = value;
+			}
+			else
+			{
+				this.mReplacement.spriteList = value;
+			}
+		}
+	}
+
+	public Material spriteMaterial
+	{
+		get
+		{
+			return (this.mReplacement == null ? this.material : this.mReplacement.spriteMaterial);
+		}
+		set
+		{
+			if (this.mReplacement != null)
+			{
+				this.mReplacement.spriteMaterial = value;
+			}
+			else if (this.material != null)
+			{
+				this.MarkAsChanged();
+				this.mPMA = -1;
+				this.material = value;
+				this.MarkAsChanged();
+			}
+			else
+			{
+				this.mPMA = 0;
+				this.material = value;
+			}
+		}
+	}
+
+	public Texture texture
+	{
+		get
+		{
+			Texture texture;
+			if (this.mReplacement != null)
+			{
+				texture = this.mReplacement.texture;
+			}
+			else if (this.material == null)
+			{
+				texture = null;
+			}
+			else
+			{
+				texture = this.material.mainTexture;
+			}
+			return texture;
+		}
+	}
+
+	public UIAtlas()
+	{
+	}
+
+	public static bool CheckIfRelated(UIAtlas a, UIAtlas b)
+	{
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return (a == b || a.References(b) ? true : b.References(a));
+	}
+
+	public BetterList<string> GetListOfSprites()
+	{
+		if (this.mReplacement != null)
+		{
+			return this.mReplacement.GetListOfSprites();
+		}
+		if (this.mSprites.Count == 0)
+		{
+			this.Upgrade();
+		}
+		BetterList<string> betterList = new BetterList<string>();
+		int num = 0;
+		int count = this.mSprites.Count;
+		while (num < count)
+		{
+			UISpriteData item = this.mSprites[num];
+			if (item != null && !string.IsNullOrEmpty(item.name))
+			{
+				betterList.Add(item.name);
+			}
+			num++;
+		}
+		return betterList;
+	}
+
+	public BetterList<string> GetListOfSprites(string match)
+	{
+		if (this.mReplacement)
+		{
+			return this.mReplacement.GetListOfSprites(match);
+		}
+		if (string.IsNullOrEmpty(match))
+		{
+			return this.GetListOfSprites();
+		}
+		if (this.mSprites.Count == 0)
+		{
+			this.Upgrade();
+		}
+		BetterList<string> betterList = new BetterList<string>();
+		int num = 0;
+		int count = this.mSprites.Count;
+		while (num < count)
+		{
+			UISpriteData item = this.mSprites[num];
+			if (item != null && !string.IsNullOrEmpty(item.name) && string.Equals(match, item.name, StringComparison.OrdinalIgnoreCase))
+			{
+				betterList.Add(item.name);
+				return betterList;
+			}
+			num++;
+		}
+		string[] lower = match.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+		for (int i = 0; i < (int)lower.Length; i++)
+		{
+			lower[i] = lower[i].ToLower();
+		}
+		int num1 = 0;
+		int count1 = this.mSprites.Count;
+		while (num1 < count1)
+		{
+			UISpriteData uISpriteDatum = this.mSprites[num1];
+			if (uISpriteDatum != null && !string.IsNullOrEmpty(uISpriteDatum.name))
+			{
+				string str = uISpriteDatum.name.ToLower();
+				int num2 = 0;
+				for (int j = 0; j < (int)lower.Length; j++)
+				{
+					if (str.Contains(lower[j]))
+					{
+						num2++;
+					}
+				}
+				if (num2 == (int)lower.Length)
+				{
+					betterList.Add(uISpriteDatum.name);
+				}
+			}
+			num1++;
+		}
+		return betterList;
+	}
+
+	public string GetRandomSprite(string startsWith)
+	{
+		string item;
+		if (this.GetSprite(startsWith) != null)
+		{
+			return startsWith;
+		}
+		List<UISpriteData> uISpriteDatas = this.spriteList;
+		List<string> strs = new List<string>();
+		foreach (UISpriteData uISpriteDatum in uISpriteDatas)
+		{
+			if (!uISpriteDatum.name.StartsWith(startsWith))
+			{
+				continue;
+			}
+			strs.Add(uISpriteDatum.name);
+		}
+		if (strs.Count <= 0)
+		{
+			item = null;
+		}
+		else
+		{
+			item = strs[UnityEngine.Random.Range(0, strs.Count)];
+		}
+		return item;
+	}
+
+	public UISpriteData GetSprite(string name)
+	{
+		int num;
+		UISpriteData item;
+		if (this.mReplacement != null)
+		{
+			return this.mReplacement.GetSprite(name);
+		}
+		if (!string.IsNullOrEmpty(name))
+		{
+			if (this.mSprites.Count == 0)
+			{
+				this.Upgrade();
+			}
+			if (this.mSprites.Count == 0)
+			{
+				return null;
+			}
+			if (this.mSpriteIndices.Count != this.mSprites.Count)
+			{
+				this.MarkSpriteListAsChanged();
+			}
+			if (this.mSpriteIndices.TryGetValue(name, out num))
+			{
+				if (num > -1 && num < this.mSprites.Count)
+				{
+					return this.mSprites[num];
+				}
+				this.MarkSpriteListAsChanged();
+				if (!this.mSpriteIndices.TryGetValue(name, out num))
+				{
+					item = null;
+				}
+				else
+				{
+					item = this.mSprites[num];
+				}
+				return item;
+			}
+			int num1 = 0;
+			int count = this.mSprites.Count;
+			while (num1 < count)
+			{
+				UISpriteData uISpriteDatum = this.mSprites[num1];
+				if (!string.IsNullOrEmpty(uISpriteDatum.name) && name == uISpriteDatum.name)
+				{
+					this.MarkSpriteListAsChanged();
+					return uISpriteDatum;
+				}
+				num1++;
+			}
+		}
+		return null;
+	}
+
+	public void MarkAsChanged()
+	{
+		if (this.mReplacement != null)
+		{
+			this.mReplacement.MarkAsChanged();
+		}
+		UISprite[] uISpriteArray = NGUITools.FindActive<UISprite>();
+		int num = 0;
+		int length = (int)uISpriteArray.Length;
+		while (num < length)
+		{
+			UISprite uISprite = uISpriteArray[num];
+			if (UIAtlas.CheckIfRelated(this, uISprite.atlas))
+			{
+				UIAtlas uIAtla = uISprite.atlas;
+				uISprite.atlas = null;
+				uISprite.atlas = uIAtla;
+			}
+			num++;
+		}
+		UIFont[] uIFontArray = Resources.FindObjectsOfTypeAll(typeof(UIFont)) as UIFont[];
+		int num1 = 0;
+		int length1 = (int)uIFontArray.Length;
+		while (num1 < length1)
+		{
+			UIFont uIFont = uIFontArray[num1];
+			if (UIAtlas.CheckIfRelated(this, uIFont.atlas))
+			{
+				UIAtlas uIAtla1 = uIFont.atlas;
+				uIFont.atlas = null;
+				uIFont.atlas = uIAtla1;
+			}
+			num1++;
+		}
+		UILabel[] uILabelArray = NGUITools.FindActive<UILabel>();
+		int num2 = 0;
+		int length2 = (int)uILabelArray.Length;
+		while (num2 < length2)
+		{
+			UILabel uILabel = uILabelArray[num2];
+			if (uILabel.bitmapFont != null && UIAtlas.CheckIfRelated(this, uILabel.bitmapFont.atlas))
+			{
+				UIFont uIFont1 = uILabel.bitmapFont;
+				uILabel.bitmapFont = null;
+				uILabel.bitmapFont = uIFont1;
+			}
+			num2++;
+		}
+	}
+
+	public void MarkSpriteListAsChanged()
+	{
+		this.mSpriteIndices.Clear();
+		int num = 0;
+		int count = this.mSprites.Count;
+		while (num < count)
+		{
+			this.mSpriteIndices[this.mSprites[num].name] = num;
+			num++;
+		}
+	}
+
+	private bool References(UIAtlas atlas)
+	{
+		if (atlas == null)
+		{
+			return false;
+		}
+		if (atlas == this)
+		{
+			return true;
+		}
+		return (this.mReplacement == null ? false : this.mReplacement.References(atlas));
+	}
+
+	public void SortAlphabetically()
+	{
+		this.mSprites.Sort((UISpriteData s1, UISpriteData s2) => s1.name.CompareTo(s2.name));
+	}
+
+	private bool Upgrade()
+	{
+		if (this.mReplacement)
+		{
+			return this.mReplacement.Upgrade();
+		}
+		if (this.mSprites.Count != 0 || this.sprites.Count <= 0 || !this.material)
+		{
+			return false;
+		}
+		Texture texture = this.material.mainTexture;
+		int num = (texture == null ? 512 : texture.width);
+		int num1 = (texture == null ? 512 : texture.height);
+		for (int i = 0; i < this.sprites.Count; i++)
+		{
+			UIAtlas.Sprite item = this.sprites[i];
+			Rect rect = item.outer;
+			Rect rect1 = item.inner;
+			if (this.mCoordinates == UIAtlas.Coordinates.TexCoords)
+			{
+				NGUIMath.ConvertToPixels(rect, num, num1, true);
+				NGUIMath.ConvertToPixels(rect1, num, num1, true);
+			}
+			UISpriteData uISpriteDatum = new UISpriteData()
+			{
+				name = item.name,
+				x = Mathf.RoundToInt(rect.xMin),
+				y = Mathf.RoundToInt(rect.yMin),
+				width = Mathf.RoundToInt(rect.width),
+				height = Mathf.RoundToInt(rect.height),
+				paddingLeft = Mathf.RoundToInt(item.paddingLeft * rect.width),
+				paddingRight = Mathf.RoundToInt(item.paddingRight * rect.width),
+				paddingBottom = Mathf.RoundToInt(item.paddingBottom * rect.height),
+				paddingTop = Mathf.RoundToInt(item.paddingTop * rect.height),
+				borderLeft = Mathf.RoundToInt(rect1.xMin - rect.xMin),
+				borderRight = Mathf.RoundToInt(rect.xMax - rect1.xMax),
+				borderBottom = Mathf.RoundToInt(rect.yMax - rect1.yMax),
+				borderTop = Mathf.RoundToInt(rect1.yMin - rect.yMin)
+			};
+			this.mSprites.Add(uISpriteDatum);
+		}
+		this.sprites.Clear();
+		return true;
+	}
+
+	private enum Coordinates
+	{
+		Pixels,
+		TexCoords
+	}
+
 	[Serializable]
 	private class Sprite
 	{
-		public string name = "Unity Bug";
+		public string name;
 
-		public Rect outer = new Rect(0f, 0f, 1f, 1f);
+		public Rect outer;
 
-		public Rect inner = new Rect(0f, 0f, 1f, 1f);
+		public Rect inner;
 
 		public bool rotated;
 
@@ -29,453 +516,12 @@ public class UIAtlas : MonoBehaviour
 		{
 			get
 			{
-				return paddingLeft != 0f || paddingRight != 0f || paddingTop != 0f || paddingBottom != 0f;
+				return (this.paddingLeft != 0f || this.paddingRight != 0f || this.paddingTop != 0f ? true : this.paddingBottom != 0f);
 			}
 		}
-	}
 
-	private enum Coordinates
-	{
-		Pixels = 0,
-		TexCoords = 1
-	}
-
-	[SerializeField]
-	[HideInInspector]
-	private Material material;
-
-	[SerializeField]
-	[HideInInspector]
-	private List<UISpriteData> mSprites = new List<UISpriteData>();
-
-	[SerializeField]
-	[HideInInspector]
-	private float mPixelSize = 1f;
-
-	[SerializeField]
-	[HideInInspector]
-	private UIAtlas mReplacement;
-
-	[SerializeField]
-	[HideInInspector]
-	private Coordinates mCoordinates;
-
-	[SerializeField]
-	[HideInInspector]
-	private List<Sprite> sprites = new List<Sprite>();
-
-	private int mPMA = -1;
-
-	private Dictionary<string, int> mSpriteIndices = new Dictionary<string, int>();
-
-	[CompilerGenerated]
-	private static Comparison<UISpriteData> _003C_003Ef__am_0024cache8;
-
-	public Material spriteMaterial
-	{
-		get
+		public Sprite()
 		{
-			return (!(mReplacement != null)) ? material : mReplacement.spriteMaterial;
 		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.spriteMaterial = value;
-				return;
-			}
-			if (material == null)
-			{
-				mPMA = 0;
-				material = value;
-				return;
-			}
-			MarkAsChanged();
-			mPMA = -1;
-			material = value;
-			MarkAsChanged();
-		}
-	}
-
-	public bool premultipliedAlpha
-	{
-		get
-		{
-			if (mReplacement != null)
-			{
-				return mReplacement.premultipliedAlpha;
-			}
-			if (mPMA == -1)
-			{
-				Material material = spriteMaterial;
-				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
-			}
-			return mPMA == 1;
-		}
-	}
-
-	public List<UISpriteData> spriteList
-	{
-		get
-		{
-			if (mReplacement != null)
-			{
-				return mReplacement.spriteList;
-			}
-			if (mSprites.Count == 0)
-			{
-				Upgrade();
-			}
-			return mSprites;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.spriteList = value;
-			}
-			else
-			{
-				mSprites = value;
-			}
-		}
-	}
-
-	public Texture texture
-	{
-		get
-		{
-			return (mReplacement != null) ? mReplacement.texture : ((!(material != null)) ? null : material.mainTexture);
-		}
-	}
-
-	public float pixelSize
-	{
-		get
-		{
-			return (!(mReplacement != null)) ? mPixelSize : mReplacement.pixelSize;
-		}
-		set
-		{
-			if (mReplacement != null)
-			{
-				mReplacement.pixelSize = value;
-				return;
-			}
-			float num = Mathf.Clamp(value, 0.25f, 4f);
-			if (mPixelSize != num)
-			{
-				mPixelSize = num;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public UIAtlas replacement
-	{
-		get
-		{
-			return mReplacement;
-		}
-		set
-		{
-			UIAtlas uIAtlas = value;
-			if (uIAtlas == this)
-			{
-				uIAtlas = null;
-			}
-			if (mReplacement != uIAtlas)
-			{
-				if (uIAtlas != null && uIAtlas.replacement == this)
-				{
-					uIAtlas.replacement = null;
-				}
-				if (mReplacement != null)
-				{
-					MarkAsChanged();
-				}
-				mReplacement = uIAtlas;
-				if (uIAtlas != null)
-				{
-					material = null;
-				}
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public UISpriteData GetSprite(string name)
-	{
-		if (mReplacement != null)
-		{
-			return mReplacement.GetSprite(name);
-		}
-		if (!string.IsNullOrEmpty(name))
-		{
-			if (mSprites.Count == 0)
-			{
-				Upgrade();
-			}
-			if (mSprites.Count == 0)
-			{
-				return null;
-			}
-			if (mSpriteIndices.Count != mSprites.Count)
-			{
-				MarkSpriteListAsChanged();
-			}
-			int value;
-			if (mSpriteIndices.TryGetValue(name, out value))
-			{
-				if (value > -1 && value < mSprites.Count)
-				{
-					return mSprites[value];
-				}
-				MarkSpriteListAsChanged();
-				return (!mSpriteIndices.TryGetValue(name, out value)) ? null : mSprites[value];
-			}
-			int i = 0;
-			for (int count = mSprites.Count; i < count; i++)
-			{
-				UISpriteData uISpriteData = mSprites[i];
-				if (!string.IsNullOrEmpty(uISpriteData.name) && name == uISpriteData.name)
-				{
-					MarkSpriteListAsChanged();
-					return uISpriteData;
-				}
-			}
-		}
-		return null;
-	}
-
-	public string GetRandomSprite(string startsWith)
-	{
-		if (GetSprite(startsWith) == null)
-		{
-			List<UISpriteData> list = spriteList;
-			List<string> list2 = new List<string>();
-			foreach (UISpriteData item in list)
-			{
-				if (item.name.StartsWith(startsWith))
-				{
-					list2.Add(item.name);
-				}
-			}
-			return (list2.Count <= 0) ? null : list2[UnityEngine.Random.Range(0, list2.Count)];
-		}
-		return startsWith;
-	}
-
-	public void MarkSpriteListAsChanged()
-	{
-		mSpriteIndices.Clear();
-		int i = 0;
-		for (int count = mSprites.Count; i < count; i++)
-		{
-			mSpriteIndices[mSprites[i].name] = i;
-		}
-	}
-
-	public void SortAlphabetically()
-	{
-		List<UISpriteData> list = mSprites;
-		if (_003C_003Ef__am_0024cache8 == null)
-		{
-			_003C_003Ef__am_0024cache8 = _003CSortAlphabetically_003Em__1CF;
-		}
-		list.Sort(_003C_003Ef__am_0024cache8);
-	}
-
-	public BetterList<string> GetListOfSprites()
-	{
-		if (mReplacement != null)
-		{
-			return mReplacement.GetListOfSprites();
-		}
-		if (mSprites.Count == 0)
-		{
-			Upgrade();
-		}
-		BetterList<string> betterList = new BetterList<string>();
-		int i = 0;
-		for (int count = mSprites.Count; i < count; i++)
-		{
-			UISpriteData uISpriteData = mSprites[i];
-			if (uISpriteData != null && !string.IsNullOrEmpty(uISpriteData.name))
-			{
-				betterList.Add(uISpriteData.name);
-			}
-		}
-		return betterList;
-	}
-
-	public BetterList<string> GetListOfSprites(string match)
-	{
-		if ((bool)mReplacement)
-		{
-			return mReplacement.GetListOfSprites(match);
-		}
-		if (string.IsNullOrEmpty(match))
-		{
-			return GetListOfSprites();
-		}
-		if (mSprites.Count == 0)
-		{
-			Upgrade();
-		}
-		BetterList<string> betterList = new BetterList<string>();
-		int i = 0;
-		for (int count = mSprites.Count; i < count; i++)
-		{
-			UISpriteData uISpriteData = mSprites[i];
-			if (uISpriteData != null && !string.IsNullOrEmpty(uISpriteData.name) && string.Equals(match, uISpriteData.name, StringComparison.OrdinalIgnoreCase))
-			{
-				betterList.Add(uISpriteData.name);
-				return betterList;
-			}
-		}
-		string[] array = match.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-		for (int j = 0; j < array.Length; j++)
-		{
-			array[j] = array[j].ToLower();
-		}
-		int k = 0;
-		for (int count2 = mSprites.Count; k < count2; k++)
-		{
-			UISpriteData uISpriteData2 = mSprites[k];
-			if (uISpriteData2 == null || string.IsNullOrEmpty(uISpriteData2.name))
-			{
-				continue;
-			}
-			string text = uISpriteData2.name.ToLower();
-			int num = 0;
-			for (int l = 0; l < array.Length; l++)
-			{
-				if (text.Contains(array[l]))
-				{
-					num++;
-				}
-			}
-			if (num == array.Length)
-			{
-				betterList.Add(uISpriteData2.name);
-			}
-		}
-		return betterList;
-	}
-
-	private bool References(UIAtlas atlas)
-	{
-		if (atlas == null)
-		{
-			return false;
-		}
-		if (atlas == this)
-		{
-			return true;
-		}
-		return mReplacement != null && mReplacement.References(atlas);
-	}
-
-	public static bool CheckIfRelated(UIAtlas a, UIAtlas b)
-	{
-		if (a == null || b == null)
-		{
-			return false;
-		}
-		return a == b || a.References(b) || b.References(a);
-	}
-
-	public void MarkAsChanged()
-	{
-		if (mReplacement != null)
-		{
-			mReplacement.MarkAsChanged();
-		}
-		UISprite[] array = NGUITools.FindActive<UISprite>();
-		int i = 0;
-		for (int num = array.Length; i < num; i++)
-		{
-			UISprite uISprite = array[i];
-			if (CheckIfRelated(this, uISprite.atlas))
-			{
-				UIAtlas atlas = uISprite.atlas;
-				uISprite.atlas = null;
-				uISprite.atlas = atlas;
-			}
-		}
-		UIFont[] array2 = Resources.FindObjectsOfTypeAll(typeof(UIFont)) as UIFont[];
-		int j = 0;
-		for (int num2 = array2.Length; j < num2; j++)
-		{
-			UIFont uIFont = array2[j];
-			if (CheckIfRelated(this, uIFont.atlas))
-			{
-				UIAtlas atlas2 = uIFont.atlas;
-				uIFont.atlas = null;
-				uIFont.atlas = atlas2;
-			}
-		}
-		UILabel[] array3 = NGUITools.FindActive<UILabel>();
-		int k = 0;
-		for (int num3 = array3.Length; k < num3; k++)
-		{
-			UILabel uILabel = array3[k];
-			if (uILabel.bitmapFont != null && CheckIfRelated(this, uILabel.bitmapFont.atlas))
-			{
-				UIFont bitmapFont = uILabel.bitmapFont;
-				uILabel.bitmapFont = null;
-				uILabel.bitmapFont = bitmapFont;
-			}
-		}
-	}
-
-	private bool Upgrade()
-	{
-		if ((bool)mReplacement)
-		{
-			return mReplacement.Upgrade();
-		}
-		if (mSprites.Count == 0 && sprites.Count > 0 && (bool)material)
-		{
-			Texture mainTexture = material.mainTexture;
-			int width = ((!(mainTexture != null)) ? 512 : mainTexture.width);
-			int height = ((!(mainTexture != null)) ? 512 : mainTexture.height);
-			for (int i = 0; i < sprites.Count; i++)
-			{
-				Sprite sprite = sprites[i];
-				Rect outer = sprite.outer;
-				Rect inner = sprite.inner;
-				if (mCoordinates == Coordinates.TexCoords)
-				{
-					NGUIMath.ConvertToPixels(outer, width, height, true);
-					NGUIMath.ConvertToPixels(inner, width, height, true);
-				}
-				UISpriteData uISpriteData = new UISpriteData();
-				uISpriteData.name = sprite.name;
-				uISpriteData.x = Mathf.RoundToInt(outer.xMin);
-				uISpriteData.y = Mathf.RoundToInt(outer.yMin);
-				uISpriteData.width = Mathf.RoundToInt(outer.width);
-				uISpriteData.height = Mathf.RoundToInt(outer.height);
-				uISpriteData.paddingLeft = Mathf.RoundToInt(sprite.paddingLeft * outer.width);
-				uISpriteData.paddingRight = Mathf.RoundToInt(sprite.paddingRight * outer.width);
-				uISpriteData.paddingBottom = Mathf.RoundToInt(sprite.paddingBottom * outer.height);
-				uISpriteData.paddingTop = Mathf.RoundToInt(sprite.paddingTop * outer.height);
-				uISpriteData.borderLeft = Mathf.RoundToInt(inner.xMin - outer.xMin);
-				uISpriteData.borderRight = Mathf.RoundToInt(outer.xMax - inner.xMax);
-				uISpriteData.borderBottom = Mathf.RoundToInt(outer.yMax - inner.yMax);
-				uISpriteData.borderTop = Mathf.RoundToInt(inner.yMin - outer.yMin);
-				mSprites.Add(uISpriteData);
-			}
-			sprites.Clear();
-			return true;
-		}
-		return false;
-	}
-
-	[CompilerGenerated]
-	private static int _003CSortAlphabetically_003Em__1CF(UISpriteData s1, UISpriteData s2)
-	{
-		return s1.name.CompareTo(s2.name);
 	}
 }

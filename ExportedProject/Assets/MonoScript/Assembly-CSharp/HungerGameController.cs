@@ -1,4 +1,7 @@
+using ExitGames.Client.Photon;
 using Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 internal sealed class HungerGameController : Photon.MonoBehaviour
@@ -37,93 +40,12 @@ internal sealed class HungerGameController : Photon.MonoBehaviour
 	{
 		get
 		{
-			return _instance;
+			return HungerGameController._instance;
 		}
 	}
 
-	private void Start()
+	public HungerGameController()
 	{
-		maxCountPlayers = PhotonNetwork.room.maxPlayers;
-		gameTimer = int.Parse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString()) * 60;
-		_instance = this;
-	}
-
-	private void OnDestroy()
-	{
-		_instance = null;
-	}
-
-	private void Update()
-	{
-		if (isStartTimer && startTimer > 0f)
-		{
-			startTimer -= Time.deltaTime;
-		}
-		if (isStartGame && goTimer > 0f)
-		{
-			goTimer -= Time.deltaTime;
-		}
-		if (goTimer < 0f)
-		{
-			goTimer = 0f;
-		}
-		if (isShowGo && timerShowGo >= 0f)
-		{
-			timerShowGo -= Time.deltaTime;
-		}
-		if (isShowGo && timerShowGo < 0f)
-		{
-			isShowGo = false;
-		}
-		if (isGo && gameTimer > 0f && Initializer.players.Count > 0)
-		{
-			gameTimer -= Time.deltaTime;
-		}
-		if (!base.photonView.isMine)
-		{
-			return;
-		}
-		if (gameTimer <= 0f && !theEnd)
-		{
-			theEnd = true;
-			base.photonView.RPC("Draw", PhotonTargets.AllBuffered);
-		}
-		timeToSynchTimer -= Time.deltaTime;
-		if (isGo && timeToSynchTimer < 0f)
-		{
-			timeToSynchTimer = 0.5f;
-			base.photonView.RPC("SynchGameTimer", PhotonTargets.Others, gameTimer);
-		}
-		GameObject[] array = GameObject.FindGameObjectsWithTag("NetworkTable");
-		if (!isStartGame)
-		{
-			if (!isStartTimer && array.Length >= minCountPlayer)
-			{
-				base.photonView.RPC("StartTimer", PhotonTargets.AllBuffered, true);
-			}
-			if (timeToSynchTimer < 0f)
-			{
-				timeToSynchTimer = 0.5f;
-				base.photonView.RPC("SynchStartTimer", PhotonTargets.Others, startTimer);
-			}
-			if ((!isStartGame && isStartTimer && startTimer < 0.1f && array.Length >= minCountPlayer) || (!isStartGame && isStartTimer && array.Length == PhotonNetwork.room.maxPlayers))
-			{
-				base.photonView.RPC("StartGame", PhotonTargets.AllBuffered);
-				PhotonNetwork.room.visible = false;
-			}
-		}
-		else
-		{
-			if (timeToSynchTimer < 0f)
-			{
-				timeToSynchTimer = 0.5f;
-				base.photonView.RPC("SynchTimerGo", PhotonTargets.Others, goTimer);
-			}
-			if (!isGo && goTimer < 0.1f)
-			{
-				base.photonView.RPC("Go", PhotonTargets.AllBuffered);
-			}
-		}
 	}
 
 	[PunRPC]
@@ -131,53 +53,137 @@ internal sealed class HungerGameController : Photon.MonoBehaviour
 	private void Draw()
 	{
 		Debug.Log("Draw!!!");
-		NetworkStartTable myNetworkStartTable = WeaponManager.sharedManager.myNetworkStartTable;
-		if (myNetworkStartTable != null)
+		NetworkStartTable networkStartTable = WeaponManager.sharedManager.myNetworkStartTable;
+		if (networkStartTable != null)
 		{
-			StartCoroutine(myNetworkStartTable.DrawInHanger());
+			base.StartCoroutine(networkStartTable.DrawInHanger());
 		}
 	}
 
-	[RPC]
 	[PunRPC]
+	[RPC]
+	private void Go()
+	{
+		this.isGo = true;
+		this.isShowGo = true;
+	}
+
+	private void OnDestroy()
+	{
+		HungerGameController._instance = null;
+	}
+
+	private void Start()
+	{
+		this.maxCountPlayers = PhotonNetwork.room.maxPlayers;
+		this.gameTimer = (float)(int.Parse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString()) * 60);
+		HungerGameController._instance = this;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void StartGame()
+	{
+		this.isStartGame = true;
+	}
+
+	[PunRPC]
+	[RPC]
 	private void StartTimer(bool _isStartTimer)
 	{
-		isStartTimer = _isStartTimer;
+		this.isStartTimer = _isStartTimer;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SynchGameTimer(float _gameTimer)
+	{
+		this.gameTimer = _gameTimer;
 	}
 
 	[PunRPC]
 	[RPC]
 	private void SynchStartTimer(float _startTimer)
 	{
-		startTimer = _startTimer;
+		this.startTimer = _startTimer;
 	}
 
 	[PunRPC]
 	[RPC]
 	private void SynchTimerGo(float _goTimer)
 	{
-		goTimer = _goTimer;
+		this.goTimer = _goTimer;
 	}
 
-	[RPC]
-	[PunRPC]
-	private void SynchGameTimer(float _gameTimer)
+	private void Update()
 	{
-		gameTimer = _gameTimer;
-	}
-
-	[RPC]
-	[PunRPC]
-	private void StartGame()
-	{
-		isStartGame = true;
-	}
-
-	[RPC]
-	[PunRPC]
-	private void Go()
-	{
-		isGo = true;
-		isShowGo = true;
+		if (this.isStartTimer && this.startTimer > 0f)
+		{
+			this.startTimer -= Time.deltaTime;
+		}
+		if (this.isStartGame && this.goTimer > 0f)
+		{
+			this.goTimer -= Time.deltaTime;
+		}
+		if (this.goTimer < 0f)
+		{
+			this.goTimer = 0f;
+		}
+		if (this.isShowGo && this.timerShowGo >= 0f)
+		{
+			this.timerShowGo -= Time.deltaTime;
+		}
+		if (this.isShowGo && this.timerShowGo < 0f)
+		{
+			this.isShowGo = false;
+		}
+		if (this.isGo && this.gameTimer > 0f && Initializer.players.Count > 0)
+		{
+			this.gameTimer -= Time.deltaTime;
+		}
+		if (base.photonView.isMine)
+		{
+			if (this.gameTimer <= 0f && !this.theEnd)
+			{
+				this.theEnd = true;
+				base.photonView.RPC("Draw", PhotonTargets.AllBuffered, new object[0]);
+			}
+			this.timeToSynchTimer -= Time.deltaTime;
+			if (this.isGo && this.timeToSynchTimer < 0f)
+			{
+				this.timeToSynchTimer = 0.5f;
+				base.photonView.RPC("SynchGameTimer", PhotonTargets.Others, new object[] { this.gameTimer });
+			}
+			GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("NetworkTable");
+			if (this.isStartGame)
+			{
+				if (this.timeToSynchTimer < 0f)
+				{
+					this.timeToSynchTimer = 0.5f;
+					base.photonView.RPC("SynchTimerGo", PhotonTargets.Others, new object[] { this.goTimer });
+				}
+				if (!this.isGo && this.goTimer < 0.1f)
+				{
+					base.photonView.RPC("Go", PhotonTargets.AllBuffered, new object[0]);
+				}
+			}
+			else
+			{
+				if (!this.isStartTimer && (int)gameObjectArray.Length >= this.minCountPlayer)
+				{
+					base.photonView.RPC("StartTimer", PhotonTargets.AllBuffered, new object[] { true });
+				}
+				if (this.timeToSynchTimer < 0f)
+				{
+					this.timeToSynchTimer = 0.5f;
+					base.photonView.RPC("SynchStartTimer", PhotonTargets.Others, new object[] { this.startTimer });
+				}
+				if (!this.isStartGame && this.isStartTimer && this.startTimer < 0.1f && (int)gameObjectArray.Length >= this.minCountPlayer || !this.isStartGame && this.isStartTimer && (int)gameObjectArray.Length == PhotonNetwork.room.maxPlayers)
+				{
+					base.photonView.RPC("StartGame", PhotonTargets.AllBuffered, new object[0]);
+					PhotonNetwork.room.visible = false;
+				}
+			}
+		}
 	}
 }

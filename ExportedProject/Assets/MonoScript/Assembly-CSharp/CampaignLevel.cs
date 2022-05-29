@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class CampaignLevel
@@ -10,53 +12,57 @@ public sealed class CampaignLevel
 
 	private string _localizeKeyForLevelMap;
 
-	public string sceneName
-	{
-		get
-		{
-			return _sceneName;
-		}
-		set
-		{
-			_sceneName = value;
-		}
-	}
-
 	public string localizeKeyForLevelMap
 	{
 		get
 		{
-			return _localizeKeyForLevelMap;
+			return this._localizeKeyForLevelMap;
 		}
 		set
 		{
-			_localizeKeyForLevelMap = value;
+			this._localizeKeyForLevelMap = value;
 		}
 	}
-
-	public string predlog { get; set; }
 
 	public Vector3 LocalPosition
 	{
 		get
 		{
-			return _localPosition;
+			return this._localPosition;
 		}
 		set
 		{
-			_localPosition = value;
+			this._localPosition = value;
+		}
+	}
+
+	public string predlog
+	{
+		get;
+		set;
+	}
+
+	public string sceneName
+	{
+		get
+		{
+			return this._sceneName;
+		}
+		set
+		{
+			this._sceneName = value;
 		}
 	}
 
 	public CampaignLevel(string sceneName, string keyForLevelMap, string pr = "in")
 	{
-		_sceneName = sceneName;
-		_localizeKeyForLevelMap = keyForLevelMap;
-		predlog = pr;
+		this._sceneName = sceneName;
+		this._localizeKeyForLevelMap = keyForLevelMap;
+		this.predlog = pr;
 	}
 
 	public CampaignLevel()
 	{
-		_sceneName = string.Empty;
+		this._sceneName = string.Empty;
 	}
 }

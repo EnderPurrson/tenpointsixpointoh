@@ -1,71 +1,16 @@
+using ExitGames.Client.Photon;
+using Rilisoft;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class JoinRoomFromFrends : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CShowUnlockMapDialog_003Ec__AnonStorey27D
-	{
-		internal UnlockPremiumMapView unlockPremiumMapView;
-
-		internal Action successfulUnlockCallback;
-
-		internal string levelName;
-
-		internal JoinRoomFromFrends _003C_003Ef__this;
-
-		internal void _003C_003Em__186(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.HandleCloseUnlockDialog(unlockPremiumMapView);
-		}
-
-		internal void _003C_003Em__187(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.HandleUnlockPressed(unlockPremiumMapView, successfulUnlockCallback, levelName);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleUnlockPressed_003Ec__AnonStorey27E
-	{
-		internal string levelName;
-
-		internal int priceAmount;
-
-		internal Action successfulUnlockCallback;
-
-		internal UnlockPremiumMapView unlockPremiumMapView;
-
-		internal void _003C_003Em__188()
-		{
-			Storager.setInt(levelName + "Key", 1, true);
-			if (Application.platform != RuntimePlatform.IPhonePlayer)
-			{
-				PlayerPrefs.Save();
-			}
-			ShopNGUIController.SynchronizeAndroidPurchases("Friend's map unlocked: " + levelName);
-			FlurryPluginWrapper.LogEvent("Unlock " + levelName + " map");
-			AnalyticsStuff.LogSales(levelName, "Premium Maps");
-			AnalyticsFacade.InAppPurchase(levelName, "Premium Maps", 1, priceAmount, "Coins");
-			if (coinsPlashka.thisScript != null)
-			{
-				coinsPlashka.thisScript.enabled = false;
-			}
-			successfulUnlockCallback();
-			UnityEngine.Object.Destroy(unlockPremiumMapView.gameObject);
-		}
-
-		internal void _003C_003Em__189()
-		{
-			FlurryPluginWrapper.LogEvent("Try_Enable " + levelName + " map");
-			StoreKitEventListener.State.PurchaseKey = "In map selection In Friends";
-		}
-	}
-
 	public int game_mode;
 
 	public string room_name;
@@ -108,12 +53,271 @@ public sealed class JoinRoomFromFrends : MonoBehaviour
 
 	private LoadingNGUIController _loadingNGUIController;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache15;
-
-	private void Start()
+	static JoinRoomFromFrends()
 	{
-		sharedJoinRoomFromFrends = this;
+	}
+
+	public JoinRoomFromFrends()
+	{
+	}
+
+	public void BackFromPasswordButton()
+	{
+		this.isBackFromPassword = true;
+		this.SetEnabledPasswordPanel(false);
+		PhotonNetwork.Disconnect();
+		UnityEngine.Debug.Log("BackFromPasswordButton");
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void closeConnectPanel()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+		this.fonConnectTexture.mainTexture = null;
+		this.RemoveLoadingGUI();
+		this.connectPanel.SetActive(false);
+		this.label.gameObject.SetActive(false);
+		this.plashkaLabel.SetActive(false);
+		this.friendsPanel.SetActive(true);
+		ActivityIndicator.IsActiveIndicator = false;
+	}
+
+	public void ConnectToRoom(int _game_mode, string _room_name, string _map)
+	{
+		string str;
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.OnEsc), "Connect To Friend");
+		InfoWindowController.HideCurrentWindow();
+		this.SetEnabledPasswordPanel(false);
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(_map));
+		if (infoScene.isPremium)
+		{
+			if ((Storager.getInt(string.Concat(infoScene.NameScene, "Key"), true) == 1 ? false : !PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene)))
+			{
+				if (this.objectForOffWhenUlockDialog != null)
+				{
+					this.objectForOffWhenUlockDialog.SetActive(false);
+				}
+				this.ShowUnlockMapDialog(() => {
+				}, infoScene.NameScene);
+				return;
+			}
+		}
+		int num = (_game_mode <= 99 ? _game_mode / 10 : _game_mode % 100 / 10);
+		this.game_mode = _game_mode % 10;
+		this.room_name = _room_name;
+		Defs.isMulti = true;
+		Defs.isInet = true;
+		Defs.isFlag = false;
+		Defs.isCOOP = false;
+		Defs.isCompany = false;
+		Defs.isHunger = false;
+		Defs.isCapturePoints = false;
+		switch (this.game_mode)
+		{
+			case 0:
+			{
+				StoreKitEventListener.State.Mode = "Deathmatch Wordwide";
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.Deathmatch;
+				break;
+			}
+			case 1:
+			{
+				StoreKitEventListener.State.Mode = "Time Survival";
+				Defs.isCOOP = true;
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TimeBattle;
+				break;
+			}
+			case 2:
+			{
+				StoreKitEventListener.State.Mode = "Team Battle";
+				Defs.isCompany = true;
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TeamFight;
+				break;
+			}
+			case 3:
+			{
+				if (false)
+				{
+					if (ShowNoJoinConnectFromRanks.sharedController != null)
+					{
+						ShowNoJoinConnectFromRanks.sharedController.resetShow(3);
+					}
+					return;
+				}
+				Defs.isHunger = true;
+				StoreKitEventListener.State.Mode = "Deadly Games";
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.DeadlyGames;
+				break;
+			}
+			case 4:
+			{
+				if (false)
+				{
+					StoreKitEventListener.State.Mode = "Flag Capture";
+					if (ShowNoJoinConnectFromRanks.sharedController != null)
+					{
+						ShowNoJoinConnectFromRanks.sharedController.resetShow(4);
+					}
+					return;
+				}
+				Defs.isFlag = true;
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.FlagCapture;
+				break;
+			}
+			case 5:
+			{
+				Defs.isCapturePoints = true;
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.CapturePoints;
+				break;
+			}
+			default:
+			{
+				return;
+			}
+		}
+		ActivityIndicator.IsActiveIndicator = true;
+		this.oldActivFriendPanel = this.friendsPanel.activeSelf;
+		if (JoinRoomFromFrends.friendProfilePanel != null)
+		{
+			this.oldActivProfileProfile = JoinRoomFromFrends.friendProfilePanel.activeSelf;
+		}
+		this.connectPanel.SetActive(true);
+		this.friendsPanel.SetActive(false);
+		if (JoinRoomFromFrends.friendProfilePanel != null)
+		{
+			JoinRoomFromFrends.friendProfilePanel.SetActive(false);
+		}
+		this.label.gameObject.SetActive(false);
+		this.plashkaLabel.SetActive(false);
+		UnityEngine.Debug.Log(string.Concat("fonConnectTexture.mainTexture=", _map, " ", infoScene.NameScene));
+		Defs.isDaterRegim = (!Defs.filterMaps.ContainsKey(infoScene.NameScene) ? false : infoScene.AvaliableWeapon == ModeWeapon.dater);
+		WeaponManager.sharedManager.Reset((!Defs.isDaterRegim ? 0 : 3));
+		base.StartCoroutine(this.SetFonLoadingWaitForReset(infoScene.NameScene, false));
+		string[] separator = new string[] { Initializer.Separator, ConnectSceneNGUIController.regim.ToString(), null, null, null };
+		if (!Defs.isDaterRegim)
+		{
+			str = (!Defs.isHunger ? num.ToString() : "0");
+		}
+		else
+		{
+			str = "Dater";
+		}
+		separator[2] = str;
+		separator[3] = "v";
+		separator[4] = GlobalGameController.MultiplayerProtocolVersion;
+		string str1 = string.Concat(separator);
+		ConnectSceneNGUIController.gameTier = num;
+		UnityEngine.Debug.Log(string.Concat("Connect -", str1));
+		PhotonNetwork.autoJoinLobby = false;
+		PhotonNetwork.ConnectUsingSettings(str1);
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void ConnectToRoom()
+	{
+		PhotonNetwork.playerName = ProfileController.GetPlayerNameOrDefault();
+		UnityEngine.Debug.Log(string.Concat("OnJoinedLobby ", this.room_name));
+		PhotonNetwork.JoinRoom(this.room_name);
+		PlayerPrefs.SetString("RoomName", this.room_name);
+	}
+
+	public void EnterPassword(string pass)
+	{
+		if (pass != this.passwordRoom)
+		{
+			this.timerShowWrongPassword = 3f;
+			this.WrongPasswordLabel.SetActive(true);
+		}
+		else
+		{
+			PhotonNetwork.isMessageQueueRunning = false;
+			base.StartCoroutine(this.MoveToGameScene());
+			ActivityIndicator.IsActiveIndicator = true;
+		}
+	}
+
+	private void HandleCloseUnlockDialog(UnlockPremiumMapView unlockPremiumMapView)
+	{
+		if (this.objectForOffWhenUlockDialog != null)
+		{
+			this.objectForOffWhenUlockDialog.SetActive(true);
+		}
+		this.closeConnectPanel();
+		UnityEngine.Object.Destroy(unlockPremiumMapView.gameObject);
+	}
+
+	private void HandleUnlockPressed(UnlockPremiumMapView unlockPremiumMapView, Action successfulUnlockCallback, string levelName)
+	{
+		int price = unlockPremiumMapView.Price;
+		ShopNGUIController.TryToBuy((FriendsWindowGUI.Instance == null ? unlockPremiumMapView.gameObject : FriendsWindowGUI.Instance.gameObject), new ItemPrice(unlockPremiumMapView.Price, "Coins"), () => {
+			Storager.setInt(string.Concat(levelName, "Key"), 1, true);
+			if (Application.platform != RuntimePlatform.IPhonePlayer)
+			{
+				PlayerPrefs.Save();
+			}
+			ShopNGUIController.SynchronizeAndroidPurchases(string.Concat("Friend's map unlocked: ", levelName));
+			FlurryPluginWrapper.LogEvent(string.Concat("Unlock ", levelName, " map"));
+			AnalyticsStuff.LogSales(levelName, "Premium Maps", false);
+			AnalyticsFacade.InAppPurchase(levelName, "Premium Maps", 1, price, "Coins");
+			if (coinsPlashka.thisScript != null)
+			{
+				coinsPlashka.thisScript.enabled = false;
+			}
+			successfulUnlockCallback();
+			UnityEngine.Object.Destroy(unlockPremiumMapView.gameObject);
+		}, () => {
+			FlurryPluginWrapper.LogEvent(string.Concat("Try_Enable ", levelName, " map"));
+			StoreKitEventListener.State.PurchaseKey = "In map selection In Friends";
+		}, null, null, null, null);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator MoveToGameScene()
+	{
+		return new JoinRoomFromFrends.u003cMoveToGameSceneu003ec__Iterator91();
+	}
+
+	public void OnConnectedToMaster()
+	{
+		this.ConnectToRoom();
+	}
+
+	private void OnDestroy()
+	{
+		JoinRoomFromFrends.sharedJoinRoomFromFrends = null;
+		PhotonObjectCacher.RemoveObject(base.gameObject);
+	}
+
+	private void OnDisable()
+	{
+		PhotonObjectCacher.RemoveObject(base.gameObject);
+	}
+
+	private void OnDisconnectedFromPhoton()
+	{
+		if (this.isFaledConnectToRoom)
+		{
+			this.ShowLabel("Game is unavailable...");
+		}
+		else if (!this.isBackFromPassword)
+		{
+			this.ShowLabel("Can't connect ...");
+		}
+		else
+		{
+			this.closeConnectPanel();
+		}
+		this.isFaledConnectToRoom = false;
+		this.isBackFromPassword = false;
+		UnityEngine.Debug.Log("OnDisconnectedFromPhoton");
 	}
 
 	private void OnEnable()
@@ -124,327 +328,52 @@ public sealed class JoinRoomFromFrends : MonoBehaviour
 	private void OnEsc()
 	{
 		PhotonNetwork.Disconnect();
-		closeConnectPanel();
-	}
-
-	private void OnDisable()
-	{
-		PhotonObjectCacher.RemoveObject(base.gameObject);
-	}
-
-	private void OnDestroy()
-	{
-		sharedJoinRoomFromFrends = null;
-		PhotonObjectCacher.RemoveObject(base.gameObject);
-	}
-
-	public void BackFromPasswordButton()
-	{
-		isBackFromPassword = true;
-		SetEnabledPasswordPanel(false);
-		PhotonNetwork.Disconnect();
-		Debug.Log("BackFromPasswordButton");
-	}
-
-	public void EnterPassword(string pass)
-	{
-		if (pass == passwordRoom)
-		{
-			PhotonNetwork.isMessageQueueRunning = false;
-			StartCoroutine(MoveToGameScene());
-			ActivityIndicator.IsActiveIndicator = true;
-		}
-		else
-		{
-			timerShowWrongPassword = 3f;
-			WrongPasswordLabel.SetActive(true);
-		}
-	}
-
-	private void ShowLoadingGUI(string _mapName)
-	{
-		_loadingNGUIController = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
-		_loadingNGUIController.SceneToLoad = _mapName;
-		_loadingNGUIController.loadingNGUITexture.mainTexture = Resources.Load<Texture2D>("LevelLoadings" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/Loading_" + _mapName);
-		_loadingNGUIController.transform.parent = fonConnectTexture.transform.parent;
-		_loadingNGUIController.transform.localPosition = Vector3.zero;
-		_loadingNGUIController.Init();
-	}
-
-	private void RemoveLoadingGUI()
-	{
-		if (_loadingNGUIController != null)
-		{
-			UnityEngine.Object.Destroy(_loadingNGUIController.gameObject);
-			_loadingNGUIController = null;
-		}
-	}
-
-	private IEnumerator SetFonLoadingWaitForReset(string _mapName = "", bool isAddCountRun = false)
-	{
-		RemoveLoadingGUI();
-		while (WeaponManager.sharedManager == null)
-		{
-			yield return null;
-		}
-		while (WeaponManager.sharedManager.LockGetWeaponPrefabs > 0)
-		{
-			yield return null;
-		}
-		ShowLoadingGUI(_mapName);
-	}
-
-	public void ConnectToRoom(int _game_mode, string _room_name, string _map)
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(OnEsc, "Connect To Friend");
-		InfoWindowController.HideCurrentWindow();
-		SetEnabledPasswordPanel(false);
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(_map));
-		if (infoScene.isPremium && Storager.getInt(infoScene.NameScene + "Key", true) != 1 && !PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene))
-		{
-			if (objectForOffWhenUlockDialog != null)
-			{
-				objectForOffWhenUlockDialog.SetActive(false);
-			}
-			if (_003C_003Ef__am_0024cache15 == null)
-			{
-				_003C_003Ef__am_0024cache15 = _003CConnectToRoom_003Em__185;
-			}
-			Action successfulUnlockCallback = _003C_003Ef__am_0024cache15;
-			ShowUnlockMapDialog(successfulUnlockCallback, infoScene.NameScene);
-			return;
-		}
-		int gameTier = ((_game_mode <= 99) ? (_game_mode / 10) : (_game_mode % 100 / 10));
-		game_mode = _game_mode % 10;
-		room_name = _room_name;
-		Defs.isMulti = true;
-		Defs.isInet = true;
-		Defs.isFlag = false;
-		Defs.isCOOP = false;
-		Defs.isCompany = false;
-		Defs.isHunger = false;
-		Defs.isCapturePoints = false;
-		switch (game_mode)
-		{
-		default:
-			return;
-		case 0:
-			StoreKitEventListener.State.Mode = "Deathmatch Wordwide";
-			ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.Deathmatch;
-			break;
-		case 1:
-			StoreKitEventListener.State.Mode = "Time Survival";
-			Defs.isCOOP = true;
-			ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TimeBattle;
-			break;
-		case 2:
-			StoreKitEventListener.State.Mode = "Team Battle";
-			Defs.isCompany = true;
-			ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TeamFight;
-			break;
-		case 3:
-			if (true)
-			{
-				Defs.isHunger = true;
-				StoreKitEventListener.State.Mode = "Deadly Games";
-				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.DeadlyGames;
-				break;
-			}
-			if (ShowNoJoinConnectFromRanks.sharedController != null)
-			{
-				ShowNoJoinConnectFromRanks.sharedController.resetShow(3);
-			}
-			return;
-		case 4:
-			if (true)
-			{
-				Defs.isFlag = true;
-				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.FlagCapture;
-				break;
-			}
-			StoreKitEventListener.State.Mode = "Flag Capture";
-			if (ShowNoJoinConnectFromRanks.sharedController != null)
-			{
-				ShowNoJoinConnectFromRanks.sharedController.resetShow(4);
-			}
-			return;
-		case 5:
-			Defs.isCapturePoints = true;
-			ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.CapturePoints;
-			break;
-		}
-		ActivityIndicator.IsActiveIndicator = true;
-		oldActivFriendPanel = friendsPanel.activeSelf;
-		if (friendProfilePanel != null)
-		{
-			oldActivProfileProfile = friendProfilePanel.activeSelf;
-		}
-		connectPanel.SetActive(true);
-		friendsPanel.SetActive(false);
-		if (friendProfilePanel != null)
-		{
-			friendProfilePanel.SetActive(false);
-		}
-		label.gameObject.SetActive(false);
-		plashkaLabel.SetActive(false);
-		Debug.Log("fonConnectTexture.mainTexture=" + _map + " " + infoScene.NameScene);
-		Defs.isDaterRegim = Defs.filterMaps.ContainsKey(infoScene.NameScene) && infoScene.AvaliableWeapon == ModeWeapon.dater;
-		WeaponManager.sharedManager.Reset(Defs.isDaterRegim ? 3 : 0);
-		StartCoroutine(SetFonLoadingWaitForReset(infoScene.NameScene));
-		string text = Initializer.Separator + ConnectSceneNGUIController.regim.ToString() + (Defs.isDaterRegim ? "Dater" : ((!Defs.isHunger) ? gameTier.ToString() : "0")) + "v" + GlobalGameController.MultiplayerProtocolVersion;
-		ConnectSceneNGUIController.gameTier = gameTier;
-		Debug.Log("Connect -" + text);
-		PhotonNetwork.autoJoinLobby = false;
-		PhotonNetwork.ConnectUsingSettings(text);
-	}
-
-	private void Update()
-	{
-		if (coinsPlashka.thisScript != null)
-		{
-			coinsPlashka.thisScript.enabled = coinsShop.thisScript != null && coinsShop.thisScript.enabled;
-		}
-		if (timerShowWrongPassword > 0f && WrongPasswordLabel.activeSelf)
-		{
-			timerShowWrongPassword -= Time.deltaTime;
-		}
-		if (timerShowWrongPassword <= 0f && WrongPasswordLabel.activeSelf)
-		{
-			WrongPasswordLabel.SetActive(false);
-		}
-	}
-
-	private void ShowUnlockMapDialog(Action successfulUnlockCallback, string levelName)
-	{
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D _003CShowUnlockMapDialog_003Ec__AnonStorey27D = new _003CShowUnlockMapDialog_003Ec__AnonStorey27D();
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.successfulUnlockCallback = successfulUnlockCallback;
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.levelName = levelName;
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D._003C_003Ef__this = this;
-		if (string.IsNullOrEmpty(_003CShowUnlockMapDialog_003Ec__AnonStorey27D.levelName))
-		{
-			Debug.LogWarning("Level name shoul not be empty.");
-			return;
-		}
-		UnityEngine.Object original = Resources.Load("UnlockPremiumMapView");
-		GameObject gameObject = UnityEngine.Object.Instantiate(original) as GameObject;
-		gameObject.transform.parent = base.transform;
-		gameObject.transform.localScale = Vector3.one;
-		gameObject.transform.localPosition = Vector3.zero;
-		Tools.SetLayerRecursively(gameObject, base.gameObject.layer);
-		ActivityIndicator.IsActiveIndicator = false;
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.unlockPremiumMapView = gameObject.GetComponent<UnlockPremiumMapView>();
-		if (_003CShowUnlockMapDialog_003Ec__AnonStorey27D.unlockPremiumMapView == null)
-		{
-			Debug.LogError("UnlockPremiumMapView should not be null.");
-			return;
-		}
-		int value = 0;
-		Defs.PremiumMaps.TryGetValue(_003CShowUnlockMapDialog_003Ec__AnonStorey27D.levelName, out value);
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.unlockPremiumMapView.Price = value;
-		EventHandler value2 = _003CShowUnlockMapDialog_003Ec__AnonStorey27D._003C_003Em__186;
-		EventHandler value3 = _003CShowUnlockMapDialog_003Ec__AnonStorey27D._003C_003Em__187;
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.unlockPremiumMapView.ClosePressed += value2;
-		_003CShowUnlockMapDialog_003Ec__AnonStorey27D.unlockPremiumMapView.UnlockPressed += value3;
-	}
-
-	private void HandleCloseUnlockDialog(UnlockPremiumMapView unlockPremiumMapView)
-	{
-		if (objectForOffWhenUlockDialog != null)
-		{
-			objectForOffWhenUlockDialog.SetActive(true);
-		}
-		closeConnectPanel();
-		UnityEngine.Object.Destroy(unlockPremiumMapView.gameObject);
-	}
-
-	private void HandleUnlockPressed(UnlockPremiumMapView unlockPremiumMapView, Action successfulUnlockCallback, string levelName)
-	{
-		_003CHandleUnlockPressed_003Ec__AnonStorey27E _003CHandleUnlockPressed_003Ec__AnonStorey27E = new _003CHandleUnlockPressed_003Ec__AnonStorey27E();
-		_003CHandleUnlockPressed_003Ec__AnonStorey27E.levelName = levelName;
-		_003CHandleUnlockPressed_003Ec__AnonStorey27E.successfulUnlockCallback = successfulUnlockCallback;
-		_003CHandleUnlockPressed_003Ec__AnonStorey27E.unlockPremiumMapView = unlockPremiumMapView;
-		_003CHandleUnlockPressed_003Ec__AnonStorey27E.priceAmount = _003CHandleUnlockPressed_003Ec__AnonStorey27E.unlockPremiumMapView.Price;
-		ShopNGUIController.TryToBuy((!(FriendsWindowGUI.Instance != null)) ? _003CHandleUnlockPressed_003Ec__AnonStorey27E.unlockPremiumMapView.gameObject : FriendsWindowGUI.Instance.gameObject, new ItemPrice(_003CHandleUnlockPressed_003Ec__AnonStorey27E.unlockPremiumMapView.Price, "Coins"), _003CHandleUnlockPressed_003Ec__AnonStorey27E._003C_003Em__188, _003CHandleUnlockPressed_003Ec__AnonStorey27E._003C_003Em__189);
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void closeConnectPanel()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
-		fonConnectTexture.mainTexture = null;
-		RemoveLoadingGUI();
-		connectPanel.SetActive(false);
-		label.gameObject.SetActive(false);
-		plashkaLabel.SetActive(false);
-		friendsPanel.SetActive(true);
-		ActivityIndicator.IsActiveIndicator = false;
-	}
-
-	private void ShowLabel(string text)
-	{
-		label.text = text;
-		label.gameObject.SetActive(true);
-		plashkaLabel.SetActive(true);
-		ActivityIndicator.IsActiveIndicator = false;
-		Invoke("closeConnectPanel", 3f);
-	}
-
-	private void OnDisconnectedFromPhoton()
-	{
-		if (isFaledConnectToRoom)
-		{
-			ShowLabel("Game is unavailable...");
-		}
-		else if (isBackFromPassword)
-		{
-			closeConnectPanel();
-		}
-		else
-		{
-			ShowLabel("Can't connect ...");
-		}
-		isFaledConnectToRoom = false;
-		isBackFromPassword = false;
-		Debug.Log("OnDisconnectedFromPhoton");
+		this.closeConnectPanel();
 	}
 
 	private void OnFailedToConnectToPhoton(object parameters)
 	{
-		ShowLabel("Can't connect ...");
-		Debug.Log("OnFailedToConnectToPhoton. StatusCode: " + parameters);
-	}
-
-	public void OnConnectedToMaster()
-	{
-		ConnectToRoom();
+		this.ShowLabel("Can't connect ...");
+		UnityEngine.Debug.Log(string.Concat("OnFailedToConnectToPhoton. StatusCode: ", parameters));
 	}
 
 	public void OnJoinedLobby()
 	{
-		ConnectToRoom();
+		this.ConnectToRoom();
 	}
 
-	[Obfuscation(Exclude = true)]
-	private void ConnectToRoom()
+	private void OnJoinedRoom()
 	{
-		PhotonNetwork.playerName = ProfileController.GetPlayerNameOrDefault();
-		Debug.Log("OnJoinedLobby " + room_name);
-		PhotonNetwork.JoinRoom(room_name);
-		PlayerPrefs.SetString("RoomName", room_name);
+		UnityEngine.Debug.Log("OnJoinedRoom - init");
+		GlobalGameController.healthMyPlayer = 0f;
+		if (PhotonNetwork.room == null)
+		{
+			PhotonNetwork.Disconnect();
+			this.ShowLabel("Game is unavailable...");
+		}
+		else
+		{
+			this.passwordRoom = PhotonNetwork.room.customProperties[ConnectSceneNGUIController.passwordProperty].ToString();
+			PhotonNetwork.isMessageQueueRunning = false;
+			if (!this.passwordRoom.Equals(string.Empty))
+			{
+				UnityEngine.Debug.Log(string.Concat("Show Password Panel ", this.passwordRoom));
+				ActivityIndicator.IsActiveIndicator = false;
+				this.inputPassworLabel.@value = string.Empty;
+				this.SetEnabledPasswordPanel(true);
+			}
+			else
+			{
+				PhotonNetwork.isMessageQueueRunning = false;
+				base.StartCoroutine(this.MoveToGameScene());
+			}
+		}
 	}
 
 	private void OnPhotonJoinRoomFailed()
 	{
-		Debug.Log("OnPhotonJoinRoomFailed - init");
-		isFaledConnectToRoom = true;
+		UnityEngine.Debug.Log("OnPhotonJoinRoomFailed - init");
+		this.isFaledConnectToRoom = true;
 		PhotonNetwork.Disconnect();
 		InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_0137"));
 		InfoWindowController.HideProcessing(3f);
@@ -454,77 +383,111 @@ public sealed class JoinRoomFromFrends : MonoBehaviour
 		Defs.isHunger = false;
 		Defs.isCapturePoints = false;
 		Defs.isDaterRegim = false;
-		WeaponManager.sharedManager.Reset();
+		WeaponManager.sharedManager.Reset(0);
+	}
+
+	private void RemoveLoadingGUI()
+	{
+		if (this._loadingNGUIController != null)
+		{
+			UnityEngine.Object.Destroy(this._loadingNGUIController.gameObject);
+			this._loadingNGUIController = null;
+		}
 	}
 
 	private void SetEnabledPasswordPanel(bool enabled)
 	{
-		PasswordPanel.SetActive(enabled);
-		if (_loadingNGUIController != null)
+		Texture texture;
+		this.PasswordPanel.SetActive(enabled);
+		if (this._loadingNGUIController != null)
 		{
-			fonConnectTexture.gameObject.SetActive(enabled);
-			fonConnectTexture.mainTexture = ((!enabled) ? null : _loadingNGUIController.loadingNGUITexture.mainTexture);
-			_loadingNGUIController.gameObject.SetActive(!enabled);
-		}
-	}
-
-	private void OnJoinedRoom()
-	{
-		Debug.Log("OnJoinedRoom - init");
-		GlobalGameController.healthMyPlayer = 0f;
-		if (PhotonNetwork.room != null)
-		{
-			passwordRoom = PhotonNetwork.room.customProperties[ConnectSceneNGUIController.passwordProperty].ToString();
-			PhotonNetwork.isMessageQueueRunning = false;
-			if (passwordRoom.Equals(string.Empty))
+			this.fonConnectTexture.gameObject.SetActive(enabled);
+			UITexture uITexture = this.fonConnectTexture;
+			if (!enabled)
 			{
-				PhotonNetwork.isMessageQueueRunning = false;
-				StartCoroutine(MoveToGameScene());
-				return;
+				texture = null;
 			}
-			Debug.Log("Show Password Panel " + passwordRoom);
-			ActivityIndicator.IsActiveIndicator = false;
-			inputPassworLabel.value = string.Empty;
-			SetEnabledPasswordPanel(true);
-		}
-		else
-		{
-			PhotonNetwork.Disconnect();
-			ShowLabel("Game is unavailable...");
+			else
+			{
+				texture = this._loadingNGUIController.loadingNGUITexture.mainTexture;
+			}
+			uITexture.mainTexture = texture;
+			this._loadingNGUIController.gameObject.SetActive(!enabled);
 		}
 	}
 
-	private IEnumerator MoveToGameScene()
+	[DebuggerHidden]
+	private IEnumerator SetFonLoadingWaitForReset(string _mapName = "", bool isAddCountRun = false)
 	{
-		AnalyticsStuff.LogMultiplayer();
-		if (SceneLoader.ActiveSceneName.Equals("Clans"))
-		{
-			Defs.isGameFromFriends = false;
-			Defs.isGameFromClans = true;
-		}
-		else
-		{
-			Defs.isGameFromFriends = true;
-			Defs.isGameFromClans = false;
-		}
-		SceneInfo scInfo = SceneInfoController.instance.GetInfoScene(int.Parse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.mapProperty].ToString()));
-		WeaponManager.sharedManager.Reset((int)((scInfo != null) ? scInfo.AvaliableWeapon : ModeWeapon.all));
-		Debug.Log("MoveToGameScene");
-		while (PhotonNetwork.room == null)
-		{
-			yield return 0;
-		}
-		Debug.Log("map=" + PhotonNetwork.room.customProperties[ConnectSceneNGUIController.mapProperty].ToString());
-		Debug.Log(scInfo.NameScene);
-		LoadConnectScene.textureToShow = Resources.Load("LevelLoadings" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/Loading_" + scInfo.NameScene) as Texture2D;
-		LoadingInAfterGame.loadingTexture = LoadConnectScene.textureToShow;
-		LoadConnectScene.sceneToLoad = scInfo.NameScene;
-		LoadConnectScene.noteToShow = null;
-		yield return Singleton<SceneLoader>.Instance.LoadSceneAsync("PromScene");
+		JoinRoomFromFrends.u003cSetFonLoadingWaitForResetu003ec__Iterator90 variable = null;
+		return variable;
 	}
 
-	[CompilerGenerated]
-	private static void _003CConnectToRoom_003Em__185()
+	private void ShowLabel(string text)
 	{
+		this.label.text = text;
+		this.label.gameObject.SetActive(true);
+		this.plashkaLabel.SetActive(true);
+		ActivityIndicator.IsActiveIndicator = false;
+		base.Invoke("closeConnectPanel", 3f);
+	}
+
+	private void ShowLoadingGUI(string _mapName)
+	{
+		this._loadingNGUIController = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
+		this._loadingNGUIController.SceneToLoad = _mapName;
+		this._loadingNGUIController.loadingNGUITexture.mainTexture = Resources.Load<Texture2D>(string.Concat("LevelLoadings", (!Device.isRetinaAndStrong ? string.Empty : "/Hi"), "/Loading_", _mapName));
+		this._loadingNGUIController.transform.parent = this.fonConnectTexture.transform.parent;
+		this._loadingNGUIController.transform.localPosition = Vector3.zero;
+		this._loadingNGUIController.Init();
+	}
+
+	private void ShowUnlockMapDialog(Action successfulUnlockCallback, string levelName)
+	{
+		if (string.IsNullOrEmpty(levelName))
+		{
+			UnityEngine.Debug.LogWarning("Level name shoul not be empty.");
+			return;
+		}
+		GameObject gameObject = UnityEngine.Object.Instantiate(Resources.Load("UnlockPremiumMapView")) as GameObject;
+		gameObject.transform.parent = base.transform;
+		gameObject.transform.localScale = Vector3.one;
+		gameObject.transform.localPosition = Vector3.zero;
+		Tools.SetLayerRecursively(gameObject, base.gameObject.layer);
+		ActivityIndicator.IsActiveIndicator = false;
+		UnlockPremiumMapView component = gameObject.GetComponent<UnlockPremiumMapView>();
+		if (component == null)
+		{
+			UnityEngine.Debug.LogError("UnlockPremiumMapView should not be null.");
+			return;
+		}
+		int num = 0;
+		Defs.PremiumMaps.TryGetValue(levelName, out num);
+		component.Price = num;
+		EventHandler eventHandler = (object sender, EventArgs e) => this.HandleCloseUnlockDialog(component);
+		EventHandler eventHandler1 = (object sender, EventArgs e) => this.HandleUnlockPressed(component, successfulUnlockCallback, levelName);
+		component.ClosePressed += eventHandler;
+		component.UnlockPressed += eventHandler1;
+	}
+
+	private void Start()
+	{
+		JoinRoomFromFrends.sharedJoinRoomFromFrends = this;
+	}
+
+	private void Update()
+	{
+		if (coinsPlashka.thisScript != null)
+		{
+			coinsPlashka.thisScript.enabled = (coinsShop.thisScript == null ? false : coinsShop.thisScript.enabled);
+		}
+		if (this.timerShowWrongPassword > 0f && this.WrongPasswordLabel.activeSelf)
+		{
+			this.timerShowWrongPassword -= Time.deltaTime;
+		}
+		if (this.timerShowWrongPassword <= 0f && this.WrongPasswordLabel.activeSelf)
+		{
+			this.WrongPasswordLabel.SetActive(false);
+		}
 	}
 }

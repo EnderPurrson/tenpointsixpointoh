@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/Button Keys (Legacy)")]
+[ExecuteInEditMode]
 public class UIButtonKeys : UIKeyNavigation
 {
 	public UIButtonKeys selectOnClick;
@@ -14,42 +15,46 @@ public class UIButtonKeys : UIKeyNavigation
 
 	public UIButtonKeys selectOnRight;
 
+	public UIButtonKeys()
+	{
+	}
+
 	protected override void OnEnable()
 	{
-		Upgrade();
+		this.Upgrade();
 		base.OnEnable();
 	}
 
 	public void Upgrade()
 	{
-		if (onClick == null && selectOnClick != null)
+		if (this.onClick == null && this.selectOnClick != null)
 		{
-			onClick = selectOnClick.gameObject;
-			selectOnClick = null;
+			this.onClick = this.selectOnClick.gameObject;
+			this.selectOnClick = null;
 			NGUITools.SetDirty(this);
 		}
-		if (onLeft == null && selectOnLeft != null)
+		if (this.onLeft == null && this.selectOnLeft != null)
 		{
-			onLeft = selectOnLeft.gameObject;
-			selectOnLeft = null;
+			this.onLeft = this.selectOnLeft.gameObject;
+			this.selectOnLeft = null;
 			NGUITools.SetDirty(this);
 		}
-		if (onRight == null && selectOnRight != null)
+		if (this.onRight == null && this.selectOnRight != null)
 		{
-			onRight = selectOnRight.gameObject;
-			selectOnRight = null;
+			this.onRight = this.selectOnRight.gameObject;
+			this.selectOnRight = null;
 			NGUITools.SetDirty(this);
 		}
-		if (onUp == null && selectOnUp != null)
+		if (this.onUp == null && this.selectOnUp != null)
 		{
-			onUp = selectOnUp.gameObject;
-			selectOnUp = null;
+			this.onUp = this.selectOnUp.gameObject;
+			this.selectOnUp = null;
 			NGUITools.SetDirty(this);
 		}
-		if (onDown == null && selectOnDown != null)
+		if (this.onDown == null && this.selectOnDown != null)
 		{
-			onDown = selectOnDown.gameObject;
-			selectOnDown = null;
+			this.onDown = this.selectOnDown.gameObject;
+			this.selectOnDown = null;
 			NGUITools.SetDirty(this);
 		}
 	}

@@ -6,43 +6,63 @@ public class AGSRequestAchievementsResponse : AGSRequestResponse
 {
 	public List<AGSAchievement> achievements;
 
+	public AGSRequestAchievementsResponse()
+	{
+	}
+
 	public static AGSRequestAchievementsResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00ee, IL_0113
+		AGSRequestAchievementsResponse blankResponseWithError;
 		try
 		{
 			AGSRequestAchievementsResponse aGSRequestAchievementsResponse = new AGSRequestAchievementsResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestAchievementsResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestAchievementsResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestAchievementsResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestAchievementsResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
 			aGSRequestAchievementsResponse.achievements = new List<AGSAchievement>();
-			if (hashtable.ContainsKey("achievements"))
+			if (hashtables.ContainsKey("achievements"))
 			{
-				foreach (Hashtable item in hashtable["achievements"] as ArrayList)
+				IEnumerator enumerator = (hashtables["achievements"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestAchievementsResponse.achievements.Add(AGSAchievement.fromHashtable(item));
+					while (enumerator.MoveNext())
+					{
+						Hashtable current = (Hashtable)enumerator.Current;
+						aGSRequestAchievementsResponse.achievements.Add(AGSAchievement.fromHashtable(current));
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			return aGSRequestAchievementsResponse;
+			blankResponseWithError = aGSRequestAchievementsResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON");
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestAchievementsResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSRequestAchievementsResponse GetBlankResponseWithError(string error, int userData = 0)
 	{
-		AGSRequestAchievementsResponse aGSRequestAchievementsResponse = new AGSRequestAchievementsResponse();
-		aGSRequestAchievementsResponse.error = error;
-		aGSRequestAchievementsResponse.userData = userData;
-		aGSRequestAchievementsResponse.achievements = new List<AGSAchievement>();
+		AGSRequestAchievementsResponse aGSRequestAchievementsResponse = new AGSRequestAchievementsResponse()
+		{
+			error = error,
+			userData = userData,
+			achievements = new List<AGSAchievement>()
+		};
 		return aGSRequestAchievementsResponse;
 	}
 
 	public static AGSRequestAchievementsResponse GetPlatformNotSupportedResponse(int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
+		return AGSRequestAchievementsResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
 	}
 }

@@ -14,7 +14,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _currentCount;
+				return this._currentCount;
 			}
 		}
 
@@ -22,52 +22,52 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _requiredCount;
+				return this._requiredCount;
 			}
 		}
 
-		public AccumulativeQuestBase(string id, long day, int slot, Difficulty difficulty, Reward reward, bool active, bool rewarded, int requiredCount, int initialCound)
-			: base(id, day, slot, difficulty, reward, active, rewarded)
+		public AccumulativeQuestBase(string id, long day, int slot, Rilisoft.Difficulty difficulty, Rilisoft.Reward reward, bool active, bool rewarded, int requiredCount, int initialCound) : base(id, day, slot, difficulty, reward, active, rewarded)
 		{
 			if (requiredCount < 1)
 			{
-				throw new ArgumentOutOfRangeException("requiredCount", requiredCount, "Requires at least 1.");
+				throw new ArgumentOutOfRangeException("requiredCount", (object)requiredCount, "Requires at least 1.");
 			}
-			_requiredCount = requiredCount;
-			_currentCount = Mathf.Clamp(initialCound, 0, requiredCount);
-		}
-
-		public void IncrementIf(bool condition, int count = 1)
-		{
-			if (condition)
-			{
-				decimal num = CalculateProgress();
-				_currentCount = Mathf.Clamp(_currentCount + count, 0, _requiredCount);
-				if (num < 1m)
-				{
-					SetDirty();
-				}
-			}
-		}
-
-		public void Increment(int count = 1)
-		{
-			IncrementIf(true, count);
-		}
-
-		public override decimal CalculateProgress()
-		{
-			return (decimal)_currentCount / (decimal)RequiredCount;
-		}
-
-		protected override void ApppendDifficultyProperties(Dictionary<string, object> difficultyProperties)
-		{
-			difficultyProperties["parameter"] = _requiredCount;
+			this._requiredCount = requiredCount;
+			this._currentCount = Mathf.Clamp(initialCound, 0, requiredCount);
 		}
 
 		protected override void AppendProperties(Dictionary<string, object> properties)
 		{
-			properties["currentCount"] = _currentCount;
+			properties["currentCount"] = this._currentCount;
+		}
+
+		protected override void ApppendDifficultyProperties(Dictionary<string, object> difficultyProperties)
+		{
+			difficultyProperties["parameter"] = this._requiredCount;
+		}
+
+		public override decimal CalculateProgress()
+		{
+			return this._currentCount / this.RequiredCount;
+		}
+
+		public void Increment(int count = 1)
+		{
+			this.IncrementIf(true, count);
+		}
+
+		public void IncrementIf(bool condition, int count = 1)
+		{
+			if (!condition)
+			{
+				return;
+			}
+			decimal num = this.CalculateProgress();
+			this._currentCount = Mathf.Clamp(this._currentCount + count, 0, this._requiredCount);
+			if (num < new decimal(1))
+			{
+				base.SetDirty();
+			}
 		}
 	}
 }

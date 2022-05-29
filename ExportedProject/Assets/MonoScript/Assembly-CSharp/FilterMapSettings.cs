@@ -5,4 +5,8 @@ public class FilterMapSettings
 	public string settingName;
 
 	public Func<string> defaultWeaponSet;
+
+	public FilterMapSettings()
+	{
+	}
 }

@@ -35,55 +35,63 @@ public class ShopCarouselElement : MonoBehaviour
 
 	public Vector3 arrnoInitialPos;
 
-	public void SetQuantity()
+	public ShopCarouselElement()
 	{
-		quantity.text = Storager.getInt(GearManager.HolderQuantityForID(itemID), false) + ((itemID == null || !GearManager.HolderQuantityForID(itemID).Equals(GearManager.Grenade)) ? string.Empty : ("/" + GearManager.MaxCountForGear(GearManager.HolderQuantityForID(itemID))));
 	}
 
 	private void Awake()
 	{
-		arrnoInitialPos = new Vector3(70.05f, -0.00016f, -120f);
-	}
-
-	private void Start()
-	{
-		if (Array.IndexOf(PotionsController.potions, itemID) >= 0)
-		{
-			quantity.gameObject.SetActive(true);
-			HandlePotionActivated(itemID);
-		}
-		PotionsController.PotionActivated += HandlePotionActivated;
+		this.arrnoInitialPos = new Vector3(70.05f, -0.00016f, -120f);
 	}
 
 	private void HandlePotionActivated(string obj)
 	{
-		if (itemID != null && obj != null && itemID.Equals(obj))
+		if (this.itemID != null && obj != null && this.itemID.Equals(obj))
 		{
-			quantity.text = Storager.getInt(GearManager.HolderQuantityForID(itemID), false) + ((itemID == null || !GearManager.HolderQuantityForID(itemID).Equals(GearManager.Grenade)) ? string.Empty : ("/" + GearManager.MaxCountForGear(GearManager.HolderQuantityForID(itemID))));
-		}
-	}
-
-	public void SetPos(float scaleCoef, float offset)
-	{
-		if (model != null)
-		{
-			model.localScale = baseScale * scaleCoef;
-			model.localPosition = ourPosition * scaleCoef + new Vector3(offset, 0f, 0f);
-		}
-		if (arrow != null)
-		{
-			arrow.localScale = new Vector3(1f, 1f, 1f) * scaleCoef;
-			arrow.localPosition = new Vector3(arrnoInitialPos.x * scaleCoef, arrnoInitialPos.y * scaleCoef, arrnoInitialPos.z) + new Vector3(offset, 0f, 0f);
-		}
-		if (locked != null)
-		{
-			locked.transform.localScale = new Vector3(1f, 1f, 1f) * scaleCoef;
-			locked.transform.localPosition = new Vector3(0f, 0f, arrnoInitialPos.z) + new Vector3(offset, 0f, 0f);
+			UILabel uILabel = this.quantity;
+			int num = Storager.getInt(GearManager.HolderQuantityForID(this.itemID), false);
+			uILabel.text = string.Concat(num.ToString(), (this.itemID == null || !GearManager.HolderQuantityForID(this.itemID).Equals(GearManager.Grenade) ? string.Empty : string.Concat("/", GearManager.MaxCountForGear(GearManager.HolderQuantityForID(this.itemID)))));
 		}
 	}
 
 	private void OnDestroy()
 	{
-		PotionsController.PotionActivated -= HandlePotionActivated;
+		PotionsController.PotionActivated -= new Action<string>(this.HandlePotionActivated);
+	}
+
+	public void SetPos(float scaleCoef, float offset)
+	{
+		if (this.model != null)
+		{
+			this.model.localScale = this.baseScale * scaleCoef;
+			this.model.localPosition = (this.ourPosition * scaleCoef) + new Vector3(offset, 0f, 0f);
+		}
+		if (this.arrow != null)
+		{
+			this.arrow.localScale = new Vector3(1f, 1f, 1f) * scaleCoef;
+			this.arrow.localPosition = new Vector3(this.arrnoInitialPos.x * scaleCoef, this.arrnoInitialPos.y * scaleCoef, this.arrnoInitialPos.z) + new Vector3(offset, 0f, 0f);
+		}
+		if (this.locked != null)
+		{
+			this.locked.transform.localScale = new Vector3(1f, 1f, 1f) * scaleCoef;
+			this.locked.transform.localPosition = new Vector3(0f, 0f, this.arrnoInitialPos.z) + new Vector3(offset, 0f, 0f);
+		}
+	}
+
+	public void SetQuantity()
+	{
+		UILabel uILabel = this.quantity;
+		int num = Storager.getInt(GearManager.HolderQuantityForID(this.itemID), false);
+		uILabel.text = string.Concat(num.ToString(), (this.itemID == null || !GearManager.HolderQuantityForID(this.itemID).Equals(GearManager.Grenade) ? string.Empty : string.Concat("/", GearManager.MaxCountForGear(GearManager.HolderQuantityForID(this.itemID)))));
+	}
+
+	private void Start()
+	{
+		if (Array.IndexOf<string>(PotionsController.potions, this.itemID) >= 0)
+		{
+			this.quantity.gameObject.SetActive(true);
+			this.HandlePotionActivated(this.itemID);
+		}
+		PotionsController.PotionActivated += new Action<string>(this.HandlePotionActivated);
 	}
 }

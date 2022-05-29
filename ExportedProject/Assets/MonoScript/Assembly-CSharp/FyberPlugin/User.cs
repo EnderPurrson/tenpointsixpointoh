@@ -1,26 +1,15 @@
+using FyberPlugin.LitJson;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
-using FyberPlugin.LitJson;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace FyberPlugin
 {
 	public class User
 	{
-		[Obfuscation(Exclude = true)]
-		private class JsonResponse<T>
-		{
-			public bool success { get; set; }
-
-			public string key { get; set; }
-
-			public T value { get; set; }
-
-			public string error { get; set; }
-		}
-
 		protected const string AGE = "age";
 
 		protected const string BIRTHDATE = "birthdate";
@@ -65,281 +54,328 @@ namespace FyberPlugin
 		{
 		}
 
-		protected static void NativePut(string json)
+		public User()
 		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.user.UserWrapper"))
-			{
-				androidJavaObject.CallStatic("put", json);
-			}
-		}
-
-		protected static string GetJsonMessage(string key)
-		{
-			//Discarded unreachable code: IL_002c
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.user.UserWrapper"))
-			{
-				return androidJavaObject.CallStatic<string>("get", new object[1] { key });
-			}
-		}
-
-		public static void SetAge(int age)
-		{
-			Put("age", age);
-		}
-
-		public static DateTime? GetBirthdate()
-		{
-			string s = Get<string>("birthdate");
-			DateTime result;
-			if (DateTime.TryParseExact(s, "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out result))
-			{
-				return result;
-			}
-			return null;
-		}
-
-		public static void SetBirthdate(DateTime birthdate)
-		{
-			Put("birthdate", birthdate);
-		}
-
-		public static void SetGender(UserGender gender)
-		{
-			Put("gender", gender);
-		}
-
-		public static void SetSexualOrientation(UserSexualOrientation sexualOrientation)
-		{
-			Put("sexual_orientation", sexualOrientation);
-		}
-
-		public static void SetEthnicity(UserEthnicity ethnicity)
-		{
-			Put("ethnicity", ethnicity);
-		}
-
-		public static Location GetLocation()
-		{
-			return Get<Location>("fyberlocation");
-		}
-
-		public static void SetLocation(Location location)
-		{
-			Put("fyberlocation", location);
-		}
-
-		public static void SetMaritalStatus(UserMaritalStatus maritalStatus)
-		{
-			Put("marital_status", maritalStatus);
-		}
-
-		public static void SetNumberOfChildrens(int numberOfChildrens)
-		{
-			Put("children", numberOfChildrens);
-		}
-
-		public static void SetAnnualHouseholdIncome(int annualHouseholdIncome)
-		{
-			Put("annual_household_income", annualHouseholdIncome);
-		}
-
-		public static void SetEducation(UserEducation education)
-		{
-			Put("education", education);
-		}
-
-		public static string GetZipcode()
-		{
-			return Get<string>("zipcode");
-		}
-
-		public static void SetZipcode(string zipcode)
-		{
-			Put("zipcode", zipcode);
-		}
-
-		public static string[] GetInterests()
-		{
-			return Get<string[]>("interests");
-		}
-
-		public static void SetInterests(string[] interests)
-		{
-			Put("interests", interests);
-		}
-
-		public static void SetIap(bool iap)
-		{
-			Put("iap", iap);
-		}
-
-		public static void SetIapAmount(float iap_amount)
-		{
-			Put("iap_amount", (double)iap_amount);
-		}
-
-		public static void SetNumberOfSessions(int numberOfSessions)
-		{
-			Put("number_of_sessions", numberOfSessions);
-		}
-
-		public static void SetPsTime(long ps_time)
-		{
-			Put("ps_time", ps_time);
-		}
-
-		public static void SetLastSession(long lastSession)
-		{
-			Put("last_session", lastSession);
-		}
-
-		public static void SetConnection(UserConnection connection)
-		{
-			Put("connection", connection);
-		}
-
-		public static string GetDevice()
-		{
-			return Get<string>("device");
-		}
-
-		public static void SetDevice(string device)
-		{
-			Put("device", device);
-		}
-
-		public static string GetAppVersion()
-		{
-			return Get<string>("app_version");
-		}
-
-		public static void SetAppVersion(string appVersion)
-		{
-			Put("app_version", appVersion);
-		}
-
-		public static void PutCustomValue(string key, string value)
-		{
-			Put(key, value);
-		}
-
-		public static string GetCustomValue(string key)
-		{
-			return Get<string>(key);
-		}
-
-		private static void Put(string key, object value)
-		{
-			string json = GeneratePutJsonString(key, value);
-			NativePut(json);
-		}
-
-		protected static T Get<T>(string key)
-		{
-			string jsonMessage = GetJsonMessage(key);
-			JsonResponse<T> jsonResponse = JsonMapper.ToObject<JsonResponse<T>>(jsonMessage);
-			if (jsonResponse.success)
-			{
-				return jsonResponse.value;
-			}
-			Debug.Log(jsonResponse.error);
-			return default(T);
-		}
-
-		private static string GeneratePutJsonString(string key, object value)
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("action", "put");
-			dictionary.Add("key", key);
-			dictionary.Add("type", value.GetType().ToString());
-			if (value is DateTime)
-			{
-				dictionary.Add("value", ((DateTime)value).ToString("yyyy/MM/dd"));
-			}
-			else
-			{
-				dictionary.Add("value", value);
-			}
-			return JsonMapper.ToJson(dictionary);
 		}
 
 		protected static string GenerateGetJsonString(string key)
 		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("action", "get");
-			dictionary.Add("key", key);
-			return JsonMapper.ToJson(dictionary);
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "action", "get" },
+				{ "key", key }
+			};
+			return JsonMapper.ToJson(strs);
+		}
+
+		private static string GeneratePutJsonString(string key, object value)
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "action", "put" },
+				{ "key", key },
+				{ "type", value.GetType().ToString() }
+			};
+			if (!(value is DateTime))
+			{
+				strs.Add("value", value);
+			}
+			else
+			{
+				strs.Add("value", ((DateTime)value).ToString("yyyy/MM/dd"));
+			}
+			return JsonMapper.ToJson(strs);
+		}
+
+		protected static T Get<T>(string key)
+		{
+			User.JsonResponse<T> obj = JsonMapper.ToObject<User.JsonResponse<T>>(User.GetJsonMessage(key));
+			if (obj.success)
+			{
+				return obj.@value;
+			}
+			Debug.Log(obj.error);
+			return default(T);
 		}
 
 		public static int? GetAge()
 		{
-			return Get<int?>("age");
-		}
-
-		public static UserGender? GetGender()
-		{
-			return Get<UserGender?>("gender");
-		}
-
-		public static UserSexualOrientation? GetSexualOrientation()
-		{
-			return Get<UserSexualOrientation?>("sexual_orientation");
-		}
-
-		public static UserEthnicity? GetEthnicity()
-		{
-			return Get<UserEthnicity?>("ethnicity");
-		}
-
-		public static UserMaritalStatus? GetMaritalStatus()
-		{
-			return Get<UserMaritalStatus?>("marital_status");
-		}
-
-		public static int? GetNumberOfChildrens()
-		{
-			return Get<int?>("children");
+			return User.Get<int?>("age");
 		}
 
 		public static int? GetAnnualHouseholdIncome()
 		{
-			return Get<int?>("annual_household_income");
+			return User.Get<int?>("annual_household_income");
 		}
 
-		public static UserEducation? GetEducation()
+		public static string GetAppVersion()
 		{
-			return Get<UserEducation?>("education");
+			return User.Get<string>("app_version");
 		}
 
-		public static bool? GetIap()
+		public static DateTime? GetBirthdate()
 		{
-			return Get<bool?>("iap");
-		}
-
-		public static float? GetIapAmount()
-		{
-			double? num = Get<double?>("iap_amount");
-			return (!num.HasValue) ? null : new float?((float)num.Value);
-		}
-
-		public static int? GetNumberOfSessions()
-		{
-			return Get<int?>("number_of_sessions");
-		}
-
-		public static long? GetPsTime()
-		{
-			return Get<long?>("ps_time");
-		}
-
-		public static long? GetLastSession()
-		{
-			return Get<long?>("last_session");
+			DateTime dateTime;
+			if (DateTime.TryParseExact(User.Get<string>("birthdate"), "yyyy/MM/dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime))
+			{
+				return new DateTime?(dateTime);
+			}
+			return null;
 		}
 
 		public static UserConnection? GetConnection()
 		{
-			return Get<UserConnection?>("connection");
+			return User.Get<UserConnection?>("connection");
+		}
+
+		public static string GetCustomValue(string key)
+		{
+			return User.Get<string>(key);
+		}
+
+		public static string GetDevice()
+		{
+			return User.Get<string>("device");
+		}
+
+		public static UserEducation? GetEducation()
+		{
+			return User.Get<UserEducation?>("education");
+		}
+
+		public static UserEthnicity? GetEthnicity()
+		{
+			return User.Get<UserEthnicity?>("ethnicity");
+		}
+
+		public static UserGender? GetGender()
+		{
+			return User.Get<UserGender?>("gender");
+		}
+
+		public static bool? GetIap()
+		{
+			return User.Get<bool?>("iap");
+		}
+
+		public static float? GetIapAmount()
+		{
+			float? nullable;
+			double? nullable1 = User.Get<double?>("iap_amount");
+			if (!nullable1.HasValue)
+			{
+				nullable = null;
+			}
+			else
+			{
+				nullable = new float?((float)nullable1.Value);
+			}
+			return nullable;
+		}
+
+		public static string[] GetInterests()
+		{
+			return User.Get<string[]>("interests");
+		}
+
+		protected static string GetJsonMessage(string key)
+		{
+			string str;
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.user.UserWrapper", new object[0]))
+			{
+				str = androidJavaObject.CallStatic<string>("get", new object[] { key });
+			}
+			return str;
+		}
+
+		public static long? GetLastSession()
+		{
+			return User.Get<long?>("last_session");
+		}
+
+		public static Location GetLocation()
+		{
+			return User.Get<Location>("fyberlocation");
+		}
+
+		public static UserMaritalStatus? GetMaritalStatus()
+		{
+			return User.Get<UserMaritalStatus?>("marital_status");
+		}
+
+		public static int? GetNumberOfChildrens()
+		{
+			return User.Get<int?>("children");
+		}
+
+		public static int? GetNumberOfSessions()
+		{
+			return User.Get<int?>("number_of_sessions");
+		}
+
+		public static long? GetPsTime()
+		{
+			return User.Get<long?>("ps_time");
+		}
+
+		public static UserSexualOrientation? GetSexualOrientation()
+		{
+			return User.Get<UserSexualOrientation?>("sexual_orientation");
+		}
+
+		public static string GetZipcode()
+		{
+			return User.Get<string>("zipcode");
+		}
+
+		protected static void NativePut(string json)
+		{
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.user.UserWrapper", new object[0]))
+			{
+				androidJavaObject.CallStatic("put", new object[] { json });
+			}
+		}
+
+		private static void Put(string key, object value)
+		{
+			User.NativePut(User.GeneratePutJsonString(key, value));
+		}
+
+		public static void PutCustomValue(string key, string value)
+		{
+			User.Put(key, value);
+		}
+
+		public static void SetAge(int age)
+		{
+			User.Put("age", age);
+		}
+
+		public static void SetAnnualHouseholdIncome(int annualHouseholdIncome)
+		{
+			User.Put("annual_household_income", annualHouseholdIncome);
+		}
+
+		public static void SetAppVersion(string appVersion)
+		{
+			User.Put("app_version", appVersion);
+		}
+
+		public static void SetBirthdate(DateTime birthdate)
+		{
+			User.Put("birthdate", birthdate);
+		}
+
+		public static void SetConnection(UserConnection connection)
+		{
+			User.Put("connection", connection);
+		}
+
+		public static void SetDevice(string device)
+		{
+			User.Put("device", device);
+		}
+
+		public static void SetEducation(UserEducation education)
+		{
+			User.Put("education", education);
+		}
+
+		public static void SetEthnicity(UserEthnicity ethnicity)
+		{
+			User.Put("ethnicity", ethnicity);
+		}
+
+		public static void SetGender(UserGender gender)
+		{
+			User.Put("gender", gender);
+		}
+
+		public static void SetIap(bool iap)
+		{
+			User.Put("iap", iap);
+		}
+
+		public static void SetIapAmount(float iap_amount)
+		{
+			User.Put("iap_amount", (double)iap_amount);
+		}
+
+		public static void SetInterests(string[] interests)
+		{
+			User.Put("interests", interests);
+		}
+
+		public static void SetLastSession(long lastSession)
+		{
+			User.Put("last_session", lastSession);
+		}
+
+		public static void SetLocation(Location location)
+		{
+			User.Put("fyberlocation", location);
+		}
+
+		public static void SetMaritalStatus(UserMaritalStatus maritalStatus)
+		{
+			User.Put("marital_status", maritalStatus);
+		}
+
+		public static void SetNumberOfChildrens(int numberOfChildrens)
+		{
+			User.Put("children", numberOfChildrens);
+		}
+
+		public static void SetNumberOfSessions(int numberOfSessions)
+		{
+			User.Put("number_of_sessions", numberOfSessions);
+		}
+
+		public static void SetPsTime(long ps_time)
+		{
+			User.Put("ps_time", ps_time);
+		}
+
+		public static void SetSexualOrientation(UserSexualOrientation sexualOrientation)
+		{
+			User.Put("sexual_orientation", sexualOrientation);
+		}
+
+		public static void SetZipcode(string zipcode)
+		{
+			User.Put("zipcode", zipcode);
+		}
+
+		[Obfuscation(Exclude=true)]
+		private class JsonResponse<T>
+		{
+			public string error
+			{
+				get;
+				set;
+			}
+
+			public string key
+			{
+				get;
+				set;
+			}
+
+			public bool success
+			{
+				get;
+				set;
+			}
+
+			public T @value
+			{
+				get;
+				set;
+			}
+
+			public JsonResponse()
+			{
+			}
 		}
 	}
 }

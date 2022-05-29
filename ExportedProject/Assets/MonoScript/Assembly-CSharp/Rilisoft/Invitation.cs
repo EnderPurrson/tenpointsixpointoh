@@ -38,144 +38,149 @@ namespace Rilisoft
 
 		private float inactivityStartTm;
 
-		private void Start()
+		public Invitation()
 		{
-			_timeToUpdateInactivityState = 25f;
-			inactivityStartTm = float.PositiveInfinity;
-			UpdateInfo();
-			if (JoinClan != null)
-			{
-				JoinClan.SetActive(IsClanInv && string.IsNullOrEmpty(FriendsController.sharedController.ClanID) && string.IsNullOrEmpty(FriendsController.sharedController.JoinClanSent));
-			}
-			if (RejectClan != null)
-			{
-				RejectClan.SetActive(IsClanInv);
-			}
-			if (youAlready != null)
-			{
-				youAlready.SetActive(IsClanInv && !string.IsNullOrEmpty(FriendsController.sharedController.ClanID));
-			}
-			if (ClanLogo != null)
-			{
-				ClanLogo.gameObject.SetActive(IsClanInv);
-			}
-			if (accept != null)
-			{
-				accept.SetActive(!IsClanInv);
-			}
-			reject.SetActive(!IsClanInv);
-			rank.gameObject.SetActive(!IsClanInv);
-		}
-
-		public void KeepClanData()
-		{
-			FriendsController.sharedController.tempClanID = id;
-			FriendsController.sharedController.tempClanLogo = clanLogoString ?? string.Empty;
-			FriendsController.sharedController.tempClanName = nm.text ?? string.Empty;
-		}
-
-		private void UpdateInfo()
-		{
-			if (IsClanInv)
-			{
-				foreach (Dictionary<string, string> clanInvite in FriendsController.sharedController.ClanInvites)
-				{
-					string value;
-					if (clanInvite.TryGetValue("id", out value) && value.Equals(id))
-					{
-						string value2;
-						if (clanInvite.TryGetValue("logo", out value2))
-						{
-							try
-							{
-								byte[] data = Convert.FromBase64String(value2);
-								Texture2D texture2D = new Texture2D(8, 8, TextureFormat.ARGB32, false);
-								texture2D.LoadImage(data);
-								texture2D.filterMode = FilterMode.Point;
-								texture2D.Apply();
-								Texture mainTexture = ClanLogo.mainTexture;
-								ClanLogo.mainTexture = texture2D;
-								if (mainTexture != null)
-								{
-									UnityEngine.Object.Destroy(mainTexture);
-								}
-							}
-							catch (Exception)
-							{
-								Texture mainTexture2 = ClanLogo.mainTexture;
-								ClanLogo.mainTexture = null;
-								if (mainTexture2 != null)
-								{
-									UnityEngine.Object.Destroy(mainTexture2);
-								}
-							}
-						}
-						string value3;
-						if (clanInvite.TryGetValue("name", out value3))
-						{
-							nm.text = value3;
-						}
-						break;
-					}
-				}
-				return;
-			}
-			Dictionary<string, object> value4;
-			object value5;
-			if (id != null && FriendsController.sharedController.playersInfo.TryGetValue(id, out value4) && value4.TryGetValue("player", out value5))
-			{
-				Dictionary<string, object> dictionary = value5 as Dictionary<string, object>;
-				nm.text = dictionary["nick"] as string;
-				string text = Convert.ToString(dictionary["rank"]);
-				rank.spriteName = "Rank_" + ((!text.Equals("0")) ? text : "1");
-			}
 		}
 
 		public void DisableButtons()
 		{
-			if (accept != null)
+			if (this.accept != null)
 			{
-				accept.SetActive(false);
+				this.accept.SetActive(false);
 			}
-			reject.SetActive(false);
-			inactivityStartTm = Time.realtimeSinceStartup;
-			if (JoinClan != null)
+			this.reject.SetActive(false);
+			this.inactivityStartTm = Time.realtimeSinceStartup;
+			if (this.JoinClan != null)
 			{
-				JoinClan.SetActive(false);
+				this.JoinClan.SetActive(false);
 			}
-			if (RejectClan != null)
+			if (this.RejectClan != null)
 			{
-				RejectClan.SetActive(false);
+				this.RejectClan.SetActive(false);
 			}
+		}
+
+		public void KeepClanData()
+		{
+			FriendsController.sharedController.tempClanID = this.id;
+			FriendsController.sharedController.tempClanLogo = this.clanLogoString ?? string.Empty;
+			FriendsController.sharedController.tempClanName = this.nm.text ?? string.Empty;
+		}
+
+		private void Start()
+		{
+			this._timeToUpdateInactivityState = 25f;
+			this.inactivityStartTm = Single.PositiveInfinity;
+			this.UpdateInfo();
+			if (this.JoinClan != null)
+			{
+				this.JoinClan.SetActive((!this.IsClanInv || !string.IsNullOrEmpty(FriendsController.sharedController.ClanID) ? false : string.IsNullOrEmpty(FriendsController.sharedController.JoinClanSent)));
+			}
+			if (this.RejectClan != null)
+			{
+				this.RejectClan.SetActive(this.IsClanInv);
+			}
+			if (this.youAlready != null)
+			{
+				this.youAlready.SetActive((!this.IsClanInv ? false : !string.IsNullOrEmpty(FriendsController.sharedController.ClanID)));
+			}
+			if (this.ClanLogo != null)
+			{
+				this.ClanLogo.gameObject.SetActive(this.IsClanInv);
+			}
+			if (this.accept != null)
+			{
+				this.accept.SetActive(!this.IsClanInv);
+			}
+			this.reject.SetActive(!this.IsClanInv);
+			this.rank.gameObject.SetActive(!this.IsClanInv);
 		}
 
 		private void Update()
 		{
-			if (Time.realtimeSinceStartup - inactivityStartTm > _timeToUpdateInactivityState)
+			if (Time.realtimeSinceStartup - this.inactivityStartTm > this._timeToUpdateInactivityState)
 			{
-				inactivityStartTm = float.PositiveInfinity;
-				if (accept != null)
+				this.inactivityStartTm = Single.PositiveInfinity;
+				if (this.accept != null)
 				{
-					accept.SetActive(true);
+					this.accept.SetActive(true);
 				}
-				reject.SetActive(!IsClanInv);
-				if (JoinClan != null)
+				this.reject.SetActive(!this.IsClanInv);
+				if (this.JoinClan != null)
 				{
-					JoinClan.SetActive(IsClanInv && string.IsNullOrEmpty(FriendsController.sharedController.ClanID) && string.IsNullOrEmpty(FriendsController.sharedController.JoinClanSent));
+					this.JoinClan.SetActive((!this.IsClanInv || !string.IsNullOrEmpty(FriendsController.sharedController.ClanID) ? false : string.IsNullOrEmpty(FriendsController.sharedController.JoinClanSent)));
 				}
-				if (RejectClan != null)
+				if (this.RejectClan != null)
 				{
-					RejectClan.SetActive(IsClanInv);
+					this.RejectClan.SetActive(this.IsClanInv);
 				}
-				if (youAlready != null)
+				if (this.youAlready != null)
 				{
-					youAlready.SetActive(IsClanInv && !string.IsNullOrEmpty(FriendsController.sharedController.ClanID));
+					this.youAlready.SetActive((!this.IsClanInv ? false : !string.IsNullOrEmpty(FriendsController.sharedController.ClanID)));
 				}
 			}
-			if (Time.realtimeSinceStartup - timeLastCheck > 1f)
+			if (Time.realtimeSinceStartup - this.timeLastCheck > 1f)
 			{
-				timeLastCheck = Time.realtimeSinceStartup;
-				UpdateInfo();
+				this.timeLastCheck = Time.realtimeSinceStartup;
+				this.UpdateInfo();
+			}
+		}
+
+		private void UpdateInfo()
+		{
+			string str;
+			string str1;
+			string str2;
+			Dictionary<string, object> strs;
+			object obj;
+			if (!this.IsClanInv)
+			{
+				if (this.id != null && FriendsController.sharedController.playersInfo.TryGetValue(this.id, out strs) && strs.TryGetValue("player", out obj))
+				{
+					Dictionary<string, object> strs1 = obj as Dictionary<string, object>;
+					this.nm.text = strs1["nick"] as string;
+					string str3 = Convert.ToString(strs1["rank"]);
+					this.rank.spriteName = string.Concat("Rank_", (!str3.Equals("0") ? str3 : "1"));
+				}
+				return;
+			}
+			foreach (Dictionary<string, string> clanInvite in FriendsController.sharedController.ClanInvites)
+			{
+				if (!clanInvite.TryGetValue("id", out str) || !str.Equals(this.id))
+				{
+					continue;
+				}
+				if (clanInvite.TryGetValue("logo", out str1))
+				{
+					try
+					{
+						byte[] numArray = Convert.FromBase64String(str1);
+						Texture2D texture2D = new Texture2D(8, 8, TextureFormat.ARGB32, false);
+						texture2D.LoadImage(numArray);
+						texture2D.filterMode = FilterMode.Point;
+						texture2D.Apply();
+						Texture clanLogo = this.ClanLogo.mainTexture;
+						this.ClanLogo.mainTexture = texture2D;
+						if (clanLogo != null)
+						{
+							UnityEngine.Object.Destroy(clanLogo);
+						}
+					}
+					catch (Exception exception)
+					{
+						Texture texture = this.ClanLogo.mainTexture;
+						this.ClanLogo.mainTexture = null;
+						if (texture != null)
+						{
+							UnityEngine.Object.Destroy(texture);
+						}
+					}
+				}
+				if (clanInvite.TryGetValue("name", out str2))
+				{
+					this.nm.text = str2;
+				}
+				break;
 			}
 		}
 	}

@@ -1,3 +1,5 @@
+using System;
+
 internal sealed class InterstitialResult
 {
 	private readonly string _closeReason;
@@ -8,7 +10,7 @@ internal sealed class InterstitialResult
 	{
 		get
 		{
-			return _closeReason;
+			return this._closeReason;
 		}
 	}
 
@@ -16,14 +18,14 @@ internal sealed class InterstitialResult
 	{
 		get
 		{
-			return _errorMessage;
+			return this._errorMessage;
 		}
 	}
 
 	private InterstitialResult(string closeReason, string errorMessage)
 	{
-		_closeReason = closeReason ?? string.Empty;
-		_errorMessage = errorMessage ?? string.Empty;
+		this._closeReason = closeReason ?? string.Empty;
+		this._errorMessage = errorMessage ?? string.Empty;
 	}
 
 	public static InterstitialResult FromCloseReason(string closeReason)

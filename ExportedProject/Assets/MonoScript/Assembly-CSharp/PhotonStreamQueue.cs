@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public class PhotonStreamQueue
 
 	private int m_ObjectsPerSample = -1;
 
-	private float m_LastSampleTime = float.NegativeInfinity;
+	private float m_LastSampleTime = Single.NegativeInfinity;
 
 	private int m_LastFrameCount = -1;
 
@@ -21,102 +22,108 @@ public class PhotonStreamQueue
 
 	public PhotonStreamQueue(int sampleRate)
 	{
-		m_SampleRate = sampleRate;
+		this.m_SampleRate = sampleRate;
 	}
 
 	private void BeginWritePackage()
 	{
-		if (Time.realtimeSinceStartup < m_LastSampleTime + 1f / (float)m_SampleRate)
+		if (Time.realtimeSinceStartup < this.m_LastSampleTime + 1f / (float)this.m_SampleRate)
 		{
-			m_IsWriting = false;
+			this.m_IsWriting = false;
 			return;
 		}
-		if (m_SampleCount == 1)
+		if (this.m_SampleCount == 1)
 		{
-			m_ObjectsPerSample = m_Objects.Count;
+			this.m_ObjectsPerSample = this.m_Objects.Count;
 		}
-		else if (m_SampleCount > 1 && m_Objects.Count / m_SampleCount != m_ObjectsPerSample)
+		else if (this.m_SampleCount > 1 && this.m_Objects.Count / this.m_SampleCount != this.m_ObjectsPerSample)
 		{
 			Debug.LogWarning("The number of objects sent via a PhotonStreamQueue has to be the same each frame");
-			Debug.LogWarning("Objects in List: " + m_Objects.Count + " / Sample Count: " + m_SampleCount + " = " + m_Objects.Count / m_SampleCount + " != " + m_ObjectsPerSample);
+			Debug.LogWarning(string.Concat(new object[] { "Objects in List: ", this.m_Objects.Count, " / Sample Count: ", this.m_SampleCount, " = ", this.m_Objects.Count / this.m_SampleCount, " != ", this.m_ObjectsPerSample }));
 		}
-		m_IsWriting = true;
-		m_SampleCount++;
-		m_LastSampleTime = Time.realtimeSinceStartup;
+		this.m_IsWriting = true;
+		this.m_SampleCount++;
+		this.m_LastSampleTime = Time.realtimeSinceStartup;
 	}
 
-	public void Reset()
+	public void Deserialize(PhotonStream stream)
 	{
-		m_SampleCount = 0;
-		m_ObjectsPerSample = -1;
-		m_LastSampleTime = float.NegativeInfinity;
-		m_LastFrameCount = -1;
-		m_Objects.Clear();
-	}
-
-	public void SendNext(object obj)
-	{
-		if (Time.frameCount != m_LastFrameCount)
+		this.m_Objects.Clear();
+		this.m_SampleCount = (int)stream.ReceiveNext();
+		this.m_ObjectsPerSample = (int)stream.ReceiveNext();
+		for (int i = 0; i < this.m_SampleCount * this.m_ObjectsPerSample; i++)
 		{
-			BeginWritePackage();
+			this.m_Objects.Add(stream.ReceiveNext());
 		}
-		m_LastFrameCount = Time.frameCount;
-		if (m_IsWriting)
+		if (this.m_Objects.Count <= 0)
 		{
-			m_Objects.Add(obj);
+			this.m_NextObjectIndex = -1;
+		}
+		else
+		{
+			this.m_NextObjectIndex = 0;
 		}
 	}
 
 	public bool HasQueuedObjects()
 	{
-		return m_NextObjectIndex != -1;
+		return this.m_NextObjectIndex != -1;
 	}
 
 	public object ReceiveNext()
 	{
-		if (m_NextObjectIndex == -1)
+		if (this.m_NextObjectIndex == -1)
 		{
 			return null;
 		}
-		if (m_NextObjectIndex >= m_Objects.Count)
+		if (this.m_NextObjectIndex >= this.m_Objects.Count)
 		{
-			m_NextObjectIndex -= m_ObjectsPerSample;
+			this.m_NextObjectIndex -= this.m_ObjectsPerSample;
 		}
-		return m_Objects[m_NextObjectIndex++];
+		List<object> mObjects = this.m_Objects;
+		PhotonStreamQueue photonStreamQueue = this;
+		int mNextObjectIndex = photonStreamQueue.m_NextObjectIndex;
+		int num = mNextObjectIndex;
+		photonStreamQueue.m_NextObjectIndex = mNextObjectIndex + 1;
+		return mObjects[num];
+	}
+
+	public void Reset()
+	{
+		this.m_SampleCount = 0;
+		this.m_ObjectsPerSample = -1;
+		this.m_LastSampleTime = Single.NegativeInfinity;
+		this.m_LastFrameCount = -1;
+		this.m_Objects.Clear();
+	}
+
+	public void SendNext(object obj)
+	{
+		if (Time.frameCount != this.m_LastFrameCount)
+		{
+			this.BeginWritePackage();
+		}
+		this.m_LastFrameCount = Time.frameCount;
+		if (!this.m_IsWriting)
+		{
+			return;
+		}
+		this.m_Objects.Add(obj);
 	}
 
 	public void Serialize(PhotonStream stream)
 	{
-		if (m_Objects.Count > 0 && m_ObjectsPerSample < 0)
+		if (this.m_Objects.Count > 0 && this.m_ObjectsPerSample < 0)
 		{
-			m_ObjectsPerSample = m_Objects.Count;
+			this.m_ObjectsPerSample = this.m_Objects.Count;
 		}
-		stream.SendNext(m_SampleCount);
-		stream.SendNext(m_ObjectsPerSample);
-		for (int i = 0; i < m_Objects.Count; i++)
+		stream.SendNext(this.m_SampleCount);
+		stream.SendNext(this.m_ObjectsPerSample);
+		for (int i = 0; i < this.m_Objects.Count; i++)
 		{
-			stream.SendNext(m_Objects[i]);
+			stream.SendNext(this.m_Objects[i]);
 		}
-		m_Objects.Clear();
-		m_SampleCount = 0;
-	}
-
-	public void Deserialize(PhotonStream stream)
-	{
-		m_Objects.Clear();
-		m_SampleCount = (int)stream.ReceiveNext();
-		m_ObjectsPerSample = (int)stream.ReceiveNext();
-		for (int i = 0; i < m_SampleCount * m_ObjectsPerSample; i++)
-		{
-			m_Objects.Add(stream.ReceiveNext());
-		}
-		if (m_Objects.Count > 0)
-		{
-			m_NextObjectIndex = 0;
-		}
-		else
-		{
-			m_NextObjectIndex = -1;
-		}
+		this.m_Objects.Clear();
+		this.m_SampleCount = 0;
 	}
 }

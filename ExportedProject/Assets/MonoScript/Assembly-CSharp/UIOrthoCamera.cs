@@ -1,7 +1,8 @@
+using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/Orthographic Camera")]
+[ExecuteInEditMode]
 [RequireComponent(typeof(Camera))]
 public class UIOrthoCamera : MonoBehaviour
 {
@@ -9,21 +10,28 @@ public class UIOrthoCamera : MonoBehaviour
 
 	private Transform mTrans;
 
+	public UIOrthoCamera()
+	{
+	}
+
 	private void Start()
 	{
-		mCam = GetComponent<Camera>();
-		mTrans = base.transform;
-		mCam.orthographic = true;
+		this.mCam = base.GetComponent<Camera>();
+		this.mTrans = base.transform;
+		this.mCam.orthographic = true;
 	}
 
 	private void Update()
 	{
-		float num = mCam.rect.yMin * (float)Screen.height;
-		float num2 = mCam.rect.yMax * (float)Screen.height;
-		float num3 = (num2 - num) * 0.5f * mTrans.lossyScale.y;
-		if (!Mathf.Approximately(mCam.orthographicSize, num3))
+		Rect rect = this.mCam.rect;
+		float single = rect.yMin * (float)Screen.height;
+		Rect rect1 = this.mCam.rect;
+		float single1 = rect1.yMax * (float)Screen.height;
+		Vector3 vector3 = this.mTrans.lossyScale;
+		float single2 = (single1 - single) * 0.5f * vector3.y;
+		if (!Mathf.Approximately(this.mCam.orthographicSize, single2))
 		{
-			mCam.orthographicSize = num3;
+			this.mCam.orthographicSize = single2;
 		}
 	}
 }

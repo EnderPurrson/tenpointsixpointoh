@@ -6,68 +6,73 @@ namespace GooglePlayGames.Native.PInvoke
 {
 	internal abstract class BaseReferenceHolder : IDisposable
 	{
-		private static Dictionary<HandleRef, BaseReferenceHolder> _refs = new Dictionary<HandleRef, BaseReferenceHolder>();
+		private static Dictionary<HandleRef, BaseReferenceHolder> _refs;
 
 		private HandleRef mSelfPointer;
 
+		static BaseReferenceHolder()
+		{
+			BaseReferenceHolder._refs = new Dictionary<HandleRef, BaseReferenceHolder>();
+		}
+
 		public BaseReferenceHolder(IntPtr pointer)
 		{
-			mSelfPointer = PInvokeUtilities.CheckNonNull(new HandleRef(this, pointer));
-		}
-
-		protected bool IsDisposed()
-		{
-			return PInvokeUtilities.IsNull(mSelfPointer);
-		}
-
-		protected HandleRef SelfPtr()
-		{
-			if (IsDisposed())
-			{
-				throw new InvalidOperationException("Attempted to use object after it was cleaned up");
-			}
-			return mSelfPointer;
-		}
-
-		protected abstract void CallDispose(HandleRef selfPointer);
-
-		~BaseReferenceHolder()
-		{
-			Dispose(true);
-		}
-
-		public void Dispose()
-		{
-			Dispose(false);
-			GC.SuppressFinalize(this);
+			this.mSelfPointer = PInvokeUtilities.CheckNonNull(new HandleRef(this, pointer));
 		}
 
 		internal IntPtr AsPointer()
 		{
-			return SelfPtr().Handle;
+			return this.SelfPtr().Handle;
+		}
+
+		protected abstract void CallDispose(HandleRef selfPointer);
+
+		public void Dispose()
+		{
+			this.Dispose(false);
+			GC.SuppressFinalize(this);
 		}
 
 		private void Dispose(bool fromFinalizer)
 		{
-			if ((fromFinalizer || !_refs.ContainsKey(mSelfPointer)) && !PInvokeUtilities.IsNull(mSelfPointer))
+			if ((fromFinalizer || !BaseReferenceHolder._refs.ContainsKey(this.mSelfPointer)) && !PInvokeUtilities.IsNull(this.mSelfPointer))
 			{
-				CallDispose(mSelfPointer);
-				mSelfPointer = new HandleRef(this, IntPtr.Zero);
+				this.CallDispose(this.mSelfPointer);
+				this.mSelfPointer = new HandleRef(this, IntPtr.Zero);
 			}
 		}
 
-		internal void ReferToMe()
+		~BaseReferenceHolder()
 		{
-			_refs[SelfPtr()] = this;
+			this.Dispose(true);
 		}
 
 		internal void ForgetMe()
 		{
-			if (_refs.ContainsKey(SelfPtr()))
+			if (BaseReferenceHolder._refs.ContainsKey(this.SelfPtr()))
 			{
-				_refs.Remove(SelfPtr());
-				Dispose(false);
+				BaseReferenceHolder._refs.Remove(this.SelfPtr());
+				this.Dispose(false);
 			}
+		}
+
+		protected bool IsDisposed()
+		{
+			return PInvokeUtilities.IsNull(this.mSelfPointer);
+		}
+
+		internal void ReferToMe()
+		{
+			BaseReferenceHolder._refs[this.SelfPtr()] = this;
+		}
+
+		protected HandleRef SelfPtr()
+		{
+			if (this.IsDisposed())
+			{
+				throw new InvalidOperationException("Attempted to use object after it was cleaned up");
+			}
+			return this.mSelfPointer;
 		}
 	}
 }

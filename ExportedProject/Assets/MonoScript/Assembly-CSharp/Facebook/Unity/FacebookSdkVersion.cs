@@ -1,3 +1,5 @@
+using System;
+
 namespace Facebook.Unity
 {
 	public class FacebookSdkVersion
@@ -8,6 +10,10 @@ namespace Facebook.Unity
 			{
 				return "7.4.0";
 			}
+		}
+
+		public FacebookSdkVersion()
+		{
 		}
 	}
 }

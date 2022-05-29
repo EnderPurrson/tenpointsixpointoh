@@ -15,15 +15,15 @@ namespace LitJson
 		{
 			get
 			{
-				if (element_type == null)
+				if (this.element_type == null)
 				{
 					return typeof(JsonData);
 				}
-				return element_type;
+				return this.element_type;
 			}
 			set
 			{
-				element_type = value;
+				this.element_type = value;
 			}
 		}
 
@@ -31,11 +31,11 @@ namespace LitJson
 		{
 			get
 			{
-				return is_dictionary;
+				return this.is_dictionary;
 			}
 			set
 			{
-				is_dictionary = value;
+				this.is_dictionary = value;
 			}
 		}
 
@@ -43,11 +43,11 @@ namespace LitJson
 		{
 			get
 			{
-				return properties;
+				return this.properties;
 			}
 			set
 			{
-				properties = value;
+				this.properties = value;
 			}
 		}
 	}

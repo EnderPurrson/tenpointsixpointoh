@@ -1,76 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class EveryplayRecButtons : MonoBehaviour
 {
-	public enum ButtonsOrigin
-	{
-		TopLeft = 0,
-		TopRight = 1,
-		BottomLeft = 2,
-		BottomRight = 3
-	}
-
-	private class TextureAtlasSrc
-	{
-		public Rect atlasRect;
-
-		public Rect normalizedAtlasRect;
-
-		public TextureAtlasSrc(int width, int height, int x, int y, float scale)
-		{
-			atlasRect.x = x + 2;
-			atlasRect.y = y + 2;
-			atlasRect.width = (float)width * scale;
-			atlasRect.height = (float)height * scale;
-			normalizedAtlasRect.width = (float)width / 256f;
-			normalizedAtlasRect.height = (float)height / 256f;
-			normalizedAtlasRect.x = atlasRect.x / 256f;
-			normalizedAtlasRect.y = 1f - (atlasRect.y + (float)height) / 256f;
-		}
-	}
-
-	private class Button
-	{
-		public bool enabled;
-
-		public Rect screenRect;
-
-		public TextureAtlasSrc bg;
-
-		public TextureAtlasSrc title;
-
-		public ButtonTapped onTap;
-
-		public Button(TextureAtlasSrc bg, TextureAtlasSrc title, ButtonTapped buttonTapped)
-		{
-			enabled = true;
-			this.bg = bg;
-			this.title = title;
-			screenRect.width = bg.atlasRect.width;
-			screenRect.height = bg.atlasRect.height;
-			onTap = buttonTapped;
-		}
-	}
-
-	private class ToggleButton : Button
-	{
-		public TextureAtlasSrc toggleOn;
-
-		public TextureAtlasSrc toggleOff;
-
-		public bool toggled;
-
-		public ToggleButton(TextureAtlasSrc bg, TextureAtlasSrc title, ButtonTapped buttonTapped, TextureAtlasSrc toggleOn, TextureAtlasSrc toggleOff)
-			: base(bg, title, buttonTapped)
-		{
-			this.toggleOn = toggleOn;
-			this.toggleOff = toggleOff;
-		}
-	}
-
-	private delegate void ButtonTapped();
-
 	private const int atlasWidth = 256;
 
 	private const int atlasHeight = 256;
@@ -79,7 +12,7 @@ public class EveryplayRecButtons : MonoBehaviour
 
 	public Texture2D atlasTexture;
 
-	public ButtonsOrigin origin;
+	public EveryplayRecButtons.ButtonsOrigin origin;
 
 	public Vector2 containerMargin = new Vector2(16f, 16f);
 
@@ -97,117 +30,307 @@ public class EveryplayRecButtons : MonoBehaviour
 
 	private bool startFaceCamWhenPermissionGranted;
 
-	private TextureAtlasSrc editVideoAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc editVideoAtlasSrc;
 
-	private TextureAtlasSrc faceCamAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc faceCamAtlasSrc;
 
-	private TextureAtlasSrc openEveryplayAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc openEveryplayAtlasSrc;
 
-	private TextureAtlasSrc shareVideoAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc shareVideoAtlasSrc;
 
-	private TextureAtlasSrc startRecordingAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc startRecordingAtlasSrc;
 
-	private TextureAtlasSrc stopRecordingAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc stopRecordingAtlasSrc;
 
-	private TextureAtlasSrc facecamToggleOnAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc facecamToggleOnAtlasSrc;
 
-	private TextureAtlasSrc facecamToggleOffAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc facecamToggleOffAtlasSrc;
 
-	private TextureAtlasSrc bgHeaderAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc bgHeaderAtlasSrc;
 
-	private TextureAtlasSrc bgFooterAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc bgFooterAtlasSrc;
 
-	private TextureAtlasSrc bgAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc bgAtlasSrc;
 
-	private TextureAtlasSrc buttonAtlasSrc;
+	private EveryplayRecButtons.TextureAtlasSrc buttonAtlasSrc;
 
-	private Button shareVideoButton;
+	private EveryplayRecButtons.Button shareVideoButton;
 
-	private Button editVideoButton;
+	private EveryplayRecButtons.Button editVideoButton;
 
-	private Button openEveryplayButton;
+	private EveryplayRecButtons.Button openEveryplayButton;
 
-	private Button startRecordingButton;
+	private EveryplayRecButtons.Button startRecordingButton;
 
-	private Button stopRecordingButton;
+	private EveryplayRecButtons.Button stopRecordingButton;
 
-	private ToggleButton faceCamToggleButton;
+	private EveryplayRecButtons.ToggleButton faceCamToggleButton;
 
-	private Button tappedButton;
+	private EveryplayRecButtons.Button tappedButton;
 
-	private List<Button> visibleButtons;
+	private List<EveryplayRecButtons.Button> visibleButtons;
+
+	public EveryplayRecButtons()
+	{
+	}
 
 	private void Awake()
 	{
-		containerScaling = GetScalingByResolution();
-		editVideoAtlasSrc = new TextureAtlasSrc(112, 19, 0, 0, containerScaling);
-		faceCamAtlasSrc = new TextureAtlasSrc(103, 19, 116, 0, containerScaling);
-		openEveryplayAtlasSrc = new TextureAtlasSrc(178, 23, 0, 23, containerScaling);
-		shareVideoAtlasSrc = new TextureAtlasSrc(134, 19, 0, 50, containerScaling);
-		startRecordingAtlasSrc = new TextureAtlasSrc(171, 23, 0, 73, containerScaling);
-		stopRecordingAtlasSrc = new TextureAtlasSrc(169, 23, 0, 100, containerScaling);
-		facecamToggleOnAtlasSrc = new TextureAtlasSrc(101, 42, 0, 127, containerScaling);
-		facecamToggleOffAtlasSrc = new TextureAtlasSrc(101, 42, 101, 127, containerScaling);
-		bgHeaderAtlasSrc = new TextureAtlasSrc(256, 9, 0, 169, containerScaling);
-		bgFooterAtlasSrc = new TextureAtlasSrc(256, 9, 0, 169, containerScaling);
-		bgAtlasSrc = new TextureAtlasSrc(256, 6, 0, 178, containerScaling);
-		buttonAtlasSrc = new TextureAtlasSrc(220, 64, 0, 190, containerScaling);
-		buttonTitleHorizontalMargin = Mathf.RoundToInt((float)buttonTitleHorizontalMargin * containerScaling);
-		buttonTitleVerticalMargin = Mathf.RoundToInt((float)buttonTitleVerticalMargin * containerScaling);
-		buttonMargin = Mathf.RoundToInt((float)buttonMargin * containerScaling);
-		shareVideoButton = new Button(buttonAtlasSrc, shareVideoAtlasSrc, ShareVideo);
-		editVideoButton = new Button(buttonAtlasSrc, editVideoAtlasSrc, EditVideo);
-		openEveryplayButton = new Button(buttonAtlasSrc, openEveryplayAtlasSrc, OpenEveryplay);
-		startRecordingButton = new Button(buttonAtlasSrc, startRecordingAtlasSrc, StartRecording);
-		stopRecordingButton = new Button(buttonAtlasSrc, stopRecordingAtlasSrc, StopRecording);
-		faceCamToggleButton = new ToggleButton(buttonAtlasSrc, faceCamAtlasSrc, FaceCamToggle, facecamToggleOnAtlasSrc, facecamToggleOffAtlasSrc);
-		visibleButtons = new List<Button>();
-		bgFooterAtlasSrc.normalizedAtlasRect.y = bgFooterAtlasSrc.normalizedAtlasRect.y + bgFooterAtlasSrc.normalizedAtlasRect.height;
-		bgFooterAtlasSrc.normalizedAtlasRect.height = 0f - bgFooterAtlasSrc.normalizedAtlasRect.height;
-		SetButtonVisible(startRecordingButton, true);
-		SetButtonVisible(openEveryplayButton, true);
-		SetButtonVisible(faceCamToggleButton, true);
+		this.containerScaling = this.GetScalingByResolution();
+		this.editVideoAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(112, 19, 0, 0, this.containerScaling);
+		this.faceCamAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(103, 19, 116, 0, this.containerScaling);
+		this.openEveryplayAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(178, 23, 0, 23, this.containerScaling);
+		this.shareVideoAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(134, 19, 0, 50, this.containerScaling);
+		this.startRecordingAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(171, 23, 0, 73, this.containerScaling);
+		this.stopRecordingAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(169, 23, 0, 100, this.containerScaling);
+		this.facecamToggleOnAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(101, 42, 0, 127, this.containerScaling);
+		this.facecamToggleOffAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(101, 42, 101, 127, this.containerScaling);
+		this.bgHeaderAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(256, 9, 0, 169, this.containerScaling);
+		this.bgFooterAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(256, 9, 0, 169, this.containerScaling);
+		this.bgAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(256, 6, 0, 178, this.containerScaling);
+		this.buttonAtlasSrc = new EveryplayRecButtons.TextureAtlasSrc(220, 64, 0, 190, this.containerScaling);
+		this.buttonTitleHorizontalMargin = Mathf.RoundToInt((float)this.buttonTitleHorizontalMargin * this.containerScaling);
+		this.buttonTitleVerticalMargin = Mathf.RoundToInt((float)this.buttonTitleVerticalMargin * this.containerScaling);
+		this.buttonMargin = Mathf.RoundToInt((float)this.buttonMargin * this.containerScaling);
+		this.shareVideoButton = new EveryplayRecButtons.Button(this.buttonAtlasSrc, this.shareVideoAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.ShareVideo));
+		this.editVideoButton = new EveryplayRecButtons.Button(this.buttonAtlasSrc, this.editVideoAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.EditVideo));
+		this.openEveryplayButton = new EveryplayRecButtons.Button(this.buttonAtlasSrc, this.openEveryplayAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.OpenEveryplay));
+		this.startRecordingButton = new EveryplayRecButtons.Button(this.buttonAtlasSrc, this.startRecordingAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.StartRecording));
+		this.stopRecordingButton = new EveryplayRecButtons.Button(this.buttonAtlasSrc, this.stopRecordingAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.StopRecording));
+		this.faceCamToggleButton = new EveryplayRecButtons.ToggleButton(this.buttonAtlasSrc, this.faceCamAtlasSrc, new EveryplayRecButtons.ButtonTapped(this.FaceCamToggle), this.facecamToggleOnAtlasSrc, this.facecamToggleOffAtlasSrc);
+		this.visibleButtons = new List<EveryplayRecButtons.Button>();
+		this.bgFooterAtlasSrc.normalizedAtlasRect.y = this.bgFooterAtlasSrc.normalizedAtlasRect.y + this.bgFooterAtlasSrc.normalizedAtlasRect.height;
+		this.bgFooterAtlasSrc.normalizedAtlasRect.height = -this.bgFooterAtlasSrc.normalizedAtlasRect.height;
+		this.SetButtonVisible(this.startRecordingButton, true);
+		this.SetButtonVisible(this.openEveryplayButton, true);
+		this.SetButtonVisible(this.faceCamToggleButton, true);
 		if (!Everyplay.IsRecordingSupported())
 		{
-			startRecordingButton.enabled = false;
-			stopRecordingButton.enabled = false;
+			this.startRecordingButton.enabled = false;
+			this.stopRecordingButton.enabled = false;
 		}
-		Everyplay.RecordingStarted += RecordingStarted;
-		Everyplay.RecordingStopped += RecordingStopped;
-		Everyplay.ReadyForRecording += ReadyForRecording;
-		Everyplay.FaceCamRecordingPermission += FaceCamRecordingPermission;
+		Everyplay.RecordingStarted += new Everyplay.RecordingStartedDelegate(this.RecordingStarted);
+		Everyplay.RecordingStopped += new Everyplay.RecordingStoppedDelegate(this.RecordingStopped);
+		Everyplay.ReadyForRecording += new Everyplay.ReadyForRecordingDelegate(this.ReadyForRecording);
+		Everyplay.FaceCamRecordingPermission += new Everyplay.FaceCamRecordingPermissionDelegate(this.FaceCamRecordingPermission);
+	}
+
+	private int CalculateContainerHeight()
+	{
+		float single = 0f;
+		float single1 = this.bgHeaderAtlasSrc.atlasRect.height + ((float)(this.buttonMargin * 2) - this.bgHeaderAtlasSrc.atlasRect.height);
+		foreach (EveryplayRecButtons.Button visibleButton in this.visibleButtons)
+		{
+			visibleButton.screenRect.x = (this.bgAtlasSrc.atlasRect.width - visibleButton.screenRect.width) / 2f;
+			visibleButton.screenRect.y = single1;
+			single1 = single1 + ((float)this.buttonMargin + visibleButton.screenRect.height);
+			single = single + ((float)this.buttonMargin + visibleButton.screenRect.height);
+		}
+		int num = Mathf.RoundToInt(single + this.bgHeaderAtlasSrc.atlasRect.height + this.bgFooterAtlasSrc.atlasRect.height);
+		return num;
 	}
 
 	private void Destroy()
 	{
-		Everyplay.RecordingStarted -= RecordingStarted;
-		Everyplay.RecordingStopped -= RecordingStopped;
-		Everyplay.ReadyForRecording -= ReadyForRecording;
-		Everyplay.FaceCamRecordingPermission -= FaceCamRecordingPermission;
+		Everyplay.RecordingStarted -= new Everyplay.RecordingStartedDelegate(this.RecordingStarted);
+		Everyplay.RecordingStopped -= new Everyplay.RecordingStoppedDelegate(this.RecordingStopped);
+		Everyplay.ReadyForRecording -= new Everyplay.ReadyForRecordingDelegate(this.ReadyForRecording);
+		Everyplay.FaceCamRecordingPermission -= new Everyplay.FaceCamRecordingPermissionDelegate(this.FaceCamRecordingPermission);
 	}
 
-	private void SetButtonVisible(Button button, bool visible)
+	private void DrawBackround(int containerHeight)
 	{
-		if (visibleButtons.Contains(button))
+		this.DrawTexture(0f, 0f, this.bgHeaderAtlasSrc.atlasRect.width, this.bgHeaderAtlasSrc.atlasRect.height, this.atlasTexture, this.bgHeaderAtlasSrc.normalizedAtlasRect);
+		this.DrawTexture(0f, this.bgHeaderAtlasSrc.atlasRect.height, this.bgAtlasSrc.atlasRect.width, (float)containerHeight - this.bgHeaderAtlasSrc.atlasRect.height - this.bgFooterAtlasSrc.atlasRect.height, this.atlasTexture, this.bgAtlasSrc.normalizedAtlasRect);
+		this.DrawTexture(0f, (float)containerHeight - this.bgFooterAtlasSrc.atlasRect.height, this.bgFooterAtlasSrc.atlasRect.width, this.bgFooterAtlasSrc.atlasRect.height, this.atlasTexture, this.bgFooterAtlasSrc.normalizedAtlasRect);
+	}
+
+	private void DrawButton(EveryplayRecButtons.Button button, Color tintColor)
+	{
+		object obj;
+		Color color = GUI.color;
+		bool flag = false;
+		flag = typeof(EveryplayRecButtons.ToggleButton).IsAssignableFrom(button.GetType());
+		if (!flag)
+		{
+			GUI.color = tintColor;
+			this.DrawTexture(button.screenRect.x, button.screenRect.y, button.bg.atlasRect.width, button.bg.atlasRect.height, this.atlasTexture, button.bg.normalizedAtlasRect);
+			GUI.color = color;
+		}
+		else
+		{
+			EveryplayRecButtons.ToggleButton toggleButton = (EveryplayRecButtons.ToggleButton)button;
+			if (button != null)
+			{
+				float single = button.screenRect.x + button.screenRect.width - toggleButton.toggleOn.atlasRect.width;
+				float single1 = button.screenRect.y + button.screenRect.height / 2f - toggleButton.toggleOn.atlasRect.height / 2f;
+				EveryplayRecButtons.TextureAtlasSrc textureAtlasSrc = (!toggleButton.toggled ? toggleButton.toggleOff : toggleButton.toggleOn);
+				GUI.color = tintColor;
+				this.DrawTexture(single, single1, textureAtlasSrc.atlasRect.width, textureAtlasSrc.atlasRect.height, this.atlasTexture, textureAtlasSrc.normalizedAtlasRect);
+				GUI.color = color;
+			}
+		}
+		if (!flag)
+		{
+			obj = this.buttonTitleHorizontalMargin;
+		}
+		else
+		{
+			obj = null;
+		}
+		float single2 = (float)obj;
+		if (!button.enabled)
+		{
+			GUI.color = tintColor;
+		}
+		this.DrawTexture(button.screenRect.x + single2, button.screenRect.y + (float)this.buttonTitleVerticalMargin, button.title.atlasRect.width, button.title.atlasRect.height, this.atlasTexture, button.title.normalizedAtlasRect);
+		if (!button.enabled)
+		{
+			GUI.color = color;
+		}
+	}
+
+	private void DrawButtons()
+	{
+		foreach (EveryplayRecButtons.Button visibleButton in this.visibleButtons)
+		{
+			if (!visibleButton.enabled)
+			{
+				this.DrawButton(visibleButton, new Color(0.5f, 0.5f, 0.5f, 0.3f));
+			}
+			else
+			{
+				this.DrawButton(visibleButton, (this.tappedButton != visibleButton ? Color.white : Color.gray));
+			}
+		}
+	}
+
+	private void DrawTexture(float x, float y, float width, float height, Texture2D texture, Rect uvRect)
+	{
+		x += this.containerOffset.x;
+		y += this.containerOffset.y;
+		GUI.DrawTextureWithTexCoords(new Rect(x, y, width, height), texture, uvRect, true);
+	}
+
+	private void EditVideo()
+	{
+		Everyplay.PlayLastRecording();
+	}
+
+	private void FaceCamRecordingPermission(bool granted)
+	{
+		this.faceCamPermissionGranted = granted;
+		if (this.startFaceCamWhenPermissionGranted)
+		{
+			this.faceCamToggleButton.toggled = granted;
+			Everyplay.FaceCamStartSession();
+			if (Everyplay.FaceCamIsSessionRunning())
+			{
+				this.startFaceCamWhenPermissionGranted = false;
+			}
+		}
+	}
+
+	private void FaceCamToggle()
+	{
+		if (!this.faceCamPermissionGranted)
+		{
+			Everyplay.FaceCamRequestRecordingPermission();
+			this.startFaceCamWhenPermissionGranted = true;
+		}
+		else
+		{
+			this.faceCamToggleButton.toggled = !this.faceCamToggleButton.toggled;
+			if (this.faceCamToggleButton.toggled)
+			{
+				if (!Everyplay.FaceCamIsSessionRunning())
+				{
+					Everyplay.FaceCamStartSession();
+				}
+			}
+			else if (Everyplay.FaceCamIsSessionRunning())
+			{
+				Everyplay.FaceCamStopSession();
+			}
+		}
+	}
+
+	private float GetScalingByResolution()
+	{
+		int num = Mathf.Max(Screen.height, Screen.width);
+		int num1 = Mathf.Min(Screen.height, Screen.width);
+		if (num >= 640 && (num != 1024 || num1 != 768))
+		{
+			return 1f;
+		}
+		return 0.5f;
+	}
+
+	private void OnGUI()
+	{
+		if (Event.current.type.Equals(EventType.Repaint))
+		{
+			int num = this.CalculateContainerHeight();
+			this.UpdateContainerOffset(num);
+			this.DrawBackround(num);
+			this.DrawButtons();
+		}
+	}
+
+	private void OpenEveryplay()
+	{
+		Everyplay.Show();
+	}
+
+	private void ReadyForRecording(bool enabled)
+	{
+		this.startRecordingButton.enabled = enabled;
+		this.stopRecordingButton.enabled = enabled;
+	}
+
+	private void RecordingStarted()
+	{
+		this.ReplaceVisibleButton(this.startRecordingButton, this.stopRecordingButton);
+		this.SetButtonVisible(this.shareVideoButton, false);
+		this.SetButtonVisible(this.editVideoButton, false);
+		this.SetButtonVisible(this.faceCamToggleButton, false);
+	}
+
+	private void RecordingStopped()
+	{
+		this.ReplaceVisibleButton(this.stopRecordingButton, this.startRecordingButton);
+		this.SetButtonVisible(this.shareVideoButton, true);
+		this.SetButtonVisible(this.editVideoButton, true);
+		this.SetButtonVisible(this.faceCamToggleButton, true);
+	}
+
+	private void ReplaceVisibleButton(EveryplayRecButtons.Button button, EveryplayRecButtons.Button replacementButton)
+	{
+		int num = this.visibleButtons.IndexOf(button);
+		if (num >= 0)
+		{
+			this.visibleButtons[num] = replacementButton;
+		}
+	}
+
+	private void SetButtonVisible(EveryplayRecButtons.Button button, bool visible)
+	{
+		if (this.visibleButtons.Contains(button))
 		{
 			if (!visible)
 			{
-				visibleButtons.Remove(button);
+				this.visibleButtons.Remove(button);
 			}
 		}
 		else if (visible)
 		{
-			visibleButtons.Add(button);
+			this.visibleButtons.Add(button);
 		}
 	}
 
-	private void ReplaceVisibleButton(Button button, Button replacementButton)
+	private void ShareVideo()
 	{
-		int num = visibleButtons.IndexOf(button);
-		if (num >= 0)
-		{
-			visibleButtons[num] = replacementButton;
-		}
+		Everyplay.ShowSharingModal();
 	}
 
 	private void StartRecording()
@@ -220,237 +343,136 @@ public class EveryplayRecButtons : MonoBehaviour
 		Everyplay.StopRecording();
 	}
 
-	private void RecordingStarted()
-	{
-		ReplaceVisibleButton(startRecordingButton, stopRecordingButton);
-		SetButtonVisible(shareVideoButton, false);
-		SetButtonVisible(editVideoButton, false);
-		SetButtonVisible(faceCamToggleButton, false);
-	}
-
-	private void RecordingStopped()
-	{
-		ReplaceVisibleButton(stopRecordingButton, startRecordingButton);
-		SetButtonVisible(shareVideoButton, true);
-		SetButtonVisible(editVideoButton, true);
-		SetButtonVisible(faceCamToggleButton, true);
-	}
-
-	private void ReadyForRecording(bool enabled)
-	{
-		startRecordingButton.enabled = enabled;
-		stopRecordingButton.enabled = enabled;
-	}
-
-	private void FaceCamRecordingPermission(bool granted)
-	{
-		faceCamPermissionGranted = granted;
-		if (startFaceCamWhenPermissionGranted)
-		{
-			faceCamToggleButton.toggled = granted;
-			Everyplay.FaceCamStartSession();
-			if (Everyplay.FaceCamIsSessionRunning())
-			{
-				startFaceCamWhenPermissionGranted = false;
-			}
-		}
-	}
-
-	private void FaceCamToggle()
-	{
-		if (faceCamPermissionGranted)
-		{
-			faceCamToggleButton.toggled = !faceCamToggleButton.toggled;
-			if (faceCamToggleButton.toggled)
-			{
-				if (!Everyplay.FaceCamIsSessionRunning())
-				{
-					Everyplay.FaceCamStartSession();
-				}
-			}
-			else if (Everyplay.FaceCamIsSessionRunning())
-			{
-				Everyplay.FaceCamStopSession();
-			}
-		}
-		else
-		{
-			Everyplay.FaceCamRequestRecordingPermission();
-			startFaceCamWhenPermissionGranted = true;
-		}
-	}
-
-	private void OpenEveryplay()
-	{
-		Everyplay.Show();
-	}
-
-	private void EditVideo()
-	{
-		Everyplay.PlayLastRecording();
-	}
-
-	private void ShareVideo()
-	{
-		Everyplay.ShowSharingModal();
-	}
-
 	private void Update()
 	{
-		Touch[] touches = Input.touches;
-		for (int i = 0; i < touches.Length; i++)
+		Touch[] touchArray = Input.touches;
+		for (int i = 0; i < (int)touchArray.Length; i++)
 		{
-			Touch touch = touches[i];
+			Touch touch = touchArray[i];
 			if (touch.phase == TouchPhase.Began)
 			{
-				foreach (Button visibleButton in visibleButtons)
+				foreach (EveryplayRecButtons.Button visibleButton in this.visibleButtons)
 				{
-					if (visibleButton.screenRect.Contains(new Vector2(touch.position.x - containerOffset.x, (float)Screen.height - touch.position.y - containerOffset.y)))
+					float single = touch.position.x - this.containerOffset.x;
+					float single1 = (float)Screen.height;
+					Vector2 vector2 = touch.position;
+					if (!visibleButton.screenRect.Contains(new Vector2(single, single1 - vector2.y - this.containerOffset.y)))
 					{
-						tappedButton = visibleButton;
+						continue;
 					}
+					this.tappedButton = visibleButton;
 				}
 			}
 			else if (touch.phase == TouchPhase.Ended)
 			{
-				foreach (Button visibleButton2 in visibleButtons)
+				foreach (EveryplayRecButtons.Button button in this.visibleButtons)
 				{
-					if (visibleButton2.screenRect.Contains(new Vector2(touch.position.x - containerOffset.x, (float)Screen.height - touch.position.y - containerOffset.y)) && visibleButton2.onTap != null)
+					float single2 = touch.position.x - this.containerOffset.x;
+					float single3 = (float)Screen.height;
+					Vector2 vector21 = touch.position;
+					if (!button.screenRect.Contains(new Vector2(single2, single3 - vector21.y - this.containerOffset.y)) || button.onTap == null)
 					{
-						visibleButton2.onTap();
+						continue;
 					}
+					button.onTap();
 				}
-				tappedButton = null;
+				this.tappedButton = null;
 			}
 			else if (touch.phase == TouchPhase.Canceled)
 			{
-				tappedButton = null;
+				this.tappedButton = null;
 			}
 		}
-	}
-
-	private void OnGUI()
-	{
-		if (Event.current.type.Equals(EventType.Repaint))
-		{
-			int containerHeight = CalculateContainerHeight();
-			UpdateContainerOffset(containerHeight);
-			DrawBackround(containerHeight);
-			DrawButtons();
-		}
-	}
-
-	private void DrawTexture(float x, float y, float width, float height, Texture2D texture, Rect uvRect)
-	{
-		x += containerOffset.x;
-		y += containerOffset.y;
-		GUI.DrawTextureWithTexCoords(new Rect(x, y, width, height), texture, uvRect, true);
-	}
-
-	private void DrawButtons()
-	{
-		foreach (Button visibleButton in visibleButtons)
-		{
-			if (visibleButton.enabled)
-			{
-				DrawButton(visibleButton, (tappedButton != visibleButton) ? Color.white : Color.gray);
-			}
-			else
-			{
-				DrawButton(visibleButton, new Color(0.5f, 0.5f, 0.5f, 0.3f));
-			}
-		}
-	}
-
-	private void DrawBackround(int containerHeight)
-	{
-		DrawTexture(0f, 0f, bgHeaderAtlasSrc.atlasRect.width, bgHeaderAtlasSrc.atlasRect.height, atlasTexture, bgHeaderAtlasSrc.normalizedAtlasRect);
-		DrawTexture(0f, bgHeaderAtlasSrc.atlasRect.height, bgAtlasSrc.atlasRect.width, (float)containerHeight - bgHeaderAtlasSrc.atlasRect.height - bgFooterAtlasSrc.atlasRect.height, atlasTexture, bgAtlasSrc.normalizedAtlasRect);
-		DrawTexture(0f, (float)containerHeight - bgFooterAtlasSrc.atlasRect.height, bgFooterAtlasSrc.atlasRect.width, bgFooterAtlasSrc.atlasRect.height, atlasTexture, bgFooterAtlasSrc.normalizedAtlasRect);
-	}
-
-	private void DrawButton(Button button, Color tintColor)
-	{
-		Color color = GUI.color;
-		bool flag = false;
-		flag = typeof(ToggleButton).IsAssignableFrom(button.GetType());
-		if (flag)
-		{
-			ToggleButton toggleButton = (ToggleButton)button;
-			if (button != null)
-			{
-				float x = button.screenRect.x + button.screenRect.width - toggleButton.toggleOn.atlasRect.width;
-				float y = button.screenRect.y + button.screenRect.height / 2f - toggleButton.toggleOn.atlasRect.height / 2f;
-				TextureAtlasSrc textureAtlasSrc = ((!toggleButton.toggled) ? toggleButton.toggleOff : toggleButton.toggleOn);
-				GUI.color = tintColor;
-				DrawTexture(x, y, textureAtlasSrc.atlasRect.width, textureAtlasSrc.atlasRect.height, atlasTexture, textureAtlasSrc.normalizedAtlasRect);
-				GUI.color = color;
-			}
-		}
-		else
-		{
-			GUI.color = tintColor;
-			DrawTexture(button.screenRect.x, button.screenRect.y, button.bg.atlasRect.width, button.bg.atlasRect.height, atlasTexture, button.bg.normalizedAtlasRect);
-			GUI.color = color;
-		}
-		float num = ((!flag) ? buttonTitleHorizontalMargin : 0);
-		if (!button.enabled)
-		{
-			GUI.color = tintColor;
-		}
-		DrawTexture(button.screenRect.x + num, button.screenRect.y + (float)buttonTitleVerticalMargin, button.title.atlasRect.width, button.title.atlasRect.height, atlasTexture, button.title.normalizedAtlasRect);
-		if (!button.enabled)
-		{
-			GUI.color = color;
-		}
-	}
-
-	private int CalculateContainerHeight()
-	{
-		float num = 0f;
-		float num2 = bgHeaderAtlasSrc.atlasRect.height + ((float)(buttonMargin * 2) - bgHeaderAtlasSrc.atlasRect.height);
-		foreach (Button visibleButton in visibleButtons)
-		{
-			visibleButton.screenRect.x = (bgAtlasSrc.atlasRect.width - visibleButton.screenRect.width) / 2f;
-			visibleButton.screenRect.y = num2;
-			num2 += (float)buttonMargin + visibleButton.screenRect.height;
-			num += (float)buttonMargin + visibleButton.screenRect.height;
-		}
-		return Mathf.RoundToInt(num + bgHeaderAtlasSrc.atlasRect.height + bgFooterAtlasSrc.atlasRect.height);
 	}
 
 	private void UpdateContainerOffset(int containerHeight)
 	{
-		if (origin == ButtonsOrigin.TopRight)
+		if (this.origin == EveryplayRecButtons.ButtonsOrigin.TopRight)
 		{
-			containerOffset.x = (float)Screen.width - containerMargin.x * containerScaling - bgAtlasSrc.atlasRect.width;
-			containerOffset.y = containerMargin.y * containerScaling;
+			this.containerOffset.x = (float)Screen.width - this.containerMargin.x * this.containerScaling - this.bgAtlasSrc.atlasRect.width;
+			this.containerOffset.y = this.containerMargin.y * this.containerScaling;
 		}
-		else if (origin == ButtonsOrigin.BottomLeft)
+		else if (this.origin == EveryplayRecButtons.ButtonsOrigin.BottomLeft)
 		{
-			containerOffset.x = containerMargin.x * containerScaling;
-			containerOffset.y = (float)Screen.height - containerMargin.y * containerScaling - (float)containerHeight;
+			this.containerOffset.x = this.containerMargin.x * this.containerScaling;
+			this.containerOffset.y = (float)Screen.height - this.containerMargin.y * this.containerScaling - (float)containerHeight;
 		}
-		else if (origin == ButtonsOrigin.BottomRight)
+		else if (this.origin != EveryplayRecButtons.ButtonsOrigin.BottomRight)
 		{
-			containerOffset.x = (float)Screen.width - containerMargin.x * containerScaling - bgAtlasSrc.atlasRect.width;
-			containerOffset.y = (float)Screen.height - containerMargin.y * containerScaling - (float)containerHeight;
+			this.containerOffset.x = this.containerMargin.x * this.containerScaling;
+			this.containerOffset.y = this.containerMargin.y * this.containerScaling;
 		}
 		else
 		{
-			containerOffset.x = containerMargin.x * containerScaling;
-			containerOffset.y = containerMargin.y * containerScaling;
+			this.containerOffset.x = (float)Screen.width - this.containerMargin.x * this.containerScaling - this.bgAtlasSrc.atlasRect.width;
+			this.containerOffset.y = (float)Screen.height - this.containerMargin.y * this.containerScaling - (float)containerHeight;
 		}
 	}
 
-	private float GetScalingByResolution()
+	private class Button
 	{
-		int num = Mathf.Max(Screen.height, Screen.width);
-		int num2 = Mathf.Min(Screen.height, Screen.width);
-		if (num < 640 || (num == 1024 && num2 == 768))
+		public bool enabled;
+
+		public Rect screenRect;
+
+		public EveryplayRecButtons.TextureAtlasSrc bg;
+
+		public EveryplayRecButtons.TextureAtlasSrc title;
+
+		public EveryplayRecButtons.ButtonTapped onTap;
+
+		public Button(EveryplayRecButtons.TextureAtlasSrc bg, EveryplayRecButtons.TextureAtlasSrc title, EveryplayRecButtons.ButtonTapped buttonTapped)
 		{
-			return 0.5f;
+			this.enabled = true;
+			this.bg = bg;
+			this.title = title;
+			this.screenRect.width = bg.atlasRect.width;
+			this.screenRect.height = bg.atlasRect.height;
+			this.onTap = buttonTapped;
 		}
-		return 1f;
+	}
+
+	public enum ButtonsOrigin
+	{
+		TopLeft,
+		TopRight,
+		BottomLeft,
+		BottomRight
+	}
+
+	private delegate void ButtonTapped();
+
+	private class TextureAtlasSrc
+	{
+		public Rect atlasRect;
+
+		public Rect normalizedAtlasRect;
+
+		public TextureAtlasSrc(int width, int height, int x, int y, float scale)
+		{
+			this.atlasRect.x = (float)(x + 2);
+			this.atlasRect.y = (float)(y + 2);
+			this.atlasRect.width = (float)width * scale;
+			this.atlasRect.height = (float)height * scale;
+			this.normalizedAtlasRect.width = (float)width / 256f;
+			this.normalizedAtlasRect.height = (float)height / 256f;
+			this.normalizedAtlasRect.x = this.atlasRect.x / 256f;
+			this.normalizedAtlasRect.y = 1f - (this.atlasRect.y + (float)height) / 256f;
+		}
+	}
+
+	private class ToggleButton : EveryplayRecButtons.Button
+	{
+		public EveryplayRecButtons.TextureAtlasSrc toggleOn;
+
+		public EveryplayRecButtons.TextureAtlasSrc toggleOff;
+
+		public bool toggled;
+
+		public ToggleButton(EveryplayRecButtons.TextureAtlasSrc bg, EveryplayRecButtons.TextureAtlasSrc title, EveryplayRecButtons.ButtonTapped buttonTapped, EveryplayRecButtons.TextureAtlasSrc toggleOn, EveryplayRecButtons.TextureAtlasSrc toggleOff) : base(bg, title, buttonTapped)
+		{
+			this.toggleOn = toggleOn;
+			this.toggleOff = toggleOff;
+		}
 	}
 }

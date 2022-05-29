@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
 
@@ -19,9 +21,9 @@ namespace I2.Loc
 
 		private CoroutineManager mCoroutineManager;
 
-		public static string EmptyCategory = "Default";
+		public static string EmptyCategory;
 
-		public static char[] CategorySeparators = "/\\".ToCharArray();
+		public static char[] CategorySeparators;
 
 		public List<TermData> mTerms = new List<TermData>();
 
@@ -36,288 +38,92 @@ namespace I2.Loc
 
 		public bool UserAgreesToHaveItOnTheScene;
 
-		public string Export_CSV(string Category)
+		static LanguageSource()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			int count = mLanguages.Count;
-			stringBuilder.Append("Key,Type,Desc");
-			foreach (LanguageData mLanguage in mLanguages)
+			LanguageSource.EmptyCategory = "Default";
+			LanguageSource.CategorySeparators = "/\\".ToCharArray();
+		}
+
+		public LanguageSource()
+		{
+		}
+
+		public void AddLanguage(string LanguageName, string LanguageCode)
+		{
+			if (this.GetLanguageIndex(LanguageName, true) >= 0)
 			{
-				stringBuilder.Append(",");
-				AppendString(stringBuilder, GoogleLanguages.GetCodedLanguage(mLanguage.Name, mLanguage.Code));
+				return;
 			}
-			stringBuilder.Append("\n");
-			foreach (TermData mTerm in mTerms)
+			LanguageData languageDatum = new LanguageData()
 			{
-				string text;
-				if (string.IsNullOrEmpty(Category) || (Category == EmptyCategory && mTerm.Term.IndexOfAny(CategorySeparators) < 0))
-				{
-					text = mTerm.Term;
-				}
-				else
-				{
-					if (!mTerm.Term.StartsWith(Category) || !(Category != mTerm.Term))
-					{
-						continue;
-					}
-					text = mTerm.Term.Substring(Category.Length + 1);
-				}
-				AppendString(stringBuilder, text);
-				stringBuilder.AppendFormat(",{0}", mTerm.TermType.ToString());
-				stringBuilder.Append(",");
-				AppendString(stringBuilder, mTerm.Description);
-				for (int i = 0; i < Mathf.Min(count, mTerm.Languages.Length); i++)
-				{
-					stringBuilder.Append(",");
-					AppendString(stringBuilder, mTerm.Languages[i]);
-				}
-				stringBuilder.Append("\n");
+				Name = LanguageName,
+				Code = LanguageCode
+			};
+			this.mLanguages.Add(languageDatum);
+			int count = this.mLanguages.Count;
+			int num = 0;
+			int count1 = this.mTerms.Count;
+			while (num < count1)
+			{
+				Array.Resize<string>(ref this.mTerms[num].Languages, count);
+				num++;
 			}
-			return stringBuilder.ToString();
+		}
+
+		public TermData AddTerm(string term)
+		{
+			return this.AddTerm(term, eTermType.Text);
+		}
+
+		public TermData AddTerm(string NewTerm, eTermType termType)
+		{
+			LanguageSource.ValidateFullTerm(ref NewTerm);
+			NewTerm = NewTerm.Trim();
+			TermData termData = this.GetTermData(NewTerm);
+			if (termData == null)
+			{
+				termData = new TermData()
+				{
+					Term = NewTerm,
+					TermType = termType,
+					Languages = new string[this.mLanguages.Count]
+				};
+				this.mTerms.Add(termData);
+				this.mDictionary.Add(NewTerm, termData);
+			}
+			return termData;
 		}
 
 		private static void AppendString(StringBuilder Builder, string Text)
 		{
-			if (!string.IsNullOrEmpty(Text))
+			if (string.IsNullOrEmpty(Text))
 			{
-				Text = Text.Replace("\\n", "\n");
-				if (Text.IndexOfAny(",\n\"".ToCharArray()) >= 0)
-				{
-					Text = Text.Replace("\"", "\"\"");
-					Builder.AppendFormat("\"{0}\"", Text);
-				}
-				else
-				{
-					Builder.Append(Text);
-				}
-			}
-		}
-
-		public WWW Export_Google_CreateWWWcall(eSpreadsheetUpdateMode UpdateMode = eSpreadsheetUpdateMode.Replace)
-		{
-			string value = Export_Google_CreateData();
-			WWWForm wWWForm = new WWWForm();
-			wWWForm.AddField("key", Google_SpreadsheetKey);
-			wWWForm.AddField("action", "SetLanguageSource");
-			wWWForm.AddField("data", value);
-			wWWForm.AddField("updateMode", UpdateMode.ToString());
-			return new WWW(Google_WebServiceURL, wWWForm);
-		}
-
-		private string Export_Google_CreateData()
-		{
-			List<string> categories = GetCategories(true);
-			StringBuilder stringBuilder = new StringBuilder();
-			bool flag = true;
-			foreach (string item in categories)
-			{
-				if (flag)
-				{
-					flag = false;
-				}
-				else
-				{
-					stringBuilder.Append("<I2Loc>");
-				}
-				string value = Export_CSV(item);
-				stringBuilder.Append(item);
-				stringBuilder.Append("<I2Loc>");
-				stringBuilder.Append(value);
-			}
-			return stringBuilder.ToString();
-		}
-
-		public string Import_CSV(string Category, string CSVstring, eSpreadsheetUpdateMode UpdateMode = eSpreadsheetUpdateMode.Replace)
-		{
-			List<string[]> list = LocalizationReader.ReadCSV(CSVstring);
-			string[] array = list[0];
-			if (UpdateMode == eSpreadsheetUpdateMode.Replace)
-			{
-				ClearAllData();
-			}
-			int num = Mathf.Max(array.Length - 3, 0);
-			int[] array2 = new int[num];
-			for (int i = 0; i < num; i++)
-			{
-				string Language;
-				string code;
-				GoogleLanguages.UnPackCodeFromLanguageName(array[i + 3], out Language, out code);
-				int num2 = GetLanguageIndex(Language);
-				if (num2 < 0)
-				{
-					LanguageData languageData = new LanguageData();
-					languageData.Name = Language;
-					languageData.Code = code;
-					mLanguages.Add(languageData);
-					num2 = mLanguages.Count - 1;
-				}
-				array2[i] = num2;
-			}
-			num = mLanguages.Count;
-			int j = 0;
-			for (int count = mTerms.Count; j < count; j++)
-			{
-				TermData termData = mTerms[j];
-				if (termData.Languages.Length < num)
-				{
-					Array.Resize(ref termData.Languages, num);
-				}
-			}
-			int k = 1;
-			for (int count2 = list.Count; k < count2; k++)
-			{
-				array = list[k];
-				string Term = ((!string.IsNullOrEmpty(Category)) ? (Category + "/" + array[0]) : array[0]);
-				ValidateFullTerm(ref Term);
-				TermData termData2 = GetTermData(Term);
-				if (termData2 == null)
-				{
-					termData2 = new TermData();
-					termData2.Term = Term;
-					termData2.Languages = new string[mLanguages.Count];
-					for (int l = 0; l < mLanguages.Count; l++)
-					{
-						termData2.Languages[l] = string.Empty;
-					}
-					mTerms.Add(termData2);
-					mDictionary.Add(Term, termData2);
-				}
-				else if (UpdateMode == eSpreadsheetUpdateMode.AddNewTerms)
-				{
-					continue;
-				}
-				termData2.TermType = GetTermType(array[1]);
-				termData2.Description = array[2];
-				for (int m = 0; m < array2.Length && m < array.Length - 3; m++)
-				{
-					if (!string.IsNullOrEmpty(array[m + 3]))
-					{
-						termData2.Languages[array2[m]] = array[m + 3];
-					}
-				}
-			}
-			return string.Empty;
-		}
-
-		public static eTermType GetTermType(string type)
-		{
-			int i = 0;
-			for (int num = 8; i <= num; i++)
-			{
-				if (string.Equals(((eTermType)i).ToString(), type, StringComparison.OrdinalIgnoreCase))
-				{
-					return (eTermType)i;
-				}
-			}
-			return eTermType.Text;
-		}
-
-		public void Import_Google()
-		{
-		}
-
-		private IEnumerator Import_Google_Coroutine()
-		{
-			WWW www = Import_Google_CreateWWWcall();
-			if (www != null)
-			{
-				while (!www.isDone)
-				{
-					yield return null;
-				}
-				if (string.IsNullOrEmpty(www.error) && www.text != "\"\"")
-				{
-					PlayerPrefs.SetString("I2Source_" + Google_SpreadsheetKey, www.text);
-					PlayerPrefs.Save();
-					Import_Google_Result(www.text, eSpreadsheetUpdateMode.Replace);
-					LocalizationManager.LocalizeAll();
-					Debug.Log("Done Google Sync '" + www.text + "'");
-				}
-				else
-				{
-					Debug.Log("Language Source was up-to-date with Google Spreadsheet");
-				}
-				UnityEngine.Object.Destroy(mCoroutineManager.gameObject);
-				mCoroutineManager = null;
-			}
-		}
-
-		public WWW Import_Google_CreateWWWcall(bool ForceUpdate = false)
-		{
-			if (!HasGoogleSpreadsheet())
-			{
-				return null;
-			}
-			string url = string.Format("{0}?key={1}&action=GetLanguageSource&version={2}", Google_WebServiceURL, Google_SpreadsheetKey, (!ForceUpdate) ? Google_LastUpdatedVersion : "0");
-			return new WWW(url);
-		}
-
-		public bool HasGoogleSpreadsheet()
-		{
-			return !string.IsNullOrEmpty(Google_WebServiceURL) && !string.IsNullOrEmpty(Google_SpreadsheetKey);
-		}
-
-		public void Import_Google_Result(string JsonString, eSpreadsheetUpdateMode UpdateMode)
-		{
-			if (JsonString == "\"\"")
-			{
-				Debug.Log("Language Source was up to date");
 				return;
 			}
-			if (UpdateMode == eSpreadsheetUpdateMode.Replace)
+			Text = Text.Replace("\\n", "\n");
+			if (Text.IndexOfAny(",\n\"".ToCharArray()) < 0)
 			{
-				ClearAllData();
-			}
-			Import_CSV(string.Empty, JsonString, UpdateMode);
-		}
-
-		public List<string> GetCategories(bool OnlyMainCategory = false)
-		{
-			List<string> list = new List<string>();
-			foreach (TermData mTerm in mTerms)
-			{
-				string categoryFromFullTerm = GetCategoryFromFullTerm(mTerm.Term, OnlyMainCategory);
-				if (!list.Contains(categoryFromFullTerm))
-				{
-					list.Add(categoryFromFullTerm);
-				}
-			}
-			list.Sort();
-			return list;
-		}
-
-		internal static string GetKeyFromFullTerm(string FullTerm, bool OnlyMainCategory = false)
-		{
-			int num = ((!OnlyMainCategory) ? FullTerm.LastIndexOfAny(CategorySeparators) : FullTerm.IndexOfAny(CategorySeparators));
-			return (num >= 0) ? FullTerm.Substring(num + 1) : FullTerm;
-		}
-
-		internal static string GetCategoryFromFullTerm(string FullTerm, bool OnlyMainCategory = false)
-		{
-			int num = ((!OnlyMainCategory) ? FullTerm.LastIndexOfAny(CategorySeparators) : FullTerm.IndexOfAny(CategorySeparators));
-			return (num >= 0) ? FullTerm.Substring(0, num) : EmptyCategory;
-		}
-
-		internal static void DeserializeFullTerm(string FullTerm, out string Key, out string Category, bool OnlyMainCategory = false)
-		{
-			int num = ((!OnlyMainCategory) ? FullTerm.LastIndexOfAny(CategorySeparators) : FullTerm.IndexOfAny(CategorySeparators));
-			if (num < 0)
-			{
-				Category = EmptyCategory;
-				Key = FullTerm;
+				Builder.Append(Text);
 			}
 			else
 			{
-				Category = FullTerm.Substring(0, num);
-				Key = FullTerm.Substring(num + 1);
+				Text = Text.Replace("\"", "\"\"");
+				Builder.AppendFormat("\"{0}\"", Text);
 			}
+		}
+
+		public static bool AreTheSameLanguage(string Language1, string Language2)
+		{
+			Language1 = LanguageSource.GetLanguageWithoutRegion(Language1);
+			Language2 = LanguageSource.GetLanguageWithoutRegion(Language2);
+			return string.Compare(Language1, Language2, StringComparison.OrdinalIgnoreCase) == 0;
 		}
 
 		private void Awake()
 		{
-			if (NeverDestroy)
+			if (this.NeverDestroy)
 			{
-				if (ManagerHasASimilarSource())
+				if (this.ManagerHasASimilarSource())
 				{
 					UnityEngine.Object.Destroy(this);
 					return;
@@ -325,61 +131,195 @@ namespace I2.Loc
 				UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 			}
 			LocalizationManager.AddSource(this);
-			UpdateDictionary();
+			this.UpdateDictionary();
 		}
 
-		public void UpdateDictionary()
+		public void ClearAllData()
 		{
-			mDictionary.Clear();
-			int i = 0;
-			for (int count = mTerms.Count; i < count; i++)
+			this.mTerms.Clear();
+			this.mLanguages.Clear();
+			this.mDictionary.Clear();
+		}
+
+		public bool ContainsTerm(string term)
+		{
+			return this.GetTermData(term) != null;
+		}
+
+		internal static void DeserializeFullTerm(string FullTerm, out string Key, out string Category, bool OnlyMainCategory = false)
+		{
+			int num = (!OnlyMainCategory ? FullTerm.LastIndexOfAny(LanguageSource.CategorySeparators) : FullTerm.IndexOfAny(LanguageSource.CategorySeparators));
+			if (num >= 0)
 			{
-				ValidateFullTerm(ref mTerms[i].Term);
-				mDictionary[mTerms[i].Term] = mTerms[i];
+				Category = FullTerm.Substring(0, num);
+				Key = FullTerm.Substring(num + 1);
+			}
+			else
+			{
+				Category = LanguageSource.EmptyCategory;
+				Key = FullTerm;
 			}
 		}
 
-		public string GetSourceName()
+		public string Export_CSV(string Category)
 		{
-			string text = base.gameObject.name;
-			Transform parent = base.transform.parent;
-			while ((bool)parent)
+			string term;
+			StringBuilder stringBuilder = new StringBuilder();
+			int count = this.mLanguages.Count;
+			stringBuilder.Append("Key,Type,Desc");
+			foreach (LanguageData mLanguage in this.mLanguages)
 			{
-				text = parent.name + "_" + text;
-				parent = parent.parent;
+				stringBuilder.Append(",");
+				LanguageSource.AppendString(stringBuilder, GoogleLanguages.GetCodedLanguage(mLanguage.Name, mLanguage.Code));
 			}
-			return text;
+			stringBuilder.Append("\n");
+			foreach (TermData mTerm in this.mTerms)
+			{
+				if (string.IsNullOrEmpty(Category) || Category == LanguageSource.EmptyCategory && mTerm.Term.IndexOfAny(LanguageSource.CategorySeparators) < 0)
+				{
+					term = mTerm.Term;
+				}
+				else if (!mTerm.Term.StartsWith(Category) || !(Category != mTerm.Term))
+				{
+					continue;
+				}
+				else
+				{
+					term = mTerm.Term.Substring(Category.Length + 1);
+				}
+				LanguageSource.AppendString(stringBuilder, term);
+				stringBuilder.AppendFormat(",{0}", mTerm.TermType.ToString());
+				stringBuilder.Append(",");
+				LanguageSource.AppendString(stringBuilder, mTerm.Description);
+				for (int i = 0; i < Mathf.Min(count, (int)mTerm.Languages.Length); i++)
+				{
+					stringBuilder.Append(",");
+					LanguageSource.AppendString(stringBuilder, mTerm.Languages[i]);
+				}
+				stringBuilder.Append("\n");
+			}
+			return stringBuilder.ToString();
+		}
+
+		private string Export_Google_CreateData()
+		{
+			List<string> categories = this.GetCategories(true);
+			StringBuilder stringBuilder = new StringBuilder();
+			bool flag = true;
+			foreach (string category in categories)
+			{
+				if (!flag)
+				{
+					stringBuilder.Append("<I2Loc>");
+				}
+				else
+				{
+					flag = false;
+				}
+				string str = this.Export_CSV(category);
+				stringBuilder.Append(category);
+				stringBuilder.Append("<I2Loc>");
+				stringBuilder.Append(str);
+			}
+			return stringBuilder.ToString();
+		}
+
+		public WWW Export_Google_CreateWWWcall(eSpreadsheetUpdateMode UpdateMode = 1)
+		{
+			string str = this.Export_Google_CreateData();
+			WWWForm wWWForm = new WWWForm();
+			wWWForm.AddField("key", this.Google_SpreadsheetKey);
+			wWWForm.AddField("action", "SetLanguageSource");
+			wWWForm.AddField("data", str);
+			wWWForm.AddField("updateMode", UpdateMode.ToString());
+			return new WWW(this.Google_WebServiceURL, wWWForm);
+		}
+
+		public UnityEngine.Object FindAsset(string Name)
+		{
+			if (this.Assets != null)
+			{
+				int num = 0;
+				int length = (int)this.Assets.Length;
+				while (num < length)
+				{
+					if (this.Assets[num] != null && this.Assets[num].name == Name)
+					{
+						return this.Assets[num];
+					}
+					num++;
+				}
+			}
+			return null;
+		}
+
+		public List<string> GetCategories(bool OnlyMainCategory = false)
+		{
+			List<string> strs = new List<string>();
+			foreach (TermData mTerm in this.mTerms)
+			{
+				string categoryFromFullTerm = LanguageSource.GetCategoryFromFullTerm(mTerm.Term, OnlyMainCategory);
+				if (strs.Contains(categoryFromFullTerm))
+				{
+					continue;
+				}
+				strs.Add(categoryFromFullTerm);
+			}
+			strs.Sort();
+			return strs;
+		}
+
+		internal static string GetCategoryFromFullTerm(string FullTerm, bool OnlyMainCategory = false)
+		{
+			int num = (!OnlyMainCategory ? FullTerm.LastIndexOfAny(LanguageSource.CategorySeparators) : FullTerm.IndexOfAny(LanguageSource.CategorySeparators));
+			return (num >= 0 ? FullTerm.Substring(0, num) : LanguageSource.EmptyCategory);
+		}
+
+		internal static string GetKeyFromFullTerm(string FullTerm, bool OnlyMainCategory = false)
+		{
+			int num = (!OnlyMainCategory ? FullTerm.LastIndexOfAny(LanguageSource.CategorySeparators) : FullTerm.IndexOfAny(LanguageSource.CategorySeparators));
+			return (num >= 0 ? FullTerm.Substring(num + 1) : FullTerm);
 		}
 
 		public int GetLanguageIndex(string language, bool AllowDiscartingRegion = true)
 		{
-			int i = 0;
-			for (int count = mLanguages.Count; i < count; i++)
+			int num = 0;
+			int count = this.mLanguages.Count;
+			while (num < count)
 			{
-				if (string.Compare(mLanguages[i].Name, language, StringComparison.OrdinalIgnoreCase) == 0)
+				if (string.Compare(this.mLanguages[num].Name, language, StringComparison.OrdinalIgnoreCase) == 0)
 				{
-					return i;
+					return num;
 				}
+				num++;
 			}
 			if (AllowDiscartingRegion)
 			{
-				int j = 0;
-				for (int count2 = mLanguages.Count; j < count2; j++)
+				int num1 = 0;
+				int count1 = this.mLanguages.Count;
+				while (num1 < count1)
 				{
-					if (AreTheSameLanguage(mLanguages[j].Name, language))
+					if (LanguageSource.AreTheSameLanguage(this.mLanguages[num1].Name, language))
 					{
-						return j;
+						return num1;
 					}
+					num1++;
 				}
 			}
 			return -1;
 		}
 
-		public static bool AreTheSameLanguage(string Language1, string Language2)
+		public List<string> GetLanguages()
 		{
-			Language1 = GetLanguageWithoutRegion(Language1);
-			Language2 = GetLanguageWithoutRegion(Language2);
-			return string.Compare(Language1, Language2, StringComparison.OrdinalIgnoreCase) == 0;
+			List<string> strs = new List<string>();
+			int num = 0;
+			int count = this.mLanguages.Count;
+			while (num < count)
+			{
+				strs.Add(this.mLanguages[num].Name);
+				num++;
+			}
+			return strs;
 		}
 
 		public static string GetLanguageWithoutRegion(string Language)
@@ -392,123 +332,275 @@ namespace I2.Loc
 			return Language.Substring(0, num).Trim();
 		}
 
-		public void AddLanguage(string LanguageName, string LanguageCode)
+		public string GetSourceName()
 		{
-			if (GetLanguageIndex(LanguageName) < 0)
+			string str = base.gameObject.name;
+			for (Transform i = base.transform.parent; i; i = i.parent)
 			{
-				LanguageData languageData = new LanguageData();
-				languageData.Name = LanguageName;
-				languageData.Code = LanguageCode;
-				mLanguages.Add(languageData);
-				int count = mLanguages.Count;
-				int i = 0;
-				for (int count2 = mTerms.Count; i < count2; i++)
-				{
-					Array.Resize(ref mTerms[i].Languages, count);
-				}
+				str = string.Concat(i.name, "_", str);
 			}
-		}
-
-		public void RemoveLanguage(string LanguageName)
-		{
-			int languageIndex = GetLanguageIndex(LanguageName);
-			if (languageIndex < 0)
-			{
-				return;
-			}
-			int count = mLanguages.Count;
-			int i = 0;
-			for (int count2 = mTerms.Count; i < count2; i++)
-			{
-				for (int j = languageIndex + 1; j < count; j++)
-				{
-					mTerms[i].Languages[j - 1] = mTerms[i].Languages[j];
-				}
-				Array.Resize(ref mTerms[i].Languages, count - 1);
-			}
-			mLanguages.RemoveAt(languageIndex);
-		}
-
-		public List<string> GetLanguages()
-		{
-			List<string> list = new List<string>();
-			int i = 0;
-			for (int count = mLanguages.Count; i < count; i++)
-			{
-				list.Add(mLanguages[i].Name);
-			}
-			return list;
-		}
-
-		public string GetTermTranslation(string term)
-		{
-			int languageIndex = GetLanguageIndex(LocalizationManager.CurrentLanguage);
-			if (languageIndex < 0)
-			{
-				return string.Empty;
-			}
-			TermData termData = GetTermData(term);
-			if (termData != null)
-			{
-				return termData.Languages[languageIndex];
-			}
-			return string.Empty;
-		}
-
-		public TermData AddTerm(string term)
-		{
-			return AddTerm(term, eTermType.Text);
+			return str;
 		}
 
 		public TermData GetTermData(string term)
 		{
-			if (mDictionary.Count == 0)
+			TermData termDatum;
+			if (this.mDictionary.Count == 0)
 			{
-				UpdateDictionary();
+				this.UpdateDictionary();
 			}
-			TermData value;
-			mDictionary.TryGetValue(term, out value);
-			return value;
-		}
-
-		public bool ContainsTerm(string term)
-		{
-			return GetTermData(term) != null;
+			this.mDictionary.TryGetValue(term, out termDatum);
+			return termDatum;
 		}
 
 		public List<string> GetTermsList()
 		{
-			return new List<string>(mDictionary.Keys);
+			return new List<string>(this.mDictionary.Keys);
 		}
 
-		public TermData AddTerm(string NewTerm, eTermType termType)
+		public string GetTermTranslation(string term)
 		{
-			ValidateFullTerm(ref NewTerm);
-			NewTerm = NewTerm.Trim();
-			TermData termData = GetTermData(NewTerm);
+			int languageIndex = this.GetLanguageIndex(LocalizationManager.CurrentLanguage, true);
+			if (languageIndex < 0)
+			{
+				return string.Empty;
+			}
+			TermData termData = this.GetTermData(term);
 			if (termData == null)
 			{
-				termData = new TermData();
-				termData.Term = NewTerm;
-				termData.TermType = termType;
-				termData.Languages = new string[mLanguages.Count];
-				mTerms.Add(termData);
-				mDictionary.Add(NewTerm, termData);
+				return string.Empty;
 			}
-			return termData;
+			return termData.Languages[languageIndex];
+		}
+
+		public static eTermType GetTermType(string type)
+		{
+			int num = 0;
+			int num1 = 8;
+			while (num <= num1)
+			{
+				if (string.Equals((eTermType)num.ToString(), type, StringComparison.OrdinalIgnoreCase))
+				{
+					return (eTermType)num;
+				}
+				num++;
+			}
+			return eTermType.Text;
+		}
+
+		public bool HasAsset(UnityEngine.Object Obj)
+		{
+			return Array.IndexOf<UnityEngine.Object>(this.Assets, Obj) >= 0;
+		}
+
+		public bool HasGoogleSpreadsheet()
+		{
+			return (string.IsNullOrEmpty(this.Google_WebServiceURL) ? false : !string.IsNullOrEmpty(this.Google_SpreadsheetKey));
+		}
+
+		public string Import_CSV(string Category, string CSVstring, eSpreadsheetUpdateMode UpdateMode = 1)
+		{
+			string str;
+			string str1;
+			List<string[]> strArrays = LocalizationReader.ReadCSV(CSVstring);
+			string[] item = strArrays[0];
+			if (UpdateMode == eSpreadsheetUpdateMode.Replace)
+			{
+				this.ClearAllData();
+			}
+			int count = Mathf.Max((int)item.Length - 3, 0);
+			int[] numArray = new int[count];
+			for (int i = 0; i < count; i++)
+			{
+				GoogleLanguages.UnPackCodeFromLanguageName(item[i + 3], out str, out str1);
+				int languageIndex = this.GetLanguageIndex(str, true);
+				if (languageIndex < 0)
+				{
+					LanguageData languageDatum = new LanguageData()
+					{
+						Name = str,
+						Code = str1
+					};
+					this.mLanguages.Add(languageDatum);
+					languageIndex = this.mLanguages.Count - 1;
+				}
+				numArray[i] = languageIndex;
+			}
+			count = this.mLanguages.Count;
+			int num = 0;
+			int count1 = this.mTerms.Count;
+			while (num < count1)
+			{
+				TermData termDatum = this.mTerms[num];
+				if ((int)termDatum.Languages.Length < count)
+				{
+					Array.Resize<string>(ref termDatum.Languages, count);
+				}
+				num++;
+			}
+			int num1 = 1;
+			int count2 = strArrays.Count;
+			while (num1 < count2)
+			{
+				item = strArrays[num1];
+				string str2 = (!string.IsNullOrEmpty(Category) ? string.Concat(Category, "/", item[0]) : item[0]);
+				LanguageSource.ValidateFullTerm(ref str2);
+				TermData termData = this.GetTermData(str2);
+				if (termData != null)
+				{
+					if (UpdateMode != eSpreadsheetUpdateMode.AddNewTerms)
+					{
+						goto Label1;
+					}
+					goto Label0;
+				}
+				else
+				{
+					termData = new TermData()
+					{
+						Term = str2,
+						Languages = new string[this.mLanguages.Count]
+					};
+					for (int j = 0; j < this.mLanguages.Count; j++)
+					{
+						termData.Languages[j] = string.Empty;
+					}
+					this.mTerms.Add(termData);
+					this.mDictionary.Add(str2, termData);
+				}
+			Label1:
+				termData.TermType = LanguageSource.GetTermType(item[1]);
+				termData.Description = item[2];
+				for (int k = 0; k < (int)numArray.Length && k < (int)item.Length - 3; k++)
+				{
+					if (!string.IsNullOrEmpty(item[k + 3]))
+					{
+						termData.Languages[numArray[k]] = item[k + 3];
+					}
+				}
+			Label0:
+				num1++;
+			}
+			return string.Empty;
+		}
+
+		public void Import_Google()
+		{
+		}
+
+		[DebuggerHidden]
+		private IEnumerator Import_Google_Coroutine()
+		{
+			LanguageSource.u003cImport_Google_Coroutineu003ec__Iterator81 variable = null;
+			return variable;
+		}
+
+		public WWW Import_Google_CreateWWWcall(bool ForceUpdate = false)
+		{
+			if (!this.HasGoogleSpreadsheet())
+			{
+				return null;
+			}
+			return new WWW(string.Format("{0}?key={1}&action=GetLanguageSource&version={2}", this.Google_WebServiceURL, this.Google_SpreadsheetKey, (!ForceUpdate ? this.Google_LastUpdatedVersion : "0")));
+		}
+
+		public void Import_Google_Result(string JsonString, eSpreadsheetUpdateMode UpdateMode)
+		{
+			if (JsonString == "\"\"")
+			{
+				UnityEngine.Debug.Log("Language Source was up to date");
+				return;
+			}
+			if (UpdateMode == eSpreadsheetUpdateMode.Replace)
+			{
+				this.ClearAllData();
+			}
+			this.Import_CSV(string.Empty, JsonString, UpdateMode);
+		}
+
+		public bool IsEqualTo(LanguageSource Source)
+		{
+			if (Source.mLanguages.Count != this.mLanguages.Count)
+			{
+				return false;
+			}
+			int num = 0;
+			int count = this.mLanguages.Count;
+			while (num < count)
+			{
+				if (Source.GetLanguageIndex(this.mLanguages[num].Name, true) < 0)
+				{
+					return false;
+				}
+				num++;
+			}
+			return true;
+		}
+
+		internal bool ManagerHasASimilarSource()
+		{
+			int num = 0;
+			int count = LocalizationManager.Sources.Count;
+			while (num < count)
+			{
+				LanguageSource item = LocalizationManager.Sources[num];
+				if (item != null && item.IsEqualTo(this) && item != this)
+				{
+					return true;
+				}
+				num++;
+			}
+			return false;
+		}
+
+		public void RemoveLanguage(string LanguageName)
+		{
+			int languageIndex = this.GetLanguageIndex(LanguageName, true);
+			if (languageIndex < 0)
+			{
+				return;
+			}
+			int count = this.mLanguages.Count;
+			int languages = 0;
+			int num = this.mTerms.Count;
+			while (languages < num)
+			{
+				for (int i = languageIndex + 1; i < count; i++)
+				{
+					this.mTerms[languages].Languages[i - 1] = this.mTerms[languages].Languages[i];
+				}
+				Array.Resize<string>(ref this.mTerms[languages].Languages, count - 1);
+				languages++;
+			}
+			this.mLanguages.RemoveAt(languageIndex);
 		}
 
 		public void RemoveTerm(string term)
 		{
-			int i = 0;
-			for (int count = mTerms.Count; i < count; i++)
+			int num = 0;
+			int count = this.mTerms.Count;
+			while (num < count)
 			{
-				if (mTerms[i].Term == term)
+				if (this.mTerms[num].Term == term)
 				{
-					mTerms.RemoveAt(i);
-					mDictionary.Remove(term);
-					break;
+					this.mTerms.RemoveAt(num);
+					this.mDictionary.Remove(term);
+					return;
 				}
+				num++;
+			}
+		}
+
+		public void UpdateDictionary()
+		{
+			this.mDictionary.Clear();
+			int item = 0;
+			int count = this.mTerms.Count;
+			while (item < count)
+			{
+				LanguageSource.ValidateFullTerm(ref this.mTerms[item].Term);
+				this.mDictionary[this.mTerms[item].Term] = this.mTerms[item];
+				item++;
 			}
 		}
 
@@ -516,69 +608,10 @@ namespace I2.Loc
 		{
 			Term = Term.Replace('\\', '/');
 			Term = Term.Trim();
-			if (Term.StartsWith(EmptyCategory) && Term.Length > EmptyCategory.Length && Term[EmptyCategory.Length] == '/')
+			if (Term.StartsWith(LanguageSource.EmptyCategory) && Term.Length > LanguageSource.EmptyCategory.Length && Term[LanguageSource.EmptyCategory.Length] == '/')
 			{
-				Term = Term.Substring(EmptyCategory.Length + 1);
+				Term = Term.Substring(LanguageSource.EmptyCategory.Length + 1);
 			}
-		}
-
-		public bool IsEqualTo(LanguageSource Source)
-		{
-			if (Source.mLanguages.Count != mLanguages.Count)
-			{
-				return false;
-			}
-			int i = 0;
-			for (int count = mLanguages.Count; i < count; i++)
-			{
-				if (Source.GetLanguageIndex(mLanguages[i].Name) < 0)
-				{
-					return false;
-				}
-			}
-			return true;
-		}
-
-		internal bool ManagerHasASimilarSource()
-		{
-			int i = 0;
-			for (int count = LocalizationManager.Sources.Count; i < count; i++)
-			{
-				LanguageSource languageSource = LocalizationManager.Sources[i];
-				if (languageSource != null && languageSource.IsEqualTo(this) && languageSource != this)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		public void ClearAllData()
-		{
-			mTerms.Clear();
-			mLanguages.Clear();
-			mDictionary.Clear();
-		}
-
-		public UnityEngine.Object FindAsset(string Name)
-		{
-			if (Assets != null)
-			{
-				int i = 0;
-				for (int num = Assets.Length; i < num; i++)
-				{
-					if (Assets[i] != null && Assets[i].name == Name)
-					{
-						return Assets[i];
-					}
-				}
-			}
-			return null;
-		}
-
-		public bool HasAsset(UnityEngine.Object Obj)
-		{
-			return Array.IndexOf(Assets, Obj) >= 0;
 		}
 	}
 }

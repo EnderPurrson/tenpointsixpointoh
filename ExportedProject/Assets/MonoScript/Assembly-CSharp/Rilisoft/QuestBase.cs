@@ -1,8 +1,8 @@
+using Rilisoft.MiniJson;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft.MiniJson;
-using Rilisoft.NullExtensions;
 
 namespace Rilisoft
 {
@@ -14,9 +14,9 @@ namespace Rilisoft
 
 		private readonly int _slot;
 
-		private readonly Difficulty _difficulty;
+		private readonly Rilisoft.Difficulty _difficulty;
 
-		private readonly Reward _reward;
+		private readonly Rilisoft.Reward _reward;
 
 		private bool _dirty;
 
@@ -24,43 +24,21 @@ namespace Rilisoft
 
 		private bool _rewarded;
 
-		public string Id
-		{
-			get
-			{
-				return _id;
-			}
-		}
+		private EventHandler Changed;
 
 		public long Day
 		{
 			get
 			{
-				return _day;
+				return this._day;
 			}
 		}
 
-		public int Slot
+		public Rilisoft.Difficulty Difficulty
 		{
 			get
 			{
-				return _slot;
-			}
-		}
-
-		public Difficulty Difficulty
-		{
-			get
-			{
-				return _difficulty;
-			}
-		}
-
-		public Reward Reward
-		{
-			get
-			{
-				return _reward;
+				return this._difficulty;
 			}
 		}
 
@@ -68,7 +46,23 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _dirty;
+				return this._dirty;
+			}
+		}
+
+		public string Id
+		{
+			get
+			{
+				return this._id;
+			}
+		}
+
+		public Rilisoft.Reward Reward
+		{
+			get
+			{
+				return this._reward;
 			}
 		}
 
@@ -76,98 +70,116 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _rewarded;
+				return this._rewarded;
 			}
 		}
 
-		public event EventHandler Changed;
+		public int Slot
+		{
+			get
+			{
+				return this._slot;
+			}
+		}
 
-		public QuestBase(string id, long day, int slot, Difficulty difficulty, Reward reward, bool active, bool rewarded)
+		public QuestBase(string id, long day, int slot, Rilisoft.Difficulty difficulty, Rilisoft.Reward reward, bool active, bool rewarded)
 		{
 			if (string.IsNullOrEmpty(id))
 			{
 				throw new ArgumentException("Id should not be empty.");
 			}
-			_id = id;
-			_day = day;
-			_slot = slot;
-			_difficulty = difficulty;
-			_reward = reward;
-			_active = active;
-			_rewarded = rewarded;
-		}
-
-		public void SetClean()
-		{
-			_dirty = false;
-		}
-
-		public void SetRewarded()
-		{
-			_rewarded = true;
-			_dirty = true;
-		}
-
-		public bool SetActive()
-		{
-			if (_active)
-			{
-				return false;
-			}
-			_active = true;
-			_dirty = true;
-			return true;
-		}
-
-		public Dictionary<string, object> ToJson()
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>(2);
-			dictionary.Add("reward", Reward.ToJson());
-			Dictionary<string, object> dictionary2 = dictionary;
-			ApppendDifficultyProperties(dictionary2);
-			dictionary = new Dictionary<string, object>(3);
-			dictionary.Add("id", Id);
-			dictionary.Add("day", Day);
-			dictionary.Add("slot", Slot);
-			dictionary.Add(QuestConstants.GetDifficultyKey(Difficulty), dictionary2);
-			dictionary.Add("active", Convert.ToInt32(_active));
-			dictionary.Add("rewarded", Convert.ToInt32(Rewarded));
-			Dictionary<string, object> dictionary3 = dictionary;
-			AppendProperties(dictionary3);
-			return dictionary3;
-		}
-
-		public override string ToString()
-		{
-			return Json.Serialize(ToJson());
-		}
-
-		protected void SetDirty()
-		{
-			_dirty = true;
-			this.Changed.Do(_003CSetDirty_003Em__3BD);
-		}
-
-		public abstract decimal CalculateProgress();
-
-		protected virtual void ApppendDifficultyProperties(Dictionary<string, object> difficultyProperties)
-		{
+			this._id = id;
+			this._day = day;
+			this._slot = slot;
+			this._difficulty = difficulty;
+			this._reward = reward;
+			this._active = active;
+			this._rewarded = rewarded;
 		}
 
 		protected virtual void AppendProperties(Dictionary<string, object> properties)
 		{
 		}
 
-		internal void DebugSetDay(long day)
+		protected virtual void ApppendDifficultyProperties(Dictionary<string, object> difficultyProperties)
 		{
-			_day = day;
-			_dirty = true;
 		}
 
-		[CompilerGenerated]
-		private void _003CSetDirty_003Em__3BD(EventHandler h)
+		public abstract decimal CalculateProgress();
+
+		internal void DebugSetDay(long day)
 		{
-			h(this, EventArgs.Empty);
+			this._day = day;
+			this._dirty = true;
+		}
+
+		public bool SetActive()
+		{
+			if (this._active)
+			{
+				return false;
+			}
+			this._active = true;
+			this._dirty = true;
+			return true;
+		}
+
+		public void SetClean()
+		{
+			this._dirty = false;
+		}
+
+		protected void SetDirty()
+		{
+			this._dirty = true;
+			this.Changed.Do<EventHandler>((EventHandler h) => h(this, EventArgs.Empty));
+		}
+
+		public void SetRewarded()
+		{
+			this._rewarded = true;
+			this._dirty = true;
+		}
+
+		public Dictionary<string, object> ToJson()
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>(2)
+			{
+				{ "reward", this.Reward.ToJson() }
+			};
+			Dictionary<string, object> strs1 = strs;
+			this.ApppendDifficultyProperties(strs1);
+			strs = new Dictionary<string, object>(3)
+			{
+				{ "id", this.Id },
+				{ "day", this.Day },
+				{ "slot", this.Slot },
+				{ QuestConstants.GetDifficultyKey(this.Difficulty), strs1 },
+				{ "active", Convert.ToInt32(this._active) },
+				{ "rewarded", Convert.ToInt32(this.Rewarded) }
+			};
+			Dictionary<string, object> strs2 = strs;
+			this.AppendProperties(strs2);
+			return strs2;
+		}
+
+		public override string ToString()
+		{
+			return Json.Serialize(this.ToJson());
+		}
+
+		public event EventHandler Changed
+		{
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			add
+			{
+				this.Changed += value;
+			}
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			remove
+			{
+				this.Changed -= value;
+			}
 		}
 	}
 }

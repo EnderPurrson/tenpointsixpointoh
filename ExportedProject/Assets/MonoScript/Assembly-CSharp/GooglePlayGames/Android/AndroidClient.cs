@@ -1,31 +1,14 @@
-using System;
-using System.Runtime.CompilerServices;
+using GooglePlayGames;
 using GooglePlayGames.Native.PInvoke;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace GooglePlayGames.Android
 {
 	internal class AndroidClient : IClientImpl
 	{
-		[CompilerGenerated]
-		private sealed class _003CCreatePlatformConfiguration_003Ec__AnonStorey1FF
-		{
-			internal IntPtr intentRef;
-
-			internal void _003C_003Em__83()
-			{
-				try
-				{
-					LaunchBridgeIntent(intentRef);
-				}
-				finally
-				{
-					AndroidJNI.DeleteGlobalRef(intentRef);
-				}
-			}
-		}
-
 		internal const string BridgeActivityClass = "com.google.games.bridge.NativeBridgeActivity";
 
 		private const string LaunchBridgeMethod = "launchBridgeIntent";
@@ -34,67 +17,72 @@ namespace GooglePlayGames.Android
 
 		private TokenClient tokenClient;
 
-		[CompilerGenerated]
-		private static Action<IntPtr> _003C_003Ef__am_0024cache1;
+		public AndroidClient()
+		{
+		}
 
 		public PlatformConfiguration CreatePlatformConfiguration()
 		{
 			AndroidPlatformConfiguration androidPlatformConfiguration = AndroidPlatformConfiguration.Create();
-			using (AndroidJavaObject androidJavaObject = AndroidTokenClient.GetActivity())
+			using (AndroidJavaObject activity = AndroidTokenClient.GetActivity())
 			{
-				androidPlatformConfiguration.SetActivity(androidJavaObject.GetRawObject());
-				if (_003C_003Ef__am_0024cache1 == null)
-				{
-					_003C_003Ef__am_0024cache1 = _003CCreatePlatformConfiguration_003Em__82;
-				}
-				androidPlatformConfiguration.SetOptionalIntentHandlerForUI(_003C_003Ef__am_0024cache1);
-				return androidPlatformConfiguration;
+				androidPlatformConfiguration.SetActivity(activity.GetRawObject());
+				androidPlatformConfiguration.SetOptionalIntentHandlerForUI((IntPtr intent) => {
+					IntPtr intPtr = AndroidJNI.NewGlobalRef(intent);
+					PlayGamesHelperObject.RunOnGameThread(() => {
+						try
+						{
+							AndroidClient.LaunchBridgeIntent(intPtr);
+						}
+						finally
+						{
+							AndroidJNI.DeleteGlobalRef(intPtr);
+						}
+					});
+				});
 			}
+			return androidPlatformConfiguration;
 		}
 
 		public TokenClient CreateTokenClient(string playerId, bool reset)
 		{
-			if (tokenClient == null || reset)
+			if (this.tokenClient == null || reset)
 			{
-				tokenClient = new AndroidTokenClient(playerId);
+				this.tokenClient = new AndroidTokenClient(playerId);
 			}
-			return tokenClient;
+			return this.tokenClient;
 		}
 
 		private static void LaunchBridgeIntent(IntPtr bridgedIntent)
 		{
-			object[] args = new object[2];
-			jvalue[] array = AndroidJNIHelper.CreateJNIArgArray(args);
+			object[] objArray = new object[2];
+			jvalue[] rawObject = AndroidJNIHelper.CreateJNIArgArray(objArray);
 			try
 			{
-				using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.NativeBridgeActivity"))
+				try
 				{
-					using (AndroidJavaObject androidJavaObject = AndroidTokenClient.GetActivity())
+					using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.NativeBridgeActivity"))
 					{
-						IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "launchBridgeIntent", "(Landroid/app/Activity;Landroid/content/Intent;)V");
-						array[0].l = androidJavaObject.GetRawObject();
-						array[1].l = bridgedIntent;
-						AndroidJNI.CallStaticVoidMethod(androidJavaClass.GetRawClass(), staticMethodID, array);
+						using (AndroidJavaObject activity = AndroidTokenClient.GetActivity())
+						{
+							IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "launchBridgeIntent", "(Landroid/app/Activity;Landroid/content/Intent;)V");
+							rawObject[0].l = activity.GetRawObject();
+							rawObject[1].l = bridgedIntent;
+							AndroidJNI.CallStaticVoidMethod(androidJavaClass.GetRawClass(), staticMethodID, rawObject);
+						}
 					}
 				}
-			}
-			catch (Exception ex)
-			{
-				GooglePlayGames.OurUtils.Logger.e("Exception launching bridge intent: " + ex.Message);
-				GooglePlayGames.OurUtils.Logger.e(ex.ToString());
+				catch (Exception exception1)
+				{
+					Exception exception = exception1;
+					GooglePlayGames.OurUtils.Logger.e(string.Concat("Exception launching bridge intent: ", exception.Message));
+					GooglePlayGames.OurUtils.Logger.e(exception.ToString());
+				}
 			}
 			finally
 			{
-				AndroidJNIHelper.DeleteJNIArgArray(args, array);
+				AndroidJNIHelper.DeleteJNIArgArray(objArray, rawObject);
 			}
-		}
-
-		[CompilerGenerated]
-		private static void _003CCreatePlatformConfiguration_003Em__82(IntPtr intent)
-		{
-			_003CCreatePlatformConfiguration_003Ec__AnonStorey1FF _003CCreatePlatformConfiguration_003Ec__AnonStorey1FF = new _003CCreatePlatformConfiguration_003Ec__AnonStorey1FF();
-			_003CCreatePlatformConfiguration_003Ec__AnonStorey1FF.intentRef = AndroidJNI.NewGlobalRef(intent);
-			PlayGamesHelperObject.RunOnGameThread(_003CCreatePlatformConfiguration_003Ec__AnonStorey1FF._003C_003Em__83);
 		}
 	}
 }

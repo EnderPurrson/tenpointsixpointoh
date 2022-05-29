@@ -1,10 +1,12 @@
+using System;
+
 namespace Unity.Linq
 {
 	public enum TransformCloneType
 	{
-		KeepOriginal = 0,
-		FollowParent = 1,
-		Origin = 2,
-		DoNothing = 3
+		KeepOriginal,
+		FollowParent,
+		Origin,
+		DoNothing
 	}
 }

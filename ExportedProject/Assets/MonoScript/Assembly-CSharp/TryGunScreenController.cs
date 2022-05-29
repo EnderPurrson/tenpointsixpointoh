@@ -1,71 +1,11 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class TryGunScreenController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CHandleBuy_003Ec__AnonStorey356
-	{
-		internal int priceAmount;
-
-		internal string priceCurrency;
-
-		internal TryGunScreenController _003C_003Ef__this;
-
-		private static Action<string> _003C_003Ef__am_0024cache3;
-
-		internal void _003C_003Em__592()
-		{
-			if (Defs.isSoundFX)
-			{
-			}
-			ShopNGUIController.FireWeaponOrArmorBought();
-			ShopNGUIController.CategoryNames category = _003C_003Ef__this.category;
-			string itemTag = _003C_003Ef__this.ItemTag;
-			if (_003C_003Ef__am_0024cache3 == null)
-			{
-				_003C_003Ef__am_0024cache3 = _003C_003Em__596;
-			}
-			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(category, itemTag, 1, false, 0, _003C_003Ef__am_0024cache3);
-			try
-			{
-				string empty = string.Empty;
-				string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(_003C_003Ef__this.ItemTag) ?? WeaponManager.FirstUnboughtTag(_003C_003Ef__this.ItemTag), empty, _003C_003Ef__this.category);
-				FlurryPluginWrapper.LogPurchaseByModes(_003C_003Ef__this.category, itemNameNonLocalized, 1, false);
-				if (_003C_003Ef__this.category != ShopNGUIController.CategoryNames.GearCategory)
-				{
-					FlurryPluginWrapper.LogPurchaseByPoints(_003C_003Ef__this.category, itemNameNonLocalized, 1);
-					FlurryPluginWrapper.LogPurchasesPoints(ShopNGUIController.IsWeaponCategory(_003C_003Ef__this.category));
-				}
-				bool isDaterWeapon = false;
-				if (ShopNGUIController.IsWeaponCategory(_003C_003Ef__this.category))
-				{
-					WeaponSounds weaponInfo = ItemDb.GetWeaponInfo(_003C_003Ef__this.ItemTag);
-					isDaterWeapon = weaponInfo != null && weaponInfo.IsAvalibleFromFilter(3);
-				}
-				string text = ((!FlurryEvents.shopCategoryToLogSalesNamesMapping.ContainsKey(_003C_003Ef__this.category)) ? _003C_003Ef__this.category.ToString() : FlurryEvents.shopCategoryToLogSalesNamesMapping[_003C_003Ef__this.category]);
-				AnalyticsStuff.LogSales(itemNameNonLocalized, text, isDaterWeapon);
-				AnalyticsFacade.InAppPurchase(itemNameNonLocalized, text, 1, priceAmount, priceCurrency);
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception in loggin in Try Gun Screen Controller: " + ex);
-			}
-			_003C_003Ef__this.DestroyScreen();
-		}
-
-		private static void _003C_003Em__596(string item)
-		{
-			if (ShopNGUIController.sharedShop != null)
-			{
-				ShopNGUIController.sharedShop.FireBuyAction(item);
-			}
-		}
-	}
-
 	public GameObject buyPanel;
 
 	public GameObject equipPanel;
@@ -112,68 +52,64 @@ public class TryGunScreenController : MonoBehaviour
 
 	private IDisposable _escapeSubscription;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache17;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache18;
-
 	public bool ExpiredTryGun
 	{
 		get
 		{
-			return _expiredTryGun;
+			return this._expiredTryGun;
 		}
 		set
 		{
+			bool flag;
 			try
 			{
-				_expiredTryGun = value;
-				backButton.SetActive(value);
-				buyPanel.SetActive(value);
-				equipPanel.SetActive(!value);
-				gemsPrice.SetActive(value && price.Currency == "GemsCurrency");
-				gemsPriceOld.SetActive(value && price.Currency == "GemsCurrency");
-				coinsPrice.SetActive(value && price.Currency == "Coins");
-				coinsPriceOld.SetActive(value && price.Currency == "Coins");
-				headSpecialOffer.SetActive(!value);
-				headExpired.SetActive(value);
-				if (value)
+				this._expiredTryGun = value;
+				this.backButton.SetActive(value);
+				this.buyPanel.SetActive(value);
+				this.equipPanel.SetActive(!value);
+				this.gemsPrice.SetActive((!value ? false : this.price.Currency == "GemsCurrency"));
+				this.gemsPriceOld.SetActive((!value ? false : this.price.Currency == "GemsCurrency"));
+				this.coinsPrice.SetActive((!value ? false : this.price.Currency == "Coins"));
+				this.coinsPriceOld.SetActive((!value ? false : this.price.Currency == "Coins"));
+				this.headSpecialOffer.SetActive(!value);
+				this.headExpired.SetActive(value);
+				if (!value)
 				{
-					if (price.Currency == "GemsCurrency")
+					int num = (!FriendsController.useBuffSystem ? KillRateCheck.instance.GetRoundsForGun() : BuffSystem.instance.GetRoundsForGun());
+					foreach (UILabel numberOfMatchesLabel in this.numberOfMatchesLabels)
 					{
-						gemsPrice.GetComponent<UILabel>().text = price.Price.ToString();
-						gemsPriceOld.GetComponent<UILabel>().text = priceWithoutPromo.Price.ToString();
+						numberOfMatchesLabel.text = string.Format(LocalizationStore.Get("Key_1995"), num);
 					}
-					if (price.Currency == "Coins")
+				}
+				else
+				{
+					if (this.price.Currency == "GemsCurrency")
 					{
-						coinsPrice.GetComponent<UILabel>().text = price.Price.ToString();
-						coinsPriceOld.GetComponent<UILabel>().text = priceWithoutPromo.Price.ToString();
+						this.gemsPrice.GetComponent<UILabel>().text = this.price.Price.ToString();
+						this.gemsPriceOld.GetComponent<UILabel>().text = this.priceWithoutPromo.Price.ToString();
+					}
+					if (this.price.Currency == "Coins")
+					{
+						this.coinsPrice.GetComponent<UILabel>().text = this.price.Price.ToString();
+						this.coinsPriceOld.GetComponent<UILabel>().text = this.priceWithoutPromo.Price.ToString();
 					}
 					try
 					{
-						foreach (UILabel discountLabel in discountLabels)
+						foreach (UILabel discountLabel in this.discountLabels)
 						{
-							bool onlyServerDiscount;
-							discountLabel.text = string.Format(LocalizationStore.Get("Key_1996"), Mathf.RoundToInt(WeaponManager.TryGunPromoDuration() / 60f), ShopNGUIController.DiscountFor(ItemTag, out onlyServerDiscount));
+							discountLabel.text = string.Format(LocalizationStore.Get("Key_1996"), Mathf.RoundToInt(WeaponManager.TryGunPromoDuration() / 60f), ShopNGUIController.DiscountFor(this.ItemTag, out flag));
 						}
 					}
-					catch (Exception ex)
+					catch (Exception exception)
 					{
-						Debug.LogError("Exception in setting up discount in try gun screen: " + ex);
+						Debug.LogError(string.Concat("Exception in setting up discount in try gun screen: ", exception));
 					}
-					AnalyticsStuff.LogWEaponsSpecialOffers_Conversion(true);
-					return;
-				}
-				int num = ((!FriendsController.useBuffSystem) ? KillRateCheck.instance.GetRoundsForGun() : BuffSystem.instance.GetRoundsForGun());
-				foreach (UILabel numberOfMatchesLabel in numberOfMatchesLabels)
-				{
-					numberOfMatchesLabel.text = string.Format(LocalizationStore.Get("Key_1995"), num);
+					AnalyticsStuff.LogWEaponsSpecialOffers_Conversion(true, null);
 				}
 			}
-			catch (Exception ex2)
+			catch (Exception exception1)
 			{
-				Debug.LogError("Exception in ExpiredTryGun: " + ex2);
+				Debug.LogError(string.Concat("Exception in ExpiredTryGun: ", exception1));
 			}
 		}
 	}
@@ -182,58 +118,37 @@ public class TryGunScreenController : MonoBehaviour
 	{
 		get
 		{
-			return _itemTag;
+			return this._itemTag;
 		}
 		set
 		{
 			try
 			{
-				_itemTag = value;
-				category = (ShopNGUIController.CategoryNames)PromoActionsGUIController.CatForTg(_itemTag);
-				price = ShopNGUIController.currentPrice(_itemTag, category);
-				priceWithoutPromo = ShopNGUIController.currentPrice(_itemTag, category, false, false);
-				string text = PromoActionsGUIController.IconNameForKey(_itemTag, (int)category);
-				Texture texture = Resources.Load<Texture>("OfferIcons/" + text);
-				if (texture != null && itemImage != null)
+				this._itemTag = value;
+				this.category = (ShopNGUIController.CategoryNames)PromoActionsGUIController.CatForTg(this._itemTag);
+				this.price = ShopNGUIController.currentPrice(this._itemTag, this.category, false, true);
+				this.priceWithoutPromo = ShopNGUIController.currentPrice(this._itemTag, this.category, false, false);
+				string str = PromoActionsGUIController.IconNameForKey(this._itemTag, (int)this.category);
+				Texture texture = Resources.Load<Texture>(string.Concat("OfferIcons/", str));
+				if (texture != null && this.itemImage != null)
 				{
-					itemImage.mainTexture = texture;
+					this.itemImage.mainTexture = texture;
 				}
-				string itemNameByTag = ItemDb.GetItemNameByTag(_itemTag);
-				foreach (UILabel itemNameLabel in itemNameLabels)
+				string itemNameByTag = ItemDb.GetItemNameByTag(this._itemTag);
+				foreach (UILabel itemNameLabel in this.itemNameLabels)
 				{
 					itemNameLabel.text = itemNameByTag;
 				}
 			}
-			catch (Exception ex)
+			catch (Exception exception)
 			{
-				Debug.LogError("Exception in ItemTag: " + ex);
+				Debug.LogError(string.Concat("Exception in ItemTag: ", exception));
 			}
 		}
 	}
 
-	public void HandleEquip()
+	public TryGunScreenController()
 	{
-		try
-		{
-			WeaponManager.sharedManager.AddTryGun(ItemTag);
-			if (FriendsController.useBuffSystem)
-			{
-				BuffSystem.instance.SetGetTryGun(ItemDb.GetByTag(ItemTag).PrefabName);
-			}
-			else
-			{
-				KillRateCheck.instance.SetGetWeapon();
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("TryGunScreenController HandleEquip exception: " + ex);
-		}
-	}
-
-	public void HandleClose()
-	{
-		DestroyScreen();
 	}
 
 	private void DestroyScreen()
@@ -244,52 +159,92 @@ public class TryGunScreenController : MonoBehaviour
 
 	public void HandleBuy()
 	{
-		_003CHandleBuy_003Ec__AnonStorey356 _003CHandleBuy_003Ec__AnonStorey = new _003CHandleBuy_003Ec__AnonStorey356();
-		_003CHandleBuy_003Ec__AnonStorey._003C_003Ef__this = this;
-		_003CHandleBuy_003Ec__AnonStorey.priceAmount = price.Price;
-		_003CHandleBuy_003Ec__AnonStorey.priceCurrency = price.Currency;
-		GameObject mainPanel = base.gameObject;
-		ItemPrice itemPrice = price;
-		Action onSuccess = _003CHandleBuy_003Ec__AnonStorey._003C_003Em__592;
-		if (_003C_003Ef__am_0024cache17 == null)
-		{
-			_003C_003Ef__am_0024cache17 = _003CHandleBuy_003Em__593;
-		}
-		Action onEnterCoinsShopAction = _003C_003Ef__am_0024cache17;
-		if (_003C_003Ef__am_0024cache18 == null)
-		{
-			_003C_003Ef__am_0024cache18 = _003CHandleBuy_003Em__594;
-		}
-		ShopNGUIController.TryToBuy(mainPanel, itemPrice, onSuccess, null, null, null, onEnterCoinsShopAction, _003C_003Ef__am_0024cache18);
+		Action<string> action = null;
+		int price = this.price.Price;
+		string currency = this.price.Currency;
+		ShopNGUIController.TryToBuy(base.gameObject, this.price, () => {
+			!Defs.isSoundFX;
+			ShopNGUIController.FireWeaponOrArmorBought();
+			ShopNGUIController.CategoryNames u003cu003ef_this = this.category;
+			string itemTag = this.ItemTag;
+			if (action == null)
+			{
+				action = (string item) => {
+					if (ShopNGUIController.sharedShop != null)
+					{
+						ShopNGUIController.sharedShop.FireBuyAction(item);
+					}
+				};
+			}
+			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(u003cu003ef_this, itemTag, 1, false, 0, action, null, true, true, true);
+			try
+			{
+				string empty = string.Empty;
+				string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(this.ItemTag) ?? WeaponManager.FirstUnboughtTag(this.ItemTag), empty, this.category, null);
+				FlurryPluginWrapper.LogPurchaseByModes(this.category, itemNameNonLocalized, 1, false);
+				if (this.category != ShopNGUIController.CategoryNames.GearCategory)
+				{
+					FlurryPluginWrapper.LogPurchaseByPoints(this.category, itemNameNonLocalized, 1);
+					FlurryPluginWrapper.LogPurchasesPoints(ShopNGUIController.IsWeaponCategory(this.category));
+				}
+				bool flag = false;
+				if (ShopNGUIController.IsWeaponCategory(this.category))
+				{
+					WeaponSounds weaponInfo = ItemDb.GetWeaponInfo(this.ItemTag);
+					flag = (weaponInfo == null ? false : weaponInfo.IsAvalibleFromFilter(3));
+				}
+				string str = (!FlurryEvents.shopCategoryToLogSalesNamesMapping.ContainsKey(this.category) ? this.category.ToString() : FlurryEvents.shopCategoryToLogSalesNamesMapping[this.category]);
+				AnalyticsStuff.LogSales(itemNameNonLocalized, str, flag);
+				AnalyticsFacade.InAppPurchase(itemNameNonLocalized, str, 1, price, currency);
+			}
+			catch (Exception exception)
+			{
+				Debug.LogError(string.Concat("Exception in loggin in Try Gun Screen Controller: ", exception));
+			}
+			this.DestroyScreen();
+		}, null, null, null, () => {
+		}, () => {
+		});
 	}
 
-	private void Start()
+	public void HandleClose()
 	{
-		_escapeSubscription = BackSystem.Instance.Register(_003CStart_003Em__595, "Try Gun Screen");
+		this.DestroyScreen();
+	}
+
+	public void HandleEquip()
+	{
+		try
+		{
+			WeaponManager.sharedManager.AddTryGun(this.ItemTag);
+			if (!FriendsController.useBuffSystem)
+			{
+				KillRateCheck.instance.SetGetWeapon();
+			}
+			else
+			{
+				BuffSystem.instance.SetGetTryGun(ItemDb.GetByTag(this.ItemTag).PrefabName);
+			}
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("TryGunScreenController HandleEquip exception: ", exception));
+		}
 	}
 
 	private void OnDestroy()
 	{
-		_escapeSubscription.Dispose();
+		this._escapeSubscription.Dispose();
 	}
 
-	[CompilerGenerated]
-	private static void _003CHandleBuy_003Em__593()
+	private void Start()
 	{
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleBuy_003Em__594()
-	{
-	}
-
-	[CompilerGenerated]
-	private void _003CStart_003Em__595()
-	{
-		if (!ExpiredTryGun)
-		{
-			HandleEquip();
-		}
-		HandleClose();
+		this._escapeSubscription = BackSystem.Instance.Register(() => {
+			if (!this.ExpiredTryGun)
+			{
+				this.HandleEquip();
+			}
+			this.HandleClose();
+		}, "Try Gun Screen");
 	}
 }

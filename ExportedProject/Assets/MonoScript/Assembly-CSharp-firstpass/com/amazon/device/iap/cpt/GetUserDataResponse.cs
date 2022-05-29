@@ -1,112 +1,147 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class GetUserDataResponse : Jsonable
 	{
-		public string RequestId { get; set; }
-
-		public AmazonUserData AmazonUserData { get; set; }
-
-		public string Status { get; set; }
-
-		public string ToJson()
+		public com.amazon.device.iap.cpt.AmazonUserData AmazonUserData
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public string RequestId
 		{
-			//Discarded unreachable code: IL_0056, IL_0068
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("requestId", RequestId);
-				dictionary.Add("amazonUserData", (AmazonUserData == null) ? null : AmazonUserData.GetObjectDictionary());
-				dictionary.Add("status", Status);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		public string Status
+		{
+			get;
+			set;
+		}
+
+		public GetUserDataResponse()
+		{
 		}
 
 		public static GetUserDataResponse CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0091, IL_00a3
+			GetUserDataResponse getUserDataResponse;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					GetUserDataResponse item = new GetUserDataResponse();
+					if (jsonMap.ContainsKey("requestId"))
+					{
+						item.RequestId = (string)jsonMap["requestId"];
+					}
+					if (jsonMap.ContainsKey("amazonUserData"))
+					{
+						item.AmazonUserData = com.amazon.device.iap.cpt.AmazonUserData.CreateFromDictionary(jsonMap["amazonUserData"] as Dictionary<string, object>);
+					}
+					if (jsonMap.ContainsKey("status"))
+					{
+						item.Status = (string)jsonMap["status"];
+					}
+					getUserDataResponse = item;
 				}
-				GetUserDataResponse getUserDataResponse = new GetUserDataResponse();
-				if (jsonMap.ContainsKey("requestId"))
+				else
 				{
-					getUserDataResponse.RequestId = (string)jsonMap["requestId"];
+					getUserDataResponse = null;
 				}
-				if (jsonMap.ContainsKey("amazonUserData"))
-				{
-					getUserDataResponse.AmazonUserData = AmazonUserData.CreateFromDictionary(jsonMap["amazonUserData"] as Dictionary<string, object>);
-				}
-				if (jsonMap.ContainsKey("status"))
-				{
-					getUserDataResponse.Status = (string)jsonMap["status"];
-				}
-				return getUserDataResponse;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return getUserDataResponse;
 		}
 
 		public static GetUserDataResponse CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			GetUserDataResponse getUserDataResponse;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				getUserDataResponse = GetUserDataResponse.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return getUserDataResponse;
 		}
 
-		public static Dictionary<string, GetUserDataResponse> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, GetUserDataResponse> dictionary = new Dictionary<string, GetUserDataResponse>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			object objectDictionary;
+			try
 			{
-				GetUserDataResponse value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>()
+				{
+					{ "requestId", this.RequestId }
+				};
+				Dictionary<string, object> strs2 = strs1;
+				if (this.AmazonUserData == null)
+				{
+					objectDictionary = null;
+				}
+				else
+				{
+					objectDictionary = this.AmazonUserData.GetObjectDictionary();
+				}
+				strs2.Add("amazonUserData", objectDictionary);
+				strs1.Add("status", this.Status);
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<GetUserDataResponse> ListFromJson(List<object> array)
 		{
-			List<GetUserDataResponse> list = new List<GetUserDataResponse>();
-			foreach (object item in array)
+			List<GetUserDataResponse> getUserDataResponses = new List<GetUserDataResponse>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				getUserDataResponses.Add(GetUserDataResponse.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return getUserDataResponses;
+		}
+
+		public static Dictionary<string, GetUserDataResponse> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, GetUserDataResponse> strs = new Dictionary<string, GetUserDataResponse>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				GetUserDataResponse getUserDataResponse = GetUserDataResponse.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, getUserDataResponse);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

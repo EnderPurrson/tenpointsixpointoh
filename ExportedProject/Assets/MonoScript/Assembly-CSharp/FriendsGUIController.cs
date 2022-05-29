@@ -1,28 +1,13 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public sealed class FriendsGUIController : MonoBehaviour, IFriendsGUIController
 {
-	[CompilerGenerated]
-	private sealed class _003CHandleProfileButton_003Ec__AnonStorey1F4
-	{
-		internal IFriendsGUIController hidable;
-
-		internal void _003C_003Em__59()
-		{
-			if (ExperienceController.sharedController != null && ExpController.Instance != null)
-			{
-				ExperienceController.sharedController.isShowRanks = false;
-				ExpController.Instance.InterfaceEnabled = false;
-			}
-			hidable.Hide(false);
-		}
-	}
-
 	public static Action UpdaeOnlineEvent;
 
 	public GameObject multyButton;
@@ -67,50 +52,140 @@ public sealed class FriendsGUIController : MonoBehaviour, IFriendsGUIController
 
 	private LeaderboardsController _leaderboardsController;
 
-	[CompilerGenerated]
-	private static Comparison<FriendPreview> _003C_003Ef__am_0024cache16;
-
-	[CompilerGenerated]
-	private static Comparison<FriendPreview> _003C_003Ef__am_0024cache17;
-
-	void IFriendsGUIController.Hide(bool h)
+	static FriendsGUIController()
 	{
-		friendsPanel.gameObject.SetActive(!h);
-		fon.SetActive(!h);
-		ShowProfile = h;
 	}
 
-	public static void RaiseUpdaeOnlineEvent()
+	public FriendsGUIController()
 	{
-		if (UpdaeOnlineEvent != null)
+	}
+
+	[DebuggerHidden]
+	private IEnumerator __UpdateGUI()
+	{
+		FriendsGUIController.u003c__UpdateGUIu003ec__Iterator77 variable = null;
+		return variable;
+	}
+
+	private void _SortFriendPreviews()
+	{
+		FriendPreview[] componentsInChildren = this.friendsGrid.GetComponentsInChildren<FriendPreview>(true);
+		FriendPreview[] friendPreviewArray = this.friendsGrid.GetComponentsInChildren<FriendPreview>(false) ?? new FriendPreview[0];
+		Array.Sort<FriendPreview>(friendPreviewArray, (FriendPreview fp1, FriendPreview fp2) => fp1.name.CompareTo(fp2.name));
+		string str2 = null;
+		float single = 0f;
+		if ((int)friendPreviewArray.Length > 0)
 		{
-			UpdaeOnlineEvent();
+			str2 = friendPreviewArray[0].gameObject.name;
+			Transform transforms = this.friendsGrid.transform.parent;
+			if (transforms != null)
+			{
+				UIPanel component = transforms.GetComponent<UIPanel>();
+				if (component != null)
+				{
+					Vector3 vector3 = friendPreviewArray[0].transform.localPosition;
+					single = vector3.x - component.clipOffset.x;
+				}
+			}
 		}
+		Array.Sort<FriendPreview>(componentsInChildren, (FriendPreview fp1, FriendPreview fp2) => {
+			int num;
+			int num1;
+			int num2;
+			int num3;
+			if (fp1.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp1.id))
+			{
+				return 1;
+			}
+			if (fp2.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp2.id))
+			{
+				return -1;
+			}
+			string item = FriendsController.sharedController.onlineInfo[fp1.id]["delta"];
+			string str = FriendsController.sharedController.onlineInfo[fp1.id]["game_mode"];
+			int num4 = int.Parse(item);
+			int num5 = int.Parse(str);
+			num = ((float)num4 > FriendsController.onlineDelta || num5 > 99 && num5 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num5 / 100 != 3 ? 2 : (num5 != -1 ? 0 : 1));
+			string item1 = FriendsController.sharedController.onlineInfo[fp2.id]["delta"];
+			string str1 = FriendsController.sharedController.onlineInfo[fp2.id]["game_mode"];
+			int num6 = int.Parse(item1);
+			int num7 = int.Parse(str1);
+			num1 = ((float)num6 > FriendsController.onlineDelta || num7 > 99 && num7 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num7 / 100 != 3 ? 2 : (num7 <= -1 ? 1 : 0));
+			if (num == num1 && int.TryParse(fp1.id, out num2) && int.TryParse(fp2.id, out num3))
+			{
+				return num2 - num3;
+			}
+			return num - num1;
+		});
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			componentsInChildren[i].gameObject.name = i.ToString("D7");
+		}
+		this.friendsGrid.SortAlphabetically();
+		this.friendsGrid.WrapContent();
+		Transform transforms1 = null;
+		if (str2 != null)
+		{
+			FriendPreview[] friendPreviewArray1 = componentsInChildren;
+			int num8 = 0;
+			while (num8 < (int)friendPreviewArray1.Length)
+			{
+				FriendPreview friendPreview = friendPreviewArray1[num8];
+				if (!friendPreview.name.Equals(str2))
+				{
+					num8++;
+				}
+				else
+				{
+					transforms1 = friendPreview.transform;
+					break;
+				}
+			}
+		}
+		if (transforms1 == null && (int)componentsInChildren.Length > 0 && this.friendsGrid.gameObject.activeInHierarchy)
+		{
+			transforms1 = componentsInChildren[0].transform;
+		}
+		if (transforms1 != null)
+		{
+			float single1 = transforms1.localPosition.x - single;
+			Transform vector31 = this.friendsGrid.transform.parent;
+			if (vector31 != null)
+			{
+				UIPanel vector2 = vector31.GetComponent<UIPanel>();
+				if (vector2 != null)
+				{
+					vector2.clipOffset = new Vector2(single1, vector2.clipOffset.y);
+					float single2 = vector31.localPosition.y;
+					Vector3 vector32 = vector31.localPosition;
+					vector31.localPosition = new Vector3(-single1, single2, vector32.z);
+				}
+			}
+		}
+		this.friendsGrid.WrapContent();
 	}
 
 	public void HandleProfileButton()
 	{
 		if (ProfileController.Instance != null)
 		{
-			_003CHandleProfileButton_003Ec__AnonStorey1F4 _003CHandleProfileButton_003Ec__AnonStorey1F = new _003CHandleProfileButton_003Ec__AnonStorey1F4();
-			_003CHandleProfileButton_003Ec__AnonStorey1F.hidable = this;
-			_003CHandleProfileButton_003Ec__AnonStorey1F.hidable.Hide(true);
-			ProfileController.Instance.ShowInterface(_003CHandleProfileButton_003Ec__AnonStorey1F._003C_003Em__59);
+			this.Hide(true);
+			ProfileController.Instance.ShowInterface(new Action[] { new Action(() => {
+				if (ExperienceController.sharedController != null && ExpController.Instance != null)
+				{
+					ExperienceController.sharedController.isShowRanks = false;
+					ExpController.Instance.InterfaceEnabled = false;
+				}
+				this.Hide(false);
+			}) });
 		}
 	}
 
-	public void ShowBestPlayers(bool h)
+	void IFriendsGUIController.Hide(bool h)
 	{
-		friendsPanel.gameObject.SetActive(!h);
-		leaderboardsView.gameObject.SetActive(h);
-	}
-
-	public void RequestLeaderboards()
-	{
-		if (_leaderboardsController != null)
-		{
-			_leaderboardsController.RequestLeaderboards();
-		}
+		this.friendsPanel.gameObject.SetActive(!h);
+		this.fon.SetActive(!h);
+		FriendsGUIController.ShowProfile = h;
 	}
 
 	public void MultyButtonHandler(object sender, EventArgs e)
@@ -131,296 +206,161 @@ public sealed class FriendsGUIController : MonoBehaviour, IFriendsGUIController
 		Application.LoadLevel(Defs.PromSceneName);
 	}
 
+	private void OnDestroy()
+	{
+		FriendsController.sharedController.StopRefreshingOnline();
+		this._friendProfileController.Dispose();
+		FriendsGUIController.ShowProfile = false;
+	}
+
+	private void OnDisable()
+	{
+		FriendsController.FriendsUpdated -= new Action(this.UpdateGUI);
+	}
+
+	private void OnEnable()
+	{
+		FriendsController.FriendsUpdated += new Action(this.UpdateGUI);
+		base.StartCoroutine(this.__UpdateGUI());
+	}
+
+	public static void RaiseUpdaeOnlineEvent()
+	{
+		if (FriendsGUIController.UpdaeOnlineEvent != null)
+		{
+			FriendsGUIController.UpdaeOnlineEvent();
+		}
+	}
+
+	public void RequestLeaderboards()
+	{
+		if (this._leaderboardsController != null)
+		{
+			this._leaderboardsController.RequestLeaderboards();
+		}
+	}
+
+	public void ShowBestPlayers(bool h)
+	{
+		this.friendsPanel.gameObject.SetActive(!h);
+		this.leaderboardsView.gameObject.SetActive(h);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SortFriendPreviewsAfterDelay()
+	{
+		FriendsGUIController.u003cSortFriendPreviewsAfterDelayu003ec__Iterator76 variable = null;
+		return variable;
+	}
+
 	private void Start()
 	{
 		StoreKitEventListener.State.Mode = "Friends";
 		StoreKitEventListener.State.PurchaseKey = "In friends";
 		StoreKitEventListener.State.Parameters.Clear();
-		if (multyButton != null)
+		if (this.multyButton != null)
 		{
-			if (!ProtocolListGetter.currentVersionIsSupported)
+			if (ProtocolListGetter.currentVersionIsSupported)
 			{
-				multyButton.gameObject.SetActive(false);
+				ButtonHandler component = this.multyButton.GetComponent<ButtonHandler>();
+				if (component != null)
+				{
+					component.Clicked += new EventHandler(this.MultyButtonHandler);
+				}
 			}
 			else
 			{
-				ButtonHandler component = multyButton.GetComponent<ButtonHandler>();
-				if (component != null)
-				{
-					component.Clicked += MultyButtonHandler;
-				}
+				this.multyButton.gameObject.SetActive(false);
 			}
 		}
-		timeOfLastSort = Time.realtimeSinceStartup;
+		this.timeOfLastSort = Time.realtimeSinceStartup;
 		Defs.ProfileFromFriends = 0;
-		_friendProfileController = new FriendProfileController(this);
-		if (leaderboardsView != null && _leaderboardsController == null)
+		this._friendProfileController = new FriendProfileController(this, true);
+		if (this.leaderboardsView != null && this._leaderboardsController == null)
 		{
-			_leaderboardsController = leaderboardsView.gameObject.AddComponent<LeaderboardsController>();
-			_leaderboardsController.LeaderboardsView = leaderboardsView;
-			_leaderboardsController.FriendsGuiController = this;
-			_leaderboardsController.PlayerId = Storager.getString("AccountCreated", false);
+			this._leaderboardsController = this.leaderboardsView.gameObject.AddComponent<LeaderboardsController>();
+			this._leaderboardsController.LeaderboardsView = this.leaderboardsView;
+			this._leaderboardsController.FriendsGuiController = this;
+			this._leaderboardsController.PlayerId = Storager.getString("AccountCreated", false);
 		}
 		FriendsController.sharedController.StartRefreshingOnline();
-		StartCoroutine(SortFriendPreviewsAfterDelay());
-	}
-
-	private void OnEnable()
-	{
-		FriendsController.FriendsUpdated += UpdateGUI;
-		StartCoroutine(__UpdateGUI());
-	}
-
-	public void UpdateGUI()
-	{
-		StartCoroutine(__UpdateGUI());
-	}
-
-	private IEnumerator SortFriendPreviewsAfterDelay()
-	{
-		yield return null;
-		yield return null;
-		_SortFriendPreviews();
-	}
-
-	private void _SortFriendPreviews()
-	{
-		FriendPreview[] componentsInChildren = friendsGrid.GetComponentsInChildren<FriendPreview>(true);
-		FriendPreview[] array = friendsGrid.GetComponentsInChildren<FriendPreview>(false);
-		if (array == null)
-		{
-			array = new FriendPreview[0];
-		}
-		FriendPreview[] array2 = array;
-		if (_003C_003Ef__am_0024cache16 == null)
-		{
-			_003C_003Ef__am_0024cache16 = _003C_SortFriendPreviews_003Em__5A;
-		}
-		Array.Sort(array2, _003C_003Ef__am_0024cache16);
-		string text = null;
-		float num = 0f;
-		if (array.Length > 0)
-		{
-			text = array[0].gameObject.name;
-			Transform parent = friendsGrid.transform.parent;
-			if (parent != null)
-			{
-				UIPanel component = parent.GetComponent<UIPanel>();
-				if (component != null)
-				{
-					num = array[0].transform.localPosition.x - component.clipOffset.x;
-				}
-			}
-		}
-		if (_003C_003Ef__am_0024cache17 == null)
-		{
-			_003C_003Ef__am_0024cache17 = _003C_SortFriendPreviews_003Em__5B;
-		}
-		Array.Sort(componentsInChildren, _003C_003Ef__am_0024cache17);
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			componentsInChildren[i].gameObject.name = i.ToString("D7");
-		}
-		friendsGrid.SortAlphabetically();
-		friendsGrid.WrapContent();
-		Transform transform = null;
-		if (text != null)
-		{
-			FriendPreview[] array3 = componentsInChildren;
-			foreach (FriendPreview friendPreview in array3)
-			{
-				if (friendPreview.name.Equals(text))
-				{
-					transform = friendPreview.transform;
-					break;
-				}
-			}
-		}
-		if (transform == null && componentsInChildren.Length > 0 && friendsGrid.gameObject.activeInHierarchy)
-		{
-			transform = componentsInChildren[0].transform;
-		}
-		if (transform != null)
-		{
-			float num2 = transform.localPosition.x - num;
-			Transform parent2 = friendsGrid.transform.parent;
-			if (parent2 != null)
-			{
-				UIPanel component2 = parent2.GetComponent<UIPanel>();
-				if (component2 != null)
-				{
-					component2.clipOffset = new Vector2(num2, component2.clipOffset.y);
-					parent2.localPosition = new Vector3(0f - num2, parent2.localPosition.y, parent2.localPosition.z);
-				}
-			}
-		}
-		friendsGrid.WrapContent();
-	}
-
-	private IEnumerator __UpdateGUI()
-	{
-		FriendPreview[] fps = friendsGrid.GetComponentsInChildren<FriendPreview>(true);
-		Invitation[] invs = invitationsGrid.GetComponentsInChildren<Invitation>(true);
-		Invitation[] sentInvs = sentInvitationsGrid.GetComponentsInChildren<Invitation>(true);
-		Invitation[] clanInvs = ClanInvitationsGrid.GetComponentsInChildren<Invitation>(true);
-		List<Invitation> clanInvtoRemove = new List<Invitation>();
-		List<string> existingClanInvs = new List<string>();
-		Invitation[] array = clanInvs;
-		foreach (Invitation i in array)
-		{
-			bool found = false;
-			foreach (Dictionary<string, string> ClanInv in FriendsController.sharedController.ClanInvites)
-			{
-			}
-			if (!found)
-			{
-				clanInvtoRemove.Add(i);
-			}
-			else if (i.id != null)
-			{
-				existingClanInvs.Add(i.id);
-			}
-		}
-		foreach (Invitation inv in clanInvtoRemove)
-		{
-			inv.transform.parent = null;
-			UnityEngine.Object.Destroy(inv.gameObject);
-		}
-		foreach (Dictionary<string, string> ClanInv2 in FriendsController.sharedController.ClanInvites)
-		{
-			if (!existingClanInvs.Contains(ClanInv2["id"]))
-			{
-				GameObject f = UnityEngine.Object.Instantiate(Resources.Load("Invitation") as GameObject);
-				f.transform.parent = ClanInvitationsGrid.transform;
-				f.transform.localScale = new Vector3(1f, 1f, 1f);
-				f.GetComponent<Invitation>().IsClanInv = true;
-				if (ClanInv2.ContainsKey("id"))
-				{
-					f.GetComponent<Invitation>().id = ClanInv2["id"];
-					f.GetComponent<Invitation>().recordId = ClanInv2["id"];
-				}
-				if (ClanInv2.ContainsKey("name"))
-				{
-					f.GetComponent<Invitation>().nm.text = ClanInv2["name"];
-				}
-				string clanLogo;
-				if (ClanInv2.TryGetValue("logo", out clanLogo) && !string.IsNullOrEmpty(clanLogo))
-				{
-					f.GetComponent<Invitation>().clanLogoString = clanLogo;
-				}
-			}
-		}
-		yield return null;
-		invitationsGrid.Reposition();
-		sentInvitationsGrid.Reposition();
-		ClanInvitationsGrid.Reposition();
-		timeOfLastSort = Time.realtimeSinceStartup;
-		_SortFriendPreviews();
+		base.StartCoroutine(this.SortFriendPreviewsAfterDelay());
 	}
 
 	private void Update()
 	{
-		if (receivingPlashka != null && FriendsController.sharedController != null)
+		if (this.receivingPlashka != null && FriendsController.sharedController != null)
 		{
-			if ((friendsPanel != null && friendsPanel.gameObject.activeInHierarchy) || (inboxPanel != null && inboxPanel.gameObject.activeInHierarchy))
+			if (this.friendsPanel != null && this.friendsPanel.gameObject.activeInHierarchy || this.inboxPanel != null && this.inboxPanel.gameObject.activeInHierarchy)
 			{
-				receivingPlashka.SetActive(FriendsController.sharedController.NumberOfFriendsRequests > 0);
-				receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
+				this.receivingPlashka.SetActive(FriendsController.sharedController.NumberOfFriendsRequests > 0);
+				this.receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
 			}
-			else if (_friendProfileController != null && _friendProfileController.FriendProfileGo != null && _friendProfileController.FriendProfileGo.activeInHierarchy)
+			else if (this._friendProfileController != null && this._friendProfileController.FriendProfileGo != null && this._friendProfileController.FriendProfileGo.activeInHierarchy)
 			{
-				receivingPlashka.SetActive(FriendsController.sharedController.NumberOffFullInfoRequests > 0);
-				receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
+				this.receivingPlashka.SetActive(FriendsController.sharedController.NumberOffFullInfoRequests > 0);
+				this.receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
 			}
-			else if (leaderboardsView != null && leaderboardsView.gameObject.activeInHierarchy)
+			else if (!(this.leaderboardsView != null) || !this.leaderboardsView.gameObject.activeInHierarchy)
 			{
-				receivingPlashka.SetActive(FriendsController.sharedController.NumberOfBestPlayersRequests > 0);
-				receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
+				this.receivingPlashka.SetActive(false);
 			}
 			else
 			{
-				receivingPlashka.SetActive(false);
+				this.receivingPlashka.SetActive(FriendsController.sharedController.NumberOfBestPlayersRequests > 0);
+				this.receivingPlashka.GetComponent<UILabel>().text = LocalizationStore.Key_0348;
 			}
 		}
-		friendsGrid.transform.parent.GetComponent<UIScrollView>().enabled = friendsGrid.transform.childCount > 4;
-		if (friendsGrid.transform.childCount > 0 && friendsGrid.transform.childCount <= 4 && Time.realtimeSinceStartup - _timeLastFriendsScrollUpdate > 0.5f)
+		this.friendsGrid.transform.parent.GetComponent<UIScrollView>().enabled = this.friendsGrid.transform.childCount > 4;
+		if (this.friendsGrid.transform.childCount > 0 && this.friendsGrid.transform.childCount <= 4 && Time.realtimeSinceStartup - this._timeLastFriendsScrollUpdate > 0.5f)
 		{
-			_timeLastFriendsScrollUpdate = Time.realtimeSinceStartup;
-			float num = 0f;
-			foreach (Transform item in friendsGrid.transform)
+			this._timeLastFriendsScrollUpdate = Time.realtimeSinceStartup;
+			float current = 0f;
+			IEnumerator enumerator = this.friendsGrid.transform.GetEnumerator();
+			try
 			{
-				num += item.localPosition.x;
+				while (enumerator.MoveNext())
+				{
+					current += ((Transform)enumerator.Current).localPosition.x;
+				}
 			}
-			num /= (float)friendsGrid.transform.childCount;
-			Transform parent = friendsGrid.transform.parent;
-			if (parent != null)
+			finally
 			{
-				UIPanel component = parent.GetComponent<UIPanel>();
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
+			}
+			current /= (float)this.friendsGrid.transform.childCount;
+			Transform vector3 = this.friendsGrid.transform.parent;
+			if (vector3 != null)
+			{
+				UIPanel component = vector3.GetComponent<UIPanel>();
 				if (component != null)
 				{
-					component.clipOffset = new Vector2(num, component.clipOffset.y);
-					parent.localPosition = new Vector3(0f - num, parent.localPosition.y, parent.localPosition.z);
+					component.clipOffset = new Vector2(current, component.clipOffset.y);
+					float single = vector3.localPosition.y;
+					Vector3 vector31 = vector3.localPosition;
+					vector3.localPosition = new Vector3(-current, single, vector31.z);
 				}
 			}
 		}
-		if (Time.realtimeSinceStartup - timeOfLastSort > 10f)
+		if (Time.realtimeSinceStartup - this.timeOfLastSort > 10f)
 		{
-			if (UpdaeOnlineEvent != null)
+			if (FriendsGUIController.UpdaeOnlineEvent != null)
 			{
-				UpdaeOnlineEvent();
+				FriendsGUIController.UpdaeOnlineEvent();
 			}
-			timeOfLastSort = Time.realtimeSinceStartup;
-			_SortFriendPreviews();
+			this.timeOfLastSort = Time.realtimeSinceStartup;
+			this._SortFriendPreviews();
 		}
-		newMEssage.SetActive(FriendsController.sharedController.invitesToUs.Count > 0 || FriendsController.sharedController.ClanInvites.Count > 0);
-		canAddLAbel.SetActive(FriendsController.sharedController.friends.Count == 0);
+		this.newMEssage.SetActive((FriendsController.sharedController.invitesToUs.Count > 0 ? true : FriendsController.sharedController.ClanInvites.Count > 0));
+		this.canAddLAbel.SetActive(FriendsController.sharedController.friends.Count == 0);
 	}
 
-	private void OnDisable()
+	public void UpdateGUI()
 	{
-		FriendsController.FriendsUpdated -= UpdateGUI;
-	}
-
-	private void OnDestroy()
-	{
-		FriendsController.sharedController.StopRefreshingOnline();
-		_friendProfileController.Dispose();
-		ShowProfile = false;
-	}
-
-	[CompilerGenerated]
-	private static int _003C_SortFriendPreviews_003Em__5A(FriendPreview fp1, FriendPreview fp2)
-	{
-		return fp1.name.CompareTo(fp2.name);
-	}
-
-	[CompilerGenerated]
-	private static int _003C_SortFriendPreviews_003Em__5B(FriendPreview fp1, FriendPreview fp2)
-	{
-		if (fp1.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp1.id))
-		{
-			return 1;
-		}
-		if (fp2.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp2.id))
-		{
-			return -1;
-		}
-		string s = FriendsController.sharedController.onlineInfo[fp1.id]["delta"];
-		string s2 = FriendsController.sharedController.onlineInfo[fp1.id]["game_mode"];
-		int num = int.Parse(s);
-		int num2 = int.Parse(s2);
-		int num3 = (((float)num > FriendsController.onlineDelta || (num2 > 99 && num2 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num2 / 100 != 3)) ? 2 : ((num2 == -1) ? 1 : 0));
-		string s3 = FriendsController.sharedController.onlineInfo[fp2.id]["delta"];
-		string s4 = FriendsController.sharedController.onlineInfo[fp2.id]["game_mode"];
-		int num4 = int.Parse(s3);
-		int num5 = int.Parse(s4);
-		int num6 = (((float)num4 > FriendsController.onlineDelta || (num5 > 99 && num5 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num5 / 100 != 3)) ? 2 : ((num5 <= -1) ? 1 : 0));
-		int result;
-		int result2;
-		if (num3 == num6 && int.TryParse(fp1.id, out result) && int.TryParse(fp2.id, out result2))
-		{
-			return result - result2;
-		}
-		return num3 - num6;
+		base.StartCoroutine(this.__UpdateGUI());
 	}
 }

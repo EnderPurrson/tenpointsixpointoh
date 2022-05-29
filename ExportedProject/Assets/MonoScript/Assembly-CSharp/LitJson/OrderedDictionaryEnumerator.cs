@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -11,7 +12,7 @@ namespace LitJson
 		{
 			get
 			{
-				return Entry;
+				return this.Entry;
 			}
 		}
 
@@ -19,7 +20,7 @@ namespace LitJson
 		{
 			get
 			{
-				KeyValuePair<string, JsonData> current = list_enumerator.Current;
+				KeyValuePair<string, JsonData> current = this.list_enumerator.Current;
 				return new DictionaryEntry(current.Key, current.Value);
 			}
 		}
@@ -28,7 +29,7 @@ namespace LitJson
 		{
 			get
 			{
-				return list_enumerator.Current.Key;
+				return this.list_enumerator.Current.Key;
 			}
 		}
 
@@ -36,23 +37,23 @@ namespace LitJson
 		{
 			get
 			{
-				return list_enumerator.Current.Value;
+				return this.list_enumerator.Current.Value;
 			}
 		}
 
 		public OrderedDictionaryEnumerator(IEnumerator<KeyValuePair<string, JsonData>> enumerator)
 		{
-			list_enumerator = enumerator;
+			this.list_enumerator = enumerator;
 		}
 
 		public bool MoveNext()
 		{
-			return list_enumerator.MoveNext();
+			return this.list_enumerator.MoveNext();
 		}
 
 		public void Reset()
 		{
-			list_enumerator.Reset();
+			this.list_enumerator.Reset();
 		}
 	}
 }

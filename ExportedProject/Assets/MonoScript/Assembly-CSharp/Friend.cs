@@ -19,29 +19,29 @@ public sealed class Friend
 
 	public Friend(string friendName, string friendId, bool friendIsUser)
 	{
-		name = friendName;
-		id = friendId;
-		isUser = friendIsUser;
-		avatar = null;
+		this.name = friendName;
+		this.id = friendId;
+		this.isUser = friendIsUser;
+		this.avatar = null;
 	}
 
 	public void SetAvatar(Texture2D txt)
 	{
-		avatar = txt;
-	}
-
-	public void SetTimeLastVisit(DateTime visitTime)
-	{
-		nextVisit = visitTime;
-	}
-
-	public void SetTimeLabel(UILabel tL)
-	{
-		timeLabel = tL;
+		this.avatar = txt;
 	}
 
 	public void SetAvatarObj(UITexture aT)
 	{
-		avatarTexture = aT;
+		this.avatarTexture = aT;
+	}
+
+	public void SetTimeLabel(UILabel tL)
+	{
+		this.timeLabel = tL;
+	}
+
+	public void SetTimeLastVisit(DateTime visitTime)
+	{
+		this.nextVisit = visitTime;
 	}
 }

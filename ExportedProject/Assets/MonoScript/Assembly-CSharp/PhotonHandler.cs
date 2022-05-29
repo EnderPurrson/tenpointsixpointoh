@@ -1,8 +1,10 @@
-using System;
-using System.Collections;
-using System.Diagnostics;
 using ExitGames.Client.Photon;
 using Photon;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal class PhotonHandler : Photon.MonoBehaviour
@@ -27,115 +29,107 @@ internal class PhotonHandler : Photon.MonoBehaviour
 
 	protected internal static Type PingImplementation;
 
-	internal static CloudRegionCode BestRegionCodeCurrently = CloudRegionCode.none;
+	internal static CloudRegionCode BestRegionCodeCurrently;
 
 	internal static CloudRegionCode BestRegionCodeInPreferences
 	{
 		get
 		{
-			string @string = PlayerPrefs.GetString("PUNCloudBestRegion", string.Empty);
-			if (!string.IsNullOrEmpty(@string))
+			string str = PlayerPrefs.GetString("PUNCloudBestRegion", string.Empty);
+			if (string.IsNullOrEmpty(str))
 			{
-				return Region.Parse(@string);
+				return CloudRegionCode.none;
 			}
-			return CloudRegionCode.none;
+			return Region.Parse(str);
 		}
 		set
 		{
-			if (value == CloudRegionCode.none)
-			{
-				PlayerPrefs.DeleteKey("PUNCloudBestRegion");
-			}
-			else
+			if (value != CloudRegionCode.none)
 			{
 				PlayerPrefs.SetString("PUNCloudBestRegion", value.ToString());
 			}
+			else
+			{
+				PlayerPrefs.DeleteKey("PUNCloudBestRegion");
+			}
 		}
+	}
+
+	static PhotonHandler()
+	{
+		PhotonHandler.BestRegionCodeCurrently = CloudRegionCode.none;
+	}
+
+	public PhotonHandler()
+	{
 	}
 
 	protected void Awake()
 	{
-		if (SP != null && SP != this && SP.gameObject != null)
+		if (PhotonHandler.SP != null && PhotonHandler.SP != this && PhotonHandler.SP.gameObject != null)
 		{
-			UnityEngine.Object.DestroyImmediate(SP.gameObject);
+			UnityEngine.Object.DestroyImmediate(PhotonHandler.SP.gameObject);
 		}
-		SP = this;
+		PhotonHandler.SP = this;
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		updateInterval = 1000 / PhotonNetwork.sendRate;
-		updateIntervalOnSerialize = 1000 / PhotonNetwork.sendRateOnSerialize;
-		StartFallbackSendAckThread();
+		this.updateInterval = 1000 / PhotonNetwork.sendRate;
+		this.updateIntervalOnSerialize = 1000 / PhotonNetwork.sendRateOnSerialize;
+		PhotonHandler.StartFallbackSendAckThread();
 	}
 
-	protected void OnApplicationQuit()
+	public static bool FallbackSendAckThread()
 	{
-		AppQuits = true;
-		StopFallbackSendAckThread();
-		PhotonNetwork.Disconnect();
+		if (PhotonHandler.sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
+		{
+			if (PhotonHandler.timerToStopConnectionInBackground != null && PhotonNetwork.BackgroundTimeout > 0.001f && (float)PhotonHandler.timerToStopConnectionInBackground.ElapsedMilliseconds > PhotonNetwork.BackgroundTimeout * 1000f)
+			{
+				return PhotonHandler.sendThreadShouldRun;
+			}
+			PhotonNetwork.networkingPeer.SendAcksOnly();
+		}
+		return PhotonHandler.sendThreadShouldRun;
 	}
 
 	protected void OnApplicationPause(bool pause)
 	{
 		if (PhotonNetwork.BackgroundTimeout > 0.001f)
 		{
-			if (timerToStopConnectionInBackground == null)
+			if (PhotonHandler.timerToStopConnectionInBackground == null)
 			{
-				timerToStopConnectionInBackground = new Stopwatch();
+				PhotonHandler.timerToStopConnectionInBackground = new Stopwatch();
 			}
-			timerToStopConnectionInBackground.Reset();
-			if (pause)
+			PhotonHandler.timerToStopConnectionInBackground.Reset();
+			if (!pause)
 			{
-				timerToStopConnectionInBackground.Start();
+				PhotonHandler.timerToStopConnectionInBackground.Stop();
 			}
 			else
 			{
-				timerToStopConnectionInBackground.Stop();
+				PhotonHandler.timerToStopConnectionInBackground.Start();
 			}
 		}
+	}
+
+	protected void OnApplicationQuit()
+	{
+		PhotonHandler.AppQuits = true;
+		PhotonHandler.StopFallbackSendAckThread();
+		PhotonNetwork.Disconnect();
+	}
+
+	protected void OnCreatedRoom()
+	{
+		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
 	}
 
 	protected void OnDestroy()
 	{
-		StopFallbackSendAckThread();
+		PhotonHandler.StopFallbackSendAckThread();
 	}
 
-	protected void Update()
+	protected void OnJoinedRoom()
 	{
-		if (PhotonNetwork.networkingPeer == null)
-		{
-			UnityEngine.Debug.LogError("NetworkPeer broke!");
-		}
-		else
-		{
-			if (PhotonNetwork.connectionStateDetailed == ClientState.PeerCreated || PhotonNetwork.connectionStateDetailed == ClientState.Disconnected || PhotonNetwork.offlineMode || !PhotonNetwork.isMessageQueueRunning)
-			{
-				return;
-			}
-			Defs.inComingMessagesCounter = 0;
-			bool flag = true;
-			while (PhotonNetwork.isMessageQueueRunning && flag)
-			{
-				flag = PhotonNetwork.networkingPeer.DispatchIncomingCommands();
-				Defs.inComingMessagesCounter++;
-			}
-			Defs.inComingMessagesCounter = 0;
-			int num = (int)(Time.realtimeSinceStartup * 1000f);
-			if (PhotonNetwork.isMessageQueueRunning && num > nextSendTickCountOnSerialize)
-			{
-				PhotonNetwork.networkingPeer.RunViewUpdate();
-				nextSendTickCountOnSerialize = num + updateIntervalOnSerialize;
-				nextSendTickCount = 0;
-			}
-			num = (int)(Time.realtimeSinceStartup * 1000f);
-			if (num > nextSendTickCount)
-			{
-				bool flag2 = true;
-				while (PhotonNetwork.isMessageQueueRunning && flag2)
-				{
-					flag2 = PhotonNetwork.networkingPeer.SendOutgoingCommands();
-				}
-				nextSendTickCount = num + updateInterval;
-			}
-		}
+		PhotonNetwork.networkingPeer.LoadLevelIfSynced();
 	}
 
 	protected void OnLevelWasLoaded(int level)
@@ -144,82 +138,72 @@ internal class PhotonHandler : Photon.MonoBehaviour
 		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
 	}
 
-	protected void OnJoinedRoom()
+	protected internal static void PingAvailableRegionsAndConnectToBest()
 	{
-		PhotonNetwork.networkingPeer.LoadLevelIfSynced();
+		PhotonHandler.SP.StartCoroutine(PhotonHandler.SP.PingAvailableRegionsCoroutine(true));
 	}
 
-	protected void OnCreatedRoom()
+	[DebuggerHidden]
+	internal IEnumerator PingAvailableRegionsCoroutine(bool connectToBest)
 	{
-		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
+		PhotonHandler.u003cPingAvailableRegionsCoroutineu003ec__IteratorD2 variable = null;
+		return variable;
 	}
 
 	public static void StartFallbackSendAckThread()
 	{
-		if (!sendThreadShouldRun)
+		if (PhotonHandler.sendThreadShouldRun)
 		{
-			sendThreadShouldRun = true;
-			SupportClass.CallInBackground(FallbackSendAckThread);
+			return;
 		}
+		PhotonHandler.sendThreadShouldRun = true;
+		SupportClass.CallInBackground(new Func<bool>(PhotonHandler.FallbackSendAckThread));
 	}
 
 	public static void StopFallbackSendAckThread()
 	{
-		sendThreadShouldRun = false;
+		PhotonHandler.sendThreadShouldRun = false;
 	}
 
-	public static bool FallbackSendAckThread()
+	protected void Update()
 	{
-		if (sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
+		if (PhotonNetwork.networkingPeer == null)
 		{
-			if (timerToStopConnectionInBackground != null && PhotonNetwork.BackgroundTimeout > 0.001f && (float)timerToStopConnectionInBackground.ElapsedMilliseconds > PhotonNetwork.BackgroundTimeout * 1000f)
+			UnityEngine.Debug.LogError("NetworkPeer broke!");
+			return;
+		}
+		if (PhotonNetwork.connectionStateDetailed == ClientState.PeerCreated || PhotonNetwork.connectionStateDetailed == ClientState.Disconnected || PhotonNetwork.offlineMode)
+		{
+			return;
+		}
+		if (!PhotonNetwork.isMessageQueueRunning)
+		{
+			return;
+		}
+		Defs.inComingMessagesCounter = 0;
+		bool flag = true;
+		while (PhotonNetwork.isMessageQueueRunning && flag)
+		{
+			flag = PhotonNetwork.networkingPeer.DispatchIncomingCommands();
+			Defs.inComingMessagesCounter++;
+		}
+		Defs.inComingMessagesCounter = 0;
+		int num = (int)(Time.realtimeSinceStartup * 1000f);
+		if (PhotonNetwork.isMessageQueueRunning && num > this.nextSendTickCountOnSerialize)
+		{
+			PhotonNetwork.networkingPeer.RunViewUpdate();
+			this.nextSendTickCountOnSerialize = num + this.updateIntervalOnSerialize;
+			this.nextSendTickCount = 0;
+		}
+		num = (int)(Time.realtimeSinceStartup * 1000f);
+		if (num > this.nextSendTickCount)
+		{
+			bool flag1 = true;
+			while (PhotonNetwork.isMessageQueueRunning && flag1)
 			{
-				return sendThreadShouldRun;
+				flag1 = PhotonNetwork.networkingPeer.SendOutgoingCommands();
 			}
-			PhotonNetwork.networkingPeer.SendAcksOnly();
-		}
-		return sendThreadShouldRun;
-	}
-
-	protected internal static void PingAvailableRegionsAndConnectToBest()
-	{
-		SP.StartCoroutine(SP.PingAvailableRegionsCoroutine(true));
-	}
-
-	internal IEnumerator PingAvailableRegionsCoroutine(bool connectToBest)
-	{
-		BestRegionCodeCurrently = CloudRegionCode.none;
-		while (PhotonNetwork.networkingPeer.AvailableRegions == null)
-		{
-			if (PhotonNetwork.connectionStateDetailed != ClientState.ConnectingToNameServer && PhotonNetwork.connectionStateDetailed != ClientState.ConnectedToNameServer)
-			{
-				UnityEngine.Debug.LogError("Call ConnectToNameServer to ping available regions.");
-				yield break;
-			}
-			UnityEngine.Debug.Log(string.Concat("Waiting for AvailableRegions. State: ", PhotonNetwork.connectionStateDetailed, " Server: ", PhotonNetwork.Server, " PhotonNetwork.networkingPeer.AvailableRegions ", PhotonNetwork.networkingPeer.AvailableRegions != null));
-			yield return new WaitForSeconds(0.25f);
-		}
-		if (PhotonNetwork.networkingPeer.AvailableRegions == null || PhotonNetwork.networkingPeer.AvailableRegions.Count == 0)
-		{
-			UnityEngine.Debug.LogError("No regions available. Are you sure your appid is valid and setup?");
-			yield break;
-		}
-		PhotonPingManager pingManager = new PhotonPingManager();
-		foreach (Region region in PhotonNetwork.networkingPeer.AvailableRegions)
-		{
-			SP.StartCoroutine(pingManager.PingSocket(region));
-		}
-		while (!pingManager.Done)
-		{
-			yield return new WaitForSeconds(0.1f);
-		}
-		Region best = pingManager.BestRegion;
-		BestRegionCodeCurrently = best.Code;
-		BestRegionCodeInPreferences = best.Code;
-		UnityEngine.Debug.Log(string.Concat("Found best region: ", best.Code, " ping: ", best.Ping, ". Calling ConnectToRegionMaster() is: ", connectToBest));
-		if (connectToBest)
-		{
-			PhotonNetwork.networkingPeer.ConnectToRegionMaster(best.Code);
+			this.nextSendTickCount = num + this.updateInterval;
 		}
 	}
 }

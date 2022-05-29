@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -15,31 +19,31 @@ namespace Rilisoft
 
 		public AudioClip ClipGemsAdded;
 
-		private void OnEnable()
+		public BankIncrementSoundIndicator()
 		{
-			CoinsMessage.CoinsLabelDisappeared += OnCurrencyGetted;
-		}
-
-		private void OnDisable()
-		{
-			CoinsMessage.CoinsLabelDisappeared -= OnCurrencyGetted;
 		}
 
 		private void OnCurrencyGetted(bool isGems, int count)
 		{
-			float delay = ((Defs.isMulti || Defs.IsSurvival || !TrainingController.TrainingCompleted) ? PlayDelay : 0f);
-			StartCoroutine(PlaySounds(isGems, count < 2, delay));
+			float single = (Defs.isMulti || Defs.IsSurvival || !TrainingController.TrainingCompleted ? this.PlayDelay : 0f);
+			base.StartCoroutine(this.PlaySounds(isGems, count < 2, single));
 		}
 
+		private void OnDisable()
+		{
+			CoinsMessage.CoinsLabelDisappeared -= new CoinsMessage.CoinsLabelDisappearedDelegate(this.OnCurrencyGetted);
+		}
+
+		private void OnEnable()
+		{
+			CoinsMessage.CoinsLabelDisappeared += new CoinsMessage.CoinsLabelDisappearedDelegate(this.OnCurrencyGetted);
+		}
+
+		[DebuggerHidden]
 		private IEnumerator PlaySounds(bool isGems, bool oneCoin, float delay)
 		{
-			if (!SceneLoader.ActiveSceneName.Equals("LevelComplete") && Defs.isSoundFX)
-			{
-				yield return new WaitForSeconds(delay);
-				AudioClip clip2 = null;
-				clip2 = ((!isGems) ? ((!oneCoin || !(ClipCoinAdded != null)) ? ClipCoinsAdded : ClipCoinAdded) : ((!oneCoin || !(ClipCoinAdded != null)) ? ClipGemsAdded : ClipGemAdded));
-				NGUITools.PlaySound(clip2);
-			}
+			BankIncrementSoundIndicator.u003cPlaySoundsu003ec__Iterator108 variable = null;
+			return variable;
 		}
 	}
 }

@@ -1,7 +1,7 @@
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 
 namespace Rilisoft
@@ -52,68 +52,115 @@ namespace Rilisoft
 
 		public const string AnalyticsEventName = "Daily Quests";
 
-		private static readonly HashSet<string> _supportedQuests = new HashSet<string>(new string[15]
-		{
-			"breakSeries", "killFlagCarriers", "killInCampaign", "killInMode", "killNpcWithWeapon", "killViaHeadshot", "killWithGrenade", "killWithWeapon", "makeSeries", "revenge",
-			"surviveWavesInArena", "winInMap", "winInMode", "captureFlags", "capturePoints"
-		});
+		private readonly static HashSet<string> _supportedQuests;
 
-		private static readonly Dictionary<string, ShopNGUIController.CategoryNames> _weaponSlots = new Dictionary<string, ShopNGUIController.CategoryNames>
+		private readonly static Dictionary<string, ShopNGUIController.CategoryNames> _weaponSlots;
+
+		private readonly static Dictionary<string, string> localizationQuests;
+
+		static QuestConstants()
 		{
+			QuestConstants._supportedQuests = new HashSet<string>(new string[] { "breakSeries", "killFlagCarriers", "killInCampaign", "killInMode", "killNpcWithWeapon", "killViaHeadshot", "killWithGrenade", "killWithWeapon", "makeSeries", "revenge", "surviveWavesInArena", "winInMap", "winInMode", "captureFlags", "capturePoints" });
+			Dictionary<string, ShopNGUIController.CategoryNames> strs = new Dictionary<string, ShopNGUIController.CategoryNames>()
 			{
-				"Backup",
-				ShopNGUIController.CategoryNames.BackupCategory
-			},
+				{ "Backup", ShopNGUIController.CategoryNames.BackupCategory },
+				{ "Melee", ShopNGUIController.CategoryNames.MeleeCategory },
+				{ "Premium", ShopNGUIController.CategoryNames.PremiumCategory },
+				{ "Primary", ShopNGUIController.CategoryNames.PrimaryCategory },
+				{ "Sniper", ShopNGUIController.CategoryNames.SniperCategory },
+				{ "Special", ShopNGUIController.CategoryNames.SpecilCategory }
+			};
+			QuestConstants._weaponSlots = strs;
+			Dictionary<string, string> strs1 = new Dictionary<string, string>()
 			{
-				"Melee",
-				ShopNGUIController.CategoryNames.MeleeCategory
-			},
+				{ "addFriend", "Key_1894" },
+				{ "getGotcha", "Key_1890" },
+				{ "breakSeries", "Key_1709" },
+				{ "captureFlags", "Key_1704" },
+				{ "capturePoints", "Key_1703" },
+				{ "joinClan", "Key_1895" },
+				{ "killFlagCarriers", "Key_1702" },
+				{ "killInCampaign", "Key_1712" },
+				{ "killInMode", "Key_1701" },
+				{ "killNpcWithWeapon", "Key_1713" },
+				{ "killViaHeadshot", "Key_1706" },
+				{ "killWithGrenade", "Key_1707" },
+				{ "killWithWeapon", "Key_1705" },
+				{ "likeFacebook", "Key_1892" },
+				{ "loginFacebook", "Key_1891" },
+				{ "loginTwitter", "Key_1893" },
+				{ "makeSeries", "Key_1710" },
+				{ "revenge", "Key_1708" },
+				{ "surviveWavesInArena", "Key_1711" },
+				{ "winInMap", "Key_1700" },
+				{ "winInMode", "Key_1699" }
+			};
+			QuestConstants.localizationQuests = strs1;
+		}
+
+		public static string GetAccumulativeQuestDescriptionByType(AccumulativeQuestBase quest)
+		{
+			string str;
+			string str1;
+			string str2;
+			string str3;
+			QuestConstants.localizationQuests.TryGetValue(quest.Id, out str);
+			string str4 = str.Map<string, string>(new Func<string, string>(LocalizationStore.Get), "{0}");
+			ModeAccumulativeQuest modeAccumulativeQuest = quest as ModeAccumulativeQuest;
+			if (modeAccumulativeQuest != null)
 			{
-				"Premium",
-				ShopNGUIController.CategoryNames.PremiumCategory
-			},
-			{
-				"Primary",
-				ShopNGUIController.CategoryNames.PrimaryCategory
-			},
-			{
-				"Sniper",
-				ShopNGUIController.CategoryNames.SniperCategory
-			},
-			{
-				"Special",
-				ShopNGUIController.CategoryNames.SpecilCategory
+				if (!ConnectSceneNGUIController.gameModesLocalizeKey.TryGetValue(Convert.ToInt32(modeAccumulativeQuest.Mode).ToString(), out str1))
+				{
+					str1 = modeAccumulativeQuest.Mode.ToString();
+					Debug.LogError(string.Concat("Couldnot find mode name for ", modeAccumulativeQuest.Mode));
+				}
+				return string.Format(str4, string.Format("[fff600]{0}[-]", modeAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", LocalizationStore.Get(str1)));
 			}
-		};
-
-		private static readonly Dictionary<string, string> localizationQuests = new Dictionary<string, string>
-		{
-			{ "addFriend", "Key_1894" },
-			{ "getGotcha", "Key_1890" },
-			{ "breakSeries", "Key_1709" },
-			{ "captureFlags", "Key_1704" },
-			{ "capturePoints", "Key_1703" },
-			{ "joinClan", "Key_1895" },
-			{ "killFlagCarriers", "Key_1702" },
-			{ "killInCampaign", "Key_1712" },
-			{ "killInMode", "Key_1701" },
-			{ "killNpcWithWeapon", "Key_1713" },
-			{ "killViaHeadshot", "Key_1706" },
-			{ "killWithGrenade", "Key_1707" },
-			{ "killWithWeapon", "Key_1705" },
-			{ "likeFacebook", "Key_1892" },
-			{ "loginFacebook", "Key_1891" },
-			{ "loginTwitter", "Key_1893" },
-			{ "makeSeries", "Key_1710" },
-			{ "revenge", "Key_1708" },
-			{ "surviveWavesInArena", "Key_1711" },
-			{ "winInMap", "Key_1700" },
-			{ "winInMode", "Key_1699" }
-		};
+			MapAccumulativeQuest mapAccumulativeQuest = quest as MapAccumulativeQuest;
+			if (mapAccumulativeQuest != null)
+			{
+				SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(mapAccumulativeQuest.Map);
+				string empty = string.Empty;
+				if (infoScene != null)
+				{
+					empty = infoScene.TranslateName;
+				}
+				else
+				{
+					empty = mapAccumulativeQuest.Map;
+					Debug.LogError(string.Concat("Couldnot find map name for ", mapAccumulativeQuest.Map));
+				}
+				return string.Format(str4, string.Format("[fff600]{0}[-]", mapAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", empty));
+			}
+			WeaponSlotAccumulativeQuest weaponSlotAccumulativeQuest = quest as WeaponSlotAccumulativeQuest;
+			if (weaponSlotAccumulativeQuest == null)
+			{
+				try
+				{
+					str3 = string.Format(str4, string.Format("[fff600]{0}[-]", quest.RequiredCount));
+				}
+				catch (FormatException formatException)
+				{
+					str3 = str4;
+				}
+				return str3;
+			}
+			if (!ShopNGUIController.weaponCategoryLocKeys.TryGetValue(weaponSlotAccumulativeQuest.WeaponSlot.ToString(), out str2))
+			{
+				str2 = weaponSlotAccumulativeQuest.WeaponSlot.ToString().Replace("Category", string.Empty);
+				Debug.LogError(string.Concat("Couldnot find weapon name for ", weaponSlotAccumulativeQuest.WeaponSlot));
+			}
+			return string.Format(str4, string.Format("[fff600]{0}[-]", weaponSlotAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", LocalizationStore.Get(str2)));
+		}
 
 		internal static string GetDifficultyKey(Difficulty difficulty)
 		{
 			return difficulty.ToString().ToLowerInvariant();
+		}
+
+		internal static string[] GetSupportedQuests()
+		{
+			return QuestConstants._supportedQuests.ToArray<string>();
 		}
 
 		internal static bool IsSupported(string id)
@@ -122,105 +169,50 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("id");
 			}
-			return _supportedQuests.Contains(id);
-		}
-
-		internal static string[] GetSupportedQuests()
-		{
-			return _supportedQuests.ToArray();
-		}
-
-		internal static ShopNGUIController.CategoryNames? ParseWeaponSlot(string weaponSlot)
-		{
-			//Discarded unreachable code: IL_0050, IL_0065
-			if (string.IsNullOrEmpty(weaponSlot))
-			{
-				return null;
-			}
-			ShopNGUIController.CategoryNames value;
-			if (_weaponSlots.TryGetValue(weaponSlot, out value))
-			{
-				return value;
-			}
-			try
-			{
-				return (ShopNGUIController.CategoryNames)(int)Enum.Parse(typeof(ShopNGUIController.CategoryNames), weaponSlot);
-			}
-			catch
-			{
-				return null;
-			}
+			return QuestConstants._supportedQuests.Contains(id);
 		}
 
 		internal static ConnectSceneNGUIController.RegimGame? ParseMode(string mode)
 		{
-			//Discarded unreachable code: IL_0037, IL_004c
+			ConnectSceneNGUIController.RegimGame? nullable;
 			if (string.IsNullOrEmpty(mode))
 			{
 				return null;
 			}
 			try
 			{
-				return (ConnectSceneNGUIController.RegimGame)(int)Enum.Parse(typeof(ConnectSceneNGUIController.RegimGame), mode);
+				ConnectSceneNGUIController.RegimGame regimGame = (ConnectSceneNGUIController.RegimGame)((int)Enum.Parse(typeof(ConnectSceneNGUIController.RegimGame), mode));
+				nullable = new ConnectSceneNGUIController.RegimGame?(regimGame);
 			}
 			catch
 			{
-				return null;
+				nullable = null;
 			}
+			return nullable;
 		}
 
-		public static string GetAccumulativeQuestDescriptionByType(AccumulativeQuestBase quest)
+		internal static ShopNGUIController.CategoryNames? ParseWeaponSlot(string weaponSlot)
 		{
-			//Discarded unreachable code: IL_0203, IL_0211
-			string value;
-			localizationQuests.TryGetValue(quest.Id, out value);
-			string text = value.Map(LocalizationStore.Get, "{0}");
-			ModeAccumulativeQuest modeAccumulativeQuest = quest as ModeAccumulativeQuest;
-			if (modeAccumulativeQuest != null)
+			ShopNGUIController.CategoryNames categoryName;
+			ShopNGUIController.CategoryNames? nullable;
+			if (string.IsNullOrEmpty(weaponSlot))
 			{
-				string value2;
-				if (!ConnectSceneNGUIController.gameModesLocalizeKey.TryGetValue(Convert.ToInt32(modeAccumulativeQuest.Mode).ToString(), out value2))
-				{
-					value2 = modeAccumulativeQuest.Mode.ToString();
-					Debug.LogError("Couldnot find mode name for " + modeAccumulativeQuest.Mode);
-				}
-				return string.Format(text, string.Format("[fff600]{0}[-]", modeAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", LocalizationStore.Get(value2)));
+				return null;
 			}
-			MapAccumulativeQuest mapAccumulativeQuest = quest as MapAccumulativeQuest;
-			if (mapAccumulativeQuest != null)
+			if (QuestConstants._weaponSlots.TryGetValue(weaponSlot, out categoryName))
 			{
-				SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(mapAccumulativeQuest.Map);
-				string empty = string.Empty;
-				if (infoScene == null)
-				{
-					empty = mapAccumulativeQuest.Map;
-					Debug.LogError("Couldnot find map name for " + mapAccumulativeQuest.Map);
-				}
-				else
-				{
-					empty = infoScene.TranslateName;
-				}
-				return string.Format(text, string.Format("[fff600]{0}[-]", mapAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", empty));
-			}
-			WeaponSlotAccumulativeQuest weaponSlotAccumulativeQuest = quest as WeaponSlotAccumulativeQuest;
-			if (weaponSlotAccumulativeQuest != null)
-			{
-				string value3;
-				if (!ShopNGUIController.weaponCategoryLocKeys.TryGetValue(weaponSlotAccumulativeQuest.WeaponSlot.ToString(), out value3))
-				{
-					value3 = weaponSlotAccumulativeQuest.WeaponSlot.ToString().Replace("Category", string.Empty);
-					Debug.LogError("Couldnot find weapon name for " + weaponSlotAccumulativeQuest.WeaponSlot);
-				}
-				return string.Format(text, string.Format("[fff600]{0}[-]", weaponSlotAccumulativeQuest.RequiredCount), string.Format("[ff9600]{0}[-]", LocalizationStore.Get(value3)));
+				return new ShopNGUIController.CategoryNames?(categoryName);
 			}
 			try
 			{
-				return string.Format(text, string.Format("[fff600]{0}[-]", quest.RequiredCount));
+				categoryName = (ShopNGUIController.CategoryNames)((int)Enum.Parse(typeof(ShopNGUIController.CategoryNames), weaponSlot));
+				nullable = new ShopNGUIController.CategoryNames?(categoryName);
 			}
-			catch (FormatException)
+			catch
 			{
-				return text;
+				nullable = null;
 			}
+			return nullable;
 		}
 	}
 }

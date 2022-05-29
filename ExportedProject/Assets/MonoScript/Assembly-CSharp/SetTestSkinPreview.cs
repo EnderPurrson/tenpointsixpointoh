@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class SetTestSkinPreview : MonoBehaviour
@@ -7,4 +8,8 @@ public sealed class SetTestSkinPreview : MonoBehaviour
 	public UILabel nameLabel;
 
 	public UILabel keyLabel;
+
+	public SetTestSkinPreview()
+	{
+	}
 }

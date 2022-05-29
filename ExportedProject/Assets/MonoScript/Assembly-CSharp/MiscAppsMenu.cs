@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MiscAppsMenu : MonoBehaviour
@@ -6,14 +7,18 @@ public class MiscAppsMenu : MonoBehaviour
 
 	public HiddenSettings misc;
 
-	public void UnloadMisc()
+	public MiscAppsMenu()
 	{
-		misc = null;
 	}
 
 	private void Awake()
 	{
-		Instance = this;
-		Object.DontDestroyOnLoad(base.gameObject);
+		MiscAppsMenu.Instance = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+	}
+
+	public void UnloadMisc()
+	{
+		this.misc = null;
 	}
 }

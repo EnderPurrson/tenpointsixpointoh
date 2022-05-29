@@ -1,3 +1,5 @@
+using System;
+
 public class MarafonBonusIconName
 {
 	public const string gold = "bonus_coins";
@@ -13,4 +15,8 @@ public class MarafonBonusIconName
 	public const string turret = "bonus_turret";
 
 	public const string grenade = "bonus_grenade";
+
+	public MarafonBonusIconName()
+	{
+	}
 }

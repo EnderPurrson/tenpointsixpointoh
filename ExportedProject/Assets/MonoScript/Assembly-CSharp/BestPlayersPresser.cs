@@ -1,14 +1,11 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class BestPlayersPresser : MonoBehaviour
 {
-	private void Start()
+	public BestPlayersPresser()
 	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-		{
-			base.gameObject.SetActive(false);
-		}
 	}
 
 	private void OnClick()
@@ -18,5 +15,13 @@ internal sealed class BestPlayersPresser : MonoBehaviour
 		component.friendsPanel.gameObject.SetActive(false);
 		component.leaderboardsView.gameObject.SetActive(true);
 		component.RequestLeaderboards();
+	}
+
+	private void Start()
+	{
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+		{
+			base.gameObject.SetActive(false);
+		}
 	}
 }

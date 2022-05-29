@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class MyUIInput : UIInput
@@ -21,153 +24,156 @@ public class MyUIInput : UIInput
 
 	private bool _selectAfterPause;
 
-	private void Awake()
+	public MyUIInput()
 	{
-		hideInput = false;
 	}
 
-	protected override void OnSelect(bool isSelected)
+	private void Awake()
 	{
-		if (isSelected)
-		{
-			OnSelectEvent();
-		}
-		else if (!hideInput)
-		{
-			OnDeselectEvent();
-		}
+		this.hideInput = false;
 	}
 
 	public void DeselectInput()
 	{
-		OnDeselectEventCustom();
+		this.OnDeselectEventCustom();
+	}
+
+	public float GetKeyboardHeight()
+	{
+		return this.heightKeyboard;
+	}
+
+	private void OnApplicationPause(bool pauseStatus)
+	{
+		if (!pauseStatus)
+		{
+			if (this._selectAfterPause)
+			{
+				base.isSelected = true;
+			}
+			this._selectAfterPause = false;
+		}
+		else
+		{
+			this._selectAfterPause = base.isSelected;
+			if (base.isSelected)
+			{
+				base.isSelected = false;
+			}
+		}
 	}
 
 	protected void OnDeselectEventCustom()
 	{
-		if (mDoInit)
+		if (this.mDoInit)
 		{
-			Init();
+			base.Init();
 		}
 		if (UIInput.mKeyboard != null)
 		{
 			UIInput.mKeyboard.active = false;
 			UIInput.mKeyboard = null;
 		}
-		if (label != null)
+		if (this.label != null)
 		{
-			mValue = base.value;
-			if (string.IsNullOrEmpty(mValue))
+			this.mValue = base.@value;
+			if (!string.IsNullOrEmpty(this.mValue))
 			{
-				label.text = mDefaultText;
-				label.color = mDefaultColor;
+				this.label.text = this.mValue;
 			}
 			else
 			{
-				label.text = mValue;
+				this.label.text = this.mDefaultText;
+				this.label.color = this.mDefaultColor;
 			}
 			Input.imeCompositionMode = IMECompositionMode.Auto;
-			label.alignment = mAlignment;
+			this.label.alignment = this.mAlignment;
 		}
 		base.isSelected = false;
 		UIInput.selection = null;
-		UpdateLabel();
-	}
-
-	private new void Update()
-	{
-		if (Application.isEditor)
-		{
-			if ((Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown("enter")) && onKeyboardInter != null)
-			{
-				onKeyboardInter();
-			}
-			if (Input.GetKeyDown(KeyCode.KeypadPlus) && onKeyboardVisible != null)
-			{
-				onKeyboardVisible();
-			}
-			if (Input.GetKeyDown(KeyCode.KeypadMinus))
-			{
-				if (onKeyboardHide != null)
-				{
-					onKeyboardHide();
-				}
-				DeselectInput();
-			}
-		}
-		base.Update();
-	}
-
-	public float GetKeyboardHeight()
-	{
-		return heightKeyboard;
-	}
-
-	private void SetKeyboardHeight()
-	{
-		//Discarded unreachable code: IL_007a, IL_008c
-		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-		{
-			AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity").Get<AndroidJavaObject>("mUnityPlayer").Call<AndroidJavaObject>("getView", new object[0]);
-			using (AndroidJavaObject androidJavaObject2 = new AndroidJavaObject("android.graphics.Rect"))
-			{
-				androidJavaObject.Call("getWindowVisibleDisplayFrame", androidJavaObject2);
-				heightKeyboard = Screen.height - androidJavaObject2.Call<int>("height", new object[0]);
-			}
-		}
+		base.UpdateLabel();
 	}
 
 	private void OnDestroy()
 	{
 		base.OnSelect(false);
-		DeselectInput();
-	}
-
-	private void OnEnable()
-	{
-		DeviceOrientationMonitor.OnOrientationChange += OnDeviceOrientationChanged;
-	}
-
-	private void OnDisable()
-	{
-		DeviceOrientationMonitor.OnOrientationChange -= OnDeviceOrientationChanged;
-		base.OnSelect(false);
-		DeselectInput();
-		base.Cleanup();
+		this.DeselectInput();
 	}
 
 	private void OnDeviceOrientationChanged(DeviceOrientation ori)
 	{
 		if (base.isSelected)
 		{
-			StartCoroutine(ReSelect());
+			base.StartCoroutine(this.ReSelect());
 		}
 	}
 
+	private void OnDisable()
+	{
+		DeviceOrientationMonitor.OnOrientationChange -= new Action<DeviceOrientation>(this.OnDeviceOrientationChanged);
+		base.OnSelect(false);
+		this.DeselectInput();
+		base.Cleanup();
+	}
+
+	private void OnEnable()
+	{
+		DeviceOrientationMonitor.OnOrientationChange += new Action<DeviceOrientation>(this.OnDeviceOrientationChanged);
+	}
+
+	protected override void OnSelect(bool isSelected)
+	{
+		if (isSelected)
+		{
+			base.OnSelectEvent();
+		}
+		else if (!this.hideInput)
+		{
+			base.OnDeselectEvent();
+		}
+	}
+
+	[DebuggerHidden]
 	private IEnumerator ReSelect()
 	{
-		DeselectInput();
-		yield return new WaitForSeconds(0.3f);
-		base.isSelected = true;
+		MyUIInput.u003cReSelectu003ec__IteratorBE variable = null;
+		return variable;
 	}
 
-	private void OnApplicationPause(bool pauseStatus)
+	private void SetKeyboardHeight()
 	{
-		if (pauseStatus)
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
 		{
-			_selectAfterPause = base.isSelected;
-			if (base.isSelected)
+			AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity").Get<AndroidJavaObject>("mUnityPlayer").Call<AndroidJavaObject>("getView", new object[0]);
+			using (AndroidJavaObject androidJavaObject1 = new AndroidJavaObject("android.graphics.Rect", new object[0]))
 			{
-				base.isSelected = false;
+				androidJavaObject.Call("getWindowVisibleDisplayFrame", new object[] { androidJavaObject1 });
+				this.heightKeyboard = (float)(Screen.height - androidJavaObject1.Call<int>("height", new object[0]));
 			}
 		}
-		else
+	}
+
+	private new void Update()
+	{
+		if (Application.isEditor)
 		{
-			if (_selectAfterPause)
+			if ((Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown("enter")) && this.onKeyboardInter != null)
 			{
-				base.isSelected = true;
+				this.onKeyboardInter();
 			}
-			_selectAfterPause = false;
+			if (Input.GetKeyDown(KeyCode.KeypadPlus) && this.onKeyboardVisible != null)
+			{
+				this.onKeyboardVisible();
+			}
+			if (Input.GetKeyDown(KeyCode.KeypadMinus))
+			{
+				if (this.onKeyboardHide != null)
+				{
+					this.onKeyboardHide();
+				}
+				this.DeselectInput();
+			}
 		}
+		base.Update();
 	}
 }

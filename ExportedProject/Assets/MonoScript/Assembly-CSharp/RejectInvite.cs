@@ -1,20 +1,25 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class RejectInvite : MonoBehaviour
 {
+	public RejectInvite()
+	{
+	}
+
 	private void OnClick()
 	{
 		ButtonClickSound.Instance.PlayClick();
 		Invitation component = base.transform.parent.GetComponent<Invitation>();
-		if (component != null)
+		if (component == null)
 		{
-			FriendsController.sharedController.RejectInvite(component.id);
-			base.transform.parent.GetComponent<Invitation>().DisableButtons();
+			Debug.LogWarning("invitation == null");
 		}
 		else
 		{
-			Debug.LogWarning("invitation == null");
+			FriendsController.sharedController.RejectInvite(component.id, null);
+			base.transform.parent.GetComponent<Invitation>().DisableButtons();
 		}
 	}
 }

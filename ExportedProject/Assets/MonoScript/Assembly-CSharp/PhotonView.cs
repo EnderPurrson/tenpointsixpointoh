@@ -1,6 +1,7 @@
+using Photon;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Photon;
 using UnityEngine;
 
 [AddComponentMenu("Photon Networking/Photon View &v")]
@@ -8,7 +9,7 @@ public class PhotonView : Photon.MonoBehaviour
 {
 	public int ownerId;
 
-	public int group;
+	public int @group;
 
 	protected internal bool mixedModeIsReliable;
 
@@ -52,19 +53,11 @@ public class PhotonView : Photon.MonoBehaviour
 
 	private bool failedToFindOnSerialize;
 
-	public int prefix
+	public int CreatorActorNr
 	{
 		get
 		{
-			if (prefixBackup == -1 && PhotonNetwork.networkingPeer != null)
-			{
-				prefixBackup = PhotonNetwork.networkingPeer.currentLevelPrefix;
-			}
-			return prefixBackup;
-		}
-		set
-		{
-			prefixBackup = value;
+			return this.viewIdField / PhotonNetwork.MAX_VIEW_IDS;
 		}
 	}
 
@@ -72,73 +65,15 @@ public class PhotonView : Photon.MonoBehaviour
 	{
 		get
 		{
-			if (!didAwake)
+			if (!this.didAwake)
 			{
-				instantiationDataField = PhotonNetwork.networkingPeer.FetchInstantiationData(instantiationId);
+				this.instantiationDataField = PhotonNetwork.networkingPeer.FetchInstantiationData(this.instantiationId);
 			}
-			return instantiationDataField;
+			return this.instantiationDataField;
 		}
 		set
 		{
-			instantiationDataField = value;
-		}
-	}
-
-	public int viewID
-	{
-		get
-		{
-			return viewIdField;
-		}
-		set
-		{
-			bool flag = didAwake && viewIdField == 0;
-			ownerId = value / PhotonNetwork.MAX_VIEW_IDS;
-			viewIdField = value;
-			if (flag)
-			{
-				PhotonNetwork.networkingPeer.RegisterPhotonView(this);
-			}
-		}
-	}
-
-	public bool isSceneView
-	{
-		get
-		{
-			return CreatorActorNr == 0;
-		}
-	}
-
-	public PhotonPlayer owner
-	{
-		get
-		{
-			return PhotonPlayer.Find(ownerId);
-		}
-	}
-
-	public int OwnerActorNr
-	{
-		get
-		{
-			return ownerId;
-		}
-	}
-
-	public bool isOwnerActive
-	{
-		get
-		{
-			return ownerId != 0 && PhotonNetwork.networkingPeer.mActors.ContainsKey(ownerId);
-		}
-	}
-
-	public int CreatorActorNr
-	{
-		get
-		{
-			return viewIdField / PhotonNetwork.MAX_VIEW_IDS;
+			this.instantiationDataField = value;
 		}
 	}
 
@@ -146,71 +81,97 @@ public class PhotonView : Photon.MonoBehaviour
 	{
 		get
 		{
-			return ownerId == PhotonNetwork.player.ID || (!isOwnerActive && PhotonNetwork.isMasterClient);
+			bool flag;
+			if (this.ownerId == PhotonNetwork.player.ID)
+			{
+				flag = true;
+			}
+			else
+			{
+				flag = (this.isOwnerActive ? false : PhotonNetwork.isMasterClient);
+			}
+			return flag;
 		}
+	}
+
+	public bool isOwnerActive
+	{
+		get
+		{
+			return (this.ownerId == 0 ? false : PhotonNetwork.networkingPeer.mActors.ContainsKey(this.ownerId));
+		}
+	}
+
+	public bool isSceneView
+	{
+		get
+		{
+			return this.CreatorActorNr == 0;
+		}
+	}
+
+	public PhotonPlayer owner
+	{
+		get
+		{
+			return PhotonPlayer.Find(this.ownerId);
+		}
+	}
+
+	public int OwnerActorNr
+	{
+		get
+		{
+			return this.ownerId;
+		}
+	}
+
+	public int prefix
+	{
+		get
+		{
+			if (this.prefixBackup == -1 && PhotonNetwork.networkingPeer != null)
+			{
+				this.prefixBackup = PhotonNetwork.networkingPeer.currentLevelPrefix;
+			}
+			return this.prefixBackup;
+		}
+		set
+		{
+			this.prefixBackup = value;
+		}
+	}
+
+	public int viewID
+	{
+		get
+		{
+			return this.viewIdField;
+		}
+		set
+		{
+			bool flag = (!this.didAwake ? false : this.viewIdField == 0);
+			this.ownerId = value / PhotonNetwork.MAX_VIEW_IDS;
+			this.viewIdField = value;
+			if (flag)
+			{
+				PhotonNetwork.networkingPeer.RegisterPhotonView(this);
+			}
+		}
+	}
+
+	public PhotonView()
+	{
 	}
 
 	protected internal void Awake()
 	{
-		if (viewID != 0)
+		if (this.viewID != 0)
 		{
 			PhotonNetwork.networkingPeer.RegisterPhotonView(this);
-			instantiationDataField = PhotonNetwork.networkingPeer.FetchInstantiationData(instantiationId);
+			this.instantiationDataField = PhotonNetwork.networkingPeer.FetchInstantiationData(this.instantiationId);
 		}
-		didAwake = true;
-	}
-
-	public void RequestOwnership()
-	{
-		PhotonNetwork.networkingPeer.RequestOwnership(viewID, ownerId);
-	}
-
-	public void TransferOwnership(PhotonPlayer newOwner)
-	{
-		TransferOwnership(newOwner.ID);
-	}
-
-	public void TransferOwnership(int newOwnerId)
-	{
-		PhotonNetwork.networkingPeer.TransferOwnership(viewID, newOwnerId);
-		ownerId = newOwnerId;
-	}
-
-	protected internal void OnDestroy()
-	{
-		if (!removedFromLocalViewList)
-		{
-			bool flag = PhotonNetwork.networkingPeer.LocalCleanPhotonView(this);
-			bool flag2 = false;
-			if (flag && !flag2 && instantiationId > 0 && !PhotonHandler.AppQuits && PhotonNetwork.logLevel >= PhotonLogLevel.Informational)
-			{
-				Debug.Log("PUN-instantiated '" + base.gameObject.name + "' got destroyed by engine. This is OK when loading levels. Otherwise use: PhotonNetwork.Destroy().");
-			}
-		}
-	}
-
-	public void SerializeView(PhotonStream stream, PhotonMessageInfo info)
-	{
-		SerializeComponent(observed, stream, info);
-		if (ObservedComponents != null && ObservedComponents.Count > 0)
-		{
-			for (int i = 0; i < ObservedComponents.Count; i++)
-			{
-				SerializeComponent(ObservedComponents[i], stream, info);
-			}
-		}
-	}
-
-	public void DeserializeView(PhotonStream stream, PhotonMessageInfo info)
-	{
-		DeserializeComponent(observed, stream, info);
-		if (ObservedComponents != null && ObservedComponents.Count > 0)
-		{
-			for (int i = 0; i < ObservedComponents.Count; i++)
-			{
-				DeserializeComponent(ObservedComponents[i], stream, info);
-			}
-		}
+		this.didAwake = true;
 	}
 
 	protected internal void DeserializeComponent(Component component, PhotonStream stream, PhotonMessageInfo info)
@@ -221,193 +182,131 @@ public class PhotonView : Photon.MonoBehaviour
 		}
 		if (component is UnityEngine.MonoBehaviour)
 		{
-			ExecuteComponentOnSerialize(component, stream, info);
+			this.ExecuteComponentOnSerialize(component, stream, info);
 		}
 		else if (component is Transform)
 		{
-			Transform transform = (Transform)component;
-			switch (onSerializeTransformOption)
+			Transform transforms = (Transform)component;
+			switch (this.onSerializeTransformOption)
 			{
-			case OnSerializeTransform.All:
-				transform.localPosition = (Vector3)stream.ReceiveNext();
-				transform.localRotation = (Quaternion)stream.ReceiveNext();
-				transform.localScale = (Vector3)stream.ReceiveNext();
-				break;
-			case OnSerializeTransform.OnlyPosition:
-				transform.localPosition = (Vector3)stream.ReceiveNext();
-				break;
-			case OnSerializeTransform.OnlyRotation:
-				transform.localRotation = (Quaternion)stream.ReceiveNext();
-				break;
-			case OnSerializeTransform.OnlyScale:
-				transform.localScale = (Vector3)stream.ReceiveNext();
-				break;
-			case OnSerializeTransform.PositionAndRotation:
-				transform.localPosition = (Vector3)stream.ReceiveNext();
-				transform.localRotation = (Quaternion)stream.ReceiveNext();
-				break;
+				case OnSerializeTransform.OnlyPosition:
+				{
+					transforms.localPosition = (Vector3)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeTransform.OnlyRotation:
+				{
+					transforms.localRotation = (Quaternion)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeTransform.OnlyScale:
+				{
+					transforms.localScale = (Vector3)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeTransform.PositionAndRotation:
+				{
+					transforms.localPosition = (Vector3)stream.ReceiveNext();
+					transforms.localRotation = (Quaternion)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeTransform.All:
+				{
+					transforms.localPosition = (Vector3)stream.ReceiveNext();
+					transforms.localRotation = (Quaternion)stream.ReceiveNext();
+					transforms.localScale = (Vector3)stream.ReceiveNext();
+					break;
+				}
 			}
 		}
 		else if (component is Rigidbody)
 		{
 			Rigidbody rigidbody = (Rigidbody)component;
-			switch (onSerializeRigidBodyOption)
+			switch (this.onSerializeRigidBodyOption)
 			{
-			case OnSerializeRigidBody.All:
-				rigidbody.velocity = (Vector3)stream.ReceiveNext();
-				rigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
-				break;
-			case OnSerializeRigidBody.OnlyAngularVelocity:
-				rigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
-				break;
-			case OnSerializeRigidBody.OnlyVelocity:
-				rigidbody.velocity = (Vector3)stream.ReceiveNext();
-				break;
+				case OnSerializeRigidBody.OnlyVelocity:
+				{
+					rigidbody.velocity = (Vector3)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeRigidBody.OnlyAngularVelocity:
+				{
+					rigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeRigidBody.All:
+				{
+					rigidbody.velocity = (Vector3)stream.ReceiveNext();
+					rigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
+					break;
+				}
 			}
 		}
-		else if (component is Rigidbody2D)
-		{
-			Rigidbody2D rigidbody2D = (Rigidbody2D)component;
-			switch (onSerializeRigidBodyOption)
-			{
-			case OnSerializeRigidBody.All:
-				rigidbody2D.velocity = (Vector2)stream.ReceiveNext();
-				rigidbody2D.angularVelocity = (float)stream.ReceiveNext();
-				break;
-			case OnSerializeRigidBody.OnlyAngularVelocity:
-				rigidbody2D.angularVelocity = (float)stream.ReceiveNext();
-				break;
-			case OnSerializeRigidBody.OnlyVelocity:
-				rigidbody2D.velocity = (Vector2)stream.ReceiveNext();
-				break;
-			}
-		}
-		else
+		else if (!(component is Rigidbody2D))
 		{
 			Debug.LogError("Type of observed is unknown when receiving.");
 		}
-	}
-
-	protected internal void SerializeComponent(Component component, PhotonStream stream, PhotonMessageInfo info)
-	{
-		if (component == null)
-		{
-			return;
-		}
-		if (component is UnityEngine.MonoBehaviour)
-		{
-			ExecuteComponentOnSerialize(component, stream, info);
-		}
-		else if (component is Transform)
-		{
-			Transform transform = (Transform)component;
-			switch (onSerializeTransformOption)
-			{
-			case OnSerializeTransform.All:
-				stream.SendNext(transform.localPosition);
-				stream.SendNext(transform.localRotation);
-				stream.SendNext(transform.localScale);
-				break;
-			case OnSerializeTransform.OnlyPosition:
-				stream.SendNext(transform.localPosition);
-				break;
-			case OnSerializeTransform.OnlyRotation:
-				stream.SendNext(transform.localRotation);
-				break;
-			case OnSerializeTransform.OnlyScale:
-				stream.SendNext(transform.localScale);
-				break;
-			case OnSerializeTransform.PositionAndRotation:
-				stream.SendNext(transform.localPosition);
-				stream.SendNext(transform.localRotation);
-				break;
-			}
-		}
-		else if (component is Rigidbody)
-		{
-			Rigidbody rigidbody = (Rigidbody)component;
-			switch (onSerializeRigidBodyOption)
-			{
-			case OnSerializeRigidBody.All:
-				stream.SendNext(rigidbody.velocity);
-				stream.SendNext(rigidbody.angularVelocity);
-				break;
-			case OnSerializeRigidBody.OnlyAngularVelocity:
-				stream.SendNext(rigidbody.angularVelocity);
-				break;
-			case OnSerializeRigidBody.OnlyVelocity:
-				stream.SendNext(rigidbody.velocity);
-				break;
-			}
-		}
-		else if (component is Rigidbody2D)
-		{
-			Rigidbody2D rigidbody2D = (Rigidbody2D)component;
-			switch (onSerializeRigidBodyOption)
-			{
-			case OnSerializeRigidBody.All:
-				stream.SendNext(rigidbody2D.velocity);
-				stream.SendNext(rigidbody2D.angularVelocity);
-				break;
-			case OnSerializeRigidBody.OnlyAngularVelocity:
-				stream.SendNext(rigidbody2D.angularVelocity);
-				break;
-			case OnSerializeRigidBody.OnlyVelocity:
-				stream.SendNext(rigidbody2D.velocity);
-				break;
-			}
-		}
 		else
 		{
-			Debug.LogError("Observed type is not serializable: " + component.GetType());
+			Rigidbody2D rigidbody2D = (Rigidbody2D)component;
+			switch (this.onSerializeRigidBodyOption)
+			{
+				case OnSerializeRigidBody.OnlyVelocity:
+				{
+					rigidbody2D.velocity = (Vector2)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeRigidBody.OnlyAngularVelocity:
+				{
+					rigidbody2D.angularVelocity = (float)stream.ReceiveNext();
+					break;
+				}
+				case OnSerializeRigidBody.All:
+				{
+					rigidbody2D.velocity = (Vector2)stream.ReceiveNext();
+					rigidbody2D.angularVelocity = (float)stream.ReceiveNext();
+					break;
+				}
+			}
+		}
+	}
+
+	public void DeserializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		this.DeserializeComponent(this.observed, stream, info);
+		if (this.ObservedComponents != null && this.ObservedComponents.Count > 0)
+		{
+			for (int i = 0; i < this.ObservedComponents.Count; i++)
+			{
+				this.DeserializeComponent(this.ObservedComponents[i], stream, info);
+			}
 		}
 	}
 
 	protected internal void ExecuteComponentOnSerialize(Component component, PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (!(component != null))
+		if (component != null)
 		{
-			return;
-		}
-		MethodInfo value = null;
-		if (!m_OnSerializeMethodInfos.TryGetValue(component, out value))
-		{
-			if (!NetworkingPeer.GetMethod(component as UnityEngine.MonoBehaviour, PhotonNetworkingMessage.OnPhotonSerializeView.ToString(), out value))
+			MethodInfo methodInfo = null;
+			if (!this.m_OnSerializeMethodInfos.TryGetValue(component, out methodInfo))
 			{
-				Debug.LogError("The observed monobehaviour (" + component.name + ") of this PhotonView does not implement OnPhotonSerializeView()!");
-				value = null;
+				if (!NetworkingPeer.GetMethod(component as UnityEngine.MonoBehaviour, PhotonNetworkingMessage.OnPhotonSerializeView.ToString(), out methodInfo))
+				{
+					Debug.LogError(string.Concat("The observed monobehaviour (", component.name, ") of this PhotonView does not implement OnPhotonSerializeView()!"));
+					methodInfo = null;
+				}
+				this.m_OnSerializeMethodInfos.Add(component, methodInfo);
 			}
-			m_OnSerializeMethodInfos.Add(component, value);
+			if (methodInfo != null)
+			{
+				methodInfo.Invoke(component, new object[] { stream, info });
+			}
 		}
-		if (value != null)
-		{
-			value.Invoke(component, new object[2] { stream, info });
-		}
 	}
 
-	public void RefreshRpcMonoBehaviourCache()
+	public static PhotonView Find(int viewID)
 	{
-		RpcMonoBehaviours = GetComponents<UnityEngine.MonoBehaviour>();
-	}
-
-	public void RPC(string methodName, PhotonTargets target, params object[] parameters)
-	{
-		PhotonNetwork.RPC(this, methodName, target, false, parameters);
-	}
-
-	public void RpcSecure(string methodName, PhotonTargets target, bool encrypt, params object[] parameters)
-	{
-		PhotonNetwork.RPC(this, methodName, target, encrypt, parameters);
-	}
-
-	public void RPC(string methodName, PhotonPlayer targetPlayer, params object[] parameters)
-	{
-		PhotonNetwork.RPC(this, methodName, targetPlayer, false, parameters);
-	}
-
-	public void RpcSecure(string methodName, PhotonPlayer targetPlayer, bool encrypt, params object[] parameters)
-	{
-		PhotonNetwork.RPC(this, methodName, targetPlayer, encrypt, parameters);
+		return PhotonNetwork.networkingPeer.GetPhotonView(viewID);
 	}
 
 	public static PhotonView Get(Component component)
@@ -420,13 +319,175 @@ public class PhotonView : Photon.MonoBehaviour
 		return gameObj.GetComponent<PhotonView>();
 	}
 
-	public static PhotonView Find(int viewID)
+	protected internal void OnDestroy()
 	{
-		return PhotonNetwork.networkingPeer.GetPhotonView(viewID);
+		if (!this.removedFromLocalViewList)
+		{
+			bool flag = PhotonNetwork.networkingPeer.LocalCleanPhotonView(this);
+			bool flag1 = false;
+			if (flag && !flag1 && this.instantiationId > 0 && !PhotonHandler.AppQuits && PhotonNetwork.logLevel >= PhotonLogLevel.Informational)
+			{
+				Debug.Log(string.Concat("PUN-instantiated '", base.gameObject.name, "' got destroyed by engine. This is OK when loading levels. Otherwise use: PhotonNetwork.Destroy()."));
+			}
+		}
+	}
+
+	public void RefreshRpcMonoBehaviourCache()
+	{
+		this.RpcMonoBehaviours = base.GetComponents<UnityEngine.MonoBehaviour>();
+	}
+
+	public void RequestOwnership()
+	{
+		PhotonNetwork.networkingPeer.RequestOwnership(this.viewID, this.ownerId);
+	}
+
+	public void RPC(string methodName, PhotonTargets target, params object[] parameters)
+	{
+		PhotonNetwork.RPC(this, methodName, target, false, parameters);
+	}
+
+	public void RPC(string methodName, PhotonPlayer targetPlayer, params object[] parameters)
+	{
+		PhotonNetwork.RPC(this, methodName, targetPlayer, false, parameters);
+	}
+
+	public void RpcSecure(string methodName, PhotonTargets target, bool encrypt, params object[] parameters)
+	{
+		PhotonNetwork.RPC(this, methodName, target, encrypt, parameters);
+	}
+
+	public void RpcSecure(string methodName, PhotonPlayer targetPlayer, bool encrypt, params object[] parameters)
+	{
+		PhotonNetwork.RPC(this, methodName, targetPlayer, encrypt, parameters);
+	}
+
+	protected internal void SerializeComponent(Component component, PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (component == null)
+		{
+			return;
+		}
+		if (component is UnityEngine.MonoBehaviour)
+		{
+			this.ExecuteComponentOnSerialize(component, stream, info);
+		}
+		else if (component is Transform)
+		{
+			Transform transforms = (Transform)component;
+			switch (this.onSerializeTransformOption)
+			{
+				case OnSerializeTransform.OnlyPosition:
+				{
+					stream.SendNext(transforms.localPosition);
+					break;
+				}
+				case OnSerializeTransform.OnlyRotation:
+				{
+					stream.SendNext(transforms.localRotation);
+					break;
+				}
+				case OnSerializeTransform.OnlyScale:
+				{
+					stream.SendNext(transforms.localScale);
+					break;
+				}
+				case OnSerializeTransform.PositionAndRotation:
+				{
+					stream.SendNext(transforms.localPosition);
+					stream.SendNext(transforms.localRotation);
+					break;
+				}
+				case OnSerializeTransform.All:
+				{
+					stream.SendNext(transforms.localPosition);
+					stream.SendNext(transforms.localRotation);
+					stream.SendNext(transforms.localScale);
+					break;
+				}
+			}
+		}
+		else if (component is Rigidbody)
+		{
+			Rigidbody rigidbody = (Rigidbody)component;
+			switch (this.onSerializeRigidBodyOption)
+			{
+				case OnSerializeRigidBody.OnlyVelocity:
+				{
+					stream.SendNext(rigidbody.velocity);
+					break;
+				}
+				case OnSerializeRigidBody.OnlyAngularVelocity:
+				{
+					stream.SendNext(rigidbody.angularVelocity);
+					break;
+				}
+				case OnSerializeRigidBody.All:
+				{
+					stream.SendNext(rigidbody.velocity);
+					stream.SendNext(rigidbody.angularVelocity);
+					break;
+				}
+			}
+		}
+		else if (!(component is Rigidbody2D))
+		{
+			Debug.LogError(string.Concat("Observed type is not serializable: ", component.GetType()));
+		}
+		else
+		{
+			Rigidbody2D rigidbody2D = (Rigidbody2D)component;
+			switch (this.onSerializeRigidBodyOption)
+			{
+				case OnSerializeRigidBody.OnlyVelocity:
+				{
+					stream.SendNext(rigidbody2D.velocity);
+					break;
+				}
+				case OnSerializeRigidBody.OnlyAngularVelocity:
+				{
+					stream.SendNext(rigidbody2D.angularVelocity);
+					break;
+				}
+				case OnSerializeRigidBody.All:
+				{
+					stream.SendNext(rigidbody2D.velocity);
+					stream.SendNext(rigidbody2D.angularVelocity);
+					break;
+				}
+			}
+		}
+	}
+
+	public void SerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		this.SerializeComponent(this.observed, stream, info);
+		if (this.ObservedComponents != null && this.ObservedComponents.Count > 0)
+		{
+			for (int i = 0; i < this.ObservedComponents.Count; i++)
+			{
+				this.SerializeComponent(this.ObservedComponents[i], stream, info);
+			}
+		}
 	}
 
 	public override string ToString()
 	{
-		return string.Format("View ({3}){0} on {1} {2}", viewID, (!(base.gameObject != null)) ? "GO==null" : base.gameObject.name, (!isSceneView) ? string.Empty : "(scene)", prefix);
+		object[] objArray = new object[] { this.viewID, null, null, null };
+		objArray[1] = (base.gameObject == null ? "GO==null" : base.gameObject.name);
+		objArray[2] = (!this.isSceneView ? string.Empty : "(scene)");
+		objArray[3] = this.prefix;
+		return string.Format("View ({3}){0} on {1} {2}", objArray);
+	}
+
+	public void TransferOwnership(PhotonPlayer newOwner)
+	{
+		this.TransferOwnership(newOwner.ID);
+	}
+
+	public void TransferOwnership(int newOwnerId)
+	{
+		PhotonNetwork.networkingPeer.TransferOwnership(this.viewID, newOwnerId);
+		this.ownerId = newOwnerId;
 	}
 }

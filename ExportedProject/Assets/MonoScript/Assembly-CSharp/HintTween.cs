@@ -1,7 +1,12 @@
+using System;
 using UnityEngine;
 
 public class HintTween : MonoBehaviour
 {
+	public HintTween()
+	{
+	}
+
 	private void Start()
 	{
 		base.transform.localScale = Vector3.one * 0.3f;

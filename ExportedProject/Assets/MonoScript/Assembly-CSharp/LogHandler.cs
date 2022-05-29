@@ -1,5 +1,9 @@
-using System.Collections;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class LogHandler : MonoBehaviour
@@ -12,48 +16,49 @@ internal sealed class LogHandler : MonoBehaviour
 
 	private string _stackTrace = string.Empty;
 
-	private void Start()
+	public LogHandler()
 	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-		{
-			Object.DontDestroyOnLoad(base.gameObject);
-		}
-		else
-		{
-			Object.Destroy(base.gameObject);
-		}
-	}
-
-	private void OnEnable()
-	{
-		StartCoroutine(RegisterLogCallbackCoroutine());
-	}
-
-	private void OnDisable()
-	{
-		_cancelled = true;
-		if (_registered)
-		{
-			Application.RegisterLogCallback(null);
-		}
-	}
-
-	private IEnumerator RegisterLogCallbackCoroutine()
-	{
-		yield return new WaitForSeconds(0.5f);
-		if (!_cancelled)
-		{
-			Application.RegisterLogCallback(HandleLog);
-			_registered = true;
-		}
 	}
 
 	private void HandleLog(string logString, string stackTrace, LogType type)
 	{
 		if (type == LogType.Exception)
 		{
-			_logString = logString;
-			_stackTrace = stackTrace;
+			this._logString = logString;
+			this._stackTrace = stackTrace;
+		}
+	}
+
+	private void OnDisable()
+	{
+		this._cancelled = true;
+		if (this._registered)
+		{
+			Application.RegisterLogCallback(null);
+		}
+	}
+
+	private void OnEnable()
+	{
+		base.StartCoroutine(this.RegisterLogCallbackCoroutine());
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RegisterLogCallbackCoroutine()
+	{
+		LogHandler.u003cRegisterLogCallbackCoroutineu003ec__Iterator16D variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		if (BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
+		else
+		{
+			UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 		}
 	}
 }

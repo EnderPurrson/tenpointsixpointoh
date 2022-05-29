@@ -6,63 +6,24 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Input Field")]
 public class UIInput : MonoBehaviour
 {
-	public enum InputType
-	{
-		Standard = 0,
-		AutoCorrect = 1,
-		Password = 2
-	}
-
-	public enum Validation
-	{
-		None = 0,
-		Integer = 1,
-		Float = 2,
-		Alphanumeric = 3,
-		Username = 4,
-		Name = 5,
-		Filename = 6
-	}
-
-	public enum KeyboardType
-	{
-		Default = 0,
-		ASCIICapable = 1,
-		NumbersAndPunctuation = 2,
-		URL = 3,
-		NumberPad = 4,
-		PhonePad = 5,
-		NamePhonePad = 6,
-		EmailAddress = 7
-	}
-
-	public enum OnReturnKey
-	{
-		Default = 0,
-		Submit = 1,
-		NewLine = 2
-	}
-
-	public delegate char OnValidate(string text, int charIndex, char addedChar);
-
 	public static UIInput current;
 
 	public static UIInput selection;
 
 	public UILabel label;
 
-	public InputType inputType;
+	public UIInput.InputType inputType;
 
-	public OnReturnKey onReturnKey;
+	public UIInput.OnReturnKey onReturnKey;
 
-	public KeyboardType keyboardType;
+	public UIInput.KeyboardType keyboardType;
 
 	public bool hideInput;
 
 	[NonSerialized]
 	public bool selectAllTextOnFocus = true;
 
-	public Validation validation;
+	public UIInput.Validation validation;
 
 	public int characterLimit;
 
@@ -76,16 +37,16 @@ public class UIInput : MonoBehaviour
 
 	public Color caretColor = new Color(1f, 1f, 1f, 0.8f);
 
-	public Color selectionColor = new Color(1f, 0.8745098f, 47f / 85f, 0.5f);
+	public Color selectionColor = new Color(1f, 0.8745098f, 0.5529412f, 0.5f);
 
 	public List<EventDelegate> onSubmit = new List<EventDelegate>();
 
 	public List<EventDelegate> onChange = new List<EventDelegate>();
 
-	public OnValidate onValidate;
+	public UIInput.OnValidate onValidate;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected string mValue;
 
 	[NonSerialized]
@@ -108,7 +69,7 @@ public class UIInput : MonoBehaviour
 
 	protected static int mDrawStart;
 
-	protected static string mLastIME = string.Empty;
+	protected static string mLastIME;
 
 	protected static TouchScreenKeyboard mKeyboard;
 
@@ -152,24 +113,35 @@ public class UIInput : MonoBehaviour
 
 	private static int mIgnoreKey;
 
-	public string defaultText
+	public UITexture caret
 	{
 		get
 		{
-			if (mDoInit)
+			return this.mCaret;
+		}
+	}
+
+	public int cursorPosition
+	{
+		get
+		{
+			if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
 			{
-				Init();
+				return this.@value.Length;
 			}
-			return mDefaultText;
+			return (!this.isSelected ? this.@value.Length : this.mSelectionEnd);
 		}
 		set
 		{
-			if (mDoInit)
+			if (this.isSelected)
 			{
-				Init();
+				if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
+				{
+					return;
+				}
+				this.mSelectionEnd = value;
+				this.UpdateLabel();
 			}
-			mDefaultText = value;
-			UpdateLabel();
 		}
 	}
 
@@ -177,19 +149,40 @@ public class UIInput : MonoBehaviour
 	{
 		get
 		{
-			if (mDoInit)
+			if (this.mDoInit)
 			{
-				Init();
+				this.Init();
 			}
-			return mDefaultColor;
+			return this.mDefaultColor;
 		}
 		set
 		{
-			mDefaultColor = value;
-			if (!isSelected)
+			this.mDefaultColor = value;
+			if (!this.isSelected)
 			{
-				label.color = value;
+				this.label.color = value;
 			}
+		}
+	}
+
+	public string defaultText
+	{
+		get
+		{
+			if (this.mDoInit)
+			{
+				this.Init();
+			}
+			return this.mDefaultText;
+		}
+		set
+		{
+			if (this.mDoInit)
+			{
+				this.Init();
+			}
+			this.mDefaultText = value;
+			this.UpdateLabel();
 		}
 	}
 
@@ -197,75 +190,26 @@ public class UIInput : MonoBehaviour
 	{
 		get
 		{
-			return hideInput && label != null && !label.multiLine && inputType != InputType.Password;
+			return (!this.hideInput || !(this.label != null) || this.label.multiLine ? false : this.inputType != UIInput.InputType.Password);
 		}
 	}
 
-	[Obsolete("Use UIInput.value instead")]
-	public string text
+	public bool isSelected
 	{
 		get
 		{
-			return value;
+			return UIInput.selection == this;
 		}
 		set
 		{
-			this.value = value;
-		}
-	}
-
-	public string value
-	{
-		get
-		{
-			if (mDoInit)
+			if (value)
 			{
-				Init();
+				UICamera.selectedObject = base.gameObject;
 			}
-			return mValue;
-		}
-		set
-		{
-			if (mDoInit)
+			else if (this.isSelected)
 			{
-				Init();
+				UICamera.selectedObject = null;
 			}
-			mDrawStart = 0;
-			if (Application.platform == RuntimePlatform.BlackBerryPlayer)
-			{
-				value = value.Replace("\\b", "\b");
-			}
-			value = Validate(value);
-			if (isSelected && mKeyboard != null && mCached != value)
-			{
-				mKeyboard.text = value;
-				mCached = value;
-			}
-			if (!(mValue != value))
-			{
-				return;
-			}
-			mValue = value;
-			mLoadSavedValue = false;
-			if (isSelected)
-			{
-				if (string.IsNullOrEmpty(value))
-				{
-					mSelectionStart = 0;
-					mSelectionEnd = 0;
-				}
-				else
-				{
-					mSelectionStart = value.Length;
-					mSelectionEnd = mSelectionStart;
-				}
-			}
-			else
-			{
-				SaveToPlayerPrefs(value);
-			}
-			UpdateLabel();
-			ExecuteOnChange();
 		}
 	}
 
@@ -274,52 +218,34 @@ public class UIInput : MonoBehaviour
 	{
 		get
 		{
-			return isSelected;
+			return this.isSelected;
 		}
 		set
 		{
-			isSelected = value;
+			this.isSelected = value;
 		}
 	}
 
-	public bool isSelected
+	public int selectionEnd
 	{
 		get
 		{
-			return selection == this;
+			if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
+			{
+				return this.@value.Length;
+			}
+			return (!this.isSelected ? this.@value.Length : this.mSelectionEnd);
 		}
 		set
 		{
-			if (!value)
+			if (this.isSelected)
 			{
-				if (isSelected)
+				if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
 				{
-					UICamera.selectedObject = null;
+					return;
 				}
-			}
-			else
-			{
-				UICamera.selectedObject = base.gameObject;
-			}
-		}
-	}
-
-	public int cursorPosition
-	{
-		get
-		{
-			if (mKeyboard != null && !inputShouldBeHidden)
-			{
-				return value.Length;
-			}
-			return (!isSelected) ? value.Length : mSelectionEnd;
-		}
-		set
-		{
-			if (isSelected && (mKeyboard == null || inputShouldBeHidden))
-			{
-				mSelectionEnd = value;
-				UpdateLabel();
+				this.mSelectionEnd = value;
+				this.UpdateLabel();
 			}
 		}
 	}
@@ -328,47 +254,798 @@ public class UIInput : MonoBehaviour
 	{
 		get
 		{
-			if (mKeyboard != null && !inputShouldBeHidden)
+			if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
 			{
 				return 0;
 			}
-			return (!isSelected) ? value.Length : mSelectionStart;
+			return (!this.isSelected ? this.@value.Length : this.mSelectionStart);
 		}
 		set
 		{
-			if (isSelected && (mKeyboard == null || inputShouldBeHidden))
+			if (this.isSelected)
 			{
-				mSelectionStart = value;
-				UpdateLabel();
+				if (UIInput.mKeyboard != null && !this.inputShouldBeHidden)
+				{
+					return;
+				}
+				this.mSelectionStart = value;
+				this.UpdateLabel();
 			}
 		}
 	}
 
-	public int selectionEnd
+	[Obsolete("Use UIInput.value instead")]
+	public string text
 	{
 		get
 		{
-			if (mKeyboard != null && !inputShouldBeHidden)
-			{
-				return value.Length;
-			}
-			return (!isSelected) ? value.Length : mSelectionEnd;
+			return this.@value;
 		}
 		set
 		{
-			if (isSelected && (mKeyboard == null || inputShouldBeHidden))
+			this.@value = value;
+		}
+	}
+
+	public string @value
+	{
+		get
+		{
+			if (this.mDoInit)
 			{
-				mSelectionEnd = value;
-				UpdateLabel();
+				this.Init();
+			}
+			return this.mValue;
+		}
+		set
+		{
+			if (this.mDoInit)
+			{
+				this.Init();
+			}
+			UIInput.mDrawStart = 0;
+			if (Application.platform == RuntimePlatform.BlackBerryPlayer)
+			{
+				value = value.Replace("\\b", "\b");
+			}
+			value = this.Validate(value);
+			if (this.isSelected && UIInput.mKeyboard != null && this.mCached != value)
+			{
+				UIInput.mKeyboard.text = value;
+				this.mCached = value;
+			}
+			if (this.mValue != value)
+			{
+				this.mValue = value;
+				this.mLoadSavedValue = false;
+				if (!this.isSelected)
+				{
+					this.SaveToPlayerPrefs(value);
+				}
+				else if (!string.IsNullOrEmpty(value))
+				{
+					this.mSelectionStart = value.Length;
+					this.mSelectionEnd = this.mSelectionStart;
+				}
+				else
+				{
+					this.mSelectionStart = 0;
+					this.mSelectionEnd = 0;
+				}
+				this.UpdateLabel();
+				this.ExecuteOnChange();
 			}
 		}
 	}
 
-	public UITexture caret
+	static UIInput()
 	{
-		get
+		UIInput.mLastIME = string.Empty;
+	}
+
+	public UIInput()
+	{
+	}
+
+	protected virtual void Cleanup()
+	{
+		if (this.mHighlight)
 		{
-			return mCaret;
+			this.mHighlight.enabled = false;
+		}
+		if (this.mCaret)
+		{
+			this.mCaret.enabled = false;
+		}
+		if (this.mBlankTex)
+		{
+			NGUITools.Destroy(this.mBlankTex);
+			this.mBlankTex = null;
+		}
+	}
+
+	protected void DoBackspace()
+	{
+		if (!string.IsNullOrEmpty(this.mValue))
+		{
+			if (this.mSelectionStart == this.mSelectionEnd)
+			{
+				if (this.mSelectionStart < 1)
+				{
+					return;
+				}
+				this.mSelectionEnd--;
+			}
+			this.Insert(string.Empty);
+		}
+	}
+
+	protected void ExecuteOnChange()
+	{
+		if (UIInput.current == null && EventDelegate.IsValid(this.onChange))
+		{
+			UIInput.current = this;
+			EventDelegate.Execute(this.onChange);
+			UIInput.current = null;
+		}
+	}
+
+	protected int GetCharUnderMouse()
+	{
+		float single;
+		Vector3[] vector3Array = this.label.worldCorners;
+		Ray ray = UICamera.currentRay;
+		Plane plane = new Plane(vector3Array[0], vector3Array[1], vector3Array[2]);
+		return (!plane.Raycast(ray, out single) ? 0 : UIInput.mDrawStart + this.label.GetCharacterIndexAtPosition(ray.GetPoint(single), false));
+	}
+
+	protected string GetLeftText()
+	{
+		int num = Mathf.Min(this.mSelectionStart, this.mSelectionEnd);
+		return (string.IsNullOrEmpty(this.mValue) || num < 0 ? string.Empty : this.mValue.Substring(0, num));
+	}
+
+	protected string GetRightText()
+	{
+		int num = Mathf.Max(this.mSelectionStart, this.mSelectionEnd);
+		return (string.IsNullOrEmpty(this.mValue) || num >= this.mValue.Length ? string.Empty : this.mValue.Substring(num));
+	}
+
+	protected string GetSelection()
+	{
+		if (string.IsNullOrEmpty(this.mValue) || this.mSelectionStart == this.mSelectionEnd)
+		{
+			return string.Empty;
+		}
+		int num = Mathf.Min(this.mSelectionStart, this.mSelectionEnd);
+		int num1 = Mathf.Max(this.mSelectionStart, this.mSelectionEnd);
+		return this.mValue.Substring(num, num1 - num);
+	}
+
+	protected void Init()
+	{
+		if (this.mDoInit && this.label != null)
+		{
+			this.mDoInit = false;
+			this.mDefaultText = this.label.text;
+			this.mDefaultColor = this.label.color;
+			this.label.supportEncoding = false;
+			this.mEllipsis = this.label.overflowEllipsis;
+			if (this.label.alignment == NGUIText.Alignment.Justified)
+			{
+				this.label.alignment = NGUIText.Alignment.Left;
+				Debug.LogWarning("Input fields using labels with justified alignment are not supported at this time", this);
+			}
+			this.mAlignment = this.label.alignment;
+			this.mPosition = this.label.cachedTransform.localPosition.x;
+			this.UpdateLabel();
+		}
+	}
+
+	protected virtual void Insert(string text)
+	{
+		string leftText = this.GetLeftText();
+		string rightText = this.GetRightText();
+		int length = rightText.Length;
+		StringBuilder stringBuilder = new StringBuilder(leftText.Length + rightText.Length + text.Length);
+		stringBuilder.Append(leftText);
+		int num = 0;
+		int length1 = text.Length;
+		while (num < length1)
+		{
+			char str = text[num];
+			if (str == '\b')
+			{
+				this.DoBackspace();
+			}
+			else if (this.characterLimit <= 0 || stringBuilder.Length + length < this.characterLimit)
+			{
+				if (this.onValidate != null)
+				{
+					str = this.onValidate(stringBuilder.ToString(), stringBuilder.Length, str);
+				}
+				else if (this.validation != UIInput.Validation.None)
+				{
+					str = this.Validate(stringBuilder.ToString(), stringBuilder.Length, str);
+				}
+				if (str != 0)
+				{
+					stringBuilder.Append(str);
+				}
+			}
+			else
+			{
+				break;
+			}
+			num++;
+		}
+		this.mSelectionStart = stringBuilder.Length;
+		this.mSelectionEnd = this.mSelectionStart;
+		int num1 = 0;
+		int length2 = rightText.Length;
+		while (num1 < length2)
+		{
+			char chr = rightText[num1];
+			if (this.onValidate != null)
+			{
+				chr = this.onValidate(stringBuilder.ToString(), stringBuilder.Length, chr);
+			}
+			else if (this.validation != UIInput.Validation.None)
+			{
+				chr = this.Validate(stringBuilder.ToString(), stringBuilder.Length, chr);
+			}
+			if (chr != 0)
+			{
+				stringBuilder.Append(chr);
+			}
+			num1++;
+		}
+		this.mValue = stringBuilder.ToString();
+		this.UpdateLabel();
+		this.ExecuteOnChange();
+	}
+
+	public void LoadValue()
+	{
+		if (!string.IsNullOrEmpty(this.savedAs))
+		{
+			string str = this.mValue.Replace("\\n", "\n");
+			this.mValue = string.Empty;
+			this.@value = (!PlayerPrefs.HasKey(this.savedAs) ? str : PlayerPrefs.GetString(this.savedAs));
+		}
+	}
+
+	protected void OnDeselectEvent()
+	{
+		if (this.mDoInit)
+		{
+			this.Init();
+		}
+		if (this.label != null)
+		{
+			this.label.overflowEllipsis = this.mEllipsis;
+		}
+		if (this.label != null && NGUITools.GetActive(this))
+		{
+			this.mValue = this.@value;
+			if (UIInput.mKeyboard != null)
+			{
+				UIInput.mWaitForKeyboard = false;
+				UIInput.mKeyboard.active = false;
+				UIInput.mKeyboard = null;
+			}
+			if (!string.IsNullOrEmpty(this.mValue))
+			{
+				this.label.text = this.mValue;
+			}
+			else
+			{
+				this.label.text = this.mDefaultText;
+				this.label.color = this.mDefaultColor;
+			}
+			Input.imeCompositionMode = IMECompositionMode.Auto;
+			this.label.alignment = this.mAlignment;
+		}
+		UIInput.selection = null;
+		this.UpdateLabel();
+	}
+
+	private void OnDisable()
+	{
+		this.Cleanup();
+	}
+
+	protected virtual void OnDrag(Vector2 delta)
+	{
+		if (this.label != null && (UICamera.currentScheme == UICamera.ControlScheme.Mouse || UICamera.currentScheme == UICamera.ControlScheme.Touch))
+		{
+			this.selectionEnd = this.GetCharUnderMouse();
+		}
+	}
+
+	private void OnKey(KeyCode key)
+	{
+		int num = Time.frameCount;
+		if (UIInput.mIgnoreKey == num)
+		{
+			return;
+		}
+		if (this.mCam != null && (key == this.mCam.cancelKey0 || key == this.mCam.cancelKey1))
+		{
+			UIInput.mIgnoreKey = num;
+			this.isSelected = false;
+		}
+		else if (key == KeyCode.Tab)
+		{
+			UIInput.mIgnoreKey = num;
+			this.isSelected = false;
+			UIKeyNavigation component = base.GetComponent<UIKeyNavigation>();
+			if (component != null)
+			{
+				component.OnKey(KeyCode.Tab);
+			}
+		}
+	}
+
+	protected virtual void OnPress(bool isPressed)
+	{
+		if (isPressed && this.isSelected && this.label != null && (UICamera.currentScheme == UICamera.ControlScheme.Mouse || UICamera.currentScheme == UICamera.ControlScheme.Touch))
+		{
+			this.selectionEnd = this.GetCharUnderMouse();
+			if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
+			{
+				this.selectionStart = this.mSelectionEnd;
+			}
+		}
+	}
+
+	protected virtual void OnSelect(bool isSelected)
+	{
+		if (!isSelected)
+		{
+			this.OnDeselectEvent();
+		}
+		else
+		{
+			this.OnSelectEvent();
+		}
+	}
+
+	protected void OnSelectEvent()
+	{
+		this.mSelectTime = Time.frameCount;
+		UIInput.selection = this;
+		if (this.mDoInit)
+		{
+			this.Init();
+		}
+		if (this.label != null)
+		{
+			this.mEllipsis = this.label.overflowEllipsis;
+			this.label.overflowEllipsis = false;
+		}
+		if (this.label != null && NGUITools.GetActive(this))
+		{
+			this.mSelectMe = Time.frameCount;
+		}
+	}
+
+	public void RemoveFocus()
+	{
+		this.isSelected = false;
+	}
+
+	protected void SaveToPlayerPrefs(string val)
+	{
+		if (!string.IsNullOrEmpty(this.savedAs))
+		{
+			if (!string.IsNullOrEmpty(val))
+			{
+				PlayerPrefs.SetString(this.savedAs, val);
+			}
+			else
+			{
+				PlayerPrefs.DeleteKey(this.savedAs);
+			}
+		}
+	}
+
+	public void SaveValue()
+	{
+		this.SaveToPlayerPrefs(this.mValue);
+	}
+
+	private void Start()
+	{
+		if (this.selectOnTab != null)
+		{
+			if (base.GetComponent<UIKeyNavigation>() == null)
+			{
+				base.gameObject.AddComponent<UIKeyNavigation>().onDown = this.selectOnTab;
+			}
+			this.selectOnTab = null;
+			NGUITools.SetDirty(this);
+		}
+		if (!this.mLoadSavedValue || string.IsNullOrEmpty(this.savedAs))
+		{
+			this.@value = this.mValue.Replace("\\n", "\n");
+		}
+		else
+		{
+			this.LoadValue();
+		}
+	}
+
+	public void Submit()
+	{
+		if (NGUITools.GetActive(this))
+		{
+			this.mValue = this.@value;
+			if (UIInput.current == null)
+			{
+				UIInput.current = this;
+				EventDelegate.Execute(this.onSubmit);
+				UIInput.current = null;
+			}
+			this.SaveToPlayerPrefs(this.mValue);
+		}
+	}
+
+	protected virtual void Update()
+	{
+		string str;
+		TouchScreenKeyboardType touchScreenKeyboardType;
+		if (!this.isSelected || this.mSelectTime == Time.frameCount)
+		{
+			return;
+		}
+		if (this.mDoInit)
+		{
+			this.Init();
+		}
+		if (UIInput.mWaitForKeyboard)
+		{
+			if (UIInput.mKeyboard != null && !UIInput.mKeyboard.active)
+			{
+				return;
+			}
+			UIInput.mWaitForKeyboard = false;
+		}
+		if (this.mSelectMe != -1 && this.mSelectMe != Time.frameCount)
+		{
+			this.mSelectMe = -1;
+			this.mSelectionEnd = (!string.IsNullOrEmpty(this.mValue) ? this.mValue.Length : 0);
+			UIInput.mDrawStart = 0;
+			this.mSelectionStart = (!this.selectAllTextOnFocus ? this.mSelectionEnd : 0);
+			this.label.color = this.activeTextColor;
+			RuntimePlatform runtimePlatform = Application.platform;
+			if (runtimePlatform == RuntimePlatform.IPhonePlayer || runtimePlatform == RuntimePlatform.Android || runtimePlatform == RuntimePlatform.WP8Player || runtimePlatform == RuntimePlatform.BlackBerryPlayer || runtimePlatform == RuntimePlatform.MetroPlayerARM || runtimePlatform == RuntimePlatform.MetroPlayerX64 || runtimePlatform == RuntimePlatform.MetroPlayerX86)
+			{
+				if (this.inputShouldBeHidden)
+				{
+					TouchScreenKeyboard.hideInput = true;
+					touchScreenKeyboardType = (TouchScreenKeyboardType)this.keyboardType;
+					str = "|";
+				}
+				else if (this.inputType != UIInput.InputType.Password)
+				{
+					TouchScreenKeyboard.hideInput = false;
+					touchScreenKeyboardType = (TouchScreenKeyboardType)this.keyboardType;
+					str = this.mValue;
+					this.mSelectionStart = this.mSelectionEnd;
+				}
+				else
+				{
+					TouchScreenKeyboard.hideInput = false;
+					touchScreenKeyboardType = (TouchScreenKeyboardType)this.keyboardType;
+					str = this.mValue;
+					this.mSelectionStart = this.mSelectionEnd;
+				}
+				UIInput.mWaitForKeyboard = true;
+				UIInput.mKeyboard = (this.inputType != UIInput.InputType.Password ? TouchScreenKeyboard.Open(str, touchScreenKeyboardType, (this.inputShouldBeHidden ? false : this.inputType == UIInput.InputType.AutoCorrect), (!this.label.multiLine ? false : !this.hideInput), false, false, this.defaultText) : TouchScreenKeyboard.Open(str, touchScreenKeyboardType, false, false, true));
+			}
+			else
+			{
+				Vector2 vector2 = (!(UICamera.current != null) || !(UICamera.current.cachedCamera != null) ? this.label.worldCorners[0] : UICamera.current.cachedCamera.WorldToScreenPoint(this.label.worldCorners[0]));
+				vector2.y = (float)Screen.height - vector2.y;
+				Input.imeCompositionMode = IMECompositionMode.On;
+				Input.compositionCursorPos = vector2;
+			}
+			this.UpdateLabel();
+			if (string.IsNullOrEmpty(Input.inputString))
+			{
+				return;
+			}
+		}
+		if (UIInput.mKeyboard == null)
+		{
+			string str1 = Input.compositionString;
+			if (string.IsNullOrEmpty(str1) && !string.IsNullOrEmpty(Input.inputString))
+			{
+				string str2 = Input.inputString;
+				for (int i = 0; i < str2.Length; i++)
+				{
+					char chr = str2[i];
+					if (chr >= ' ')
+					{
+						if (chr != '\uF700')
+						{
+							if (chr != '\uF701')
+							{
+								if (chr != '\uF702')
+								{
+									if (chr != '\uF703')
+									{
+										this.Insert(chr.ToString());
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (UIInput.mLastIME != str1)
+			{
+				this.mSelectionEnd = (!string.IsNullOrEmpty(str1) ? this.mValue.Length + str1.Length : this.mSelectionStart);
+				UIInput.mLastIME = str1;
+				this.UpdateLabel();
+				this.ExecuteOnChange();
+			}
+		}
+		else
+		{
+			string str3 = (UIInput.mKeyboard.done || !UIInput.mKeyboard.active ? this.mCached : UIInput.mKeyboard.text);
+			if (this.inputShouldBeHidden)
+			{
+				if (str3 != "|")
+				{
+					if (!string.IsNullOrEmpty(str3))
+					{
+						this.Insert(str3.Substring(1));
+					}
+					else if (!UIInput.mKeyboard.done && UIInput.mKeyboard.active)
+					{
+						this.DoBackspace();
+					}
+					UIInput.mKeyboard.text = "|";
+				}
+			}
+			else if (this.mCached != str3)
+			{
+				this.mCached = str3;
+				if (!UIInput.mKeyboard.done && UIInput.mKeyboard.active)
+				{
+					this.@value = str3;
+				}
+			}
+			if (UIInput.mKeyboard.done || !UIInput.mKeyboard.active)
+			{
+				if (!UIInput.mKeyboard.wasCanceled)
+				{
+					this.Submit();
+				}
+				UIInput.mKeyboard = null;
+				this.isSelected = false;
+				this.mCached = string.Empty;
+			}
+		}
+		if (this.mCaret != null && this.mNextBlink < RealTime.time)
+		{
+			this.mNextBlink = RealTime.time + 0.5f;
+			this.mCaret.enabled = !this.mCaret.enabled;
+		}
+		if (this.isSelected && this.mLastAlpha != this.label.finalAlpha)
+		{
+			this.UpdateLabel();
+		}
+		if (this.mCam == null)
+		{
+			this.mCam = UICamera.FindCameraForLayer(base.gameObject.layer);
+		}
+		if (this.mCam != null)
+		{
+			bool flag = false;
+			if (this.label.multiLine)
+			{
+				bool flag1 = (Input.GetKey(KeyCode.LeftControl) ? true : Input.GetKey(KeyCode.RightControl));
+				flag = (this.onReturnKey != UIInput.OnReturnKey.Submit ? !flag1 : flag1);
+			}
+			if (UICamera.GetKeyDown(this.mCam.submitKey0))
+			{
+				if (!flag)
+				{
+					if (UICamera.controller.current != null)
+					{
+						UICamera.controller.clickNotification = UICamera.ClickNotification.None;
+					}
+					UICamera.currentKey = this.mCam.submitKey0;
+					this.Submit();
+				}
+				else
+				{
+					this.Insert("\n");
+				}
+			}
+			if (UICamera.GetKeyDown(this.mCam.submitKey1))
+			{
+				if (!flag)
+				{
+					if (UICamera.controller.current != null)
+					{
+						UICamera.controller.clickNotification = UICamera.ClickNotification.None;
+					}
+					UICamera.currentKey = this.mCam.submitKey1;
+					this.Submit();
+				}
+				else
+				{
+					this.Insert("\n");
+				}
+			}
+			if (!this.mCam.useKeyboard && UICamera.GetKeyUp(9))
+			{
+				this.OnKey(KeyCode.Tab);
+			}
+		}
+	}
+
+	public void UpdateLabel()
+	{
+		string empty;
+		if (this.label != null)
+		{
+			if (this.mDoInit)
+			{
+				this.Init();
+			}
+			bool flag = this.isSelected;
+			string str = this.@value;
+			bool flag1 = (!string.IsNullOrEmpty(str) ? false : string.IsNullOrEmpty(Input.compositionString));
+			this.label.color = (!flag1 || flag ? this.activeTextColor : this.mDefaultColor);
+			if (!flag1)
+			{
+				if (this.inputType != UIInput.InputType.Password)
+				{
+					empty = str;
+				}
+				else
+				{
+					empty = string.Empty;
+					string str1 = "*";
+					if (this.label.bitmapFont != null && this.label.bitmapFont.bmFont != null && this.label.bitmapFont.bmFont.GetGlyph(42) == null)
+					{
+						str1 = "x";
+					}
+					int num = 0;
+					int length = str.Length;
+					while (num < length)
+					{
+						empty = string.Concat(empty, str1);
+						num++;
+					}
+				}
+				int num1 = (!flag ? 0 : Mathf.Min(empty.Length, this.cursorPosition));
+				string str2 = empty.Substring(0, num1);
+				if (flag)
+				{
+					str2 = string.Concat(str2, Input.compositionString);
+				}
+				empty = string.Concat(str2, empty.Substring(num1, empty.Length - num1));
+				if (!flag || this.label.overflowMethod != UILabel.Overflow.ClampContent || this.label.maxLineCount != 1)
+				{
+					UIInput.mDrawStart = 0;
+					this.label.alignment = this.mAlignment;
+				}
+				else
+				{
+					int fit = this.label.CalculateOffsetToFit(empty);
+					if (fit == 0)
+					{
+						UIInput.mDrawStart = 0;
+						this.label.alignment = this.mAlignment;
+					}
+					else if (num1 < UIInput.mDrawStart)
+					{
+						UIInput.mDrawStart = num1;
+						this.label.alignment = NGUIText.Alignment.Left;
+					}
+					else if (fit >= UIInput.mDrawStart)
+					{
+						fit = this.label.CalculateOffsetToFit(empty.Substring(0, num1));
+						if (fit > UIInput.mDrawStart)
+						{
+							UIInput.mDrawStart = fit;
+							this.label.alignment = NGUIText.Alignment.Right;
+						}
+					}
+					else
+					{
+						UIInput.mDrawStart = fit;
+						this.label.alignment = NGUIText.Alignment.Left;
+					}
+					if (UIInput.mDrawStart != 0)
+					{
+						empty = empty.Substring(UIInput.mDrawStart, empty.Length - UIInput.mDrawStart);
+					}
+				}
+			}
+			else
+			{
+				empty = (!flag ? this.mDefaultText : string.Empty);
+				this.label.alignment = this.mAlignment;
+			}
+			this.label.text = empty;
+			if (!flag || UIInput.mKeyboard != null && !this.inputShouldBeHidden)
+			{
+				this.Cleanup();
+			}
+			else
+			{
+				int num2 = this.mSelectionStart - UIInput.mDrawStart;
+				int num3 = this.mSelectionEnd - UIInput.mDrawStart;
+				if (this.mBlankTex == null)
+				{
+					this.mBlankTex = new Texture2D(2, 2, TextureFormat.ARGB32, false);
+					for (int i = 0; i < 2; i++)
+					{
+						for (int j = 0; j < 2; j++)
+						{
+							this.mBlankTex.SetPixel(j, i, Color.white);
+						}
+					}
+					this.mBlankTex.Apply();
+				}
+				if (num2 != num3)
+				{
+					if (this.mHighlight != null)
+					{
+						this.mHighlight.pivot = this.label.pivot;
+						this.mHighlight.mainTexture = this.mBlankTex;
+						this.mHighlight.MarkAsChanged();
+						this.mHighlight.enabled = true;
+					}
+					else
+					{
+						this.mHighlight = NGUITools.AddWidget<UITexture>(this.label.cachedGameObject, 2147483647);
+						this.mHighlight.name = "Input Highlight";
+						this.mHighlight.mainTexture = this.mBlankTex;
+						this.mHighlight.fillGeometry = false;
+						this.mHighlight.pivot = this.label.pivot;
+						this.mHighlight.SetAnchor(this.label.cachedTransform);
+					}
+				}
+				if (this.mCaret != null)
+				{
+					this.mCaret.pivot = this.label.pivot;
+					this.mCaret.mainTexture = this.mBlankTex;
+					this.mCaret.MarkAsChanged();
+					this.mCaret.enabled = true;
+				}
+				else
+				{
+					this.mCaret = NGUITools.AddWidget<UITexture>(this.label.cachedGameObject, 2147483647);
+					this.mCaret.name = "Input Caret";
+					this.mCaret.mainTexture = this.mBlankTex;
+					this.mCaret.fillGeometry = false;
+					this.mCaret.pivot = this.label.pivot;
+					this.mCaret.SetAnchor(this.label.cachedTransform);
+				}
+				if (num2 == num3)
+				{
+					this.label.PrintOverlay(num2, num3, this.mCaret.geometry, null, this.caretColor, this.selectionColor);
+					if (this.mHighlight != null)
+					{
+						this.mHighlight.enabled = false;
+					}
+				}
+				else
+				{
+					this.label.PrintOverlay(num2, num3, this.mCaret.geometry, this.mHighlight.geometry, this.caretColor, this.selectionColor);
+					this.mHighlight.enabled = this.mHighlight.geometry.hasVertices;
+				}
+				this.mNextBlink = RealTime.time + 0.5f;
+				this.mLastAlpha = this.label.finalAlpha;
+			}
 		}
 	}
 
@@ -381,690 +1058,34 @@ public class UIInput : MonoBehaviour
 		StringBuilder stringBuilder = new StringBuilder(val.Length);
 		for (int i = 0; i < val.Length; i++)
 		{
-			char c = val[i];
-			if (onValidate != null)
+			char str = val[i];
+			if (this.onValidate != null)
 			{
-				c = onValidate(stringBuilder.ToString(), stringBuilder.Length, c);
+				str = this.onValidate(stringBuilder.ToString(), stringBuilder.Length, str);
 			}
-			else if (validation != 0)
+			else if (this.validation != UIInput.Validation.None)
 			{
-				c = Validate(stringBuilder.ToString(), stringBuilder.Length, c);
+				str = this.Validate(stringBuilder.ToString(), stringBuilder.Length, str);
 			}
-			if (c != 0)
+			if (str != 0)
 			{
-				stringBuilder.Append(c);
-			}
-		}
-		if (characterLimit > 0 && stringBuilder.Length > characterLimit)
-		{
-			return stringBuilder.ToString(0, characterLimit);
-		}
-		return stringBuilder.ToString();
-	}
-
-	private void Start()
-	{
-		if (selectOnTab != null)
-		{
-			UIKeyNavigation component = GetComponent<UIKeyNavigation>();
-			if (component == null)
-			{
-				component = base.gameObject.AddComponent<UIKeyNavigation>();
-				component.onDown = selectOnTab;
-			}
-			selectOnTab = null;
-			NGUITools.SetDirty(this);
-		}
-		if (mLoadSavedValue && !string.IsNullOrEmpty(savedAs))
-		{
-			LoadValue();
-		}
-		else
-		{
-			value = mValue.Replace("\\n", "\n");
-		}
-	}
-
-	protected void Init()
-	{
-		if (mDoInit && label != null)
-		{
-			mDoInit = false;
-			mDefaultText = label.text;
-			mDefaultColor = label.color;
-			label.supportEncoding = false;
-			mEllipsis = label.overflowEllipsis;
-			if (label.alignment == NGUIText.Alignment.Justified)
-			{
-				label.alignment = NGUIText.Alignment.Left;
-				Debug.LogWarning("Input fields using labels with justified alignment are not supported at this time", this);
-			}
-			mAlignment = label.alignment;
-			mPosition = label.cachedTransform.localPosition.x;
-			UpdateLabel();
-		}
-	}
-
-	protected void SaveToPlayerPrefs(string val)
-	{
-		if (!string.IsNullOrEmpty(savedAs))
-		{
-			if (string.IsNullOrEmpty(val))
-			{
-				PlayerPrefs.DeleteKey(savedAs);
-			}
-			else
-			{
-				PlayerPrefs.SetString(savedAs, val);
+				stringBuilder.Append(str);
 			}
 		}
-	}
-
-	protected virtual void OnSelect(bool isSelected)
-	{
-		if (isSelected)
+		if (this.characterLimit <= 0 || stringBuilder.Length <= this.characterLimit)
 		{
-			OnSelectEvent();
+			return stringBuilder.ToString();
 		}
-		else
-		{
-			OnDeselectEvent();
-		}
-	}
-
-	protected void OnSelectEvent()
-	{
-		mSelectTime = Time.frameCount;
-		selection = this;
-		if (mDoInit)
-		{
-			Init();
-		}
-		if (label != null)
-		{
-			mEllipsis = label.overflowEllipsis;
-			label.overflowEllipsis = false;
-		}
-		if (label != null && NGUITools.GetActive(this))
-		{
-			mSelectMe = Time.frameCount;
-		}
-	}
-
-	protected void OnDeselectEvent()
-	{
-		if (mDoInit)
-		{
-			Init();
-		}
-		if (label != null)
-		{
-			label.overflowEllipsis = mEllipsis;
-		}
-		if (label != null && NGUITools.GetActive(this))
-		{
-			mValue = value;
-			if (mKeyboard != null)
-			{
-				mWaitForKeyboard = false;
-				mKeyboard.active = false;
-				mKeyboard = null;
-			}
-			if (string.IsNullOrEmpty(mValue))
-			{
-				label.text = mDefaultText;
-				label.color = mDefaultColor;
-			}
-			else
-			{
-				label.text = mValue;
-			}
-			Input.imeCompositionMode = IMECompositionMode.Auto;
-			label.alignment = mAlignment;
-		}
-		selection = null;
-		UpdateLabel();
-	}
-
-	protected virtual void Update()
-	{
-		if (!isSelected || mSelectTime == Time.frameCount)
-		{
-			return;
-		}
-		if (mDoInit)
-		{
-			Init();
-		}
-		if (mWaitForKeyboard)
-		{
-			if (mKeyboard != null && !mKeyboard.active)
-			{
-				return;
-			}
-			mWaitForKeyboard = false;
-		}
-		if (mSelectMe != -1 && mSelectMe != Time.frameCount)
-		{
-			mSelectMe = -1;
-			mSelectionEnd = ((!string.IsNullOrEmpty(mValue)) ? mValue.Length : 0);
-			mDrawStart = 0;
-			mSelectionStart = ((!selectAllTextOnFocus) ? mSelectionEnd : 0);
-			label.color = activeTextColor;
-			RuntimePlatform platform = Application.platform;
-			if (platform == RuntimePlatform.IPhonePlayer || platform == RuntimePlatform.Android || platform == RuntimePlatform.WP8Player || platform == RuntimePlatform.BlackBerryPlayer || platform == RuntimePlatform.MetroPlayerARM || platform == RuntimePlatform.MetroPlayerX64 || platform == RuntimePlatform.MetroPlayerX86)
-			{
-				TouchScreenKeyboardType touchScreenKeyboardType;
-				string text;
-				if (inputShouldBeHidden)
-				{
-					TouchScreenKeyboard.hideInput = true;
-					touchScreenKeyboardType = (TouchScreenKeyboardType)keyboardType;
-					text = "|";
-				}
-				else if (inputType == InputType.Password)
-				{
-					TouchScreenKeyboard.hideInput = false;
-					touchScreenKeyboardType = (TouchScreenKeyboardType)keyboardType;
-					text = mValue;
-					mSelectionStart = mSelectionEnd;
-				}
-				else
-				{
-					TouchScreenKeyboard.hideInput = false;
-					touchScreenKeyboardType = (TouchScreenKeyboardType)keyboardType;
-					text = mValue;
-					mSelectionStart = mSelectionEnd;
-				}
-				mWaitForKeyboard = true;
-				mKeyboard = ((inputType != InputType.Password) ? TouchScreenKeyboard.Open(text, touchScreenKeyboardType, !inputShouldBeHidden && inputType == InputType.AutoCorrect, label.multiLine && !hideInput, false, false, defaultText) : TouchScreenKeyboard.Open(text, touchScreenKeyboardType, false, false, true));
-			}
-			else
-			{
-				Vector2 compositionCursorPos = ((!(UICamera.current != null) || !(UICamera.current.cachedCamera != null)) ? label.worldCorners[0] : UICamera.current.cachedCamera.WorldToScreenPoint(label.worldCorners[0]));
-				compositionCursorPos.y = (float)Screen.height - compositionCursorPos.y;
-				Input.imeCompositionMode = IMECompositionMode.On;
-				Input.compositionCursorPos = compositionCursorPos;
-			}
-			UpdateLabel();
-			if (string.IsNullOrEmpty(Input.inputString))
-			{
-				return;
-			}
-		}
-		if (mKeyboard != null)
-		{
-			string text2 = ((!mKeyboard.done && mKeyboard.active) ? mKeyboard.text : mCached);
-			if (inputShouldBeHidden)
-			{
-				if (text2 != "|")
-				{
-					if (!string.IsNullOrEmpty(text2))
-					{
-						Insert(text2.Substring(1));
-					}
-					else if (!mKeyboard.done && mKeyboard.active)
-					{
-						DoBackspace();
-					}
-					mKeyboard.text = "|";
-				}
-			}
-			else if (mCached != text2)
-			{
-				mCached = text2;
-				if (!mKeyboard.done && mKeyboard.active)
-				{
-					value = text2;
-				}
-			}
-			if (mKeyboard.done || !mKeyboard.active)
-			{
-				if (!mKeyboard.wasCanceled)
-				{
-					Submit();
-				}
-				mKeyboard = null;
-				isSelected = false;
-				mCached = string.Empty;
-			}
-		}
-		else
-		{
-			string compositionString = Input.compositionString;
-			if (string.IsNullOrEmpty(compositionString) && !string.IsNullOrEmpty(Input.inputString))
-			{
-				string inputString = Input.inputString;
-				for (int i = 0; i < inputString.Length; i++)
-				{
-					char c = inputString[i];
-					if (c >= ' ' && c != '\uf700' && c != '\uf701' && c != '\uf702' && c != '\uf703')
-					{
-						Insert(c.ToString());
-					}
-				}
-			}
-			if (mLastIME != compositionString)
-			{
-				mSelectionEnd = ((!string.IsNullOrEmpty(compositionString)) ? (mValue.Length + compositionString.Length) : mSelectionStart);
-				mLastIME = compositionString;
-				UpdateLabel();
-				ExecuteOnChange();
-			}
-		}
-		if (mCaret != null && mNextBlink < RealTime.time)
-		{
-			mNextBlink = RealTime.time + 0.5f;
-			mCaret.enabled = !mCaret.enabled;
-		}
-		if (isSelected && mLastAlpha != label.finalAlpha)
-		{
-			UpdateLabel();
-		}
-		if (mCam == null)
-		{
-			mCam = UICamera.FindCameraForLayer(base.gameObject.layer);
-		}
-		if (!(mCam != null))
-		{
-			return;
-		}
-		bool flag = false;
-		if (label.multiLine)
-		{
-			bool flag2 = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
-			flag = ((onReturnKey != OnReturnKey.Submit) ? (!flag2) : flag2);
-		}
-		if (UICamera.GetKeyDown(mCam.submitKey0))
-		{
-			if (flag)
-			{
-				Insert("\n");
-			}
-			else
-			{
-				if (UICamera.controller.current != null)
-				{
-					UICamera.controller.clickNotification = UICamera.ClickNotification.None;
-				}
-				UICamera.currentKey = mCam.submitKey0;
-				Submit();
-			}
-		}
-		if (UICamera.GetKeyDown(mCam.submitKey1))
-		{
-			if (flag)
-			{
-				Insert("\n");
-			}
-			else
-			{
-				if (UICamera.controller.current != null)
-				{
-					UICamera.controller.clickNotification = UICamera.ClickNotification.None;
-				}
-				UICamera.currentKey = mCam.submitKey1;
-				Submit();
-			}
-		}
-		if (!mCam.useKeyboard && UICamera.GetKeyUp(KeyCode.Tab))
-		{
-			OnKey(KeyCode.Tab);
-		}
-	}
-
-	private void OnKey(KeyCode key)
-	{
-		int frameCount = Time.frameCount;
-		if (mIgnoreKey == frameCount)
-		{
-			return;
-		}
-		if (mCam != null && (key == mCam.cancelKey0 || key == mCam.cancelKey1))
-		{
-			mIgnoreKey = frameCount;
-			isSelected = false;
-		}
-		else if (key == KeyCode.Tab)
-		{
-			mIgnoreKey = frameCount;
-			isSelected = false;
-			UIKeyNavigation component = GetComponent<UIKeyNavigation>();
-			if (component != null)
-			{
-				component.OnKey(KeyCode.Tab);
-			}
-		}
-	}
-
-	protected void DoBackspace()
-	{
-		if (string.IsNullOrEmpty(mValue))
-		{
-			return;
-		}
-		if (mSelectionStart == mSelectionEnd)
-		{
-			if (mSelectionStart < 1)
-			{
-				return;
-			}
-			mSelectionEnd--;
-		}
-		Insert(string.Empty);
-	}
-
-	protected virtual void Insert(string text)
-	{
-		string leftText = GetLeftText();
-		string rightText = GetRightText();
-		int length = rightText.Length;
-		StringBuilder stringBuilder = new StringBuilder(leftText.Length + rightText.Length + text.Length);
-		stringBuilder.Append(leftText);
-		int i = 0;
-		for (int length2 = text.Length; i < length2; i++)
-		{
-			char c = text[i];
-			if (c == '\b')
-			{
-				DoBackspace();
-				continue;
-			}
-			if (characterLimit > 0 && stringBuilder.Length + length >= characterLimit)
-			{
-				break;
-			}
-			if (onValidate != null)
-			{
-				c = onValidate(stringBuilder.ToString(), stringBuilder.Length, c);
-			}
-			else if (validation != 0)
-			{
-				c = Validate(stringBuilder.ToString(), stringBuilder.Length, c);
-			}
-			if (c != 0)
-			{
-				stringBuilder.Append(c);
-			}
-		}
-		mSelectionStart = stringBuilder.Length;
-		mSelectionEnd = mSelectionStart;
-		int j = 0;
-		for (int length3 = rightText.Length; j < length3; j++)
-		{
-			char c2 = rightText[j];
-			if (onValidate != null)
-			{
-				c2 = onValidate(stringBuilder.ToString(), stringBuilder.Length, c2);
-			}
-			else if (validation != 0)
-			{
-				c2 = Validate(stringBuilder.ToString(), stringBuilder.Length, c2);
-			}
-			if (c2 != 0)
-			{
-				stringBuilder.Append(c2);
-			}
-		}
-		mValue = stringBuilder.ToString();
-		UpdateLabel();
-		ExecuteOnChange();
-	}
-
-	protected string GetLeftText()
-	{
-		int num = Mathf.Min(mSelectionStart, mSelectionEnd);
-		return (!string.IsNullOrEmpty(mValue) && num >= 0) ? mValue.Substring(0, num) : string.Empty;
-	}
-
-	protected string GetRightText()
-	{
-		int num = Mathf.Max(mSelectionStart, mSelectionEnd);
-		return (!string.IsNullOrEmpty(mValue) && num < mValue.Length) ? mValue.Substring(num) : string.Empty;
-	}
-
-	protected string GetSelection()
-	{
-		if (string.IsNullOrEmpty(mValue) || mSelectionStart == mSelectionEnd)
-		{
-			return string.Empty;
-		}
-		int num = Mathf.Min(mSelectionStart, mSelectionEnd);
-		int num2 = Mathf.Max(mSelectionStart, mSelectionEnd);
-		return mValue.Substring(num, num2 - num);
-	}
-
-	protected int GetCharUnderMouse()
-	{
-		Vector3[] worldCorners = label.worldCorners;
-		Ray currentRay = UICamera.currentRay;
-		float enter;
-		return new Plane(worldCorners[0], worldCorners[1], worldCorners[2]).Raycast(currentRay, out enter) ? (mDrawStart + label.GetCharacterIndexAtPosition(currentRay.GetPoint(enter), false)) : 0;
-	}
-
-	protected virtual void OnPress(bool isPressed)
-	{
-		if (isPressed && isSelected && label != null && (UICamera.currentScheme == UICamera.ControlScheme.Mouse || UICamera.currentScheme == UICamera.ControlScheme.Touch))
-		{
-			selectionEnd = GetCharUnderMouse();
-			if (!Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.RightShift))
-			{
-				selectionStart = mSelectionEnd;
-			}
-		}
-	}
-
-	protected virtual void OnDrag(Vector2 delta)
-	{
-		if (label != null && (UICamera.currentScheme == UICamera.ControlScheme.Mouse || UICamera.currentScheme == UICamera.ControlScheme.Touch))
-		{
-			selectionEnd = GetCharUnderMouse();
-		}
-	}
-
-	private void OnDisable()
-	{
-		Cleanup();
-	}
-
-	protected virtual void Cleanup()
-	{
-		if ((bool)mHighlight)
-		{
-			mHighlight.enabled = false;
-		}
-		if ((bool)mCaret)
-		{
-			mCaret.enabled = false;
-		}
-		if ((bool)mBlankTex)
-		{
-			NGUITools.Destroy(mBlankTex);
-			mBlankTex = null;
-		}
-	}
-
-	public void Submit()
-	{
-		if (NGUITools.GetActive(this))
-		{
-			mValue = value;
-			if (current == null)
-			{
-				current = this;
-				EventDelegate.Execute(onSubmit);
-				current = null;
-			}
-			SaveToPlayerPrefs(mValue);
-		}
-	}
-
-	public void UpdateLabel()
-	{
-		if (!(label != null))
-		{
-			return;
-		}
-		if (mDoInit)
-		{
-			Init();
-		}
-		bool flag = isSelected;
-		string text = value;
-		bool flag2 = string.IsNullOrEmpty(text) && string.IsNullOrEmpty(Input.compositionString);
-		label.color = ((!flag2 || flag) ? activeTextColor : mDefaultColor);
-		string text2;
-		if (flag2)
-		{
-			text2 = ((!flag) ? mDefaultText : string.Empty);
-			label.alignment = mAlignment;
-		}
-		else
-		{
-			if (inputType == InputType.Password)
-			{
-				text2 = string.Empty;
-				string text3 = "*";
-				if (label.bitmapFont != null && label.bitmapFont.bmFont != null && label.bitmapFont.bmFont.GetGlyph(42) == null)
-				{
-					text3 = "x";
-				}
-				int i = 0;
-				for (int length = text.Length; i < length; i++)
-				{
-					text2 += text3;
-				}
-			}
-			else
-			{
-				text2 = text;
-			}
-			int num = (flag ? Mathf.Min(text2.Length, cursorPosition) : 0);
-			string text4 = text2.Substring(0, num);
-			if (flag)
-			{
-				text4 += Input.compositionString;
-			}
-			text2 = text4 + text2.Substring(num, text2.Length - num);
-			if (flag && label.overflowMethod == UILabel.Overflow.ClampContent && label.maxLineCount == 1)
-			{
-				int num2 = label.CalculateOffsetToFit(text2);
-				if (num2 == 0)
-				{
-					mDrawStart = 0;
-					label.alignment = mAlignment;
-				}
-				else if (num < mDrawStart)
-				{
-					mDrawStart = num;
-					label.alignment = NGUIText.Alignment.Left;
-				}
-				else if (num2 < mDrawStart)
-				{
-					mDrawStart = num2;
-					label.alignment = NGUIText.Alignment.Left;
-				}
-				else
-				{
-					num2 = label.CalculateOffsetToFit(text2.Substring(0, num));
-					if (num2 > mDrawStart)
-					{
-						mDrawStart = num2;
-						label.alignment = NGUIText.Alignment.Right;
-					}
-				}
-				if (mDrawStart != 0)
-				{
-					text2 = text2.Substring(mDrawStart, text2.Length - mDrawStart);
-				}
-			}
-			else
-			{
-				mDrawStart = 0;
-				label.alignment = mAlignment;
-			}
-		}
-		label.text = text2;
-		if (flag && (mKeyboard == null || inputShouldBeHidden))
-		{
-			int num3 = mSelectionStart - mDrawStart;
-			int num4 = mSelectionEnd - mDrawStart;
-			if (mBlankTex == null)
-			{
-				mBlankTex = new Texture2D(2, 2, TextureFormat.ARGB32, false);
-				for (int j = 0; j < 2; j++)
-				{
-					for (int k = 0; k < 2; k++)
-					{
-						mBlankTex.SetPixel(k, j, Color.white);
-					}
-				}
-				mBlankTex.Apply();
-			}
-			if (num3 != num4)
-			{
-				if (mHighlight == null)
-				{
-					mHighlight = NGUITools.AddWidget<UITexture>(label.cachedGameObject);
-					mHighlight.name = "Input Highlight";
-					mHighlight.mainTexture = mBlankTex;
-					mHighlight.fillGeometry = false;
-					mHighlight.pivot = label.pivot;
-					mHighlight.SetAnchor(label.cachedTransform);
-				}
-				else
-				{
-					mHighlight.pivot = label.pivot;
-					mHighlight.mainTexture = mBlankTex;
-					mHighlight.MarkAsChanged();
-					mHighlight.enabled = true;
-				}
-			}
-			if (mCaret == null)
-			{
-				mCaret = NGUITools.AddWidget<UITexture>(label.cachedGameObject);
-				mCaret.name = "Input Caret";
-				mCaret.mainTexture = mBlankTex;
-				mCaret.fillGeometry = false;
-				mCaret.pivot = label.pivot;
-				mCaret.SetAnchor(label.cachedTransform);
-			}
-			else
-			{
-				mCaret.pivot = label.pivot;
-				mCaret.mainTexture = mBlankTex;
-				mCaret.MarkAsChanged();
-				mCaret.enabled = true;
-			}
-			if (num3 != num4)
-			{
-				label.PrintOverlay(num3, num4, mCaret.geometry, mHighlight.geometry, caretColor, selectionColor);
-				mHighlight.enabled = mHighlight.geometry.hasVertices;
-			}
-			else
-			{
-				label.PrintOverlay(num3, num4, mCaret.geometry, null, caretColor, selectionColor);
-				if (mHighlight != null)
-				{
-					mHighlight.enabled = false;
-				}
-			}
-			mNextBlink = RealTime.time + 0.5f;
-			mLastAlpha = label.finalAlpha;
-		}
-		else
-		{
-			Cleanup();
-		}
+		return stringBuilder.ToString(0, this.characterLimit);
 	}
 
 	protected char Validate(string text, int pos, char ch)
 	{
-		if (validation == Validation.None || !base.enabled)
+		if (this.validation == UIInput.Validation.None || !base.enabled)
 		{
 			return ch;
 		}
-		if (validation == Validation.Integer)
+		if (this.validation == UIInput.Validation.Integer)
 		{
 			if (ch >= '0' && ch <= '9')
 			{
@@ -1075,7 +1096,7 @@ public class UIInput : MonoBehaviour
 				return ch;
 			}
 		}
-		else if (validation == Validation.Float)
+		else if (this.validation == UIInput.Validation.Float)
 		{
 			if (ch >= '0' && ch <= '9')
 			{
@@ -1090,7 +1111,7 @@ public class UIInput : MonoBehaviour
 				return ch;
 			}
 		}
-		else if (validation == Validation.Alphanumeric)
+		else if (this.validation == UIInput.Validation.Alphanumeric)
 		{
 			if (ch >= 'A' && ch <= 'Z')
 			{
@@ -1105,7 +1126,98 @@ public class UIInput : MonoBehaviour
 				return ch;
 			}
 		}
-		else if (validation == Validation.Username)
+		else if (this.validation != UIInput.Validation.Username)
+		{
+			if (this.validation == UIInput.Validation.Filename)
+			{
+				if (ch == ':')
+				{
+					return '\0';
+				}
+				if (ch == '/')
+				{
+					return '\0';
+				}
+				if (ch == '\\')
+				{
+					return '\0';
+				}
+				if (ch == '<')
+				{
+					return '\0';
+				}
+				if (ch == '>')
+				{
+					return '\0';
+				}
+				if (ch == '|')
+				{
+					return '\0';
+				}
+				if (ch == '\u005E')
+				{
+					return '\0';
+				}
+				if (ch == '*')
+				{
+					return '\0';
+				}
+				if (ch == ';')
+				{
+					return '\0';
+				}
+				if (ch == '\"')
+				{
+					return '\0';
+				}
+				if (ch == '\u0060')
+				{
+					return '\0';
+				}
+				if (ch == '\t')
+				{
+					return '\0';
+				}
+				if (ch == '\n')
+				{
+					return '\0';
+				}
+				return ch;
+			}
+			if (this.validation == UIInput.Validation.Name)
+			{
+				char chr = (text.Length <= 0 ? ' ' : text[Mathf.Clamp(pos, 0, text.Length - 1)]);
+				char chr1 = (text.Length <= 0 ? '\n' : text[Mathf.Clamp(pos + 1, 0, text.Length - 1)]);
+				if (ch >= 'a' && ch <= 'z')
+				{
+					if (chr != ' ')
+					{
+						return ch;
+					}
+					return (char)(ch - 97 + 65);
+				}
+				if (ch >= 'A' && ch <= 'Z')
+				{
+					if (chr == ' ' || chr == '\'')
+					{
+						return ch;
+					}
+					return (char)(ch - 65 + 97);
+				}
+				if (ch == '\'')
+				{
+					if (chr != ' ' && chr != '\'' && chr1 != '\'' && !text.Contains("'"))
+					{
+						return ch;
+					}
+				}
+				else if (ch == ' ' && chr != ' ' && chr != '\'' && chr1 != ' ' && chr1 != '\'')
+				{
+					return ch;
+				}
+			}
+		}
+		else
 		{
 			if (ch >= 'A' && ch <= 'Z')
 			{
@@ -1120,109 +1232,45 @@ public class UIInput : MonoBehaviour
 				return ch;
 			}
 		}
-		else
-		{
-			if (validation == Validation.Filename)
-			{
-				switch (ch)
-				{
-				case ':':
-					return '\0';
-				case '/':
-					return '\0';
-				case '\\':
-					return '\0';
-				case '<':
-					return '\0';
-				case '>':
-					return '\0';
-				case '|':
-					return '\0';
-				case '^':
-					return '\0';
-				case '*':
-					return '\0';
-				case ';':
-					return '\0';
-				case '"':
-					return '\0';
-				case '`':
-					return '\0';
-				case '\t':
-					return '\0';
-				case '\n':
-					return '\0';
-				default:
-					return ch;
-				}
-			}
-			if (validation == Validation.Name)
-			{
-				char c = ((text.Length <= 0) ? ' ' : text[Mathf.Clamp(pos, 0, text.Length - 1)]);
-				char c2 = ((text.Length <= 0) ? '\n' : text[Mathf.Clamp(pos + 1, 0, text.Length - 1)]);
-				if (ch >= 'a' && ch <= 'z')
-				{
-					if (c == ' ')
-					{
-						return (char)(ch - 97 + 65);
-					}
-					return ch;
-				}
-				if (ch >= 'A' && ch <= 'Z')
-				{
-					if (c != ' ' && c != '\'')
-					{
-						return (char)(ch - 65 + 97);
-					}
-					return ch;
-				}
-				switch (ch)
-				{
-				case '\'':
-					if (c != ' ' && c != '\'' && c2 != '\'' && !text.Contains("'"))
-					{
-						return ch;
-					}
-					break;
-				case ' ':
-					if (c != ' ' && c != '\'' && c2 != ' ' && c2 != '\'')
-					{
-						return ch;
-					}
-					break;
-				}
-			}
-		}
 		return '\0';
 	}
 
-	protected void ExecuteOnChange()
+	public enum InputType
 	{
-		if (current == null && EventDelegate.IsValid(onChange))
-		{
-			current = this;
-			EventDelegate.Execute(onChange);
-			current = null;
-		}
+		Standard,
+		AutoCorrect,
+		Password
 	}
 
-	public void RemoveFocus()
+	public enum KeyboardType
 	{
-		isSelected = false;
+		Default,
+		ASCIICapable,
+		NumbersAndPunctuation,
+		URL,
+		NumberPad,
+		PhonePad,
+		NamePhonePad,
+		EmailAddress
 	}
 
-	public void SaveValue()
+	public enum OnReturnKey
 	{
-		SaveToPlayerPrefs(mValue);
+		Default,
+		Submit,
+		NewLine
 	}
 
-	public void LoadValue()
+	public delegate char OnValidate(string text, int charIndex, char addedChar);
+
+	public enum Validation
 	{
-		if (!string.IsNullOrEmpty(savedAs))
-		{
-			string text = mValue.Replace("\\n", "\n");
-			mValue = string.Empty;
-			value = ((!PlayerPrefs.HasKey(savedAs)) ? text : PlayerPrefs.GetString(savedAs));
-		}
+		None,
+		Integer,
+		Float,
+		Alphanumeric,
+		Username,
+		Name,
+		Filename
 	}
 }

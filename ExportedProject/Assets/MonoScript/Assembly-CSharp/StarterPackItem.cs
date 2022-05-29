@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class StarterPackItem : MonoBehaviour
@@ -10,44 +11,48 @@ public class StarterPackItem : MonoBehaviour
 
 	public UILabel realPriceItem;
 
+	public StarterPackItem()
+	{
+	}
+
 	public void SetData(StarterPackItemData itemData)
 	{
 		bool flag = itemData.count > 1;
-		countItems.gameObject.SetActive(flag);
+		this.countItems.gameObject.SetActive(flag);
 		if (flag)
 		{
-			countItems.text = itemData.count.ToString();
+			this.countItems.text = itemData.count.ToString();
 		}
-		string validTag = itemData.validTag;
+		string str = itemData.validTag;
 		int num = 0;
-		string text = validTag;
-		bool flag2 = GearManager.IsItemGear(validTag);
-		if (flag2)
+		string str1 = str;
+		bool flag1 = GearManager.IsItemGear(str);
+		if (flag1)
 		{
-			text = GearManager.HolderQuantityForID(validTag);
-			num = GearManager.CurrentNumberOfUphradesForGear(text);
+			str1 = GearManager.HolderQuantityForID(str);
+			num = GearManager.CurrentNumberOfUphradesForGear(str1);
 		}
-		if (flag2 && (text == GearManager.Turret || text == GearManager.Mech))
+		if (!flag1 || !(str1 == GearManager.Turret) && !(str1 == GearManager.Mech))
 		{
-			int? upgradeNum = num;
-			imageItem.mainTexture = ItemDb.GetTextureItemByTag(text, upgradeNum);
+			this.imageItem.mainTexture = ItemDb.GetTextureItemByTag(str1, null);
 		}
 		else
 		{
-			imageItem.mainTexture = ItemDb.GetTextureItemByTag(text);
+			int? nullable = new int?(num);
+			this.imageItem.mainTexture = ItemDb.GetTextureItemByTag(str1, nullable);
 		}
-		nameItem.text = ItemDb.GetItemNameByTag(validTag);
-		string text2 = ItemDb.GetShopIdByTag(validTag);
-		if (string.IsNullOrEmpty(text2))
+		this.nameItem.text = ItemDb.GetItemNameByTag(str);
+		string shopIdByTag = ItemDb.GetShopIdByTag(str);
+		if (string.IsNullOrEmpty(shopIdByTag))
 		{
-			text2 = ((!flag2) ? validTag : GearManager.OneItemIDForGear(text, num));
+			shopIdByTag = (!flag1 ? str : GearManager.OneItemIDForGear(str1, num));
 		}
-		ItemPrice priceByShopId = ItemDb.GetPriceByShopId(text2);
+		ItemPrice priceByShopId = ItemDb.GetPriceByShopId(shopIdByTag);
 		if (priceByShopId != null)
 		{
-			int num2 = priceByShopId.Price * itemData.count;
-			string arg = ((!(priceByShopId.Currency == "Coins")) ? LocalizationStore.Get("Key_0771") : LocalizationStore.Get("Key_0936"));
-			realPriceItem.text = string.Format("{0} {1}", num2, arg);
+			int price = priceByShopId.Price * itemData.count;
+			string str2 = (priceByShopId.Currency != "Coins" ? LocalizationStore.Get("Key_0771") : LocalizationStore.Get("Key_0936"));
+			this.realPriceItem.text = string.Format("{0} {1}", price, str2);
 		}
 	}
 }

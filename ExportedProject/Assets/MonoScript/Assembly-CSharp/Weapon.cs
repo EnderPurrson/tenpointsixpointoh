@@ -1,4 +1,5 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class Weapon
@@ -13,11 +14,11 @@ public class Weapon
 	{
 		get
 		{
-			return _currentAmmoInBackpack.Value;
+			return this._currentAmmoInBackpack.Value;
 		}
 		set
 		{
-			_currentAmmoInBackpack.Value = value;
+			this._currentAmmoInBackpack.Value = value;
 		}
 	}
 
@@ -25,11 +26,15 @@ public class Weapon
 	{
 		get
 		{
-			return _currentAmmoInClip.Value;
+			return this._currentAmmoInClip.Value;
 		}
 		set
 		{
-			_currentAmmoInClip.Value = value;
+			this._currentAmmoInClip.Value = value;
 		}
+	}
+
+	public Weapon()
+	{
 	}
 }

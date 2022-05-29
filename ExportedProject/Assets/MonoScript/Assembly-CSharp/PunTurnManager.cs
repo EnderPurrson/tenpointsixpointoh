@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PunTurnManager : PunBehaviour
@@ -19,19 +20,6 @@ public class PunTurnManager : PunBehaviour
 
 	private bool _isOverCallProcessed;
 
-	public int Turn
-	{
-		get
-		{
-			return PhotonNetwork.room.GetTurn();
-		}
-		private set
-		{
-			_isOverCallProcessed = false;
-			PhotonNetwork.room.SetTurn(value, true);
-		}
-	}
-
 	public float ElapsedTimeInTurn
 	{
 		get
@@ -40,19 +28,11 @@ public class PunTurnManager : PunBehaviour
 		}
 	}
 
-	public float RemainingSecondsInTurn
-	{
-		get
-		{
-			return Mathf.Max(0f, TurnDuration - ElapsedTimeInTurn);
-		}
-	}
-
 	public bool IsCompletedByAll
 	{
 		get
 		{
-			return PhotonNetwork.room != null && Turn > 0 && finishedPlayers.Count == PhotonNetwork.room.playerCount;
+			return (PhotonNetwork.room == null || this.Turn <= 0 ? false : this.finishedPlayers.Count == PhotonNetwork.room.playerCount);
 		}
 	}
 
@@ -60,7 +40,7 @@ public class PunTurnManager : PunBehaviour
 	{
 		get
 		{
-			return finishedPlayers.Contains(PhotonNetwork.player);
+			return this.finishedPlayers.Contains(PhotonNetwork.player);
 		}
 	}
 
@@ -68,54 +48,43 @@ public class PunTurnManager : PunBehaviour
 	{
 		get
 		{
-			return RemainingSecondsInTurn <= 0f;
+			return this.RemainingSecondsInTurn <= 0f;
 		}
 	}
 
-	private void Start()
+	public float RemainingSecondsInTurn
 	{
-		PhotonNetwork.OnEventCall = OnEvent;
-	}
-
-	private void Update()
-	{
-		if (Turn > 0 && IsOver && !_isOverCallProcessed)
+		get
 		{
-			_isOverCallProcessed = true;
-			TurnManagerListener.OnTurnTimeEnds(Turn);
+			return Mathf.Max(0f, this.TurnDuration - this.ElapsedTimeInTurn);
 		}
+	}
+
+	public int Turn
+	{
+		get
+		{
+			return PhotonNetwork.room.GetTurn();
+		}
+		private set
+		{
+			this._isOverCallProcessed = false;
+			PhotonNetwork.room.SetTurn(value, true);
+		}
+	}
+
+	public PunTurnManager()
+	{
 	}
 
 	public void BeginTurn()
 	{
-		Turn++;
-	}
-
-	public void SendMove(object move, bool finished)
-	{
-		if (IsFinishedByMe)
-		{
-			Debug.LogWarning("Can't SendMove. Turn is finished by this player.");
-			return;
-		}
-		Hashtable hashtable = new Hashtable();
-		hashtable.Add("turn", Turn);
-		hashtable.Add("move", move);
-		byte eventCode = (byte)((!finished) ? 1 : 2);
-		PhotonNetwork.RaiseEvent(eventCode, hashtable, true, new RaiseEventOptions
-		{
-			CachingOption = EventCaching.AddToRoomCache
-		});
-		if (finished)
-		{
-			PhotonNetwork.player.SetFinishedTurn(Turn);
-		}
-		OnEvent(eventCode, hashtable, PhotonNetwork.player.ID);
+		this.Turn = this.Turn + 1;
 	}
 
 	public bool GetPlayerFinishedTurn(PhotonPlayer player)
 	{
-		if (player != null && finishedPlayers != null && finishedPlayers.Contains(player))
+		if (player != null && this.finishedPlayers != null && this.finishedPlayers.Contains(player))
 		{
 			return true;
 		}
@@ -125,32 +94,28 @@ public class PunTurnManager : PunBehaviour
 	public void OnEvent(byte eventCode, object content, int senderId)
 	{
 		PhotonPlayer photonPlayer = PhotonPlayer.Find(senderId);
-		switch (eventCode)
-		{
-		case 1:
-		{
-			Hashtable hashtable2 = content as Hashtable;
-			int turn = (int)hashtable2["turn"];
-			object move2 = hashtable2["move"];
-			TurnManagerListener.OnPlayerMove(photonPlayer, turn, move2);
-			break;
-		}
-		case 2:
+		byte num = eventCode;
+		if (num == 1)
 		{
 			Hashtable hashtable = content as Hashtable;
-			int num = (int)hashtable["turn"];
-			object move = hashtable["move"];
-			if (num == Turn)
-			{
-				finishedPlayers.Add(photonPlayer);
-				TurnManagerListener.OnPlayerFinished(photonPlayer, num, move);
-			}
-			if (IsCompletedByAll)
-			{
-				TurnManagerListener.OnTurnCompleted(Turn);
-			}
-			break;
+			int item = (int)hashtable["turn"];
+			object obj = hashtable["move"];
+			this.TurnManagerListener.OnPlayerMove(photonPlayer, item, obj);
 		}
+		else if (num == 2)
+		{
+			Hashtable hashtable1 = content as Hashtable;
+			int item1 = (int)hashtable1["turn"];
+			object obj1 = hashtable1["move"];
+			if (item1 == this.Turn)
+			{
+				this.finishedPlayers.Add(photonPlayer);
+				this.TurnManagerListener.OnPlayerFinished(photonPlayer, item1, obj1);
+			}
+			if (this.IsCompletedByAll)
+			{
+				this.TurnManagerListener.OnTurnCompleted(this.Turn);
+			}
 		}
 	}
 
@@ -158,9 +123,48 @@ public class PunTurnManager : PunBehaviour
 	{
 		if (propertiesThatChanged.ContainsKey("Turn"))
 		{
-			_isOverCallProcessed = false;
-			finishedPlayers.Clear();
-			TurnManagerListener.OnTurnBegins(Turn);
+			this._isOverCallProcessed = false;
+			this.finishedPlayers.Clear();
+			this.TurnManagerListener.OnTurnBegins(this.Turn);
+		}
+	}
+
+	public void SendMove(object move, bool finished)
+	{
+		if (this.IsFinishedByMe)
+		{
+			Debug.LogWarning("Can't SendMove. Turn is finished by this player.");
+			return;
+		}
+		Hashtable hashtable = new Hashtable()
+		{
+			{ "turn", this.Turn },
+			{ "move", move }
+		};
+		byte num = (byte)((!finished ? 1 : 2));
+		RaiseEventOptions raiseEventOption = new RaiseEventOptions()
+		{
+			CachingOption = EventCaching.AddToRoomCache
+		};
+		PhotonNetwork.RaiseEvent(num, hashtable, true, raiseEventOption);
+		if (finished)
+		{
+			PhotonNetwork.player.SetFinishedTurn(this.Turn);
+		}
+		this.OnEvent(num, hashtable, PhotonNetwork.player.ID);
+	}
+
+	private void Start()
+	{
+		PhotonNetwork.OnEventCall = new PhotonNetwork.EventCallback(this.OnEvent);
+	}
+
+	private void Update()
+	{
+		if (this.Turn > 0 && this.IsOver && !this._isOverCallProcessed)
+		{
+			this._isOverCallProcessed = true;
+			this.TurnManagerListener.OnTurnTimeEnds(this.Turn);
 		}
 	}
 }

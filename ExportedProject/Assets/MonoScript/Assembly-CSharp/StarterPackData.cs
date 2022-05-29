@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public class StarterPackData
@@ -17,4 +18,8 @@ public class StarterPackData
 	public int gemsCost;
 
 	public bool enable;
+
+	public StarterPackData()
+	{
+	}
 }

@@ -1,4 +1,5 @@
 using ExitGames.Client.Photon;
+using System;
 
 internal class EnterRoomParams
 {
@@ -17,4 +18,8 @@ internal class EnterRoomParams
 	public bool RejoinOnly;
 
 	public string[] ExpectedUsers;
+
+	public EnterRoomParams()
+	{
+	}
 }

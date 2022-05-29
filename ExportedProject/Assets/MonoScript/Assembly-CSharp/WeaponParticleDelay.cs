@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class WeaponParticleDelay : MonoBehaviour
@@ -12,30 +13,31 @@ public class WeaponParticleDelay : MonoBehaviour
 
 	private bool seqStarted;
 
-	private void Awake()
+	public WeaponParticleDelay()
 	{
-		weaponAnimation = GetComponent<Animation>();
 	}
 
-	private void Update()
+	private void Awake()
 	{
-		if (weaponAnimation.IsPlaying(animationName))
-		{
-			if (!seqStarted)
-			{
-				seqStarted = true;
-				partSystem.gameObject.SetActive(false);
-				Invoke("TurnOnParticleSystem", delay);
-			}
-		}
-		else
-		{
-			seqStarted = false;
-		}
+		this.weaponAnimation = base.GetComponent<Animation>();
 	}
 
 	private void TurnOnParticleSystem()
 	{
-		partSystem.gameObject.SetActive(true);
+		this.partSystem.gameObject.SetActive(true);
+	}
+
+	private void Update()
+	{
+		if (!this.weaponAnimation.IsPlaying(this.animationName))
+		{
+			this.seqStarted = false;
+		}
+		else if (!this.seqStarted)
+		{
+			this.seqStarted = true;
+			this.partSystem.gameObject.SetActive(false);
+			base.Invoke("TurnOnParticleSystem", this.delay);
+		}
 	}
 }

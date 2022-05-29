@@ -1,26 +1,29 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class DeviceOrientationMonitor : MonoBehaviour
 {
-	public static float CheckDelay = 0.5f;
+	public static float CheckDelay;
 
-	[CompilerGenerated]
-	private static Action<DeviceOrientation> _003C_003Ef__am_0024cache3;
-
-	public static DeviceOrientation CurrentOrientation { get; private set; }
-
-	public static event Action<DeviceOrientation> OnOrientationChange;
+	public static DeviceOrientation CurrentOrientation
+	{
+		get;
+		private set;
+	}
 
 	static DeviceOrientationMonitor()
 	{
-		if (_003C_003Ef__am_0024cache3 == null)
-		{
-			_003C_003Ef__am_0024cache3 = _003COnOrientationChange_003Em__289;
-		}
-		DeviceOrientationMonitor.OnOrientationChange = _003C_003Ef__am_0024cache3;
+		DeviceOrientationMonitor.CheckDelay = 0.5f;
+		DeviceOrientationMonitor.OnOrientationChange = (DeviceOrientation o) => {
+		};
+	}
+
+	public DeviceOrientationMonitor()
+	{
 	}
 
 	private void Awake()
@@ -28,33 +31,21 @@ public class DeviceOrientationMonitor : MonoBehaviour
 		UnityEngine.Object.DontDestroyOnLoad(this);
 	}
 
-	private void OnEnable()
+	[DebuggerHidden]
+	private IEnumerator CheckForChange()
 	{
-		StartCoroutine(CheckForChange());
+		return new DeviceOrientationMonitor.u003cCheckForChangeu003ec__Iterator131();
 	}
 
 	private void OnDisable()
 	{
-		StopAllCoroutines();
+		base.StopAllCoroutines();
 	}
 
-	private IEnumerator CheckForChange()
+	private void OnEnable()
 	{
-		CurrentOrientation = Input.deviceOrientation;
-		while (true)
-		{
-			DeviceOrientation deviceOrientation = Input.deviceOrientation;
-			if ((deviceOrientation == DeviceOrientation.LandscapeLeft || deviceOrientation == DeviceOrientation.LandscapeRight) && CurrentOrientation != Input.deviceOrientation)
-			{
-				CurrentOrientation = Input.deviceOrientation;
-				DeviceOrientationMonitor.OnOrientationChange(CurrentOrientation);
-			}
-			yield return new WaitForSeconds(CheckDelay);
-		}
+		base.StartCoroutine(this.CheckForChange());
 	}
 
-	[CompilerGenerated]
-	private static void _003COnOrientationChange_003Em__289(DeviceOrientation o)
-	{
-	}
+	public static event Action<DeviceOrientation> OnOrientationChange;
 }

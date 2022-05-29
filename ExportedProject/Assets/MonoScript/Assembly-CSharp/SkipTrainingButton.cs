@@ -1,9 +1,12 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class SkipTrainingButton : MonoBehaviour
 {
-	public static event Action SkipTrClosed;
+	public SkipTrainingButton()
+	{
+	}
 
 	protected virtual void OnClick()
 	{
@@ -13,4 +16,6 @@ public class SkipTrainingButton : MonoBehaviour
 		}
 		Resources.UnloadUnusedAssets();
 	}
+
+	public static event Action SkipTrClosed;
 }

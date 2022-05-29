@@ -1,37 +1,16 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public class GiftController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CGetInfoNewPlayer_003Ec__AnonStorey2B4
-	{
-		internal GiftCategoryType needCat;
-
-		internal bool _003C_003Em__2D3(GiftNewPlayerInfo val)
-		{
-			return val.TypeCategory == needCat;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateSlot_003Ec__AnonStorey2B5
-	{
-		internal SlotInfo slot;
-
-		internal bool _003C_003Em__2D4(GiftCategory c)
-		{
-			return c == slot.category;
-		}
-	}
-
 	private const string FREE_SPINS_STORAGER_KEY = "freeSpinsCount";
 
 	public const string KEY_COUNT_GIFT_FOR_NEW_PLAYER = "keyCountGiftNewPlayer";
@@ -78,8 +57,8 @@ public class GiftController : MonoBehaviour
 	[SerializeField]
 	private readonly List<SlotInfo> _slots = new List<SlotInfo>();
 
-	[SerializeField]
 	[ReadOnly]
+	[SerializeField]
 	private readonly List<GiftNewPlayerInfo> _forNewPlayer = new List<GiftNewPlayerInfo>();
 
 	private bool _cfgGachaIsActive;
@@ -94,54 +73,11 @@ public class GiftController : MonoBehaviour
 
 	private bool _kDataLoading;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache11;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache12;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cache13;
-
-	[CompilerGenerated]
-	private static Func<GiftCategory, bool> _003C_003Ef__am_0024cache14;
-
-	[CompilerGenerated]
-	private static Comparison<SlotInfo> _003C_003Ef__am_0024cache15;
-
-	[CompilerGenerated]
-	private static Func<SlotInfo, bool> _003C_003Ef__am_0024cache16;
-
-	[CompilerGenerated]
-	private static Func<SlotInfo, float> _003C_003Ef__am_0024cache17;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cache18;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, string> _003C_003Ef__am_0024cache19;
-
-	public float TimeLeft
+	public bool ActiveGift
 	{
 		get
 		{
-			return _localTimer;
-		}
-	}
-
-	public List<SlotInfo> Slots
-	{
-		get
-		{
-			return _slots;
-		}
-	}
-
-	public bool CanGetTimerGift
-	{
-		get
-		{
-			return ActiveGift && _canGetTimerGift;
+			return (!this._cfgGachaIsActive || !this.DataIsLoaded ? false : FriendsController.ServerTime >= (long)0);
 		}
 	}
 
@@ -149,7 +85,7 @@ public class GiftController : MonoBehaviour
 	{
 		get
 		{
-			return ActiveGift && FreeSpins > 0;
+			return (!this.ActiveGift ? false : this.FreeSpins > 0);
 		}
 	}
 
@@ -157,83 +93,15 @@ public class GiftController : MonoBehaviour
 	{
 		get
 		{
-			return CanGetTimerGift || CanGetFreeSpinGift;
+			return (this.CanGetTimerGift ? true : this.CanGetFreeSpinGift);
 		}
 	}
 
-	public bool ActiveGift
+	public bool CanGetTimerGift
 	{
 		get
 		{
-			return _cfgGachaIsActive && DataIsLoaded && FriendsController.ServerTime >= 0;
-		}
-	}
-
-	public bool DataIsLoaded
-	{
-		get
-		{
-			if (_slots == null)
-			{
-				return false;
-			}
-			if (_slots.Count == 0)
-			{
-				return false;
-			}
-			return true;
-		}
-	}
-
-	public static Dictionary<int, List<ItemRecord>> GrayCategoryWeapons
-	{
-		get
-		{
-			if (_grayCategoryWeapons == null)
-			{
-				_grayCategoryWeapons = new Dictionary<int, List<ItemRecord>>();
-				_grayCategoryWeapons.Add(0, new List<ItemRecord>
-				{
-					ItemDb.GetByPrefabName("Weapon10"),
-					ItemDb.GetByPrefabName("Weapon44"),
-					ItemDb.GetByPrefabName("Weapon79")
-				});
-				_grayCategoryWeapons.Add(1, new List<ItemRecord>
-				{
-					ItemDb.GetByPrefabName("Weapon278"),
-					ItemDb.GetByPrefabName("Weapon336"),
-					ItemDb.GetByPrefabName("Weapon65"),
-					ItemDb.GetByPrefabName("Weapon286")
-				});
-				_grayCategoryWeapons.Add(2, new List<ItemRecord>
-				{
-					ItemDb.GetByPrefabName("Weapon252"),
-					ItemDb.GetByPrefabName("Weapon258"),
-					ItemDb.GetByPrefabName("Weapon48"),
-					ItemDb.GetByPrefabName("Weapon253")
-				});
-				_grayCategoryWeapons.Add(3, new List<ItemRecord>
-				{
-					ItemDb.GetByPrefabName("Weapon257"),
-					ItemDb.GetByPrefabName("Weapon262"),
-					ItemDb.GetByPrefabName("Weapon251")
-				});
-				_grayCategoryWeapons.Add(4, new List<ItemRecord>
-				{
-					ItemDb.GetByPrefabName("Weapon330"),
-					ItemDb.GetByPrefabName("Weapon308")
-				});
-				_grayCategoryWeapons.Add(5, new List<ItemRecord> { ItemDb.GetByPrefabName("Weapon222") });
-			}
-			return _grayCategoryWeapons;
-		}
-	}
-
-	public int FreeSpins
-	{
-		get
-		{
-			return _freeSpins.Value;
+			return (!this.ActiveGift ? false : this._canGetTimerGift);
 		}
 	}
 
@@ -245,10 +113,134 @@ public class GiftController : MonoBehaviour
 		}
 		set
 		{
-			if (value >= 0 && value < CountGetGiftForNewPlayer)
+			if (value >= 0 && value < GiftController.CountGetGiftForNewPlayer)
 			{
 				Storager.setInt("keyCountGiftNewPlayer", value, false);
 			}
+		}
+	}
+
+	public bool DataIsLoaded
+	{
+		get
+		{
+			if (this._slots == null)
+			{
+				return false;
+			}
+			if (this._slots.Count == 0)
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+
+	internal TimeSpan FreeGachaAvailableIn
+	{
+		get
+		{
+			if (!Storager.hasKey("SaveServerTime"))
+			{
+				this.LastTimeGetGift = FriendsController.ServerTime - (long)14400 + (long)1;
+			}
+			long serverTime = FriendsController.ServerTime - this.LastTimeGetGift;
+			return TimeSpan.FromSeconds((double)((long)14400 - serverTime));
+		}
+	}
+
+	public int FreeSpins
+	{
+		get
+		{
+			return this._freeSpins.Value;
+		}
+	}
+
+	public static Dictionary<int, List<ItemRecord>> GrayCategoryWeapons
+	{
+		get
+		{
+			if (GiftController._grayCategoryWeapons == null)
+			{
+				GiftController._grayCategoryWeapons = new Dictionary<int, List<ItemRecord>>();
+				Dictionary<int, List<ItemRecord>> nums = GiftController._grayCategoryWeapons;
+				List<ItemRecord> itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon10"),
+					ItemDb.GetByPrefabName("Weapon44"),
+					ItemDb.GetByPrefabName("Weapon79")
+				};
+				nums.Add(0, itemRecords);
+				Dictionary<int, List<ItemRecord>> nums1 = GiftController._grayCategoryWeapons;
+				itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon278"),
+					ItemDb.GetByPrefabName("Weapon336"),
+					ItemDb.GetByPrefabName("Weapon65"),
+					ItemDb.GetByPrefabName("Weapon286")
+				};
+				nums1.Add(1, itemRecords);
+				Dictionary<int, List<ItemRecord>> nums2 = GiftController._grayCategoryWeapons;
+				itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon252"),
+					ItemDb.GetByPrefabName("Weapon258"),
+					ItemDb.GetByPrefabName("Weapon48"),
+					ItemDb.GetByPrefabName("Weapon253")
+				};
+				nums2.Add(2, itemRecords);
+				Dictionary<int, List<ItemRecord>> nums3 = GiftController._grayCategoryWeapons;
+				itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon257"),
+					ItemDb.GetByPrefabName("Weapon262"),
+					ItemDb.GetByPrefabName("Weapon251")
+				};
+				nums3.Add(3, itemRecords);
+				Dictionary<int, List<ItemRecord>> nums4 = GiftController._grayCategoryWeapons;
+				itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon330"),
+					ItemDb.GetByPrefabName("Weapon308")
+				};
+				nums4.Add(4, itemRecords);
+				Dictionary<int, List<ItemRecord>> nums5 = GiftController._grayCategoryWeapons;
+				itemRecords = new List<ItemRecord>()
+				{
+					ItemDb.GetByPrefabName("Weapon222")
+				};
+				nums5.Add(5, itemRecords);
+			}
+			return GiftController._grayCategoryWeapons;
+		}
+	}
+
+	private long LastTimeGetGift
+	{
+		get
+		{
+			return (long)Storager.getInt("SaveServerTime", false);
+		}
+		set
+		{
+			Storager.setInt("SaveServerTime", (int)value, false);
+		}
+	}
+
+	public List<SlotInfo> Slots
+	{
+		get
+		{
+			return this._slots;
+		}
+	}
+
+	public float TimeLeft
+	{
+		get
+		{
+			return this._localTimer;
 		}
 	}
 
@@ -264,83 +256,46 @@ public class GiftController : MonoBehaviour
 			{
 				return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_ios.json";
 			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
 			{
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+				if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
 				{
-					return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_android.json";
-				}
-				if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-				{
-					return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_amazon.json";
+					return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_wp8.json";
 				}
 				return string.Empty;
 			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 			{
-				return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_wp8.json";
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_android.json";
+			}
+			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/gift/gift_pixelgun_amazon.json";
 			}
 			return string.Empty;
 		}
 	}
 
-	private long LastTimeGetGift
-	{
-		get
-		{
-			return Storager.getInt("SaveServerTime", false);
-		}
-		set
-		{
-			int val = (int)value;
-			Storager.setInt("SaveServerTime", val, false);
-		}
-	}
-
-	internal TimeSpan FreeGachaAvailableIn
-	{
-		get
-		{
-			if (!Storager.hasKey("SaveServerTime"))
-			{
-				LastTimeGetGift = FriendsController.ServerTime - 14400 + 1;
-			}
-			long num = FriendsController.ServerTime - LastTimeGetGift;
-			return TimeSpan.FromSeconds(14400 - num);
-		}
-	}
-
-	public static event Action OnChangeSlots;
-
-	public static event Action OnTimerEnded;
-
-	public static event Action<string> OnUpdateTimer;
-
 	static GiftController()
 	{
-		if (_003C_003Ef__am_0024cache11 == null)
-		{
-			_003C_003Ef__am_0024cache11 = _003COnChangeSlots_003Em__2CD;
-		}
-		GiftController.OnChangeSlots = _003C_003Ef__am_0024cache11;
-		if (_003C_003Ef__am_0024cache12 == null)
-		{
-			_003C_003Ef__am_0024cache12 = _003COnTimerEnded_003Em__2CE;
-		}
-		GiftController.OnTimerEnded = _003C_003Ef__am_0024cache12;
-		if (_003C_003Ef__am_0024cache13 == null)
-		{
-			_003C_003Ef__am_0024cache13 = _003COnUpdateTimer_003Em__2CF;
-		}
-		GiftController.OnUpdateTimer = _003C_003Ef__am_0024cache13;
+		GiftController.OnChangeSlots = () => {
+		};
+		GiftController.OnTimerEnded = () => {
+		};
+		GiftController.OnUpdateTimer = (string s) => {
+		};
+	}
+
+	public GiftController()
+	{
 	}
 
 	private void Awake()
 	{
-		Instance = this;
-		_freeSpins.Value = Storager.getInt("freeSpinsCount", true);
-		_localTimer = -1f;
-		_categories.Clear();
+		GiftController.Instance = this;
+		this._freeSpins.Value = Storager.getInt("freeSpinsCount", true);
+		this._localTimer = -1f;
+		this._categories.Clear();
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 		if (!Storager.hasKey("SaveServerTime"))
 		{
@@ -359,523 +314,30 @@ public class GiftController : MonoBehaviour
 			Storager.setInt("keyIsGetSkinNewPlayer", 0, false);
 		}
 		Storager.getInt("keyCountGiftNewPlayer", false);
-		StartCoroutine(GetDataFromServerLoop());
-		FriendsController.ServerTimeUpdated += OnUpdateTimeFromServer;
+		base.StartCoroutine(this.GetDataFromServerLoop());
+		FriendsController.ServerTimeUpdated += new Action(this.OnUpdateTimeFromServer);
 	}
 
-	private void OnDestroy()
+	[DebuggerHidden]
+	private IEnumerator CheckAvailableGifts()
 	{
-		FriendsController.ServerTimeUpdated -= OnUpdateTimeFromServer;
-		Instance = null;
-	}
-
-	private void Update()
-	{
-		if (_localTimer > 0f)
-		{
-			_localTimer -= Time.deltaTime;
-			if (_localTimer < 0f)
-			{
-				_localTimer = 0f;
-			}
-			_canGetTimerGift = false;
-			if (_oldTime != (int)_localTimer)
-			{
-				_oldTime = (int)_localTimer;
-				if (GiftController.OnUpdateTimer != null)
-				{
-					GiftController.OnUpdateTimer(GetStringTimer());
-				}
-			}
-		}
-		else if (!_canGetTimerGift && (int)_localTimer == 0)
-		{
-			_localTimer = -1f;
-			_canGetTimerGift = true;
-			if (GiftController.OnUpdateTimer != null)
-			{
-				GiftController.OnUpdateTimer(GetStringTimer());
-			}
-			if (GiftController.OnTimerEnded != null)
-			{
-				GiftController.OnTimerEnded();
-			}
-		}
-	}
-
-	public void SetTimer(int val)
-	{
-		if (val > 14400)
-		{
-			val = 14400;
-		}
-		if (val != 0)
-		{
-			long num2 = (LastTimeGetGift = FriendsController.ServerTime - (14400 - val));
-		}
-		else
-		{
-			LastTimeGetGift = FriendsController.ServerTime - 14400 + 1;
-		}
-		OnUpdateTimeFromServer();
-	}
-
-	private GiftCategoryType ParseToEnum(string typeCat)
-	{
-		GiftCategoryType? giftCategoryType = typeCat.ToEnum<GiftCategoryType>();
-		return giftCategoryType.HasValue ? giftCategoryType.Value : GiftCategoryType.none;
-	}
-
-	public void SetGifts()
-	{
-		if (_cfgGachaIsActive)
-		{
-			if (_categories != null && _categories.Count > 0)
-			{
-				StartCoroutine(CheckAvailableGifts());
-			}
-			return;
-		}
-		_categories.Clear();
-		_slots.Clear();
-		if (GiftController.OnChangeSlots != null)
-		{
-			GiftController.OnChangeSlots();
-		}
-	}
-
-	public void RecreateSlots()
-	{
-		if (_kAlreadyGenerateSlot || !_cfgGachaIsActive)
-		{
-			return;
-		}
-		_kAlreadyGenerateSlot = true;
-		_slots.Clear();
-		IEnumerable<GiftCategory> enumerable;
-		if (FriendsController.SandboxEnabled)
-		{
-			IEnumerable<GiftCategory> categories = _categories;
-			enumerable = categories;
-		}
-		else
-		{
-			List<GiftCategory> categories2 = _categories;
-			if (_003C_003Ef__am_0024cache14 == null)
-			{
-				_003C_003Ef__am_0024cache14 = _003CRecreateSlots_003Em__2D0;
-			}
-			enumerable = categories2.Where(_003C_003Ef__am_0024cache14);
-		}
-		IEnumerable<GiftCategory> enumerable2 = enumerable;
-		foreach (GiftCategory item in enumerable2)
-		{
-			item.CheckGifts();
-			if (item.AvaliableGiftsCount < 1)
-			{
-				continue;
-			}
-			SlotInfo slotInfo = new SlotInfo();
-			slotInfo.category = item;
-			slotInfo.gift = item.GetRandomGift();
-			if (slotInfo.gift != null && !string.IsNullOrEmpty(slotInfo.gift.Id))
-			{
-				slotInfo.percentGetSlot = item.PercentChance;
-				slotInfo.positionInScroll = item.ScrollPosition;
-				slotInfo.isActiveEvent = false;
-				if (CountGetGiftForNewPlayer > 0)
-				{
-					SetPerGetGiftForNewPlayer(slotInfo);
-				}
-				_slots.Add(slotInfo);
-			}
-		}
-		GiftCategoryType? prevDroppedCategoryType = _prevDroppedCategoryType;
-		if (prevDroppedCategoryType.HasValue)
-		{
-			SlotInfo slotInfo2 = _slots.FirstOrDefault(_003CRecreateSlots_003Em__2D1);
-			if (slotInfo2 != null)
-			{
-				slotInfo2.NoDropped = true;
-			}
-		}
-		List<SlotInfo> slots = _slots;
-		if (_003C_003Ef__am_0024cache15 == null)
-		{
-			_003C_003Ef__am_0024cache15 = _003CRecreateSlots_003Em__2D2;
-		}
-		slots.Sort(_003C_003Ef__am_0024cache15);
-		if (GiftController.OnChangeSlots != null)
-		{
-			GiftController.OnChangeSlots();
-		}
-		OnUpdateTimeFromServer();
-	}
-
-	private IEnumerator WaitDrop(GiftCategory cat, string id, bool isContains = false)
-	{
-		bool lk = true;
-		int iter = 0;
-		GiftInfo gift2 = null;
-		while (lk)
-		{
-			iter++;
-			gift2 = cat.GetRandomGift();
-			if ((!isContains) ? (gift2.Id == id) : gift2.Id.Contains(id))
-			{
-				lk = false;
-				Debug.Log(string.Format("[TTT] found '{0}' iterations count: {1}", gift2.Id, iter));
-			}
-			if (iter > 100)
-			{
-				Debug.Log("[TTT] stop waiting");
-				lk = false;
-			}
-			yield return null;
-		}
-	}
-
-	public GiftNewPlayerInfo GetInfoNewPlayer(GiftCategoryType needCat)
-	{
-		_003CGetInfoNewPlayer_003Ec__AnonStorey2B4 _003CGetInfoNewPlayer_003Ec__AnonStorey2B = new _003CGetInfoNewPlayer_003Ec__AnonStorey2B4();
-		_003CGetInfoNewPlayer_003Ec__AnonStorey2B.needCat = needCat;
-		return _forNewPlayer.Find(_003CGetInfoNewPlayer_003Ec__AnonStorey2B._003C_003Em__2D3);
-	}
-
-	private void SetPerGetGiftForNewPlayer(SlotInfo curSlot)
-	{
-		float percentGetSlot = 0f;
-		int value = curSlot.gift.Count.Value;
-		curSlot.isActiveEvent = true;
-		GiftNewPlayerInfo infoNewPlayer = GetInfoNewPlayer(curSlot.category.Type);
-		if (infoNewPlayer != null)
-		{
-			value = infoNewPlayer.Count.Value;
-			if (curSlot.category.Type == GiftCategoryType.ArmorAndHat && Storager.getInt("keyIsGetArmorNewPlayer", false) == 0)
-			{
-				percentGetSlot = infoNewPlayer.Percent;
-			}
-			if (curSlot.category.Type == GiftCategoryType.Skins && Storager.getInt("keyIsGetSkinNewPlayer", false) == 0)
-			{
-				percentGetSlot = infoNewPlayer.Percent;
-			}
-			if (curSlot.category.Type == GiftCategoryType.Coins)
-			{
-				percentGetSlot = infoNewPlayer.Percent;
-			}
-			if (curSlot.category.Type == GiftCategoryType.Gems)
-			{
-				percentGetSlot = infoNewPlayer.Percent;
-			}
-		}
-		curSlot.percentGetSlot = percentGetSlot;
-		curSlot.CountGift = value;
-	}
-
-	public void UpdateSlot(SlotInfo curSlot)
-	{
-		curSlot.category.CheckGifts();
-		curSlot.gift = curSlot.category.GetRandomGift();
-		if (curSlot.gift == null)
-		{
-			_slots.Remove(curSlot);
-		}
-		else
-		{
-			curSlot.percentGetSlot = curSlot.category.PercentChance;
-			curSlot.positionInScroll = curSlot.category.ScrollPosition;
-		}
-		_003CUpdateSlot_003Ec__AnonStorey2B5 _003CUpdateSlot_003Ec__AnonStorey2B = new _003CUpdateSlot_003Ec__AnonStorey2B5();
-		foreach (SlotInfo slot in _slots)
-		{
-			_003CUpdateSlot_003Ec__AnonStorey2B.slot = slot;
-			GiftCategory giftCategory = _categories.FirstOrDefault(_003CUpdateSlot_003Ec__AnonStorey2B._003C_003Em__2D4);
-			if (CountGetGiftForNewPlayer > 0)
-			{
-				SetPerGetGiftForNewPlayer(_003CUpdateSlot_003Ec__AnonStorey2B.slot);
-			}
-			else
-			{
-				_003CUpdateSlot_003Ec__AnonStorey2B.slot.percentGetSlot = _003CUpdateSlot_003Ec__AnonStorey2B.slot.category.PercentChance;
-			}
-		}
-	}
-
-	public void ReCreateSlots()
-	{
-		_kAlreadyGenerateSlot = false;
-		SetGifts();
-	}
-
-	public SlotInfo GetRandomSlot()
-	{
-		return null;
-	}
-
-	private IEnumerator GetDataFromServerLoop()
-	{
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage <= TrainingController.NewTrainingCompletedStage.None)
-		{
-			yield return null;
-		}
-		while (true)
-		{
-			yield return StartCoroutine(DownloadDataFormServer());
-			yield return new WaitForSeconds(870f);
-		}
-	}
-
-	private IEnumerator DownloadDataFormServer()
-	{
-		if (_kDataLoading)
-		{
-			yield break;
-		}
-		_kDataLoading = true;
-		string urlDataAddress = UrlForLoadData;
-		WWW downloadData = null;
-		int iter = 3;
-		while (iter > 0)
-		{
-			downloadData = Tools.CreateWwwIfNotConnected(urlDataAddress);
-			if (downloadData == null)
-			{
-				yield break;
-			}
-			while (!downloadData.isDone)
-			{
-				yield return null;
-			}
-			if (!string.IsNullOrEmpty(downloadData.error))
-			{
-				yield return new WaitForSeconds(5f);
-				iter--;
-				continue;
-			}
-			break;
-		}
-		if (downloadData == null || !string.IsNullOrEmpty(downloadData.error))
-		{
-			if (Defs.IsDeveloperBuild && downloadData != null)
-			{
-				Debug.LogWarningFormat("Request to {0} failed: {1}", urlDataAddress, downloadData.error);
-			}
-			_kDataLoading = false;
-			yield break;
-		}
-		string responseText = URLs.Sanitize(downloadData);
-		Dictionary<string, object> allData = Json.Deserialize(responseText) as Dictionary<string, object>;
-		if (allData == null)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("Bad response: " + responseText);
-			}
-			_kDataLoading = false;
-			yield break;
-		}
-		if (allData.ContainsKey("isActive"))
-		{
-			_cfgGachaIsActive = Convert.ToBoolean(allData["isActive"], CultureInfo.InvariantCulture);
-			if (!_cfgGachaIsActive)
-			{
-				_kDataLoading = false;
-				OnDataLoaded();
-				yield break;
-			}
-		}
-		if (allData.ContainsKey("price"))
-		{
-			CostBuyCanGetGift.Value = Convert.ToInt32(allData["price"], CultureInfo.InvariantCulture);
-		}
-		_forNewPlayer.Clear();
-		if (allData.ContainsKey("newPlayerEvent"))
-		{
-			List<object> listAllParametrNewPlayer = allData["newPlayerEvent"] as List<object>;
-			if (listAllParametrNewPlayer != null)
-			{
-				for (int iTG = 0; iTG < listAllParametrNewPlayer.Count; iTG++)
-				{
-					Dictionary<string, object> curParametr = listAllParametrNewPlayer[iTG] as Dictionary<string, object>;
-					GiftNewPlayerInfo curAddInfo = new GiftNewPlayerInfo();
-					if (curParametr.ContainsKey("typeCategory"))
-					{
-						curAddInfo.TypeCategory = ParseToEnum(curParametr["typeCategory"].ToString());
-						if (curParametr.ContainsKey("count"))
-						{
-							curAddInfo.Count.Value = int.Parse(curParametr["count"].ToString());
-						}
-						if (curParametr.ContainsKey("percent"))
-						{
-							object curPercentObject = curParametr["percent"];
-							curAddInfo.Percent = (float)Convert.ToDouble(curPercentObject, CultureInfo.InvariantCulture);
-						}
-						_forNewPlayer.Add(curAddInfo);
-					}
-				}
-			}
-		}
-		_categories.Clear();
-		if (allData.ContainsKey("categories"))
-		{
-			List<object> listCategories = allData["categories"] as List<object>;
-			if (listCategories != null)
-			{
-				for (int iC = 0; iC < listCategories.Count; iC++)
-				{
-					Dictionary<string, object> infoCategory = listCategories[iC] as Dictionary<string, object>;
-					if (infoCategory == null)
-					{
-						continue;
-					}
-					GiftCategory newCategory = new GiftCategory();
-					if (!infoCategory.ContainsKey("typeCategory"))
-					{
-						continue;
-					}
-					newCategory.Type = ParseToEnum(infoCategory["typeCategory"].ToString());
-					if (infoCategory.ContainsKey("posInScroll"))
-					{
-						newCategory.ScrollPosition = int.Parse(infoCategory["posInScroll"].ToString());
-					}
-					if (!infoCategory.ContainsKey("gifts"))
-					{
-						continue;
-					}
-					if (infoCategory.ContainsKey("keyTransInfo"))
-					{
-						newCategory.KeyTranslateInfoCommon = infoCategory["keyTransInfo"].ToString();
-					}
-					List<object> gifts = infoCategory["gifts"] as List<object>;
-					if (gifts != null)
-					{
-						for (int iG = 0; iG < gifts.Count; iG++)
-						{
-							Dictionary<string, object> infoGift = gifts[iG] as Dictionary<string, object>;
-							if (infoGift == null)
-							{
-								continue;
-							}
-							GiftInfo newGiftInfo = new GiftInfo();
-							switch (newCategory.Type)
-							{
-							case GiftCategoryType.Coins:
-								newGiftInfo.Id = "Coins";
-								break;
-							case GiftCategoryType.Gems:
-								newGiftInfo.Id = "Gems";
-								break;
-							default:
-								if (infoGift.ContainsKey("idGift"))
-								{
-									newGiftInfo.Id = infoGift["idGift"].ToString();
-								}
-								break;
-							}
-							if (infoGift.ContainsKey("count"))
-							{
-								newGiftInfo.Count.Value = int.Parse(infoGift["count"].ToString());
-							}
-							if (infoGift.ContainsKey("percent"))
-							{
-								object percentObject = infoGift["percent"];
-								newGiftInfo.PercentAddInSlot = (float)Convert.ToDouble(percentObject, CultureInfo.InvariantCulture);
-							}
-							if (infoGift.ContainsKey("keyTransInfo"))
-							{
-								newGiftInfo.KeyTranslateInfo = infoGift["keyTransInfo"].ToString();
-							}
-							if (newGiftInfo.Count.Value == 0)
-							{
-								newGiftInfo.Count.Value = 1;
-							}
-							newCategory.AddGift(newGiftInfo);
-						}
-					}
-					if (newCategory.AnyGifts)
-					{
-						_categories.Add(newCategory);
-					}
-				}
-			}
-		}
-		OnDataLoaded();
-		_kDataLoading = false;
-	}
-
-	private void OnDataLoaded()
-	{
-		SetGifts();
-	}
-
-	public SlotInfo GetGift(bool ignoreAvailabilityCheck = false)
-	{
-		if (!ignoreAvailabilityCheck)
-		{
-			if (CanGetTimerGift)
-			{
-				_canGetTimerGift = false;
-				_localTimer = -1f;
-				ReSaveLastTimeSever();
-			}
-			else
-			{
-				if (FreeSpins <= 0)
-				{
-					return null;
-				}
-				_freeSpins.Value--;
-				Storager.setInt("freeSpinsCount", _freeSpins.Value, true);
-			}
-		}
-		List<SlotInfo> slots = _slots;
-		if (_003C_003Ef__am_0024cache16 == null)
-		{
-			_003C_003Ef__am_0024cache16 = _003CGetGift_003Em__2D5;
-		}
-		List<SlotInfo> list = slots.Where(_003C_003Ef__am_0024cache16).ToList();
-		if (_003C_003Ef__am_0024cache17 == null)
-		{
-			_003C_003Ef__am_0024cache17 = _003CGetGift_003Em__2D6;
-		}
-		float max = list.Sum(_003C_003Ef__am_0024cache17);
-		float num = UnityEngine.Random.Range(0f, max);
-		float num2 = 0f;
-		SlotInfo slotInfo = null;
-		for (int i = 0; i < list.Count; i++)
-		{
-			SlotInfo slotInfo2 = list[i];
-			num2 += slotInfo2.percentGetSlot;
-			if (num <= num2)
-			{
-				slotInfo = slotInfo2;
-				slotInfo.numInScroll = _slots.IndexOf(slotInfo2);
-				break;
-			}
-		}
-		if (slotInfo != null)
-		{
-			CountGetGiftForNewPlayer--;
-			GiveProductForSlot(slotInfo);
-		}
-		slotInfo.NoDropped = true;
-		_prevDroppedCategoryType = slotInfo.category.Type;
-		return slotInfo;
+		GiftController.u003cCheckAvailableGiftsu003ec__Iterator14A variable = null;
+		return variable;
 	}
 
 	public void CheckAvaliableSlots()
 	{
 		bool flag = false;
-		for (int i = 0; i < _slots.Count; i++)
+		for (int i = 0; i < this._slots.Count; i++)
 		{
-			SlotInfo slotInfo = _slots[i];
-			if (slotInfo.CheckAvaliableGift())
+			SlotInfo item = this._slots[i];
+			if (item.CheckAvaliableGift())
 			{
 				flag = true;
 			}
-			if (slotInfo.gift == null)
+			if (item.gift == null)
 			{
-				_slots.RemoveAt(i);
+				this._slots.RemoveAt(i);
 				i--;
 			}
 		}
@@ -885,112 +347,116 @@ public class GiftController : MonoBehaviour
 		}
 	}
 
-	public void GiveProductForSlot(SlotInfo curSlot)
+	[DebuggerHidden]
+	private IEnumerator DownloadDataFormServer()
 	{
-		if (curSlot == null)
+		GiftController.u003cDownloadDataFormServeru003ec__Iterator149 variable = null;
+		return variable;
+	}
+
+	public static List<string> GetAvailableGrayWeaponsTags()
+	{
+		int num = ExpController.OurTierForAnyPlace();
+		return (
+			from w in GiftController.GrayCategoryWeapons[num]
+			where Storager.getInt(w.StorageId, true) == 0
+			select w.Tag).ToList<string>();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetDataFromServerLoop()
+	{
+		GiftController.u003cGetDataFromServerLoopu003ec__Iterator148 variable = null;
+		return variable;
+	}
+
+	public SlotInfo GetGift(bool ignoreAvailabilityCheck = false)
+	{
+		if (!ignoreAvailabilityCheck)
 		{
-			return;
-		}
-		switch (curSlot.category.Type)
-		{
-		case GiftCategoryType.Coins:
-			BankController.AddCoins(curSlot.CountGift, false);
-			StartCoroutine(BankController.WaitForIndicationGems(false));
-			break;
-		case GiftCategoryType.Gems:
-			BankController.AddGems(curSlot.CountGift, false);
-			StartCoroutine(BankController.WaitForIndicationGems(true));
-			break;
-		case GiftCategoryType.Skins:
-			Storager.setInt("keyIsGetSkinNewPlayer", 1, false);
-			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.SkinsCategory, curSlot.gift.Id, 1, false, 0, null, null, false, true, false);
-			break;
-		case GiftCategoryType.Gear:
-		{
-			int int2 = Storager.getInt(curSlot.gift.Id, false);
-			Storager.setInt(curSlot.gift.Id, int2 + curSlot.gift.Count.Value, false);
-			break;
-		}
-		case GiftCategoryType.Grenades:
-		{
-			int @int = Storager.getInt(curSlot.gift.Id, false);
-			Storager.setInt(curSlot.gift.Id, @int + curSlot.gift.Count.Value, false);
-			break;
-		}
-		case GiftCategoryType.Wear:
-			ShopNGUIController.ProvideShopItemOnStarterPackBoguht(curSlot.gift.TypeShopCat.Value, curSlot.gift.Id, 1, false, 0, null, null, true, true, false);
-			if (ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.wearEquipAction != null)
+			if (!this.CanGetTimerGift)
 			{
-				ShopNGUIController.sharedShop.wearEquipAction(curSlot.gift.TypeShopCat.Value, string.Empty, string.Empty);
-			}
-			break;
-		case GiftCategoryType.ArmorAndHat:
-			Storager.setInt("keyIsGetArmorNewPlayer", 1, false);
-			if (curSlot.gift.TypeShopCat == ShopNGUIController.CategoryNames.ArmorCategory)
-			{
-				ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.ArmorCategory, curSlot.gift.Id, 1, false, 0, null, null, true, true, false);
-				if (ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.wearEquipAction != null)
+				if (this.FreeSpins <= 0)
 				{
-					ShopNGUIController.sharedShop.wearEquipAction(ShopNGUIController.CategoryNames.ArmorCategory, string.Empty, string.Empty);
+					return null;
 				}
-			}
-			break;
-		case GiftCategoryType.Gun1:
-		case GiftCategoryType.Gun2:
-		case GiftCategoryType.Gun3:
-		case GiftCategoryType.Guns_gray:
-			if (WeaponManager.IsExclusiveWeapon(curSlot.gift.Id))
-			{
-				WeaponManager.ProvideExclusiveWeaponByTag(curSlot.gift.Id);
+				ref SaltedInt value = ref this._freeSpins;
+				value.Value = value.Value - 1;
+				Storager.setInt("freeSpinsCount", this._freeSpins.Value, true);
 			}
 			else
 			{
-				GiveProduct(curSlot.gift.TypeShopCat.Value, curSlot.gift.Id);
+				this._canGetTimerGift = false;
+				this._localTimer = -1f;
+				this.ReSaveLastTimeSever();
 			}
-			break;
-		case GiftCategoryType.Editor:
-			if (curSlot.gift.Id == "editor_Cape")
-			{
-				GiveProduct(ShopNGUIController.CategoryNames.CapesCategory, "cape_Custom");
-			}
-			else if (curSlot.gift.Id == "editor_Skin")
-			{
-				Storager.setInt(Defs.SkinsMakerInProfileBought, 1, true);
-			}
-			else
-			{
-				Debug.LogError(string.Format("[GIFT] unknown editor id: '{0}'", curSlot.gift.Id));
-			}
-			break;
-		case GiftCategoryType.Masks:
-			GiveProduct(ShopNGUIController.CategoryNames.MaskCategory, curSlot.gift.Id);
-			break;
-		case GiftCategoryType.Capes:
-			GiveProduct(ShopNGUIController.CategoryNames.CapesCategory, curSlot.gift.Id);
-			break;
-		case GiftCategoryType.Boots:
-			GiveProduct(ShopNGUIController.CategoryNames.BootsCategory, curSlot.gift.Id);
-			break;
-		case GiftCategoryType.Hats_random:
-			GiveProduct(ShopNGUIController.CategoryNames.HatsCategory, curSlot.gift.Id);
-			break;
-		case GiftCategoryType.Stickers:
+		}
+		List<SlotInfo> list = (
+			from s in this._slots
+			where !s.NoDropped
+			select s).ToList<SlotInfo>();
+		float single = list.Sum<SlotInfo>((SlotInfo s) => s.percentGetSlot);
+		float single1 = UnityEngine.Random.Range(0f, single);
+		float single2 = 0f;
+		SlotInfo slotInfo = null;
+		int num = 0;
+		while (num < list.Count)
 		{
-			TypePackSticker? typePackSticker = curSlot.gift.Id.ToEnum<TypePackSticker>();
-			if (!typePackSticker.HasValue)
+			SlotInfo item = list[num];
+			single2 += item.percentGetSlot;
+			if (single1 > single2)
 			{
-				throw new Exception("sticker id type parse error");
+				num++;
 			}
-			StickersController.BuyStickersPack(typePackSticker.Value);
-			break;
+			else
+			{
+				slotInfo = item;
+				slotInfo.numInScroll = this._slots.IndexOf(item);
+				break;
+			}
 		}
-		case GiftCategoryType.Freespins:
-			_freeSpins.Value += curSlot.gift.Count.Value;
-			Storager.setInt("freeSpinsCount", _freeSpins.Value, true);
-			break;
-		case GiftCategoryType.Event_content:
-			break;
+		if (slotInfo != null)
+		{
+			GiftController.CountGetGiftForNewPlayer = GiftController.CountGetGiftForNewPlayer - 1;
+			this.GiveProductForSlot(slotInfo);
 		}
+		slotInfo.NoDropped = true;
+		this._prevDroppedCategoryType = new GiftCategoryType?(slotInfo.category.Type);
+		return slotInfo;
+	}
+
+	public GiftNewPlayerInfo GetInfoNewPlayer(GiftCategoryType needCat)
+	{
+		return this._forNewPlayer.Find((GiftNewPlayerInfo val) => val.TypeCategory == needCat);
+	}
+
+	private string GetRandomGrayWeapon()
+	{
+		List<string> availableGrayWeaponsTags = GiftController.GetAvailableGrayWeaponsTags();
+		if (!availableGrayWeaponsTags.Any<string>())
+		{
+			return string.Empty;
+		}
+		return availableGrayWeaponsTags[UnityEngine.Random.Range(0, availableGrayWeaponsTags.Count)];
+	}
+
+	public SlotInfo GetRandomSlot()
+	{
+		return null;
+	}
+
+	public string GetStringTimer()
+	{
+		string str;
+		string str1;
+		string str2;
+		int num = (int)(this._localTimer / 3600f);
+		int num1 = (int)(this._localTimer / 60f) - num * 60;
+		int num2 = (int)this._localTimer - num * 3600 - num1 * 60;
+		str = (num >= 10 ? num.ToString() : string.Concat("0", num));
+		str1 = (num1 >= 10 ? num1.ToString() : string.Concat("0", num1));
+		str2 = (num2 >= 10 ? num2.ToString() : string.Concat("0", num2));
+		return string.Concat(new string[] { str, ":", str1, ":", str2 });
 	}
 
 	private void GiveProduct(ShopNGUIController.CategoryNames category, string tag)
@@ -1002,168 +468,435 @@ public class GiftController : MonoBehaviour
 		}
 	}
 
-	public static List<string> GetAvailableGrayWeaponsTags()
+	public void GiveProductForSlot(SlotInfo curSlot)
 	{
-		int key = ExpController.OurTierForAnyPlace();
-		List<ItemRecord> source = GrayCategoryWeapons[key];
-		if (_003C_003Ef__am_0024cache18 == null)
+		if (curSlot != null)
 		{
-			_003C_003Ef__am_0024cache18 = _003CGetAvailableGrayWeaponsTags_003Em__2D7;
+			switch (curSlot.category.Type)
+			{
+				case GiftCategoryType.Coins:
+				{
+					BankController.AddCoins(curSlot.CountGift, false, AnalyticsConstants.AccrualType.Earned);
+					base.StartCoroutine(BankController.WaitForIndicationGems(false));
+					break;
+				}
+				case GiftCategoryType.Gems:
+				{
+					BankController.AddGems(curSlot.CountGift, false, AnalyticsConstants.AccrualType.Earned);
+					base.StartCoroutine(BankController.WaitForIndicationGems(true));
+					break;
+				}
+				case GiftCategoryType.Grenades:
+				{
+					int num = Storager.getInt(curSlot.gift.Id, false);
+					Storager.setInt(curSlot.gift.Id, num + curSlot.gift.Count.Value, false);
+					break;
+				}
+				case GiftCategoryType.Gear:
+				{
+					int num1 = Storager.getInt(curSlot.gift.Id, false);
+					Storager.setInt(curSlot.gift.Id, num1 + curSlot.gift.Count.Value, false);
+					break;
+				}
+				case GiftCategoryType.Skins:
+				{
+					Storager.setInt("keyIsGetSkinNewPlayer", 1, false);
+					ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.SkinsCategory, curSlot.gift.Id, 1, false, 0, null, null, false, true, false);
+					break;
+				}
+				case GiftCategoryType.ArmorAndHat:
+				{
+					Storager.setInt("keyIsGetArmorNewPlayer", 1, false);
+					ShopNGUIController.CategoryNames? typeShopCat = curSlot.gift.TypeShopCat;
+					if ((typeShopCat.GetValueOrDefault() != ShopNGUIController.CategoryNames.ArmorCategory ? false : typeShopCat.HasValue))
+					{
+						ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.ArmorCategory, curSlot.gift.Id, 1, false, 0, null, null, true, true, false);
+						if (ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.wearEquipAction != null)
+						{
+							ShopNGUIController.sharedShop.wearEquipAction(7, string.Empty, string.Empty);
+						}
+					}
+					break;
+				}
+				case GiftCategoryType.Wear:
+				{
+					ShopNGUIController.CategoryNames? nullable = curSlot.gift.TypeShopCat;
+					ShopNGUIController.ProvideShopItemOnStarterPackBoguht(nullable.Value, curSlot.gift.Id, 1, false, 0, null, null, true, true, false);
+					if (ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.wearEquipAction != null)
+					{
+						Action<ShopNGUIController.CategoryNames, string, string> action = ShopNGUIController.sharedShop.wearEquipAction;
+						ShopNGUIController.CategoryNames? typeShopCat1 = curSlot.gift.TypeShopCat;
+						action(typeShopCat1.Value, string.Empty, string.Empty);
+					}
+					break;
+				}
+				case GiftCategoryType.Editor:
+				{
+					if (curSlot.gift.Id == "editor_Cape")
+					{
+						this.GiveProduct(ShopNGUIController.CategoryNames.CapesCategory, "cape_Custom");
+					}
+					else if (curSlot.gift.Id != "editor_Skin")
+					{
+						UnityEngine.Debug.LogError(string.Format("[GIFT] unknown editor id: '{0}'", curSlot.gift.Id));
+					}
+					else
+					{
+						Storager.setInt(Defs.SkinsMakerInProfileBought, 1, true);
+					}
+					break;
+				}
+				case GiftCategoryType.Masks:
+				{
+					this.GiveProduct(ShopNGUIController.CategoryNames.MaskCategory, curSlot.gift.Id);
+					break;
+				}
+				case GiftCategoryType.Capes:
+				{
+					this.GiveProduct(ShopNGUIController.CategoryNames.CapesCategory, curSlot.gift.Id);
+					break;
+				}
+				case GiftCategoryType.Boots:
+				{
+					this.GiveProduct(ShopNGUIController.CategoryNames.BootsCategory, curSlot.gift.Id);
+					break;
+				}
+				case GiftCategoryType.Hats_random:
+				{
+					this.GiveProduct(ShopNGUIController.CategoryNames.HatsCategory, curSlot.gift.Id);
+					break;
+				}
+				case GiftCategoryType.Gun1:
+				case GiftCategoryType.Gun2:
+				case GiftCategoryType.Gun3:
+				case GiftCategoryType.Guns_gray:
+				{
+					if (!WeaponManager.IsExclusiveWeapon(curSlot.gift.Id))
+					{
+						ShopNGUIController.CategoryNames? nullable1 = curSlot.gift.TypeShopCat;
+						this.GiveProduct(nullable1.Value, curSlot.gift.Id);
+					}
+					else
+					{
+						WeaponManager.ProvideExclusiveWeaponByTag(curSlot.gift.Id);
+					}
+					break;
+				}
+				case GiftCategoryType.Stickers:
+				{
+					TypePackSticker? @enum = curSlot.gift.Id.ToEnum<TypePackSticker>(null);
+					if (!@enum.HasValue)
+					{
+						throw new Exception("sticker id type parse error");
+					}
+					StickersController.BuyStickersPack(@enum.Value);
+					break;
+				}
+				case GiftCategoryType.Freespins:
+				{
+					ref SaltedInt value = ref this._freeSpins;
+					value.Value = value.Value + curSlot.gift.Count.Value;
+					Storager.setInt("freeSpinsCount", this._freeSpins.Value, true);
+					break;
+				}
+			}
 		}
-		IEnumerable<ItemRecord> source2 = source.Where(_003C_003Ef__am_0024cache18);
-		if (_003C_003Ef__am_0024cache19 == null)
-		{
-			_003C_003Ef__am_0024cache19 = _003CGetAvailableGrayWeaponsTags_003Em__2D8;
-		}
-		return source2.Select(_003C_003Ef__am_0024cache19).ToList();
 	}
 
-	private string GetRandomGrayWeapon()
+	private void OnDataLoaded()
 	{
-		List<string> availableGrayWeaponsTags = GetAvailableGrayWeaponsTags();
-		if (!availableGrayWeaponsTags.Any())
-		{
-			return string.Empty;
-		}
-		int index = UnityEngine.Random.Range(0, availableGrayWeaponsTags.Count);
-		return availableGrayWeaponsTags[index];
+		this.SetGifts();
 	}
 
-	private IEnumerator CheckAvailableGifts()
+	private void OnDestroy()
 	{
-		while (!(WeaponManager.sharedManager != null))
-		{
-			yield return null;
-		}
-		RecreateSlots();
-	}
-
-	public void ReSaveLastTimeSever()
-	{
-		LastTimeGetGift = FriendsController.ServerTime;
-		OnUpdateTimeFromServer();
-	}
-
-	public string GetStringTimer()
-	{
-		int num = (int)(_localTimer / 3600f);
-		int num2 = (int)(_localTimer / 60f) - num * 60;
-		int num3 = (int)_localTimer - num * 3600 - num2 * 60;
-		string text = ((num >= 10) ? num.ToString() : ("0" + num));
-		string text2 = ((num2 >= 10) ? num2.ToString() : ("0" + num2));
-		string text3 = ((num3 >= 10) ? num3.ToString() : ("0" + num3));
-		return text + ":" + text2 + ":" + text3;
+		FriendsController.ServerTimeUpdated -= new Action(this.OnUpdateTimeFromServer);
+		GiftController.Instance = null;
 	}
 
 	private void OnUpdateTimeFromServer()
 	{
-		if (_slots.Count == 0)
+		if (this._slots.Count == 0)
 		{
-			StartCoroutine(DownloadDataFormServer());
+			base.StartCoroutine(this.DownloadDataFormServer());
+			return;
+		}
+		if (FriendsController.ServerTime < (long)0)
+		{
+			return;
+		}
+		this._localTimer = -1f;
+		this._canGetTimerGift = false;
+		if (!Storager.hasKey("SaveServerTime"))
+		{
+			this.LastTimeGetGift = FriendsController.ServerTime - (long)14400 + (long)1;
+		}
+		int serverTime = (int)(FriendsController.ServerTime - this.LastTimeGetGift);
+		if (serverTime < 14400)
+		{
+			this._canGetTimerGift = false;
+			this._localTimer = (float)(14400 - serverTime);
 		}
 		else
 		{
-			if (FriendsController.ServerTime < 0)
+			this._canGetTimerGift = true;
+			if (GiftController.OnTimerEnded != null)
 			{
-				return;
+				GiftController.OnTimerEnded();
 			}
-			_localTimer = -1f;
-			_canGetTimerGift = false;
-			if (!Storager.hasKey("SaveServerTime"))
+		}
+	}
+
+	private GiftCategoryType ParseToEnum(string typeCat)
+	{
+		GiftCategoryType? @enum = typeCat.ToEnum<GiftCategoryType>(null);
+		return (!@enum.HasValue ? GiftCategoryType.none : @enum.Value);
+	}
+
+	public void RecreateSlots()
+	{
+		IEnumerable<GiftCategory> giftCategories;
+		if (!this._kAlreadyGenerateSlot && this._cfgGachaIsActive)
+		{
+			this._kAlreadyGenerateSlot = true;
+			this._slots.Clear();
+			if (!FriendsController.SandboxEnabled)
 			{
-				LastTimeGetGift = FriendsController.ServerTime - 14400 + 1;
-			}
-			int num = (int)(FriendsController.ServerTime - LastTimeGetGift);
-			if (num >= 14400)
-			{
-				_canGetTimerGift = true;
-				if (GiftController.OnTimerEnded != null)
-				{
-					GiftController.OnTimerEnded();
-				}
+				giftCategories = 
+					from c in this._categories
+					where c.Type != GiftCategoryType.Gear
+					select c;
 			}
 			else
 			{
-				_canGetTimerGift = false;
-				_localTimer = 14400 - num;
+				giftCategories = this._categories;
+			}
+			IEnumerator<GiftCategory> enumerator = giftCategories.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					GiftCategory current = enumerator.Current;
+					current.CheckGifts();
+					if (current.AvaliableGiftsCount >= 1)
+					{
+						SlotInfo slotInfo = new SlotInfo()
+						{
+							category = current,
+							gift = current.GetRandomGift()
+						};
+						if (slotInfo.gift != null && !string.IsNullOrEmpty(slotInfo.gift.Id))
+						{
+							slotInfo.percentGetSlot = current.PercentChance;
+							slotInfo.positionInScroll = current.ScrollPosition;
+							slotInfo.isActiveEvent = false;
+							if (GiftController.CountGetGiftForNewPlayer > 0)
+							{
+								this.SetPerGetGiftForNewPlayer(slotInfo);
+							}
+							this._slots.Add(slotInfo);
+						}
+					}
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			if (this._prevDroppedCategoryType.HasValue)
+			{
+				SlotInfo slotInfo1 = this._slots.FirstOrDefault<SlotInfo>((SlotInfo s) => {
+					GiftCategoryType type = s.category.Type;
+					GiftCategoryType? nullable = this._prevDroppedCategoryType;
+					return (type != nullable.GetValueOrDefault() ? false : nullable.HasValue);
+				});
+				if (slotInfo1 != null)
+				{
+					slotInfo1.NoDropped = true;
+				}
+			}
+			this._slots.Sort((SlotInfo left, SlotInfo right) => {
+				if (left == null && right == null)
+				{
+					return 0;
+				}
+				if (left == null)
+				{
+					return -1;
+				}
+				if (right == null)
+				{
+					return 1;
+				}
+				return left.positionInScroll.CompareTo(right.positionInScroll);
+			});
+			if (GiftController.OnChangeSlots != null)
+			{
+				GiftController.OnChangeSlots();
+			}
+			this.OnUpdateTimeFromServer();
+		}
+	}
+
+	public void ReCreateSlots()
+	{
+		this._kAlreadyGenerateSlot = false;
+		this.SetGifts();
+	}
+
+	public void ReSaveLastTimeSever()
+	{
+		this.LastTimeGetGift = FriendsController.ServerTime;
+		this.OnUpdateTimeFromServer();
+	}
+
+	public void SetGifts()
+	{
+		if (!this._cfgGachaIsActive)
+		{
+			this._categories.Clear();
+			this._slots.Clear();
+			if (GiftController.OnChangeSlots != null)
+			{
+				GiftController.OnChangeSlots();
 			}
 		}
+		else if (this._categories != null && this._categories.Count > 0)
+		{
+			base.StartCoroutine(this.CheckAvailableGifts());
+		}
+	}
+
+	private void SetPerGetGiftForNewPlayer(SlotInfo curSlot)
+	{
+		float percent = 0f;
+		int value = curSlot.gift.Count.Value;
+		curSlot.isActiveEvent = true;
+		GiftNewPlayerInfo infoNewPlayer = this.GetInfoNewPlayer(curSlot.category.Type);
+		if (infoNewPlayer != null)
+		{
+			value = infoNewPlayer.Count.Value;
+			if (curSlot.category.Type == GiftCategoryType.ArmorAndHat && Storager.getInt("keyIsGetArmorNewPlayer", false) == 0)
+			{
+				percent = infoNewPlayer.Percent;
+			}
+			if (curSlot.category.Type == GiftCategoryType.Skins && Storager.getInt("keyIsGetSkinNewPlayer", false) == 0)
+			{
+				percent = infoNewPlayer.Percent;
+			}
+			if (curSlot.category.Type == GiftCategoryType.Coins)
+			{
+				percent = infoNewPlayer.Percent;
+			}
+			if (curSlot.category.Type == GiftCategoryType.Gems)
+			{
+				percent = infoNewPlayer.Percent;
+			}
+		}
+		curSlot.percentGetSlot = percent;
+		curSlot.CountGift = value;
+	}
+
+	public void SetTimer(int val)
+	{
+		if (val > 14400)
+		{
+			val = 14400;
+		}
+		if (val != 0)
+		{
+			long serverTime = FriendsController.ServerTime - (long)(14400 - val);
+			this.LastTimeGetGift = serverTime;
+		}
+		else
+		{
+			this.LastTimeGetGift = FriendsController.ServerTime - (long)14400 + (long)1;
+		}
+		this.OnUpdateTimeFromServer();
 	}
 
 	public void TryGetData()
 	{
-		if (!DataIsLoaded)
+		if (!this.DataIsLoaded)
 		{
-			StartCoroutine(DownloadDataFormServer());
+			base.StartCoroutine(this.DownloadDataFormServer());
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003COnChangeSlots_003Em__2CD()
+	private void Update()
 	{
-	}
-
-	[CompilerGenerated]
-	private static void _003COnTimerEnded_003Em__2CE()
-	{
-	}
-
-	[CompilerGenerated]
-	private static void _003COnUpdateTimer_003Em__2CF(string s)
-	{
-	}
-
-	[CompilerGenerated]
-	private static bool _003CRecreateSlots_003Em__2D0(GiftCategory c)
-	{
-		return c.Type != GiftCategoryType.Gear;
-	}
-
-	[CompilerGenerated]
-	private bool _003CRecreateSlots_003Em__2D1(SlotInfo s)
-	{
-		return s.category.Type == _prevDroppedCategoryType;
-	}
-
-	[CompilerGenerated]
-	private static int _003CRecreateSlots_003Em__2D2(SlotInfo left, SlotInfo right)
-	{
-		if (left == null && right == null)
+		if (this._localTimer > 0f)
 		{
-			return 0;
+			this._localTimer -= Time.deltaTime;
+			if (this._localTimer < 0f)
+			{
+				this._localTimer = 0f;
+			}
+			this._canGetTimerGift = false;
+			if (this._oldTime != (int)this._localTimer)
+			{
+				this._oldTime = (int)this._localTimer;
+				if (GiftController.OnUpdateTimer != null)
+				{
+					GiftController.OnUpdateTimer(this.GetStringTimer());
+				}
+			}
 		}
-		if (left == null)
+		else if (!this._canGetTimerGift && (int)this._localTimer == 0)
 		{
-			return -1;
+			this._localTimer = -1f;
+			this._canGetTimerGift = true;
+			if (GiftController.OnUpdateTimer != null)
+			{
+				GiftController.OnUpdateTimer(this.GetStringTimer());
+			}
+			if (GiftController.OnTimerEnded != null)
+			{
+				GiftController.OnTimerEnded();
+			}
 		}
-		if (right == null)
+	}
+
+	public void UpdateSlot(SlotInfo curSlot)
+	{
+		curSlot.category.CheckGifts();
+		curSlot.gift = curSlot.category.GetRandomGift();
+		if (curSlot.gift != null)
 		{
-			return 1;
+			curSlot.percentGetSlot = curSlot.category.PercentChance;
+			curSlot.positionInScroll = curSlot.category.ScrollPosition;
 		}
-		return left.positionInScroll.CompareTo(right.positionInScroll);
+		else
+		{
+			this._slots.Remove(curSlot);
+		}
+		foreach (SlotInfo _slot in this._slots)
+		{
+			this._categories.FirstOrDefault<GiftCategory>((GiftCategory c) => c == _slot.category);
+			if (GiftController.CountGetGiftForNewPlayer <= 0)
+			{
+				_slot.percentGetSlot = _slot.category.PercentChance;
+			}
+			else
+			{
+				this.SetPerGetGiftForNewPlayer(_slot);
+			}
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CGetGift_003Em__2D5(SlotInfo s)
+	[DebuggerHidden]
+	private IEnumerator WaitDrop(GiftCategory cat, string id, bool isContains = false)
 	{
-		return !s.NoDropped;
+		GiftController.u003cWaitDropu003ec__Iterator147 variable = null;
+		return variable;
 	}
 
-	[CompilerGenerated]
-	private static float _003CGetGift_003Em__2D6(SlotInfo s)
-	{
-		return s.percentGetSlot;
-	}
+	public static event Action OnChangeSlots;
 
-	[CompilerGenerated]
-	private static bool _003CGetAvailableGrayWeaponsTags_003Em__2D7(ItemRecord w)
-	{
-		return Storager.getInt(w.StorageId, true) == 0;
-	}
+	public static event Action OnTimerEnded;
 
-	[CompilerGenerated]
-	private static string _003CGetAvailableGrayWeaponsTags_003Em__2D8(ItemRecord w)
-	{
-		return w.Tag;
-	}
+	public static event Action<string> OnUpdateTimer;
 }

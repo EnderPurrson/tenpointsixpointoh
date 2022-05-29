@@ -1,3 +1,5 @@
+using System;
+
 namespace GooglePlayGames.BasicApi
 {
 	public class ScorePageToken
@@ -14,23 +16,7 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mCollection;
-			}
-		}
-
-		public LeaderboardTimeSpan TimeSpan
-		{
-			get
-			{
-				return mTimespan;
-			}
-		}
-
-		public string LeaderboardId
-		{
-			get
-			{
-				return mId;
+				return this.mCollection;
 			}
 		}
 
@@ -38,16 +24,32 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mInternalObject;
+				return this.mInternalObject;
+			}
+		}
+
+		public string LeaderboardId
+		{
+			get
+			{
+				return this.mId;
+			}
+		}
+
+		public LeaderboardTimeSpan TimeSpan
+		{
+			get
+			{
+				return this.mTimespan;
 			}
 		}
 
 		internal ScorePageToken(object internalObject, string id, LeaderboardCollection collection, LeaderboardTimeSpan timespan)
 		{
-			mInternalObject = internalObject;
-			mId = id;
-			mCollection = collection;
-			mTimespan = timespan;
+			this.mInternalObject = internalObject;
+			this.mId = id;
+			this.mCollection = collection;
+			this.mTimespan = timespan;
 		}
 	}
 }

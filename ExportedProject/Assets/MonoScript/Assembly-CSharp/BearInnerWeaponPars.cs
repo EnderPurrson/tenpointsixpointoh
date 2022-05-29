@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BearInnerWeaponPars : MonoBehaviour
@@ -9,4 +10,8 @@ public class BearInnerWeaponPars : MonoBehaviour
 	public AudioClip reload;
 
 	public AudioClip empty;
+
+	public BearInnerWeaponPars()
+	{
+	}
 }

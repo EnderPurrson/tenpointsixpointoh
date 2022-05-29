@@ -1,41 +1,18 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class SkinEditorController : MonoBehaviour
 {
-	public enum ModeEditor
-	{
-		SkinPers = 0,
-		Cape = 1,
-		LogoClan = 2
-	}
+	public static Color colorForPaint;
 
-	public enum BrashMode
-	{
-		Pencil = 0,
-		Brash = 1,
-		Eraser = 2,
-		Fill = 3,
-		Pipette = 4
-	}
+	public static Color[] colorHistory;
 
-	public static Color colorForPaint = new Color(0f, 1f, 0f, 1f);
+	public static SkinEditorController.BrashMode brashMode;
 
-	public static Color[] colorHistory = new Color[5]
-	{
-		Color.clear,
-		Color.clear,
-		Color.clear,
-		Color.clear,
-		Color.clear
-	};
-
-	public static BrashMode brashMode = BrashMode.Pencil;
-
-	public static BrashMode brashModeOld = BrashMode.Pencil;
+	public static SkinEditorController.BrashMode brashModeOld;
 
 	public GameObject topPart;
 
@@ -49,9 +26,9 @@ public class SkinEditorController : MonoBehaviour
 
 	public GameObject backPart;
 
-	public static ModeEditor modeEditor = ModeEditor.SkinPers;
+	public static SkinEditorController.ModeEditor modeEditor;
 
-	public static SkinEditorController sharedController = null;
+	public static SkinEditorController sharedController;
 
 	public ButtonHandler saveButton;
 
@@ -127,13 +104,13 @@ public class SkinEditorController : MonoBehaviour
 
 	public GameObject selectedSide;
 
-	public static Texture2D currentSkin = null;
+	public static Texture2D currentSkin;
 
-	public static string currentSkinName = null;
+	public static string currentSkinName;
 
-	public static Dictionary<string, Dictionary<string, Rect>> rectsPartsInSkin = new Dictionary<string, Dictionary<string, Rect>>();
+	public static Dictionary<string, Dictionary<string, Rect>> rectsPartsInSkin;
 
-	public static Dictionary<string, Dictionary<string, Texture2D>> texturesParts = new Dictionary<string, Dictionary<string, Texture2D>>();
+	public static Dictionary<string, Dictionary<string, Texture2D>> texturesParts;
 
 	public UILabel pensilLabel;
 
@@ -157,9 +134,9 @@ public class SkinEditorController : MonoBehaviour
 
 	public UIInput skinNameInput;
 
-	public static bool isEditingPartSkin = false;
+	public static bool isEditingPartSkin;
 
-	public static bool isEditingSkin = false;
+	public static bool isEditingSkin;
 
 	public bool isSaveAndExit;
 
@@ -177,875 +154,73 @@ public class SkinEditorController : MonoBehaviour
 
 	private IDisposable _backSubscription;
 
-	public static event Action<string> ExitFromSkinEditor;
-
 	static SkinEditorController()
 	{
+		SkinEditorController.colorForPaint = new Color(0f, 1f, 0f, 1f);
+		SkinEditorController.colorHistory = new Color[] { Color.clear, Color.clear, Color.clear, Color.clear, Color.clear };
+		SkinEditorController.brashMode = SkinEditorController.BrashMode.Pencil;
+		SkinEditorController.brashModeOld = SkinEditorController.BrashMode.Pencil;
+		SkinEditorController.modeEditor = SkinEditorController.ModeEditor.SkinPers;
+		SkinEditorController.sharedController = null;
+		SkinEditorController.currentSkin = null;
+		SkinEditorController.currentSkinName = null;
+		SkinEditorController.rectsPartsInSkin = new Dictionary<string, Dictionary<string, Rect>>();
+		SkinEditorController.texturesParts = new Dictionary<string, Dictionary<string, Texture2D>>();
+		SkinEditorController.isEditingPartSkin = false;
+		SkinEditorController.isEditingSkin = false;
 		SkinEditorController.ExitFromSkinEditor = null;
 	}
 
-	private void Start()
+	public SkinEditorController()
 	{
-		brashMode = BrashMode.Pencil;
-		isEditingSkin = false;
-		isEditingPartSkin = false;
-		sharedController = this;
-		MenuBackgroundMusic.sharedMusic.PlayCustomMusicFrom(base.gameObject);
-		if (ExperienceController.sharedController != null)
-		{
-			ExperienceController.sharedController.isShowRanks = false;
-		}
-		colorForPaint = new Color(PlayerPrefs.GetFloat("ColorForPaintR", 0f), PlayerPrefs.GetFloat("ColorForPaintG", 1f), PlayerPrefs.GetFloat("ColorForPaintB", 0f), 1f);
-		colorButton.gameObject.GetComponent<UIButton>().defaultColor = colorForPaint;
-		colorButton.gameObject.GetComponent<UIButton>().pressed = colorForPaint;
-		colorButton.gameObject.GetComponent<UIButton>().hover = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = colorForPaint;
-		for (int i = 0; i < colorOnBrashSprites.Length; i++)
-		{
-			colorOnBrashSprites[i].color = colorForPaint;
-		}
-		if (modeEditor == ModeEditor.SkinPers)
-		{
-			if (currentSkinName == null)
-			{
-				currentSkin = Resources.Load("Clear_Skin") as Texture2D;
-				currentSkin.filterMode = FilterMode.Point;
-				currentSkin.Apply();
-				skinNameInput.value = string.Empty;
-			}
-			else
-			{
-				currentSkin = SkinsController.skinsForPers[currentSkinName];
-				if (SkinsController.skinsNamesForPers.ContainsKey(currentSkinName))
-				{
-					skinNameInput.value = SkinsController.skinsNamesForPers[currentSkinName];
-				}
-			}
-			Debug.Log("modeEditor== ModeEditor.SkinPers");
-			partPreviewPanel.SetActive(false);
-			skinPreviewPanel.SetActive(true);
-			editorPanel.SetActive(false);
-			currentPreviewsSkin.Add(previewPers);
-			currentPreviewsSkin.Add(previewPersShadow);
-			ShowPreviewSkin();
-		}
-		if (modeEditor == ModeEditor.Cape || modeEditor == ModeEditor.LogoClan)
-		{
-			Texture2D texture2D = null;
-			if (modeEditor == ModeEditor.Cape)
-			{
-				texture2D = SkinsController.capeUserTexture;
-				if (texture2D == null)
-				{
-					texture2D = Resources.Load<Texture2D>("cape_CustomTexture");
-				}
-			}
-			else
-			{
-				texture2D = SkinsController.logoClanUserTexture;
-				if (texture2D == null)
-				{
-					texture2D = Resources.Load<Texture2D>("Clan_Previews/icon_clan_001");
-				}
-			}
-			currentSkin = EditorTextures.CreateCopyTexture(texture2D);
-			partPreviewPanel.SetActive(false);
-			skinPreviewPanel.SetActive(false);
-			editorPanel.SetActive(true);
-			editorTexture.gameObject.GetComponent<EditorTextures>().SetStartCanvas(currentSkin);
-		}
-		savePanelInEditorTexture.SetActive(false);
-		SkinsController.SetTextureRecursivelyFrom(previewPers, currentSkin);
-		SetPartsRect();
-		UpdateTexturesPartsInDictionary();
-		colorPanel.SetActive(false);
-		saveChangesPanel.SetActive(false);
-		saveSkinPanel.SetActive(false);
-		leavePanel.SetActive(false);
-		if (topPart != null)
-		{
-			ButtonHandler component = topPart.GetComponent<ButtonHandler>();
-			if (component != null)
-			{
-				component.Clicked += HandleSideClicked;
-			}
-		}
-		if (downPart != null)
-		{
-			ButtonHandler component2 = downPart.GetComponent<ButtonHandler>();
-			if (component2 != null)
-			{
-				component2.Clicked += HandleSideClicked;
-			}
-		}
-		if (leftPart != null)
-		{
-			ButtonHandler component3 = leftPart.GetComponent<ButtonHandler>();
-			if (component3 != null)
-			{
-				component3.Clicked += HandleSideClicked;
-			}
-		}
-		if (frontPart != null)
-		{
-			ButtonHandler component4 = frontPart.GetComponent<ButtonHandler>();
-			if (component4 != null)
-			{
-				component4.Clicked += HandleSideClicked;
-			}
-		}
-		if (rigthPart != null)
-		{
-			ButtonHandler component5 = rigthPart.GetComponent<ButtonHandler>();
-			if (component5 != null)
-			{
-				component5.Clicked += HandleSideClicked;
-			}
-		}
-		if (backPart != null)
-		{
-			ButtonHandler component6 = backPart.GetComponent<ButtonHandler>();
-			if (component6 != null)
-			{
-				component6.Clicked += HandleSideClicked;
-			}
-		}
-		if (saveButton != null)
-		{
-			saveButton.Clicked += HandleSaveButtonClicked;
-		}
-		if (backButton != null)
-		{
-			backButton.Clicked += HandleBackButtonClicked;
-		}
-		if (fillButton != null)
-		{
-			fillButton.Clicked += HandleSelectBrashClicked;
-		}
-		if (brashButton != null)
-		{
-			brashButton.Clicked += HandleSelectBrashClicked;
-		}
-		if (pencilButton != null)
-		{
-			pencilButton.Clicked += HandleSelectBrashClicked;
-		}
-		if (pipetteButton != null)
-		{
-			pipetteButton.Clicked += HandleSelectBrashClicked;
-		}
-		if (eraserButton != null)
-		{
-			eraserButton.Clicked += HandleSelectBrashClicked;
-		}
-		if (colorButton != null)
-		{
-			colorButton.Clicked += HandleSelectColorClicked;
-		}
-		if (setColorButton != null)
-		{
-			setColorButton.Clicked += HandleSetColorClicked;
-		}
-		if (saveChangesButton != null)
-		{
-			DialogEscape dialogEscape = saveChangesButton.GetComponent<DialogEscape>() ?? saveChangesButton.gameObject.AddComponent<DialogEscape>();
-			dialogEscape.Context = "Save Skin Changes Dialog";
-			saveChangesButton.Clicked += HandleSaveChangesButtonClicked;
-		}
-		if (cancelInSaveChangesButton != null)
-		{
-			cancelInSaveChangesButton.Clicked += HandleCancelInSaveChangesButtonClicked;
-		}
-		if (okInSaveSkin != null)
-		{
-			DialogEscape dialogEscape2 = okInSaveSkin.GetComponent<DialogEscape>() ?? okInSaveSkin.gameObject.AddComponent<DialogEscape>();
-			dialogEscape2.Context = "Save Skin as... Dialog";
-			okInSaveSkin.Clicked += HandleOkInSaveSkinClicked;
-		}
-		if (cancelInSaveSkin != null)
-		{
-			cancelInSaveSkin.Clicked += HandleCancelInSaveSkinClicked;
-		}
-		if (yesInLeaveSave != null)
-		{
-			DialogEscape dialogEscape3 = yesInLeaveSave.GetComponent<DialogEscape>() ?? yesInLeaveSave.gameObject.AddComponent<DialogEscape>();
-			dialogEscape3.Context = "Save Skin Dialog";
-			yesInLeaveSave.Clicked += HandleYesInLeaveSaveClicked;
-		}
-		if (noInLeaveSave != null)
-		{
-			noInLeaveSave.Clicked += HandleNoInLeaveSaveClicked;
-		}
-		if (yesSaveButtonInEdit != null)
-		{
-			DialogEscape dialogEscape4 = yesSaveButtonInEdit.GetComponent<DialogEscape>() ?? yesSaveButtonInEdit.gameObject.AddComponent<DialogEscape>();
-			dialogEscape4.Context = "Save Cape Dialog";
-			yesSaveButtonInEdit.Clicked += HandleYesSaveButtonInEditClicked;
-		}
-		if (noSaveButtonInEdit != null)
-		{
-			noSaveButtonInEdit.Clicked += HandleNoSaveButtonInEditClicked;
-		}
-		for (int j = 0; j < colorHistoryButtons.Length; j++)
-		{
-			colorHistoryButtons[j].Clicked += HandleSetHistoryColorClicked;
-		}
-		if (presetsButton != null)
-		{
-			presetsButton.Clicked += HandlePresetsButtonClicked;
-		}
-		if (closePresetPanelButton != null)
-		{
-			closePresetPanelButton.Clicked += HandleClosePresetClicked;
-		}
-		if (selectPresetButton != null)
-		{
-			selectPresetButton.Clicked += HandleSelectPresetClicked;
-		}
-		if (centeredPresetButton != null)
-		{
-			centeredPresetButton.Clicked += HandleSelectPresetClicked;
-		}
-		AddColor(colorForPaint);
-		UpdateHistoryColors();
-		GetPresetSkins();
-		UIWrapContent uIWrapContent = skinPresentsWrap;
-		uIWrapContent.onInitializeItem = (UIWrapContent.OnInitializeItem)Delegate.Combine(uIWrapContent.onInitializeItem, new UIWrapContent.OnInitializeItem(WrapSkinPreset));
-	}
-
-	private void WrapSkinPreset(GameObject obj, int wrapIndex, int realIndex)
-	{
-		MeshRenderer component = obj.transform.GetChild(0).GetChild(0).GetComponent<MeshRenderer>();
-		if (!(component == null))
-		{
-			component.material.mainTexture = SkinsController.skinsForPers[presentSkins[realIndex]];
-		}
-	}
-
-	private void GetPresetSkins()
-	{
-		presentSkins = SkinsController.GetSkinsIdList();
-		skinPresentsWrap.maxIndex = presentSkins.Count - 1;
-	}
-
-	private void OpenPresetsWindow()
-	{
-		HidePreviewSkin();
-		presetsPanel.SetActive(true);
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(_003COpenPresetsWindow_003Em__531, "Skin Editor Presets Window");
-	}
-
-	private void HandlePresetsButtonClicked(object sender, EventArgs e)
-	{
-		OpenPresetsWindow();
-	}
-
-	private void HandleClosePresetClicked(object sender, EventArgs e)
-	{
-		ShowPreviewSkin();
-		presetsPanel.SetActive(false);
-		OnEnable();
-	}
-
-	private void HandleSelectPresetClicked(object sender, EventArgs e)
-	{
-		GameObject centeredObject = skinPresentsWrap.GetComponent<MyCenterOnChild>().centeredObject;
-		if (!(centeredObject == null))
-		{
-			SetPresetSkin(centeredObject);
-			HandleClosePresetClicked(null, null);
-		}
-	}
-
-	private void SetPresetSkin(GameObject obj)
-	{
-		MeshRenderer component = obj.transform.GetChild(0).GetChild(0).GetComponent<MeshRenderer>();
-		if (!(component == null))
-		{
-			currentSkin = component.material.mainTexture as Texture2D;
-			SkinsController.SetTextureRecursivelyFrom(previewPers, currentSkin);
-			SetPartsRect();
-			UpdateTexturesPartsInDictionary();
-		}
-	}
-
-	private void SetPresetSkin(int index)
-	{
-		currentSkin = SkinsController.skinsForPers[presentSkins[index]];
-		SkinsController.SetTextureRecursivelyFrom(previewPers, currentSkin);
-		SetPartsRect();
-		UpdateTexturesPartsInDictionary();
-	}
-
-	private void HandleYesSaveButtonInEditClicked(object sender, EventArgs e)
-	{
-		if (modeEditor == ModeEditor.LogoClan)
-		{
-			Debug.Log("modeEditor==ModeEditor.LogoClan");
-			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)editorTexture.mainTexture);
-		}
-		if (modeEditor == ModeEditor.Cape)
-		{
-			SkinsController.capeUserTexture = EditorTextures.CreateCopyTexture((Texture2D)editorTexture.mainTexture);
-			string cape = SkinsController.StringFromTexture(SkinsController.capeUserTexture);
-			long ticks = DateTime.UtcNow.Ticks;
-			CapeMemento capeMemento = new CapeMemento(ticks, cape);
-			PlayerPrefs.SetString("NewUserCape", JsonUtility.ToJson(capeMemento));
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-			{
-				SkinsSynchronizer.Instance.Sync();
-			}
-			else
-			{
-				SkinsSynchronizer.Instance.Push();
-			}
-		}
-		isEditingPartSkin = false;
-		HandleBackButtonClicked(null, (modeEditor != ModeEditor.LogoClan) ? null : new EditorClosingEventArgs
-		{
-			ClanLogoSaved = true
-		});
-	}
-
-	private void HandleNoSaveButtonInEditClicked(object sender, EventArgs e)
-	{
-		isEditingPartSkin = false;
-		HandleBackButtonClicked(null, null);
-	}
-
-	private void HandleOkInSaveSkinClicked(object sender, EventArgs e)
-	{
-		ShowPreviewSkin();
-		newNameSkin = SkinsController.AddUserSkin(skinNameInput.value, currentSkin, currentSkinName);
-		SkinsController.SetCurrentSkin(newNameSkin);
-		isEditingSkin = false;
-		saveSkinPanel.SetActive(false);
-		HandleBackButtonClicked(null, null);
-	}
-
-	private void HandleCancelInSaveSkinClicked(object sender, EventArgs e)
-	{
-		if (isSaveAndExit)
-		{
-			saveSkinPanel.SetActive(false);
-			leavePanel.SetActive(true);
-		}
-		else
-		{
-			ShowPreviewSkin();
-			saveSkinPanel.SetActive(false);
-		}
-	}
-
-	private void HandleYesInLeaveSaveClicked(object sender, EventArgs e)
-	{
-		leavePanel.SetActive(false);
-		saveSkinPanel.SetActive(true);
-		isSaveAndExit = true;
-	}
-
-	private void HandleNoInLeaveSaveClicked(object sender, EventArgs e)
-	{
-		isEditingSkin = false;
-		ShowPreviewSkin();
-		leavePanel.SetActive(false);
-		HandleBackButtonClicked(null, null);
-	}
-
-	private void ShowPreviewSkin()
-	{
-		foreach (GameObject item in currentPreviewsSkin)
-		{
-			item.SetActive(true);
-		}
-		backButton.gameObject.GetComponent<UIButton>().isEnabled = true;
-		saveButton.gameObject.GetComponent<UIButton>().isEnabled = true;
-		presetsButton.gameObject.GetComponent<UIButton>().isEnabled = true;
-	}
-
-	private void HidePreviewSkin()
-	{
-		foreach (GameObject item in currentPreviewsSkin)
-		{
-			item.SetActive(false);
-		}
-		backButton.gameObject.GetComponent<UIButton>().isEnabled = false;
-		saveButton.gameObject.GetComponent<UIButton>().isEnabled = false;
-		presetsButton.gameObject.GetComponent<UIButton>().isEnabled = false;
-	}
-
-	private void HandleSaveChangesButtonClicked(object sender, EventArgs e)
-	{
-		isEditingPartSkin = false;
-		isEditingSkin = true;
-		saveChangesPanel.SetActive(false);
-		SavePartInTexturesParts(selectedPartName);
-		currentSkin = BuildSkin(texturesParts);
-		SkinsController.SetTextureRecursivelyFrom(previewPers, currentSkin);
-		UpdateTexturesPartsInDictionary();
-		HandleBackButtonClicked(null, null);
-	}
-
-	private void HandleCancelInSaveChangesButtonClicked(object sender, EventArgs e)
-	{
-		isEditingPartSkin = false;
-		saveChangesPanel.SetActive(false);
-		HandleBackButtonClicked(null, null);
-	}
-
-	private void HandleSelectColorClicked(object sender, EventArgs e)
-	{
-		if (brashMode == BrashMode.Pipette)
-		{
-			brashMode = brashModeOld;
-			pencilButton.gameObject.GetComponent<UIToggle>().value = true;
-		}
-		editorPanel.SetActive(false);
-		colorPanel.SetActive(true);
-		oldColor.color = colorForPaint;
-		newColor.color = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = colorForPaint;
-	}
-
-	private void SetCurrentColor(Color color)
-	{
-		colorForPaint = color;
-		colorButton.gameObject.GetComponent<UIButton>().defaultColor = colorForPaint;
-		colorButton.gameObject.GetComponent<UIButton>().pressed = colorForPaint;
-		colorButton.gameObject.GetComponent<UIButton>().hover = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = colorForPaint;
-		okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = colorForPaint;
-		PlayerPrefs.SetFloat("ColorForPaintR", colorForPaint.r);
-		PlayerPrefs.SetFloat("ColorForPaintG", colorForPaint.g);
-		PlayerPrefs.SetFloat("ColorForPaintB", colorForPaint.b);
-		for (int i = 0; i < colorOnBrashSprites.Length; i++)
-		{
-			colorOnBrashSprites[i].color = colorForPaint;
-		}
-	}
-
-	private void UpdateHistoryColors()
-	{
-		for (int i = 0; i < colorHistory.Length; i++)
-		{
-			colorHistoryButtons[i].gameObject.SetActive(colorHistory[i] != Color.clear);
-			colorHistorySprites[i].color = colorHistory[i];
-			colorHistoryButtons[i].GetComponent<UIButton>().defaultColor = colorHistory[i];
-			colorHistoryButtons[i].GetComponent<UIButton>().pressed = colorHistory[i];
-			colorHistoryButtons[i].GetComponent<UIButton>().hover = colorHistory[i];
-		}
-		frameResizer.ResizeFrame();
 	}
 
 	private void AddColor(Color color)
 	{
-		SetCurrentColor(color);
-		for (int i = 0; i < colorHistory.Length; i++)
+		this.SetCurrentColor(color);
+		for (int i = 0; i < (int)SkinEditorController.colorHistory.Length; i++)
 		{
-			if (colorHistory[i] == color)
+			if (SkinEditorController.colorHistory[i] == color)
 			{
 				return;
 			}
 		}
-		for (int j = 1; j < colorHistory.Length; j++)
+		for (int j = 1; j < (int)SkinEditorController.colorHistory.Length; j++)
 		{
-			colorHistory[colorHistory.Length - j] = colorHistory[colorHistory.Length - j - 1];
+			SkinEditorController.colorHistory[(int)SkinEditorController.colorHistory.Length - j] = SkinEditorController.colorHistory[(int)SkinEditorController.colorHistory.Length - j - 1];
 		}
-		colorHistory[0] = color;
-		UpdateHistoryColors();
-	}
-
-	public void HandleSetColorClicked(object sender, EventArgs e)
-	{
-		editorPanel.SetActive(true);
-		colorPanel.SetActive(false);
-		AddColor(newColor.color);
-	}
-
-	public void HandleSetHistoryColorClicked(object sender, EventArgs e)
-	{
-		for (int i = 0; i < colorHistoryButtons.Length; i++)
-		{
-			if (colorHistoryButtons[i].Equals(sender))
-			{
-				SetCurrentColor(colorHistory[i]);
-			}
-		}
-	}
-
-	public void SetColorClickedUp()
-	{
-		if (brashMode == BrashMode.Pipette)
-		{
-			brashMode = brashModeOld;
-			switch (brashMode)
-			{
-			case BrashMode.Brash:
-				brashButton.gameObject.GetComponent<UIToggle>().value = true;
-				break;
-			case BrashMode.Eraser:
-				brashMode = BrashMode.Pencil;
-				pencilButton.gameObject.GetComponent<UIToggle>().value = true;
-				break;
-			case BrashMode.Fill:
-				fillButton.gameObject.GetComponent<UIToggle>().value = true;
-				break;
-			case BrashMode.Pencil:
-				pencilButton.gameObject.GetComponent<UIToggle>().value = true;
-				break;
-			}
-		}
-	}
-
-	private void HandleSelectBrashClicked(object sender, EventArgs e)
-	{
-		GameObject gameObject = (sender as MonoBehaviour).gameObject;
-		string text = gameObject.name;
-		Debug.Log(text);
-		if (text.Equals("Fill"))
-		{
-			brashMode = BrashMode.Fill;
-		}
-		if (text.Equals("Brash"))
-		{
-			brashMode = BrashMode.Brash;
-		}
-		if (text.Equals("Pencil"))
-		{
-			brashMode = BrashMode.Pencil;
-		}
-		if (text.Equals("Eraser"))
-		{
-			brashMode = BrashMode.Eraser;
-		}
-		if (text.Equals("Pipette"))
-		{
-			if (brashMode != BrashMode.Pipette)
-			{
-				brashModeOld = brashMode;
-			}
-			brashMode = BrashMode.Pipette;
-		}
-	}
-
-	private void HandleSideClicked(object sender, EventArgs e)
-	{
-		selectedSide = (sender as MonoBehaviour).gameObject;
-		editorPanel.SetActive(true);
-		partPreviewPanel.SetActive(false);
-		editorTexture.gameObject.GetComponent<EditorTextures>().SetStartCanvas((Texture2D)selectedSide.transform.GetChild(0).GetComponent<UITexture>().mainTexture);
-	}
-
-	private void HandleSaveButtonClicked(object sender, EventArgs e)
-	{
-		isSaveAndExit = false;
-		saveSkinPanel.SetActive(true);
-		HidePreviewSkin();
-	}
-
-	private void HandleBackButtonClicked(object sender, EventArgs e)
-	{
-		if (partPreviewPanel.activeSelf)
-		{
-			if (isEditingPartSkin)
-			{
-				saveChangesPanel.SetActive(true);
-				backButton.gameObject.GetComponent<UIButton>().isEnabled = false;
-				topPart.GetComponent<UIButton>().isEnabled = false;
-				downPart.GetComponent<UIButton>().isEnabled = false;
-				leftPart.GetComponent<UIButton>().isEnabled = false;
-				frontPart.GetComponent<UIButton>().isEnabled = false;
-				rigthPart.GetComponent<UIButton>().isEnabled = false;
-				backPart.GetComponent<UIButton>().isEnabled = false;
-			}
-			else
-			{
-				partPreviewPanel.SetActive(false);
-				skinPreviewPanel.SetActive(true);
-				backButton.gameObject.GetComponent<UIButton>().isEnabled = true;
-				topPart.GetComponent<UIButton>().isEnabled = true;
-				downPart.GetComponent<UIButton>().isEnabled = true;
-				leftPart.GetComponent<UIButton>().isEnabled = true;
-				frontPart.GetComponent<UIButton>().isEnabled = true;
-				rigthPart.GetComponent<UIButton>().isEnabled = true;
-				backPart.GetComponent<UIButton>().isEnabled = true;
-			}
-		}
-		else if (editorPanel.activeSelf)
-		{
-			if (modeEditor == ModeEditor.SkinPers)
-			{
-				editorPanel.SetActive(false);
-				partPreviewPanel.SetActive(true);
-				selectedSide.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture((Texture2D)editorTexture.mainTexture);
-			}
-			else if (modeEditor == ModeEditor.Cape || modeEditor == ModeEditor.LogoClan)
-			{
-				if (isEditingPartSkin)
-				{
-					savePanelInEditorTexture.SetActive(true);
-				}
-				else
-				{
-					ExitFromScene(e);
-				}
-			}
-		}
-		else if (colorPanel.activeSelf)
-		{
-			editorPanel.SetActive(true);
-			colorPanel.SetActive(false);
-		}
-		else if (skinPreviewPanel.activeSelf)
-		{
-			if (isEditingSkin)
-			{
-				leavePanel.SetActive(true);
-				HidePreviewSkin();
-			}
-			else
-			{
-				ExitFromScene(e);
-			}
-		}
-	}
-
-	private void SavePartInTexturesParts(string _partName)
-	{
-		Dictionary<string, Texture2D> dictionary = new Dictionary<string, Texture2D>();
-		foreach (KeyValuePair<string, Texture2D> item in texturesParts[_partName])
-		{
-			if (item.Key.Equals("Top"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)topPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-			if (item.Key.Equals("Down"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)downPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-			if (item.Key.Equals("Left"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)leftPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-			if (item.Key.Equals("Front"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)frontPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-			if (item.Key.Equals("Right"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)rigthPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-			if (item.Key.Equals("Back"))
-			{
-				dictionary.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)backPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
-			}
-		}
-		if (_partName.Equals("Arm_right") || _partName.Equals("Arm_left"))
-		{
-			texturesParts.Remove("Arm_right");
-			texturesParts.Add("Arm_right", dictionary);
-			texturesParts.Remove("Arm_left");
-			texturesParts.Add("Arm_left", dictionary);
-		}
-		if (_partName.Equals("Foot_right") || _partName.Equals("Foot_left"))
-		{
-			texturesParts.Remove("Foot_right");
-			texturesParts.Add("Foot_right", dictionary);
-			texturesParts.Remove("Foot_left");
-			texturesParts.Add("Foot_left", dictionary);
-		}
-		texturesParts.Remove(_partName);
-		texturesParts.Add(_partName, dictionary);
-	}
-
-	private void SetPartsRect()
-	{
-		Dictionary<string, Rect> dictionary = new Dictionary<string, Rect>();
-		rectsPartsInSkin.Clear();
-		if (modeEditor == ModeEditor.SkinPers)
-		{
-			Dictionary<string, Rect> dictionary2 = new Dictionary<string, Rect>();
-			dictionary2.Add("Top", new Rect(8f, 24f, 8f, 8f));
-			dictionary2.Add("Down", new Rect(16f, 24f, 8f, 8f));
-			dictionary2.Add("Left", new Rect(0f, 16f, 8f, 8f));
-			dictionary2.Add("Front", new Rect(8f, 16f, 8f, 8f));
-			dictionary2.Add("Right", new Rect(16f, 16f, 8f, 8f));
-			dictionary2.Add("Back", new Rect(24f, 16f, 8f, 8f));
-			rectsPartsInSkin.Add("Head", dictionary2);
-			Dictionary<string, Rect> dictionary3 = new Dictionary<string, Rect>();
-			dictionary3.Add("Top", new Rect(4f, 12f, 4f, 4f));
-			dictionary3.Add("Down", new Rect(8f, 12f, 4f, 4f));
-			dictionary3.Add("Left", new Rect(0f, 0f, 4f, 12f));
-			dictionary3.Add("Front", new Rect(4f, 0f, 4f, 12f));
-			dictionary3.Add("Right", new Rect(8f, 0f, 4f, 12f));
-			dictionary3.Add("Back", new Rect(12f, 0f, 4f, 12f));
-			rectsPartsInSkin.Add("Foot_left", dictionary3);
-			Dictionary<string, Rect> dictionary4 = new Dictionary<string, Rect>();
-			dictionary4.Add("Top", new Rect(4f, 12f, 4f, 4f));
-			dictionary4.Add("Down", new Rect(8f, 12f, 4f, 4f));
-			dictionary4.Add("Left", new Rect(0f, 0f, 4f, 12f));
-			dictionary4.Add("Front", new Rect(4f, 0f, 4f, 12f));
-			dictionary4.Add("Right", new Rect(8f, 0f, 4f, 12f));
-			dictionary4.Add("Back", new Rect(12f, 0f, 4f, 12f));
-			rectsPartsInSkin.Add("Foot_right", dictionary4);
-			Dictionary<string, Rect> dictionary5 = new Dictionary<string, Rect>();
-			dictionary5.Add("Top", new Rect(20f, 12f, 8f, 4f));
-			dictionary5.Add("Down", new Rect(28f, 12f, 8f, 4f));
-			dictionary5.Add("Left", new Rect(16f, 0f, 4f, 12f));
-			dictionary5.Add("Front", new Rect(20f, 0f, 8f, 12f));
-			dictionary5.Add("Right", new Rect(28f, 0f, 4f, 12f));
-			dictionary5.Add("Back", new Rect(32f, 0f, 8f, 12f));
-			rectsPartsInSkin.Add("Body", dictionary5);
-			Dictionary<string, Rect> dictionary6 = new Dictionary<string, Rect>();
-			dictionary6.Add("Top", new Rect(44f, 12f, 4f, 4f));
-			dictionary6.Add("Down", new Rect(48f, 12f, 4f, 4f));
-			dictionary6.Add("Left", new Rect(40f, 0f, 4f, 12f));
-			dictionary6.Add("Front", new Rect(44f, 0f, 4f, 12f));
-			dictionary6.Add("Right", new Rect(48f, 0f, 4f, 12f));
-			dictionary6.Add("Back", new Rect(52f, 0f, 4f, 12f));
-			rectsPartsInSkin.Add("Arm_right", dictionary6);
-			Dictionary<string, Rect> dictionary7 = new Dictionary<string, Rect>();
-			dictionary7.Add("Top", new Rect(44f, 12f, 4f, 4f));
-			dictionary7.Add("Down", new Rect(48f, 12f, 4f, 4f));
-			dictionary7.Add("Left", new Rect(40f, 0f, 4f, 12f));
-			dictionary7.Add("Front", new Rect(44f, 0f, 4f, 12f));
-			dictionary7.Add("Right", new Rect(48f, 0f, 4f, 12f));
-			dictionary7.Add("Back", new Rect(52f, 0f, 4f, 12f));
-			rectsPartsInSkin.Add("Arm_left", dictionary7);
-		}
-	}
-
-	public void UpdateTexturesPartsInDictionary()
-	{
-		texturesParts.Clear();
-		foreach (KeyValuePair<string, Dictionary<string, Rect>> item in rectsPartsInSkin)
-		{
-			Dictionary<string, Texture2D> dictionary = new Dictionary<string, Texture2D>();
-			foreach (KeyValuePair<string, Rect> item2 in rectsPartsInSkin[item.Key])
-			{
-				dictionary.Add(item2.Key, TextureFromRect(currentSkin, rectsPartsInSkin[item.Key][item2.Key]));
-			}
-			texturesParts.Add(item.Key, dictionary);
-		}
+		SkinEditorController.colorHistory[0] = color;
+		this.UpdateHistoryColors();
 	}
 
 	public static Texture2D BuildSkin(Dictionary<string, Dictionary<string, Texture2D>> _texturesParts)
 	{
-		int width = currentSkin.width;
-		int height = currentSkin.height;
-		Texture2D texture2D = new Texture2D(width, height, TextureFormat.RGBA32, false);
-		Color clear = Color.clear;
-		for (int i = 0; i < height; i++)
+		int num = SkinEditorController.currentSkin.width;
+		int num1 = SkinEditorController.currentSkin.height;
+		Texture2D texture2D = new Texture2D(num, num1, TextureFormat.RGBA32, false);
+		Color color = Color.clear;
+		for (int i = 0; i < num1; i++)
 		{
-			for (int j = 0; j < width; j++)
+			for (int j = 0; j < num; j++)
 			{
-				texture2D.SetPixel(j, i, clear);
+				texture2D.SetPixel(j, i, color);
 			}
 		}
 		foreach (KeyValuePair<string, Dictionary<string, Texture2D>> _texturesPart in _texturesParts)
 		{
 			foreach (KeyValuePair<string, Texture2D> item in _texturesParts[_texturesPart.Key])
 			{
-				texture2D.SetPixels(Mathf.RoundToInt(rectsPartsInSkin[_texturesPart.Key][item.Key].x), Mathf.RoundToInt(rectsPartsInSkin[_texturesPart.Key][item.Key].y), Mathf.RoundToInt(rectsPartsInSkin[_texturesPart.Key][item.Key].width), Mathf.RoundToInt(rectsPartsInSkin[_texturesPart.Key][item.Key].height), _texturesParts[_texturesPart.Key][item.Key].GetPixels());
+				Rect rect = SkinEditorController.rectsPartsInSkin[_texturesPart.Key][item.Key];
+				int num2 = Mathf.RoundToInt(rect.x);
+				Rect item1 = SkinEditorController.rectsPartsInSkin[_texturesPart.Key][item.Key];
+				int num3 = Mathf.RoundToInt(item1.y);
+				Rect rect1 = SkinEditorController.rectsPartsInSkin[_texturesPart.Key][item.Key];
+				int num4 = Mathf.RoundToInt(rect1.width);
+				Rect item2 = SkinEditorController.rectsPartsInSkin[_texturesPart.Key][item.Key];
+				texture2D.SetPixels(num2, num3, num4, Mathf.RoundToInt(item2.height), _texturesParts[_texturesPart.Key][item.Key].GetPixels());
 			}
 		}
 		texture2D.filterMode = FilterMode.Point;
-		texture2D.Apply();
-		return texture2D;
-	}
-
-	public void SelectPart(string _partName)
-	{
-		if (!texturesParts.ContainsKey(_partName))
-		{
-			Debug.Log("texturesParts not contain key");
-			return;
-		}
-		isEditingPartSkin = false;
-		selectedPartName = _partName;
-		topPart.SetActive(false);
-		downPart.SetActive(false);
-		leftPart.SetActive(false);
-		frontPart.SetActive(false);
-		rigthPart.SetActive(false);
-		backPart.SetActive(false);
-		int num = 22;
-		foreach (KeyValuePair<string, Texture2D> item in texturesParts[_partName])
-		{
-			if (item.Key.Equals("Top"))
-			{
-				topPart.SetActive(true);
-				topPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				topPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				topPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				topPart.transform.localPosition = new Vector3((float)(-item.Value.width) * 0.5f * (float)num, (float)(texturesParts[_partName]["Front"].height + item.Value.height) * 0.5f * (float)num, 0f);
-				topPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-			if (item.Key.Equals("Down"))
-			{
-				downPart.SetActive(true);
-				downPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				downPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				downPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				downPart.transform.localPosition = new Vector3((float)(-item.Value.width) * 0.5f * (float)num, (float)(-(texturesParts[_partName]["Front"].height + item.Value.height)) * 0.5f * (float)num, 0f);
-				downPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-			if (item.Key.Equals("Left"))
-			{
-				leftPart.SetActive(true);
-				leftPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				leftPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				leftPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				leftPart.transform.localPosition = new Vector3((0f - ((float)item.Value.width * 0.5f + (float)texturesParts[_partName]["Front"].width)) * (float)num, 0f, 0f);
-				leftPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-			if (item.Key.Equals("Front"))
-			{
-				frontPart.SetActive(true);
-				frontPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				frontPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				frontPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				frontPart.transform.localPosition = new Vector3((0f - (float)item.Value.width * 0.5f) * (float)num, 0f, 0f);
-				frontPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-			if (item.Key.Equals("Right"))
-			{
-				rigthPart.SetActive(true);
-				rigthPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				rigthPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				rigthPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				rigthPart.transform.localPosition = new Vector3((float)item.Value.width * 0.5f * (float)num, 0f, 0f);
-				rigthPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-			if (item.Key.Equals("Back"))
-			{
-				backPart.SetActive(true);
-				backPart.GetComponent<BoxCollider>().size = new Vector3(item.Value.width * num, item.Value.height * num, 0f);
-				backPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
-				backPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
-				backPart.transform.localPosition = new Vector3(((float)item.Value.width * 0.5f + (float)texturesParts[_partName]["Right"].width) * (float)num, 0f, 0f);
-				backPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
-			}
-		}
-		partPreviewPanel.SetActive(true);
-		skinPreviewPanel.SetActive(false);
-	}
-
-	private Texture2D TextureFromRect(Texture2D texForCut, Rect rectForCut)
-	{
-		Color[] pixels = texForCut.GetPixels((int)rectForCut.x, (int)rectForCut.y, (int)rectForCut.width, (int)rectForCut.height);
-		Texture2D texture2D = new Texture2D((int)rectForCut.width, (int)rectForCut.height);
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.SetPixels(pixels);
 		texture2D.Apply();
 		return texture2D;
 	}
@@ -1054,48 +229,910 @@ public class SkinEditorController : MonoBehaviour
 	{
 		if (SkinEditorController.ExitFromSkinEditor != null)
 		{
-			SkinEditorController.ExitFromSkinEditor((modeEditor != ModeEditor.LogoClan || e == null || !(e is EditorClosingEventArgs) || !(e as EditorClosingEventArgs).ClanLogoSaved) ? newNameSkin : "SAVED");
-			currentSkinName = null;
+			SkinEditorController.ExitFromSkinEditor((SkinEditorController.modeEditor != SkinEditorController.ModeEditor.LogoClan || e == null || !(e is EditorClosingEventArgs) || !(e as EditorClosingEventArgs).ClanLogoSaved ? this.newNameSkin : "SAVED"));
+			SkinEditorController.currentSkinName = null;
 		}
 		UnityEngine.Object.Destroy(base.gameObject);
-		if (modeEditor != ModeEditor.LogoClan && ExperienceController.sharedController != null)
+		if (SkinEditorController.modeEditor != SkinEditorController.ModeEditor.LogoClan && ExperienceController.sharedController != null)
 		{
 			ExperienceController.sharedController.isShowRanks = true;
 		}
 	}
 
-	private void OnEnable()
+	private void GetPresetSkins()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(_003COnEnable_003Em__532, "Skin Editor");
+		this.presentSkins = SkinsController.GetSkinsIdList();
+		this.skinPresentsWrap.maxIndex = this.presentSkins.Count - 1;
 	}
 
-	private void OnDisable()
+	private void HandleBackButtonClicked(object sender, EventArgs e)
 	{
-		if (_backSubscription != null)
+		if (!this.partPreviewPanel.activeSelf)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			if (!this.editorPanel.activeSelf)
+			{
+				if (this.colorPanel.activeSelf)
+				{
+					this.editorPanel.SetActive(true);
+					this.colorPanel.SetActive(false);
+					return;
+				}
+				if (!this.skinPreviewPanel.activeSelf)
+				{
+					return;
+				}
+				if (!SkinEditorController.isEditingSkin)
+				{
+					this.ExitFromScene(e);
+				}
+				else
+				{
+					this.leavePanel.SetActive(true);
+					this.HidePreviewSkin();
+				}
+				return;
+			}
+			if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.SkinPers)
+			{
+				this.editorPanel.SetActive(false);
+				this.partPreviewPanel.SetActive(true);
+				this.selectedSide.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture((Texture2D)this.editorTexture.mainTexture);
+			}
+			else if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.Cape || SkinEditorController.modeEditor == SkinEditorController.ModeEditor.LogoClan)
+			{
+				if (!SkinEditorController.isEditingPartSkin)
+				{
+					this.ExitFromScene(e);
+				}
+				else
+				{
+					this.savePanelInEditorTexture.SetActive(true);
+				}
+			}
+			return;
 		}
+		if (!SkinEditorController.isEditingPartSkin)
+		{
+			this.partPreviewPanel.SetActive(false);
+			this.skinPreviewPanel.SetActive(true);
+			this.backButton.gameObject.GetComponent<UIButton>().isEnabled = true;
+			this.topPart.GetComponent<UIButton>().isEnabled = true;
+			this.downPart.GetComponent<UIButton>().isEnabled = true;
+			this.leftPart.GetComponent<UIButton>().isEnabled = true;
+			this.frontPart.GetComponent<UIButton>().isEnabled = true;
+			this.rigthPart.GetComponent<UIButton>().isEnabled = true;
+			this.backPart.GetComponent<UIButton>().isEnabled = true;
+		}
+		else
+		{
+			this.saveChangesPanel.SetActive(true);
+			this.backButton.gameObject.GetComponent<UIButton>().isEnabled = false;
+			this.topPart.GetComponent<UIButton>().isEnabled = false;
+			this.downPart.GetComponent<UIButton>().isEnabled = false;
+			this.leftPart.GetComponent<UIButton>().isEnabled = false;
+			this.frontPart.GetComponent<UIButton>().isEnabled = false;
+			this.rigthPart.GetComponent<UIButton>().isEnabled = false;
+			this.backPart.GetComponent<UIButton>().isEnabled = false;
+		}
+	}
+
+	private void HandleCancelInSaveChangesButtonClicked(object sender, EventArgs e)
+	{
+		SkinEditorController.isEditingPartSkin = false;
+		this.saveChangesPanel.SetActive(false);
+		this.HandleBackButtonClicked(null, null);
+	}
+
+	private void HandleCancelInSaveSkinClicked(object sender, EventArgs e)
+	{
+		if (!this.isSaveAndExit)
+		{
+			this.ShowPreviewSkin();
+			this.saveSkinPanel.SetActive(false);
+		}
+		else
+		{
+			this.saveSkinPanel.SetActive(false);
+			this.leavePanel.SetActive(true);
+		}
+	}
+
+	private void HandleClosePresetClicked(object sender, EventArgs e)
+	{
+		this.ShowPreviewSkin();
+		this.presetsPanel.SetActive(false);
+		this.OnEnable();
+	}
+
+	private void HandleNoInLeaveSaveClicked(object sender, EventArgs e)
+	{
+		SkinEditorController.isEditingSkin = false;
+		this.ShowPreviewSkin();
+		this.leavePanel.SetActive(false);
+		this.HandleBackButtonClicked(null, null);
+	}
+
+	private void HandleNoSaveButtonInEditClicked(object sender, EventArgs e)
+	{
+		SkinEditorController.isEditingPartSkin = false;
+		this.HandleBackButtonClicked(null, null);
+	}
+
+	private void HandleOkInSaveSkinClicked(object sender, EventArgs e)
+	{
+		this.ShowPreviewSkin();
+		this.newNameSkin = SkinsController.AddUserSkin(this.skinNameInput.@value, SkinEditorController.currentSkin, SkinEditorController.currentSkinName);
+		SkinsController.SetCurrentSkin(this.newNameSkin);
+		SkinEditorController.isEditingSkin = false;
+		this.saveSkinPanel.SetActive(false);
+		this.HandleBackButtonClicked(null, null);
+	}
+
+	private void HandlePresetsButtonClicked(object sender, EventArgs e)
+	{
+		this.OpenPresetsWindow();
+	}
+
+	private void HandleSaveButtonClicked(object sender, EventArgs e)
+	{
+		this.isSaveAndExit = false;
+		this.saveSkinPanel.SetActive(true);
+		this.HidePreviewSkin();
+	}
+
+	private void HandleSaveChangesButtonClicked(object sender, EventArgs e)
+	{
+		SkinEditorController.isEditingPartSkin = false;
+		SkinEditorController.isEditingSkin = true;
+		this.saveChangesPanel.SetActive(false);
+		this.SavePartInTexturesParts(this.selectedPartName);
+		SkinEditorController.currentSkin = SkinEditorController.BuildSkin(SkinEditorController.texturesParts);
+		SkinsController.SetTextureRecursivelyFrom(this.previewPers, SkinEditorController.currentSkin, null);
+		this.UpdateTexturesPartsInDictionary();
+		this.HandleBackButtonClicked(null, null);
+	}
+
+	private void HandleSelectBrashClicked(object sender, EventArgs e)
+	{
+		string str = (sender as MonoBehaviour).gameObject.name;
+		Debug.Log(str);
+		if (str.Equals("Fill"))
+		{
+			SkinEditorController.brashMode = SkinEditorController.BrashMode.Fill;
+		}
+		if (str.Equals("Brash"))
+		{
+			SkinEditorController.brashMode = SkinEditorController.BrashMode.Brash;
+		}
+		if (str.Equals("Pencil"))
+		{
+			SkinEditorController.brashMode = SkinEditorController.BrashMode.Pencil;
+		}
+		if (str.Equals("Eraser"))
+		{
+			SkinEditorController.brashMode = SkinEditorController.BrashMode.Eraser;
+		}
+		if (str.Equals("Pipette"))
+		{
+			if (SkinEditorController.brashMode != SkinEditorController.BrashMode.Pipette)
+			{
+				SkinEditorController.brashModeOld = SkinEditorController.brashMode;
+			}
+			SkinEditorController.brashMode = SkinEditorController.BrashMode.Pipette;
+		}
+	}
+
+	private void HandleSelectColorClicked(object sender, EventArgs e)
+	{
+		if (SkinEditorController.brashMode == SkinEditorController.BrashMode.Pipette)
+		{
+			SkinEditorController.brashMode = SkinEditorController.brashModeOld;
+			this.pencilButton.gameObject.GetComponent<UIToggle>().@value = true;
+		}
+		this.editorPanel.SetActive(false);
+		this.colorPanel.SetActive(true);
+		this.oldColor.color = SkinEditorController.colorForPaint;
+		this.newColor.color = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = SkinEditorController.colorForPaint;
+	}
+
+	private void HandleSelectPresetClicked(object sender, EventArgs e)
+	{
+		GameObject component = this.skinPresentsWrap.GetComponent<MyCenterOnChild>().centeredObject;
+		if (component == null)
+		{
+			return;
+		}
+		this.SetPresetSkin(component);
+		this.HandleClosePresetClicked(null, null);
+	}
+
+	public void HandleSetColorClicked(object sender, EventArgs e)
+	{
+		this.editorPanel.SetActive(true);
+		this.colorPanel.SetActive(false);
+		this.AddColor(this.newColor.color);
+	}
+
+	public void HandleSetHistoryColorClicked(object sender, EventArgs e)
+	{
+		for (int i = 0; i < (int)this.colorHistoryButtons.Length; i++)
+		{
+			if (this.colorHistoryButtons[i].Equals(sender))
+			{
+				this.SetCurrentColor(SkinEditorController.colorHistory[i]);
+			}
+		}
+	}
+
+	private void HandleSideClicked(object sender, EventArgs e)
+	{
+		this.selectedSide = (sender as MonoBehaviour).gameObject;
+		this.editorPanel.SetActive(true);
+		this.partPreviewPanel.SetActive(false);
+		this.editorTexture.gameObject.GetComponent<EditorTextures>().SetStartCanvas((Texture2D)this.selectedSide.transform.GetChild(0).GetComponent<UITexture>().mainTexture);
+	}
+
+	private void HandleYesInLeaveSaveClicked(object sender, EventArgs e)
+	{
+		this.leavePanel.SetActive(false);
+		this.saveSkinPanel.SetActive(true);
+		this.isSaveAndExit = true;
+	}
+
+	private void HandleYesSaveButtonInEditClicked(object sender, EventArgs e)
+	{
+		EventArgs editorClosingEventArg;
+		if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.LogoClan)
+		{
+			Debug.Log("modeEditor==ModeEditor.LogoClan");
+			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)this.editorTexture.mainTexture);
+		}
+		if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.Cape)
+		{
+			SkinsController.capeUserTexture = EditorTextures.CreateCopyTexture((Texture2D)this.editorTexture.mainTexture);
+			string str = SkinsController.StringFromTexture(SkinsController.capeUserTexture);
+			CapeMemento capeMemento = new CapeMemento(DateTime.UtcNow.Ticks, str);
+			PlayerPrefs.SetString("NewUserCape", JsonUtility.ToJson(capeMemento));
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer)
+			{
+				SkinsSynchronizer.Instance.Push();
+			}
+			else
+			{
+				SkinsSynchronizer.Instance.Sync();
+			}
+		}
+		SkinEditorController.isEditingPartSkin = false;
+		if (SkinEditorController.modeEditor != SkinEditorController.ModeEditor.LogoClan)
+		{
+			editorClosingEventArg = null;
+		}
+		else
+		{
+			editorClosingEventArg = new EditorClosingEventArgs()
+			{
+				ClanLogoSaved = true
+			};
+		}
+		this.HandleBackButtonClicked(null, editorClosingEventArg);
+	}
+
+	private void HidePreviewSkin()
+	{
+		foreach (GameObject gameObject in this.currentPreviewsSkin)
+		{
+			gameObject.SetActive(false);
+		}
+		this.backButton.gameObject.GetComponent<UIButton>().isEnabled = false;
+		this.saveButton.gameObject.GetComponent<UIButton>().isEnabled = false;
+		this.presetsButton.gameObject.GetComponent<UIButton>().isEnabled = false;
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		SkinEditorController.sharedController = null;
 	}
 
-	[CompilerGenerated]
-	private void _003COpenPresetsWindow_003Em__531()
+	private void OnDisable()
 	{
-		HandleClosePresetClicked(this, EventArgs.Empty);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
 	}
 
-	[CompilerGenerated]
-	private void _003COnEnable_003Em__532()
+	private void OnEnable()
 	{
-		HandleBackButtonClicked(this, EventArgs.Empty);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => this.HandleBackButtonClicked(this, EventArgs.Empty), "Skin Editor");
+	}
+
+	private void OpenPresetsWindow()
+	{
+		this.HidePreviewSkin();
+		this.presetsPanel.SetActive(true);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => this.HandleClosePresetClicked(this, EventArgs.Empty), "Skin Editor Presets Window");
+	}
+
+	private void SavePartInTexturesParts(string _partName)
+	{
+		Dictionary<string, Texture2D> strs = new Dictionary<string, Texture2D>();
+		foreach (KeyValuePair<string, Texture2D> item in SkinEditorController.texturesParts[_partName])
+		{
+			if (item.Key.Equals("Top"))
+			{
+				strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.topPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+			}
+			if (item.Key.Equals("Down"))
+			{
+				strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.downPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+			}
+			if (item.Key.Equals("Left"))
+			{
+				strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.leftPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+			}
+			if (item.Key.Equals("Front"))
+			{
+				strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.frontPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+			}
+			if (item.Key.Equals("Right"))
+			{
+				strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.rigthPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+			}
+			if (!item.Key.Equals("Back"))
+			{
+				continue;
+			}
+			strs.Add(item.Key, EditorTextures.CreateCopyTexture((Texture2D)this.backPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture));
+		}
+		if (_partName.Equals("Arm_right") || _partName.Equals("Arm_left"))
+		{
+			SkinEditorController.texturesParts.Remove("Arm_right");
+			SkinEditorController.texturesParts.Add("Arm_right", strs);
+			SkinEditorController.texturesParts.Remove("Arm_left");
+			SkinEditorController.texturesParts.Add("Arm_left", strs);
+		}
+		if (_partName.Equals("Foot_right") || _partName.Equals("Foot_left"))
+		{
+			SkinEditorController.texturesParts.Remove("Foot_right");
+			SkinEditorController.texturesParts.Add("Foot_right", strs);
+			SkinEditorController.texturesParts.Remove("Foot_left");
+			SkinEditorController.texturesParts.Add("Foot_left", strs);
+		}
+		SkinEditorController.texturesParts.Remove(_partName);
+		SkinEditorController.texturesParts.Add(_partName, strs);
+	}
+
+	public void SelectPart(string _partName)
+	{
+		if (!SkinEditorController.texturesParts.ContainsKey(_partName))
+		{
+			Debug.Log("texturesParts not contain key");
+			return;
+		}
+		SkinEditorController.isEditingPartSkin = false;
+		this.selectedPartName = _partName;
+		this.topPart.SetActive(false);
+		this.downPart.SetActive(false);
+		this.leftPart.SetActive(false);
+		this.frontPart.SetActive(false);
+		this.rigthPart.SetActive(false);
+		this.backPart.SetActive(false);
+		int num = 22;
+		foreach (KeyValuePair<string, Texture2D> item in SkinEditorController.texturesParts[_partName])
+		{
+			if (item.Key.Equals("Top"))
+			{
+				this.topPart.SetActive(true);
+				this.topPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+				this.topPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+				this.topPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+				this.topPart.transform.localPosition = new Vector3((float)(-item.Value.width) * 0.5f * (float)num, (float)(SkinEditorController.texturesParts[_partName]["Front"].height + item.Value.height) * 0.5f * (float)num, 0f);
+				this.topPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+			}
+			if (item.Key.Equals("Down"))
+			{
+				this.downPart.SetActive(true);
+				this.downPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+				this.downPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+				this.downPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+				this.downPart.transform.localPosition = new Vector3((float)(-item.Value.width) * 0.5f * (float)num, (float)(-(SkinEditorController.texturesParts[_partName]["Front"].height + item.Value.height)) * 0.5f * (float)num, 0f);
+				this.downPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+			}
+			if (item.Key.Equals("Left"))
+			{
+				this.leftPart.SetActive(true);
+				this.leftPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+				this.leftPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+				this.leftPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+				this.leftPart.transform.localPosition = new Vector3(-((float)item.Value.width * 0.5f + (float)SkinEditorController.texturesParts[_partName]["Front"].width) * (float)num, 0f, 0f);
+				this.leftPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+			}
+			if (item.Key.Equals("Front"))
+			{
+				this.frontPart.SetActive(true);
+				this.frontPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+				this.frontPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+				this.frontPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+				this.frontPart.transform.localPosition = new Vector3(-((float)item.Value.width * 0.5f) * (float)num, 0f, 0f);
+				this.frontPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+			}
+			if (item.Key.Equals("Right"))
+			{
+				this.rigthPart.SetActive(true);
+				this.rigthPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+				this.rigthPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+				this.rigthPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+				this.rigthPart.transform.localPosition = new Vector3((float)item.Value.width * 0.5f * (float)num, 0f, 0f);
+				this.rigthPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+			}
+			if (!item.Key.Equals("Back"))
+			{
+				continue;
+			}
+			this.backPart.SetActive(true);
+			this.backPart.GetComponent<BoxCollider>().size = new Vector3((float)(item.Value.width * num), (float)(item.Value.height * num), 0f);
+			this.backPart.transform.GetChild(0).GetComponent<UITexture>().width = item.Value.width * num;
+			this.backPart.transform.GetChild(0).GetComponent<UITexture>().height = item.Value.height * num;
+			this.backPart.transform.localPosition = new Vector3(((float)item.Value.width * 0.5f + (float)SkinEditorController.texturesParts[_partName]["Right"].width) * (float)num, 0f, 0f);
+			this.backPart.transform.GetChild(0).GetComponent<UITexture>().mainTexture = EditorTextures.CreateCopyTexture(item.Value);
+		}
+		this.partPreviewPanel.SetActive(true);
+		this.skinPreviewPanel.SetActive(false);
+	}
+
+	public void SetColorClickedUp()
+	{
+		if (SkinEditorController.brashMode == SkinEditorController.BrashMode.Pipette)
+		{
+			SkinEditorController.brashMode = SkinEditorController.brashModeOld;
+			switch (SkinEditorController.brashMode)
+			{
+				case SkinEditorController.BrashMode.Pencil:
+				{
+					this.pencilButton.gameObject.GetComponent<UIToggle>().@value = true;
+					break;
+				}
+				case SkinEditorController.BrashMode.Brash:
+				{
+					this.brashButton.gameObject.GetComponent<UIToggle>().@value = true;
+					break;
+				}
+				case SkinEditorController.BrashMode.Eraser:
+				{
+					SkinEditorController.brashMode = SkinEditorController.BrashMode.Pencil;
+					this.pencilButton.gameObject.GetComponent<UIToggle>().@value = true;
+					break;
+				}
+				case SkinEditorController.BrashMode.Fill:
+				{
+					this.fillButton.gameObject.GetComponent<UIToggle>().@value = true;
+					break;
+				}
+			}
+		}
+	}
+
+	private void SetCurrentColor(Color color)
+	{
+		SkinEditorController.colorForPaint = color;
+		this.colorButton.gameObject.GetComponent<UIButton>().defaultColor = SkinEditorController.colorForPaint;
+		this.colorButton.gameObject.GetComponent<UIButton>().pressed = SkinEditorController.colorForPaint;
+		this.colorButton.gameObject.GetComponent<UIButton>().hover = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = SkinEditorController.colorForPaint;
+		PlayerPrefs.SetFloat("ColorForPaintR", SkinEditorController.colorForPaint.r);
+		PlayerPrefs.SetFloat("ColorForPaintG", SkinEditorController.colorForPaint.g);
+		PlayerPrefs.SetFloat("ColorForPaintB", SkinEditorController.colorForPaint.b);
+		for (int i = 0; i < (int)this.colorOnBrashSprites.Length; i++)
+		{
+			this.colorOnBrashSprites[i].color = SkinEditorController.colorForPaint;
+		}
+	}
+
+	private void SetPartsRect()
+	{
+		Dictionary<string, Rect> strs = new Dictionary<string, Rect>();
+		SkinEditorController.rectsPartsInSkin.Clear();
+		if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.SkinPers)
+		{
+			Dictionary<string, Rect> strs1 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(8f, 24f, 8f, 8f) },
+				{ "Down", new Rect(16f, 24f, 8f, 8f) },
+				{ "Left", new Rect(0f, 16f, 8f, 8f) },
+				{ "Front", new Rect(8f, 16f, 8f, 8f) },
+				{ "Right", new Rect(16f, 16f, 8f, 8f) },
+				{ "Back", new Rect(24f, 16f, 8f, 8f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Head", strs1);
+			Dictionary<string, Rect> strs2 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(4f, 12f, 4f, 4f) },
+				{ "Down", new Rect(8f, 12f, 4f, 4f) },
+				{ "Left", new Rect(0f, 0f, 4f, 12f) },
+				{ "Front", new Rect(4f, 0f, 4f, 12f) },
+				{ "Right", new Rect(8f, 0f, 4f, 12f) },
+				{ "Back", new Rect(12f, 0f, 4f, 12f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Foot_left", strs2);
+			Dictionary<string, Rect> strs3 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(4f, 12f, 4f, 4f) },
+				{ "Down", new Rect(8f, 12f, 4f, 4f) },
+				{ "Left", new Rect(0f, 0f, 4f, 12f) },
+				{ "Front", new Rect(4f, 0f, 4f, 12f) },
+				{ "Right", new Rect(8f, 0f, 4f, 12f) },
+				{ "Back", new Rect(12f, 0f, 4f, 12f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Foot_right", strs3);
+			Dictionary<string, Rect> strs4 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(20f, 12f, 8f, 4f) },
+				{ "Down", new Rect(28f, 12f, 8f, 4f) },
+				{ "Left", new Rect(16f, 0f, 4f, 12f) },
+				{ "Front", new Rect(20f, 0f, 8f, 12f) },
+				{ "Right", new Rect(28f, 0f, 4f, 12f) },
+				{ "Back", new Rect(32f, 0f, 8f, 12f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Body", strs4);
+			Dictionary<string, Rect> strs5 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(44f, 12f, 4f, 4f) },
+				{ "Down", new Rect(48f, 12f, 4f, 4f) },
+				{ "Left", new Rect(40f, 0f, 4f, 12f) },
+				{ "Front", new Rect(44f, 0f, 4f, 12f) },
+				{ "Right", new Rect(48f, 0f, 4f, 12f) },
+				{ "Back", new Rect(52f, 0f, 4f, 12f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Arm_right", strs5);
+			Dictionary<string, Rect> strs6 = new Dictionary<string, Rect>()
+			{
+				{ "Top", new Rect(44f, 12f, 4f, 4f) },
+				{ "Down", new Rect(48f, 12f, 4f, 4f) },
+				{ "Left", new Rect(40f, 0f, 4f, 12f) },
+				{ "Front", new Rect(44f, 0f, 4f, 12f) },
+				{ "Right", new Rect(48f, 0f, 4f, 12f) },
+				{ "Back", new Rect(52f, 0f, 4f, 12f) }
+			};
+			SkinEditorController.rectsPartsInSkin.Add("Arm_left", strs6);
+		}
+	}
+
+	private void SetPresetSkin(GameObject obj)
+	{
+		MeshRenderer component = obj.transform.GetChild(0).GetChild(0).GetComponent<MeshRenderer>();
+		if (component == null)
+		{
+			return;
+		}
+		SkinEditorController.currentSkin = component.material.mainTexture as Texture2D;
+		SkinsController.SetTextureRecursivelyFrom(this.previewPers, SkinEditorController.currentSkin, null);
+		this.SetPartsRect();
+		this.UpdateTexturesPartsInDictionary();
+	}
+
+	private void SetPresetSkin(int index)
+	{
+		SkinEditorController.currentSkin = SkinsController.skinsForPers[this.presentSkins[index]];
+		SkinsController.SetTextureRecursivelyFrom(this.previewPers, SkinEditorController.currentSkin, null);
+		this.SetPartsRect();
+		this.UpdateTexturesPartsInDictionary();
+	}
+
+	private void ShowPreviewSkin()
+	{
+		foreach (GameObject gameObject in this.currentPreviewsSkin)
+		{
+			gameObject.SetActive(true);
+		}
+		this.backButton.gameObject.GetComponent<UIButton>().isEnabled = true;
+		this.saveButton.gameObject.GetComponent<UIButton>().isEnabled = true;
+		this.presetsButton.gameObject.GetComponent<UIButton>().isEnabled = true;
+	}
+
+	private void Start()
+	{
+		SkinEditorController.brashMode = SkinEditorController.BrashMode.Pencil;
+		SkinEditorController.isEditingSkin = false;
+		SkinEditorController.isEditingPartSkin = false;
+		SkinEditorController.sharedController = this;
+		MenuBackgroundMusic.sharedMusic.PlayCustomMusicFrom(base.gameObject);
+		if (ExperienceController.sharedController != null)
+		{
+			ExperienceController.sharedController.isShowRanks = false;
+		}
+		SkinEditorController.colorForPaint = new Color(PlayerPrefs.GetFloat("ColorForPaintR", 0f), PlayerPrefs.GetFloat("ColorForPaintG", 1f), PlayerPrefs.GetFloat("ColorForPaintB", 0f), 1f);
+		this.colorButton.gameObject.GetComponent<UIButton>().defaultColor = SkinEditorController.colorForPaint;
+		this.colorButton.gameObject.GetComponent<UIButton>().pressed = SkinEditorController.colorForPaint;
+		this.colorButton.gameObject.GetComponent<UIButton>().hover = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().defaultColor = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().pressed = SkinEditorController.colorForPaint;
+		this.okColorInPalitraButton.gameObject.GetComponent<UIButton>().hover = SkinEditorController.colorForPaint;
+		for (int i = 0; i < (int)this.colorOnBrashSprites.Length; i++)
+		{
+			this.colorOnBrashSprites[i].color = SkinEditorController.colorForPaint;
+		}
+		if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.SkinPers)
+		{
+			if (SkinEditorController.currentSkinName != null)
+			{
+				SkinEditorController.currentSkin = SkinsController.skinsForPers[SkinEditorController.currentSkinName];
+				if (SkinsController.skinsNamesForPers.ContainsKey(SkinEditorController.currentSkinName))
+				{
+					this.skinNameInput.@value = SkinsController.skinsNamesForPers[SkinEditorController.currentSkinName];
+				}
+			}
+			else
+			{
+				SkinEditorController.currentSkin = Resources.Load("Clear_Skin") as Texture2D;
+				SkinEditorController.currentSkin.filterMode = FilterMode.Point;
+				SkinEditorController.currentSkin.Apply();
+				this.skinNameInput.@value = string.Empty;
+			}
+			Debug.Log("modeEditor== ModeEditor.SkinPers");
+			this.partPreviewPanel.SetActive(false);
+			this.skinPreviewPanel.SetActive(true);
+			this.editorPanel.SetActive(false);
+			this.currentPreviewsSkin.Add(this.previewPers);
+			this.currentPreviewsSkin.Add(this.previewPersShadow);
+			this.ShowPreviewSkin();
+		}
+		if (SkinEditorController.modeEditor == SkinEditorController.ModeEditor.Cape || SkinEditorController.modeEditor == SkinEditorController.ModeEditor.LogoClan)
+		{
+			Texture2D texture2D = null;
+			if (SkinEditorController.modeEditor != SkinEditorController.ModeEditor.Cape)
+			{
+				texture2D = SkinsController.logoClanUserTexture;
+				if (texture2D == null)
+				{
+					texture2D = Resources.Load<Texture2D>("Clan_Previews/icon_clan_001");
+				}
+			}
+			else
+			{
+				texture2D = SkinsController.capeUserTexture;
+				if (texture2D == null)
+				{
+					texture2D = Resources.Load<Texture2D>("cape_CustomTexture");
+				}
+			}
+			SkinEditorController.currentSkin = EditorTextures.CreateCopyTexture(texture2D);
+			this.partPreviewPanel.SetActive(false);
+			this.skinPreviewPanel.SetActive(false);
+			this.editorPanel.SetActive(true);
+			this.editorTexture.gameObject.GetComponent<EditorTextures>().SetStartCanvas(SkinEditorController.currentSkin);
+		}
+		this.savePanelInEditorTexture.SetActive(false);
+		SkinsController.SetTextureRecursivelyFrom(this.previewPers, SkinEditorController.currentSkin, null);
+		this.SetPartsRect();
+		this.UpdateTexturesPartsInDictionary();
+		this.colorPanel.SetActive(false);
+		this.saveChangesPanel.SetActive(false);
+		this.saveSkinPanel.SetActive(false);
+		this.leavePanel.SetActive(false);
+		if (this.topPart != null)
+		{
+			ButtonHandler component = this.topPart.GetComponent<ButtonHandler>();
+			if (component != null)
+			{
+				component.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.downPart != null)
+		{
+			ButtonHandler buttonHandler = this.downPart.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
+			{
+				buttonHandler.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.leftPart != null)
+		{
+			ButtonHandler component1 = this.leftPart.GetComponent<ButtonHandler>();
+			if (component1 != null)
+			{
+				component1.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.frontPart != null)
+		{
+			ButtonHandler buttonHandler1 = this.frontPart.GetComponent<ButtonHandler>();
+			if (buttonHandler1 != null)
+			{
+				buttonHandler1.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.rigthPart != null)
+		{
+			ButtonHandler component2 = this.rigthPart.GetComponent<ButtonHandler>();
+			if (component2 != null)
+			{
+				component2.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.backPart != null)
+		{
+			ButtonHandler buttonHandler2 = this.backPart.GetComponent<ButtonHandler>();
+			if (buttonHandler2 != null)
+			{
+				buttonHandler2.Clicked += new EventHandler(this.HandleSideClicked);
+			}
+		}
+		if (this.saveButton != null)
+		{
+			this.saveButton.Clicked += new EventHandler(this.HandleSaveButtonClicked);
+		}
+		if (this.backButton != null)
+		{
+			this.backButton.Clicked += new EventHandler(this.HandleBackButtonClicked);
+		}
+		if (this.fillButton != null)
+		{
+			this.fillButton.Clicked += new EventHandler(this.HandleSelectBrashClicked);
+		}
+		if (this.brashButton != null)
+		{
+			this.brashButton.Clicked += new EventHandler(this.HandleSelectBrashClicked);
+		}
+		if (this.pencilButton != null)
+		{
+			this.pencilButton.Clicked += new EventHandler(this.HandleSelectBrashClicked);
+		}
+		if (this.pipetteButton != null)
+		{
+			this.pipetteButton.Clicked += new EventHandler(this.HandleSelectBrashClicked);
+		}
+		if (this.eraserButton != null)
+		{
+			this.eraserButton.Clicked += new EventHandler(this.HandleSelectBrashClicked);
+		}
+		if (this.colorButton != null)
+		{
+			this.colorButton.Clicked += new EventHandler(this.HandleSelectColorClicked);
+		}
+		if (this.setColorButton != null)
+		{
+			this.setColorButton.Clicked += new EventHandler(this.HandleSetColorClicked);
+		}
+		if (this.saveChangesButton != null)
+		{
+			(this.saveChangesButton.GetComponent<DialogEscape>() ?? this.saveChangesButton.gameObject.AddComponent<DialogEscape>()).Context = "Save Skin Changes Dialog";
+			this.saveChangesButton.Clicked += new EventHandler(this.HandleSaveChangesButtonClicked);
+		}
+		if (this.cancelInSaveChangesButton != null)
+		{
+			this.cancelInSaveChangesButton.Clicked += new EventHandler(this.HandleCancelInSaveChangesButtonClicked);
+		}
+		if (this.okInSaveSkin != null)
+		{
+			(this.okInSaveSkin.GetComponent<DialogEscape>() ?? this.okInSaveSkin.gameObject.AddComponent<DialogEscape>()).Context = "Save Skin as... Dialog";
+			this.okInSaveSkin.Clicked += new EventHandler(this.HandleOkInSaveSkinClicked);
+		}
+		if (this.cancelInSaveSkin != null)
+		{
+			this.cancelInSaveSkin.Clicked += new EventHandler(this.HandleCancelInSaveSkinClicked);
+		}
+		if (this.yesInLeaveSave != null)
+		{
+			(this.yesInLeaveSave.GetComponent<DialogEscape>() ?? this.yesInLeaveSave.gameObject.AddComponent<DialogEscape>()).Context = "Save Skin Dialog";
+			this.yesInLeaveSave.Clicked += new EventHandler(this.HandleYesInLeaveSaveClicked);
+		}
+		if (this.noInLeaveSave != null)
+		{
+			this.noInLeaveSave.Clicked += new EventHandler(this.HandleNoInLeaveSaveClicked);
+		}
+		if (this.yesSaveButtonInEdit != null)
+		{
+			(this.yesSaveButtonInEdit.GetComponent<DialogEscape>() ?? this.yesSaveButtonInEdit.gameObject.AddComponent<DialogEscape>()).Context = "Save Cape Dialog";
+			this.yesSaveButtonInEdit.Clicked += new EventHandler(this.HandleYesSaveButtonInEditClicked);
+		}
+		if (this.noSaveButtonInEdit != null)
+		{
+			this.noSaveButtonInEdit.Clicked += new EventHandler(this.HandleNoSaveButtonInEditClicked);
+		}
+		for (int j = 0; j < (int)this.colorHistoryButtons.Length; j++)
+		{
+			this.colorHistoryButtons[j].Clicked += new EventHandler(this.HandleSetHistoryColorClicked);
+		}
+		if (this.presetsButton != null)
+		{
+			this.presetsButton.Clicked += new EventHandler(this.HandlePresetsButtonClicked);
+		}
+		if (this.closePresetPanelButton != null)
+		{
+			this.closePresetPanelButton.Clicked += new EventHandler(this.HandleClosePresetClicked);
+		}
+		if (this.selectPresetButton != null)
+		{
+			this.selectPresetButton.Clicked += new EventHandler(this.HandleSelectPresetClicked);
+		}
+		if (this.centeredPresetButton != null)
+		{
+			this.centeredPresetButton.Clicked += new EventHandler(this.HandleSelectPresetClicked);
+		}
+		this.AddColor(SkinEditorController.colorForPaint);
+		this.UpdateHistoryColors();
+		this.GetPresetSkins();
+		this.skinPresentsWrap.onInitializeItem += new UIWrapContent.OnInitializeItem(this.WrapSkinPreset);
+	}
+
+	private Texture2D TextureFromRect(Texture2D texForCut, Rect rectForCut)
+	{
+		Color[] pixels = texForCut.GetPixels((int)rectForCut.x, (int)rectForCut.y, (int)rectForCut.width, (int)rectForCut.height);
+		Texture2D texture2D = new Texture2D((int)rectForCut.width, (int)rectForCut.height)
+		{
+			filterMode = FilterMode.Point
+		};
+		texture2D.SetPixels(pixels);
+		texture2D.Apply();
+		return texture2D;
+	}
+
+	private void UpdateHistoryColors()
+	{
+		for (int i = 0; i < (int)SkinEditorController.colorHistory.Length; i++)
+		{
+			this.colorHistoryButtons[i].gameObject.SetActive(SkinEditorController.colorHistory[i] != Color.clear);
+			this.colorHistorySprites[i].color = SkinEditorController.colorHistory[i];
+			this.colorHistoryButtons[i].GetComponent<UIButton>().defaultColor = SkinEditorController.colorHistory[i];
+			this.colorHistoryButtons[i].GetComponent<UIButton>().pressed = SkinEditorController.colorHistory[i];
+			this.colorHistoryButtons[i].GetComponent<UIButton>().hover = SkinEditorController.colorHistory[i];
+		}
+		this.frameResizer.ResizeFrame();
+	}
+
+	public void UpdateTexturesPartsInDictionary()
+	{
+		SkinEditorController.texturesParts.Clear();
+		foreach (KeyValuePair<string, Dictionary<string, Rect>> keyValuePair in SkinEditorController.rectsPartsInSkin)
+		{
+			Dictionary<string, Texture2D> strs = new Dictionary<string, Texture2D>();
+			foreach (KeyValuePair<string, Rect> item in SkinEditorController.rectsPartsInSkin[keyValuePair.Key])
+			{
+				strs.Add(item.Key, this.TextureFromRect(SkinEditorController.currentSkin, SkinEditorController.rectsPartsInSkin[keyValuePair.Key][item.Key]));
+			}
+			SkinEditorController.texturesParts.Add(keyValuePair.Key, strs);
+		}
+	}
+
+	private void WrapSkinPreset(GameObject obj, int wrapIndex, int realIndex)
+	{
+		MeshRenderer component = obj.transform.GetChild(0).GetChild(0).GetComponent<MeshRenderer>();
+		if (component == null)
+		{
+			return;
+		}
+		component.material.mainTexture = SkinsController.skinsForPers[this.presentSkins[realIndex]];
+	}
+
+	public static event Action<string> ExitFromSkinEditor;
+
+	public enum BrashMode
+	{
+		Pencil,
+		Brash,
+		Eraser,
+		Fill,
+		Pipette
+	}
+
+	public enum ModeEditor
+	{
+		SkinPers,
+		Cape,
+		LogoClan
 	}
 }

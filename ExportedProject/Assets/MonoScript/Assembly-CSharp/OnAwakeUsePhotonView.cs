@@ -1,34 +1,41 @@
 using Photon;
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
 public class OnAwakeUsePhotonView : Photon.MonoBehaviour
 {
-	private void Awake()
+	public OnAwakeUsePhotonView()
 	{
-		if (base.photonView.isMine)
-		{
-			base.photonView.RPC("OnAwakeRPC", PhotonTargets.All);
-		}
 	}
 
-	private void Start()
+	private void Awake()
 	{
-		if (base.photonView.isMine)
+		if (!base.photonView.isMine)
 		{
-			base.photonView.RPC("OnAwakeRPC", PhotonTargets.All, (byte)1);
+			return;
 		}
+		base.photonView.RPC("OnAwakeRPC", PhotonTargets.All, new object[0]);
 	}
 
 	[PunRPC]
 	public void OnAwakeRPC()
 	{
-		Debug.Log("RPC: 'OnAwakeRPC' PhotonView: " + base.photonView);
+		Debug.Log(string.Concat("RPC: 'OnAwakeRPC' PhotonView: ", base.photonView));
 	}
 
 	[PunRPC]
 	public void OnAwakeRPC(byte myParameter)
 	{
-		Debug.Log("RPC: 'OnAwakeRPC' Parameter: " + myParameter + " PhotonView: " + base.photonView);
+		Debug.Log(string.Concat(new object[] { "RPC: 'OnAwakeRPC' Parameter: ", myParameter, " PhotonView: ", base.photonView }));
+	}
+
+	private void Start()
+	{
+		if (!base.photonView.isMine)
+		{
+			return;
+		}
+		base.photonView.RPC("OnAwakeRPC", PhotonTargets.All, new object[] { (byte)1 });
 	}
 }

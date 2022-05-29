@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Blinking : MonoBehaviour
@@ -8,23 +9,27 @@ public class Blinking : MonoBehaviour
 
 	private float _time;
 
+	public Blinking()
+	{
+	}
+
 	private void Start()
 	{
-		mySprite = GetComponent<UISprite>();
+		this.mySprite = base.GetComponent<UISprite>();
 	}
 
 	private void Update()
 	{
-		_time += Time.deltaTime;
-		if (mySprite != null)
+		this._time += Time.deltaTime;
+		if (this.mySprite != null)
 		{
-			Color color = mySprite.color;
-			float num = 2f * (_time - Mathf.Floor(_time / halfCycle) * halfCycle) / halfCycle;
-			if (num > 1f)
+			Color color = this.mySprite.color;
+			float single = 2f * (this._time - Mathf.Floor(this._time / this.halfCycle) * this.halfCycle) / this.halfCycle;
+			if (single > 1f)
 			{
-				num = 2f - num;
+				single = 2f - single;
 			}
-			mySprite.color = new Color(color.r, color.g, color.b, num);
+			this.mySprite.color = new Color(color.r, color.g, color.b, single);
 		}
 	}
 }

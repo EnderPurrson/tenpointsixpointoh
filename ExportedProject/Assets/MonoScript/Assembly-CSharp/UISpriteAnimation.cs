@@ -1,25 +1,26 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/UI/Sprite Animation")]
 [ExecuteInEditMode]
 [RequireComponent(typeof(UISprite))]
-[AddComponentMenu("NGUI/UI/Sprite Animation")]
 public class UISpriteAnimation : MonoBehaviour
 {
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected int mFPS = 30;
 
 	[HideInInspector]
 	[SerializeField]
 	protected string mPrefix = string.Empty;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected bool mLoop = true;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected bool mSnap = true;
 
 	protected UISprite mSprite;
@@ -36,7 +37,7 @@ public class UISpriteAnimation : MonoBehaviour
 	{
 		get
 		{
-			return mSpriteNames.Count;
+			return this.mSpriteNames.Count;
 		}
 	}
 
@@ -44,39 +45,11 @@ public class UISpriteAnimation : MonoBehaviour
 	{
 		get
 		{
-			return mFPS;
+			return this.mFPS;
 		}
 		set
 		{
-			mFPS = value;
-		}
-	}
-
-	public string namePrefix
-	{
-		get
-		{
-			return mPrefix;
-		}
-		set
-		{
-			if (mPrefix != value)
-			{
-				mPrefix = value;
-				RebuildSpriteList();
-			}
-		}
-	}
-
-	public bool loop
-	{
-		get
-		{
-			return mLoop;
-		}
-		set
-		{
-			mLoop = value;
+			this.mFPS = value;
 		}
 	}
 
@@ -84,87 +57,122 @@ public class UISpriteAnimation : MonoBehaviour
 	{
 		get
 		{
-			return mActive;
+			return this.mActive;
+		}
+	}
+
+	public bool loop
+	{
+		get
+		{
+			return this.mLoop;
+		}
+		set
+		{
+			this.mLoop = value;
+		}
+	}
+
+	public string namePrefix
+	{
+		get
+		{
+			return this.mPrefix;
+		}
+		set
+		{
+			if (this.mPrefix != value)
+			{
+				this.mPrefix = value;
+				this.RebuildSpriteList();
+			}
+		}
+	}
+
+	public UISpriteAnimation()
+	{
+	}
+
+	public void Pause()
+	{
+		this.mActive = false;
+	}
+
+	public void Play()
+	{
+		this.mActive = true;
+	}
+
+	public void RebuildSpriteList()
+	{
+		if (this.mSprite == null)
+		{
+			this.mSprite = base.GetComponent<UISprite>();
+		}
+		this.mSpriteNames.Clear();
+		if (this.mSprite != null && this.mSprite.atlas != null)
+		{
+			List<UISpriteData> uISpriteDatas = this.mSprite.atlas.spriteList;
+			int num = 0;
+			int count = uISpriteDatas.Count;
+			while (num < count)
+			{
+				UISpriteData item = uISpriteDatas[num];
+				if (string.IsNullOrEmpty(this.mPrefix) || item.name.StartsWith(this.mPrefix))
+				{
+					this.mSpriteNames.Add(item.name);
+				}
+				num++;
+			}
+			this.mSpriteNames.Sort();
+		}
+	}
+
+	public void ResetToBeginning()
+	{
+		this.mActive = true;
+		this.mIndex = 0;
+		if (this.mSprite != null && this.mSpriteNames.Count > 0)
+		{
+			this.mSprite.spriteName = this.mSpriteNames[this.mIndex];
+			if (this.mSnap)
+			{
+				this.mSprite.MakePixelPerfect();
+			}
 		}
 	}
 
 	protected virtual void Start()
 	{
-		RebuildSpriteList();
+		this.RebuildSpriteList();
 	}
 
 	protected virtual void Update()
 	{
-		if (!mActive || mSpriteNames.Count <= 1 || !Application.isPlaying || mFPS <= 0)
+		if (this.mActive && this.mSpriteNames.Count > 1 && Application.isPlaying && this.mFPS > 0)
 		{
-			return;
-		}
-		mDelta += RealTime.deltaTime;
-		float num = 1f / (float)mFPS;
-		if (!(num < mDelta))
-		{
-			return;
-		}
-		mDelta = ((!(num > 0f)) ? 0f : (mDelta - num));
-		if (++mIndex >= mSpriteNames.Count)
-		{
-			mIndex = 0;
-			mActive = mLoop;
-		}
-		if (mActive)
-		{
-			mSprite.spriteName = mSpriteNames[mIndex];
-			if (mSnap)
+			this.mDelta += RealTime.deltaTime;
+			float single = 1f / (float)this.mFPS;
+			if (single < this.mDelta)
 			{
-				mSprite.MakePixelPerfect();
-			}
-		}
-	}
-
-	public void RebuildSpriteList()
-	{
-		if (mSprite == null)
-		{
-			mSprite = GetComponent<UISprite>();
-		}
-		mSpriteNames.Clear();
-		if (!(mSprite != null) || !(mSprite.atlas != null))
-		{
-			return;
-		}
-		List<UISpriteData> spriteList = mSprite.atlas.spriteList;
-		int i = 0;
-		for (int count = spriteList.Count; i < count; i++)
-		{
-			UISpriteData uISpriteData = spriteList[i];
-			if (string.IsNullOrEmpty(mPrefix) || uISpriteData.name.StartsWith(mPrefix))
-			{
-				mSpriteNames.Add(uISpriteData.name);
-			}
-		}
-		mSpriteNames.Sort();
-	}
-
-	public void Play()
-	{
-		mActive = true;
-	}
-
-	public void Pause()
-	{
-		mActive = false;
-	}
-
-	public void ResetToBeginning()
-	{
-		mActive = true;
-		mIndex = 0;
-		if (mSprite != null && mSpriteNames.Count > 0)
-		{
-			mSprite.spriteName = mSpriteNames[mIndex];
-			if (mSnap)
-			{
-				mSprite.MakePixelPerfect();
+				this.mDelta = (single <= 0f ? 0f : this.mDelta - single);
+				UISpriteAnimation uISpriteAnimation = this;
+				int num = uISpriteAnimation.mIndex + 1;
+				int num1 = num;
+				uISpriteAnimation.mIndex = num;
+				if (num1 >= this.mSpriteNames.Count)
+				{
+					this.mIndex = 0;
+					this.mActive = this.mLoop;
+				}
+				if (this.mActive)
+				{
+					this.mSprite.spriteName = this.mSpriteNames[this.mIndex];
+					if (this.mSnap)
+					{
+						this.mSprite.MakePixelPerfect();
+					}
+				}
 			}
 		}
 	}

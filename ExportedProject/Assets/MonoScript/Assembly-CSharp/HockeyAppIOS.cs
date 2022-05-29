@@ -1,20 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class HockeyAppIOS : MonoBehaviour
 {
-	public enum AuthenticatorType
-	{
-		Anonymous = 0,
-		Device = 1,
-		HockeyAppUser = 2,
-		HockeyAppEmail = 3,
-		WebAuth = 4
-	}
-
 	protected const string HOCKEYAPP_BASEURL = "https://rink.hockeyapp.net/";
 
 	protected const string HOCKEYAPP_CRASHESPATH = "api/2/apps/[APPID]/crashes/upload";
@@ -29,7 +22,7 @@ public class HockeyAppIOS : MonoBehaviour
 	public string serverURL = "your-custom-server-url";
 
 	[Header("Authentication")]
-	public AuthenticatorType authenticatorType;
+	public HockeyAppIOS.AuthenticatorType authenticatorType;
 
 	public string secret = "your-hockey-app-secret";
 
@@ -44,25 +37,12 @@ public class HockeyAppIOS : MonoBehaviour
 	[Header("Version Updates")]
 	public bool updateAlert = true;
 
+	public HockeyAppIOS()
+	{
+	}
+
 	private void Awake()
 	{
-	}
-
-	private void OnEnable()
-	{
-	}
-
-	private void OnDisable()
-	{
-	}
-
-	private void GameViewLoaded(string message)
-	{
-	}
-
-	protected virtual List<string> GetLogHeaders()
-	{
-		return new List<string>();
 	}
 
 	protected virtual WWWForm CreateForm(string log)
@@ -70,48 +50,8 @@ public class HockeyAppIOS : MonoBehaviour
 		return new WWWForm();
 	}
 
-	protected virtual List<string> GetLogFiles()
+	private void GameViewLoaded(string message)
 	{
-		return new List<string>();
-	}
-
-	protected virtual IEnumerator SendLogs(List<string> logs)
-	{
-		string crashPath = "api/2/apps/[APPID]/crashes/upload";
-		string url = GetBaseURL() + crashPath.Replace("[APPID]", appID);
-		foreach (string log in logs)
-		{
-			WWWForm postForm = CreateForm(log);
-			string lContent2 = postForm.headers["Content-Type"].ToString();
-			lContent2 = lContent2.Replace("\"", string.Empty);
-			WWW www = new WWW(headers: new Dictionary<string, string> { { "Content-Type", lContent2 } }, url: url, postData: postForm.data);
-			yield return www;
-			if (!string.IsNullOrEmpty(www.error))
-			{
-				continue;
-			}
-			try
-			{
-				File.Delete(log);
-			}
-			catch (Exception ex)
-			{
-				Exception e = ex;
-				if (Debug.isDebugBuild)
-				{
-					Debug.Log("Failed to delete exception log: " + e);
-				}
-			}
-		}
-	}
-
-	protected virtual void WriteLogToDisk(string logString, string stackTrace)
-	{
-	}
-
-	protected virtual string GetBaseURL()
-	{
-		return string.Empty;
 	}
 
 	protected virtual string GetAuthenticatorTypeString()
@@ -119,16 +59,59 @@ public class HockeyAppIOS : MonoBehaviour
 		return string.Empty;
 	}
 
-	protected virtual bool IsConnected()
+	protected virtual string GetBaseURL()
 	{
-		return false;
+		return string.Empty;
+	}
+
+	protected virtual List<string> GetLogFiles()
+	{
+		return new List<string>();
+	}
+
+	protected virtual List<string> GetLogHeaders()
+	{
+		return new List<string>();
 	}
 
 	protected virtual void HandleException(string logString, string stackTrace)
 	{
 	}
 
+	protected virtual bool IsConnected()
+	{
+		return false;
+	}
+
+	private void OnDisable()
+	{
+	}
+
+	private void OnEnable()
+	{
+	}
+
 	public void OnHandleLogCallback(string logString, string stackTrace, LogType type)
 	{
+	}
+
+	[DebuggerHidden]
+	protected virtual IEnumerator SendLogs(List<string> logs)
+	{
+		HockeyAppIOS.u003cSendLogsu003ec__IteratorE9 variable = null;
+		return variable;
+	}
+
+	protected virtual void WriteLogToDisk(string logString, string stackTrace)
+	{
+	}
+
+	public enum AuthenticatorType
+	{
+		Anonymous,
+		Device,
+		HockeyAppUser,
+		HockeyAppEmail,
+		WebAuth
 	}
 }

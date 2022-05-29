@@ -1,15 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace Facebook.Unity
 {
 	internal class ComponentFactory
 	{
-		internal enum IfNotExist
-		{
-			AddNew = 0,
-			ReturnNull = 1
-		}
-
 		public const string GameObjectName = "UnityFacebookSDKPlugin";
 
 		private static GameObject facebookGameObject;
@@ -18,28 +13,40 @@ namespace Facebook.Unity
 		{
 			get
 			{
-				if (facebookGameObject == null)
+				if (ComponentFactory.facebookGameObject == null)
 				{
-					facebookGameObject = new GameObject("UnityFacebookSDKPlugin");
+					ComponentFactory.facebookGameObject = new GameObject("UnityFacebookSDKPlugin");
 				}
-				return facebookGameObject;
+				return ComponentFactory.facebookGameObject;
 			}
 		}
 
-		public static T GetComponent<T>(IfNotExist ifNotExist = IfNotExist.AddNew) where T : MonoBehaviour
+		public ComponentFactory()
 		{
-			GameObject gameObject = FacebookGameObject;
-			T val = gameObject.GetComponent<T>();
-			if ((Object)val == (Object)default(Object) && ifNotExist == IfNotExist.AddNew)
+		}
+
+		public static T AddComponent<T>()
+		where T : MonoBehaviour
+		{
+			return ComponentFactory.FacebookGameObject.AddComponent<T>();
+		}
+
+		public static T GetComponent<T>(ComponentFactory.IfNotExist ifNotExist = 0)
+		where T : MonoBehaviour
+		{
+			GameObject facebookGameObject = ComponentFactory.FacebookGameObject;
+			T component = facebookGameObject.GetComponent<T>();
+			if (component == null && ifNotExist == ComponentFactory.IfNotExist.AddNew)
 			{
-				val = gameObject.AddComponent<T>();
+				component = facebookGameObject.AddComponent<T>();
 			}
-			return val;
+			return component;
 		}
 
-		public static T AddComponent<T>() where T : MonoBehaviour
+		internal enum IfNotExist
 		{
-			return FacebookGameObject.AddComponent<T>();
+			AddNew,
+			ReturnNull
 		}
 	}
 }

@@ -1,13 +1,18 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class UISlicedSprite : UISprite
 {
-	public override Type type
+	public override UIBasicSprite.Type type
 	{
 		get
 		{
-			return Type.Sliced;
+			return UIBasicSprite.Type.Sliced;
 		}
+	}
+
+	public UISlicedSprite()
+	{
 	}
 }

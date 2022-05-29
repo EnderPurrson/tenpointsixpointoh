@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class EnterPasswordInFriensJoinButton : MonoBehaviour
@@ -6,19 +7,23 @@ public class EnterPasswordInFriensJoinButton : MonoBehaviour
 
 	public JoinRoomFromFrends joinRoomFromFrends;
 
-	private void Start()
+	public EnterPasswordInFriensJoinButton()
 	{
 	}
 
 	private void OnClick()
 	{
-		if (joinRoomFromFrends == null)
+		if (this.joinRoomFromFrends == null)
 		{
-			joinRoomFromFrends = JoinRoomFromFrends.sharedJoinRoomFromFrends;
+			this.joinRoomFromFrends = JoinRoomFromFrends.sharedJoinRoomFromFrends;
 		}
-		if (joinRoomFromFrends != null)
+		if (this.joinRoomFromFrends != null)
 		{
-			joinRoomFromFrends.EnterPassword(passwordLabel.text);
+			this.joinRoomFromFrends.EnterPassword(this.passwordLabel.text);
 		}
+	}
+
+	private void Start()
+	{
 	}
 }

@@ -1,13 +1,18 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class UIFilledSprite : UISprite
 {
-	public override Type type
+	public override UIBasicSprite.Type type
 	{
 		get
 		{
-			return Type.Filled;
+			return UIBasicSprite.Type.Filled;
 		}
+	}
+
+	public UIFilledSprite()
+	{
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class WallBloodParticle : MonoBehaviour
@@ -12,36 +13,41 @@ public class WallBloodParticle : MonoBehaviour
 
 	public ParticleSystem myParticleSystem;
 
+	public WallBloodParticle()
+	{
+	}
+
 	private void Start()
 	{
-		myTransform = base.transform;
-		myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-		myParticleSystem.enableEmission = false;
+		this.myTransform = base.transform;
+		this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+		this.myParticleSystem.enableEmission = false;
 		base.gameObject.SetActive(false);
 	}
 
 	public void StartShowParticle(Vector3 pos, Quaternion rot, bool _isUseMine)
 	{
-		isUseMine = _isUseMine;
-		liveTime = maxliveTime;
-		myTransform.position = pos;
-		myTransform.rotation = rot;
-		myParticleSystem.enableEmission = true;
+		this.isUseMine = _isUseMine;
+		this.liveTime = this.maxliveTime;
+		this.myTransform.position = pos;
+		this.myTransform.rotation = rot;
+		this.myParticleSystem.enableEmission = true;
 		base.gameObject.SetActive(true);
 	}
 
 	private void Update()
 	{
-		if (!(liveTime < 0f))
+		if (this.liveTime < 0f)
 		{
-			liveTime -= Time.deltaTime;
-			if (liveTime < 0f)
-			{
-				myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-				myParticleSystem.enableEmission = false;
-				isUseMine = false;
-				base.gameObject.SetActive(false);
-			}
+			return;
+		}
+		this.liveTime -= Time.deltaTime;
+		if (this.liveTime < 0f)
+		{
+			this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+			this.myParticleSystem.enableEmission = false;
+			this.isUseMine = false;
+			base.gameObject.SetActive(false);
 		}
 	}
 }

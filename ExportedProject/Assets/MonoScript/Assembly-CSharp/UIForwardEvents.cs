@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Forward Events (Legacy)")]
@@ -23,75 +24,79 @@ public class UIForwardEvents : MonoBehaviour
 
 	public bool onScroll;
 
-	private void OnHover(bool isOver)
+	public UIForwardEvents()
 	{
-		if (onHover && target != null)
-		{
-			target.SendMessage("OnHover", isOver, SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	private void OnPress(bool pressed)
-	{
-		if (onPress && target != null)
-		{
-			target.SendMessage("OnPress", pressed, SendMessageOptions.DontRequireReceiver);
-		}
 	}
 
 	private void OnClick()
 	{
-		if (onClick && target != null)
+		if (this.onClick && this.target != null)
 		{
-			target.SendMessage("OnClick", SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnClick", SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
 	private void OnDoubleClick()
 	{
-		if (onDoubleClick && target != null)
+		if (this.onDoubleClick && this.target != null)
 		{
-			target.SendMessage("OnDoubleClick", SendMessageOptions.DontRequireReceiver);
-		}
-	}
-
-	private void OnSelect(bool selected)
-	{
-		if (onSelect && target != null)
-		{
-			target.SendMessage("OnSelect", selected, SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnDoubleClick", SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
-		if (onDrag && target != null)
+		if (this.onDrag && this.target != null)
 		{
-			target.SendMessage("OnDrag", delta, SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnDrag", delta, SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
 	private void OnDrop(GameObject go)
 	{
-		if (onDrop && target != null)
+		if (this.onDrop && this.target != null)
 		{
-			target.SendMessage("OnDrop", go, SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnDrop", go, SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
-	private void OnSubmit()
+	private void OnHover(bool isOver)
 	{
-		if (onSubmit && target != null)
+		if (this.onHover && this.target != null)
 		{
-			target.SendMessage("OnSubmit", SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnHover", isOver, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (this.onPress && this.target != null)
+		{
+			this.target.SendMessage("OnPress", pressed, SendMessageOptions.DontRequireReceiver);
 		}
 	}
 
 	private void OnScroll(float delta)
 	{
-		if (onScroll && target != null)
+		if (this.onScroll && this.target != null)
 		{
-			target.SendMessage("OnScroll", delta, SendMessageOptions.DontRequireReceiver);
+			this.target.SendMessage("OnScroll", delta, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnSelect(bool selected)
+	{
+		if (this.onSelect && this.target != null)
+		{
+			this.target.SendMessage("OnSelect", selected, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnSubmit()
+	{
+		if (this.onSubmit && this.target != null)
+		{
+			this.target.SendMessage("OnSubmit", SendMessageOptions.DontRequireReceiver);
 		}
 	}
 }

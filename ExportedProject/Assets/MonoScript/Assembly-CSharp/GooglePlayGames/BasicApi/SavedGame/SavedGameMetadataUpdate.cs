@@ -1,10 +1,77 @@
-using System;
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.SavedGame
 {
 	public struct SavedGameMetadataUpdate
 	{
+		private readonly bool mDescriptionUpdated;
+
+		private readonly string mNewDescription;
+
+		private readonly bool mCoverImageUpdated;
+
+		private readonly byte[] mNewPngCoverImage;
+
+		private readonly TimeSpan? mNewPlayedTime;
+
+		public bool IsCoverImageUpdated
+		{
+			get
+			{
+				return this.mCoverImageUpdated;
+			}
+		}
+
+		public bool IsDescriptionUpdated
+		{
+			get
+			{
+				return this.mDescriptionUpdated;
+			}
+		}
+
+		public bool IsPlayedTimeUpdated
+		{
+			get
+			{
+				return this.mNewPlayedTime.HasValue;
+			}
+		}
+
+		public string UpdatedDescription
+		{
+			get
+			{
+				return this.mNewDescription;
+			}
+		}
+
+		public TimeSpan? UpdatedPlayedTime
+		{
+			get
+			{
+				return this.mNewPlayedTime;
+			}
+		}
+
+		public byte[] UpdatedPngCoverImage
+		{
+			get
+			{
+				return this.mNewPngCoverImage;
+			}
+		}
+
+		private SavedGameMetadataUpdate(SavedGameMetadataUpdate.Builder builder)
+		{
+			this.mDescriptionUpdated = builder.mDescriptionUpdated;
+			this.mNewDescription = builder.mNewDescription;
+			this.mCoverImageUpdated = builder.mCoverImageUpdated;
+			this.mNewPngCoverImage = builder.mNewPngCoverImage;
+			this.mNewPlayedTime = builder.mNewPlayedTime;
+		}
+
 		public struct Builder
 		{
 			internal bool mDescriptionUpdated;
@@ -17,101 +84,34 @@ namespace GooglePlayGames.BasicApi.SavedGame
 
 			internal TimeSpan? mNewPlayedTime;
 
-			public Builder WithUpdatedDescription(string description)
+			public SavedGameMetadataUpdate Build()
 			{
-				mNewDescription = Misc.CheckNotNull(description);
-				mDescriptionUpdated = true;
+				return new SavedGameMetadataUpdate(this);
+			}
+
+			public SavedGameMetadataUpdate.Builder WithUpdatedDescription(string description)
+			{
+				this.mNewDescription = Misc.CheckNotNull<string>(description);
+				this.mDescriptionUpdated = true;
 				return this;
 			}
 
-			public Builder WithUpdatedPngCoverImage(byte[] newPngCoverImage)
-			{
-				mCoverImageUpdated = true;
-				mNewPngCoverImage = newPngCoverImage;
-				return this;
-			}
-
-			public Builder WithUpdatedPlayedTime(TimeSpan newPlayedTime)
+			public SavedGameMetadataUpdate.Builder WithUpdatedPlayedTime(TimeSpan newPlayedTime)
 			{
 				if (newPlayedTime.TotalMilliseconds > 1.8446744073709552E+19)
 				{
 					throw new InvalidOperationException("Timespans longer than ulong.MaxValue milliseconds are not allowed");
 				}
-				mNewPlayedTime = newPlayedTime;
+				this.mNewPlayedTime = new TimeSpan?(newPlayedTime);
 				return this;
 			}
 
-			public SavedGameMetadataUpdate Build()
+			public SavedGameMetadataUpdate.Builder WithUpdatedPngCoverImage(byte[] newPngCoverImage)
 			{
-				return new SavedGameMetadataUpdate(this);
+				this.mCoverImageUpdated = true;
+				this.mNewPngCoverImage = newPngCoverImage;
+				return this;
 			}
-		}
-
-		private readonly bool mDescriptionUpdated;
-
-		private readonly string mNewDescription;
-
-		private readonly bool mCoverImageUpdated;
-
-		private readonly byte[] mNewPngCoverImage;
-
-		private readonly TimeSpan? mNewPlayedTime;
-
-		public bool IsDescriptionUpdated
-		{
-			get
-			{
-				return mDescriptionUpdated;
-			}
-		}
-
-		public string UpdatedDescription
-		{
-			get
-			{
-				return mNewDescription;
-			}
-		}
-
-		public bool IsCoverImageUpdated
-		{
-			get
-			{
-				return mCoverImageUpdated;
-			}
-		}
-
-		public byte[] UpdatedPngCoverImage
-		{
-			get
-			{
-				return mNewPngCoverImage;
-			}
-		}
-
-		public bool IsPlayedTimeUpdated
-		{
-			get
-			{
-				return mNewPlayedTime.HasValue;
-			}
-		}
-
-		public TimeSpan? UpdatedPlayedTime
-		{
-			get
-			{
-				return mNewPlayedTime;
-			}
-		}
-
-		private SavedGameMetadataUpdate(Builder builder)
-		{
-			mDescriptionUpdated = builder.mDescriptionUpdated;
-			mNewDescription = builder.mNewDescription;
-			mCoverImageUpdated = builder.mCoverImageUpdated;
-			mNewPngCoverImage = builder.mNewPngCoverImage;
-			mNewPlayedTime = builder.mNewPlayedTime;
 		}
 	}
 }

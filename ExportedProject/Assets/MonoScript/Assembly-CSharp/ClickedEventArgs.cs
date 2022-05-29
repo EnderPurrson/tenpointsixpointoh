@@ -8,12 +8,12 @@ public sealed class ClickedEventArgs : EventArgs
 	{
 		get
 		{
-			return _id;
+			return this._id;
 		}
 	}
 
 	public ClickedEventArgs(string id)
 	{
-		_id = id ?? string.Empty;
+		this._id = id ?? string.Empty;
 	}
 }

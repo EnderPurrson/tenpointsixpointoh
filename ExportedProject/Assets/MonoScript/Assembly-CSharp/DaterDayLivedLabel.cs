@@ -1,36 +1,42 @@
+using I2.Loc;
+using System;
 using UnityEngine;
 
 public class DaterDayLivedLabel : MonoBehaviour
 {
 	private UILabel myLabel;
 
+	public DaterDayLivedLabel()
+	{
+	}
+
 	private void Awake()
 	{
-		myLabel = GetComponent<UILabel>();
-	}
-
-	private void SetText()
-	{
-		myLabel.text = LocalizationStore.Get("Key_1615") + ": " + Storager.getInt("DaterDayLived", false);
-	}
-
-	private void OnEnable()
-	{
-		SetText();
-	}
-
-	private void Start()
-	{
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
+		this.myLabel = base.GetComponent<UILabel>();
 	}
 
 	private void HandleLocalizationChanged()
 	{
-		SetText();
+		this.SetText();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	private void OnEnable()
+	{
+		this.SetText();
+	}
+
+	private void SetText()
+	{
+		this.myLabel.text = string.Concat(LocalizationStore.Get("Key_1615"), ": ", Storager.getInt("DaterDayLived", false));
+	}
+
+	private void Start()
+	{
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 }

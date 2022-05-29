@@ -9,6 +9,6 @@ namespace LitJson
 
 		public bool IsField;
 
-		public Type Type;
+		public System.Type Type;
 	}
 }

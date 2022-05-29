@@ -1,3 +1,6 @@
+using Facebook.Unity;
+using System;
+
 namespace Facebook.Unity.Mobile
 {
 	internal abstract class MobileFacebookGameObject : FacebookGameObject, IFacebookCallbackHandler, IMobileFacebookCallbackHandler
@@ -10,19 +13,23 @@ namespace Facebook.Unity.Mobile
 			}
 		}
 
+		protected MobileFacebookGameObject()
+		{
+		}
+
 		public void OnAppInviteComplete(string message)
 		{
-			MobileFacebook.OnAppInviteComplete(message);
+			this.MobileFacebook.OnAppInviteComplete(message);
 		}
 
 		public void OnFetchDeferredAppLinkComplete(string message)
 		{
-			MobileFacebook.OnFetchDeferredAppLinkComplete(message);
+			this.MobileFacebook.OnFetchDeferredAppLinkComplete(message);
 		}
 
 		public void OnRefreshCurrentAccessTokenComplete(string message)
 		{
-			MobileFacebook.OnRefreshCurrentAccessTokenComplete(message);
+			this.MobileFacebook.OnRefreshCurrentAccessTokenComplete(message);
 		}
 	}
 }

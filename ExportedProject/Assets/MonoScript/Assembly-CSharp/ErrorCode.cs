@@ -59,4 +59,8 @@ public class ErrorCode
 	public const int ExternalHttpCallFailed = 32744;
 
 	public const int SlotError = 32742;
+
+	public ErrorCode()
+	{
+	}
 }

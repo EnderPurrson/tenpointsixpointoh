@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AGSClient : MonoBehaviour
@@ -19,95 +20,51 @@ public class AGSClient : MonoBehaviour
 
 	private static AmazonJavaWrapper JavaObject;
 
-	private static readonly string PROXY_CLASS_NAME;
-
-	public static event Action ServiceReadyEvent;
-
-	public static event Action<string> ServiceNotReadyEvent;
+	private readonly static string PROXY_CLASS_NAME;
 
 	static AGSClient()
 	{
-		PROXY_CLASS_NAME = "com.amazon.ags.api.unity.AmazonGamesClientProxyImpl";
-		JavaObject = new AmazonJavaWrapper();
-		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(PROXY_CLASS_NAME))
+		AGSClient.PROXY_CLASS_NAME = "com.amazon.ags.api.unity.AmazonGamesClientProxyImpl";
+		AGSClient.JavaObject = new AmazonJavaWrapper();
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(AGSClient.PROXY_CLASS_NAME))
 		{
-			if (androidJavaClass.GetRawClass() == IntPtr.Zero)
+			if (androidJavaClass.GetRawClass() != IntPtr.Zero)
 			{
-				LogGameCircleWarning("No java class " + PROXY_CLASS_NAME + " present, can't use AGSClient");
+				AGSClient.JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
 			}
 			else
 			{
-				JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
+				AGSClient.LogGameCircleWarning(string.Concat("No java class ", AGSClient.PROXY_CLASS_NAME, " present, can't use AGSClient"));
 			}
 		}
+	}
+
+	public AGSClient()
+	{
 	}
 
 	public static void Init()
 	{
-		Init(supportsLeaderboards, supportsAchievements, supportsWhispersync);
+		AGSClient.Init(AGSClient.supportsLeaderboards, AGSClient.supportsAchievements, AGSClient.supportsWhispersync);
 	}
 
 	public static void Init(bool supportsLeaderboards, bool supportsAchievements, bool supportsWhispersync)
 	{
-		ReinitializeOnFocus = true;
+		AGSClient.ReinitializeOnFocus = true;
 		AGSClient.supportsAchievements = supportsAchievements;
 		AGSClient.supportsLeaderboards = supportsLeaderboards;
 		AGSClient.supportsWhispersync = supportsWhispersync;
-		JavaObject.Call("init", supportsLeaderboards, supportsAchievements, supportsWhispersync);
-	}
-
-	public static void SetPopUpEnabled(bool enabled)
-	{
-		JavaObject.Call("setPopupEnabled", enabled);
-	}
-
-	public static void SetPopUpLocation(GameCirclePopupLocation location)
-	{
-		JavaObject.Call("setPopUpLocation", location.ToString());
-	}
-
-	public static void ServiceReady(string empty)
-	{
-		Log("Client GameCircle - Service is ready");
-		IsReady = true;
-		if (AGSClient.ServiceReadyEvent != null)
-		{
-			AGSClient.ServiceReadyEvent();
-		}
+		AGSClient.JavaObject.Call("init", new object[] { supportsLeaderboards, supportsAchievements, supportsWhispersync });
 	}
 
 	public static bool IsServiceReady()
 	{
-		return IsReady;
+		return AGSClient.IsReady;
 	}
 
-	public static void release()
+	public static void Log(string message)
 	{
-		JavaObject.Call("release");
-	}
-
-	public static void Shutdown()
-	{
-		JavaObject.Call("shutdown");
-	}
-
-	public static void ServiceNotReady(string param)
-	{
-		IsReady = false;
-		if (AGSClient.ServiceNotReadyEvent != null)
-		{
-			AGSClient.ServiceNotReadyEvent(param);
-		}
-	}
-
-	public static void ShowGameCircleOverlay()
-	{
-		JavaObject.Call("showGameCircleOverlay");
-	}
-
-	public static void ShowSignInPage()
-	{
-		JavaObject.Call("showSignInPage");
+		AmazonLogging.Log(AmazonLogging.AmazonLoggingLevel.Verbose, "AmazonGameCircle", message);
 	}
 
 	public static void LogGameCircleError(string errorMessage)
@@ -120,8 +77,56 @@ public class AGSClient : MonoBehaviour
 		AmazonLogging.LogWarning(AmazonLogging.AmazonLoggingLevel.Verbose, "AmazonGameCircle", errorMessage);
 	}
 
-	public static void Log(string message)
+	public static void release()
 	{
-		AmazonLogging.Log(AmazonLogging.AmazonLoggingLevel.Verbose, "AmazonGameCircle", message);
+		AGSClient.JavaObject.Call("release", new object[0]);
 	}
+
+	public static void ServiceNotReady(string param)
+	{
+		AGSClient.IsReady = false;
+		if (AGSClient.ServiceNotReadyEvent != null)
+		{
+			AGSClient.ServiceNotReadyEvent(param);
+		}
+	}
+
+	public static void ServiceReady(string empty)
+	{
+		AGSClient.Log("Client GameCircle - Service is ready");
+		AGSClient.IsReady = true;
+		if (AGSClient.ServiceReadyEvent != null)
+		{
+			AGSClient.ServiceReadyEvent();
+		}
+	}
+
+	public static void SetPopUpEnabled(bool enabled)
+	{
+		AGSClient.JavaObject.Call("setPopupEnabled", new object[] { enabled });
+	}
+
+	public static void SetPopUpLocation(GameCirclePopupLocation location)
+	{
+		AGSClient.JavaObject.Call("setPopUpLocation", new object[] { location.ToString() });
+	}
+
+	public static void ShowGameCircleOverlay()
+	{
+		AGSClient.JavaObject.Call("showGameCircleOverlay", new object[0]);
+	}
+
+	public static void ShowSignInPage()
+	{
+		AGSClient.JavaObject.Call("showSignInPage", new object[0]);
+	}
+
+	public static void Shutdown()
+	{
+		AGSClient.JavaObject.Call("shutdown", new object[0]);
+	}
+
+	public static event Action<string> ServiceNotReadyEvent;
+
+	public static event Action ServiceReadyEvent;
 }

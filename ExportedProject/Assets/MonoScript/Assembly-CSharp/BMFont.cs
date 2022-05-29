@@ -9,12 +9,12 @@ public class BMFont
 	[SerializeField]
 	private int mSize = 16;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private int mBase;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private int mWidth;
 
 	[HideInInspector]
@@ -25,17 +25,21 @@ public class BMFont
 	[SerializeField]
 	private string mSpriteName;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private List<BMGlyph> mSaved = new List<BMGlyph>();
 
 	private Dictionary<int, BMGlyph> mDict = new Dictionary<int, BMGlyph>();
 
-	public bool isValid
+	public int baseOffset
 	{
 		get
 		{
-			return mSaved.Count > 0;
+			return this.mBase;
+		}
+		set
+		{
+			this.mBase = value;
 		}
 	}
 
@@ -43,47 +47,11 @@ public class BMFont
 	{
 		get
 		{
-			return mSize;
+			return this.mSize;
 		}
 		set
 		{
-			mSize = value;
-		}
-	}
-
-	public int baseOffset
-	{
-		get
-		{
-			return mBase;
-		}
-		set
-		{
-			mBase = value;
-		}
-	}
-
-	public int texWidth
-	{
-		get
-		{
-			return mWidth;
-		}
-		set
-		{
-			mWidth = value;
-		}
-	}
-
-	public int texHeight
-	{
-		get
-		{
-			return mHeight;
-		}
-		set
-		{
-			mHeight = value;
+			this.mSize = value;
 		}
 	}
 
@@ -91,19 +59,7 @@ public class BMFont
 	{
 		get
 		{
-			return isValid ? mSaved.Count : 0;
-		}
-	}
-
-	public string spriteName
-	{
-		get
-		{
-			return mSpriteName;
-		}
-		set
-		{
-			mSpriteName = value;
+			return (!this.isValid ? 0 : this.mSaved.Count);
 		}
 	}
 
@@ -111,56 +67,109 @@ public class BMFont
 	{
 		get
 		{
-			return mSaved;
+			return this.mSaved;
 		}
 	}
 
-	public BMGlyph GetGlyph(int index, bool createIfMissing)
+	public bool isValid
 	{
-		BMGlyph value = null;
-		if (mDict.Count == 0)
+		get
 		{
-			int i = 0;
-			for (int count = mSaved.Count; i < count; i++)
-			{
-				BMGlyph bMGlyph = mSaved[i];
-				mDict.Add(bMGlyph.index, bMGlyph);
-			}
+			return this.mSaved.Count > 0;
 		}
-		if (!mDict.TryGetValue(index, out value) && createIfMissing)
-		{
-			value = new BMGlyph();
-			value.index = index;
-			mSaved.Add(value);
-			mDict.Add(index, value);
-		}
-		return value;
 	}
 
-	public BMGlyph GetGlyph(int index)
+	public string spriteName
 	{
-		return GetGlyph(index, false);
+		get
+		{
+			return this.mSpriteName;
+		}
+		set
+		{
+			this.mSpriteName = value;
+		}
+	}
+
+	public int texHeight
+	{
+		get
+		{
+			return this.mHeight;
+		}
+		set
+		{
+			this.mHeight = value;
+		}
+	}
+
+	public int texWidth
+	{
+		get
+		{
+			return this.mWidth;
+		}
+		set
+		{
+			this.mWidth = value;
+		}
+	}
+
+	public BMFont()
+	{
 	}
 
 	public void Clear()
 	{
-		mDict.Clear();
-		mSaved.Clear();
+		this.mDict.Clear();
+		this.mSaved.Clear();
+	}
+
+	public BMGlyph GetGlyph(int index, bool createIfMissing)
+	{
+		BMGlyph bMGlyph = null;
+		if (this.mDict.Count == 0)
+		{
+			int num = 0;
+			int count = this.mSaved.Count;
+			while (num < count)
+			{
+				BMGlyph item = this.mSaved[num];
+				this.mDict.Add(item.index, item);
+				num++;
+			}
+		}
+		if (!this.mDict.TryGetValue(index, out bMGlyph) && createIfMissing)
+		{
+			bMGlyph = new BMGlyph()
+			{
+				index = index
+			};
+			this.mSaved.Add(bMGlyph);
+			this.mDict.Add(index, bMGlyph);
+		}
+		return bMGlyph;
+	}
+
+	public BMGlyph GetGlyph(int index)
+	{
+		return this.GetGlyph(index, false);
 	}
 
 	public void Trim(int xMin, int yMin, int xMax, int yMax)
 	{
-		if (!isValid)
+		if (this.isValid)
 		{
-			return;
-		}
-		int i = 0;
-		for (int count = mSaved.Count; i < count; i++)
-		{
-			BMGlyph bMGlyph = mSaved[i];
-			if (bMGlyph != null)
+			int num = 0;
+			int count = this.mSaved.Count;
+			while (num < count)
 			{
-				bMGlyph.Trim(xMin, yMin, xMax, yMax);
+				BMGlyph item = this.mSaved[num];
+				if (item != null)
+				{
+					item.Trim(xMin, yMin, xMax, yMax);
+				}
+				num++;
 			}
 		}
 	}

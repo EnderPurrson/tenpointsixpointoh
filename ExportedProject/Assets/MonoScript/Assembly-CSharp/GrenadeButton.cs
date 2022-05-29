@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class GrenadeButton : MonoBehaviour
@@ -9,4 +10,8 @@ public class GrenadeButton : MonoBehaviour
 	public UILabel priceLabel;
 
 	public UILabel fullLabel;
+
+	public GrenadeButton()
+	{
+	}
 }

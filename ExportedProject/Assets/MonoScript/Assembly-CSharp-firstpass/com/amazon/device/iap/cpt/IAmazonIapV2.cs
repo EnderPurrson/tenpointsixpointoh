@@ -1,33 +1,35 @@
+using System;
+
 namespace com.amazon.device.iap.cpt
 {
 	public interface IAmazonIapV2
 	{
-		RequestOutput GetUserData();
+		void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
 
-		RequestOutput Purchase(SkuInput skuInput);
+		void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
+
+		void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
+
+		void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
 
 		RequestOutput GetProductData(SkusInput skusInput);
 
 		RequestOutput GetPurchaseUpdates(ResetInput resetInput);
 
+		RequestOutput GetUserData();
+
 		void NotifyFulfillment(NotifyFulfillmentInput notifyFulfillmentInput);
 
-		void UnityFireEvent(string jsonMessage);
-
-		void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
-
-		void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
-
-		void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
-
-		void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
-
-		void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
+		RequestOutput Purchase(SkuInput skuInput);
 
 		void RemoveGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
 
-		void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
-
 		void RemoveGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
+
+		void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
+
+		void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
+
+		void UnityFireEvent(string jsonMessage);
 	}
 }

@@ -1,5 +1,9 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Unity.Linq;
 using UnityEngine;
 
@@ -7,13 +11,6 @@ namespace Rilisoft
 {
 	internal sealed class TrainingEnemy : MonoBehaviour
 	{
-		private enum State
-		{
-			None = 0,
-			Awakened = 1,
-			Dead = 2
-		}
-
 		public AudioClip wakeUpAudioClip;
 
 		public AudioClip dieAudioClip;
@@ -39,174 +36,152 @@ namespace Rilisoft
 
 		private Animation _animation;
 
-		private State _currentState;
+		private TrainingEnemy.State _currentState;
 
 		private Collider HeadCollider
 		{
 			get
 			{
-				if (_headCol != null)
+				if (this._headCol != null)
 				{
-					return _headCol;
+					return this._headCol;
 				}
-				GameObject gameObject = base.gameObject.Descendants("HeadCollider").FirstOrDefault();
+				GameObject gameObject = base.gameObject.Descendants("HeadCollider").FirstOrDefault<GameObject>();
 				if (gameObject != null)
 				{
-					_headCol = gameObject.GetComponent<Collider>();
+					this._headCol = gameObject.GetComponent<Collider>();
 				}
-				return _headCol;
+				return this._headCol;
 			}
 		}
 
-		public void WakeUp(float delaySeconds = 0f)
+		public TrainingEnemy()
 		{
-			StartCoroutine(AwakeCoroutine(delaySeconds));
 		}
 
 		public void ApplyDamage(float damage, bool isHeadShot)
 		{
-			if (_currentState != State.Awakened)
+			if (this._currentState != TrainingEnemy.State.Awakened)
 			{
 				return;
 			}
-			StartCoroutine(HighlightHitCoroutine());
-			if (isHeadShot)
+			base.StartCoroutine(this.HighlightHitCoroutine());
+			if (!isHeadShot)
 			{
-				ShowHeadShotEffect();
+				this.ShowHitEffect();
 			}
 			else
 			{
-				ShowHitEffect();
+				this.ShowHeadShotEffect();
 			}
-			hitPoints--;
-			if (_animation != null)
+			this.hitPoints--;
+			if (this._animation != null)
 			{
-				_animation.Play("Dummy_Damage", PlayMode.StopSameLayer);
+				this._animation.Play("Dummy_Damage", PlayMode.StopSameLayer);
 			}
-			if (hitPoints <= 0)
+			if (this.hitPoints <= 0)
 			{
-				_currentState = State.Dead;
-				if (aimTarget != null)
+				this._currentState = TrainingEnemy.State.Dead;
+				if (this.aimTarget != null)
 				{
-					Object.Destroy(aimTarget);
-					aimTarget = null;
+					UnityEngine.Object.Destroy(this.aimTarget);
+					this.aimTarget = null;
 				}
-				StartCoroutine(DieCoroutine());
+				base.StartCoroutine(this.DieCoroutine());
 			}
 		}
 
 		private void Awake()
 		{
-			baseHitPoints = hitPoints;
-			if (aimTarget != null)
+			this.baseHitPoints = this.hitPoints;
+			if (this.aimTarget != null)
 			{
-				aimTarget.SetActive(false);
+				this.aimTarget.SetActive(false);
 			}
 		}
 
-		private void Start()
+		[DebuggerHidden]
+		private IEnumerator AwakeCoroutine(float delaySeconds = 0f)
 		{
-			_audioSource = GetComponent<AudioSource>();
-			_animation = GetComponent<Animation>();
-			if (_animation != null)
-			{
-				_animation.Play("Dummy_Idle", PlayMode.StopSameLayer);
-			}
-			meshRender = GetComponentInChildren<SkinnedMeshRenderer>();
-			if ((bool)meshRender)
-			{
-				meshRender.sharedMaterial = new Material(meshRender.sharedMaterial);
-				skinTexture = meshRender.sharedMaterial.mainTexture;
-			}
+			TrainingEnemy.u003cAwakeCoroutineu003ec__Iterator121 variable = null;
+			return variable;
 		}
 
+		[DebuggerHidden]
+		private IEnumerator DieCoroutine()
+		{
+			TrainingEnemy.u003cDieCoroutineu003ec__Iterator122 variable = null;
+			return variable;
+		}
+
+		[DebuggerHidden]
 		private IEnumerator HighlightHitCoroutine()
 		{
-			SetTexture(hitTexture);
-			yield return new WaitForSeconds(0.125f);
-			SetTexture(skinTexture);
+			TrainingEnemy.u003cHighlightHitCoroutineu003ec__Iterator120 variable = null;
+			return variable;
 		}
 
 		public void SetTexture(Texture needTx)
 		{
-			if (meshRender != null)
+			if (this.meshRender != null)
 			{
-				meshRender.sharedMaterial.mainTexture = needTx;
-			}
-		}
-
-		private IEnumerator AwakeCoroutine(float delaySeconds = 0f)
-		{
-			if (delaySeconds > 0f)
-			{
-				yield return new WaitForSeconds(delaySeconds);
-			}
-			if (_animation != null)
-			{
-				if (_audioSource != null && wakeUpAudioClip != null)
-				{
-					_audioSource.PlayOneShot(wakeUpAudioClip);
-				}
-				_animation.Play("Dummy_Up", PlayMode.StopSameLayer);
-				while (_animation.isPlaying)
-				{
-					yield return null;
-				}
-				if (aimTarget != null)
-				{
-					aimTarget.SetActive(true);
-				}
-			}
-			_currentState = State.Awakened;
-		}
-
-		private IEnumerator DieCoroutine()
-		{
-			if (_animation != null)
-			{
-				while (_animation.IsPlaying("Dummy_Damage"))
-				{
-					yield return null;
-				}
-				if (_audioSource != null && dieAudioClip != null)
-				{
-					_audioSource.PlayOneShot(dieAudioClip);
-				}
-				_animation.Play("Dead", PlayMode.StopSameLayer);
-				while (_animation.isPlaying)
-				{
-					yield return null;
-				}
-			}
-			if (ZombieCreator.sharedCreator != null)
-			{
-				ZombieCreator.sharedCreator.NumOfDeadZombies++;
-			}
-		}
-
-		private void ShowHitEffect()
-		{
-			if (!Device.isPixelGunLow)
-			{
-				HitParticle currentParticle = HitStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle != null)
-				{
-					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, base.transform.position + Vector3.up * heightFlyOutHitEffect);
-				}
+				this.meshRender.sharedMaterial.mainTexture = needTx;
 			}
 		}
 
 		private void ShowHeadShotEffect()
 		{
-			if (!Device.isPixelGunLow)
+			if (Device.isPixelGunLow)
 			{
-				HitParticle currentParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle != null && HeadCollider != null)
-				{
-					Vector3 position = ((!(HeadCollider is BoxCollider)) ? ((SphereCollider)HeadCollider).center : ((BoxCollider)HeadCollider).center);
-					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, HeadCollider.transform.TransformPoint(position));
-				}
+				return;
 			}
+			HitParticle currentParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
+			if (currentParticle != null && this.HeadCollider != null)
+			{
+				Vector3 vector3 = (!(this.HeadCollider is BoxCollider) ? ((SphereCollider)this.HeadCollider).center : ((BoxCollider)this.HeadCollider).center);
+				currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, this.HeadCollider.transform.TransformPoint(vector3));
+			}
+		}
+
+		private void ShowHitEffect()
+		{
+			if (Device.isPixelGunLow)
+			{
+				return;
+			}
+			HitParticle currentParticle = HitStackController.sharedController.GetCurrentParticle(false);
+			if (currentParticle != null)
+			{
+				currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, base.transform.position + (Vector3.up * this.heightFlyOutHitEffect));
+			}
+		}
+
+		private void Start()
+		{
+			this._audioSource = base.GetComponent<AudioSource>();
+			this._animation = base.GetComponent<Animation>();
+			if (this._animation != null)
+			{
+				this._animation.Play("Dummy_Idle", PlayMode.StopSameLayer);
+			}
+			this.meshRender = base.GetComponentInChildren<SkinnedMeshRenderer>();
+			if (this.meshRender)
+			{
+				this.meshRender.sharedMaterial = new Material(this.meshRender.sharedMaterial);
+				this.skinTexture = this.meshRender.sharedMaterial.mainTexture;
+			}
+		}
+
+		public void WakeUp(float delaySeconds = 0f)
+		{
+			base.StartCoroutine(this.AwakeCoroutine(delaySeconds));
+		}
+
+		private enum State
+		{
+			None,
+			Awakened,
+			Dead
 		}
 	}
 }

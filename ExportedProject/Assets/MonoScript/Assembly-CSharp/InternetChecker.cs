@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using UnityEngine;
@@ -6,58 +7,66 @@ internal sealed class InternetChecker : MonoBehaviour
 {
 	public static bool InternetAvailable;
 
-	private void Start()
+	static InternetChecker()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
+	}
+
+	public InternetChecker()
+	{
 	}
 
 	public static void CheckForInternetConn()
 	{
-		string htmlFromUri = GetHtmlFromUri("http://google.com");
+		string htmlFromUri = InternetChecker.GetHtmlFromUri("http://google.com");
 		if (htmlFromUri == string.Empty)
 		{
-			InternetAvailable = false;
+			InternetChecker.InternetAvailable = false;
 		}
-		else if (!htmlFromUri.Contains("schema.org/WebPage"))
+		else if (htmlFromUri.Contains("schema.org/WebPage"))
 		{
-			InternetAvailable = false;
+			InternetChecker.InternetAvailable = true;
 		}
 		else
 		{
-			InternetAvailable = true;
+			InternetChecker.InternetAvailable = false;
 		}
 	}
 
 	public static string GetHtmlFromUri(string resource)
 	{
-		//Discarded unreachable code: IL_00e1
-		string text = string.Empty;
+		string empty;
+		string str = string.Empty;
 		HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(resource);
 		try
 		{
-			using (HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse())
+			using (HttpWebResponse response = (HttpWebResponse)httpWebRequest.GetResponse())
 			{
-				if (httpWebResponse.StatusCode < (HttpStatusCode)299 && httpWebResponse.StatusCode >= HttpStatusCode.OK)
+				if (((int)response.StatusCode >= 299 ? false : response.StatusCode >= HttpStatusCode.OK))
 				{
 					Debug.Log("Trying to check internet");
-					using (StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream()))
+					using (StreamReader streamReader = new StreamReader(response.GetResponseStream()))
 					{
-						char[] array = new char[80];
-						streamReader.Read(array, 0, array.Length);
-						char[] array2 = array;
-						foreach (char c in array2)
+						char[] chrArray = new char[80];
+						streamReader.Read(chrArray, 0, (int)chrArray.Length);
+						char[] chrArray1 = chrArray;
+						for (int i = 0; i < (int)chrArray1.Length; i++)
 						{
-							text += c;
+							str = string.Concat(str, chrArray1[i]);
 						}
-						return text;
 					}
 				}
-				return text;
 			}
+			return str;
 		}
 		catch
 		{
-			return string.Empty;
+			empty = string.Empty;
 		}
+		return empty;
+	}
+
+	private void Start()
+	{
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 }

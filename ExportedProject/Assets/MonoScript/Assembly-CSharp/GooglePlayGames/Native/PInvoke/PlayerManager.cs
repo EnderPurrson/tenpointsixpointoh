@@ -1,212 +1,77 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using AOT;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.Multiplayer;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class PlayerManager
 	{
-		internal class FetchListResponse : BaseReferenceHolder, IEnumerable, IEnumerable<NativePlayer>
+		private readonly GooglePlayGames.Native.PInvoke.GameServices mGameServices;
+
+		internal PlayerManager(GooglePlayGames.Native.PInvoke.GameServices services)
 		{
-			internal FetchListResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return GetEnumerator();
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_Dispose(SelfPtr());
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetStatus(SelfPtr());
-			}
-
-			public IEnumerator<NativePlayer> GetEnumerator()
-			{
-				return PInvokeUtilities.ToEnumerator(Length(), _003CGetEnumerator_003Em__161);
-			}
-
-			internal UIntPtr Length()
-			{
-				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetData_Length(SelfPtr());
-			}
-
-			internal NativePlayer GetElement(UIntPtr index)
-			{
-				if (index.ToUInt64() >= Length().ToUInt64())
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetData_GetElement(SelfPtr(), index));
-			}
-
-			internal static FetchListResponse FromPointer(IntPtr selfPointer)
-			{
-				if (PInvokeUtilities.IsNull(selfPointer))
-				{
-					return null;
-				}
-				return new FetchListResponse(selfPointer);
-			}
-
-			[CompilerGenerated]
-			private NativePlayer _003CGetEnumerator_003Em__161(UIntPtr index)
-			{
-				return GetElement(index);
-			}
+			this.mGameServices = Misc.CheckNotNull<GooglePlayGames.Native.PInvoke.GameServices>(services);
 		}
 
-		internal class FetchResponseCollector
+		internal void FetchFriends(Action<ResponseStatus, List<GooglePlayGames.BasicApi.Multiplayer.Player>> callback)
 		{
-			internal int pendingCount;
-
-			internal List<NativePlayer> results = new List<NativePlayer>();
-
-			internal Action<NativePlayer[]> callback;
-		}
-
-		internal class FetchResponse : BaseReferenceHolder
-		{
-			internal FetchResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_Dispose(SelfPtr());
-			}
-
-			internal NativePlayer GetPlayer()
-			{
-				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_GetData(SelfPtr()));
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_GetStatus(SelfPtr());
-			}
-
-			internal static FetchResponse FromPointer(IntPtr selfPointer)
-			{
-				if (PInvokeUtilities.IsNull(selfPointer))
-				{
-					return null;
-				}
-				return new FetchResponse(selfPointer);
-			}
-		}
-
-		internal class FetchSelfResponse : BaseReferenceHolder
-		{
-			internal FetchSelfResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_GetStatus(SelfPtr());
-			}
-
-			internal NativePlayer Self()
-			{
-				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_GetData(SelfPtr()));
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_Dispose(SelfPtr());
-			}
-
-			internal static FetchSelfResponse FromPointer(IntPtr selfPointer)
-			{
-				if (PInvokeUtilities.IsNull(selfPointer))
-				{
-					return null;
-				}
-				return new FetchSelfResponse(selfPointer);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CFetchList_003Ec__AnonStorey270
-		{
-			internal FetchResponseCollector coll;
-
-			internal PlayerManager _003C_003Ef__this;
-
-			internal void _003C_003Em__15F(FetchResponse rsp)
-			{
-				_003C_003Ef__this.HandleFetchResponse(coll, rsp);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CFetchFriends_003Ec__AnonStorey271
-		{
-			internal Action<ResponseStatus, List<GooglePlayGames.BasicApi.Multiplayer.Player>> callback;
-
-			internal PlayerManager _003C_003Ef__this;
-
-			internal void _003C_003Em__160(FetchListResponse rsp)
-			{
-				_003C_003Ef__this.HandleFetchCollected(rsp, callback);
-			}
-		}
-
-		private readonly GameServices mGameServices;
-
-		internal PlayerManager(GameServices services)
-		{
-			mGameServices = Misc.CheckNotNull(services);
-		}
-
-		internal void FetchSelf(Action<FetchSelfResponse> callback)
-		{
-			GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelf(mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, InternalFetchSelfCallback, Callbacks.ToIntPtr(callback, FetchSelfResponse.FromPointer));
-		}
-
-		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.PlayerManager.FetchSelfCallback))]
-		private static void InternalFetchSelfCallback(IntPtr response, IntPtr data)
-		{
-			Callbacks.PerformInternalCallback("PlayerManager#InternalFetchSelfCallback", Callbacks.Type.Temporary, response, data);
+			GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchConnected(this.mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, new GooglePlayGames.Native.Cwrapper.PlayerManager.FetchListCallback(GooglePlayGames.Native.PInvoke.PlayerManager.InternalFetchConnectedCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse>((GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse rsp) => this.HandleFetchCollected(rsp, callback), new Func<IntPtr, GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse>(GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse.FromPointer)));
 		}
 
 		internal void FetchList(string[] userIds, Action<NativePlayer[]> callback)
 		{
-			_003CFetchList_003Ec__AnonStorey270 _003CFetchList_003Ec__AnonStorey = new _003CFetchList_003Ec__AnonStorey270();
-			_003CFetchList_003Ec__AnonStorey._003C_003Ef__this = this;
-			_003CFetchList_003Ec__AnonStorey.coll = new FetchResponseCollector();
-			_003CFetchList_003Ec__AnonStorey.coll.pendingCount = userIds.Length;
-			_003CFetchList_003Ec__AnonStorey.coll.callback = callback;
-			foreach (string player_id in userIds)
+			GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponseCollector fetchResponseCollector = new GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponseCollector()
 			{
-				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_Fetch(mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, player_id, InternalFetchCallback, Callbacks.ToIntPtr(_003CFetchList_003Ec__AnonStorey._003C_003Em__15F, FetchResponse.FromPointer));
+				pendingCount = (int)userIds.Length,
+				callback = callback
+			};
+			string[] strArrays = userIds;
+			for (int i = 0; i < (int)strArrays.Length; i++)
+			{
+				string str = strArrays[i];
+				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_Fetch(this.mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, str, new GooglePlayGames.Native.Cwrapper.PlayerManager.FetchCallback(GooglePlayGames.Native.PInvoke.PlayerManager.InternalFetchCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse>((GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse rsp) => this.HandleFetchResponse(fetchResponseCollector, rsp), new Func<IntPtr, GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse>(GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse.FromPointer)));
 			}
 		}
 
-		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.PlayerManager.FetchCallback))]
-		private static void InternalFetchCallback(IntPtr response, IntPtr data)
+		internal void FetchSelf(Action<GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse> callback)
 		{
-			Callbacks.PerformInternalCallback("PlayerManager#InternalFetchCallback", Callbacks.Type.Temporary, response, data);
+			GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelf(this.mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, new GooglePlayGames.Native.Cwrapper.PlayerManager.FetchSelfCallback(GooglePlayGames.Native.PInvoke.PlayerManager.InternalFetchSelfCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse>(GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse.FromPointer)));
 		}
 
-		internal void HandleFetchResponse(FetchResponseCollector collector, FetchResponse resp)
+		internal void HandleFetchCollected(GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse rsp, Action<ResponseStatus, List<GooglePlayGames.BasicApi.Multiplayer.Player>> callback)
+		{
+			List<GooglePlayGames.BasicApi.Multiplayer.Player> players = new List<GooglePlayGames.BasicApi.Multiplayer.Player>();
+			if (rsp.Status() == CommonErrorStatus.ResponseStatus.VALID || rsp.Status() == CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
+			{
+				UIntPtr uIntPtr = rsp.Length();
+				Logger.d(string.Concat("Got ", uIntPtr.ToUInt64(), " players"));
+				IEnumerator<NativePlayer> enumerator = rsp.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						players.Add(enumerator.Current.AsPlayer());
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+			}
+			callback(rsp.Status(), players);
+		}
+
+		internal void HandleFetchResponse(GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponseCollector collector, GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse resp)
 		{
 			if (resp.Status() == CommonErrorStatus.ResponseStatus.VALID || resp.Status() == CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
 			{
@@ -220,12 +85,10 @@ namespace GooglePlayGames.Native.PInvoke
 			}
 		}
 
-		internal void FetchFriends(Action<ResponseStatus, List<GooglePlayGames.BasicApi.Multiplayer.Player>> callback)
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.PlayerManager.FetchCallback))]
+		private static void InternalFetchCallback(IntPtr response, IntPtr data)
 		{
-			_003CFetchFriends_003Ec__AnonStorey271 _003CFetchFriends_003Ec__AnonStorey = new _003CFetchFriends_003Ec__AnonStorey271();
-			_003CFetchFriends_003Ec__AnonStorey.callback = callback;
-			_003CFetchFriends_003Ec__AnonStorey._003C_003Ef__this = this;
-			GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchConnected(mGameServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, InternalFetchConnectedCallback, Callbacks.ToIntPtr(_003CFetchFriends_003Ec__AnonStorey._003C_003Em__160, FetchListResponse.FromPointer));
+			Callbacks.PerformInternalCallback("PlayerManager#InternalFetchCallback", Callbacks.Type.Temporary, response, data);
 		}
 
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.PlayerManager.FetchListCallback))]
@@ -234,18 +97,135 @@ namespace GooglePlayGames.Native.PInvoke
 			Callbacks.PerformInternalCallback("PlayerManager#InternalFetchConnectedCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void HandleFetchCollected(FetchListResponse rsp, Action<ResponseStatus, List<GooglePlayGames.BasicApi.Multiplayer.Player>> callback)
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.PlayerManager.FetchSelfCallback))]
+		private static void InternalFetchSelfCallback(IntPtr response, IntPtr data)
 		{
-			List<GooglePlayGames.BasicApi.Multiplayer.Player> list = new List<GooglePlayGames.BasicApi.Multiplayer.Player>();
-			if (rsp.Status() == CommonErrorStatus.ResponseStatus.VALID || rsp.Status() == CommonErrorStatus.ResponseStatus.VALID_BUT_STALE)
+			Callbacks.PerformInternalCallback("PlayerManager#InternalFetchSelfCallback", Callbacks.Type.Temporary, response, data);
+		}
+
+		internal class FetchListResponse : BaseReferenceHolder, IEnumerable, IEnumerable<NativePlayer>
+		{
+			internal FetchListResponse(IntPtr selfPointer) : base(selfPointer)
 			{
-				Logger.d("Got " + rsp.Length().ToUInt64() + " players");
-				foreach (NativePlayer item in rsp)
-				{
-					list.Add(item.AsPlayer());
-				}
 			}
-			callback((ResponseStatus)rsp.Status(), list);
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_Dispose(base.SelfPtr());
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse FromPointer(IntPtr selfPointer)
+			{
+				if (PInvokeUtilities.IsNull(selfPointer))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.PlayerManager.FetchListResponse(selfPointer);
+			}
+
+			internal NativePlayer GetElement(UIntPtr index)
+			{
+				if (index.ToUInt64() >= this.Length().ToUInt64())
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetData_GetElement(base.SelfPtr(), index));
+			}
+
+			public IEnumerator<NativePlayer> GetEnumerator()
+			{
+				return PInvokeUtilities.ToEnumerator<NativePlayer>(this.Length(), (UIntPtr index) => this.GetElement(index));
+			}
+
+			internal UIntPtr Length()
+			{
+				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetData_Length(base.SelfPtr());
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchListResponse_GetStatus(base.SelfPtr());
+			}
+
+			IEnumerator System.Collections.IEnumerable.GetEnumerator()
+			{
+				return this.GetEnumerator();
+			}
+		}
+
+		internal class FetchResponse : BaseReferenceHolder
+		{
+			internal FetchResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_Dispose(base.SelfPtr());
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse FromPointer(IntPtr selfPointer)
+			{
+				if (PInvokeUtilities.IsNull(selfPointer))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.PlayerManager.FetchResponse(selfPointer);
+			}
+
+			internal NativePlayer GetPlayer()
+			{
+				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_GetData(base.SelfPtr()));
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchResponse_GetStatus(base.SelfPtr());
+			}
+		}
+
+		internal class FetchResponseCollector
+		{
+			internal int pendingCount;
+
+			internal List<NativePlayer> results;
+
+			internal Action<NativePlayer[]> callback;
+
+			public FetchResponseCollector()
+			{
+			}
+		}
+
+		internal class FetchSelfResponse : BaseReferenceHolder
+		{
+			internal FetchSelfResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_Dispose(base.SelfPtr());
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse FromPointer(IntPtr selfPointer)
+			{
+				if (PInvokeUtilities.IsNull(selfPointer))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.PlayerManager.FetchSelfResponse(selfPointer);
+			}
+
+			internal NativePlayer Self()
+			{
+				return new NativePlayer(GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_GetData(base.SelfPtr()));
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.PlayerManager.PlayerManager_FetchSelfResponse_GetStatus(base.SelfPtr());
+			}
 		}
 	}
 }

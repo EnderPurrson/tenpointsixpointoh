@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public enum CustomAuthenticationType : byte
@@ -5,6 +7,6 @@ namespace ExitGames.Client.Photon.Chat
 		Custom = 0,
 		Steam = 1,
 		Facebook = 2,
-		None = byte.MaxValue
+		None = 255
 	}
 }

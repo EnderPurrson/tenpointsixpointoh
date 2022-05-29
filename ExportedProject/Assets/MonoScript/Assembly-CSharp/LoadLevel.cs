@@ -1,18 +1,24 @@
 using Rilisoft;
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LoadLevel : MonoBehaviour
 {
 	public Texture fon;
 
-	private void Start()
+	public LoadLevel()
 	{
-		Singleton<SceneLoader>.Instance.LoadScene("Level3");
 	}
 
 	private void OnGUI()
 	{
-		Rect position = new Rect(((float)Screen.width - 1366f * Defs.Coef) / 2f, 0f, 1366f * Defs.Coef, Screen.height);
-		GUI.DrawTexture(position, fon, ScaleMode.StretchToFill);
+		Rect rect = new Rect(((float)Screen.width - 1366f * Defs.Coef) / 2f, 0f, 1366f * Defs.Coef, (float)Screen.height);
+		GUI.DrawTexture(rect, this.fon, ScaleMode.StretchToFill);
+	}
+
+	private void Start()
+	{
+		Singleton<SceneLoader>.Instance.LoadScene("Level3", LoadSceneMode.Single);
 	}
 }

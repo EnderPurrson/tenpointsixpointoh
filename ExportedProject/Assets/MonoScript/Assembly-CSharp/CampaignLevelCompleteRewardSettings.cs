@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,4 +41,8 @@ public class CampaignLevelCompleteRewardSettings : MonoBehaviour
 	public Transform experienceReward;
 
 	public Transform gemsReward;
+
+	public CampaignLevelCompleteRewardSettings()
+	{
+	}
 }

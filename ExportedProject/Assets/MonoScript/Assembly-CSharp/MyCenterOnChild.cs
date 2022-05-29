@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/My Center Scroll View on Child")]
@@ -19,148 +20,150 @@ public class MyCenterOnChild : MonoBehaviour
 	{
 		get
 		{
-			return mCenteredObject;
+			return this.mCenteredObject;
 		}
 	}
 
-	private void OnEnable()
+	public MyCenterOnChild()
 	{
-		Recenter();
+	}
+
+	private void CenterOn(Transform target, Vector3 panelCenter)
+	{
+		if (!(target != null) || !(this.mScrollView != null) || !(this.mScrollView.panel != null))
+		{
+			this.mCenteredObject = null;
+		}
+		else
+		{
+			Transform transforms = this.mScrollView.panel.cachedTransform;
+			this.mCenteredObject = target.gameObject;
+			Vector3 vector3 = transforms.InverseTransformPoint(target.position);
+			Vector3 vector31 = vector3 - transforms.InverseTransformPoint(panelCenter);
+			if (!this.mScrollView.canMoveHorizontally)
+			{
+				vector31.x = 0f;
+			}
+			if (!this.mScrollView.canMoveVertically)
+			{
+				vector31.y = 0f;
+			}
+			vector31.z = 0f;
+			SpringPanel.Begin(this.mScrollView.panel.cachedGameObject, transforms.localPosition - vector31, this.springStrength).onFinished = this.onFinished;
+		}
+	}
+
+	public void CenterOn(Transform target)
+	{
+		if (this.mScrollView != null && this.mScrollView.panel != null)
+		{
+			Vector3[] vector3Array = this.mScrollView.panel.worldCorners;
+			Vector3 vector3 = (vector3Array[2] + vector3Array[0]) * 0.5f;
+			this.CenterOn(target, vector3);
+		}
 	}
 
 	private void OnDragFinished()
 	{
 		if (base.enabled)
 		{
-			Recenter();
+			this.Recenter();
 		}
+	}
+
+	private void OnEnable()
+	{
+		this.Recenter();
 	}
 
 	private void OnValidate()
 	{
-		nextPageThreshold = Mathf.Abs(nextPageThreshold);
+		this.nextPageThreshold = Mathf.Abs(this.nextPageThreshold);
 	}
 
 	public void Recenter()
 	{
-		if (mScrollView == null)
+		if (this.mScrollView == null)
 		{
-			mScrollView = NGUITools.FindInParents<UIScrollView>(base.gameObject);
-			if (mScrollView == null)
+			this.mScrollView = NGUITools.FindInParents<UIScrollView>(base.gameObject);
+			if (this.mScrollView == null)
 			{
-				Debug.LogWarning(string.Concat(GetType(), " requires ", typeof(UIScrollView), " on a parent object in order to work"), this);
+				Debug.LogWarning(string.Concat(new object[] { base.GetType(), " requires ", typeof(UIScrollView), " on a parent object in order to work" }), this);
 				base.enabled = false;
 				return;
 			}
-			mScrollView.onDragFinished = OnDragFinished;
-			if (mScrollView.horizontalScrollBar != null)
+			this.mScrollView.onDragFinished = new UIScrollView.OnDragNotification(this.OnDragFinished);
+			if (this.mScrollView.horizontalScrollBar != null)
 			{
-				mScrollView.horizontalScrollBar.onDragFinished = OnDragFinished;
+				this.mScrollView.horizontalScrollBar.onDragFinished = new UIProgressBar.OnDragFinished(this.OnDragFinished);
 			}
-			if (mScrollView.verticalScrollBar != null)
+			if (this.mScrollView.verticalScrollBar != null)
 			{
-				mScrollView.verticalScrollBar.onDragFinished = OnDragFinished;
+				this.mScrollView.verticalScrollBar.onDragFinished = new UIProgressBar.OnDragFinished(this.OnDragFinished);
 			}
 		}
-		if (mScrollView.panel == null)
+		if (this.mScrollView.panel == null)
 		{
 			return;
 		}
-		Vector3[] worldCorners = mScrollView.panel.worldCorners;
-		Vector3 vector = (worldCorners[2] + worldCorners[0]) * 0.5f;
-		Vector3 vector2 = vector - mScrollView.currentMomentum * (mScrollView.momentumAmount * 0.1f);
-		mScrollView.currentMomentum = Vector3.zero;
-		float num = float.MaxValue;
-		Transform target = null;
-		Transform transform = base.transform;
-		int num2 = 0;
-		int i = 0;
-		for (int childCount = transform.childCount; i < childCount; i++)
+		Vector3[] vector3Array = this.mScrollView.panel.worldCorners;
+		Vector3 vector3 = (vector3Array[2] + vector3Array[0]) * 0.5f;
+		Vector3 vector31 = vector3 - (this.mScrollView.currentMomentum * (this.mScrollView.momentumAmount * 0.1f));
+		this.mScrollView.currentMomentum = Vector3.zero;
+		float single = Single.MaxValue;
+		Transform child = null;
+		Transform transforms = base.transform;
+		int num = 0;
+		int num1 = 0;
+		int num2 = transforms.childCount;
+		while (num1 < num2)
 		{
-			Transform child = transform.GetChild(i);
-			float num3 = Vector3.SqrMagnitude(child.position - vector2);
-			if (num3 < num)
+			Transform child1 = transforms.GetChild(num1);
+			float single1 = Vector3.SqrMagnitude(child1.position - vector31);
+			if (single1 < single)
 			{
-				num = num3;
-				target = child;
-				num2 = i;
+				single = single1;
+				child = child1;
+				num = num1;
 			}
+			num1++;
 		}
-		if (nextPageThreshold > 0f && UICamera.currentTouch != null && mCenteredObject != null && mCenteredObject.transform == transform.GetChild(num2))
+		if (this.nextPageThreshold > 0f && UICamera.currentTouch != null && this.mCenteredObject != null && this.mCenteredObject.transform == transforms.GetChild(num))
 		{
-			Vector2 totalDelta = UICamera.currentTouch.totalDelta;
-			float num4 = 0f;
-			switch (mScrollView.movement)
+			Vector2 vector2 = UICamera.currentTouch.totalDelta;
+			float single2 = 0f;
+			UIScrollView.Movement movement = this.mScrollView.movement;
+			if (movement == UIScrollView.Movement.Horizontal)
 			{
-			case UIScrollView.Movement.Horizontal:
-				num4 = totalDelta.x;
-				break;
-			case UIScrollView.Movement.Vertical:
-				num4 = totalDelta.y;
-				break;
-			default:
-				num4 = totalDelta.magnitude;
-				break;
+				single2 = vector2.x;
 			}
-			if (num4 > nextPageThreshold)
+			else
 			{
-				if (num2 > 0)
-				{
-					target = transform.GetChild(num2 - 1);
-				}
-				else if (endlessScroll && transform.childCount > 0 && num2 == 0)
-				{
-					target = transform.GetChild(transform.childCount - 1);
-				}
+				single2 = (movement == UIScrollView.Movement.Vertical ? vector2.y : vector2.magnitude);
 			}
-			else if (num4 < 0f - nextPageThreshold)
+			if (single2 <= this.nextPageThreshold)
 			{
-				if (num2 < transform.childCount - 1)
+				if (single2 < -this.nextPageThreshold)
 				{
-					target = transform.GetChild(num2 + 1);
-				}
-				else if (endlessScroll && transform.childCount > 0)
-				{
-					target = transform.GetChild(0);
+					if (num < transforms.childCount - 1)
+					{
+						child = transforms.GetChild(num + 1);
+					}
+					else if (this.endlessScroll && transforms.childCount > 0)
+					{
+						child = transforms.GetChild(0);
+					}
 				}
 			}
-		}
-		CenterOn(target, vector);
-	}
-
-	private void CenterOn(Transform target, Vector3 panelCenter)
-	{
-		if (target != null && mScrollView != null && mScrollView.panel != null)
-		{
-			Transform cachedTransform = mScrollView.panel.cachedTransform;
-			mCenteredObject = target.gameObject;
-			Vector3 vector = cachedTransform.InverseTransformPoint(target.position);
-			Vector3 vector2 = cachedTransform.InverseTransformPoint(panelCenter);
-			Vector3 vector3 = vector - vector2;
-			if (!mScrollView.canMoveHorizontally)
+			else if (num > 0)
 			{
-				vector3.x = 0f;
+				child = transforms.GetChild(num - 1);
 			}
-			if (!mScrollView.canMoveVertically)
+			else if (this.endlessScroll && transforms.childCount > 0 && num == 0)
 			{
-				vector3.y = 0f;
+				child = transforms.GetChild(transforms.childCount - 1);
 			}
-			vector3.z = 0f;
-			SpringPanel.Begin(mScrollView.panel.cachedGameObject, cachedTransform.localPosition - vector3, springStrength).onFinished = onFinished;
 		}
-		else
-		{
-			mCenteredObject = null;
-		}
-	}
-
-	public void CenterOn(Transform target)
-	{
-		if (mScrollView != null && mScrollView.panel != null)
-		{
-			Vector3[] worldCorners = mScrollView.panel.worldCorners;
-			Vector3 panelCenter = (worldCorners[2] + worldCorners[0]) * 0.5f;
-			CenterOn(target, panelCenter);
-		}
+		this.CenterOn(child, vector3);
 	}
 }

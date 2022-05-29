@@ -1,71 +1,98 @@
+using System;
 using UnityEngine;
 
 public class StartPlayerButton : MonoBehaviour
 {
-	public enum TypeButton
-	{
-		Start = 0,
-		Team1 = 1,
-		Team2 = 2,
-		RandomBtn = 3,
-		TeamBattle = 4
-	}
-
-	public TypeButton command;
+	public StartPlayerButton.TypeButton command;
 
 	public BlueRedButtonController buttonController;
 
 	private float timeEnable;
 
+	public StartPlayerButton()
+	{
+	}
+
 	private void Awake()
 	{
-		bool flag = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints;
-		bool flag2 = NetworkStartTable.LocalOrPasswordRoom();
-		if ((!flag && command != 0) || (flag && (command == TypeButton.Start || ((command == TypeButton.RandomBtn || command == TypeButton.Team2 || command == TypeButton.Team1) && !flag2) || (command == TypeButton.TeamBattle && flag2))) || Defs.isHunger)
+		bool flag = (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture ? true : ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints);
+		bool flag1 = NetworkStartTable.LocalOrPasswordRoom();
+		if (!flag && this.command != StartPlayerButton.TypeButton.Start || flag && (this.command == StartPlayerButton.TypeButton.Start || (this.command == StartPlayerButton.TypeButton.RandomBtn || this.command == StartPlayerButton.TypeButton.Team2 || this.command == StartPlayerButton.TypeButton.Team1) && !flag1 || this.command == StartPlayerButton.TypeButton.TeamBattle && flag1) || Defs.isHunger)
 		{
 			base.gameObject.SetActive(false);
 		}
 	}
 
-	private void Start()
+	private void OnClick()
 	{
-		if ((command == TypeButton.Start || command == TypeButton.TeamBattle) && Defs.isRegimVidosDebug)
+		if (Time.time - NotificationController.timeStartApp < 3f || Defs.isCapturePoints && Time.realtimeSinceStartup - this.timeEnable < 1.5f)
 		{
-			base.gameObject.SetActive(false);
-			GetComponent<UIButton>().enabled = false;
+			return;
+		}
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (LoadingInAfterGame.isShowLoading)
+		{
+			return;
+		}
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		if (ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
+		{
+			return;
+		}
+		ButtonClickSound.Instance.PlayClick();
+		if (WeaponManager.sharedManager.myTable != null)
+		{
+			int num = WeaponManager.sharedManager.myNetworkStartTable.myCommand;
+			if (num <= 0)
+			{
+				num = (int)this.command;
+				if ((this.command == StartPlayerButton.TypeButton.RandomBtn || this.command == StartPlayerButton.TypeButton.TeamBattle) && this.buttonController != null)
+				{
+					if (this.buttonController.countRed >= this.buttonController.countBlue)
+					{
+						num = (this.buttonController.countRed <= this.buttonController.countBlue ? UnityEngine.Random.Range(1, 3) : 1);
+					}
+					else
+					{
+						num = 2;
+					}
+				}
+			}
+			WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().StartPlayerButtonClick(num);
 		}
 	}
 
 	private void OnEnable()
 	{
-		timeEnable = Time.realtimeSinceStartup;
+		this.timeEnable = Time.realtimeSinceStartup;
+	}
+
+	private void Start()
+	{
+		if ((this.command == StartPlayerButton.TypeButton.Start || this.command == StartPlayerButton.TypeButton.TeamBattle) && Defs.isRegimVidosDebug)
+		{
+			base.gameObject.SetActive(false);
+			base.GetComponent<UIButton>().enabled = false;
+		}
 	}
 
 	private void Update()
 	{
-		GetComponent<UIButton>().isEnabled = !Defs.isFlag || Initializer.flag1 != null;
+		base.GetComponent<UIButton>().isEnabled = (!Defs.isFlag ? true : Initializer.flag1 != null);
 	}
 
-	private void OnClick()
+	public enum TypeButton
 	{
-		if (Time.time - NotificationController.timeStartApp < 3f || (Defs.isCapturePoints && Time.realtimeSinceStartup - timeEnable < 1.5f) || (BankController.Instance != null && BankController.Instance.InterfaceEnabled) || LoadingInAfterGame.isShowLoading || (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown) || ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
-		{
-			return;
-		}
-		ButtonClickSound.Instance.PlayClick();
-		if (!(WeaponManager.sharedManager.myTable != null))
-		{
-			return;
-		}
-		int num = WeaponManager.sharedManager.myNetworkStartTable.myCommand;
-		if (num <= 0)
-		{
-			num = (int)command;
-			if ((command == TypeButton.RandomBtn || command == TypeButton.TeamBattle) && buttonController != null)
-			{
-				num = ((buttonController.countRed < buttonController.countBlue) ? 2 : ((buttonController.countRed > buttonController.countBlue) ? 1 : Random.Range(1, 3)));
-			}
-		}
-		WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().StartPlayerButtonClick(num);
+		Start,
+		Team1,
+		Team2,
+		RandomBtn,
+		TeamBattle
 	}
 }

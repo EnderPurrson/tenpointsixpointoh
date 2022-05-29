@@ -5,23 +5,23 @@ using UnityEngine.SocialPlatforms;
 
 public class AGSSocialLocalUser : AGSSocialUser, ILocalUser, IUserProfile
 {
-	public static AGSPlayer player = AGSPlayer.GetBlankPlayer();
+	public static AGSPlayer player;
 
-	public static List<AGSSocialUser> friendList = new List<AGSSocialUser>();
-
-	public IUserProfile[] friends
-	{
-		get
-		{
-			return friendList.ToArray();
-		}
-	}
+	public static List<AGSSocialUser> friendList;
 
 	public bool authenticated
 	{
 		get
 		{
 			return AGSPlayerClient.IsSignedIn();
+		}
+	}
+
+	public IUserProfile[] friends
+	{
+		get
+		{
+			return AGSSocialLocalUser.friendList.ToArray();
 		}
 	}
 
@@ -32,6 +32,16 @@ public class AGSSocialLocalUser : AGSSocialUser, ILocalUser, IUserProfile
 			AGSClient.LogGameCircleError("ILocalUser.underage.get is not available for GameCircle");
 			return false;
 		}
+	}
+
+	static AGSSocialLocalUser()
+	{
+		AGSSocialLocalUser.player = AGSPlayer.GetBlankPlayer();
+		AGSSocialLocalUser.friendList = new List<AGSSocialUser>();
+	}
+
+	public AGSSocialLocalUser()
+	{
 	}
 
 	public void Authenticate(Action<bool> callback)

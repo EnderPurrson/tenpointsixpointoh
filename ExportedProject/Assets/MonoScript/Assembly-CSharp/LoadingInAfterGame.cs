@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,50 +16,54 @@ public class LoadingInAfterGame : MonoBehaviour
 	{
 		get
 		{
-			return !(timerShow <= 0f) && !(loadingTexture == null) && Defs.isMulti && !Defs.isHunger;
+			return (this.timerShow <= 0f || LoadingInAfterGame.loadingTexture == null || !Defs.isMulti ? 1 : (int)Defs.isHunger) == 0;
 		}
+	}
+
+	public LoadingInAfterGame()
+	{
 	}
 
 	private void Awake()
 	{
-		if (ShouldShowLoading)
+		if (this.ShouldShowLoading)
 		{
-			_loadingNGUIController = Object.Instantiate(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
-			_loadingNGUIController.SceneToLoad = SceneManager.GetActiveScene().name;
-			_loadingNGUIController.loadingNGUITexture.mainTexture = loadingTexture;
-			_loadingNGUIController.transform.localPosition = Vector3.zero;
-			_loadingNGUIController.Init();
-			isShowLoading = true;
-		}
-	}
-
-	private void Update()
-	{
-		if (timerShow > 0f)
-		{
-			timerShow -= Time.deltaTime;
-		}
-		if (!ActivityIndicator.IsActiveIndicator)
-		{
-			ActivityIndicator.IsActiveIndicator = true;
-		}
-		if (!ShouldShowLoading)
-		{
-			isShowLoading = false;
-			base.enabled = false;
-			loadingTexture = null;
-			ActivityIndicator.IsActiveIndicator = false;
-			if (_loadingNGUIController != null)
-			{
-				Object.Destroy(_loadingNGUIController.gameObject);
-				_loadingNGUIController = null;
-				Resources.UnloadUnusedAssets();
-			}
+			this._loadingNGUIController = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
+			this._loadingNGUIController.SceneToLoad = SceneManager.GetActiveScene().name;
+			this._loadingNGUIController.loadingNGUITexture.mainTexture = LoadingInAfterGame.loadingTexture;
+			this._loadingNGUIController.transform.localPosition = Vector3.zero;
+			this._loadingNGUIController.Init();
+			LoadingInAfterGame.isShowLoading = true;
 		}
 	}
 
 	private void OnDestroy()
 	{
-		isShowLoading = false;
+		LoadingInAfterGame.isShowLoading = false;
+	}
+
+	private void Update()
+	{
+		if (this.timerShow > 0f)
+		{
+			this.timerShow -= Time.deltaTime;
+		}
+		if (!ActivityIndicator.IsActiveIndicator)
+		{
+			ActivityIndicator.IsActiveIndicator = true;
+		}
+		if (!this.ShouldShowLoading)
+		{
+			LoadingInAfterGame.isShowLoading = false;
+			base.enabled = false;
+			LoadingInAfterGame.loadingTexture = null;
+			ActivityIndicator.IsActiveIndicator = false;
+			if (this._loadingNGUIController != null)
+			{
+				UnityEngine.Object.Destroy(this._loadingNGUIController.gameObject);
+				this._loadingNGUIController = null;
+				Resources.UnloadUnusedAssets();
+			}
+		}
 	}
 }

@@ -1,9 +1,21 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PromoActionClick : MonoBehaviour
 {
-	public static event Action<string> Click;
+	public PromoActionClick()
+	{
+	}
+
+	private void OnClick()
+	{
+		if (PromoActionClick.Click != null)
+		{
+			PromoActionClick.Click(base.transform.parent.GetComponent<PromoActionPreview>().tg);
+		}
+		Debug.Log("Click");
+	}
 
 	private void OnPress(bool down)
 	{
@@ -20,12 +32,5 @@ public class PromoActionClick : MonoBehaviour
 		}
 	}
 
-	private void OnClick()
-	{
-		if (PromoActionClick.Click != null)
-		{
-			PromoActionClick.Click(base.transform.parent.GetComponent<PromoActionPreview>().tg);
-		}
-		Debug.Log("Click");
-	}
+	public static event Action<string> Click;
 }

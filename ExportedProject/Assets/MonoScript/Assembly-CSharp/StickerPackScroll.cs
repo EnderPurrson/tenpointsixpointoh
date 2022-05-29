@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class StickerPackScroll : MonoBehaviour
@@ -14,86 +17,63 @@ public class StickerPackScroll : MonoBehaviour
 
 	private UIGrid sortScript;
 
-	private void Awake()
+	public StickerPackScroll()
 	{
-		listButton.Clear();
-		listButton.AddRange(GetComponentsInChildren<BtnPackItem>(true));
 	}
 
-	private void OnEnable()
+	private void Awake()
 	{
-		UpdateListButton();
-		StickersController.onBuyPack += UpdateListButton;
+		this.listButton.Clear();
+		this.listButton.AddRange(base.GetComponentsInChildren<BtnPackItem>(true));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator crtUpdateListButton()
+	{
+		StickerPackScroll.u003ccrtUpdateListButtonu003ec__Iterator10B variable = null;
+		return variable;
 	}
 
 	private void OnDisable()
 	{
-		StickersController.onBuyPack -= UpdateListButton;
+		StickersController.onBuyPack -= new Action(this.UpdateListButton);
 	}
 
-	public void UpdateListButton()
+	private void OnEnable()
 	{
-		StartCoroutine(crtUpdateListButton());
-	}
-
-	private IEnumerator crtUpdateListButton()
-	{
-		if (sortScript == null)
-		{
-			sortScript = parentButton.GetComponent<UIGrid>();
-		}
-		listItemData = StickersController.GetAvaliablePack();
-		BtnPackItem fistAvaliableBtn = null;
-		for (int i = 0; i < listButton.Count; i++)
-		{
-			BtnPackItem curButtonItem = listButton[i];
-			if (listItemData.Contains(curButtonItem.typePack))
-			{
-				curButtonItem.transform.parent = parentButton.transform;
-				curButtonItem.gameObject.SetActive(true);
-				if (fistAvaliableBtn == null)
-				{
-					fistAvaliableBtn = curButtonItem;
-				}
-			}
-			else
-			{
-				curButtonItem.transform.parent = base.transform;
-				curButtonItem.gameObject.SetActive(false);
-			}
-		}
-		if (fistAvaliableBtn != null)
-		{
-			ShowPack(fistAvaliableBtn.typePack);
-		}
-		yield return null;
-		Sort();
-	}
-
-	public void Sort()
-	{
-		if (sortScript != null)
-		{
-			parentButton.SetActive(false);
-			parentButton.SetActive(true);
-			sortScript.Reposition();
-		}
+		this.UpdateListButton();
+		StickersController.onBuyPack += new Action(this.UpdateListButton);
 	}
 
 	public void ShowPack(TypePackSticker val)
 	{
-		for (int i = 0; i < listButton.Count; i++)
+		for (int i = 0; i < this.listButton.Count; i++)
 		{
-			BtnPackItem btnPackItem = listButton[i];
-			if (btnPackItem.typePack == val)
+			BtnPackItem item = this.listButton[i];
+			if (item.typePack != val)
 			{
-				btnPackItem.ShowPack();
-				curShowPack = btnPackItem.typePack;
+				item.HidePack();
 			}
 			else
 			{
-				btnPackItem.HidePack();
+				item.ShowPack();
+				this.curShowPack = item.typePack;
 			}
 		}
+	}
+
+	public void Sort()
+	{
+		if (this.sortScript != null)
+		{
+			this.parentButton.SetActive(false);
+			this.parentButton.SetActive(true);
+			this.sortScript.Reposition();
+		}
+	}
+
+	public void UpdateListButton()
+	{
+		base.StartCoroutine(this.crtUpdateListButton());
 	}
 }

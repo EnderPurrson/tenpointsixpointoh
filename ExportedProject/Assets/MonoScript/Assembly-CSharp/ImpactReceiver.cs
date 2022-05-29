@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ImpactReceiver : MonoBehaviour
@@ -8,18 +9,8 @@ public class ImpactReceiver : MonoBehaviour
 
 	private CharacterController character;
 
-	private void Start()
+	public ImpactReceiver()
 	{
-		character = GetComponent<CharacterController>();
-	}
-
-	private void Update()
-	{
-		if (impact.magnitude > 0.2f)
-		{
-			character.Move(impact * Time.deltaTime);
-		}
-		impact = Vector3.Lerp(impact, Vector3.zero, 5f * Time.deltaTime);
 	}
 
 	public void AddImpact(Vector3 dir, float force)
@@ -27,8 +18,23 @@ public class ImpactReceiver : MonoBehaviour
 		dir.Normalize();
 		if (dir.y < 0f)
 		{
-			dir.y = 0f - dir.y;
+			dir.y = -dir.y;
 		}
-		impact += dir.normalized * force / mass;
+		ImpactReceiver impactReceiver = this;
+		impactReceiver.impact = impactReceiver.impact + ((dir.normalized * force) / this.mass);
+	}
+
+	private void Start()
+	{
+		this.character = base.GetComponent<CharacterController>();
+	}
+
+	private void Update()
+	{
+		if (this.impact.magnitude > 0.2f)
+		{
+			this.character.Move(this.impact * Time.deltaTime);
+		}
+		this.impact = Vector3.Lerp(this.impact, Vector3.zero, 5f * Time.deltaTime);
 	}
 }

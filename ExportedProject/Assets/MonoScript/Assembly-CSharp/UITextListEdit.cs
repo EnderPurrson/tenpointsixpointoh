@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -5,20 +6,7 @@ using UnityEngine;
 [AddComponentMenu("NGUI/UI/Text List")]
 public class UITextListEdit : MonoBehaviour
 {
-	public enum Style
-	{
-		Text = 0,
-		Chat = 1
-	}
-
-	protected class Paragraph
-	{
-		public string text;
-
-		public string[] lines;
-	}
-
-	public Style style;
+	public UITextListEdit.Style style;
 
 	public UILabel textLabel;
 
@@ -30,9 +18,9 @@ public class UITextListEdit : MonoBehaviour
 
 	public bool supportScrollWheel = true;
 
-	protected char[] mSeparator = new char[1] { '\n' };
+	protected char[] mSeparator = new char[] { '\n' };
 
-	protected List<Paragraph> mParagraphs = new List<Paragraph>();
+	protected List<UITextListEdit.Paragraph> mParagraphs = new List<UITextListEdit.Paragraph>();
 
 	protected float mScroll;
 
@@ -40,138 +28,177 @@ public class UITextListEdit : MonoBehaviour
 
 	protected int mTotalLines;
 
-	public void Clear()
+	public UITextListEdit()
 	{
-		mParagraphs.Clear();
-		UpdateVisibleText();
 	}
 
 	public void Add(string text)
 	{
-		Add(text, true);
+		this.Add(text, true);
 	}
 
 	protected void Add(string text, bool updateVisible)
 	{
-		Paragraph paragraph = null;
-		if (mParagraphs.Count < maxEntries)
+		UITextListEdit.Paragraph item = null;
+		if (this.mParagraphs.Count >= this.maxEntries)
 		{
-			paragraph = new Paragraph();
+			item = this.mParagraphs[0];
+			this.mParagraphs.RemoveAt(0);
 		}
 		else
 		{
-			paragraph = mParagraphs[0];
-			mParagraphs.RemoveAt(0);
+			item = new UITextListEdit.Paragraph();
 		}
-		paragraph.text = text;
-		mParagraphs.Add(paragraph);
-		if (textLabel != null && textLabel.font != null)
+		item.text = text;
+		this.mParagraphs.Add(item);
+		if (this.textLabel != null && this.textLabel.font != null)
 		{
-			mTotalLines = 0;
-			int i = 0;
-			for (int count = mParagraphs.Count; i < count; i++)
+			this.mTotalLines = 0;
+			int num = 0;
+			int count = this.mParagraphs.Count;
+			while (num < count)
 			{
-				mTotalLines += mParagraphs[i].lines.Length;
+				this.mTotalLines += (int)this.mParagraphs[num].lines.Length;
+				num++;
 			}
 		}
 		if (updateVisible)
 		{
-			UpdateVisibleText();
+			this.UpdateVisibleText();
 		}
 	}
 
 	private void Awake()
 	{
-		if (textLabel == null)
+		if (this.textLabel == null)
 		{
-			textLabel = GetComponentInChildren<UILabel>();
+			this.textLabel = base.GetComponentInChildren<UILabel>();
 		}
-		if (textLabel != null)
+		if (this.textLabel != null)
 		{
-			textLabel.lineWidth = 0;
+			this.textLabel.lineWidth = 0;
 		}
-		Collider component = GetComponent<Collider>();
+		Collider component = base.GetComponent<Collider>();
 		if (component != null)
 		{
-			if (maxHeight <= 0f)
+			if (this.maxHeight <= 0f)
 			{
-				maxHeight = component.bounds.size.y / base.transform.lossyScale.y;
+				Bounds bound = component.bounds;
+				this.maxHeight = bound.size.y / base.transform.lossyScale.y;
 			}
-			if (maxWidth <= 0f)
+			if (this.maxWidth <= 0f)
 			{
-				maxWidth = component.bounds.size.x / base.transform.lossyScale.x;
+				Bounds bound1 = component.bounds;
+				this.maxWidth = bound1.size.x / base.transform.lossyScale.x;
 			}
+		}
+	}
+
+	public void Clear()
+	{
+		this.mParagraphs.Clear();
+		this.UpdateVisibleText();
+	}
+
+	public void OnScroll(float val)
+	{
+		if (this.mSelected && this.supportScrollWheel)
+		{
+			val = val * (this.style != UITextListEdit.Style.Chat ? -10f : 10f);
+			this.mScroll = Mathf.Max(0f, this.mScroll + val);
+			this.UpdateVisibleText();
 		}
 	}
 
 	public void OnSelect(bool selected)
 	{
-		mSelected = selected;
+		this.mSelected = selected;
 	}
 
 	protected void UpdateVisibleText()
 	{
-		if (!(textLabel != null))
+		int num;
+		if (this.textLabel != null && this.textLabel.font != null)
 		{
-			return;
-		}
-		UIFont font = textLabel.font;
-		if (!(font != null))
-		{
-			return;
-		}
-		int num = 0;
-		int num2 = ((!(maxHeight > 0f)) ? 100000 : Mathf.FloorToInt(maxHeight / textLabel.cachedTransform.localScale.y));
-		int num3 = Mathf.RoundToInt(mScroll);
-		if (num2 + num3 > mTotalLines)
-		{
-			num3 = Mathf.Max(0, mTotalLines - num2);
-			mScroll = num3;
-		}
-		if (style == Style.Chat)
-		{
-			num3 = Mathf.Max(0, mTotalLines - num2 - num3);
-		}
-		StringBuilder stringBuilder = new StringBuilder();
-		int i = 0;
-		for (int count = mParagraphs.Count; i < count; i++)
-		{
-			Paragraph paragraph = mParagraphs[mParagraphs.Count - 1 - i];
-			int j = 0;
-			for (int num4 = paragraph.lines.Length; j < num4; j++)
+			int num1 = 0;
+			if (this.maxHeight <= 0f)
 			{
-				string value = paragraph.lines[j];
-				if (num3 > 0)
+				num = 100000;
+			}
+			else
+			{
+				float single = this.maxHeight;
+				Vector3 vector3 = this.textLabel.cachedTransform.localScale;
+				num = Mathf.FloorToInt(single / vector3.y);
+			}
+			int num2 = num;
+			int num3 = Mathf.RoundToInt(this.mScroll);
+			if (num2 + num3 > this.mTotalLines)
+			{
+				num3 = Mathf.Max(0, this.mTotalLines - num2);
+				this.mScroll = (float)num3;
+			}
+			if (this.style == UITextListEdit.Style.Chat)
+			{
+				num3 = Mathf.Max(0, this.mTotalLines - num2 - num3);
+			}
+			StringBuilder stringBuilder = new StringBuilder();
+			int num4 = 0;
+			int count = this.mParagraphs.Count;
+			while (num4 < count)
+			{
+				UITextListEdit.Paragraph item = this.mParagraphs[this.mParagraphs.Count - 1 - num4];
+				int num5 = 0;
+				int length = (int)item.lines.Length;
+				while (num5 < length)
 				{
-					num3--;
-					continue;
+					string str = item.lines[num5];
+					if (num3 <= 0)
+					{
+						if (stringBuilder.Length > 0)
+						{
+							stringBuilder.Append("\n");
+						}
+						stringBuilder.Append(str);
+						num1++;
+						if (num1 >= num2)
+						{
+							break;
+						}
+					}
+					else
+					{
+						num3--;
+					}
+					num5++;
 				}
-				if (stringBuilder.Length > 0)
+				if (num1 < num2)
 				{
-					stringBuilder.Append("\n");
+					num4++;
 				}
-				stringBuilder.Append(value);
-				num++;
-				if (num >= num2)
+				else
 				{
 					break;
 				}
 			}
-			if (num >= num2)
-			{
-				break;
-			}
+			this.textLabel.text = stringBuilder.ToString();
 		}
-		textLabel.text = stringBuilder.ToString();
 	}
 
-	public void OnScroll(float val)
+	protected class Paragraph
 	{
-		if (mSelected && supportScrollWheel)
+		public string text;
+
+		public string[] lines;
+
+		public Paragraph()
 		{
-			val *= ((style != Style.Chat) ? (-10f) : 10f);
-			mScroll = Mathf.Max(0f, mScroll + val);
-			UpdateVisibleText();
 		}
+	}
+
+	public enum Style
+	{
+		Text,
+		Chat
 	}
 }

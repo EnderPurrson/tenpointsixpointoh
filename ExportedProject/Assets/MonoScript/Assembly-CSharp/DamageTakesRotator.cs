@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class DamageTakesRotator : MonoBehaviour
@@ -8,27 +9,34 @@ public sealed class DamageTakesRotator : MonoBehaviour
 
 	private GameObject myPlayer;
 
+	public DamageTakesRotator()
+	{
+	}
+
 	private void Start()
 	{
-		thisTransform = base.transform;
+		this.thisTransform = base.transform;
 	}
 
 	private void Update()
 	{
-		if (myPlayer == null)
+		if (this.myPlayer == null)
 		{
-			if (Defs.isMulti)
+			if (!Defs.isMulti)
 			{
-				myPlayer = WeaponManager.sharedManager.myPlayer;
+				this.myPlayer = GameObject.FindGameObjectWithTag("Player");
 			}
 			else
 			{
-				myPlayer = GameObject.FindGameObjectWithTag("Player");
+				this.myPlayer = WeaponManager.sharedManager.myPlayer;
 			}
 		}
-		if (!(myPlayer == null))
+		if (this.myPlayer == null)
 		{
-			thisTransform.localRotation = Quaternion.Euler(new Vector3(0f, 0f, myPlayer.transform.localRotation.eulerAngles.y));
+			return;
 		}
+		Transform transforms = this.thisTransform;
+		Vector3 vector3 = this.myPlayer.transform.localRotation.eulerAngles;
+		transforms.localRotation = Quaternion.Euler(new Vector3(0f, 0f, vector3.y));
 	}
 }

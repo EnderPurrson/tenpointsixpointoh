@@ -1,11 +1,16 @@
+using System;
 using UnityEngine;
 
 public class RotatorGun : MonoBehaviour
 {
 	public GameObject playerGun;
 
+	public RotatorGun()
+	{
+	}
+
 	private void Update()
 	{
-		playerGun.transform.rotation = base.transform.rotation;
+		this.playerGun.transform.rotation = base.transform.rotation;
 	}
 }

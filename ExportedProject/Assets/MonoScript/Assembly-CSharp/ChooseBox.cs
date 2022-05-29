@@ -1,7 +1,7 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class ChooseBox : MonoBehaviour
@@ -34,43 +34,139 @@ internal sealed class ChooseBox : MonoBehaviour
 
 	private IDisposable _backSubscription;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheE;
+	static ChooseBox()
+	{
+	}
+
+	public ChooseBox()
+	{
+	}
+
+	private int CalculateStarsLeftToOpenTheBox(int boxIndex)
+	{
+		Dictionary<string, int> strs;
+		if (boxIndex >= LevelBox.campaignBoxes.Count)
+		{
+			throw new ArgumentOutOfRangeException("boxIndex");
+		}
+		int num = 0;
+		for (int i = 0; i < boxIndex; i++)
+		{
+			LevelBox item = LevelBox.campaignBoxes[i];
+			if (CampaignProgress.boxesLevelsAndStars.TryGetValue(item.name, out strs))
+			{
+				foreach (CampaignLevel level in item.levels)
+				{
+					int num1 = 0;
+					if (!strs.TryGetValue(level.sceneName, out num1))
+					{
+						continue;
+					}
+					num += num1;
+				}
+			}
+		}
+		return LevelBox.campaignBoxes[boxIndex].starsToOpen - num;
+	}
+
+	private void HandleBackClicked(object sender, EventArgs e)
+	{
+		this._escapePressed = true;
+	}
+
+	private void HandleStartClicked(object sender, EventArgs e)
+	{
+		if (this.nguiController.selectIndexMap == 0 || this.CalculateStarsLeftToOpenTheBox(this.nguiController.selectIndexMap) <= 0 && this.IsCompliteAllLevelsToOpenTheBox(this.nguiController.selectIndexMap))
+		{
+			this.StartNBox(this.nguiController.selectIndexMap);
+		}
+	}
+
+	private bool IsCompliteAllLevelsToOpenTheBox(int boxIndex)
+	{
+		Dictionary<string, int> strs;
+		if (boxIndex == 0)
+		{
+			return true;
+		}
+		bool flag = false;
+		LevelBox item = LevelBox.campaignBoxes[boxIndex - 1];
+		if (CampaignProgress.boxesLevelsAndStars.TryGetValue(item.name, out strs))
+		{
+			if (boxIndex == 1 && strs.Count >= 9)
+			{
+				flag = true;
+			}
+			if (boxIndex == 2 && strs.Count >= 6)
+			{
+				flag = true;
+			}
+			if (boxIndex == 3 && strs.Count >= 5)
+			{
+				flag = true;
+			}
+		}
+		return flag;
+	}
 
 	private void LoadBoxPreviews()
 	{
 		for (int i = 0; i < LevelBox.campaignBoxes.Count; i++)
 		{
-			Texture item = Resources.Load(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme)) as Texture;
-			boxPreviews.Add(item);
-			Texture item2 = Resources.Load(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme + "_closed")) as Texture;
-			closedBoxPreviews.Add(item2);
+			Texture texture = Resources.Load(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme)) as Texture;
+			this.boxPreviews.Add(texture);
+			Texture texture1 = Resources.Load(ResPath.Combine("Boxes", string.Concat(LevelBox.campaignBoxes[i].PreviewNAme, "_closed"))) as Texture;
+			this.closedBoxPreviews.Add(texture1);
 		}
 	}
 
-	private void UnloadBoxPreviews()
+	private void OnDestroy()
 	{
-		boxPreviews.Clear();
-		Resources.UnloadUnusedAssets();
+		ChooseBox.instance = null;
+		CampaignProgress.SaveCampaignProgress();
+		if (Application.platform != RuntimePlatform.IPhonePlayer)
+		{
+			PlayerPrefs.Save();
+		}
+		this.UnloadBoxPreviews();
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => this._escapePressed = true, "Choose Box");
 	}
 
 	private void Start()
 	{
-		instance = this;
-		if (nguiController.startButton != null)
+		string str;
+		ChooseBox.instance = this;
+		if (this.nguiController.startButton != null)
 		{
-			ButtonHandler component = nguiController.startButton.GetComponent<ButtonHandler>();
+			ButtonHandler component = this.nguiController.startButton.GetComponent<ButtonHandler>();
 			if (component != null)
 			{
-				component.Clicked += HandleStartClicked;
+				component.Clicked += new EventHandler(this.HandleStartClicked);
 			}
 		}
-		if (nguiController.backButton != null)
+		if (this.nguiController.backButton != null)
 		{
-			ButtonHandler component2 = nguiController.backButton.GetComponent<ButtonHandler>();
-			if (component2 != null)
+			ButtonHandler buttonHandler = this.nguiController.backButton.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
 			{
-				component2.Clicked += HandleBackClicked;
+				buttonHandler.Clicked += new EventHandler(this.HandleBackClicked);
 			}
 		}
 		StoreKitEventListener.State.Mode = "Campaign";
@@ -79,62 +175,53 @@ internal sealed class ChooseBox : MonoBehaviour
 		CampaignProgressSynchronizer.Instance.Sync();
 		if (Application.platform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 		{
-			ProgressSynchronizer progressSynchronizer = ProgressSynchronizer.Instance;
-			if (_003C_003Ef__am_0024cacheE == null)
-			{
-				_003C_003Ef__am_0024cacheE = _003CStart_003Em__A;
-			}
-			progressSynchronizer.AuthenticateAndSynchronize(_003C_003Ef__am_0024cacheE, true);
+			ProgressSynchronizer.Instance.AuthenticateAndSynchronize(() => WeaponManager.sharedManager.Reset(WeaponManager.sharedManager.CurrentFilterMap), true);
 		}
 		else if (Application.platform == RuntimePlatform.IPhonePlayer)
 		{
 			ProgressSynchronizer.Instance.SynchronizeIosProgress();
-			WeaponManager.sharedManager.Reset();
+			WeaponManager.sharedManager.Reset(0);
 		}
-		pointMap = new Vector2((float)Screen.width / 2f, (float)Screen.height / 2f);
-		int num = Math.Min(LevelBox.campaignBoxes.Count, gridTransform.childCount);
+		this.pointMap = new Vector2((float)Screen.width / 2f, (float)Screen.height / 2f);
+		int num = Math.Min(LevelBox.campaignBoxes.Count, this.gridTransform.childCount);
 		for (int i = 0; i < num; i++)
 		{
-			bool flag = CalculateStarsLeftToOpenTheBox(i) <= 0 && IsCompliteAllLevelsToOpenTheBox(i);
-			Texture mainTexture = ((!flag) ? (Resources.Load<Texture>(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme + "_closed")) ?? Resources.Load<Texture>(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme))) : Resources.Load<Texture>(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme)));
-			Transform child = gridTransform.GetChild(i);
-			child.GetComponent<UITexture>().mainTexture = mainTexture;
-			Transform transform = child.FindChild("NeedMoreStarsLabel");
-			if (transform != null)
-			{
-				if (!flag && i < LevelBox.campaignBoxes.Count - 1)
-				{
-					transform.gameObject.SetActive(true);
-					int num2 = CalculateStarsLeftToOpenTheBox(i);
-					string text = ((!IsCompliteAllLevelsToOpenTheBox(i) && num2 > 0) ? string.Format(LocalizationStore.Get("Key_0241"), num2) : ((num2 <= 0) ? LocalizationStore.Get("Key_1366") : string.Format(LocalizationStore.Get("Key_1367"), num2)));
-					transform.GetComponent<UILabel>().text = text;
-				}
-				else
-				{
-					transform.gameObject.SetActive(false);
-				}
-			}
-			else
+			bool flag = (this.CalculateStarsLeftToOpenTheBox(i) > 0 ? false : this.IsCompliteAllLevelsToOpenTheBox(i));
+			Texture texture = (!flag ? Resources.Load<Texture>(ResPath.Combine("Boxes", string.Concat(LevelBox.campaignBoxes[i].PreviewNAme, "_closed"))) ?? Resources.Load<Texture>(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme)) : Resources.Load<Texture>(ResPath.Combine("Boxes", LevelBox.campaignBoxes[i].PreviewNAme)));
+			Transform child = this.gridTransform.GetChild(i);
+			child.GetComponent<UITexture>().mainTexture = texture;
+			Transform transforms = child.FindChild("NeedMoreStarsLabel");
+			if (transforms == null)
 			{
 				Debug.LogWarning("Could not find “NeedMoreStarsLabel”.");
 			}
-			Transform transform2 = child.FindChild("CaptionLabel");
-			if (transform2 != null)
+			else if (flag || i >= LevelBox.campaignBoxes.Count - 1)
 			{
-				transform2.gameObject.SetActive(flag || i == LevelBox.campaignBoxes.Count - 1);
+				transforms.gameObject.SetActive(false);
 			}
 			else
 			{
+				transforms.gameObject.SetActive(true);
+				int openTheBox = this.CalculateStarsLeftToOpenTheBox(i);
+				if (this.IsCompliteAllLevelsToOpenTheBox(i) || openTheBox <= 0)
+				{
+					str = (openTheBox <= 0 ? LocalizationStore.Get("Key_1366") : string.Format(LocalizationStore.Get("Key_1367"), openTheBox));
+				}
+				else
+				{
+					str = string.Format(LocalizationStore.Get("Key_0241"), openTheBox);
+				}
+				transforms.GetComponent<UILabel>().text = str;
+			}
+			Transform transforms1 = child.FindChild("CaptionLabel");
+			if (transforms1 == null)
+			{
 				Debug.LogWarning("Could not find “CaptionLabel”.");
 			}
-		}
-	}
-
-	private void HandleStartClicked(object sender, EventArgs e)
-	{
-		if (nguiController.selectIndexMap == 0 || (CalculateStarsLeftToOpenTheBox(nguiController.selectIndexMap) <= 0 && IsCompliteAllLevelsToOpenTheBox(nguiController.selectIndexMap)))
-		{
-			StartNBox(nguiController.selectIndexMap);
+			else
+			{
+				transforms1.gameObject.SetActive((flag ? true : i == LevelBox.campaignBoxes.Count - 1));
+			}
 		}
 	}
 
@@ -142,18 +229,24 @@ internal sealed class ChooseBox : MonoBehaviour
 	{
 		if (_nameBox.Equals("Box_1"))
 		{
-			StartNBox(0);
+			this.StartNBox(0);
+			return;
 		}
-		else if (_nameBox.Equals("Box_2"))
+		if (_nameBox.Equals("Box_2"))
 		{
-			if (CalculateStarsLeftToOpenTheBox(1) <= 0 && IsCompliteAllLevelsToOpenTheBox(1))
+			if (this.CalculateStarsLeftToOpenTheBox(1) <= 0 && this.IsCompliteAllLevelsToOpenTheBox(1))
 			{
-				StartNBox(1);
+				this.StartNBox(1);
 			}
+			return;
 		}
-		else if (_nameBox.Equals("Box_3") && CalculateStarsLeftToOpenTheBox(2) <= 0 && IsCompliteAllLevelsToOpenTheBox(2))
+		if (!_nameBox.Equals("Box_3"))
 		{
-			StartNBox(2);
+			return;
+		}
+		if (this.CalculateStarsLeftToOpenTheBox(2) <= 0 && this.IsCompliteAllLevelsToOpenTheBox(2))
+		{
+			this.StartNBox(2);
 		}
 	}
 
@@ -168,25 +261,16 @@ internal sealed class ChooseBox : MonoBehaviour
 		Application.LoadLevel(Defs.PromSceneName);
 	}
 
-	private void HandleBackClicked(object sender, EventArgs e)
+	private void UnloadBoxPreviews()
 	{
-		_escapePressed = true;
-	}
-
-	private void OnDestroy()
-	{
-		instance = null;
-		CampaignProgress.SaveCampaignProgress();
-		if (Application.platform != RuntimePlatform.IPhonePlayer)
-		{
-			PlayerPrefs.Save();
-		}
-		UnloadBoxPreviews();
+		this.boxPreviews.Clear();
+		Resources.UnloadUnusedAssets();
 	}
 
 	private void Update()
 	{
-		if (_escapePressed)
+		bool flag;
+		if (this._escapePressed)
 		{
 			ButtonClickSound.Instance.PlayClick();
 			FlurryPluginWrapper.LogEvent("Back to Main Menu");
@@ -196,96 +280,20 @@ internal sealed class ChooseBox : MonoBehaviour
 			LoadConnectScene.noteToShow = null;
 			LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
 			Application.LoadLevel(Defs.PromSceneName);
-			_escapePressed = false;
+			this._escapePressed = false;
 		}
-		if (nguiController.startButton != null)
+		if (this.nguiController.startButton != null)
 		{
-			nguiController.startButton.gameObject.SetActive(nguiController.selectIndexMap == 0 || (CalculateStarsLeftToOpenTheBox(nguiController.selectIndexMap) <= 0 && IsCompliteAllLevelsToOpenTheBox(nguiController.selectIndexMap)));
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(_003COnEnable_003Em__B, "Choose Box");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
-	}
-
-	private bool IsCompliteAllLevelsToOpenTheBox(int boxIndex)
-	{
-		if (boxIndex == 0)
-		{
-			return true;
-		}
-		bool result = false;
-		LevelBox levelBox = LevelBox.campaignBoxes[boxIndex - 1];
-		Dictionary<string, int> value;
-		if (CampaignProgress.boxesLevelsAndStars.TryGetValue(levelBox.name, out value))
-		{
-			if (boxIndex == 1 && value.Count >= 9)
+			GameObject gameObject = this.nguiController.startButton.gameObject;
+			if (this.nguiController.selectIndexMap == 0)
 			{
-				result = true;
+				flag = true;
 			}
-			if (boxIndex == 2 && value.Count >= 6)
+			else
 			{
-				result = true;
+				flag = (this.CalculateStarsLeftToOpenTheBox(this.nguiController.selectIndexMap) > 0 ? false : this.IsCompliteAllLevelsToOpenTheBox(this.nguiController.selectIndexMap));
 			}
-			if (boxIndex == 3 && value.Count >= 5)
-			{
-				result = true;
-			}
+			gameObject.SetActive(flag);
 		}
-		return result;
-	}
-
-	private int CalculateStarsLeftToOpenTheBox(int boxIndex)
-	{
-		if (boxIndex >= LevelBox.campaignBoxes.Count)
-		{
-			throw new ArgumentOutOfRangeException("boxIndex");
-		}
-		int num = 0;
-		for (int i = 0; i < boxIndex; i++)
-		{
-			LevelBox levelBox = LevelBox.campaignBoxes[i];
-			Dictionary<string, int> value;
-			if (!CampaignProgress.boxesLevelsAndStars.TryGetValue(levelBox.name, out value))
-			{
-				continue;
-			}
-			foreach (CampaignLevel level in levelBox.levels)
-			{
-				int value2 = 0;
-				if (value.TryGetValue(level.sceneName, out value2))
-				{
-					num += value2;
-				}
-			}
-		}
-		int starsToOpen = LevelBox.campaignBoxes[boxIndex].starsToOpen;
-		return starsToOpen - num;
-	}
-
-	[CompilerGenerated]
-	private static void _003CStart_003Em__A()
-	{
-		WeaponManager.sharedManager.Reset(WeaponManager.sharedManager.CurrentFilterMap);
-	}
-
-	[CompilerGenerated]
-	private void _003COnEnable_003Em__B()
-	{
-		_escapePressed = true;
 	}
 }

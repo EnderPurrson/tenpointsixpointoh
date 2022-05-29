@@ -1,33 +1,40 @@
+using System;
+
 public class TypedLobby
 {
 	public string Name;
 
 	public LobbyType Type;
 
-	public static readonly TypedLobby Default = new TypedLobby();
+	public readonly static TypedLobby Default;
 
 	public bool IsDefault
 	{
 		get
 		{
-			return Type == LobbyType.Default && string.IsNullOrEmpty(Name);
+			return (this.Type != LobbyType.Default ? false : string.IsNullOrEmpty(this.Name));
 		}
+	}
+
+	static TypedLobby()
+	{
+		TypedLobby.Default = new TypedLobby();
 	}
 
 	public TypedLobby()
 	{
-		Name = string.Empty;
-		Type = LobbyType.Default;
+		this.Name = string.Empty;
+		this.Type = LobbyType.Default;
 	}
 
 	public TypedLobby(string name, LobbyType type)
 	{
-		Name = name;
-		Type = type;
+		this.Name = name;
+		this.Type = type;
 	}
 
 	public override string ToString()
 	{
-		return string.Format("lobby '{0}'[{1}]", Name, Type);
+		return string.Format("lobby '{0}'[{1}]", this.Name, this.Type);
 	}
 }

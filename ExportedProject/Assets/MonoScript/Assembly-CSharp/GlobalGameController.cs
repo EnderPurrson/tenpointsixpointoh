@@ -1,6 +1,7 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
-using Rilisoft;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -30,7 +31,7 @@ public class GlobalGameController
 
 	public static List<Texture2D> Logos;
 
-	public static readonly int NumOfLevels;
+	public readonly static int NumOfLevels;
 
 	private static int _currentLevel;
 
@@ -78,59 +79,63 @@ public class GlobalGameController
 
 	public static int levelsToGetCoins;
 
-	public static readonly string AppVersion;
-
-	public static float armorMyPlayer { get; set; }
-
-	public static int currentLevel
-	{
-		get
-		{
-			return _currentLevel;
-		}
-		set
-		{
-			_currentLevel = value;
-		}
-	}
+	public readonly static string AppVersion;
 
 	public static int AllLevelsCompleted
 	{
 		get
 		{
-			return _allLevelsCompleted;
+			return GlobalGameController._allLevelsCompleted;
 		}
 		set
 		{
-			_allLevelsCompleted = value;
+			GlobalGameController._allLevelsCompleted = value;
 		}
 	}
 
-	public static bool is60FPSEnable
+	public static float armorMyPlayer
+	{
+		get;
+		set;
+	}
+
+	public static int CountDaySessionInCurrentVersion
 	{
 		get
 		{
-			if (!is60FPSEnableInit)
+			if (GlobalGameController._countDaySessionInCurrentVersion == -1)
 			{
-				_is60FPSEnable = PlayerPrefs.GetInt("fps60Enable", (!Device.isPixelGunLow) ? 1 : 0) == 1;
-				is60FPSEnableInit = true;
+				GlobalGameController._countDaySessionInCurrentVersion = PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 1) - PlayerPrefs.GetInt("countSessionDayOnStartCorrentVersion", 1);
 			}
-			return _is60FPSEnable;
+			return GlobalGameController._countDaySessionInCurrentVersion;
 		}
 		set
 		{
-			_is60FPSEnable = value;
-			PlayerPrefs.SetInt("fps60Enable", _is60FPSEnable ? 1 : 0);
-			is60FPSEnableInit = true;
-			Application.targetFrameRate = ((!_is60FPSEnable) ? 30 : 60);
+			GlobalGameController._countDaySessionInCurrentVersion = value;
 		}
 	}
 
-	public static int ZombiesInWave
+	internal static int CountKills
 	{
 		get
 		{
-			return 4;
+			return GlobalGameController._saltedCountKills.Value;
+		}
+		set
+		{
+			GlobalGameController._saltedCountKills.Value = value;
+		}
+	}
+
+	public static int currentLevel
+	{
+		get
+		{
+			return GlobalGameController._currentLevel;
+		}
+		set
+		{
+			GlobalGameController._currentLevel = value;
 		}
 	}
 
@@ -142,9 +147,9 @@ public class GlobalGameController
 			{
 				return 3;
 			}
-			if (_enemiesToKillOverride.HasValue)
+			if (GlobalGameController._enemiesToKillOverride.HasValue)
 			{
-				return _enemiesToKillOverride.Value;
+				return GlobalGameController._enemiesToKillOverride.Value;
 			}
 			if (!Defs.IsSurvival)
 			{
@@ -154,47 +159,53 @@ public class GlobalGameController
 		}
 		set
 		{
-			_enemiesToKillOverride = value;
+			GlobalGameController._enemiesToKillOverride = new int?(value);
 		}
+	}
+
+	public static bool is60FPSEnable
+	{
+		get
+		{
+			if (!GlobalGameController.is60FPSEnableInit)
+			{
+				GlobalGameController._is60FPSEnable = PlayerPrefs.GetInt("fps60Enable", (!Device.isPixelGunLow ? 1 : 0)) == 1;
+				GlobalGameController.is60FPSEnableInit = true;
+			}
+			return GlobalGameController._is60FPSEnable;
+		}
+		set
+		{
+			GlobalGameController._is60FPSEnable = value;
+			PlayerPrefs.SetInt("fps60Enable", (!GlobalGameController._is60FPSEnable ? 0 : 1));
+			GlobalGameController.is60FPSEnableInit = true;
+			Application.targetFrameRate = (!GlobalGameController._is60FPSEnable ? 30 : 60);
+		}
+	}
+
+	public static string MultiplayerProtocolVersion
+	{
+		get
+		{
+			return "10.6.0";
+		}
+	}
+
+	internal static bool NewVersionAvailable
+	{
+		get;
+		set;
 	}
 
 	internal static int Score
 	{
 		get
 		{
-			return _saltedScore.Value;
+			return GlobalGameController._saltedScore.Value;
 		}
 		set
 		{
-			_saltedScore.Value = value;
-		}
-	}
-
-	internal static int CountKills
-	{
-		get
-		{
-			return _saltedCountKills.Value;
-		}
-		set
-		{
-			_saltedCountKills.Value = value;
-		}
-	}
-
-	public static int CountDaySessionInCurrentVersion
-	{
-		get
-		{
-			if (_countDaySessionInCurrentVersion == -1)
-			{
-				_countDaySessionInCurrentVersion = PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 1) - PlayerPrefs.GetInt("countSessionDayOnStartCorrentVersion", 1);
-			}
-			return _countDaySessionInCurrentVersion;
-		}
-		set
-		{
-			_countDaySessionInCurrentVersion = value;
+			GlobalGameController._saltedScore.Value = value;
 		}
 	}
 
@@ -206,70 +217,47 @@ public class GlobalGameController
 		}
 	}
 
-	internal static bool NewVersionAvailable { get; set; }
-
-	public static string MultiplayerProtocolVersion
+	public static int ZombiesInWave
 	{
 		get
 		{
-			return "10.6.0";
+			return 4;
 		}
 	}
 
 	static GlobalGameController()
 	{
-		LeftHanded = true;
-		switchingWeaponSwipe = false;
-		ShowRec = true;
-		survScoreThresh = new List<int>();
-		thrStep = 10000;
-		fontHolder = null;
-		EditingLogo = 0;
-		NumOfLevels = 11;
-		_currentLevel = -1;
-		_allLevelsCompleted = 0;
-		showTableMyPlayer = false;
-		imDeadInHungerGame = false;
-		isFullVersion = true;
-		is60FPSEnableInit = false;
-		numOfCompletedLevels = 0;
-		totalNumOfCompletedLevels = 0;
-		countKillsBlue = 0;
-		countKillsRed = 0;
-		EditingCape = 0;
-		EditedCapeSaved = false;
-		_saltedScore = new SaltedInt(233495534);
-		_saltedCountKills = new SaltedInt(233495534);
-		_countDaySessionInCurrentVersion = -1;
-		coinsBase = 1;
-		coinsBaseAdding = 0;
-		levelsToGetCoins = 1;
-		AppVersion = "10.6.1";
+		GlobalGameController.LeftHanded = true;
+		GlobalGameController.switchingWeaponSwipe = false;
+		GlobalGameController.ShowRec = true;
+		GlobalGameController.survScoreThresh = new List<int>();
+		GlobalGameController.thrStep = 10000;
+		GlobalGameController.fontHolder = null;
+		GlobalGameController.EditingLogo = 0;
+		GlobalGameController.NumOfLevels = 11;
+		GlobalGameController._currentLevel = -1;
+		GlobalGameController._allLevelsCompleted = 0;
+		GlobalGameController.showTableMyPlayer = false;
+		GlobalGameController.imDeadInHungerGame = false;
+		GlobalGameController.isFullVersion = true;
+		GlobalGameController.is60FPSEnableInit = false;
+		GlobalGameController.numOfCompletedLevels = 0;
+		GlobalGameController.totalNumOfCompletedLevels = 0;
+		GlobalGameController.countKillsBlue = 0;
+		GlobalGameController.countKillsRed = 0;
+		GlobalGameController.EditingCape = 0;
+		GlobalGameController.EditedCapeSaved = false;
+		GlobalGameController._saltedScore = new SaltedInt(233495534);
+		GlobalGameController._saltedCountKills = new SaltedInt(233495534);
+		GlobalGameController._countDaySessionInCurrentVersion = -1;
+		GlobalGameController.coinsBase = 1;
+		GlobalGameController.coinsBaseAdding = 0;
+		GlobalGameController.levelsToGetCoins = 1;
+		GlobalGameController.AppVersion = "10.6.1";
 	}
 
-	public static void SetMultiMode()
+	public GlobalGameController()
 	{
-		Defs.isMulti = true;
-		Defs.isCOOP = false;
-		Defs.isHunger = false;
-		Defs.isCompany = false;
-		Defs.isFlag = false;
-		Defs.IsSurvival = false;
-		Defs.isCapturePoints = false;
-	}
-
-	private static void Swap(IList<int> list, int indexA, int indexB)
-	{
-		int value = list[indexA];
-		list[indexA] = list[indexB];
-		list[indexB] = value;
-	}
-
-	public static void ResetParameters()
-	{
-		AllLevelsCompleted = 0;
-		numOfCompletedLevels = -1;
-		totalNumOfCompletedLevels = -1;
 	}
 
 	public static void GoInBattle()
@@ -288,5 +276,30 @@ public class GlobalGameController
 		FlurryPluginWrapper.LogEvent("Launch_Multiplayer");
 		LoadConnectScene.noteToShow = null;
 		SceneManager.LoadScene(Defs.PromSceneName);
+	}
+
+	public static void ResetParameters()
+	{
+		GlobalGameController.AllLevelsCompleted = 0;
+		GlobalGameController.numOfCompletedLevels = -1;
+		GlobalGameController.totalNumOfCompletedLevels = -1;
+	}
+
+	public static void SetMultiMode()
+	{
+		Defs.isMulti = true;
+		Defs.isCOOP = false;
+		Defs.isHunger = false;
+		Defs.isCompany = false;
+		Defs.isFlag = false;
+		Defs.IsSurvival = false;
+		Defs.isCapturePoints = false;
+	}
+
+	private static void Swap(IList<int> list, int indexA, int indexB)
+	{
+		int item = list[indexA];
+		list[indexA] = list[indexB];
+		list[indexB] = item;
 	}
 }

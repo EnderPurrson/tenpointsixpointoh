@@ -1,26 +1,17 @@
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
 	public struct ConnectionResponse
 	{
-		public enum Status
-		{
-			Accepted = 0,
-			Rejected = 1,
-			ErrorInternal = 2,
-			ErrorNetworkNotConnected = 3,
-			ErrorEndpointNotConnected = 4,
-			ErrorAlreadyConnected = 5
-		}
-
-		private static readonly byte[] EmptyPayload = new byte[0];
+		private readonly static byte[] EmptyPayload;
 
 		private readonly long mLocalClientId;
 
 		private readonly string mRemoteEndpointId;
 
-		private readonly Status mResponseStatus;
+		private readonly ConnectionResponse.Status mResponseStatus;
 
 		private readonly byte[] mPayload;
 
@@ -28,23 +19,7 @@ namespace GooglePlayGames.BasicApi.Nearby
 		{
 			get
 			{
-				return mLocalClientId;
-			}
-		}
-
-		public string RemoteEndpointId
-		{
-			get
-			{
-				return mRemoteEndpointId;
-			}
-		}
-
-		public Status ResponseStatus
-		{
-			get
-			{
-				return mResponseStatus;
+				return this.mLocalClientId;
 			}
 		}
 
@@ -52,46 +27,77 @@ namespace GooglePlayGames.BasicApi.Nearby
 		{
 			get
 			{
-				return mPayload;
+				return this.mPayload;
 			}
 		}
 
-		private ConnectionResponse(long localClientId, string remoteEndpointId, Status code, byte[] payload)
+		public string RemoteEndpointId
 		{
-			mLocalClientId = localClientId;
-			mRemoteEndpointId = Misc.CheckNotNull(remoteEndpointId);
-			mResponseStatus = code;
-			mPayload = Misc.CheckNotNull(payload);
+			get
+			{
+				return this.mRemoteEndpointId;
+			}
 		}
 
-		public static ConnectionResponse Rejected(long localClientId, string remoteEndpointId)
+		public ConnectionResponse.Status ResponseStatus
 		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.Rejected, EmptyPayload);
+			get
+			{
+				return this.mResponseStatus;
+			}
 		}
 
-		public static ConnectionResponse NetworkNotConnected(long localClientId, string remoteEndpointId)
+		static ConnectionResponse()
 		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.ErrorNetworkNotConnected, EmptyPayload);
+			ConnectionResponse.EmptyPayload = new byte[0];
 		}
 
-		public static ConnectionResponse InternalError(long localClientId, string remoteEndpointId)
+		private ConnectionResponse(long localClientId, string remoteEndpointId, ConnectionResponse.Status code, byte[] payload)
 		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.ErrorInternal, EmptyPayload);
-		}
-
-		public static ConnectionResponse EndpointNotConnected(long localClientId, string remoteEndpointId)
-		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.ErrorEndpointNotConnected, EmptyPayload);
+			this.mLocalClientId = localClientId;
+			this.mRemoteEndpointId = Misc.CheckNotNull<string>(remoteEndpointId);
+			this.mResponseStatus = code;
+			this.mPayload = Misc.CheckNotNull<byte[]>(payload);
 		}
 
 		public static ConnectionResponse Accepted(long localClientId, string remoteEndpointId, byte[] payload)
 		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.Accepted, payload);
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.Accepted, payload);
 		}
 
 		public static ConnectionResponse AlreadyConnected(long localClientId, string remoteEndpointId)
 		{
-			return new ConnectionResponse(localClientId, remoteEndpointId, Status.ErrorAlreadyConnected, EmptyPayload);
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.ErrorAlreadyConnected, ConnectionResponse.EmptyPayload);
+		}
+
+		public static ConnectionResponse EndpointNotConnected(long localClientId, string remoteEndpointId)
+		{
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.ErrorEndpointNotConnected, ConnectionResponse.EmptyPayload);
+		}
+
+		public static ConnectionResponse InternalError(long localClientId, string remoteEndpointId)
+		{
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.ErrorInternal, ConnectionResponse.EmptyPayload);
+		}
+
+		public static ConnectionResponse NetworkNotConnected(long localClientId, string remoteEndpointId)
+		{
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.ErrorNetworkNotConnected, ConnectionResponse.EmptyPayload);
+		}
+
+		public static ConnectionResponse Rejected(long localClientId, string remoteEndpointId)
+		{
+			return new ConnectionResponse(localClientId, remoteEndpointId, ConnectionResponse.Status.Rejected, ConnectionResponse.EmptyPayload);
+		}
+
+		public enum Status
+		{
+			Accepted,
+			Rejected,
+			ErrorInternal,
+			ErrorNetworkNotConnected,
+			ErrorEndpointNotConnected,
+			ErrorAlreadyConnected
 		}
 	}
 }

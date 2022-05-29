@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class test : MonoBehaviour
@@ -12,7 +13,11 @@ public class test : MonoBehaviour
 
 	private WebViewObject _wvo;
 
-	private float bottomPnaelHeight = Screen.height / 8;
+	private float bottomPnaelHeight = (float)(Screen.height / 8);
+
+	public test()
+	{
+	}
 
 	private void Start()
 	{

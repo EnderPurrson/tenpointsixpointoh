@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RilisoftBot
@@ -18,72 +22,53 @@ namespace RilisoftBot
 
 		private Material _portalMaterialPref;
 
+		public PortalEnemyEffectsManager()
+		{
+		}
+
+		[DebuggerHidden]
+		private IEnumerator AnimateMaterial(Renderer rend)
+		{
+			PortalEnemyEffectsManager.u003cAnimateMaterialu003ec__Iterator11C variable = null;
+			return variable;
+		}
+
 		private void Awake()
 		{
-			_bot = GetComponent<BaseBot>();
-			_portalMaterialPref = Resources.Load<Material>("Enemy_Portal");
-			if (_portalMaterialPref == null)
+			this._bot = base.GetComponent<BaseBot>();
+			this._portalMaterialPref = Resources.Load<Material>("Enemy_Portal");
+			if (this._portalMaterialPref == null)
 			{
-				Debug.LogError("material not found");
+				UnityEngine.Debug.LogError("material not found");
 			}
 		}
 
 		public void ShowSpawnEffect()
 		{
-			ShowSpawnMaterials();
-			ShowSpawnPortal();
+			this.ShowSpawnMaterials();
+			this.ShowSpawnPortal();
 		}
 
 		private void ShowSpawnMaterials()
 		{
-			StartCoroutine(ShowSpawnMaterialsCoroutine());
+			base.StartCoroutine(this.ShowSpawnMaterialsCoroutine());
 		}
 
+		[DebuggerHidden]
 		private IEnumerator ShowSpawnMaterialsCoroutine()
 		{
-			yield return null;
-			Renderer[] rends = GetComponentsInChildren<Renderer>();
-			Renderer[] array = rends;
-			foreach (Renderer rend in array)
-			{
-				StartCoroutine(AnimateMaterial(rend));
-			}
-		}
-
-		private IEnumerator AnimateMaterial(Renderer rend)
-		{
-			Material baseMaterial = rend.material;
-			if (rend.gameObject.GetComponent<BotChangeDamageMaterial>() != null)
-			{
-				string skinKey = _bot.name + "_Level" + CurrentCampaignGame.currentLevel;
-				Texture tx = SkinsManagerPixlGun.sharedManager.skins[skinKey] as Texture;
-				if (tx != null)
-				{
-					baseMaterial.mainTexture = tx;
-				}
-			}
-			rend.material = new Material(_portalMaterialPref);
-			rend.material.mainTexture = baseMaterial.mainTexture;
-			rend.material.SetFloat("_Burn", 0.25f);
-			float timeElapsed = 0f;
-			while (timeElapsed < 1f)
-			{
-				timeElapsed += Time.deltaTime;
-				float curVal = timeElapsed * 1.25f / 1f;
-				rend.material.SetFloat("_Burn", curVal);
-				yield return null;
-			}
-			rend.material = baseMaterial;
-			yield return null;
+			PortalEnemyEffectsManager.u003cShowSpawnMaterialsCoroutineu003ec__Iterator11B variable = null;
+			return variable;
 		}
 
 		private void ShowSpawnPortal()
 		{
 			EnemyPortal portal = EnemyPortalStackController.sharedController.GetPortal();
-			if (!(portal == null))
+			if (portal == null)
 			{
-				portal.Show(base.gameObject.transform.position);
+				return;
 			}
+			portal.Show(base.gameObject.transform.position);
 		}
 	}
 }

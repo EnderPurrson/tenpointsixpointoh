@@ -10,11 +10,15 @@ namespace I2.Loc
 
 		public string MethodName = string.Empty;
 
+		public EventCallback()
+		{
+		}
+
 		public void Execute(UnityEngine.Object Sender = null)
 		{
-			if ((bool)Target)
+			if (this.Target)
 			{
-				Target.SendMessage(MethodName, Sender, SendMessageOptions.DontRequireReceiver);
+				this.Target.SendMessage(this.MethodName, Sender, SendMessageOptions.DontRequireReceiver);
 			}
 		}
 	}

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.Events;
 using GooglePlayGames.BasicApi.Multiplayer;
@@ -8,6 +5,9 @@ using GooglePlayGames.BasicApi.Nearby;
 using GooglePlayGames.BasicApi.Quests;
 using GooglePlayGames.BasicApi.SavedGame;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -15,99 +15,6 @@ namespace GooglePlayGames
 {
 	public class PlayGamesPlatform : ISocialPlatform
 	{
-		[CompilerGenerated]
-		private sealed class _003CInitializeNearby_003Ec__AnonStorey1F8
-		{
-			internal Action<INearbyConnectionClient> callback;
-
-			internal void _003C_003Em__7B(INearbyConnectionClient client)
-			{
-				Debug.Log("Nearby Client Created!!");
-				sNearbyConnectionClient = client;
-				if (callback != null)
-				{
-					callback(client);
-				}
-				else
-				{
-					Debug.Log("Initialize Nearby callback is null");
-				}
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CLoadAchievementDescriptions_003Ec__AnonStorey1F9
-		{
-			internal Action<IAchievementDescription[]> callback;
-
-			internal void _003C_003Em__7C(Achievement[] ach)
-			{
-				IAchievementDescription[] array = new IAchievementDescription[ach.Length];
-				for (int i = 0; i < array.Length; i++)
-				{
-					array[i] = new PlayGamesAchievement(ach[i]);
-				}
-				callback(array);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CLoadAchievements_003Ec__AnonStorey1FA
-		{
-			internal Action<IAchievement[]> callback;
-
-			internal void _003C_003Em__7D(Achievement[] ach)
-			{
-				IAchievement[] array = new IAchievement[ach.Length];
-				for (int i = 0; i < array.Length; i++)
-				{
-					array[i] = new PlayGamesAchievement(ach[i]);
-				}
-				callback(array);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CLoadScores_003Ec__AnonStorey1FB
-		{
-			internal Action<IScore[]> callback;
-
-			internal void _003C_003Em__7E(LeaderboardScoreData scoreData)
-			{
-				callback(scoreData.Scores);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CLoadScores_003Ec__AnonStorey1FC
-		{
-			internal ILeaderboard board;
-
-			internal Action<bool> callback;
-
-			internal PlayGamesPlatform _003C_003Ef__this;
-
-			internal void _003C_003Em__7F(LeaderboardScoreData scoreData)
-			{
-				_003C_003Ef__this.HandleLoadingScores((PlayGamesLeaderboard)board, scoreData, callback);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CHandleLoadingScores_003Ec__AnonStorey1FD
-		{
-			internal PlayGamesLeaderboard board;
-
-			internal Action<bool> callback;
-
-			internal PlayGamesPlatform _003C_003Ef__this;
-
-			internal void _003C_003Em__80(LeaderboardScoreData nextScoreData)
-			{
-				_003C_003Ef__this.HandleLoadingScores(board, nextScoreData, callback);
-			}
-		}
-
 		private static volatile PlayGamesPlatform sInstance;
 
 		private static volatile bool sNearbyInitializePending;
@@ -136,69 +43,24 @@ namespace GooglePlayGames
 			}
 		}
 
-		public static PlayGamesPlatform Instance
-		{
-			get
-			{
-				if (sInstance == null)
-				{
-					GooglePlayGames.OurUtils.Logger.d("Instance was not initialized, using default configuration.");
-					InitializeInstance(PlayGamesClientConfiguration.DefaultConfiguration);
-				}
-				return sInstance;
-			}
-		}
-
-		public static INearbyConnectionClient Nearby
-		{
-			get
-			{
-				if (sNearbyConnectionClient == null && !sNearbyInitializePending)
-				{
-					sNearbyInitializePending = true;
-					InitializeNearby(null);
-				}
-				return sNearbyConnectionClient;
-			}
-		}
-
-		public IRealTimeMultiplayerClient RealTime
-		{
-			get
-			{
-				return mClient.GetRtmpClient();
-			}
-		}
-
-		public ITurnBasedMultiplayerClient TurnBased
-		{
-			get
-			{
-				return mClient.GetTbmpClient();
-			}
-		}
-
-		public ISavedGameClient SavedGame
-		{
-			get
-			{
-				return mClient.GetSavedGameClient();
-			}
-		}
-
 		public IEventsClient Events
 		{
 			get
 			{
-				return mClient.GetEventsClient();
+				return this.mClient.GetEventsClient();
 			}
 		}
 
-		public IQuestsClient Quests
+		public static PlayGamesPlatform Instance
 		{
 			get
 			{
-				return mClient.GetQuestsClient();
+				if (PlayGamesPlatform.sInstance == null)
+				{
+					GooglePlayGames.OurUtils.Logger.d("Instance was not initialized, using default configuration.");
+					PlayGamesPlatform.InitializeInstance(PlayGamesClientConfiguration.DefaultConfiguration);
+				}
+				return PlayGamesPlatform.sInstance;
 			}
 		}
 
@@ -206,346 +68,103 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return mLocalUser;
+				return this.mLocalUser;
 			}
+		}
+
+		public static INearbyConnectionClient Nearby
+		{
+			get
+			{
+				if (PlayGamesPlatform.sNearbyConnectionClient == null && !PlayGamesPlatform.sNearbyInitializePending)
+				{
+					PlayGamesPlatform.sNearbyInitializePending = true;
+					PlayGamesPlatform.InitializeNearby(null);
+				}
+				return PlayGamesPlatform.sNearbyConnectionClient;
+			}
+		}
+
+		public IQuestsClient Quests
+		{
+			get
+			{
+				return this.mClient.GetQuestsClient();
+			}
+		}
+
+		public IRealTimeMultiplayerClient RealTime
+		{
+			get
+			{
+				return this.mClient.GetRtmpClient();
+			}
+		}
+
+		public ISavedGameClient SavedGame
+		{
+			get
+			{
+				return this.mClient.GetSavedGameClient();
+			}
+		}
+
+		public ITurnBasedMultiplayerClient TurnBased
+		{
+			get
+			{
+				return this.mClient.GetTbmpClient();
+			}
+		}
+
+		static PlayGamesPlatform()
+		{
 		}
 
 		internal PlayGamesPlatform(IPlayGamesClient client)
 		{
-			mClient = Misc.CheckNotNull(client);
-			mLocalUser = new PlayGamesLocalUser(this);
-			mConfiguration = PlayGamesClientConfiguration.DefaultConfiguration;
+			this.mClient = Misc.CheckNotNull<IPlayGamesClient>(client);
+			this.mLocalUser = new PlayGamesLocalUser(this);
+			this.mConfiguration = PlayGamesClientConfiguration.DefaultConfiguration;
 		}
 
 		private PlayGamesPlatform(PlayGamesClientConfiguration configuration)
 		{
-			mLocalUser = new PlayGamesLocalUser(this);
-			mConfiguration = configuration;
-		}
-
-		public static void InitializeInstance(PlayGamesClientConfiguration configuration)
-		{
-			if (sInstance != null)
-			{
-				GooglePlayGames.OurUtils.Logger.w("PlayGamesPlatform already initialized. Ignoring this call.");
-			}
-			else
-			{
-				sInstance = new PlayGamesPlatform(configuration);
-			}
-		}
-
-		public static void InitializeNearby(Action<INearbyConnectionClient> callback)
-		{
-			_003CInitializeNearby_003Ec__AnonStorey1F8 _003CInitializeNearby_003Ec__AnonStorey1F = new _003CInitializeNearby_003Ec__AnonStorey1F8();
-			_003CInitializeNearby_003Ec__AnonStorey1F.callback = callback;
-			Debug.Log("Calling InitializeNearby!");
-			if (sNearbyConnectionClient == null)
-			{
-				NearbyConnectionClientFactory.Create(_003CInitializeNearby_003Ec__AnonStorey1F._003C_003Em__7B);
-			}
-			else if (_003CInitializeNearby_003Ec__AnonStorey1F.callback != null)
-			{
-				Debug.Log("Nearby Already initialized: calling callback directly");
-				_003CInitializeNearby_003Ec__AnonStorey1F.callback(sNearbyConnectionClient);
-			}
-			else
-			{
-				Debug.Log("Nearby Already initialized");
-			}
+			this.mLocalUser = new PlayGamesLocalUser(this);
+			this.mConfiguration = configuration;
 		}
 
 		public static PlayGamesPlatform Activate()
 		{
 			GooglePlayGames.OurUtils.Logger.d("Activating PlayGamesPlatform.");
-			Social.Active = Instance;
-			GooglePlayGames.OurUtils.Logger.d("PlayGamesPlatform activated: " + Social.Active);
-			return Instance;
-		}
-
-		public IntPtr GetApiClient()
-		{
-			return mClient.GetApiClient();
+			Social.Active = PlayGamesPlatform.Instance;
+			GooglePlayGames.OurUtils.Logger.d(string.Concat("PlayGamesPlatform activated: ", Social.Active));
+			return PlayGamesPlatform.Instance;
 		}
 
 		public void AddIdMapping(string fromId, string toId)
 		{
-			mIdMap[fromId] = toId;
+			this.mIdMap[fromId] = toId;
 		}
 
 		public void Authenticate(Action<bool> callback)
 		{
-			Authenticate(callback, false);
+			this.Authenticate(callback, false);
 		}
 
 		public void Authenticate(Action<bool> callback, bool silent)
 		{
-			if (mClient == null)
+			if (this.mClient == null)
 			{
 				GooglePlayGames.OurUtils.Logger.d("Creating platform-specific Play Games client.");
-				mClient = PlayGamesClientFactory.GetPlatformPlayGamesClient(mConfiguration);
+				this.mClient = PlayGamesClientFactory.GetPlatformPlayGamesClient(this.mConfiguration);
 			}
-			mClient.Authenticate(callback, silent);
+			this.mClient.Authenticate(callback, silent);
 		}
 
 		public void Authenticate(ILocalUser unused, Action<bool> callback)
 		{
-			Authenticate(callback, false);
-		}
-
-		public bool IsAuthenticated()
-		{
-			return mClient != null && mClient.IsAuthenticated();
-		}
-
-		public void SignOut()
-		{
-			if (mClient != null)
-			{
-				mClient.SignOut();
-			}
-			mLocalUser = new PlayGamesLocalUser(this);
-		}
-
-		public void LoadUsers(string[] userIds, Action<IUserProfile[]> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetUserId() can only be called after authentication.");
-				callback(new IUserProfile[0]);
-			}
-			mClient.LoadUsers(userIds, callback);
-		}
-
-		public string GetUserId()
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetUserId() can only be called after authentication.");
-				return "0";
-			}
-			return mClient.GetUserId();
-		}
-
-		public void GetIdToken(Action<string> idTokenCallback)
-		{
-			if (mClient != null)
-			{
-				mClient.GetIdToken(idTokenCallback);
-				return;
-			}
-			GooglePlayGames.OurUtils.Logger.e("No client available, calling back with null.");
-			idTokenCallback(null);
-		}
-
-		public string GetAccessToken()
-		{
-			if (mClient != null)
-			{
-				return mClient.GetAccessToken();
-			}
-			return null;
-		}
-
-		public void GetServerAuthCode(Action<CommonStatusCodes, string> callback)
-		{
-			if (mClient != null && mClient.IsAuthenticated())
-			{
-				if (GameInfo.WebClientIdInitialized())
-				{
-					mClient.GetServerAuthCode(string.Empty, callback);
-					return;
-				}
-				GooglePlayGames.OurUtils.Logger.e("GetServerAuthCode requires a webClientId.");
-				callback(CommonStatusCodes.DeveloperError, string.Empty);
-			}
-			else
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetServerAuthCode can only be called after authentication.");
-				callback(CommonStatusCodes.SignInRequired, string.Empty);
-			}
-		}
-
-		public string GetUserEmail()
-		{
-			if (mClient != null)
-			{
-				return mClient.GetUserEmail();
-			}
-			return null;
-		}
-
-		public void GetUserEmail(Action<CommonStatusCodes, string> callback)
-		{
-			mClient.GetUserEmail(callback);
-		}
-
-		public void GetPlayerStats(Action<CommonStatusCodes, PlayerStats> callback)
-		{
-			if (mClient != null && mClient.IsAuthenticated())
-			{
-				mClient.GetPlayerStats(callback);
-				return;
-			}
-			GooglePlayGames.OurUtils.Logger.e("GetPlayerStats can only be called after authentication.");
-			callback(CommonStatusCodes.SignInRequired, new PlayerStats());
-		}
-
-		public Achievement GetAchievement(string achievementId)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetAchievement can only be called after authentication.");
-				return null;
-			}
-			return mClient.GetAchievement(achievementId);
-		}
-
-		public string GetUserDisplayName()
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetUserDisplayName can only be called after authentication.");
-				return string.Empty;
-			}
-			return mClient.GetUserDisplayName();
-		}
-
-		public string GetUserImageUrl()
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("GetUserImageUrl can only be called after authentication.");
-				return null;
-			}
-			return mClient.GetUserImageUrl();
-		}
-
-		public void ReportProgress(string achievementID, double progress, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("ReportProgress can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-				return;
-			}
-			GooglePlayGames.OurUtils.Logger.d("ReportProgress, " + achievementID + ", " + progress);
-			achievementID = MapId(achievementID);
-			if (progress < 1E-06)
-			{
-				GooglePlayGames.OurUtils.Logger.d("Progress 0.00 interpreted as request to reveal.");
-				mClient.RevealAchievement(achievementID, callback);
-				return;
-			}
-			bool flag = false;
-			int num = 0;
-			int num2 = 0;
-			Achievement achievement = mClient.GetAchievement(achievementID);
-			if (achievement == null)
-			{
-				GooglePlayGames.OurUtils.Logger.w("Unable to locate achievement " + achievementID);
-				GooglePlayGames.OurUtils.Logger.w("As a quick fix, assuming it's standard.");
-				flag = false;
-			}
-			else
-			{
-				flag = achievement.IsIncremental;
-				num = achievement.CurrentSteps;
-				num2 = achievement.TotalSteps;
-				GooglePlayGames.OurUtils.Logger.d("Achievement is " + ((!flag) ? "STANDARD" : "INCREMENTAL"));
-				if (flag)
-				{
-					GooglePlayGames.OurUtils.Logger.d("Current steps: " + num + "/" + num2);
-				}
-			}
-			if (flag)
-			{
-				GooglePlayGames.OurUtils.Logger.d("Progress " + progress + " interpreted as incremental target (approximate).");
-				if (progress >= 0.0 && progress <= 1.0)
-				{
-					GooglePlayGames.OurUtils.Logger.w("Progress " + progress + " is less than or equal to 1. You might be trying to use values in the range of [0,1], while values are expected to be within the range [0,100]. If you are using the latter, you can safely ignore this message.");
-				}
-				int num3 = (int)(progress / 100.0 * (double)num2);
-				int num4 = num3 - num;
-				GooglePlayGames.OurUtils.Logger.d("Target steps: " + num3 + ", cur steps:" + num);
-				GooglePlayGames.OurUtils.Logger.d("Steps to increment: " + num4);
-				if (num4 >= 0)
-				{
-					mClient.IncrementAchievement(achievementID, num4, callback);
-				}
-			}
-			else if (progress >= 100.0)
-			{
-				GooglePlayGames.OurUtils.Logger.d("Progress " + progress + " interpreted as UNLOCK.");
-				mClient.UnlockAchievement(achievementID, callback);
-			}
-			else
-			{
-				GooglePlayGames.OurUtils.Logger.d("Progress " + progress + " not enough to unlock non-incremental achievement.");
-			}
-		}
-
-		public void IncrementAchievement(string achievementID, int steps, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("IncrementAchievement can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-			}
-			else
-			{
-				GooglePlayGames.OurUtils.Logger.d("IncrementAchievement: " + achievementID + ", steps " + steps);
-				achievementID = MapId(achievementID);
-				mClient.IncrementAchievement(achievementID, steps, callback);
-			}
-		}
-
-		public void SetStepsAtLeast(string achievementID, int steps, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("SetStepsAtLeast can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-			}
-			else
-			{
-				GooglePlayGames.OurUtils.Logger.d("SetStepsAtLeast: " + achievementID + ", steps " + steps);
-				achievementID = MapId(achievementID);
-				mClient.SetStepsAtLeast(achievementID, steps, callback);
-			}
-		}
-
-		public void LoadAchievementDescriptions(Action<IAchievementDescription[]> callback)
-		{
-			_003CLoadAchievementDescriptions_003Ec__AnonStorey1F9 _003CLoadAchievementDescriptions_003Ec__AnonStorey1F = new _003CLoadAchievementDescriptions_003Ec__AnonStorey1F9();
-			_003CLoadAchievementDescriptions_003Ec__AnonStorey1F.callback = callback;
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadAchievementDescriptions can only be called after authentication.");
-				_003CLoadAchievementDescriptions_003Ec__AnonStorey1F.callback(null);
-			}
-			mClient.LoadAchievements(_003CLoadAchievementDescriptions_003Ec__AnonStorey1F._003C_003Em__7C);
-		}
-
-		public void LoadAchievements(Action<IAchievement[]> callback)
-		{
-			_003CLoadAchievements_003Ec__AnonStorey1FA _003CLoadAchievements_003Ec__AnonStorey1FA = new _003CLoadAchievements_003Ec__AnonStorey1FA();
-			_003CLoadAchievements_003Ec__AnonStorey1FA.callback = callback;
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadAchievements can only be called after authentication.");
-				_003CLoadAchievements_003Ec__AnonStorey1FA.callback(null);
-			}
-			mClient.LoadAchievements(_003CLoadAchievements_003Ec__AnonStorey1FA._003C_003Em__7D);
+			this.Authenticate(callback, false);
 		}
 
 		public IAchievement CreateAchievement()
@@ -553,225 +172,338 @@ namespace GooglePlayGames
 			return new PlayGamesAchievement();
 		}
 
-		public void ReportScore(long score, string board, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("ReportScore can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-			}
-			else
-			{
-				GooglePlayGames.OurUtils.Logger.d("ReportScore: score=" + score + ", board=" + board);
-				string leaderboardId = MapId(board);
-				mClient.SubmitScore(leaderboardId, score, callback);
-			}
-		}
-
-		public void ReportScore(long score, string board, string metadata, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("ReportScore can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-				return;
-			}
-			GooglePlayGames.OurUtils.Logger.d("ReportScore: score=" + score + ", board=" + board + " metadata=" + metadata);
-			string leaderboardId = MapId(board);
-			mClient.SubmitScore(leaderboardId, score, metadata, callback);
-		}
-
-		public void LoadScores(string leaderboardId, Action<IScore[]> callback)
-		{
-			_003CLoadScores_003Ec__AnonStorey1FB _003CLoadScores_003Ec__AnonStorey1FB = new _003CLoadScores_003Ec__AnonStorey1FB();
-			_003CLoadScores_003Ec__AnonStorey1FB.callback = callback;
-			LoadScores(leaderboardId, LeaderboardStart.PlayerCentered, mClient.LeaderboardMaxResults(), LeaderboardCollection.Public, LeaderboardTimeSpan.AllTime, _003CLoadScores_003Ec__AnonStorey1FB._003C_003Em__7E);
-		}
-
-		public void LoadScores(string leaderboardId, LeaderboardStart start, int rowCount, LeaderboardCollection collection, LeaderboardTimeSpan timeSpan, Action<LeaderboardScoreData> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
-				callback(new LeaderboardScoreData(leaderboardId, ResponseStatus.NotAuthorized));
-			}
-			else
-			{
-				mClient.LoadScores(leaderboardId, start, rowCount, collection, timeSpan, callback);
-			}
-		}
-
-		public void LoadMoreScores(ScorePageToken token, int rowCount, Action<LeaderboardScoreData> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadMoreScores can only be called after authentication.");
-				callback(new LeaderboardScoreData(token.LeaderboardId, ResponseStatus.NotAuthorized));
-			}
-			else
-			{
-				mClient.LoadMoreScores(token, rowCount, callback);
-			}
-		}
-
 		public ILeaderboard CreateLeaderboard()
 		{
-			return new PlayGamesLeaderboard(mDefaultLbUi);
+			return new PlayGamesLeaderboard(this.mDefaultLbUi);
 		}
 
-		public void ShowAchievementsUI()
+		public string GetAccessToken()
 		{
-			ShowAchievementsUI(null);
-		}
-
-		public void ShowAchievementsUI(Action<UIStatus> callback)
-		{
-			if (!IsAuthenticated())
+			if (this.mClient == null)
 			{
-				GooglePlayGames.OurUtils.Logger.e("ShowAchievementsUI can only be called after authentication.");
-				return;
+				return null;
 			}
-			GooglePlayGames.OurUtils.Logger.d("ShowAchievementsUI callback is " + callback);
-			mClient.ShowAchievementsUI(callback);
+			return this.mClient.GetAccessToken();
 		}
 
-		public void ShowLeaderboardUI()
+		public Achievement GetAchievement(string achievementId)
 		{
-			GooglePlayGames.OurUtils.Logger.d("ShowLeaderboardUI with default ID");
-			ShowLeaderboardUI(MapId(mDefaultLbUi), null);
-		}
-
-		public void ShowLeaderboardUI(string leaderboardId)
-		{
-			if (leaderboardId != null)
+			if (!this.IsAuthenticated())
 			{
-				leaderboardId = MapId(leaderboardId);
+				GooglePlayGames.OurUtils.Logger.e("GetAchievement can only be called after authentication.");
+				return null;
 			}
-			mClient.ShowLeaderboardUI(leaderboardId, LeaderboardTimeSpan.AllTime, null);
+			return this.mClient.GetAchievement(achievementId);
 		}
 
-		public void ShowLeaderboardUI(string leaderboardId, Action<UIStatus> callback)
+		public IntPtr GetApiClient()
 		{
-			ShowLeaderboardUI(leaderboardId, LeaderboardTimeSpan.AllTime, callback);
-		}
-
-		public void ShowLeaderboardUI(string leaderboardId, LeaderboardTimeSpan span, Action<UIStatus> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("ShowLeaderboardUI can only be called after authentication.");
-				callback(UIStatus.NotAuthorized);
-				return;
-			}
-			GooglePlayGames.OurUtils.Logger.d("ShowLeaderboardUI, lbId=" + leaderboardId + " callback is " + callback);
-			mClient.ShowLeaderboardUI(leaderboardId, span, callback);
-		}
-
-		public void SetDefaultLeaderboardForUI(string lbid)
-		{
-			GooglePlayGames.OurUtils.Logger.d("SetDefaultLeaderboardForUI: " + lbid);
-			if (lbid != null)
-			{
-				lbid = MapId(lbid);
-			}
-			mDefaultLbUi = lbid;
-		}
-
-		public void LoadFriends(ILocalUser user, Action<bool> callback)
-		{
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
-				if (callback != null)
-				{
-					callback(false);
-				}
-			}
-			mClient.LoadFriends(callback);
-		}
-
-		public void LoadScores(ILeaderboard board, Action<bool> callback)
-		{
-			_003CLoadScores_003Ec__AnonStorey1FC _003CLoadScores_003Ec__AnonStorey1FC = new _003CLoadScores_003Ec__AnonStorey1FC();
-			_003CLoadScores_003Ec__AnonStorey1FC.board = board;
-			_003CLoadScores_003Ec__AnonStorey1FC.callback = callback;
-			_003CLoadScores_003Ec__AnonStorey1FC._003C_003Ef__this = this;
-			if (!IsAuthenticated())
-			{
-				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
-				if (_003CLoadScores_003Ec__AnonStorey1FC.callback != null)
-				{
-					_003CLoadScores_003Ec__AnonStorey1FC.callback(false);
-				}
-			}
-			LeaderboardTimeSpan timeSpan;
-			switch (_003CLoadScores_003Ec__AnonStorey1FC.board.timeScope)
-			{
-			case TimeScope.AllTime:
-				timeSpan = LeaderboardTimeSpan.AllTime;
-				break;
-			case TimeScope.Week:
-				timeSpan = LeaderboardTimeSpan.Weekly;
-				break;
-			case TimeScope.Today:
-				timeSpan = LeaderboardTimeSpan.Daily;
-				break;
-			default:
-				timeSpan = LeaderboardTimeSpan.AllTime;
-				break;
-			}
-			((PlayGamesLeaderboard)_003CLoadScores_003Ec__AnonStorey1FC.board).loading = true;
-			GooglePlayGames.OurUtils.Logger.d(string.Concat("LoadScores, board=", _003CLoadScores_003Ec__AnonStorey1FC.board, " callback is ", _003CLoadScores_003Ec__AnonStorey1FC.callback));
-			mClient.LoadScores(_003CLoadScores_003Ec__AnonStorey1FC.board.id, LeaderboardStart.PlayerCentered, (_003CLoadScores_003Ec__AnonStorey1FC.board.range.count <= 0) ? mClient.LeaderboardMaxResults() : _003CLoadScores_003Ec__AnonStorey1FC.board.range.count, (_003CLoadScores_003Ec__AnonStorey1FC.board.userScope != UserScope.FriendsOnly) ? LeaderboardCollection.Public : LeaderboardCollection.Social, timeSpan, _003CLoadScores_003Ec__AnonStorey1FC._003C_003Em__7F);
-		}
-
-		public bool GetLoading(ILeaderboard board)
-		{
-			return board != null && board.loading;
-		}
-
-		public void RegisterInvitationDelegate(InvitationReceivedDelegate deleg)
-		{
-			mClient.RegisterInvitationDelegate(deleg);
-		}
-
-		public string GetToken()
-		{
-			return mClient.GetToken();
-		}
-
-		internal void HandleLoadingScores(PlayGamesLeaderboard board, LeaderboardScoreData scoreData, Action<bool> callback)
-		{
-			_003CHandleLoadingScores_003Ec__AnonStorey1FD _003CHandleLoadingScores_003Ec__AnonStorey1FD = new _003CHandleLoadingScores_003Ec__AnonStorey1FD();
-			_003CHandleLoadingScores_003Ec__AnonStorey1FD.board = board;
-			_003CHandleLoadingScores_003Ec__AnonStorey1FD.callback = callback;
-			_003CHandleLoadingScores_003Ec__AnonStorey1FD._003C_003Ef__this = this;
-			bool flag = _003CHandleLoadingScores_003Ec__AnonStorey1FD.board.SetFromData(scoreData);
-			if (flag && !_003CHandleLoadingScores_003Ec__AnonStorey1FD.board.HasAllScores() && scoreData.NextPageToken != null)
-			{
-				int rowCount = _003CHandleLoadingScores_003Ec__AnonStorey1FD.board.range.count - _003CHandleLoadingScores_003Ec__AnonStorey1FD.board.ScoreCount;
-				mClient.LoadMoreScores(scoreData.NextPageToken, rowCount, _003CHandleLoadingScores_003Ec__AnonStorey1FD._003C_003Em__80);
-			}
-			else
-			{
-				_003CHandleLoadingScores_003Ec__AnonStorey1FD.callback(flag);
-			}
+			return this.mClient.GetApiClient();
 		}
 
 		internal IUserProfile[] GetFriends()
 		{
-			if (!IsAuthenticated())
+			if (this.IsAuthenticated())
 			{
-				GooglePlayGames.OurUtils.Logger.d("Cannot get friends when not authenticated!");
-				return new IUserProfile[0];
+				return this.mClient.GetFriends();
 			}
-			return mClient.GetFriends();
+			GooglePlayGames.OurUtils.Logger.d("Cannot get friends when not authenticated!");
+			return new IUserProfile[0];
+		}
+
+		public void GetIdToken(Action<string> idTokenCallback)
+		{
+			if (this.mClient == null)
+			{
+				GooglePlayGames.OurUtils.Logger.e("No client available, calling back with null.");
+				idTokenCallback(null);
+			}
+			else
+			{
+				this.mClient.GetIdToken(idTokenCallback);
+			}
+		}
+
+		public bool GetLoading(ILeaderboard board)
+		{
+			return (board == null ? false : board.loading);
+		}
+
+		public void GetPlayerStats(Action<CommonStatusCodes, PlayerStats> callback)
+		{
+			if (this.mClient == null || !this.mClient.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetPlayerStats can only be called after authentication.");
+				callback(4, new PlayerStats());
+			}
+			else
+			{
+				this.mClient.GetPlayerStats(callback);
+			}
+		}
+
+		public void GetServerAuthCode(Action<CommonStatusCodes, string> callback)
+		{
+			if (this.mClient == null || !this.mClient.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetServerAuthCode can only be called after authentication.");
+				callback(4, string.Empty);
+			}
+			else if (!GameInfo.WebClientIdInitialized())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetServerAuthCode requires a webClientId.");
+				callback(10, string.Empty);
+			}
+			else
+			{
+				this.mClient.GetServerAuthCode(string.Empty, callback);
+			}
+		}
+
+		public string GetToken()
+		{
+			return this.mClient.GetToken();
+		}
+
+		public string GetUserDisplayName()
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetUserDisplayName can only be called after authentication.");
+				return string.Empty;
+			}
+			return this.mClient.GetUserDisplayName();
+		}
+
+		public string GetUserEmail()
+		{
+			if (this.mClient == null)
+			{
+				return null;
+			}
+			return this.mClient.GetUserEmail();
+		}
+
+		public void GetUserEmail(Action<CommonStatusCodes, string> callback)
+		{
+			this.mClient.GetUserEmail(callback);
+		}
+
+		public string GetUserId()
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetUserId() can only be called after authentication.");
+				return "0";
+			}
+			return this.mClient.GetUserId();
+		}
+
+		public string GetUserImageUrl()
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetUserImageUrl can only be called after authentication.");
+				return null;
+			}
+			return this.mClient.GetUserImageUrl();
+		}
+
+		internal void HandleLoadingScores(PlayGamesLeaderboard board, LeaderboardScoreData scoreData, Action<bool> callback)
+		{
+			bool flag = board.SetFromData(scoreData);
+			if (!flag || board.HasAllScores() || scoreData.NextPageToken == null)
+			{
+				callback(flag);
+			}
+			else
+			{
+				int num = board.range.count - board.ScoreCount;
+				this.mClient.LoadMoreScores(scoreData.NextPageToken, num, (LeaderboardScoreData nextScoreData) => this.HandleLoadingScores(board, nextScoreData, callback));
+			}
+		}
+
+		public void IncrementAchievement(string achievementID, int steps, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("IncrementAchievement can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "IncrementAchievement: ", achievementID, ", steps ", steps }));
+			achievementID = this.MapId(achievementID);
+			this.mClient.IncrementAchievement(achievementID, steps, callback);
+		}
+
+		public static void InitializeInstance(PlayGamesClientConfiguration configuration)
+		{
+			if (PlayGamesPlatform.sInstance != null)
+			{
+				GooglePlayGames.OurUtils.Logger.w("PlayGamesPlatform already initialized. Ignoring this call.");
+				return;
+			}
+			PlayGamesPlatform.sInstance = new PlayGamesPlatform(configuration);
+		}
+
+		public static void InitializeNearby(Action<INearbyConnectionClient> callback)
+		{
+			Debug.Log("Calling InitializeNearby!");
+			if (PlayGamesPlatform.sNearbyConnectionClient == null)
+			{
+				NearbyConnectionClientFactory.Create((INearbyConnectionClient client) => {
+					Debug.Log("Nearby Client Created!!");
+					PlayGamesPlatform.sNearbyConnectionClient = client;
+					if (callback == null)
+					{
+						Debug.Log("Initialize Nearby callback is null");
+					}
+					else
+					{
+						callback(client);
+					}
+				});
+			}
+			else if (callback == null)
+			{
+				Debug.Log("Nearby Already initialized");
+			}
+			else
+			{
+				Debug.Log("Nearby Already initialized: calling callback directly");
+				callback(PlayGamesPlatform.sNearbyConnectionClient);
+			}
+		}
+
+		public bool IsAuthenticated()
+		{
+			return (this.mClient == null ? false : this.mClient.IsAuthenticated());
+		}
+
+		public void LoadAchievementDescriptions(Action<IAchievementDescription[]> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("LoadAchievementDescriptions can only be called after authentication.");
+				callback(null);
+			}
+			this.mClient.LoadAchievements((Achievement[] ach) => {
+				IAchievementDescription[] playGamesAchievement = new IAchievementDescription[(int)ach.Length];
+				for (int i = 0; i < (int)playGamesAchievement.Length; i++)
+				{
+					playGamesAchievement[i] = new PlayGamesAchievement(ach[i]);
+				}
+				callback(playGamesAchievement);
+			});
+		}
+
+		public void LoadAchievements(Action<IAchievement[]> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("LoadAchievements can only be called after authentication.");
+				callback(null);
+			}
+			this.mClient.LoadAchievements((Achievement[] ach) => {
+				IAchievement[] playGamesAchievement = new IAchievement[(int)ach.Length];
+				for (int i = 0; i < (int)playGamesAchievement.Length; i++)
+				{
+					playGamesAchievement[i] = new PlayGamesAchievement(ach[i]);
+				}
+				callback(playGamesAchievement);
+			});
+		}
+
+		public void LoadFriends(ILocalUser user, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+			}
+			this.mClient.LoadFriends(callback);
+		}
+
+		public void LoadMoreScores(ScorePageToken token, int rowCount, Action<LeaderboardScoreData> callback)
+		{
+			if (this.IsAuthenticated())
+			{
+				this.mClient.LoadMoreScores(token, rowCount, callback);
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.e("LoadMoreScores can only be called after authentication.");
+			callback(new LeaderboardScoreData(token.LeaderboardId, ResponseStatus.NotAuthorized));
+		}
+
+		public void LoadScores(string leaderboardId, Action<IScore[]> callback)
+		{
+			this.LoadScores(leaderboardId, LeaderboardStart.PlayerCentered, this.mClient.LeaderboardMaxResults(), LeaderboardCollection.Public, LeaderboardTimeSpan.AllTime, (LeaderboardScoreData scoreData) => callback(scoreData.Scores));
+		}
+
+		public void LoadScores(string leaderboardId, LeaderboardStart start, int rowCount, LeaderboardCollection collection, LeaderboardTimeSpan timeSpan, Action<LeaderboardScoreData> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
+				callback(new LeaderboardScoreData(leaderboardId, ResponseStatus.NotAuthorized));
+				return;
+			}
+			this.mClient.LoadScores(leaderboardId, start, rowCount, collection, timeSpan, callback);
+		}
+
+		public void LoadScores(ILeaderboard board, Action<bool> callback)
+		{
+			LeaderboardTimeSpan leaderboardTimeSpan;
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("LoadScores can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+			}
+			switch (board.timeScope)
+			{
+				case TimeScope.Today:
+				{
+					leaderboardTimeSpan = LeaderboardTimeSpan.Daily;
+					break;
+				}
+				case TimeScope.Week:
+				{
+					leaderboardTimeSpan = LeaderboardTimeSpan.Weekly;
+					break;
+				}
+				case TimeScope.AllTime:
+				{
+					leaderboardTimeSpan = LeaderboardTimeSpan.AllTime;
+					break;
+				}
+				default:
+				{
+					leaderboardTimeSpan = LeaderboardTimeSpan.AllTime;
+					break;
+				}
+			}
+			((PlayGamesLeaderboard)board).loading = true;
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "LoadScores, board=", board, " callback is ", callback }));
+			this.mClient.LoadScores(board.id, LeaderboardStart.PlayerCentered, (board.range.count <= 0 ? this.mClient.LeaderboardMaxResults() : board.range.count), (board.userScope != UserScope.FriendsOnly ? LeaderboardCollection.Public : LeaderboardCollection.Social), leaderboardTimeSpan, (LeaderboardScoreData scoreData) => this.HandleLoadingScores((PlayGamesLeaderboard)board, scoreData, callback));
+		}
+
+		public void LoadUsers(string[] userIds, Action<IUserProfile[]> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("GetUserId() can only be called after authentication.");
+				callback(new IUserProfile[0]);
+			}
+			this.mClient.LoadUsers(userIds, callback);
 		}
 
 		private string MapId(string id)
@@ -780,13 +512,200 @@ namespace GooglePlayGames
 			{
 				return null;
 			}
-			if (mIdMap.ContainsKey(id))
+			if (!this.mIdMap.ContainsKey(id))
 			{
-				string text = mIdMap[id];
-				GooglePlayGames.OurUtils.Logger.d("Mapping alias " + id + " to ID " + text);
-				return text;
+				return id;
 			}
-			return id;
+			string item = this.mIdMap[id];
+			GooglePlayGames.OurUtils.Logger.d(string.Concat("Mapping alias ", id, " to ID ", item));
+			return item;
+		}
+
+		public void RegisterInvitationDelegate(InvitationReceivedDelegate deleg)
+		{
+			this.mClient.RegisterInvitationDelegate(deleg);
+		}
+
+		public void ReportProgress(string achievementID, double progress, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("ReportProgress can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "ReportProgress, ", achievementID, ", ", progress }));
+			achievementID = this.MapId(achievementID);
+			if (progress < 1E-06)
+			{
+				GooglePlayGames.OurUtils.Logger.d("Progress 0.00 interpreted as request to reveal.");
+				this.mClient.RevealAchievement(achievementID, callback);
+				return;
+			}
+			bool isIncremental = false;
+			int currentSteps = 0;
+			int totalSteps = 0;
+			Achievement achievement = this.mClient.GetAchievement(achievementID);
+			if (achievement != null)
+			{
+				isIncremental = achievement.IsIncremental;
+				currentSteps = achievement.CurrentSteps;
+				totalSteps = achievement.TotalSteps;
+				GooglePlayGames.OurUtils.Logger.d(string.Concat("Achievement is ", (!isIncremental ? "STANDARD" : "INCREMENTAL")));
+				if (isIncremental)
+				{
+					GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "Current steps: ", currentSteps, "/", totalSteps }));
+				}
+			}
+			else
+			{
+				GooglePlayGames.OurUtils.Logger.w(string.Concat("Unable to locate achievement ", achievementID));
+				GooglePlayGames.OurUtils.Logger.w("As a quick fix, assuming it's standard.");
+				isIncremental = false;
+			}
+			if (isIncremental)
+			{
+				GooglePlayGames.OurUtils.Logger.d(string.Concat("Progress ", progress, " interpreted as incremental target (approximate)."));
+				if (progress >= 0 && progress <= 1)
+				{
+					GooglePlayGames.OurUtils.Logger.w(string.Concat("Progress ", progress, " is less than or equal to 1. You might be trying to use values in the range of [0,1], while values are expected to be within the range [0,100]. If you are using the latter, you can safely ignore this message."));
+				}
+				int num = (int)(progress / 100 * (double)totalSteps);
+				int num1 = num - currentSteps;
+				GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "Target steps: ", num, ", cur steps:", currentSteps }));
+				GooglePlayGames.OurUtils.Logger.d(string.Concat("Steps to increment: ", num1));
+				if (num1 >= 0)
+				{
+					this.mClient.IncrementAchievement(achievementID, num1, callback);
+				}
+			}
+			else if (progress < 100)
+			{
+				GooglePlayGames.OurUtils.Logger.d(string.Concat("Progress ", progress, " not enough to unlock non-incremental achievement."));
+			}
+			else
+			{
+				GooglePlayGames.OurUtils.Logger.d(string.Concat("Progress ", progress, " interpreted as UNLOCK."));
+				this.mClient.UnlockAchievement(achievementID, callback);
+			}
+		}
+
+		public void ReportScore(long score, string board, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("ReportScore can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "ReportScore: score=", score, ", board=", board }));
+			string str = this.MapId(board);
+			this.mClient.SubmitScore(str, score, callback);
+		}
+
+		public void ReportScore(long score, string board, string metadata, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("ReportScore can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "ReportScore: score=", score, ", board=", board, " metadata=", metadata }));
+			string str = this.MapId(board);
+			this.mClient.SubmitScore(str, score, metadata, callback);
+		}
+
+		public void SetDefaultLeaderboardForUI(string lbid)
+		{
+			GooglePlayGames.OurUtils.Logger.d(string.Concat("SetDefaultLeaderboardForUI: ", lbid));
+			if (lbid != null)
+			{
+				lbid = this.MapId(lbid);
+			}
+			this.mDefaultLbUi = lbid;
+		}
+
+		public void SetStepsAtLeast(string achievementID, int steps, Action<bool> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("SetStepsAtLeast can only be called after authentication.");
+				if (callback != null)
+				{
+					callback(false);
+				}
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "SetStepsAtLeast: ", achievementID, ", steps ", steps }));
+			achievementID = this.MapId(achievementID);
+			this.mClient.SetStepsAtLeast(achievementID, steps, callback);
+		}
+
+		public void ShowAchievementsUI()
+		{
+			this.ShowAchievementsUI(null);
+		}
+
+		public void ShowAchievementsUI(Action<UIStatus> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("ShowAchievementsUI can only be called after authentication.");
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat("ShowAchievementsUI callback is ", callback));
+			this.mClient.ShowAchievementsUI(callback);
+		}
+
+		public void ShowLeaderboardUI()
+		{
+			GooglePlayGames.OurUtils.Logger.d("ShowLeaderboardUI with default ID");
+			this.ShowLeaderboardUI(this.MapId(this.mDefaultLbUi), null);
+		}
+
+		public void ShowLeaderboardUI(string leaderboardId)
+		{
+			if (leaderboardId != null)
+			{
+				leaderboardId = this.MapId(leaderboardId);
+			}
+			this.mClient.ShowLeaderboardUI(leaderboardId, LeaderboardTimeSpan.AllTime, null);
+		}
+
+		public void ShowLeaderboardUI(string leaderboardId, Action<UIStatus> callback)
+		{
+			this.ShowLeaderboardUI(leaderboardId, LeaderboardTimeSpan.AllTime, callback);
+		}
+
+		public void ShowLeaderboardUI(string leaderboardId, LeaderboardTimeSpan span, Action<UIStatus> callback)
+		{
+			if (!this.IsAuthenticated())
+			{
+				GooglePlayGames.OurUtils.Logger.e("ShowLeaderboardUI can only be called after authentication.");
+				callback(-3);
+				return;
+			}
+			GooglePlayGames.OurUtils.Logger.d(string.Concat(new object[] { "ShowLeaderboardUI, lbId=", leaderboardId, " callback is ", callback }));
+			this.mClient.ShowLeaderboardUI(leaderboardId, span, callback);
+		}
+
+		public void SignOut()
+		{
+			if (this.mClient != null)
+			{
+				this.mClient.SignOut();
+			}
+			this.mLocalUser = new PlayGamesLocalUser(this);
 		}
 	}
 }

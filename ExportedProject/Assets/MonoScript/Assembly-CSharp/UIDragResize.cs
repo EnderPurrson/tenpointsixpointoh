@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Drag-Resize Widget")]
@@ -29,53 +30,56 @@ public class UIDragResize : MonoBehaviour
 
 	private bool mDragging;
 
-	private void OnDragStart()
+	public UIDragResize()
 	{
-		if (target != null)
-		{
-			Vector3[] worldCorners = target.worldCorners;
-			mPlane = new Plane(worldCorners[0], worldCorners[1], worldCorners[3]);
-			Ray currentRay = UICamera.currentRay;
-			float enter;
-			if (mPlane.Raycast(currentRay, out enter))
-			{
-				mRayPos = currentRay.GetPoint(enter);
-				mLocalPos = target.cachedTransform.localPosition;
-				mWidth = target.width;
-				mHeight = target.height;
-				mDragging = true;
-			}
-		}
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
-		if (!mDragging || !(target != null))
+		float single;
+		if (this.mDragging && this.target != null)
 		{
-			return;
-		}
-		Ray currentRay = UICamera.currentRay;
-		float enter;
-		if (mPlane.Raycast(currentRay, out enter))
-		{
-			Transform cachedTransform = target.cachedTransform;
-			cachedTransform.localPosition = mLocalPos;
-			target.width = mWidth;
-			target.height = mHeight;
-			Vector3 vector = currentRay.GetPoint(enter) - mRayPos;
-			cachedTransform.position += vector;
-			Vector3 vector2 = Quaternion.Inverse(cachedTransform.localRotation) * (cachedTransform.localPosition - mLocalPos);
-			cachedTransform.localPosition = mLocalPos;
-			NGUIMath.ResizeWidget(target, pivot, vector2.x, vector2.y, minWidth, minHeight, maxWidth, maxHeight);
-			if (updateAnchors)
+			Ray ray = UICamera.currentRay;
+			if (this.mPlane.Raycast(ray, out single))
 			{
-				target.BroadcastMessage("UpdateAnchors");
+				Transform transforms = this.target.cachedTransform;
+				transforms.localPosition = this.mLocalPos;
+				this.target.width = this.mWidth;
+				this.target.height = this.mHeight;
+				Vector3 point = ray.GetPoint(single) - this.mRayPos;
+				transforms.position = transforms.position + point;
+				Vector3 vector3 = Quaternion.Inverse(transforms.localRotation) * (transforms.localPosition - this.mLocalPos);
+				transforms.localPosition = this.mLocalPos;
+				NGUIMath.ResizeWidget(this.target, this.pivot, vector3.x, vector3.y, this.minWidth, this.minHeight, this.maxWidth, this.maxHeight);
+				if (this.updateAnchors)
+				{
+					this.target.BroadcastMessage("UpdateAnchors");
+				}
 			}
 		}
 	}
 
 	private void OnDragEnd()
 	{
-		mDragging = false;
+		this.mDragging = false;
+	}
+
+	private void OnDragStart()
+	{
+		float single;
+		if (this.target != null)
+		{
+			Vector3[] vector3Array = this.target.worldCorners;
+			this.mPlane = new Plane(vector3Array[0], vector3Array[1], vector3Array[3]);
+			Ray ray = UICamera.currentRay;
+			if (this.mPlane.Raycast(ray, out single))
+			{
+				this.mRayPos = ray.GetPoint(single);
+				this.mLocalPos = this.target.cachedTransform.localPosition;
+				this.mWidth = this.target.width;
+				this.mHeight = this.target.height;
+				this.mDragging = true;
+			}
+		}
 	}
 }

@@ -1,3 +1,5 @@
+using I2.Loc;
+using System;
 using UnityEngine;
 
 public class ChestBonusButtonView : MonoBehaviour
@@ -8,57 +10,61 @@ public class ChestBonusButtonView : MonoBehaviour
 
 	private PurchaseEventArgs _purchaseInfo;
 
+	public ChestBonusButtonView()
+	{
+	}
+
 	private void Awake()
 	{
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void HandleLocalizationChanged()
-	{
-		CheckBonusButtonUpdate();
-	}
-
-	public void Initialize()
-	{
-		ChestBonusController.OnChestBonusChange += CheckBonusButtonUpdate;
-	}
-
-	public void UpdateState(PurchaseEventArgs purchaseInfo)
-	{
-		_purchaseInfo = purchaseInfo;
-		CheckBonusButtonUpdate();
-	}
-
-	public void Deinitialize()
-	{
-		ChestBonusController.OnChestBonusChange -= CheckBonusButtonUpdate;
-		_purchaseInfo = null;
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 
 	private void CheckBonusButtonUpdate()
 	{
-		bool flag = _purchaseInfo != null && ChestBonusController.Get.IsBonusActiveForItem(_purchaseInfo);
+		bool flag = (this._purchaseInfo == null ? false : ChestBonusController.Get.IsBonusActiveForItem(this._purchaseInfo));
 		base.gameObject.SetActive(flag);
 		if (flag)
 		{
-			SetViewData(_purchaseInfo);
+			this.SetViewData(this._purchaseInfo);
 		}
+	}
+
+	public void Deinitialize()
+	{
+		ChestBonusController.OnChestBonusChange -= new ChestBonusController.OnChestBonusEnabledDelegate(this.CheckBonusButtonUpdate);
+		this._purchaseInfo = null;
+	}
+
+	private void HandleLocalizationChanged()
+	{
+		this.CheckBonusButtonUpdate();
+	}
+
+	public void Initialize()
+	{
+		ChestBonusController.OnChestBonusChange += new ChestBonusController.OnChestBonusEnabledDelegate(this.CheckBonusButtonUpdate);
+	}
+
+	public void OnButtonClick()
+	{
+		ChestBonusController.Get.ShowBonusWindowForItem(this._purchaseInfo);
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 
 	private void SetViewData(PurchaseEventArgs purchaseInfo)
 	{
 		ChestBonusData bonusData = ChestBonusController.Get.GetBonusData(purchaseInfo);
-		timeOrCountLabel.text = bonusData.GetItemCountOrTime();
-		itemTexture.mainTexture = bonusData.GetImage();
+		this.timeOrCountLabel.text = bonusData.GetItemCountOrTime();
+		this.itemTexture.mainTexture = bonusData.GetImage();
 	}
 
-	public void OnButtonClick()
+	public void UpdateState(PurchaseEventArgs purchaseInfo)
 	{
-		ChestBonusController.Get.ShowBonusWindowForItem(_purchaseInfo);
+		this._purchaseInfo = purchaseInfo;
+		this.CheckBonusButtonUpdate();
 	}
 }

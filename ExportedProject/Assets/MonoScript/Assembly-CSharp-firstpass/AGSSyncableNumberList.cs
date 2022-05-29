@@ -4,60 +4,58 @@ using UnityEngine;
 
 public class AGSSyncableNumberList : AGSSyncableList
 {
-	public AGSSyncableNumberList(AmazonJavaWrapper javaObject)
-		: base(javaObject)
+	public AGSSyncableNumberList(AmazonJavaWrapper javaObject) : base(javaObject)
 	{
 	}
 
-	public AGSSyncableNumberList(AndroidJavaObject javaObject)
-		: base(javaObject)
+	public AGSSyncableNumberList(AndroidJavaObject javaObject) : base(javaObject)
 	{
 	}
 
 	public void Add(long val)
 	{
-		javaObject.Call("add", val);
+		this.javaObject.Call("add", new object[] { val });
 	}
 
 	public void Add(double val)
 	{
-		javaObject.Call("add", val);
+		this.javaObject.Call("add", new object[] { val });
 	}
 
 	public void Add(int val)
 	{
-		javaObject.Call("add", val);
+		this.javaObject.Call("add", new object[] { val });
 	}
 
 	public void Add(long val, Dictionary<string, string> metadata)
 	{
-		javaObject.Call("add", val, DictionaryToAndroidHashMap(metadata));
+		this.javaObject.Call("add", new object[] { val, base.DictionaryToAndroidHashMap(metadata) });
 	}
 
 	public void Add(double val, Dictionary<string, string> metadata)
 	{
-		javaObject.Call("add", val, DictionaryToAndroidHashMap(metadata));
+		this.javaObject.Call("add", new object[] { val, base.DictionaryToAndroidHashMap(metadata) });
 	}
 
 	public void Add(int val, Dictionary<string, string> metadata)
 	{
-		javaObject.Call("add", val, DictionaryToAndroidHashMap(metadata));
+		this.javaObject.Call("add", new object[] { val, base.DictionaryToAndroidHashMap(metadata) });
 	}
 
 	public AGSSyncableNumberElement[] GetValues()
 	{
 		AndroidJNI.PushLocalFrame(10);
-		AndroidJavaObject[] array = javaObject.Call<AndroidJavaObject[]>("getValues", new object[0]);
-		if (array == null || array.Length == 0)
+		AndroidJavaObject[] androidJavaObjectArray = this.javaObject.Call<AndroidJavaObject[]>("getValues", new object[0]);
+		if (androidJavaObjectArray == null || (int)androidJavaObjectArray.Length == 0)
 		{
 			return null;
 		}
-		AGSSyncableNumberElement[] array2 = new AGSSyncableNumberElement[array.Length];
-		for (int i = 0; i < array.Length; i++)
+		AGSSyncableNumberElement[] aGSSyncableNumber = new AGSSyncableNumberElement[(int)androidJavaObjectArray.Length];
+		for (int i = 0; i < (int)androidJavaObjectArray.Length; i++)
 		{
-			array2[i] = new AGSSyncableNumber(array[i]);
+			aGSSyncableNumber[i] = new AGSSyncableNumber(androidJavaObjectArray[i]);
 		}
 		AndroidJNI.PopLocalFrame(IntPtr.Zero);
-		return array2;
+		return aGSSyncableNumber;
 	}
 }

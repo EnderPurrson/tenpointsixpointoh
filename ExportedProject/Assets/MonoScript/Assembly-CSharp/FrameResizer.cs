@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class FrameResizer : MonoBehaviour
@@ -12,26 +13,30 @@ public class FrameResizer : MonoBehaviour
 
 	private int activeObjectsCounter;
 
+	public FrameResizer()
+	{
+	}
+
 	public void ResizeFrame()
 	{
-		activeObjectsCounter = 0;
-		for (int i = 0; i < objects.Length; i++)
+		this.activeObjectsCounter = 0;
+		for (int i = 0; i < (int)this.objects.Length; i++)
 		{
-			if (objects[i].activeSelf)
+			if (this.objects[i].activeSelf)
 			{
-				activeObjectsCounter++;
+				this.activeObjectsCounter++;
 			}
 		}
-		if (activeObjectsCounter > 0)
+		if (this.activeObjectsCounter > 0)
 		{
-			frame.width = Mathf.RoundToInt(frameSize[activeObjectsCounter - 1].x);
-			frame.height = Mathf.RoundToInt(frameSize[activeObjectsCounter - 1].y);
+			this.frame.width = Mathf.RoundToInt(this.frameSize[this.activeObjectsCounter - 1].x);
+			this.frame.height = Mathf.RoundToInt(this.frameSize[this.activeObjectsCounter - 1].y);
 		}
-		if (table != null)
+		if (this.table != null)
 		{
-			table.sorting = UITable.Sorting.Alphabetic;
-			table.Reposition();
-			table.repositionNow = true;
+			this.table.sorting = UITable.Sorting.Alphabetic;
+			this.table.Reposition();
+			this.table.repositionNow = true;
 		}
 	}
 }

@@ -1,7 +1,7 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Rilisoft;
 using UnityEngine;
 
 public class EditorTextures : MonoBehaviour
@@ -36,124 +36,41 @@ public class EditorTextures : MonoBehaviour
 
 	private bool symmetry;
 
-	private void Start()
+	public EditorTextures()
 	{
-		if (prevHistoryButton != null)
-		{
-			prevHistoryButton.Clicked += HandlePrevHistoryButtonClicked;
-			prevHistoryUIButton = prevHistoryButton.gameObject.GetComponent<UIButton>();
-		}
-		if (nextHistoryButton != null)
-		{
-			nextHistoryButton.Clicked += HandleNextHistoryButtonClicked;
-			nextHistoryUIButton = nextHistoryButton.gameObject.GetComponent<UIButton>();
-		}
-	}
-
-	public void ToggleSymmetry(bool isSymmetry)
-	{
-		symmetry = isSymmetry;
-	}
-
-	public void SetStartCanvas(Texture2D _texure)
-	{
-		canvasTexture.mainTexture = CreateCopyTexture(CreateCopyTexture(_texure));
-		float num = 400f / (float)canvasTexture.mainTexture.width;
-		float num2 = 400f / (float)canvasTexture.mainTexture.height;
-		int num3 = ((!(num < num2)) ? Mathf.RoundToInt(num2) : Mathf.RoundToInt(num));
-		canvasTexture.width = canvasTexture.mainTexture.width * num3;
-		canvasTexture.height = canvasTexture.mainTexture.height * num3;
-		UpdateFonCanvas();
-		arrHistory.Clear();
-		AddCanvasTextureInHistory();
-	}
-
-	private void HandlePrevHistoryButtonClicked(object sender, EventArgs e)
-	{
-		if (currentHistoryIndex > 0)
-		{
-			currentHistoryIndex--;
-		}
-		UpdateTextureFromHistory();
-	}
-
-	private void HandleNextHistoryButtonClicked(object sender, EventArgs e)
-	{
-		if (currentHistoryIndex < arrHistory.Count - 1)
-		{
-			currentHistoryIndex++;
-		}
-		UpdateTextureFromHistory();
-	}
-
-	private void UpdateTextureFromHistory()
-	{
-		canvasTexture.mainTexture = CreateCopyTexture((Texture2D)arrHistory[currentHistoryIndex]);
 	}
 
 	public void AddCanvasTextureInHistory()
 	{
-		while (currentHistoryIndex < arrHistory.Count - 1)
+		while (this.currentHistoryIndex < this.arrHistory.Count - 1)
 		{
-			arrHistory.RemoveAt(arrHistory.Count - 1);
+			this.arrHistory.RemoveAt(this.arrHistory.Count - 1);
 		}
-		arrHistory.Add(CreateCopyTexture((Texture2D)canvasTexture.mainTexture));
-		if (arrHistory.Count > 30)
+		this.arrHistory.Add(EditorTextures.CreateCopyTexture((Texture2D)this.canvasTexture.mainTexture));
+		if (this.arrHistory.Count > 30)
 		{
-			arrHistory.RemoveAt(0);
+			this.arrHistory.RemoveAt(0);
 		}
-		currentHistoryIndex = arrHistory.Count - 1;
+		this.currentHistoryIndex = this.arrHistory.Count - 1;
 	}
 
-	private void Update()
+	public static Texture2D CreateCopyTexture(Texture tekTexture)
 	{
-		if (prevHistoryUIButton != null && nextHistoryUIButton != null)
-		{
-			if (prevHistoryUIButton.isEnabled != (currentHistoryIndex != 0))
-			{
-				prevHistoryUIButton.isEnabled = currentHistoryIndex != 0;
-			}
-			if (nextHistoryUIButton.isEnabled != currentHistoryIndex < arrHistory.Count - 1)
-			{
-				nextHistoryUIButton.isEnabled = currentHistoryIndex < arrHistory.Count - 1;
-			}
-		}
-		if (isMouseDown && ((Input.touchCount > 0 && (Input.touches[0].phase == TouchPhase.Ended || Input.touches[0].phase == TouchPhase.Canceled)) || Input.GetMouseButtonUp(0)))
-		{
-			Vector2 pos = ((Input.touchCount <= 0) ? new Vector2(Input.mousePosition.x, Input.mousePosition.y) : new Vector2(Input.touches[0].position.x, Input.touches[0].position.y));
-			if (IsCanvasConteinPosition(pos))
-			{
-				OnCanvasClickUp();
-			}
-			isMouseDown = false;
-			oldEditPixelPos = new Vector2(-1f, -1f);
-			AddCanvasTextureInHistory();
-		}
-		if (isSetNewTexture)
-		{
-			isSetNewTexture = false;
-			UpdateFonCanvas();
-		}
-		if ((Input.touchCount <= 0 || Input.touches[0].phase == TouchPhase.Ended || Input.touches[0].phase == TouchPhase.Canceled) && !isMouseDown && !Input.GetMouseButtonDown(0))
-		{
-			return;
-		}
-		Vector2 pos2 = ((Input.touchCount <= 0) ? new Vector2(Input.mousePosition.x, Input.mousePosition.y) : new Vector2(Input.touches[0].position.x, Input.touches[0].position.y));
-		if (IsCanvasConteinPosition(pos2))
-		{
-			isMouseDown = true;
-			Vector2 editPixelPos = GetEditPixelPos(pos2);
-			if (!editPixelPos.Equals(oldEditPixelPos))
-			{
-				oldEditPixelPos = editPixelPos;
-				EditCanvas(editPixelPos);
-			}
-		}
+		return EditorTextures.CreateCopyTexture((Texture2D)tekTexture);
+	}
+
+	public static Texture2D CreateCopyTexture(Texture2D tekTexture)
+	{
+		Texture2D texture2D = new Texture2D(tekTexture.width, tekTexture.height, TextureFormat.RGBA32, false);
+		texture2D.SetPixels(tekTexture.GetPixels());
+		texture2D.filterMode = FilterMode.Point;
+		texture2D.Apply();
+		return texture2D;
 	}
 
 	private void EditCanvas(Vector2 pos)
 	{
-		if (saveFrame != null && saveFrame.activeSelf)
+		if (this.saveFrame != null && this.saveFrame.activeSelf)
 		{
 			return;
 		}
@@ -161,18 +78,18 @@ public class EditorTextures : MonoBehaviour
 		{
 			if (SkinEditorController.sharedController != null)
 			{
-				SkinEditorController.sharedController.newColor.color = ((Texture2D)canvasTexture.mainTexture).GetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
+				SkinEditorController.sharedController.newColor.color = ((Texture2D)this.canvasTexture.mainTexture).GetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y));
 				SkinEditorController.sharedController.HandleSetColorClicked(null, null);
 			}
 			return;
 		}
 		SkinEditorController.isEditingPartSkin = true;
-		Texture2D texture2D = CreateCopyTexture(canvasTexture.mainTexture as Texture2D);
+		Texture2D texture2D = EditorTextures.CreateCopyTexture(this.canvasTexture.mainTexture as Texture2D);
 		texture2D.wrapMode = TextureWrapMode.Clamp;
 		if (SkinEditorController.brashMode == SkinEditorController.BrashMode.Pencil)
 		{
 			texture2D.SetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), SkinEditorController.colorForPaint);
-			if (symmetry)
+			if (this.symmetry)
 			{
 				texture2D.SetPixel(texture2D.width - 1 - Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), SkinEditorController.colorForPaint);
 			}
@@ -196,7 +113,7 @@ public class EditorTextures : MonoBehaviour
 			{
 				texture2D.SetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y) + 1, SkinEditorController.colorForPaint);
 			}
-			if (symmetry)
+			if (this.symmetry)
 			{
 				texture2D.SetPixel(texture2D.width - 1 - Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), SkinEditorController.colorForPaint);
 				if (Mathf.RoundToInt(pos.x) > 0)
@@ -219,7 +136,7 @@ public class EditorTextures : MonoBehaviour
 		}
 		if (SkinEditorController.brashMode == SkinEditorController.BrashMode.Eraser)
 		{
-			texture2D.SetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), colorForEraser);
+			texture2D.SetPixel(Mathf.RoundToInt(pos.x), Mathf.RoundToInt(pos.y), this.colorForEraser);
 		}
 		if (SkinEditorController.brashMode == SkinEditorController.BrashMode.Fill)
 		{
@@ -228,85 +145,201 @@ public class EditorTextures : MonoBehaviour
 			Color color = pixels[num];
 			if (color != SkinEditorController.colorForPaint)
 			{
-				int item = num;
-				List<int> list = new List<int>();
-				list.Add(item);
-				while (list.Count > 0)
+				List<int> nums = new List<int>()
 				{
-					int num2 = Mathf.FloorToInt((float)list[0] / (float)texture2D.width);
-					int num3 = list[0] - num2 * texture2D.width;
-					pixels[list[0]] = SkinEditorController.colorForPaint;
-					list.RemoveAt(0);
-					if (num3 + 1 < texture2D.width && pixels[num3 + 1 + num2 * texture2D.width] == color && !list.Contains(num3 + 1 + num2 * texture2D.width))
+					num
+				};
+				while (nums.Count > 0)
+				{
+					int num1 = Mathf.FloorToInt((float)nums[0] / (float)texture2D.width);
+					int item = nums[0] - num1 * texture2D.width;
+					pixels[nums[0]] = SkinEditorController.colorForPaint;
+					nums.RemoveAt(0);
+					if (item + 1 < texture2D.width && pixels[item + 1 + num1 * texture2D.width] == color && !nums.Contains(item + 1 + num1 * texture2D.width))
 					{
-						list.Add(num3 + 1 + num2 * texture2D.width);
+						nums.Add(item + 1 + num1 * texture2D.width);
 					}
-					if (num3 - 1 >= 0 && pixels[num3 - 1 + num2 * texture2D.width] == color && !list.Contains(num3 - 1 + num2 * texture2D.width))
+					if (item - 1 >= 0 && pixels[item - 1 + num1 * texture2D.width] == color && !nums.Contains(item - 1 + num1 * texture2D.width))
 					{
-						list.Add(num3 - 1 + num2 * texture2D.width);
+						nums.Add(item - 1 + num1 * texture2D.width);
 					}
-					if (num2 + 1 < texture2D.height && pixels[num3 + (num2 + 1) * texture2D.width] == color && !list.Contains(num3 + (num2 + 1) * texture2D.width))
+					if (num1 + 1 < texture2D.height && pixels[item + (num1 + 1) * texture2D.width] == color && !nums.Contains(item + (num1 + 1) * texture2D.width))
 					{
-						list.Add(num3 + (num2 + 1) * texture2D.width);
+						nums.Add(item + (num1 + 1) * texture2D.width);
 					}
-					if (num2 - 1 >= 0 && pixels[num3 + (num2 - 1) * texture2D.width] == color && !list.Contains(num3 + (num2 - 1) * texture2D.width))
+					if (num1 - 1 < 0 || !(pixels[item + (num1 - 1) * texture2D.width] == color) || nums.Contains(item + (num1 - 1) * texture2D.width))
 					{
-						list.Add(num3 + (num2 - 1) * texture2D.width);
+						continue;
 					}
+					nums.Add(item + (num1 - 1) * texture2D.width);
 				}
 				texture2D.SetPixels(pixels);
 			}
 		}
 		texture2D.Apply();
-		isSetNewTexture = true;
-		canvasTexture.mainTexture = texture2D;
+		this.isSetNewTexture = true;
+		this.canvasTexture.mainTexture = texture2D;
 	}
 
-	private void OnCanvasClickUp()
+	private Vector2 GetEditPixelPos(Vector2 pos)
 	{
-		if ((!(saveFrame != null) || !saveFrame.activeSelf) && SkinEditorController.brashMode == SkinEditorController.BrashMode.Pipette && SkinEditorController.sharedController != null)
+		float single = (float)Screen.height / 768f;
+		return new Vector2((float)Mathf.FloorToInt((pos.x - ((float)Screen.width - (float)this.canvasTexture.width * single) * 0.5f) / ((float)this.canvasTexture.width * single) * (float)this.canvasTexture.mainTexture.width), (float)Mathf.FloorToInt((pos.y - ((float)Screen.height - (float)this.canvasTexture.height * single) * 0.5f) / ((float)this.canvasTexture.height * single) * (float)this.canvasTexture.mainTexture.height));
+	}
+
+	private void HandleNextHistoryButtonClicked(object sender, EventArgs e)
+	{
+		if (this.currentHistoryIndex < this.arrHistory.Count - 1)
 		{
-			SkinEditorController.sharedController.SetColorClickedUp();
+			this.currentHistoryIndex++;
 		}
+		this.UpdateTextureFromHistory();
+	}
+
+	private void HandlePrevHistoryButtonClicked(object sender, EventArgs e)
+	{
+		if (this.currentHistoryIndex > 0)
+		{
+			this.currentHistoryIndex--;
+		}
+		this.UpdateTextureFromHistory();
 	}
 
 	private bool IsCanvasConteinPosition(Vector2 pos)
 	{
-		bool flag = false;
-		float num = (float)Screen.height / 768f;
-		Vector2 vector = new Vector2(((float)Screen.width - num * (float)canvasTexture.width) * 0.5f, ((float)Screen.height + num * (float)canvasTexture.height) * 0.5f);
-		Vector2 vector2 = new Vector2(((float)Screen.width + num * (float)canvasTexture.width) * 0.5f, ((float)Screen.height - num * (float)canvasTexture.height) * 0.5f);
-		if (pos.x > vector.x && pos.x < vector2.x && pos.y < vector.y && pos.y > vector2.y)
+		float single = (float)Screen.height / 768f;
+		Vector2 vector2 = new Vector2(((float)Screen.width - single * (float)this.canvasTexture.width) * 0.5f, ((float)Screen.height + single * (float)this.canvasTexture.height) * 0.5f);
+		Vector2 vector21 = new Vector2(((float)Screen.width + single * (float)this.canvasTexture.width) * 0.5f, ((float)Screen.height - single * (float)this.canvasTexture.height) * 0.5f);
+		if (pos.x > vector2.x && pos.x < vector21.x && pos.y < vector2.y && pos.y > vector21.y)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	private Vector2 GetEditPixelPos(Vector2 pos)
+	private void OnCanvasClickUp()
 	{
-		float num = (float)Screen.height / 768f;
-		return new Vector2(Mathf.FloorToInt((pos.x - ((float)Screen.width - (float)canvasTexture.width * num) * 0.5f) / ((float)canvasTexture.width * num) * (float)canvasTexture.mainTexture.width), Mathf.FloorToInt((pos.y - ((float)Screen.height - (float)canvasTexture.height * num) * 0.5f) / ((float)canvasTexture.height * num) * (float)canvasTexture.mainTexture.height));
+		if (this.saveFrame != null && this.saveFrame.activeSelf)
+		{
+			return;
+		}
+		if (SkinEditorController.brashMode != SkinEditorController.BrashMode.Pipette)
+		{
+			return;
+		}
+		if (SkinEditorController.sharedController != null)
+		{
+			SkinEditorController.sharedController.SetColorClickedUp();
+		}
 	}
 
-	public static Texture2D CreateCopyTexture(Texture tekTexture)
+	public void SetStartCanvas(Texture2D _texure)
 	{
-		return CreateCopyTexture((Texture2D)tekTexture);
+		this.canvasTexture.mainTexture = EditorTextures.CreateCopyTexture(EditorTextures.CreateCopyTexture(_texure));
+		float single = 400f / (float)this.canvasTexture.mainTexture.width;
+		float single1 = 400f / (float)this.canvasTexture.mainTexture.height;
+		int num = (single >= single1 ? Mathf.RoundToInt(single1) : Mathf.RoundToInt(single));
+		this.canvasTexture.width = this.canvasTexture.mainTexture.width * num;
+		this.canvasTexture.height = this.canvasTexture.mainTexture.height * num;
+		this.UpdateFonCanvas();
+		this.arrHistory.Clear();
+		this.AddCanvasTextureInHistory();
 	}
 
-	public static Texture2D CreateCopyTexture(Texture2D tekTexture)
+	private void Start()
 	{
-		Texture2D texture2D = new Texture2D(tekTexture.width, tekTexture.height, TextureFormat.RGBA32, false);
-		texture2D.SetPixels(tekTexture.GetPixels());
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.Apply();
-		return texture2D;
+		if (this.prevHistoryButton != null)
+		{
+			this.prevHistoryButton.Clicked += new EventHandler(this.HandlePrevHistoryButtonClicked);
+			this.prevHistoryUIButton = this.prevHistoryButton.gameObject.GetComponent<UIButton>();
+		}
+		if (this.nextHistoryButton != null)
+		{
+			this.nextHistoryButton.Clicked += new EventHandler(this.HandleNextHistoryButtonClicked);
+			this.nextHistoryUIButton = this.nextHistoryButton.gameObject.GetComponent<UIButton>();
+		}
+	}
+
+	public void ToggleSymmetry(bool isSymmetry)
+	{
+		this.symmetry = isSymmetry;
+	}
+
+	private void Update()
+	{
+		Vector2 vector2;
+		Vector2 vector21;
+		if (this.prevHistoryUIButton != null && this.nextHistoryUIButton != null)
+		{
+			if (this.prevHistoryUIButton.isEnabled != this.currentHistoryIndex != 0)
+			{
+				this.prevHistoryUIButton.isEnabled = this.currentHistoryIndex != 0;
+			}
+			if (this.nextHistoryUIButton.isEnabled != this.currentHistoryIndex < this.arrHistory.Count - 1)
+			{
+				this.nextHistoryUIButton.isEnabled = this.currentHistoryIndex < this.arrHistory.Count - 1;
+			}
+		}
+		if (this.isMouseDown && (Input.touchCount > 0 && (Input.touches[0].phase == TouchPhase.Ended || Input.touches[0].phase == TouchPhase.Canceled) || Input.GetMouseButtonUp(0)))
+		{
+			if (Input.touchCount <= 0)
+			{
+				vector21 = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+			}
+			else
+			{
+				float single = Input.touches[0].position.x;
+				Vector2 vector22 = Input.touches[0].position;
+				vector21 = new Vector2(single, vector22.y);
+			}
+			if (this.IsCanvasConteinPosition(vector21))
+			{
+				this.OnCanvasClickUp();
+			}
+			this.isMouseDown = false;
+			this.oldEditPixelPos = new Vector2(-1f, -1f);
+			this.AddCanvasTextureInHistory();
+		}
+		if (this.isSetNewTexture)
+		{
+			this.isSetNewTexture = false;
+			this.UpdateFonCanvas();
+		}
+		if (Input.touchCount > 0 && Input.touches[0].phase != TouchPhase.Ended && Input.touches[0].phase != TouchPhase.Canceled || this.isMouseDown || Input.GetMouseButtonDown(0))
+		{
+			if (Input.touchCount <= 0)
+			{
+				vector2 = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+			}
+			else
+			{
+				float single1 = Input.touches[0].position.x;
+				Vector2 vector23 = Input.touches[0].position;
+				vector2 = new Vector2(single1, vector23.y);
+			}
+			Vector2 vector24 = vector2;
+			if (this.IsCanvasConteinPosition(vector24))
+			{
+				this.isMouseDown = true;
+				Vector2 editPixelPos = this.GetEditPixelPos(vector24);
+				if (!editPixelPos.Equals(this.oldEditPixelPos))
+				{
+					this.oldEditPixelPos = editPixelPos;
+					this.EditCanvas(editPixelPos);
+				}
+			}
+		}
 	}
 
 	public void UpdateFonCanvas()
 	{
-		fonCanvas.width = canvasTexture.width;
-		fonCanvas.height = canvasTexture.height;
-		fonCanvas.mainTexture = canvasTexture.mainTexture;
+		this.fonCanvas.width = this.canvasTexture.width;
+		this.fonCanvas.height = this.canvasTexture.height;
+		this.fonCanvas.mainTexture = this.canvasTexture.mainTexture;
+	}
+
+	private void UpdateTextureFromHistory()
+	{
+		this.canvasTexture.mainTexture = EditorTextures.CreateCopyTexture((Texture2D)this.arrHistory[this.currentHistoryIndex]);
 	}
 }

@@ -1,81 +1,31 @@
-using System;
-using System.Runtime.InteropServices;
 using AOT;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class GameServicesBuilder : BaseReferenceHolder
 	{
-		internal delegate void AuthFinishedCallback(Types.AuthOperation operation, CommonErrorStatus.AuthStatus status);
-
-		internal delegate void AuthStartedCallback(Types.AuthOperation operation);
-
-		private GameServicesBuilder(IntPtr selfPointer)
-			: base(selfPointer)
+		private GameServicesBuilder(IntPtr selfPointer) : base(selfPointer)
 		{
-			InternalHooks.InternalHooks_ConfigureForUnityPlugin(SelfPtr());
-		}
-
-		internal void SetOnAuthFinishedCallback(AuthFinishedCallback callback)
-		{
-			Builder.GameServices_Builder_SetOnAuthActionFinished(SelfPtr(), InternalAuthFinishedCallback, Callbacks.ToIntPtr(callback));
-		}
-
-		internal void EnableSnapshots()
-		{
-			Builder.GameServices_Builder_EnableSnapshots(SelfPtr());
-		}
-
-		internal void RequireGooglePlus()
-		{
-			Builder.GameServices_Builder_RequireGooglePlus(SelfPtr());
+			InternalHooks.InternalHooks_ConfigureForUnityPlugin(base.SelfPtr());
 		}
 
 		internal void AddOauthScope(string scope)
 		{
-			Builder.GameServices_Builder_AddOauthScope(SelfPtr(), scope);
+			Builder.GameServices_Builder_AddOauthScope(base.SelfPtr(), scope);
 		}
 
-		[MonoPInvokeCallback(typeof(Builder.OnAuthActionFinishedCallback))]
-		private static void InternalAuthFinishedCallback(Types.AuthOperation op, CommonErrorStatus.AuthStatus status, IntPtr data)
+		internal GooglePlayGames.Native.PInvoke.GameServices Build(PlatformConfiguration configRef)
 		{
-			AuthFinishedCallback authFinishedCallback = Callbacks.IntPtrToPermanentCallback<AuthFinishedCallback>(data);
-			if (authFinishedCallback == null)
+			IntPtr intPtr = Builder.GameServices_Builder_Create(base.SelfPtr(), HandleRef.ToIntPtr(configRef.AsHandle()));
+			if (intPtr.Equals(IntPtr.Zero))
 			{
-				return;
+				throw new InvalidOperationException("There was an error creating a GameServices object. Check for log errors from GamesNativeSDK");
 			}
-			try
-			{
-				authFinishedCallback(op, status);
-			}
-			catch (Exception ex)
-			{
-				Logger.e("Error encountered executing InternalAuthFinishedCallback. Smothering to avoid passing exception into Native: " + ex);
-			}
-		}
-
-		internal void SetOnAuthStartedCallback(AuthStartedCallback callback)
-		{
-			Builder.GameServices_Builder_SetOnAuthActionStarted(SelfPtr(), InternalAuthStartedCallback, Callbacks.ToIntPtr(callback));
-		}
-
-		[MonoPInvokeCallback(typeof(Builder.OnAuthActionStartedCallback))]
-		private static void InternalAuthStartedCallback(Types.AuthOperation op, IntPtr data)
-		{
-			AuthStartedCallback authStartedCallback = Callbacks.IntPtrToPermanentCallback<AuthStartedCallback>(data);
-			try
-			{
-				if (authStartedCallback != null)
-				{
-					authStartedCallback(op);
-				}
-			}
-			catch (Exception ex)
-			{
-				Logger.e("Error encountered executing InternalAuthStartedCallback. Smothering to avoid passing exception into Native: " + ex);
-			}
+			return new GooglePlayGames.Native.PInvoke.GameServices(intPtr);
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -83,71 +33,120 @@ namespace GooglePlayGames.Native.PInvoke
 			Builder.GameServices_Builder_Dispose(selfPointer);
 		}
 
-		[MonoPInvokeCallback(typeof(Builder.OnTurnBasedMatchEventCallback))]
-		private static void InternalOnTurnBasedMatchEventCallback(Types.MultiplayerEvent eventType, string matchId, IntPtr match, IntPtr userData)
+		internal static GameServicesBuilder Create()
 		{
-			Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch> action = Callbacks.IntPtrToPermanentCallback<Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch>>(userData);
-			using (NativeTurnBasedMatch arg = NativeTurnBasedMatch.FromPointer(match))
+			return new GameServicesBuilder(Builder.GameServices_Builder_Construct());
+		}
+
+		internal void EnableSnapshots()
+		{
+			Builder.GameServices_Builder_EnableSnapshots(base.SelfPtr());
+		}
+
+		[MonoPInvokeCallback(typeof(Builder.OnAuthActionFinishedCallback))]
+		private static void InternalAuthFinishedCallback(Types.AuthOperation op, CommonErrorStatus.AuthStatus status, IntPtr data)
+		{
+			GameServicesBuilder.AuthFinishedCallback permanentCallback = Callbacks.IntPtrToPermanentCallback<GameServicesBuilder.AuthFinishedCallback>(data);
+			if (permanentCallback == null)
 			{
-				try
-				{
-					if (action != null)
-					{
-						action(eventType, matchId, arg);
-					}
-				}
-				catch (Exception ex)
-				{
-					Logger.e("Error encountered executing InternalOnTurnBasedMatchEventCallback. Smothering to avoid passing exception into Native: " + ex);
-				}
+				return;
+			}
+			try
+			{
+				permanentCallback(op, status);
+			}
+			catch (Exception exception)
+			{
+				Logger.e(string.Concat("Error encountered executing InternalAuthFinishedCallback. Smothering to avoid passing exception into Native: ", exception));
 			}
 		}
 
-		internal void SetOnTurnBasedMatchEventCallback(Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch> callback)
+		[MonoPInvokeCallback(typeof(Builder.OnAuthActionStartedCallback))]
+		private static void InternalAuthStartedCallback(Types.AuthOperation op, IntPtr data)
 		{
-			IntPtr callback_arg = Callbacks.ToIntPtr(callback);
-			Builder.GameServices_Builder_SetOnTurnBasedMatchEvent(SelfPtr(), InternalOnTurnBasedMatchEventCallback, callback_arg);
+			GameServicesBuilder.AuthStartedCallback permanentCallback = Callbacks.IntPtrToPermanentCallback<GameServicesBuilder.AuthStartedCallback>(data);
+			try
+			{
+				if (permanentCallback != null)
+				{
+					permanentCallback(op);
+				}
+			}
+			catch (Exception exception)
+			{
+				Logger.e(string.Concat("Error encountered executing InternalAuthStartedCallback. Smothering to avoid passing exception into Native: ", exception));
+			}
 		}
 
 		[MonoPInvokeCallback(typeof(Builder.OnMultiplayerInvitationEventCallback))]
 		private static void InternalOnMultiplayerInvitationEventCallback(Types.MultiplayerEvent eventType, string matchId, IntPtr match, IntPtr userData)
 		{
-			Action<Types.MultiplayerEvent, string, MultiplayerInvitation> action = Callbacks.IntPtrToPermanentCallback<Action<Types.MultiplayerEvent, string, MultiplayerInvitation>>(userData);
-			using (MultiplayerInvitation arg = MultiplayerInvitation.FromPointer(match))
+			Action<Types.MultiplayerEvent, string, GooglePlayGames.Native.PInvoke.MultiplayerInvitation> permanentCallback = Callbacks.IntPtrToPermanentCallback<Action<Types.MultiplayerEvent, string, GooglePlayGames.Native.PInvoke.MultiplayerInvitation>>(userData);
+			using (GooglePlayGames.Native.PInvoke.MultiplayerInvitation multiplayerInvitation = GooglePlayGames.Native.PInvoke.MultiplayerInvitation.FromPointer(match))
 			{
 				try
 				{
-					if (action != null)
+					if (permanentCallback != null)
 					{
-						action(eventType, matchId, arg);
+						permanentCallback(eventType, matchId, multiplayerInvitation);
 					}
 				}
-				catch (Exception ex)
+				catch (Exception exception)
 				{
-					Logger.e("Error encountered executing InternalOnMultiplayerInvitationEventCallback. Smothering to avoid passing exception into Native: " + ex);
+					Logger.e(string.Concat("Error encountered executing InternalOnMultiplayerInvitationEventCallback. Smothering to avoid passing exception into Native: ", exception));
 				}
 			}
 		}
 
-		internal void SetOnMultiplayerInvitationEventCallback(Action<Types.MultiplayerEvent, string, MultiplayerInvitation> callback)
+		[MonoPInvokeCallback(typeof(Builder.OnTurnBasedMatchEventCallback))]
+		private static void InternalOnTurnBasedMatchEventCallback(Types.MultiplayerEvent eventType, string matchId, IntPtr match, IntPtr userData)
 		{
-			IntPtr callback_arg = Callbacks.ToIntPtr(callback);
-			Builder.GameServices_Builder_SetOnMultiplayerInvitationEvent(SelfPtr(), InternalOnMultiplayerInvitationEventCallback, callback_arg);
-		}
-
-		internal GameServices Build(PlatformConfiguration configRef)
-		{
-			IntPtr selfPointer = Builder.GameServices_Builder_Create(SelfPtr(), HandleRef.ToIntPtr(configRef.AsHandle()));
-			if (selfPointer.Equals(IntPtr.Zero))
+			Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch> permanentCallback = Callbacks.IntPtrToPermanentCallback<Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch>>(userData);
+			using (NativeTurnBasedMatch nativeTurnBasedMatch = NativeTurnBasedMatch.FromPointer(match))
 			{
-				throw new InvalidOperationException("There was an error creating a GameServices object. Check for log errors from GamesNativeSDK");
+				try
+				{
+					if (permanentCallback != null)
+					{
+						permanentCallback(eventType, matchId, nativeTurnBasedMatch);
+					}
+				}
+				catch (Exception exception)
+				{
+					Logger.e(string.Concat("Error encountered executing InternalOnTurnBasedMatchEventCallback. Smothering to avoid passing exception into Native: ", exception));
+				}
 			}
-			return new GameServices(selfPointer);
 		}
 
-		internal static GameServicesBuilder Create()
+		internal void RequireGooglePlus()
 		{
-			return new GameServicesBuilder(Builder.GameServices_Builder_Construct());
+			Builder.GameServices_Builder_RequireGooglePlus(base.SelfPtr());
 		}
+
+		internal void SetOnAuthFinishedCallback(GameServicesBuilder.AuthFinishedCallback callback)
+		{
+			Builder.GameServices_Builder_SetOnAuthActionFinished(base.SelfPtr(), new Builder.OnAuthActionFinishedCallback(GameServicesBuilder.InternalAuthFinishedCallback), Callbacks.ToIntPtr(callback));
+		}
+
+		internal void SetOnAuthStartedCallback(GameServicesBuilder.AuthStartedCallback callback)
+		{
+			Builder.GameServices_Builder_SetOnAuthActionStarted(base.SelfPtr(), new Builder.OnAuthActionStartedCallback(GameServicesBuilder.InternalAuthStartedCallback), Callbacks.ToIntPtr(callback));
+		}
+
+		internal void SetOnMultiplayerInvitationEventCallback(Action<Types.MultiplayerEvent, string, GooglePlayGames.Native.PInvoke.MultiplayerInvitation> callback)
+		{
+			IntPtr intPtr = Callbacks.ToIntPtr(callback);
+			Builder.GameServices_Builder_SetOnMultiplayerInvitationEvent(base.SelfPtr(), new Builder.OnMultiplayerInvitationEventCallback(GameServicesBuilder.InternalOnMultiplayerInvitationEventCallback), intPtr);
+		}
+
+		internal void SetOnTurnBasedMatchEventCallback(Action<Types.MultiplayerEvent, string, NativeTurnBasedMatch> callback)
+		{
+			IntPtr intPtr = Callbacks.ToIntPtr(callback);
+			Builder.GameServices_Builder_SetOnTurnBasedMatchEvent(base.SelfPtr(), new Builder.OnTurnBasedMatchEventCallback(GameServicesBuilder.InternalOnTurnBasedMatchEventCallback), intPtr);
+		}
+
+		internal delegate void AuthFinishedCallback(Types.AuthOperation operation, CommonErrorStatus.AuthStatus status);
+
+		internal delegate void AuthStartedCallback(Types.AuthOperation operation);
 	}
 }

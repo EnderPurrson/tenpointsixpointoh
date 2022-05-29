@@ -17,35 +17,11 @@ namespace GooglePlayGames
 
 		private DateTime mDate = new DateTime(1970, 1, 1, 0, 0, 0);
 
-		public string leaderboardID
-		{
-			get
-			{
-				return mLbId;
-			}
-			set
-			{
-				mLbId = value;
-			}
-		}
-
-		public long value
-		{
-			get
-			{
-				return mValue;
-			}
-			set
-			{
-				mValue = value;
-			}
-		}
-
 		public DateTime date
 		{
 			get
 			{
-				return mDate;
+				return this.mDate;
 			}
 		}
 
@@ -53,15 +29,19 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return mValue.ToString();
+				return this.mValue.ToString();
 			}
 		}
 
-		public string userID
+		public string leaderboardID
 		{
 			get
 			{
-				return mPlayerId;
+				return this.mLbId;
+			}
+			set
+			{
+				this.mLbId = value;
 			}
 		}
 
@@ -69,23 +49,43 @@ namespace GooglePlayGames
 		{
 			get
 			{
-				return (int)mRank;
+				return (int)this.mRank;
+			}
+		}
+
+		public string userID
+		{
+			get
+			{
+				return this.mPlayerId;
+			}
+		}
+
+		public long @value
+		{
+			get
+			{
+				return this.mValue;
+			}
+			set
+			{
+				this.mValue = value;
 			}
 		}
 
 		internal PlayGamesScore(DateTime date, string leaderboardId, ulong rank, string playerId, ulong value, string metadata)
 		{
-			mDate = date;
-			mLbId = leaderboardID;
-			mRank = rank;
-			mPlayerId = playerId;
-			mValue = (long)value;
-			mMetadata = metadata;
+			this.mDate = date;
+			this.mLbId = this.leaderboardID;
+			this.mRank = rank;
+			this.mPlayerId = playerId;
+			this.mValue = (long)value;
+			this.mMetadata = metadata;
 		}
 
 		public void ReportScore(Action<bool> callback)
 		{
-			PlayGamesPlatform.Instance.ReportScore(mValue, mLbId, mMetadata, callback);
+			PlayGamesPlatform.Instance.ReportScore(this.mValue, this.mLbId, this.mMetadata, callback);
 		}
 	}
 }

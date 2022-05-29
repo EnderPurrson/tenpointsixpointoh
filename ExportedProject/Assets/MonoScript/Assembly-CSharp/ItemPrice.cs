@@ -1,5 +1,6 @@
-using System;
 using Rilisoft;
+using System;
+using System.Runtime.CompilerServices;
 
 public sealed class ItemPrice
 {
@@ -7,36 +8,54 @@ public sealed class ItemPrice
 
 	private readonly SaltedInt _price;
 
-	private static readonly Random _prng = new Random(268898311);
+	private readonly static Random _prng;
+
+	public string Currency
+	{
+		get;
+		private set;
+	}
 
 	public int Price
 	{
 		get
 		{
-			return _price.Value;
+			return this._price.Value;
 		}
 	}
 
-	public string Currency { get; private set; }
+	static ItemPrice()
+	{
+		ItemPrice._prng = new Random(268898311);
+	}
 
 	public ItemPrice(int price, string currency)
 	{
-		_price = new SaltedInt(_prng.Next(), price);
-		Currency = currency;
+		this._price = new SaltedInt(ItemPrice._prng.Next(), price);
+		this.Currency = currency;
 	}
 
 	public int CompareTo(ItemPrice p)
 	{
+		int num;
 		if (p == null)
 		{
 			return 1;
 		}
-		if (Currency.Equals(p.Currency))
+		if (this.Currency.Equals(p.Currency))
 		{
-			return Price - p.Price;
+			return this.Price - p.Price;
 		}
-		float num = 0f;
-		num = ((!Currency.Equals("Coins")) ? ((float)Price * 1.7f - (float)p.Price) : ((float)Price - (float)p.Price * 1.7f));
-		return (num > 0f) ? 1 : ((num < 0f) ? (-1) : 0);
+		float single = 0f;
+		single = (!this.Currency.Equals("Coins") ? (float)this.Price * 1.7f - (float)p.Price : (float)this.Price - (float)p.Price * 1.7f);
+		if (single <= 0f)
+		{
+			num = (single >= 0f ? 0 : -1);
+		}
+		else
+		{
+			num = 1;
+		}
+		return num;
 	}
 }

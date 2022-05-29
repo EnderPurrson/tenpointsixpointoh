@@ -1,6 +1,6 @@
+using Facebook.Unity;
 using System;
 using System.Runtime.CompilerServices;
-using Facebook.Unity;
 using UnityEngine;
 
 public class FriendsWindowStatusBar : MonoBehaviour
@@ -31,86 +31,219 @@ public class FriendsWindowStatusBar : MonoBehaviour
 
 	public UIButton clearAllInviteButton;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheE;
-
-	public bool IsFindFriendByIdStateActivate { get; set; }
-
-	private void Start()
+	public bool IsFindFriendByIdStateActivate
 	{
-		if (findFriendInput != null)
+		get;
+		set;
+	}
+
+	public FriendsWindowStatusBar()
+	{
+	}
+
+	private void BlockClickInWindow(bool enable)
+	{
+	}
+
+	private void InitFacebookRewardButtonText()
+	{
+		if (this.facebookButtonLabels == null || (int)this.facebookButtonLabels.Length == 0)
 		{
-			MyUIInput myUIInput = findFriendInput;
-			myUIInput.onKeyboardInter = (Action)Delegate.Combine(myUIInput.onKeyboardInter, new Action(OnClickFindFriendButton));
-			MyUIInput myUIInput2 = findFriendInput;
-			myUIInput2.onKeyboardCancel = (Action)Delegate.Combine(myUIInput2.onKeyboardCancel, new Action(OnClickCancelFindFriendButton));
+			return;
+		}
+		for (int i = 0; i < (int)this.facebookButtonLabels.Length; i++)
+		{
+			this.facebookButtonLabels[i].text = LocalizationStore.Get("Key_1582");
+		}
+	}
+
+	public void OnClickBackButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		FriendsWindowGUI.Instance.HideInterface();
+	}
+
+	public void OnClickCancelFindFriendButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		this.findFriendInput.@value = string.Empty;
+	}
+
+	public void OnClickChatTab()
+	{
+		this.SetupStateFacebookContainer(true);
+		this.findContainer.gameObject.SetActive(false);
+		this.inboxContainer.gameObject.SetActive(false);
+		this.warningMessageAboutLimit.gameObject.SetActive(false);
+		this.refreshButton.gameObject.SetActive(false);
+	}
+
+	public void OnClickClearAllButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		FriendsWindowController instance = FriendsWindowController.Instance;
+		if (instance == null)
+		{
+			return;
+		}
+		instance.OnClickClearAllInboxButton();
+	}
+
+	public void OnClickFacebookButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		if (!FacebookController.FacebookSupported)
+		{
+			return;
+		}
+		FacebookController facebookController = FacebookController.sharedController;
+		if (facebookController == null)
+		{
+			return;
+		}
+		this.BlockClickInWindow(true);
+		if (!FB.IsLoggedIn)
+		{
+			MainMenuController.DoMemoryConsumingTaskInEmptyScene(() => FacebookController.Login(new Action(this.OnFacebookLoginComplete), new Action(this.OnFacebookLoginCancel), "Friends", null), () => FacebookController.Login(null, null, "Friends", null));
+		}
+		else
+		{
+			facebookController.InvitePlayer(null);
+		}
+	}
+
+	public void OnClickFindFriendButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		FriendsWindowController instance = FriendsWindowController.Instance;
+		if (instance == null)
+		{
+			return;
+		}
+		if (string.IsNullOrEmpty(this.findFriendInput.@value))
+		{
+			return;
+		}
+		this.IsFindFriendByIdStateActivate = true;
+		base.StartCoroutine(instance.ShowResultFindPlayer(this.findFriendInput.@value));
+		this.findFriendInput.@value = string.Empty;
+	}
+
+	public void OnClickInboxFriendsTab(bool isInboxListFound, bool isFriendsMax)
+	{
+		this.SetupStateFacebookContainer((isFriendsMax ? true : isInboxListFound));
+		this.findContainer.gameObject.SetActive(false);
+		bool flag = (isFriendsMax ? false : isInboxListFound);
+		this.inboxContainer.gameObject.SetActive(flag);
+		if (flag && Application.platform != RuntimePlatform.IPhonePlayer)
+		{
+			this.sendMyIdButton.gameObject.SetActive(false);
+			this.clearAllInviteButton.transform.position = this.sendMyIdButton.transform.position;
+		}
+		this.refreshButton.gameObject.SetActive(false);
+	}
+
+	public void OnClickRefreshButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		FriendsController friendsController = FriendsController.sharedController;
+		if (friendsController == null)
+		{
+			return;
+		}
+		FriendsWindowController instance = FriendsWindowController.Instance;
+		if (instance == null)
+		{
+			return;
+		}
+		instance.ShowMessageBoxProcessingData();
+		this.refreshButton.isEnabled = false;
+		base.Invoke("SetEnableRefreshButton", Defs.timeBlockRefreshFriendDate);
+		friendsController.GetFriendsData(true);
+	}
+
+	public void OnClickSendMyIdButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		FriendsController.SendMyIdByEmail();
+	}
+
+	private void OnDestroy()
+	{
+		if (this.findFriendInput != null)
+		{
+			this.findFriendInput.onKeyboardInter -= new Action(this.OnClickFindFriendButton);
+			this.findFriendInput.onKeyboardCancel -= new Action(this.OnClickCancelFindFriendButton);
 		}
 	}
 
 	private void OnEnable()
 	{
-		string text = string.Format(LocalizationStore.Get("Key_1416"), Defs.maxCountFriend, Defs.maxCountFriend);
-		warningMessageAboutLimit.text = text;
-		findFriendInput.defaultText = LocalizationStore.Get("Key_1422");
-		InitFacebookRewardButtonText();
+		string str = string.Format(LocalizationStore.Get("Key_1416"), Defs.maxCountFriend, Defs.maxCountFriend);
+		this.warningMessageAboutLimit.text = str;
+		this.findFriendInput.defaultText = LocalizationStore.Get("Key_1422");
+		this.InitFacebookRewardButtonText();
 	}
 
-	private void OnDestroy()
+	private void OnFacebookLoginCancel()
 	{
-		if (findFriendInput != null)
+		this.BlockClickInWindow(false);
+	}
+
+	private void OnFacebookLoginComplete()
+	{
+		this.BlockClickInWindow(false);
+		this.SetupStateFacebookContainer(false);
+		FacebookController facebookController = FacebookController.sharedController;
+		if (facebookController != null)
 		{
-			MyUIInput myUIInput = findFriendInput;
-			myUIInput.onKeyboardInter = (Action)Delegate.Remove(myUIInput.onKeyboardInter, new Action(OnClickFindFriendButton));
-			MyUIInput myUIInput2 = findFriendInput;
-			myUIInput2.onKeyboardCancel = (Action)Delegate.Remove(myUIInput2.onKeyboardCancel, new Action(OnClickCancelFindFriendButton));
+			facebookController.InputFacebookFriends(new Action(this.OnSuccsessGetFacebookFriendList), false);
 		}
 	}
 
-	private void InitFacebookRewardButtonText()
+	private void OnSuccsessGetFacebookFriendList()
 	{
-		if (facebookButtonLabels != null && facebookButtonLabels.Length != 0)
+		FriendsController friendsController = FriendsController.sharedController;
+		if (friendsController == null)
 		{
-			for (int i = 0; i < facebookButtonLabels.Length; i++)
-			{
-				facebookButtonLabels[i].text = LocalizationStore.Get("Key_1582");
-			}
+			return;
 		}
+		friendsController.DownloadDataAboutPossibleFriends();
+		FriendsWindowController.Instance.NeedUpdateCurrentFriendsList = true;
+	}
+
+	private void SetEnableRefreshButton()
+	{
+		this.refreshButton.isEnabled = true;
 	}
 
 	private void SetFacebookNotRewardButtonText(string text)
 	{
-		if (facebookInviteLabels != null && facebookInviteLabels.Length != 0)
+		if (this.facebookInviteLabels == null || (int)this.facebookInviteLabels.Length == 0)
 		{
-			for (int i = 0; i < facebookInviteLabels.Length; i++)
-			{
-				facebookInviteLabels[i].text = text;
-			}
+			return;
 		}
-	}
-
-	private void SetVisibleFacebookButtonTextByState(bool needFullLabel)
-	{
-		if (facebookButtonLabels.Length != 0 && facebookInviteLabels.Length != 0)
+		for (int i = 0; i < (int)this.facebookInviteLabels.Length; i++)
 		{
-			facebookButtonLabels[0].gameObject.SetActive(!needFullLabel);
-			facebookInviteLabels[0].gameObject.SetActive(needFullLabel);
+			this.facebookInviteLabels[i].text = text;
 		}
 	}
 
 	private void SetTextFacebookButton(bool isLogin, bool isRewardTake)
 	{
-		SetVisibleFacebookButtonTextByState(isLogin || isRewardTake);
-		if (isRewardTake)
+		this.SetVisibleFacebookButtonTextByState((isLogin ? true : isRewardTake));
+		if (!isRewardTake)
 		{
-			facebookRewardLabelContainer.gameObject.SetActive(false);
-			string facebookNotRewardButtonText = (isLogin ? LocalizationStore.Get("Key_1437") : LocalizationStore.Get("Key_1582"));
-			SetFacebookNotRewardButtonText(facebookNotRewardButtonText);
-			return;
+			this.facebookRewardLabelContainer.gameObject.SetActive(true);
+			for (int i = 0; i < (int)this.facebookRewardLabels.Length; i++)
+			{
+				this.facebookRewardLabels[i].text = string.Format("+{0}", 10);
+			}
 		}
-		facebookRewardLabelContainer.gameObject.SetActive(true);
-		for (int i = 0; i < facebookRewardLabels.Length; i++)
+		else
 		{
-			facebookRewardLabels[i].text = string.Format("+{0}", 10);
+			this.facebookRewardLabelContainer.gameObject.SetActive(false);
+			this.SetFacebookNotRewardButtonText((isLogin ? LocalizationStore.Get("Key_1437") : LocalizationStore.Get("Key_1582")));
 		}
 	}
 
@@ -118,12 +251,10 @@ public class FriendsWindowStatusBar : MonoBehaviour
 	{
 		if (FB.IsLoggedIn)
 		{
-			messageFacebookLabel.text = LocalizationStore.Get("Key_1413");
+			this.messageFacebookLabel.text = LocalizationStore.Get("Key_1413");
+			return;
 		}
-		else
-		{
-			messageFacebookLabel.text = LocalizationStore.Get("Key_1415");
-		}
+		this.messageFacebookLabel.text = LocalizationStore.Get("Key_1415");
 	}
 
 	private void SetupStateFacebookContainer(bool needHide)
@@ -134,183 +265,49 @@ public class FriendsWindowStatusBar : MonoBehaviour
 		}
 		if (needHide)
 		{
-			facebookContainer.gameObject.SetActive(false);
+			this.facebookContainer.gameObject.SetActive(false);
 			return;
 		}
-		bool isRewardTake = Storager.getInt(Defs.IsFacebookLoginRewardaGained, true) == 1;
-		facebookContainer.gameObject.SetActive(true);
-		SetTextFacebookButton(FB.IsLoggedIn, isRewardTake);
+		bool num = Storager.getInt(Defs.IsFacebookLoginRewardaGained, true) == 1;
+		this.facebookContainer.gameObject.SetActive(true);
+		this.SetTextFacebookButton(FB.IsLoggedIn, num);
 	}
 
-	public void OnClickBackButton()
+	private void SetVisibleFacebookButtonTextByState(bool needFullLabel)
 	{
-		ButtonClickSound.TryPlayClick();
-		FriendsWindowGUI.Instance.HideInterface();
-	}
-
-	private void OnSuccsessGetFacebookFriendList()
-	{
-		FriendsController sharedController = FriendsController.sharedController;
-		if (!(sharedController == null))
-		{
-			sharedController.DownloadDataAboutPossibleFriends();
-			FriendsWindowController.Instance.NeedUpdateCurrentFriendsList = true;
-		}
-	}
-
-	private void OnFacebookLoginComplete()
-	{
-		BlockClickInWindow(false);
-		SetupStateFacebookContainer(false);
-		FacebookController sharedController = FacebookController.sharedController;
-		if (sharedController != null)
-		{
-			sharedController.InputFacebookFriends(OnSuccsessGetFacebookFriendList);
-		}
-	}
-
-	private void OnFacebookLoginCancel()
-	{
-		BlockClickInWindow(false);
-	}
-
-	private void BlockClickInWindow(bool enable)
-	{
-	}
-
-	public void OnClickFacebookButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		if (!FacebookController.FacebookSupported)
+		if ((int)this.facebookButtonLabels.Length == 0 || (int)this.facebookInviteLabels.Length == 0)
 		{
 			return;
 		}
-		FacebookController sharedController = FacebookController.sharedController;
-		if (sharedController == null)
+		this.facebookButtonLabels[0].gameObject.SetActive(!needFullLabel);
+		this.facebookInviteLabels[0].gameObject.SetActive(needFullLabel);
+	}
+
+	private void Start()
+	{
+		if (this.findFriendInput != null)
 		{
-			return;
+			this.findFriendInput.onKeyboardInter += new Action(this.OnClickFindFriendButton);
+			this.findFriendInput.onKeyboardCancel += new Action(this.OnClickCancelFindFriendButton);
 		}
-		BlockClickInWindow(true);
-		if (FB.IsLoggedIn)
-		{
-			sharedController.InvitePlayer();
-			return;
-		}
-		Action action = _003COnClickFacebookButton_003Em__2AA;
-		if (_003C_003Ef__am_0024cacheE == null)
-		{
-			_003C_003Ef__am_0024cacheE = _003COnClickFacebookButton_003Em__2AB;
-		}
-		MainMenuController.DoMemoryConsumingTaskInEmptyScene(action, _003C_003Ef__am_0024cacheE);
-	}
-
-	public void OnClickFindFriendButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		FriendsWindowController instance = FriendsWindowController.Instance;
-		if (!(instance == null) && !string.IsNullOrEmpty(findFriendInput.value))
-		{
-			IsFindFriendByIdStateActivate = true;
-			StartCoroutine(instance.ShowResultFindPlayer(findFriendInput.value));
-			findFriendInput.value = string.Empty;
-		}
-	}
-
-	public void OnClickCancelFindFriendButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		findFriendInput.value = string.Empty;
-	}
-
-	public void OnClickClearAllButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		FriendsWindowController instance = FriendsWindowController.Instance;
-		if (!(instance == null))
-		{
-			instance.OnClickClearAllInboxButton();
-		}
-	}
-
-	public void OnClickSendMyIdButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		FriendsController.SendMyIdByEmail();
-	}
-
-	public void OnClickRefreshButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		FriendsController sharedController = FriendsController.sharedController;
-		if (!(sharedController == null))
-		{
-			FriendsWindowController instance = FriendsWindowController.Instance;
-			if (!(instance == null))
-			{
-				instance.ShowMessageBoxProcessingData();
-				refreshButton.isEnabled = false;
-				Invoke("SetEnableRefreshButton", Defs.timeBlockRefreshFriendDate);
-				sharedController.GetFriendsData(true);
-			}
-		}
-	}
-
-	private void SetEnableRefreshButton()
-	{
-		refreshButton.isEnabled = true;
-	}
-
-	public void UpdateFriendListState(bool isFriendsMax)
-	{
-		SetupStateFacebookContainer(isFriendsMax);
-		warningMessageAboutLimit.gameObject.SetActive(isFriendsMax);
-		findContainer.gameObject.SetActive(false);
-		inboxContainer.gameObject.SetActive(false);
-		refreshButton.gameObject.SetActive(true);
 	}
 
 	public void UpdateFindFriendsState(bool isFriendsMax)
 	{
-		IsFindFriendByIdStateActivate = false;
-		SetupStateFacebookContainer(true);
-		warningMessageAboutLimit.gameObject.SetActive(isFriendsMax);
-		findContainer.gameObject.SetActive(!isFriendsMax);
-		inboxContainer.gameObject.SetActive(false);
-		refreshButton.gameObject.SetActive(false);
+		this.IsFindFriendByIdStateActivate = false;
+		this.SetupStateFacebookContainer(true);
+		this.warningMessageAboutLimit.gameObject.SetActive(isFriendsMax);
+		this.findContainer.gameObject.SetActive(!isFriendsMax);
+		this.inboxContainer.gameObject.SetActive(false);
+		this.refreshButton.gameObject.SetActive(false);
 	}
 
-	public void OnClickInboxFriendsTab(bool isInboxListFound, bool isFriendsMax)
+	public void UpdateFriendListState(bool isFriendsMax)
 	{
-		SetupStateFacebookContainer(isFriendsMax || isInboxListFound);
-		findContainer.gameObject.SetActive(false);
-		bool flag = !isFriendsMax && isInboxListFound;
-		inboxContainer.gameObject.SetActive(flag);
-		if (flag && Application.platform != RuntimePlatform.IPhonePlayer)
-		{
-			sendMyIdButton.gameObject.SetActive(false);
-			clearAllInviteButton.transform.position = sendMyIdButton.transform.position;
-		}
-		refreshButton.gameObject.SetActive(false);
-	}
-
-	public void OnClickChatTab()
-	{
-		SetupStateFacebookContainer(true);
-		findContainer.gameObject.SetActive(false);
-		inboxContainer.gameObject.SetActive(false);
-		warningMessageAboutLimit.gameObject.SetActive(false);
-		refreshButton.gameObject.SetActive(false);
-	}
-
-	[CompilerGenerated]
-	private void _003COnClickFacebookButton_003Em__2AA()
-	{
-		FacebookController.Login(OnFacebookLoginComplete, OnFacebookLoginCancel, "Friends");
-	}
-
-	[CompilerGenerated]
-	private static void _003COnClickFacebookButton_003Em__2AB()
-	{
-		FacebookController.Login(null, null, "Friends");
+		this.SetupStateFacebookContainer(isFriendsMax);
+		this.warningMessageAboutLimit.gameObject.SetActive(isFriendsMax);
+		this.findContainer.gameObject.SetActive(false);
+		this.inboxContainer.gameObject.SetActive(false);
+		this.refreshButton.gameObject.SetActive(true);
 	}
 }

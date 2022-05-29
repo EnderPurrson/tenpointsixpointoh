@@ -1,4 +1,5 @@
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
@@ -8,27 +9,27 @@ namespace GooglePlayGames.BasicApi.Nearby
 
 		private readonly byte[] mPayload;
 
-		public EndpointDetails RemoteEndpoint
-		{
-			get
-			{
-				return mRemoteEndpoint;
-			}
-		}
-
 		public byte[] Payload
 		{
 			get
 			{
-				return mPayload;
+				return this.mPayload;
+			}
+		}
+
+		public EndpointDetails RemoteEndpoint
+		{
+			get
+			{
+				return this.mRemoteEndpoint;
 			}
 		}
 
 		public ConnectionRequest(string remoteEndpointId, string remoteDeviceId, string remoteEndpointName, string serviceId, byte[] payload)
 		{
 			Logger.d("Constructing ConnectionRequest");
-			mRemoteEndpoint = new EndpointDetails(remoteEndpointId, remoteDeviceId, remoteEndpointName, serviceId);
-			mPayload = Misc.CheckNotNull(payload);
+			this.mRemoteEndpoint = new EndpointDetails(remoteEndpointId, remoteDeviceId, remoteEndpointName, serviceId);
+			this.mPayload = Misc.CheckNotNull<byte[]>(payload);
 		}
 	}
 }

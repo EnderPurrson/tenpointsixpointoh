@@ -1,66 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AGSPlayerClient : MonoBehaviour
 {
 	private static AmazonJavaWrapper JavaObject;
 
-	private static readonly string PROXY_CLASS_NAME;
-
-	public static event Action<AGSRequestPlayerResponse> RequestLocalPlayerCompleted;
-
-	public static event Action<AGSRequestFriendIdsResponse> RequestFriendIdsCompleted;
-
-	public static event Action<AGSRequestBatchFriendsResponse> RequestBatchFriendsCompleted;
-
-	public static event Action<bool> OnSignedInStateChangedEvent;
-
-	[Obsolete("PlayerReceivedEvent is deprecated. Use RequestLocalPlayerCompleted instead.")]
-	public static event Action<AGSPlayer> PlayerReceivedEvent;
-
-	[Obsolete("PlayerFailedEvent is deprecated. Use RequestLocalPlayerCompleted instead.")]
-	public static event Action<string> PlayerFailedEvent;
+	private readonly static string PROXY_CLASS_NAME;
 
 	static AGSPlayerClient()
 	{
-		PROXY_CLASS_NAME = "com.amazon.ags.api.unity.PlayerClientProxyImpl";
-		JavaObject = new AmazonJavaWrapper();
-		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(PROXY_CLASS_NAME))
+		AGSPlayerClient.PROXY_CLASS_NAME = "com.amazon.ags.api.unity.PlayerClientProxyImpl";
+		AGSPlayerClient.JavaObject = new AmazonJavaWrapper();
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(AGSPlayerClient.PROXY_CLASS_NAME))
 		{
-			if (androidJavaClass.GetRawClass() == IntPtr.Zero)
+			if (androidJavaClass.GetRawClass() != IntPtr.Zero)
 			{
-				AGSClient.LogGameCircleWarning("No java class " + PROXY_CLASS_NAME + " present, can't use AGSPlayerClient");
+				AGSPlayerClient.JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
 			}
 			else
 			{
-				JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
+				AGSClient.LogGameCircleWarning(string.Concat("No java class ", AGSPlayerClient.PROXY_CLASS_NAME, " present, can't use AGSPlayerClient"));
 			}
 		}
 	}
 
-	public static void RequestLocalPlayer(int userData = 0)
+	public AGSPlayerClient()
 	{
-		JavaObject.Call("requestLocalPlayer", userData);
-	}
-
-	public static void RequestFriendIds(int userData = 0)
-	{
-		JavaObject.Call("requestLocalPlayerFriends", userData);
-	}
-
-	public static void RequestBatchFriends(List<string> friendIds, int userData = 0)
-	{
-		string text = MiniJSON.jsonEncode(friendIds.ToArray());
-		JavaObject.Call("requestBatchFriends", text, userData);
-	}
-
-	public static void LocalPlayerFriendsComplete(string json)
-	{
-		if (AGSPlayerClient.RequestFriendIdsCompleted != null)
-		{
-			AGSPlayerClient.RequestFriendIdsCompleted(AGSRequestFriendIdsResponse.FromJSON(json));
-		}
 	}
 
 	public static void BatchFriendsRequestComplete(string json)
@@ -71,16 +38,24 @@ public class AGSPlayerClient : MonoBehaviour
 		}
 	}
 
-	public static void PlayerReceived(string json)
+	public static bool IsSignedIn()
 	{
-		AGSRequestPlayerResponse aGSRequestPlayerResponse = AGSRequestPlayerResponse.FromJSON(json);
-		if (!aGSRequestPlayerResponse.IsError() && AGSPlayerClient.PlayerReceivedEvent != null)
+		return AGSPlayerClient.JavaObject.Call<bool>("isSignedIn", new object[0]);
+	}
+
+	public static void LocalPlayerFriendsComplete(string json)
+	{
+		if (AGSPlayerClient.RequestFriendIdsCompleted != null)
 		{
-			AGSPlayerClient.PlayerReceivedEvent(aGSRequestPlayerResponse.player);
+			AGSPlayerClient.RequestFriendIdsCompleted(AGSRequestFriendIdsResponse.FromJSON(json));
 		}
-		if (AGSPlayerClient.RequestLocalPlayerCompleted != null)
+	}
+
+	public static void OnSignedInStateChanged(bool isSignedIn)
+	{
+		if (AGSPlayerClient.OnSignedInStateChangedEvent != null)
 		{
-			AGSPlayerClient.RequestLocalPlayerCompleted(aGSRequestPlayerResponse);
+			AGSPlayerClient.OnSignedInStateChangedEvent(isSignedIn);
 		}
 	}
 
@@ -97,16 +72,46 @@ public class AGSPlayerClient : MonoBehaviour
 		}
 	}
 
-	public static bool IsSignedIn()
+	public static void PlayerReceived(string json)
 	{
-		return JavaObject.Call<bool>("isSignedIn", new object[0]);
-	}
-
-	public static void OnSignedInStateChanged(bool isSignedIn)
-	{
-		if (AGSPlayerClient.OnSignedInStateChangedEvent != null)
+		AGSRequestPlayerResponse aGSRequestPlayerResponse = AGSRequestPlayerResponse.FromJSON(json);
+		if (!aGSRequestPlayerResponse.IsError() && AGSPlayerClient.PlayerReceivedEvent != null)
 		{
-			AGSPlayerClient.OnSignedInStateChangedEvent(isSignedIn);
+			AGSPlayerClient.PlayerReceivedEvent(aGSRequestPlayerResponse.player);
+		}
+		if (AGSPlayerClient.RequestLocalPlayerCompleted != null)
+		{
+			AGSPlayerClient.RequestLocalPlayerCompleted(aGSRequestPlayerResponse);
 		}
 	}
+
+	public static void RequestBatchFriends(List<string> friendIds, int userData = 0)
+	{
+		string str = MiniJSON.jsonEncode(friendIds.ToArray());
+		AGSPlayerClient.JavaObject.Call("requestBatchFriends", new object[] { str, userData });
+	}
+
+	public static void RequestFriendIds(int userData = 0)
+	{
+		AGSPlayerClient.JavaObject.Call("requestLocalPlayerFriends", new object[] { userData });
+	}
+
+	public static void RequestLocalPlayer(int userData = 0)
+	{
+		AGSPlayerClient.JavaObject.Call("requestLocalPlayer", new object[] { userData });
+	}
+
+	public static event Action<bool> OnSignedInStateChangedEvent;
+
+	[Obsolete("PlayerFailedEvent is deprecated. Use RequestLocalPlayerCompleted instead.")]
+	public static event Action<string> PlayerFailedEvent;
+
+	[Obsolete("PlayerReceivedEvent is deprecated. Use RequestLocalPlayerCompleted instead.")]
+	public static event Action<AGSPlayer> PlayerReceivedEvent;
+
+	public static event Action<AGSRequestBatchFriendsResponse> RequestBatchFriendsCompleted;
+
+	public static event Action<AGSRequestFriendIdsResponse> RequestFriendIdsCompleted;
+
+	public static event Action<AGSRequestPlayerResponse> RequestLocalPlayerCompleted;
 }

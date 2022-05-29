@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,35 +11,35 @@ public static class GearManager
 
 	public const int NumberOfGearInPack = 3;
 
-	public static readonly string InvisibilityPotion = "InvisibilityPotion";
+	public readonly static string InvisibilityPotion;
 
-	public static readonly string Grenade = "GrenadeID";
+	public readonly static string Grenade;
 
-	public static readonly string Like = "LikeID";
+	public readonly static string Like;
 
-	public static readonly string Jetpack = "Jetpack";
+	public readonly static string Jetpack;
 
-	public static readonly string Turret = "Turret";
+	public readonly static string Turret;
 
-	public static readonly string Mech = "Mech";
+	public readonly static string Mech;
 
-	public static readonly string BigHeadPotion = "BigHeadPotion";
+	public readonly static string BigHeadPotion;
 
-	public static readonly string Wings = "Wings";
+	public readonly static string Wings;
 
-	public static readonly string Bear = "Bear";
+	public readonly static string Bear;
 
-	public static readonly string MusicBox = "MusicBox";
+	public readonly static string MusicBox;
 
-	public static readonly string[] Gear = new string[5] { Grenade, InvisibilityPotion, Jetpack, Turret, Mech };
+	public readonly static string[] Gear;
 
-	public static readonly string[] DaterGear = new string[4] { BigHeadPotion, Wings, MusicBox, Bear };
+	public readonly static string[] DaterGear;
 
 	public static List<string> AllGear
 	{
 		get
 		{
-			return Gear.Concat(DaterGear).ToList();
+			return GearManager.Gear.Concat<string>(GearManager.DaterGear).ToList<string>();
 		}
 	}
 
@@ -46,7 +47,7 @@ public static class GearManager
 	{
 		get
 		{
-			return ExpController.LevelsForTiers.Length - 1;
+			return (int)ExpController.LevelsForTiers.Length - 1;
 		}
 	}
 
@@ -66,28 +67,44 @@ public static class GearManager
 		}
 	}
 
+	static GearManager()
+	{
+		GearManager.InvisibilityPotion = "InvisibilityPotion";
+		GearManager.Grenade = "GrenadeID";
+		GearManager.Like = "LikeID";
+		GearManager.Jetpack = "Jetpack";
+		GearManager.Turret = "Turret";
+		GearManager.Mech = "Mech";
+		GearManager.BigHeadPotion = "BigHeadPotion";
+		GearManager.Wings = "Wings";
+		GearManager.Bear = "Bear";
+		GearManager.MusicBox = "MusicBox";
+		GearManager.Gear = new string[] { GearManager.Grenade, GearManager.InvisibilityPotion, GearManager.Jetpack, GearManager.Turret, GearManager.Mech };
+		GearManager.DaterGear = new string[] { GearManager.BigHeadPotion, GearManager.Wings, GearManager.MusicBox, GearManager.Bear };
+	}
+
 	public static string AnalyticsIDForOneItemOfGear(string itemName, bool changeGrenade = false)
 	{
 		if (itemName == null)
 		{
 			return string.Empty;
 		}
-		string text = HolderQuantityForID(itemName);
-		if (text == null || !AllGear.Contains(text))
+		string str = GearManager.HolderQuantityForID(itemName);
+		if (str == null || !GearManager.AllGear.Contains(str))
 		{
 			return string.Empty;
 		}
-		int num = CurrentNumberOfUphradesForGear(text);
-		string text2 = text;
-		if (changeGrenade && text.Equals(Grenade) && num == 0)
+		int num = GearManager.CurrentNumberOfUphradesForGear(str);
+		string str1 = str;
+		if (changeGrenade && str.Equals(GearManager.Grenade) && num == 0)
 		{
-			text2 = "Grenade";
+			str1 = "Grenade";
 		}
 		if (num > 0)
 		{
-			text2 = text2 + "_" + num;
+			str1 = string.Concat(str1, "_", num);
 		}
-		return text2;
+		return str1;
 	}
 
 	public static int CurrentNumberOfUphradesForGear(string id)
@@ -96,73 +113,41 @@ public static class GearManager
 		{
 			return 0;
 		}
-		int a = 0;
+		int ourTier = 0;
 		if (ExpController.Instance != null)
 		{
-			a = ExpController.Instance.OurTier;
+			ourTier = ExpController.Instance.OurTier;
 		}
-		return Mathf.Min(a, NumOfGearUpgrades);
-	}
-
-	public static string OneItemIDForGear(string id, int i)
-	{
-		if (id == null)
-		{
-			return null;
-		}
-		return id + OneItemSuffix + i;
-	}
-
-	public static string UpgradeIDForGear(string id, int i)
-	{
-		if (id == null)
-		{
-			return null;
-		}
-		return id + UpgradeSuffix + i;
+		return Mathf.Min(ourTier, GearManager.NumOfGearUpgrades);
 	}
 
 	public static string HolderQuantityForID(string id)
 	{
+		string str;
 		if (id == null)
 		{
 			return string.Empty;
 		}
-		foreach (string item in AllGear)
+		List<string>.Enumerator enumerator = GearManager.AllGear.GetEnumerator();
+		try
 		{
-			if (ItemIsGear(id, item))
+			while (enumerator.MoveNext())
 			{
-				return item;
+				string current = enumerator.Current;
+				if (!GearManager.ItemIsGear(id, current))
+				{
+					continue;
+				}
+				str = current;
+				return str;
 			}
+			return id;
 		}
-		return id;
-	}
-
-	public static int ItemsInPackForGear(string id)
-	{
-		return (id == null || !id.Equals(Grenade)) ? 3 : 5;
-	}
-
-	public static int MaxCountForGear(string id)
-	{
-		return (id == null || !id.Equals(Grenade)) ? 1000000 : 10;
-	}
-
-	public static string NameForUpgrade(string item, int num)
-	{
-		return item + UpgradeSuffix + num;
-	}
-
-	private static bool ItemIsGear(string item, string gear)
-	{
-		if (gear == null || item == null)
+		finally
 		{
-			return false;
+			((IDisposable)(object)enumerator).Dispose();
 		}
-		string text = gear + UpgradeSuffix;
-		string text2 = gear + OneItemSuffix;
-		int result;
-		return item == gear || (item.StartsWith(text) && item.Length > text.Length && int.TryParse(string.Empty + item[text.Length], out result)) || (item.StartsWith(text2) && item.Length > text2.Length && int.TryParse(string.Empty + item[text2.Length], out result));
+		return str;
 	}
 
 	public static bool IsItemGear(string tag)
@@ -171,13 +156,67 @@ public static class GearManager
 		{
 			return false;
 		}
-		for (int i = 0; i < AllGear.Count; i++)
+		for (int i = 0; i < GearManager.AllGear.Count; i++)
 		{
-			if (ItemIsGear(tag, AllGear[i]))
+			if (GearManager.ItemIsGear(tag, GearManager.AllGear[i]))
 			{
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private static bool ItemIsGear(string item, string gear)
+	{
+		int num;
+		bool flag;
+		if (gear == null || item == null)
+		{
+			return false;
+		}
+		string str = string.Concat(gear, GearManager.UpgradeSuffix);
+		string str1 = string.Concat(gear, GearManager.OneItemSuffix);
+		if (item == gear || item.StartsWith(str) && item.Length > str.Length && int.TryParse(string.Concat(string.Empty, item[str.Length]), out num))
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = (!item.StartsWith(str1) || item.Length <= str1.Length ? false : int.TryParse(string.Concat(string.Empty, item[str1.Length]), out num));
+		}
+		return flag;
+	}
+
+	public static int ItemsInPackForGear(string id)
+	{
+		return (id == null || !id.Equals(GearManager.Grenade) ? 3 : 5);
+	}
+
+	public static int MaxCountForGear(string id)
+	{
+		return (id == null || !id.Equals(GearManager.Grenade) ? 1000000 : 10);
+	}
+
+	public static string NameForUpgrade(string item, int num)
+	{
+		return string.Concat(item, GearManager.UpgradeSuffix, num);
+	}
+
+	public static string OneItemIDForGear(string id, int i)
+	{
+		if (id == null)
+		{
+			return null;
+		}
+		return string.Concat(id, GearManager.OneItemSuffix, i);
+	}
+
+	public static string UpgradeIDForGear(string id, int i)
+	{
+		if (id == null)
+		{
+			return null;
+		}
+		return string.Concat(id, GearManager.UpgradeSuffix, i);
 	}
 }

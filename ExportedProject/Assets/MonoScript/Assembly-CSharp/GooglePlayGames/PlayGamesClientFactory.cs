@@ -2,12 +2,17 @@ using GooglePlayGames.Android;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.Native;
 using GooglePlayGames.OurUtils;
+using System;
 using UnityEngine;
 
 namespace GooglePlayGames
 {
 	internal class PlayGamesClientFactory
 	{
+		public PlayGamesClientFactory()
+		{
+		}
+
 		internal static IPlayGamesClient GetPlatformPlayGamesClient(PlayGamesClientConfiguration config)
 		{
 			if (Application.isEditor)

@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class TweenOrthoSize : UITweener
 {
-	public float from = 1f;
+	public float @from = 1f;
 
 	public float to = 1f;
 
@@ -15,11 +15,11 @@ public class TweenOrthoSize : UITweener
 	{
 		get
 		{
-			if (mCam == null)
+			if (this.mCam == null)
 			{
-				mCam = GetComponent<Camera>();
+				this.mCam = base.GetComponent<Camera>();
 			}
-			return mCam;
+			return this.mCam;
 		}
 	}
 
@@ -28,35 +28,34 @@ public class TweenOrthoSize : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public float value
+	public float @value
 	{
 		get
 		{
-			return cachedCamera.orthographicSize;
+			return this.cachedCamera.orthographicSize;
 		}
 		set
 		{
-			cachedCamera.orthographicSize = value;
+			this.cachedCamera.orthographicSize = value;
 		}
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
+	public TweenOrthoSize()
 	{
-		value = from * (1f - factor) + to * factor;
 	}
 
 	public static TweenOrthoSize Begin(GameObject go, float duration, float to)
 	{
 		TweenOrthoSize tweenOrthoSize = UITweener.Begin<TweenOrthoSize>(go, duration);
-		tweenOrthoSize.from = tweenOrthoSize.value;
+		tweenOrthoSize.@from = tweenOrthoSize.@value;
 		tweenOrthoSize.to = to;
 		if (duration <= 0f)
 		{
@@ -66,13 +65,18 @@ public class TweenOrthoSize : UITweener
 		return tweenOrthoSize;
 	}
 
-	public override void SetStartToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		from = value;
+		this.@value = this.@from * (1f - factor) + this.to * factor;
 	}
 
 	public override void SetEndToCurrentValue()
 	{
-		to = value;
+		this.to = this.@value;
+	}
+
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

@@ -1,13 +1,11 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class RanksTapReceiver : MonoBehaviour
 {
-	public static event Action RanksClicked;
-
-	private void Start()
+	public RanksTapReceiver()
 	{
-		base.gameObject.SetActive(Defs.isMulti);
 	}
 
 	private void OnClick()
@@ -18,4 +16,11 @@ public class RanksTapReceiver : MonoBehaviour
 			RanksTapReceiver.RanksClicked();
 		}
 	}
+
+	private void Start()
+	{
+		base.gameObject.SetActive(Defs.isMulti);
+	}
+
+	public static event Action RanksClicked;
 }

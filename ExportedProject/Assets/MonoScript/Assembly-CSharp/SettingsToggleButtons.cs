@@ -1,6 +1,7 @@
-using System;
-using System.Runtime.CompilerServices;
 using Rilisoft;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class SettingsToggleButtons : MonoBehaviour
@@ -13,85 +14,94 @@ public sealed class SettingsToggleButtons : MonoBehaviour
 
 	private UIToggle _toggleVal;
 
-	public bool IsChecked
-	{
-		get
-		{
-			if (_toggle != null)
-			{
-				return _toggle.value;
-			}
-			return _isChecked;
-		}
-		set
-		{
-			if (_toggle != null)
-			{
-				_toggle.value = value;
-				return;
-			}
-			_isChecked = value;
-			offButton.isEnabled = _isChecked;
-			onButton.isEnabled = !_isChecked;
-			EventHandler<ToggleButtonEventArgs> clicked = this.Clicked;
-			if (clicked != null)
-			{
-				clicked(this, new ToggleButtonEventArgs
-				{
-					IsChecked = _isChecked
-				});
-			}
-		}
-	}
+	private EventHandler<ToggleButtonEventArgs> Clicked;
 
 	private UIToggle _toggle
 	{
 		get
 		{
-			if (_toggleVal == null)
+			if (this._toggleVal == null)
 			{
-				_toggleVal = base.gameObject.GetComponentInChildren<UIToggle>(true);
-				if (_toggleVal != null)
+				this._toggleVal = base.gameObject.GetComponentInChildren<UIToggle>(true);
+				if (this._toggleVal != null)
 				{
-					_toggleVal.onChange.Add(new EventDelegate(OnValueChanged));
+					this._toggleVal.onChange.Add(new EventDelegate(new EventDelegate.Callback(this.OnValueChanged)));
 				}
 			}
-			return _toggleVal;
+			return this._toggleVal;
 		}
 	}
 
-	public event EventHandler<ToggleButtonEventArgs> Clicked;
+	public bool IsChecked
+	{
+		get
+		{
+			if (this._toggle == null)
+			{
+				return this._isChecked;
+			}
+			return this._toggle.@value;
+		}
+		set
+		{
+			if (this._toggle == null)
+			{
+				this._isChecked = value;
+				this.offButton.isEnabled = this._isChecked;
+				this.onButton.isEnabled = !this._isChecked;
+				EventHandler<ToggleButtonEventArgs> clicked = this.Clicked;
+				if (clicked != null)
+				{
+					clicked(this, new ToggleButtonEventArgs()
+					{
+						IsChecked = this._isChecked
+					});
+				}
+			}
+			else
+			{
+				this._toggle.@value = value;
+			}
+		}
+	}
+
+	public SettingsToggleButtons()
+	{
+	}
 
 	private void OnValueChanged()
 	{
 		EventHandler<ToggleButtonEventArgs> clicked = this.Clicked;
 		if (clicked != null)
 		{
-			clicked(this, new ToggleButtonEventArgs
+			ToggleButtonEventArgs toggleButtonEventArg = new ToggleButtonEventArgs()
 			{
-				IsChecked = _toggle.value
-			});
+				IsChecked = this._toggle.@value
+			};
+			clicked(this, toggleButtonEventArg);
 		}
 	}
 
 	private void Start()
 	{
-		if (_toggle == null)
+		if (this._toggle == null)
 		{
-			onButton.GetComponent<ButtonHandler>().Clicked += _003CStart_003Em__44B;
-			offButton.GetComponent<ButtonHandler>().Clicked += _003CStart_003Em__44C;
+			this.onButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.IsChecked = true);
+			this.offButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.IsChecked = false);
 		}
 	}
 
-	[CompilerGenerated]
-	private void _003CStart_003Em__44B(object sender, EventArgs e)
+	public event EventHandler<ToggleButtonEventArgs> Clicked
 	{
-		IsChecked = true;
-	}
-
-	[CompilerGenerated]
-	private void _003CStart_003Em__44C(object sender, EventArgs e)
-	{
-		IsChecked = false;
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.Clicked += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.Clicked -= value;
+		}
 	}
 }

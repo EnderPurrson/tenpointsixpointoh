@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 [Serializable]
@@ -27,25 +27,29 @@ public class SlotInfo
 	{
 		get
 		{
-			if (isActiveEvent)
+			if (this.isActiveEvent)
 			{
-				return _countGift.Value;
+				return this._countGift.Value;
 			}
-			return gift.Count.Value;
+			return this.gift.Count.Value;
 		}
 		set
 		{
-			_countGift.Value = value;
+			this._countGift.Value = value;
 		}
+	}
+
+	public SlotInfo()
+	{
 	}
 
 	public bool CheckAvaliableGift()
 	{
-		if ((GiftController.Instance != null && gift == null) || category == null || !category.AvailableGift(gift.Id, category.Type))
+		if ((!(GiftController.Instance != null) || this.gift != null) && this.category != null && this.category.AvailableGift(this.gift.Id, this.category.Type))
 		{
-			GiftController.Instance.UpdateSlot(this);
-			return true;
+			return false;
 		}
-		return false;
+		GiftController.Instance.UpdateSlot(this);
+		return true;
 	}
 }

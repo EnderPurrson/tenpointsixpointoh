@@ -38,20 +38,25 @@ public class SpawnMonster : MonoBehaviour
 	{
 		get
 		{
-			return shouldMove;
+			return this.shouldMove;
 		}
 		set
 		{
-			if (shouldMove != value)
+			if (this.shouldMove == value)
 			{
-				shouldMove = value;
-				if (shouldMove)
-				{
-					ResetPars();
-					SendMessage("Walk");
-				}
+				return;
+			}
+			this.shouldMove = value;
+			if (this.shouldMove)
+			{
+				this.ResetPars();
+				base.SendMessage("Walk");
 			}
 		}
+	}
+
+	public SpawnMonster()
+	{
 	}
 
 	private void Awake()
@@ -62,52 +67,59 @@ public class SpawnMonster : MonoBehaviour
 		}
 	}
 
+	private void ResetPars()
+	{
+		this._targetIndex = 0;
+		this._lastTimeGo = -1f;
+	}
+
 	private void Start()
 	{
-		_nma = GetComponent<NavMeshAgent>();
+		this._nma = base.GetComponent<NavMeshAgent>();
 		IEnumerator enumerator = base.transform.GetEnumerator();
 		try
 		{
 			if (enumerator.MoveNext())
 			{
-				Transform transform = (Transform)enumerator.Current;
-				_modelChild = transform.gameObject;
+				this._modelChild = ((Transform)enumerator.Current).gameObject;
 			}
 		}
 		finally
 		{
 			IDisposable disposable = enumerator as IDisposable;
-			if (disposable != null)
+			if (disposable == null)
 			{
-				disposable.Dispose();
 			}
+			disposable.Dispose();
 		}
-		_soundClips = _modelChild.GetComponent<Sounds>();
-		if (!isCycle)
+		this._soundClips = this._modelChild.GetComponent<Sounds>();
+		if (!this.isCycle)
 		{
-			_spawnPoint = new Vector2(base.transform.position.x, base.transform.position.z);
+			float single = base.transform.position.x;
+			Vector3 vector3 = base.transform.position;
+			this._spawnPoint = new Vector2(single, vector3.z);
 		}
-		ShouldMove = false;
-		ShouldMove = true;
-		_moveBounds = new Rect(0f - halbLength, 0f - halbLength, halbLength * 2f, halbLength * 2f);
+		this.ShouldMove = false;
+		this.ShouldMove = true;
+		this._moveBounds = new Rect(-this.halbLength, -this.halbLength, this.halbLength * 2f, this.halbLength * 2f);
 	}
 
 	private void Update()
 	{
-		if (shouldMove && _lastTimeGo <= Time.time)
+		if (!this.shouldMove)
 		{
-			_nma.ResetPath();
-			_targetPoint = new Vector3(0f - halbLength + UnityEngine.Random.Range(0f, halbLength * 2f), base.transform.position.y, 0f - halbLength + UnityEngine.Random.Range(0f, halbLength * 2f));
-			_lastTimeGo = Time.time + Vector3.Distance(base.transform.position, _targetPoint) / _soundClips.notAttackingSpeed + _timeForIdle;
-			base.transform.LookAt(_targetPoint);
-			_nma.SetDestination(_targetPoint);
-			_nma.speed = _soundClips.notAttackingSpeed;
+			return;
 		}
-	}
-
-	private void ResetPars()
-	{
-		_targetIndex = 0;
-		_lastTimeGo = -1f;
+		if (this._lastTimeGo <= Time.time)
+		{
+			this._nma.ResetPath();
+			float single = -this.halbLength + UnityEngine.Random.Range(0f, this.halbLength * 2f);
+			Vector3 vector3 = base.transform.position;
+			this._targetPoint = new Vector3(single, vector3.y, -this.halbLength + UnityEngine.Random.Range(0f, this.halbLength * 2f));
+			this._lastTimeGo = Time.time + Vector3.Distance(base.transform.position, this._targetPoint) / this._soundClips.notAttackingSpeed + this._timeForIdle;
+			base.transform.LookAt(this._targetPoint);
+			this._nma.SetDestination(this._targetPoint);
+			this._nma.speed = this._soundClips.notAttackingSpeed;
+		}
 	}
 }

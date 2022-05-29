@@ -1,38 +1,15 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using RilisoftBot;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class TrainingController : MonoBehaviour
 {
-	public enum NewTrainingCompletedStage
-	{
-		None = 0,
-		ShootingRangeCompleted = 1,
-		ShopCompleted = 2,
-		FirstMatchCompleted = 3
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CStartNextStepTraning_003Ec__AnonStorey355
-	{
-		internal Player_move_c playerMove;
-
-		internal TrainingController _003C_003Ef__this;
-
-		internal void _003C_003Em__590()
-		{
-			playerMove.WeaponChanged -= _003C_003Ef__this.HandleWeaponChanged;
-			_003C_003Ef__this._weaponChangingCount = 0;
-		}
-	}
-
 	public const string NewTrainingStageHolderKey = "TrainingController.NewTrainingStageHolderKey";
 
 	public static TrainingController sharedController;
@@ -43,7 +20,7 @@ public sealed class TrainingController : MonoBehaviour
 
 	private static bool _comletedTrainingStageInitialized;
 
-	private static NewTrainingCompletedStage _completedTrainingStage;
+	private static TrainingController.NewTrainingCompletedStage _completedTrainingStage;
 
 	public GameObject swipeToRotateOverlay;
 
@@ -103,7 +80,7 @@ public sealed class TrainingController : MonoBehaviour
 
 	public Transform playerTransform;
 
-	private static readonly Vector3 _playerDefaultPosition;
+	private readonly static Vector3 _playerDefaultPosition;
 
 	private GameObject[] _overlays = new GameObject[0];
 
@@ -147,9 +124,10 @@ public sealed class TrainingController : MonoBehaviour
 
 	private static bool? _trainingCompleted;
 
-	private ActionDisposable _weaponChangedSubscription;
+	private ActionDisposable _weaponChangedSubscription = new ActionDisposable(new Action(() => {
+	}));
 
-	private readonly List<TrainingEnemy> _enemies;
+	private readonly List<TrainingEnemy> _enemies = new List<TrainingEnemy>(3);
 
 	private UIButton _pauseButton;
 
@@ -171,100 +149,33 @@ public sealed class TrainingController : MonoBehaviour
 
 	private readonly Lazy<PlayerArrowToPortalController> _directionArrow;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache45;
-
-	[CompilerGenerated]
-	private static Func<PlayerArrowToPortalController> _003C_003Ef__am_0024cache46;
-
-	[CompilerGenerated]
-	private static Func<GameObject, bool> _003C_003Ef__am_0024cache47;
-
-	public static bool TrainingCompleted
+	public static TrainingController.NewTrainingCompletedStage CompletedTrainingStage
 	{
 		get
 		{
-			if (cachedTrainingComplete)
+			if (!TrainingController._comletedTrainingStageInitialized)
 			{
-				return true;
+				TrainingController._comletedTrainingStageInitialized = true;
+				TrainingController._completedTrainingStage = (TrainingController.NewTrainingCompletedStage)Storager.getInt("TrainingController.NewTrainingStageHolderKey", false);
 			}
-			if (!_trainingCompletedInitialized)
+			return TrainingController._completedTrainingStage;
+		}
+		set
+		{
+			TrainingController._comletedTrainingStageInitialized = true;
+			if (TrainingController._completedTrainingStage != value)
 			{
-				if (Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) == 0 && PlayerPrefs.GetInt(Defs.TrainingCompleted_4_4_Sett, 0) == 1)
+				TrainingController._completedTrainingStage = value;
+				Storager.setInt("TrainingController.NewTrainingStageHolderKey", (int)TrainingController._completedTrainingStage, false);
+				if (TrainingController._completedTrainingStage == TrainingController.NewTrainingCompletedStage.FirstMatchCompleted)
 				{
-					if (Defs.IsDeveloperBuild)
+					Action action = TrainingController.onChangeTraining;
+					if (action != null)
 					{
-						Debug.Log("Trying to set TrainingCompleted flag...");
+						action();
 					}
-					OnGetProgress();
-				}
-				if (TrainingController.onChangeTraining != null)
-				{
-					TrainingController.onChangeTraining();
-				}
-				_trainingCompletedInitialized = true;
-			}
-			cachedTrainingComplete = Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) > 0 || CompletedTrainingStage == NewTrainingCompletedStage.FirstMatchCompleted;
-			return cachedTrainingComplete;
-		}
-	}
-
-	public static NewTrainingCompletedStage CompletedTrainingStage
-	{
-		get
-		{
-			if (!_comletedTrainingStageInitialized)
-			{
-				_comletedTrainingStageInitialized = true;
-				_completedTrainingStage = (NewTrainingCompletedStage)Storager.getInt("TrainingController.NewTrainingStageHolderKey", false);
-			}
-			return _completedTrainingStage;
-		}
-		set
-		{
-			_comletedTrainingStageInitialized = true;
-			if (_completedTrainingStage == value)
-			{
-				return;
-			}
-			_completedTrainingStage = value;
-			Storager.setInt("TrainingController.NewTrainingStageHolderKey", (int)_completedTrainingStage, false);
-			if (_completedTrainingStage == NewTrainingCompletedStage.FirstMatchCompleted)
-			{
-				Action action = TrainingController.onChangeTraining;
-				if (action != null)
-				{
-					action();
 				}
 			}
-		}
-	}
-
-	public Vector3 PlayerDesiredPosition
-	{
-		get
-		{
-			return (!(playerTransform != null)) ? _playerDefaultPosition : playerTransform.position;
-		}
-	}
-
-	public static Vector3 PlayerDefaultPosition
-	{
-		get
-		{
-			return _playerDefaultPosition;
-		}
-	}
-
-	public static bool? TrainingCompletedFlagForLogging
-	{
-		get
-		{
-			return _trainingCompleted;
-		}
-		set
-		{
-			_trainingCompleted = value;
 		}
 	}
 
@@ -272,55 +183,315 @@ public sealed class TrainingController : MonoBehaviour
 	{
 		get
 		{
-			return stepTraining >= TrainingState.KillZombie;
+			return TrainingController.stepTraining >= TrainingState.KillZombie;
 		}
 	}
 
-	public static event Action onChangeTraining;
-
-	public TrainingController()
+	public static Vector3 PlayerDefaultPosition
 	{
-		if (_003C_003Ef__am_0024cache45 == null)
+		get
 		{
-			_003C_003Ef__am_0024cache45 = _003C_weaponChangedSubscription_003Em__58E;
+			return TrainingController._playerDefaultPosition;
 		}
-		_weaponChangedSubscription = new ActionDisposable(_003C_003Ef__am_0024cache45);
-		_enemies = new List<TrainingEnemy>(3);
-		base._002Ector();
-		if (_003C_003Ef__am_0024cache46 == null)
+	}
+
+	public Vector3 PlayerDesiredPosition
+	{
+		get
 		{
-			_003C_003Ef__am_0024cache46 = _003CTrainingController_003Em__58F;
+			return (this.playerTransform == null ? TrainingController._playerDefaultPosition : this.playerTransform.position);
 		}
-		_directionArrow = new Lazy<PlayerArrowToPortalController>(_003C_003Ef__am_0024cache46);
+	}
+
+	public static bool TrainingCompleted
+	{
+		get
+		{
+			if (TrainingController.cachedTrainingComplete)
+			{
+				return true;
+			}
+			if (!TrainingController._trainingCompletedInitialized)
+			{
+				if (Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) == 0 && PlayerPrefs.GetInt(Defs.TrainingCompleted_4_4_Sett, 0) == 1)
+				{
+					if (Defs.IsDeveloperBuild)
+					{
+						UnityEngine.Debug.Log("Trying to set TrainingCompleted flag...");
+					}
+					TrainingController.OnGetProgress();
+				}
+				if (TrainingController.onChangeTraining != null)
+				{
+					TrainingController.onChangeTraining();
+				}
+				TrainingController._trainingCompletedInitialized = true;
+			}
+			TrainingController.cachedTrainingComplete = (Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) > 0 ? true : TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.FirstMatchCompleted);
+			return TrainingController.cachedTrainingComplete;
+		}
+	}
+
+	public static bool? TrainingCompletedFlagForLogging
+	{
+		get
+		{
+			return TrainingController._trainingCompleted;
+		}
+		set
+		{
+			TrainingController._trainingCompleted = value;
+		}
 	}
 
 	static TrainingController()
 	{
-		sharedController = null;
-		_trainingCompletedInitialized = false;
-		cachedTrainingComplete = false;
-		_comletedTrainingStageInitialized = false;
-		_completedTrainingStage = NewTrainingCompletedStage.None;
-		_playerDefaultPosition = new Vector3(-0.72f, 1.75f, -13.23f);
-		stepTraining = (TrainingState)(-1);
-		stepTrainingList = new Dictionary<string, TrainingState>(10);
-		isNextStep = TrainingState.None;
-		isPause = false;
-		nextStepAfterSkipTraining = false;
-		setNextStepInd = TrainingState.None;
-		timeShowJump = 0f;
-		timeShow3dTouchJump = 0f;
-		timeShowFire = 0f;
-		timeShow3dTouchFire = 0f;
-		stepTrainingList.Add("TapToMove", TrainingState.TapToMove);
-		stepTrainingList.Add("GetTheGun", TrainingState.GetTheGun);
-		stepTrainingList.Add("WellDone", TrainingState.WellDone);
-		stepTrainingList.Add("Shop", TrainingState.Shop);
-		stepTrainingList.Add("TapToSelectWeapon", TrainingState.TapToSelectWeapon);
-		stepTrainingList.Add("TapToShoot", TrainingState.TapToShoot);
-		stepTrainingList.Add("TapToThrowGrenade", TrainingState.TapToThrowGrenade);
-		stepTrainingList.Add("KillZombi", TrainingState.KillZombie);
-		stepTrainingList.Add("GoToPortal", TrainingState.GoToPortal);
+		TrainingController.sharedController = null;
+		TrainingController._trainingCompletedInitialized = false;
+		TrainingController.cachedTrainingComplete = false;
+		TrainingController._comletedTrainingStageInitialized = false;
+		TrainingController._completedTrainingStage = TrainingController.NewTrainingCompletedStage.None;
+		TrainingController._playerDefaultPosition = new Vector3(-0.72f, 1.75f, -13.23f);
+		TrainingController.stepTraining = TrainingState.SwipeToRotate | TrainingState.TapToMove | TrainingState.GetTheGun | TrainingState.WellDone | TrainingState.KillZombie | TrainingState.GoToPortal | TrainingState.GetTheCoin | TrainingState.WellDoneCoin | TrainingState.EnterTheShop | TrainingState.Shop | TrainingState.TapToSelectWeapon | TrainingState.TapToShoot | TrainingState.TapToThrowGrenade;
+		TrainingController.stepTrainingList = new Dictionary<string, TrainingState>(10);
+		TrainingController.isNextStep = TrainingState.None;
+		TrainingController.isPause = false;
+		TrainingController.nextStepAfterSkipTraining = false;
+		TrainingController.setNextStepInd = TrainingState.None;
+		TrainingController.timeShowJump = 0f;
+		TrainingController.timeShow3dTouchJump = 0f;
+		TrainingController.timeShowFire = 0f;
+		TrainingController.timeShow3dTouchFire = 0f;
+		TrainingController.stepTrainingList.Add("TapToMove", TrainingState.TapToMove);
+		TrainingController.stepTrainingList.Add("GetTheGun", TrainingState.GetTheGun);
+		TrainingController.stepTrainingList.Add("WellDone", TrainingState.WellDone);
+		TrainingController.stepTrainingList.Add("Shop", TrainingState.Shop);
+		TrainingController.stepTrainingList.Add("TapToSelectWeapon", TrainingState.TapToSelectWeapon);
+		TrainingController.stepTrainingList.Add("TapToShoot", TrainingState.TapToShoot);
+		TrainingController.stepTrainingList.Add("TapToThrowGrenade", TrainingState.TapToThrowGrenade);
+		TrainingController.stepTrainingList.Add("KillZombi", TrainingState.KillZombie);
+		TrainingController.stepTrainingList.Add("GoToPortal", TrainingState.GoToPortal);
+	}
+
+	public TrainingController()
+	{
+		this._directionArrow = new Lazy<PlayerArrowToPortalController>(() => {
+			GameObject gameObject = GameObject.FindWithTag("Player");
+			if (gameObject == null)
+			{
+				return null;
+			}
+			return gameObject.GetComponent<PlayerArrowToPortalController>();
+		});
+	}
+
+	private void AdjustGrenadeLabelAndArrow()
+	{
+		TrainingArrow component;
+		TrainingArrow trainingArrow;
+		Vector3 vector3 = Vector3.zero;
+		Vector3[] vector3Array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
+		if (vector3Array == null || (int)vector3Array.Length < 6)
+		{
+			float single = (float)((!GlobalGameController.LeftHanded ? -1 : 1));
+			vector3 = new Vector3((float)Defs.GrenadeX * single, (float)Defs.GrenadeY, 0f);
+		}
+		else
+		{
+			vector3 = vector3Array[5];
+		}
+		if (this.buyGrenadeArrowOverlay != null)
+		{
+			component = this.buyGrenadeArrowOverlay.GetComponent<TrainingArrow>();
+		}
+		else
+		{
+			component = null;
+		}
+		TrainingArrow trainingArrow1 = component;
+		if (trainingArrow1 != null)
+		{
+			trainingArrow1.SetAnchoredPosition(vector3 - new Vector3(64f, 0f, 0f));
+		}
+		if (this.throwGrenadeArrowOverlay != null)
+		{
+			trainingArrow = this.throwGrenadeArrowOverlay.GetComponent<TrainingArrow>();
+		}
+		else
+		{
+			trainingArrow = null;
+		}
+		TrainingArrow trainingArrow2 = trainingArrow;
+		if (trainingArrow2 != null)
+		{
+			trainingArrow2.SetAnchoredPosition(vector3 - new Vector3(90f, -60f, 0f));
+		}
+		if (this.selectGrenadeOverlay != null)
+		{
+			this.selectGrenadeOverlay.transform.localPosition = vector3 - new Vector3(120f, 0f, 0f);
+		}
+		if (this.throwGrenadeOverlay != null)
+		{
+			this.throwGrenadeOverlay.transform.localPosition = vector3 - new Vector3(400f, -120f, 0f);
+		}
+	}
+
+	private void AdjustJoystickAreaAndFinger()
+	{
+		TrainingFinger component;
+		float single = (float)((!GlobalGameController.LeftHanded ? -1 : 1));
+		Vector3 vector3 = new Vector3((float)Defs.JoyStickX * single, (float)Defs.JoyStickY, 0f);
+		if (this.dragToMoveOverlay != null)
+		{
+			this.dragToMoveOverlay.transform.localPosition = vector3 + new Vector3(30f, 120f, 0f);
+		}
+		Vector3[] vector3Array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
+		if (vector3Array != null && (int)vector3Array.Length > 4)
+		{
+			vector3 = vector3Array[4];
+		}
+		if (this.joystickShadowOverlay != null)
+		{
+			this.joystickShadowOverlay.GetComponent<RectTransform>().anchoredPosition = vector3;
+		}
+		if (this.joystickFingerOverlay != null)
+		{
+			component = this.joystickFingerOverlay.GetComponent<TrainingFinger>();
+		}
+		else
+		{
+			component = null;
+		}
+		TrainingFinger trainingFinger = component;
+		if (trainingFinger != null)
+		{
+			trainingFinger.GetComponent<RectTransform>().anchoredPosition = vector3 + new Vector3(20f, 20f, 0f);
+		}
+	}
+
+	private void AdjustShootReloadLabel()
+	{
+		bool num = PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1;
+		if (this.shootReloadOverlay != null && num)
+		{
+			this.shootReloadOverlay.transform.localPosition = this.shootReloadOverlay.transform.localPosition - new Vector3(120f, 0f, 0f);
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void AnimShop()
+	{
+		this.isAnimShop = !this.isAnimShop;
+		bool flag = TrainingController.stepTraining == TrainingState.EnterTheShop;
+		string str = this.shopButton.normalSprite;
+		string str1 = this.shopButton.pressedSprite;
+		this.shopButton.pressedSprite = str;
+		this.shopButton.normalSprite = str1;
+		if (flag)
+		{
+			base.Invoke("AnimShop", 0.3f);
+		}
+	}
+
+	public static void CancelSkipTraining()
+	{
+		TrainingController.isCanceled = false;
+		TrainingController.isPressSkip = false;
+		TrainingController.stepTraining = TrainingController.oldStepTraning;
+		TrainingController component = GameObject.FindGameObjectWithTag("TrainingController").GetComponent<TrainingController>();
+		if (TrainingController.nextStepAfterSkipTraining)
+		{
+			TrainingController.nextStepAfterSkipTraining = false;
+			component.StartNextStepTraning();
+		}
+		if (TrainingController.stepAnim != 0)
+		{
+			component.NextStepAnim();
+		}
+		else
+		{
+			component.FirstStep();
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void FirstStep()
+	{
+		TrainingController.isCanceled = false;
+		TrainingController.stepAnim = 0;
+		this.NextStepAnim();
+	}
+
+	private void HandleWeaponChanged(object sender, EventArgs e)
+	{
+		if (this._weaponChangingCount > 0 && TrainingController.stepTraining == TrainingState.TapToSelectWeapon)
+		{
+			TrainingController.isNextStep = TrainingState.TapToSelectWeapon;
+		}
+		this._weaponChangingCount++;
+	}
+
+	public void Hide3dTouchFire()
+	{
+		if (this.touch3dPressFire.activeSelf)
+		{
+			this.touch3dPressFire.SetActive(false);
+		}
+	}
+
+	public void Hide3dTouchJump()
+	{
+		if (this.touch3dPressGun.activeSelf)
+		{
+			this.touch3dPressGun.SetActive(false);
+		}
+	}
+
+	private void LateUpdate()
+	{
+		this.RefreshOverlays();
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void NextStepAnim()
+	{
+		base.CancelInvoke("NextStepAnim");
+		if (TrainingController.isCanceled)
+		{
+			return;
+		}
+		TrainingController.stepAnim++;
+		if (TrainingController.stepTraining == TrainingState.WellDone && TrainingController.stepAnim >= TrainingController.maxStepAnim)
+		{
+			TrainingController.isNextStep = TrainingState.WellDone;
+			return;
+		}
+		if (TrainingController.stepTraining == TrainingState.WellDoneCoin && TrainingController.stepAnim >= TrainingController.maxStepAnim)
+		{
+			TrainingController.isNextStep = TrainingState.WellDoneCoin;
+			return;
+		}
+		base.Invoke("NextStepAnim", this.speedAnim);
+	}
+
+	private void OnApplicationPause(bool pause)
+	{
+		FlurryEvents.LogTrainingProgress(string.Format("Pause ({0})", pause));
+	}
+
+	private void OnApplicationQuit()
+	{
+		FlurryEvents.LogTrainingProgress("Exit");
+	}
+
+	private void OnDestroy()
+	{
+		TrainingController.sharedController = null;
+		if (this._pauseButton != null)
+		{
+			this._pauseButton.isEnabled = true;
+		}
+		this._weaponChangedSubscription.Dispose();
 	}
 
 	public static void OnGetProgress()
@@ -339,721 +510,13 @@ public sealed class TrainingController : MonoBehaviour
 		FriendsController.ResetABTestSandBox();
 		FriendsController.ResetABTestSpecialOffers();
 		FriendsController.ResetABTestQuestSystem();
-		if (FriendsController.useBuffSystem)
-		{
-			BuffSystem.instance.OnGetProgress();
-		}
-		else
+		if (!FriendsController.useBuffSystem)
 		{
 			KillRateCheck.instance.OnGetProgress();
 		}
-	}
-
-	public static void SkipTraining()
-	{
-		oldStepTraning = stepTraining;
-		stepTraining = TrainingState.None;
-		isPressSkip = true;
-		isCanceled = true;
-		_trainingCompleted = false;
-		FlurryPluginWrapper.LogEventToAppsFlyer("Training complete", new Dictionary<string, string>());
-		FlurryEvents.LogTrainingProgress("Skip");
-	}
-
-	public static void CancelSkipTraining()
-	{
-		isCanceled = false;
-		isPressSkip = false;
-		stepTraining = oldStepTraning;
-		TrainingController component = GameObject.FindGameObjectWithTag("TrainingController").GetComponent<TrainingController>();
-		if (nextStepAfterSkipTraining)
-		{
-			nextStepAfterSkipTraining = false;
-			component.StartNextStepTraning();
-		}
-		if (stepAnim == 0)
-		{
-			component.FirstStep();
-		}
 		else
 		{
-			component.NextStepAnim();
-		}
-	}
-
-	private void AdjustShootReloadLabel()
-	{
-		bool flag = PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1;
-		if (shootReloadOverlay != null && flag)
-		{
-			shootReloadOverlay.transform.localPosition = shootReloadOverlay.transform.localPosition - new Vector3(120f, 0f, 0f);
-		}
-	}
-
-	private void AdjustJoystickAreaAndFinger()
-	{
-		float num = (GlobalGameController.LeftHanded ? 1 : (-1));
-		Vector3 vector = new Vector3((float)Defs.JoyStickX * num, Defs.JoyStickY, 0f);
-		if (dragToMoveOverlay != null)
-		{
-			dragToMoveOverlay.transform.localPosition = vector + new Vector3(30f, 120f, 0f);
-		}
-		Vector3[] array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
-		if (array != null && array.Length > 4)
-		{
-			vector = array[4];
-		}
-		if (joystickShadowOverlay != null)
-		{
-			joystickShadowOverlay.GetComponent<RectTransform>().anchoredPosition = vector;
-		}
-		TrainingFinger trainingFinger = ((!(joystickFingerOverlay == null)) ? joystickFingerOverlay.GetComponent<TrainingFinger>() : null);
-		if (trainingFinger != null)
-		{
-			trainingFinger.GetComponent<RectTransform>().anchoredPosition = vector + new Vector3(20f, 20f, 0f);
-		}
-	}
-
-	private void AdjustGrenadeLabelAndArrow()
-	{
-		Vector3 zero = Vector3.zero;
-		Vector3[] array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
-		if (array == null || array.Length < 6)
-		{
-			float num = (GlobalGameController.LeftHanded ? 1 : (-1));
-			zero = new Vector3((float)Defs.GrenadeX * num, Defs.GrenadeY, 0f);
-		}
-		else
-		{
-			zero = array[5];
-		}
-		TrainingArrow trainingArrow = ((!(buyGrenadeArrowOverlay == null)) ? buyGrenadeArrowOverlay.GetComponent<TrainingArrow>() : null);
-		if (trainingArrow != null)
-		{
-			trainingArrow.SetAnchoredPosition(zero - new Vector3(64f, 0f, 0f));
-		}
-		TrainingArrow trainingArrow2 = ((!(throwGrenadeArrowOverlay == null)) ? throwGrenadeArrowOverlay.GetComponent<TrainingArrow>() : null);
-		if (trainingArrow2 != null)
-		{
-			trainingArrow2.SetAnchoredPosition(zero - new Vector3(90f, -60f, 0f));
-		}
-		if (selectGrenadeOverlay != null)
-		{
-			selectGrenadeOverlay.transform.localPosition = zero - new Vector3(120f, 0f, 0f);
-		}
-		if (throwGrenadeOverlay != null)
-		{
-			throwGrenadeOverlay.transform.localPosition = zero - new Vector3(400f, -120f, 0f);
-		}
-	}
-
-	private IEnumerator Start()
-	{
-		sharedController = this;
-		PlayerArrowToPortalController.PopulateArrowPoolIfEmpty();
-		_overlays = new GameObject[10] { swipeToRotateOverlay, dragToMoveOverlay, pickupGunOverlay, wellDoneOverlay, getCoinOverlay, enterShopOverlay, shootReloadOverlay, selectGrenadeOverlay, throwGrenadeOverlay, killZombiesOverlay };
-		isPause = false;
-		animTextures = new Texture2D[3];
-		stepTraining = TrainingState.None;
-		isNextStep = TrainingState.None;
-		setNextStepInd = TrainingState.None;
-		StartNextStepTraning();
-		coinsPrefab = GameObject.FindGameObjectWithTag("CoinBonus");
-		if (coinsPrefab != null)
-		{
-			coinsPrefab.SetActive(false);
-		}
-		PlayerPrefs.SetInt("LogCountMatch", 1);
-		while (GameObject.FindGameObjectWithTag("InGameGUI") == null)
-		{
-			yield return null;
-		}
-		shopButton = GameObject.FindGameObjectWithTag("InGameGUI").GetComponent<InGameGUI>().shopButton.GetComponent<UIButton>();
-		InGameGUI.sharedInGameGUI.SetSwipeWeaponPanelVisibility(false);
-		_pauseButton = InGameGUI.sharedInGameGUI.pauseButton;
-		if (_pauseButton != null)
-		{
-			_pauseButton.isEnabled = false;
-		}
-		if (!(InGameGUI.sharedInGameGUI != null))
-		{
-			yield break;
-		}
-		if (InGameGUI.sharedInGameGUI.jumpButton != null && pickupGunOverlay != null)
-		{
-			List<UISprite> sprites2 = new List<UISprite>();
-			InGameGUI.sharedInGameGUI.jumpButton.GetComponentsInChildren(true, sprites2);
-			TrainingBlinking tb2 = pickupGunOverlay.AddComponent<TrainingBlinking>();
-			tb2.SetSprites(sprites2);
-		}
-		if (InGameGUI.sharedInGameGUI.fireButton != null)
-		{
-			List<UISprite> sprites = new List<UISprite>();
-			InGameGUI.sharedInGameGUI.fireButton.GetComponentsInChildren(true, sprites);
-			if (killZombiesOverlay != null)
-			{
-				TrainingBlinking tb = killZombiesOverlay.AddComponent<TrainingBlinking>();
-				tb.SetSprites(sprites);
-			}
-		}
-	}
-
-	private void OnApplicationQuit()
-	{
-		FlurryEvents.LogTrainingProgress("Exit");
-	}
-
-	private void OnApplicationPause(bool pause)
-	{
-		string kind = string.Format("Pause ({0})", pause);
-		FlurryEvents.LogTrainingProgress(kind);
-	}
-
-	private void OnDestroy()
-	{
-		sharedController = null;
-		if (_pauseButton != null)
-		{
-			_pauseButton.isEnabled = true;
-		}
-		_weaponChangedSubscription.Dispose();
-	}
-
-	private void HandleWeaponChanged(object sender, EventArgs e)
-	{
-		if (_weaponChangingCount > 0 && stepTraining == TrainingState.TapToSelectWeapon)
-		{
-			isNextStep = TrainingState.TapToSelectWeapon;
-		}
-		_weaponChangingCount++;
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void StartNextStepTraning()
-	{
-		if (isPressSkip)
-		{
-			nextStepAfterSkipTraining = true;
-			return;
-		}
-		stepTraining++;
-		Vector2 vector = Vector2.zero;
-		if (stepTraining == TrainingState.SwipeToRotate)
-		{
-			AdjustJoystickAreaAndFinger();
-			isCanceled = true;
-			maxStepAnim = 13;
-			speedAnim = 0.5f;
-			stepAnim = 0;
-			if (enemies != null && enemies.Length > 0)
-			{
-				GameObject[] array = enemies;
-				foreach (GameObject gameObject in array)
-				{
-					TrainingEnemy item = gameObject.GetComponent<TrainingEnemy>() ?? gameObject.AddComponent<TrainingEnemy>();
-					_enemies.Add(item);
-				}
-			}
-			else if (enemyPrototype != null)
-			{
-				Behaviour[] array2 = new Behaviour[3]
-				{
-					enemyPrototype.GetComponent<BotAiController>(),
-					enemyPrototype.GetComponent<MeleeBot>(),
-					enemyPrototype.GetComponent<NavMeshAgent>()
-				};
-				Behaviour[] array3 = array2;
-				foreach (Behaviour behaviour in array3)
-				{
-					if (behaviour != null)
-					{
-						behaviour.enabled = false;
-						UnityEngine.Object.Destroy(behaviour);
-					}
-				}
-				GameObject gameObject2 = new GameObject("DynamicEnemies");
-				gameObject2.transform.localPosition = new Vector3(-2f, 0f, 15f);
-				int enemiesToKill = GlobalGameController.EnemiesToKill;
-				for (int k = 0; k < enemiesToKill; k++)
-				{
-					GameObject gameObject3 = UnityEngine.Object.Instantiate(enemyPrototype);
-					gameObject3.transform.parent = gameObject2.transform;
-					Vector2 insideUnitCircle = UnityEngine.Random.insideUnitCircle;
-					gameObject3.transform.localPosition = new Vector3((float)(3 * k) + insideUnitCircle.x, 0f, insideUnitCircle.y);
-					gameObject3.transform.localRotation = Quaternion.AngleAxis(180f + UnityEngine.Random.Range(-60f, 60f), Vector3.up);
-					TrainingEnemy item2 = gameObject3.GetComponent<TrainingEnemy>() ?? gameObject3.AddComponent<TrainingEnemy>();
-					_enemies.Add(item2);
-				}
-			}
-		}
-		if (stepTraining == TrainingState.TapToMove)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Overview);
-			isCanceled = true;
-			maxStepAnim = 19;
-			speedAnim = 0.5f;
-			stepAnim = 0;
-			for (int l = 0; l != animTextures.Length; l++)
-			{
-				animTextures[l] = null;
-			}
-			if (animTextures[0] != null)
-			{
-				vector = new Vector2(-10f * Defs.Coef, (float)Screen.height - ((float)animTextures[0].height - 51f) * Defs.Coef);
-			}
-		}
-		if (stepTraining == TrainingState.GetTheGun)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Move);
-			HintController.instance.ShowHintByName("press_jump", 0f);
-			isCanceled = true;
-			maxStepAnim = 2;
-			speedAnim = 0.2f;
-			stepAnim = 0;
-			Vector3 vector2 = ((!(weaponTransform != null)) ? new Vector3(-1.6f, 1.75f, -2.6f) : weaponTransform.position);
-			if (weaponTransform != null)
-			{
-				UnityEngine.Object.Destroy(weaponTransform.gameObject);
-			}
-			if (weapon == null)
-			{
-				weapon = BonusCreator._CreateBonus(WeaponManager.MP5WN, vector2);
-			}
-			else
-			{
-				weapon.transform.position = vector2;
-			}
-			if (_directionArrow.Value != null)
-			{
-				_directionArrow.Value.RemovePointOfInterest();
-				_directionArrow.Value.SetPointOfInterest(weapon.transform);
-			}
-		}
-		if (stepTraining == TrainingState.WellDone || stepTraining == TrainingState.WellDoneCoin)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Jump);
-			HintController.instance.HideHintByName("press_jump");
-			HintController.instance.ShowHintByName("press_fire", 0f);
-			isCanceled = true;
-			maxStepAnim = 1;
-			speedAnim = 1f;
-			stepAnim = 0;
-			if (_directionArrow.Value != null)
-			{
-				_directionArrow.Value.RemovePointOfInterest();
-			}
-		}
-		if (stepTraining == TrainingState.GetTheCoin)
-		{
-			if (coinsPrefab != null)
-			{
-				coinsPrefab.SetActive(true);
-				coinsPrefab.GetComponent<CoinBonus>().SetPlayer();
-			}
-			isCanceled = true;
-			maxStepAnim = 2;
-			speedAnim = 3f;
-			stepAnim = 0;
-		}
-		if (stepTraining == TrainingState.EnterTheShop)
-		{
-			isAnimShop = false;
-			AnimShop();
-			isCanceled = true;
-			maxStepAnim = 13;
-			speedAnim = 0.3f;
-			stepAnim = 0;
-			if (Application.isEditor)
-			{
-				Cursor.lockState = CursorLockMode.None;
-				Cursor.visible = true;
-			}
-		}
-		if (stepTraining == TrainingState.TapToSelectWeapon)
-		{
-			_003CStartNextStepTraning_003Ec__AnonStorey355 _003CStartNextStepTraning_003Ec__AnonStorey = new _003CStartNextStepTraning_003Ec__AnonStorey355();
-			_003CStartNextStepTraning_003Ec__AnonStorey._003C_003Ef__this = this;
-			InGameGUI.sharedInGameGUI.SetSwipeWeaponPanelVisibility(PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1);
-			_003CStartNextStepTraning_003Ec__AnonStorey.playerMove = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
-			if (_003CStartNextStepTraning_003Ec__AnonStorey.playerMove != null)
-			{
-				_003CStartNextStepTraning_003Ec__AnonStorey.playerMove.WeaponChanged += HandleWeaponChanged;
-				_weaponChangedSubscription = new ActionDisposable(_003CStartNextStepTraning_003Ec__AnonStorey._003C_003Em__590);
-			}
-		}
-		else
-		{
-			_weaponChangedSubscription.Dispose();
-		}
-		if (stepTraining == TrainingState.TapToShoot)
-		{
-			AdjustShootReloadLabel();
-			isCanceled = true;
-			maxStepAnim = 2;
-			speedAnim = 3f;
-			stepAnim = 0;
-			if (Application.isEditor)
-			{
-				Cursor.lockState = CursorLockMode.Locked;
-			}
-		}
-		TrainingState value;
-		if (stepTrainingList.TryGetValue("SwipeWeapon", out value) && value == stepTraining)
-		{
-			isCanceled = true;
-			maxStepAnim = 13;
-			speedAnim = 0.3f;
-			stepAnim = 0;
-			for (int m = 0; m != animTextures.Length; m++)
-			{
-				animTextures[m] = null;
-			}
-			if (animTextures[0] != null)
-			{
-				vector = new Vector2((float)Screen.width - (float)animTextures[0].width * Defs.Coef, 0f);
-			}
-		}
-		if (stepTraining == TrainingState.KillZombie)
-		{
-			if (_enemies.Count > 0)
-			{
-				foreach (TrainingEnemy enemy in _enemies)
-				{
-					enemy.WakeUp(UnityEngine.Random.value);
-				}
-			}
-			else
-			{
-				GameObject.FindGameObjectWithTag("GameController").transform.GetComponent<ZombieCreator>().BeganCreateEnemies();
-			}
-			InGameGUI.sharedInGameGUI.centerAnhor.SetActive(true);
-			isCanceled = true;
-			maxStepAnim = 2;
-			speedAnim = 3f;
-			stepAnim = 0;
-			if (Application.isEditor)
-			{
-				Cursor.lockState = CursorLockMode.Locked;
-			}
-		}
-		if (stepTraining == TrainingState.GoToPortal)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Kill_Enemy);
-			if (_directionArrow.Value != null)
-			{
-				_directionArrow.Value.RemovePointOfInterest();
-				_directionArrow.Value.SetPointOfInterest(teleportTransform);
-			}
-			PlayerPrefs.SetInt("PendingGooglePlayGamesSync", 1);
-		}
-		if (stepTraining == TrainingState.TapToSelectWeapon)
-		{
-			isCanceled = true;
-			maxStepAnim = 19;
-			speedAnim = 0.5f;
-			stepAnim = 0;
-			animTextures[0] = Resources.Load<Texture2D>("Training/ob_change_0");
-			animTextures[1] = Resources.Load<Texture2D>("Training/ob_change_1");
-			if (animTextures[0] != null)
-			{
-				vector = new Vector2((float)Screen.width * 0.5f - 164f * Defs.Coef - (float)animTextures[0].width * 0.5f * Defs.Coef, (float)Screen.height - (112f + (float)animTextures[0].height) * Defs.Coef);
-			}
-		}
-		if (stepTraining == TrainingState.TapToThrowGrenade)
-		{
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-			{
-				WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount = 10;
-			}
-			AdjustGrenadeLabelAndArrow();
-			isCanceled = true;
-			maxStepAnim = 19;
-			speedAnim = 0.5f;
-			stepAnim = 0;
-			for (int n = 0; n != animTextures.Length; n++)
-			{
-				animTextures[n] = null;
-			}
-			Defs.InitCoordsIphone();
-			if (animTextures[0] != null)
-			{
-				vector = new Vector2((float)Screen.width - ((float)(-Defs.GrenadeX + animTextures[0].width) + 80f) * Defs.Coef, (float)Screen.height - ((float)(Defs.GrenadeY + animTextures[0].height) - 80f) * Defs.Coef);
-			}
-		}
-		if (animTextures[0] != null)
-		{
-			animTextureRect = new Rect(vector.x, vector.y, (float)animTextures[0].width * Defs.Coef, (float)animTextures[0].height * Defs.Coef);
-		}
-		Invoke("FirstStep", 1f);
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void AnimShop()
-	{
-		isAnimShop = !isAnimShop;
-		bool flag = stepTraining == TrainingState.EnterTheShop;
-		string normalSprite = shopButton.normalSprite;
-		string pressedSprite = shopButton.pressedSprite;
-		shopButton.pressedSprite = normalSprite;
-		shopButton.normalSprite = pressedSprite;
-		if (flag)
-		{
-			Invoke("AnimShop", 0.3f);
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void FirstStep()
-	{
-		isCanceled = false;
-		stepAnim = 0;
-		NextStepAnim();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void NextStepAnim()
-	{
-		CancelInvoke("NextStepAnim");
-		if (!isCanceled)
-		{
-			stepAnim++;
-			if (stepTraining == TrainingState.WellDone && stepAnim >= maxStepAnim)
-			{
-				isNextStep = TrainingState.WellDone;
-			}
-			else if (stepTraining == TrainingState.WellDoneCoin && stepAnim >= maxStepAnim)
-			{
-				isNextStep = TrainingState.WellDoneCoin;
-			}
-			else
-			{
-				Invoke("NextStepAnim", speedAnim);
-			}
-		}
-	}
-
-	private void Update()
-	{
-		if (coinsPrefab == null && stepTraining < TrainingState.GetTheCoin)
-		{
-			coinsPrefab = GameObject.FindGameObjectWithTag("CoinBonus");
-			if (coinsPrefab != null)
-			{
-				coinsPrefab.SetActive(false);
-			}
-		}
-		if (isNextStep > setNextStepInd)
-		{
-			setNextStepInd = isNextStep;
-			if (stepTraining == TrainingState.SwipeToRotate || stepTraining == TrainingState.TapToMove)
-			{
-				Invoke("StartNextStepTraning", 1.5f);
-			}
-			else if (stepTraining == TrainingState.TapToShoot)
-			{
-				Invoke("StartNextStepTraning", 3f);
-			}
-			else
-			{
-				StartNextStepTraning();
-			}
-		}
-		if (ShopNGUIController.GuiActive || isPause)
-		{
-			if (shopArrowOverlay != null)
-			{
-				shopArrowOverlay.SetActive(false);
-			}
-			if (buyGrenadeArrowOverlay != null)
-			{
-				buyGrenadeArrowOverlay.SetActive(false);
-			}
-			if (throwGrenadeArrowOverlay != null)
-			{
-				throwGrenadeArrowOverlay.SetActive(false);
-			}
-			if (joystickFingerOverlay != null)
-			{
-				joystickFingerOverlay.SetActive(false);
-			}
-			if (joystickShadowOverlay != null)
-			{
-				joystickShadowOverlay.SetActive(false);
-			}
-			if (touchpadOverlay != null)
-			{
-				touchpadOverlay.SetActive(false);
-			}
-			if (touchpadFingerOverlay != null)
-			{
-				touchpadFingerOverlay.SetActive(false);
-			}
-			if (swipeWeaponFingerOverlay != null)
-			{
-				swipeWeaponFingerOverlay.SetActive(false);
-			}
-			if (tapWeaponArrowOverlay != null)
-			{
-				tapWeaponArrowOverlay.SetActive(false);
-			}
-		}
-	}
-
-	private void LateUpdate()
-	{
-		RefreshOverlays();
-	}
-
-	public void Hide3dTouchJump()
-	{
-		if (touch3dPressGun.activeSelf)
-		{
-			touch3dPressGun.SetActive(false);
-		}
-	}
-
-	public void Hide3dTouchFire()
-	{
-		if (touch3dPressFire.activeSelf)
-		{
-			touch3dPressFire.SetActive(false);
-		}
-	}
-
-	private void RefreshOverlays()
-	{
-		if (isPause)
-		{
-			return;
-		}
-		GameObject objA = null;
-		if (stepTraining == TrainingState.SwipeToRotate)
-		{
-			objA = swipeToRotateOverlay;
-		}
-		else if (stepTraining == TrainingState.TapToMove)
-		{
-			objA = dragToMoveOverlay;
-		}
-		else if (stepTraining == TrainingState.GetTheGun)
-		{
-			if (Defs.touchPressureSupported || Application.isEditor)
-			{
-				timeShowJump += Time.deltaTime;
-				if (touch3dPressGun.activeSelf)
-				{
-					timeShow3dTouchJump += Time.deltaTime;
-					if (timeShow3dTouchJump > 5f)
-					{
-						Hide3dTouchJump();
-					}
-				}
-				if (!isShow3dTouchJump && timeShowJump > 3f)
-				{
-					isShow3dTouchJump = true;
-					HintController.instance.HideHintByName("press_jump");
-					touch3dPressGun.SetActive(true);
-				}
-			}
-			objA = pickupGunOverlay;
-		}
-		else if (stepTraining == TrainingState.WellDone || stepTraining == TrainingState.WellDoneCoin)
-		{
-			objA = wellDoneOverlay;
-		}
-		else if (stepTraining == TrainingState.GetTheCoin)
-		{
-			objA = getCoinOverlay;
-		}
-		else if (stepTraining == TrainingState.EnterTheShop)
-		{
-			objA = enterShopOverlay;
-		}
-		else if (stepTraining == TrainingState.TapToShoot)
-		{
-			objA = shootReloadOverlay;
-		}
-		else if (stepTraining == TrainingState.TapToThrowGrenade)
-		{
-			objA = throwGrenadeOverlay;
-		}
-		else if (stepTraining == TrainingState.KillZombie)
-		{
-			if (Defs.touchPressureSupported || Application.isEditor)
-			{
-				timeShowFire += Time.deltaTime;
-				if (touch3dPressFire.activeSelf)
-				{
-					timeShow3dTouchFire += Time.deltaTime;
-					if (timeShow3dTouchFire > 5f)
-					{
-						Hide3dTouchFire();
-					}
-				}
-				if (!isShow3dTouchFire && timeShowFire > 3f)
-				{
-					isShow3dTouchFire = true;
-					HintController.instance.HideHintByName("press_fire");
-					touch3dPressFire.SetActive(true);
-				}
-			}
-			objA = killZombiesOverlay;
-		}
-		GameObject[] overlays = _overlays;
-		if (_003C_003Ef__am_0024cache47 == null)
-		{
-			_003C_003Ef__am_0024cache47 = _003CRefreshOverlays_003Em__591;
-		}
-		foreach (GameObject item in overlays.Where(_003C_003Ef__am_0024cache47))
-		{
-			item.SetActive(object.ReferenceEquals(objA, item));
-		}
-		bool flag = PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1;
-		if (swipeToChangeWeaponOverlay != null)
-		{
-			swipeToChangeWeaponOverlay.SetActive(stepTraining == TrainingState.TapToSelectWeapon && flag);
-		}
-		if (tapToChangeWeaponOverlay != null)
-		{
-			tapToChangeWeaponOverlay.SetActive(stepTraining == TrainingState.TapToSelectWeapon && !flag);
-		}
-		if (shopArrowOverlay != null)
-		{
-			shopArrowOverlay.SetActive(stepTraining == TrainingState.EnterTheShop);
-		}
-		if (throwGrenadeArrowOverlay != null)
-		{
-			throwGrenadeArrowOverlay.SetActive(stepTraining == stepTrainingList["TapToThrowGrenade"]);
-		}
-		if (joystickFingerOverlay != null)
-		{
-			joystickFingerOverlay.SetActive(stepTraining == stepTrainingList["TapToMove"]);
-		}
-		if (joystickShadowOverlay != null)
-		{
-			joystickShadowOverlay.SetActive(stepTraining == stepTrainingList["TapToMove"]);
-		}
-		if (touchpadOverlay != null)
-		{
-			touchpadOverlay.SetActive(stepTraining == TrainingState.SwipeToRotate);
-		}
-		if (touchpadFingerOverlay != null)
-		{
-			touchpadFingerOverlay.SetActive(stepTraining == TrainingState.SwipeToRotate);
-		}
-		if (swipeWeaponFingerOverlay != null)
-		{
-			swipeWeaponFingerOverlay.SetActive(stepTraining == TrainingState.TapToSelectWeapon && flag);
-		}
-		if (tapWeaponArrowOverlay != null)
-		{
-			tapWeaponArrowOverlay.SetActive(stepTraining == TrainingState.TapToSelectWeapon && !flag);
-		}
-		if (InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.CampaignContainer.SetActive(stepTraining == TrainingState.KillZombie);
-			InGameGUI.sharedInGameGUI.leftAnchor.SetActive(false);
-			InGameGUI.sharedInGameGUI.rightAnchor.SetActive(false);
+			BuffSystem.instance.OnGetProgress();
 		}
 	}
 
@@ -1062,29 +525,505 @@ public sealed class TrainingController : MonoBehaviour
 		if (SceneManager.GetActiveScene().name == Defs.TrainingSceneName)
 		{
 			GC.Collect();
-			weapon = BonusCreator._CreateBonus(WeaponManager.MP5WN, new Vector3(0f, -10000f, 0f));
+			this.weapon = BonusCreator._CreateBonus(WeaponManager.MP5WN, new Vector3(0f, -10000f, 0f));
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003C_weaponChangedSubscription_003Em__58E()
+	private void RefreshOverlays()
 	{
-	}
-
-	[CompilerGenerated]
-	private static PlayerArrowToPortalController _003CTrainingController_003Em__58F()
-	{
-		GameObject gameObject = GameObject.FindWithTag("Player");
-		if (gameObject == null)
+		if (TrainingController.isPause)
 		{
-			return null;
+			return;
 		}
-		return gameObject.GetComponent<PlayerArrowToPortalController>();
+		GameObject gameObject = null;
+		if (TrainingController.stepTraining == TrainingState.SwipeToRotate)
+		{
+			gameObject = this.swipeToRotateOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.TapToMove)
+		{
+			gameObject = this.dragToMoveOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.GetTheGun)
+		{
+			if (Defs.touchPressureSupported || Application.isEditor)
+			{
+				TrainingController.timeShowJump += Time.deltaTime;
+				if (this.touch3dPressGun.activeSelf)
+				{
+					TrainingController.timeShow3dTouchJump += Time.deltaTime;
+					if (TrainingController.timeShow3dTouchJump > 5f)
+					{
+						this.Hide3dTouchJump();
+					}
+				}
+				if (!this.isShow3dTouchJump && TrainingController.timeShowJump > 3f)
+				{
+					this.isShow3dTouchJump = true;
+					HintController.instance.HideHintByName("press_jump");
+					this.touch3dPressGun.SetActive(true);
+				}
+			}
+			gameObject = this.pickupGunOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.WellDone || TrainingController.stepTraining == TrainingState.WellDoneCoin)
+		{
+			gameObject = this.wellDoneOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.GetTheCoin)
+		{
+			gameObject = this.getCoinOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.EnterTheShop)
+		{
+			gameObject = this.enterShopOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.TapToShoot)
+		{
+			gameObject = this.shootReloadOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
+		{
+			gameObject = this.throwGrenadeOverlay;
+		}
+		else if (TrainingController.stepTraining == TrainingState.KillZombie)
+		{
+			if (Defs.touchPressureSupported || Application.isEditor)
+			{
+				TrainingController.timeShowFire += Time.deltaTime;
+				if (this.touch3dPressFire.activeSelf)
+				{
+					TrainingController.timeShow3dTouchFire += Time.deltaTime;
+					if (TrainingController.timeShow3dTouchFire > 5f)
+					{
+						this.Hide3dTouchFire();
+					}
+				}
+				if (!this.isShow3dTouchFire && TrainingController.timeShowFire > 3f)
+				{
+					this.isShow3dTouchFire = true;
+					HintController.instance.HideHintByName("press_fire");
+					this.touch3dPressFire.SetActive(true);
+				}
+			}
+			gameObject = this.killZombiesOverlay;
+		}
+		IEnumerator<GameObject> enumerator = (
+			from o in (IEnumerable<GameObject>)this._overlays
+			where null != o
+			select o).GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				GameObject current = enumerator.Current;
+				current.SetActive(object.ReferenceEquals(gameObject, current));
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		bool num = PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1;
+		if (this.swipeToChangeWeaponOverlay != null)
+		{
+			this.swipeToChangeWeaponOverlay.SetActive((TrainingController.stepTraining != TrainingState.TapToSelectWeapon ? false : num));
+		}
+		if (this.tapToChangeWeaponOverlay != null)
+		{
+			this.tapToChangeWeaponOverlay.SetActive((TrainingController.stepTraining != TrainingState.TapToSelectWeapon ? false : !num));
+		}
+		if (this.shopArrowOverlay != null)
+		{
+			this.shopArrowOverlay.SetActive(TrainingController.stepTraining == TrainingState.EnterTheShop);
+		}
+		if (this.throwGrenadeArrowOverlay != null)
+		{
+			this.throwGrenadeArrowOverlay.SetActive(TrainingController.stepTraining == TrainingController.stepTrainingList["TapToThrowGrenade"]);
+		}
+		if (this.joystickFingerOverlay != null)
+		{
+			this.joystickFingerOverlay.SetActive(TrainingController.stepTraining == TrainingController.stepTrainingList["TapToMove"]);
+		}
+		if (this.joystickShadowOverlay != null)
+		{
+			this.joystickShadowOverlay.SetActive(TrainingController.stepTraining == TrainingController.stepTrainingList["TapToMove"]);
+		}
+		if (this.touchpadOverlay != null)
+		{
+			this.touchpadOverlay.SetActive(TrainingController.stepTraining == TrainingState.SwipeToRotate);
+		}
+		if (this.touchpadFingerOverlay != null)
+		{
+			this.touchpadFingerOverlay.SetActive(TrainingController.stepTraining == TrainingState.SwipeToRotate);
+		}
+		if (this.swipeWeaponFingerOverlay != null)
+		{
+			this.swipeWeaponFingerOverlay.SetActive((TrainingController.stepTraining != TrainingState.TapToSelectWeapon ? false : num));
+		}
+		if (this.tapWeaponArrowOverlay != null)
+		{
+			this.tapWeaponArrowOverlay.SetActive((TrainingController.stepTraining != TrainingState.TapToSelectWeapon ? false : !num));
+		}
+		if (InGameGUI.sharedInGameGUI != null)
+		{
+			InGameGUI.sharedInGameGUI.CampaignContainer.SetActive(TrainingController.stepTraining == TrainingState.KillZombie);
+			InGameGUI.sharedInGameGUI.leftAnchor.SetActive(false);
+			InGameGUI.sharedInGameGUI.rightAnchor.SetActive(false);
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CRefreshOverlays_003Em__591(GameObject o)
+	public static void SkipTraining()
 	{
-		return null != o;
+		TrainingController.oldStepTraning = TrainingController.stepTraining;
+		TrainingController.stepTraining = TrainingState.None;
+		TrainingController.isPressSkip = true;
+		TrainingController.isCanceled = true;
+		TrainingController._trainingCompleted = new bool?(false);
+		FlurryPluginWrapper.LogEventToAppsFlyer("Training complete", new Dictionary<string, string>());
+		FlurryEvents.LogTrainingProgress("Skip");
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		TrainingController.u003cStartu003ec__Iterator1D8 variable = null;
+		return variable;
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void StartNextStepTraning()
+	{
+		TrainingState trainingState;
+		if (TrainingController.isPressSkip)
+		{
+			TrainingController.nextStepAfterSkipTraining = true;
+			return;
+		}
+		TrainingController.stepTraining += TrainingState.SwipeToRotate;
+		Vector2 vector2 = Vector2.zero;
+		if (TrainingController.stepTraining == TrainingState.SwipeToRotate)
+		{
+			this.AdjustJoystickAreaAndFinger();
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 13;
+			this.speedAnim = 0.5f;
+			TrainingController.stepAnim = 0;
+			if (this.enemies != null && (int)this.enemies.Length > 0)
+			{
+				GameObject[] gameObjectArray = this.enemies;
+				for (int i = 0; i < (int)gameObjectArray.Length; i++)
+				{
+					GameObject gameObject = gameObjectArray[i];
+					TrainingEnemy component = gameObject.GetComponent<TrainingEnemy>() ?? gameObject.AddComponent<TrainingEnemy>();
+					this._enemies.Add(component);
+				}
+			}
+			else if (this.enemyPrototype != null)
+			{
+				Behaviour[] behaviourArray = new Behaviour[] { this.enemyPrototype.GetComponent<BotAiController>(), this.enemyPrototype.GetComponent<MeleeBot>(), this.enemyPrototype.GetComponent<NavMeshAgent>() };
+				for (int j = 0; j < (int)behaviourArray.Length; j++)
+				{
+					Behaviour behaviour = behaviourArray[j];
+					if (behaviour != null)
+					{
+						behaviour.enabled = false;
+						UnityEngine.Object.Destroy(behaviour);
+					}
+				}
+				GameObject vector3 = new GameObject("DynamicEnemies");
+				vector3.transform.localPosition = new Vector3(-2f, 0f, 15f);
+				int enemiesToKill = GlobalGameController.EnemiesToKill;
+				for (int k = 0; k < enemiesToKill; k++)
+				{
+					GameObject vector31 = UnityEngine.Object.Instantiate<GameObject>(this.enemyPrototype);
+					vector31.transform.parent = vector3.transform;
+					Vector2 vector21 = UnityEngine.Random.insideUnitCircle;
+					vector31.transform.localPosition = new Vector3((float)(3 * k) + vector21.x, 0f, vector21.y);
+					vector31.transform.localRotation = Quaternion.AngleAxis(180f + UnityEngine.Random.Range(-60f, 60f), Vector3.up);
+					TrainingEnemy trainingEnemy = vector31.GetComponent<TrainingEnemy>() ?? vector31.AddComponent<TrainingEnemy>();
+					this._enemies.Add(trainingEnemy);
+				}
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.TapToMove)
+		{
+			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Overview, true);
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 19;
+			this.speedAnim = 0.5f;
+			TrainingController.stepAnim = 0;
+			for (int l = 0; l != (int)this.animTextures.Length; l++)
+			{
+				this.animTextures[l] = null;
+			}
+			if (this.animTextures[0] != null)
+			{
+				vector2 = new Vector2(-10f * Defs.Coef, (float)Screen.height - ((float)this.animTextures[0].height - 51f) * Defs.Coef);
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.GetTheGun)
+		{
+			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Move, true);
+			HintController.instance.ShowHintByName("press_jump", 0f);
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 2;
+			this.speedAnim = 0.2f;
+			TrainingController.stepAnim = 0;
+			Vector3 vector32 = (this.weaponTransform == null ? new Vector3(-1.6f, 1.75f, -2.6f) : this.weaponTransform.position);
+			if (this.weaponTransform != null)
+			{
+				UnityEngine.Object.Destroy(this.weaponTransform.gameObject);
+			}
+			if (this.weapon != null)
+			{
+				this.weapon.transform.position = vector32;
+			}
+			else
+			{
+				this.weapon = BonusCreator._CreateBonus(WeaponManager.MP5WN, vector32);
+			}
+			if (this._directionArrow.Value != null)
+			{
+				this._directionArrow.Value.RemovePointOfInterest();
+				this._directionArrow.Value.SetPointOfInterest(this.weapon.transform);
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.WellDone || TrainingController.stepTraining == TrainingState.WellDoneCoin)
+		{
+			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Controls_Jump, true);
+			HintController.instance.HideHintByName("press_jump");
+			HintController.instance.ShowHintByName("press_fire", 0f);
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 1;
+			this.speedAnim = 1f;
+			TrainingController.stepAnim = 0;
+			if (this._directionArrow.Value != null)
+			{
+				this._directionArrow.Value.RemovePointOfInterest();
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.GetTheCoin)
+		{
+			if (this.coinsPrefab != null)
+			{
+				this.coinsPrefab.SetActive(true);
+				this.coinsPrefab.GetComponent<CoinBonus>().SetPlayer();
+			}
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 2;
+			this.speedAnim = 3f;
+			TrainingController.stepAnim = 0;
+		}
+		if (TrainingController.stepTraining == TrainingState.EnterTheShop)
+		{
+			this.isAnimShop = false;
+			this.AnimShop();
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 13;
+			this.speedAnim = 0.3f;
+			TrainingController.stepAnim = 0;
+			if (Application.isEditor)
+			{
+				Cursor.lockState = CursorLockMode.None;
+				Cursor.visible = true;
+			}
+		}
+		if (TrainingController.stepTraining != TrainingState.TapToSelectWeapon)
+		{
+			this._weaponChangedSubscription.Dispose();
+		}
+		else
+		{
+			InGameGUI.sharedInGameGUI.SetSwipeWeaponPanelVisibility(PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1);
+			Player_move_c playerMoveC = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
+			if (playerMoveC != null)
+			{
+				playerMoveC.WeaponChanged += new EventHandler<EventArgs>(this.HandleWeaponChanged);
+				this._weaponChangedSubscription = new ActionDisposable(() => {
+					playerMoveC.WeaponChanged -= new EventHandler<EventArgs>(this.HandleWeaponChanged);
+					this._weaponChangingCount = 0;
+				});
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.TapToShoot)
+		{
+			this.AdjustShootReloadLabel();
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 2;
+			this.speedAnim = 3f;
+			TrainingController.stepAnim = 0;
+			if (Application.isEditor)
+			{
+				Cursor.lockState = CursorLockMode.Locked;
+			}
+		}
+		if ((!TrainingController.stepTrainingList.TryGetValue("SwipeWeapon", out trainingState) ? false : trainingState == TrainingController.stepTraining))
+		{
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 13;
+			this.speedAnim = 0.3f;
+			TrainingController.stepAnim = 0;
+			for (int m = 0; m != (int)this.animTextures.Length; m++)
+			{
+				this.animTextures[m] = null;
+			}
+			if (this.animTextures[0] != null)
+			{
+				vector2 = new Vector2((float)Screen.width - (float)this.animTextures[0].width * Defs.Coef, 0f);
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.KillZombie)
+		{
+			if (this._enemies.Count <= 0)
+			{
+				GameObject.FindGameObjectWithTag("GameController").transform.GetComponent<ZombieCreator>().BeganCreateEnemies();
+			}
+			else
+			{
+				foreach (TrainingEnemy _enemy in this._enemies)
+				{
+					_enemy.WakeUp(UnityEngine.Random.@value);
+				}
+			}
+			InGameGUI.sharedInGameGUI.centerAnhor.SetActive(true);
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 2;
+			this.speedAnim = 3f;
+			TrainingController.stepAnim = 0;
+			if (Application.isEditor)
+			{
+				Cursor.lockState = CursorLockMode.Locked;
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.GoToPortal)
+		{
+			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Kill_Enemy, true);
+			if (this._directionArrow.Value != null)
+			{
+				this._directionArrow.Value.RemovePointOfInterest();
+				this._directionArrow.Value.SetPointOfInterest(this.teleportTransform);
+			}
+			PlayerPrefs.SetInt("PendingGooglePlayGamesSync", 1);
+		}
+		if (TrainingController.stepTraining == TrainingState.TapToSelectWeapon)
+		{
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 19;
+			this.speedAnim = 0.5f;
+			TrainingController.stepAnim = 0;
+			this.animTextures[0] = Resources.Load<Texture2D>("Training/ob_change_0");
+			this.animTextures[1] = Resources.Load<Texture2D>("Training/ob_change_1");
+			if (this.animTextures[0] != null)
+			{
+				vector2 = new Vector2((float)Screen.width * 0.5f - 164f * Defs.Coef - (float)this.animTextures[0].width * 0.5f * Defs.Coef, (float)Screen.height - (112f + (float)this.animTextures[0].height) * Defs.Coef);
+			}
+		}
+		if (TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
+		{
+			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount = 10;
+			}
+			this.AdjustGrenadeLabelAndArrow();
+			TrainingController.isCanceled = true;
+			TrainingController.maxStepAnim = 19;
+			this.speedAnim = 0.5f;
+			TrainingController.stepAnim = 0;
+			for (int n = 0; n != (int)this.animTextures.Length; n++)
+			{
+				this.animTextures[n] = null;
+			}
+			Defs.InitCoordsIphone();
+			if (this.animTextures[0] != null)
+			{
+				vector2 = new Vector2((float)Screen.width - ((float)(-Defs.GrenadeX + this.animTextures[0].width) + 80f) * Defs.Coef, (float)Screen.height - ((float)(Defs.GrenadeY + this.animTextures[0].height) - 80f) * Defs.Coef);
+			}
+		}
+		if (this.animTextures[0] != null)
+		{
+			this.animTextureRect = new Rect(vector2.x, vector2.y, (float)this.animTextures[0].width * Defs.Coef, (float)this.animTextures[0].height * Defs.Coef);
+		}
+		base.Invoke("FirstStep", 1f);
+	}
+
+	private void Update()
+	{
+		if (this.coinsPrefab == null && TrainingController.stepTraining < TrainingState.GetTheCoin)
+		{
+			this.coinsPrefab = GameObject.FindGameObjectWithTag("CoinBonus");
+			if (this.coinsPrefab != null)
+			{
+				this.coinsPrefab.SetActive(false);
+			}
+		}
+		if (TrainingController.isNextStep > TrainingController.setNextStepInd)
+		{
+			TrainingController.setNextStepInd = TrainingController.isNextStep;
+			if (TrainingController.stepTraining == TrainingState.SwipeToRotate || TrainingController.stepTraining == TrainingState.TapToMove)
+			{
+				base.Invoke("StartNextStepTraning", 1.5f);
+			}
+			else if (TrainingController.stepTraining != TrainingState.TapToShoot)
+			{
+				this.StartNextStepTraning();
+			}
+			else
+			{
+				base.Invoke("StartNextStepTraning", 3f);
+			}
+		}
+		if (ShopNGUIController.GuiActive || TrainingController.isPause)
+		{
+			if (this.shopArrowOverlay != null)
+			{
+				this.shopArrowOverlay.SetActive(false);
+			}
+			if (this.buyGrenadeArrowOverlay != null)
+			{
+				this.buyGrenadeArrowOverlay.SetActive(false);
+			}
+			if (this.throwGrenadeArrowOverlay != null)
+			{
+				this.throwGrenadeArrowOverlay.SetActive(false);
+			}
+			if (this.joystickFingerOverlay != null)
+			{
+				this.joystickFingerOverlay.SetActive(false);
+			}
+			if (this.joystickShadowOverlay != null)
+			{
+				this.joystickShadowOverlay.SetActive(false);
+			}
+			if (this.touchpadOverlay != null)
+			{
+				this.touchpadOverlay.SetActive(false);
+			}
+			if (this.touchpadFingerOverlay != null)
+			{
+				this.touchpadFingerOverlay.SetActive(false);
+			}
+			if (this.swipeWeaponFingerOverlay != null)
+			{
+				this.swipeWeaponFingerOverlay.SetActive(false);
+			}
+			if (this.tapWeaponArrowOverlay != null)
+			{
+				this.tapWeaponArrowOverlay.SetActive(false);
+			}
+		}
+	}
+
+	public static event Action onChangeTraining;
+
+	public enum NewTrainingCompletedStage
+	{
+		None,
+		ShootingRangeCompleted,
+		ShopCompleted,
+		FirstMatchCompleted
 	}
 }

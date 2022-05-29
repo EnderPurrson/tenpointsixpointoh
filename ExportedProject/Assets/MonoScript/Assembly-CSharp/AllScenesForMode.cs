@@ -8,8 +8,12 @@ public class AllScenesForMode
 
 	public List<SceneInfo> avaliableScenes = new List<SceneInfo>();
 
+	public AllScenesForMode()
+	{
+	}
+
 	public void AddInfoScene(SceneInfo needInfo)
 	{
-		avaliableScenes.Add(needInfo);
+		this.avaliableScenes.Add(needInfo);
 	}
 }

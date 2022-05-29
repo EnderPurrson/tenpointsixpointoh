@@ -1,3 +1,6 @@
+using Facebook.Unity;
+using System;
+
 namespace Facebook.Unity.Mobile
 {
 	internal interface IMobileFacebookCallbackHandler : IFacebookCallbackHandler

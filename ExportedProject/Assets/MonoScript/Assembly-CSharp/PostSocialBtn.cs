@@ -1,27 +1,28 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class PostSocialBtn : MonoBehaviour
 {
 	public bool isFacebook;
 
-	private void Start()
+	public PostSocialBtn()
 	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-		{
-			base.gameObject.SetActive(false);
-		}
 	}
 
 	private void OnClick()
 	{
-		if ((ExpController.Instance != null && ExpController.Instance.IsLevelUpShown) || ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		if (ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
 		{
 			return;
 		}
 		Debug.Log("PostSocialBtn");
 		ButtonClickSound.Instance.PlayClick();
-		if (isFacebook)
+		if (this.isFacebook)
 		{
 			if (WeaponManager.sharedManager.myTable != null)
 			{
@@ -31,6 +32,14 @@ internal sealed class PostSocialBtn : MonoBehaviour
 		else if (WeaponManager.sharedManager.myTable != null)
 		{
 			WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().PostTwitterBtnClick();
+		}
+	}
+
+	private void Start()
+	{
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+		{
+			base.gameObject.SetActive(false);
 		}
 	}
 }

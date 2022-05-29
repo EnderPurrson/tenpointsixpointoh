@@ -19,4 +19,8 @@ public class MaterialToChange
 
 	[HideInInspector]
 	public float currentLerp;
+
+	public MaterialToChange()
+	{
+	}
 }

@@ -1,29 +1,15 @@
-using System;
-using System.Runtime.InteropServices;
 using AOT;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal sealed class AndroidPlatformConfiguration : PlatformConfiguration
 	{
-		private delegate void IntentHandlerInternal(IntPtr intent, IntPtr userData);
-
-		private AndroidPlatformConfiguration(IntPtr selfPointer)
-			: base(selfPointer)
+		private AndroidPlatformConfiguration(IntPtr selfPointer) : base(selfPointer)
 		{
-		}
-
-		internal void SetActivity(IntPtr activity)
-		{
-			GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_SetActivity(SelfPtr(), activity);
-		}
-
-		internal void SetOptionalIntentHandlerForUI(Action<IntPtr> intentHandler)
-		{
-			Misc.CheckNotNull(intentHandler);
-			GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_SetOptionalIntentHandlerForUI(SelfPtr(), InternalIntentHandler, Callbacks.ToIntPtr(intentHandler));
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -31,15 +17,28 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_Dispose(selfPointer);
 		}
 
-		[MonoPInvokeCallback(typeof(IntentHandlerInternal))]
+		internal static GooglePlayGames.Native.PInvoke.AndroidPlatformConfiguration Create()
+		{
+			return new GooglePlayGames.Native.PInvoke.AndroidPlatformConfiguration(GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_Construct());
+		}
+
+		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.PInvoke.AndroidPlatformConfiguration.IntentHandlerInternal))]
 		private static void InternalIntentHandler(IntPtr intent, IntPtr userData)
 		{
 			Callbacks.PerformInternalCallback("AndroidPlatformConfiguration#InternalIntentHandler", Callbacks.Type.Permanent, intent, userData);
 		}
 
-		internal static AndroidPlatformConfiguration Create()
+		internal void SetActivity(IntPtr activity)
 		{
-			return new AndroidPlatformConfiguration(GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_Construct());
+			GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_SetActivity(base.SelfPtr(), activity);
 		}
+
+		internal void SetOptionalIntentHandlerForUI(Action<IntPtr> intentHandler)
+		{
+			Misc.CheckNotNull<Action<IntPtr>>(intentHandler);
+			GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.AndroidPlatformConfiguration_SetOptionalIntentHandlerForUI(base.SelfPtr(), new GooglePlayGames.Native.Cwrapper.AndroidPlatformConfiguration.IntentHandler(GooglePlayGames.Native.PInvoke.AndroidPlatformConfiguration.InternalIntentHandler), Callbacks.ToIntPtr(intentHandler));
+		}
+
+		private delegate void IntentHandlerInternal(IntPtr intent, IntPtr userData);
 	}
 }

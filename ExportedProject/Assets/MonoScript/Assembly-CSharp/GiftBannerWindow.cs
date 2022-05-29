@@ -1,33 +1,13 @@
+using Rilisoft;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class GiftBannerWindow : BannerWindow
 {
-	public enum StepAnimation
-	{
-		none = 0,
-		WaitForShowAward = 1,
-		ShowAward = 2,
-		waitForClose = 3
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CBuyCanGetGift_003Ec__AnonStorey2B0
-	{
-		internal bool buySuccess;
-
-		internal GiftBannerWindow _003C_003Ef__this;
-
-		internal void _003C_003Em__2C2()
-		{
-			buySuccess = true;
-			_003C_003Ef__this.GetGiftCore(true);
-		}
-	}
-
 	public const string keyTrigOpenBanner = "OpenGiftPanel";
 
 	public const string keyTrigTapButton = "OpenGiftBtnRelease";
@@ -90,122 +70,187 @@ public class GiftBannerWindow : BannerWindow
 
 	public static bool isActiveBanner;
 
-	public StepAnimation curStateAnimAward;
+	public GiftBannerWindow.StepAnimation curStateAnimAward;
 
-	public static event Action onClose;
-
-	public static event Action onGetGift;
-
-	public static event Action onHideInfoGift;
-
-	public static event Action onOpenInfoGift;
-
-	private void Awake()
+	static GiftBannerWindow()
 	{
-		instance = this;
-		if (animatorBanner != null)
-		{
-			animatorBanner = GetComponent<Animator>();
-		}
-		GiftController.OnUpdateTimer += UpdateLabelTimer;
-		GiftController.OnTimerEnded += OnEndTimer;
-		BankController.Instance.BackRequested += BackFromBank;
 	}
 
-	private void OnDestroy()
+	public GiftBannerWindow()
 	{
-		GiftController.OnUpdateTimer -= UpdateLabelTimer;
-		GiftController.OnTimerEnded -= OnEndTimer;
-		BankController.Instance.BackRequested -= BackFromBank;
-		instance = null;
 	}
 
-	private void OnEnable()
+	public void AnimFonShow(bool val)
 	{
-		if (!bannerObj.activeSelf)
+		if (this.sprDarkFon != null)
 		{
-			needPlayStartAnim = true;
-		}
-		if ((bool)objSound)
-		{
-			objSound.SetActive(Defs.isSoundFX);
-		}
-		MainMenuHeroCamera.onEndOpenGift += OnOpenBannerWindow;
-		SetViewState();
-		if (GiftController.Instance != null)
-		{
-			if (GiftController.Instance.ActiveGift)
+			if (!val)
 			{
-				GiftController.Instance.CheckAvaliableSlots();
+				TweenAlpha.Begin(this.sprDarkFon.gameObject, 0.1f, 0f);
 			}
 			else
 			{
-				SetVisibleBanner(false);
-				if (GiftBannerWindow.onClose != null)
-				{
-					GiftBannerWindow.onClose();
-				}
+				TweenAlpha.Begin(this.sprDarkFon.gameObject, 1f, 0.4f);
 			}
 		}
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(CloseBanner, "Gift (Gotcha)");
 	}
 
-	private void OnDisable()
+	private void Awake()
 	{
-		MainMenuHeroCamera.onEndOpenGift -= OnOpenBannerWindow;
-		needPlayStartAnim = true;
-		if (_backSubscription != null)
+		GiftBannerWindow.instance = this;
+		if (this.animatorBanner != null)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			this.animatorBanner = base.GetComponent<Animator>();
 		}
+		GiftController.OnUpdateTimer += new Action<string>(this.UpdateLabelTimer);
+		GiftController.OnTimerEnded += new Action(this.OnEndTimer);
+		BankController.Instance.BackRequested += new EventHandler(this.BackFromBank);
 	}
 
 	private void BackFromBank(object sender, EventArgs e)
 	{
 		if (base.IsShow)
 		{
-			Invoke("OnCloseBank", 0.2f);
+			base.Invoke("OnCloseBank", 0.2f);
 		}
 	}
 
-	private void OnCloseBank()
+	public void BuyCanGetGift()
 	{
-		needPlayStartAnim = true;
-		OnOpenBannerWindow();
-	}
-
-	public void ShowShop()
-	{
-		if (!blockedButton)
+		if (GiftBannerWindow.blockedButton)
 		{
-			SetVisibleBanner(false);
-			MainMenuController.sharedController.ShowBankWindow();
+			return;
 		}
+		bool flag = false;
+		ItemPrice itemPrice = new ItemPrice(GiftController.Instance.CostBuyCanGetGift.Value, "GemsCurrency");
+		ShopNGUIController.TryToBuy(base.transform.root.gameObject, itemPrice, () => {
+			flag = true;
+			this.GetGiftCore(true);
+		}, null, null, null, null, null);
+		if (!flag)
+		{
+			this.SetVisibleBanner(false);
+		}
+		this.SetViewState();
+	}
+
+	public void CloseBanner()
+	{
+		if (GiftBannerWindow.blockedButton)
+		{
+			return;
+		}
+		if (BannerWindowController.SharedController && this.bannerObj != null && this.bannerObj.activeSelf)
+		{
+			ButtonClickSound.Instance.PlayClick();
+			this.SetVisibleBanner(false);
+			if (GiftBannerWindow.onClose != null)
+			{
+				GiftBannerWindow.onClose();
+			}
+			GiftBannerWindow.isActiveBanner = false;
+		}
+	}
+
+	public void CloseBannerEndAnimtion()
+	{
+		BannerWindowController.SharedController.HideBannerWindow();
+		this.SetVisibleBanner(true);
+		if (MainMenuController.sharedController != null)
+		{
+			MainMenuController.sharedController.ShowSavePanel(true);
+		}
+	}
+
+	public void CloseInfoGift(bool isForce = false)
+	{
+		this.canTapOnGift = true;
+		base.CancelInvoke("StartNextStep");
+		SpringPanel component = this.scrollGift.GetComponent<SpringPanel>();
+		if (component)
+		{
+			UnityEngine.Object.Destroy(component);
+		}
+		if (this.crtForShowAward != null)
+		{
+			base.StopCoroutine(this.crtForShowAward);
+		}
+		this.animatorBanner.SetTrigger("GiftInfoClose");
+		this.crtForShowAward = null;
+		this.curStateAnimAward = GiftBannerWindow.StepAnimation.none;
+		GiftScroll.canReCreateSlots = true;
+		this.scrollGift.SetCanDraggable(true);
+		this.SetViewState();
+		this.HideDarkFon();
+		base.Invoke("UnlockedBut", 1.5f);
+		if (this.scrollGift != null)
+		{
+			this.scrollGift.UpdateListButton();
+		}
+		if (GiftBannerWindow.onHideInfoGift != null)
+		{
+			GiftBannerWindow.onHideInfoGift();
+		}
+		base.StartCoroutine(this.WaitAndSort());
+		if (!isForce && FriendsController.ServerTime < (long)0)
+		{
+			AnimationGift.instance.CheckVisibleGift();
+			this.ForceCloseAll();
+		}
+	}
+
+	private SlotInfo CopySlot(SlotInfo curSlot)
+	{
+		SlotInfo slotInfo = new SlotInfo()
+		{
+			gift = new GiftInfo()
+			{
+				Id = curSlot.gift.Id
+			}
+		};
+		slotInfo.gift.Count.Value = curSlot.gift.Count.Value;
+		slotInfo.gift.KeyTranslateInfo = curSlot.gift.KeyTranslateInfo;
+		slotInfo.CountGift = curSlot.CountGift;
+		slotInfo.numInScroll = curSlot.numInScroll;
+		slotInfo.category = curSlot.category;
+		slotInfo.isActiveEvent = curSlot.isActiveEvent;
+		return slotInfo;
+	}
+
+	public void ForceCloseAll()
+	{
+		if (GiftBannerWindow.instance == null || this.curStateAnimAward != GiftBannerWindow.StepAnimation.none || !GiftBannerWindow.isActiveBanner)
+		{
+			return;
+		}
+		GiftBannerWindow.isActiveBanner = false;
+		GiftBannerWindow.isForceClose = true;
+		this.needPlayStartAnim = true;
+		GiftBannerWindow.blockedButton = false;
+		BankController.canShowIndication = true;
+		this.canTapOnGift = true;
+		this.CloseInfoGift(true);
+		this.HideDarkFon();
+		this.SetVisibleBanner(false);
+		MainMenuController.canRotationLobbyPlayer = true;
+		if (GiftBannerWindow.onClose != null)
+		{
+			GiftBannerWindow.onClose();
+		}
+		if (AnimationGift.instance != null)
+		{
+			AnimationGift.instance.ResetAnimation();
+		}
+		this.curStateAnimAward = GiftBannerWindow.StepAnimation.none;
 	}
 
 	public void GetGift()
 	{
-		if (!blockedButton)
+		if (GiftBannerWindow.blockedButton)
 		{
-			GetGiftCore(false);
+			return;
 		}
-	}
-
-	private void OnOpenBannerWindow()
-	{
-		if (!isForceClose && needPlayStartAnim)
-		{
-			SetVisibleBanner(true);
-			needPlayStartAnim = false;
-			scrollGift.SetCanDraggable(true);
-			HideDarkFon();
-			animatorBanner.SetTrigger("OpenGiftPanel");
-		}
+		this.GetGiftCore(false);
 	}
 
 	private void GetGiftCore(bool isForMoneyGift)
@@ -222,333 +267,289 @@ public class GiftBannerWindow : BannerWindow
 		{
 			throw new Exception("failed get gift");
 		}
-		awardSlot = CopySlot(gift);
-		if (awardSlot != null)
+		this.awardSlot = this.CopySlot(gift);
+		if (this.awardSlot == null)
 		{
-			if (awardSlot.gift != null)
-			{
-				AnalyticsStuff.LogDailyGift(awardSlot.gift.Id, awardSlot.CountGift, isForMoneyGift);
-			}
-			else
-			{
-				Debug.LogError("GetGiftCore: awardSlot.gift = null");
-			}
+			UnityEngine.Debug.LogError("GetGiftCore: awardSlot = null");
+		}
+		else if (this.awardSlot.gift == null)
+		{
+			UnityEngine.Debug.LogError("GetGiftCore: awardSlot.gift = null");
 		}
 		else
 		{
-			Debug.LogError("GetGiftCore: awardSlot = null");
+			AnalyticsStuff.LogDailyGift(this.awardSlot.gift.Id, this.awardSlot.CountGift, isForMoneyGift);
 		}
-		blockedButton = true;
-		scrollGift.SetCanDraggable(false);
-		scrollGift.AnimScrollGift(awardSlot.numInScroll);
-		animatorBanner.SetTrigger("OpenGiftBtnRelease");
+		GiftBannerWindow.blockedButton = true;
+		this.scrollGift.SetCanDraggable(false);
+		this.scrollGift.AnimScrollGift(this.awardSlot.numInScroll);
+		this.animatorBanner.SetTrigger("OpenGiftBtnRelease");
 		GiftScroll.canReCreateSlots = false;
 		GiftController.Instance.ReCreateSlots();
-		ShowDarkFon();
-		StartShowAwardGift();
+		this.ShowDarkFon();
+		this.StartShowAwardGift();
 		if (GiftBannerWindow.onGetGift != null)
 		{
 			GiftBannerWindow.onGetGift();
 		}
-		_freeSpinsText.gameObject.SetActive(false);
-	}
-
-	private SlotInfo CopySlot(SlotInfo curSlot)
-	{
-		SlotInfo slotInfo = new SlotInfo();
-		slotInfo.gift = new GiftInfo();
-		slotInfo.gift.Id = curSlot.gift.Id;
-		slotInfo.gift.Count.Value = curSlot.gift.Count.Value;
-		slotInfo.gift.KeyTranslateInfo = curSlot.gift.KeyTranslateInfo;
-		slotInfo.CountGift = curSlot.CountGift;
-		slotInfo.numInScroll = curSlot.numInScroll;
-		slotInfo.category = curSlot.category;
-		slotInfo.isActiveEvent = curSlot.isActiveEvent;
-		return slotInfo;
-	}
-
-	public void BuyCanGetGift()
-	{
-		_003CBuyCanGetGift_003Ec__AnonStorey2B0 _003CBuyCanGetGift_003Ec__AnonStorey2B = new _003CBuyCanGetGift_003Ec__AnonStorey2B0();
-		_003CBuyCanGetGift_003Ec__AnonStorey2B._003C_003Ef__this = this;
-		if (!blockedButton)
-		{
-			_003CBuyCanGetGift_003Ec__AnonStorey2B.buySuccess = false;
-			ItemPrice price = new ItemPrice(GiftController.Instance.CostBuyCanGetGift.Value, "GemsCurrency");
-			ShopNGUIController.TryToBuy(base.transform.root.gameObject, price, _003CBuyCanGetGift_003Ec__AnonStorey2B._003C_003Em__2C2);
-			if (!_003CBuyCanGetGift_003Ec__AnonStorey2B.buySuccess)
-			{
-				SetVisibleBanner(false);
-			}
-			SetViewState();
-		}
-	}
-
-	public void StartShowAwardGift()
-	{
-		if (awardSlot != null)
-		{
-			canTapOnGift = false;
-			curStateAnimAward = StepAnimation.WaitForShowAward;
-			AnimationGift.instance.StartAnimForGetGift();
-			CancelInvoke("StartNextStep");
-			Invoke("StartNextStep", delayBeforeNextStep);
-		}
-		else
-		{
-			CloseInfoGift();
-		}
-	}
-
-	public void OnClickGift()
-	{
-		if (canTapOnGift)
-		{
-			StartNextStep();
-		}
-	}
-
-	private void StartNextStep()
-	{
-		switch (curStateAnimAward)
-		{
-		case StepAnimation.WaitForShowAward:
-			CancelInvoke("StartNextStep");
-			curStateAnimAward = StepAnimation.ShowAward;
-			StartNextStep();
-			break;
-		case StepAnimation.ShowAward:
-			crtForShowAward = StartCoroutine(OnAnimOpenGift());
-			break;
-		case StepAnimation.waitForClose:
-			CloseInfoGift();
-			break;
-		}
-	}
-
-	private IEnumerator OnAnimOpenGift()
-	{
-		CancelInvoke("StartNextStep");
-		HideDarkFon();
-		AnimationGift.instance.StopAnimForGetGift();
-		if (GiftBannerWindow.onOpenInfoGift != null)
-		{
-			GiftBannerWindow.onOpenInfoGift();
-		}
-		panelInfoGift.SetInfoButton(awardSlot);
-		awardSlot = null;
-		yield return new WaitForSeconds(1f);
-		BankController.canShowIndication = true;
-		animatorBanner.SetTrigger("GiftInfoShow");
-		yield return new WaitForSeconds(1.5f);
-		curStateAnimAward = StepAnimation.waitForClose;
-		canTapOnGift = true;
-		Invoke("StartNextStep", delayBeforeNextStep);
-	}
-
-	public void CloseInfoGift(bool isForce = false)
-	{
-		canTapOnGift = true;
-		CancelInvoke("StartNextStep");
-		SpringPanel component = scrollGift.GetComponent<SpringPanel>();
-		if ((bool)component)
-		{
-			UnityEngine.Object.Destroy(component);
-		}
-		if (crtForShowAward != null)
-		{
-			StopCoroutine(crtForShowAward);
-		}
-		animatorBanner.SetTrigger("GiftInfoClose");
-		crtForShowAward = null;
-		curStateAnimAward = StepAnimation.none;
-		GiftScroll.canReCreateSlots = true;
-		scrollGift.SetCanDraggable(true);
-		SetViewState();
-		HideDarkFon();
-		Invoke("UnlockedBut", 1.5f);
-		if (scrollGift != null)
-		{
-			scrollGift.UpdateListButton();
-		}
-		if (GiftBannerWindow.onHideInfoGift != null)
-		{
-			GiftBannerWindow.onHideInfoGift();
-		}
-		StartCoroutine(WaitAndSort());
-		if (!isForce && FriendsController.ServerTime < 0)
-		{
-			AnimationGift.instance.CheckVisibleGift();
-			ForceCloseAll();
-		}
-	}
-
-	private IEnumerator WaitAndSort()
-	{
-		yield return null;
-		scrollGift.transform.parent.localScale = Vector3.one;
-		scrollGift.transform.localScale = Vector3.one;
-		scrollGift.Sort();
-		yield return null;
-		while (scrollGift.transform.parent.localScale.Equals(Vector3.one))
-		{
-			yield return null;
-		}
-		scrollGift.Sort();
-	}
-
-	private void UnlockedBut()
-	{
-		blockedButton = false;
-	}
-
-	public void CloseBanner()
-	{
-		if (!blockedButton && (bool)BannerWindowController.SharedController && bannerObj != null && bannerObj.activeSelf)
-		{
-			ButtonClickSound.Instance.PlayClick();
-			SetVisibleBanner(false);
-			if (GiftBannerWindow.onClose != null)
-			{
-				GiftBannerWindow.onClose();
-			}
-			isActiveBanner = false;
-		}
-	}
-
-	public void CloseBannerEndAnimtion()
-	{
-		BannerWindowController.SharedController.HideBannerWindow();
-		SetVisibleBanner(true);
-		if (MainMenuController.sharedController != null)
-		{
-			MainMenuController.sharedController.ShowSavePanel();
-		}
-	}
-
-	public void SetVisibleBanner(bool val)
-	{
-		if (bannerObj != null)
-		{
-			bannerObj.SetActive(val);
-		}
+		this._freeSpinsText.gameObject.SetActive(false);
 	}
 
 	public string GetNameSpriteForSlot(SlotInfo curSlot)
 	{
-		GiftCategoryType giftCategoryType = curSlot.category.Type;
-		if (giftCategoryType == GiftCategoryType.ArmorAndHat)
+		if (curSlot.category.Type == GiftCategoryType.ArmorAndHat)
 		{
 			return "shop_icons_armor";
 		}
 		return string.Empty;
 	}
 
-	private void SetViewState()
-	{
-		lbPriceForBuy.text = GiftController.Instance.CostBuyCanGetGift.Value.ToString();
-		string text = LocalizationStore.Get("Key_2196");
-		int num = GiftController.Instance.FreeSpins + (GiftController.Instance.CanGetTimerGift ? 1 : 0);
-		if (GiftController.Instance.CanGetFreeSpinGift)
-		{
-			text = string.Format(text, (num <= 1) ? string.Empty : num.ToString());
-		}
-		_freeSpinsText.Text = text;
-		_freeSpinsText.gameObject.SetActiveSafe(GiftController.Instance.CanGetFreeSpinGift && num > 1);
-		butBuy.SetActiveSafe(!GiftController.Instance.CanGetGift);
-		butGift.SetActiveSafe(GiftController.Instance.CanGetGift);
-		lbTimer.gameObject.SetActive(!GiftController.Instance.CanGetTimerGift);
-		objLabelTapGift.SetActiveSafe(GiftController.Instance.CanGetGift);
-	}
-
-	public void ShowDarkFon()
-	{
-	}
-
 	public void HideDarkFon()
 	{
 	}
 
-	public void AnimFonShow(bool val)
+	[DebuggerHidden]
+	private IEnumerator OnAnimOpenGift()
 	{
-		if (sprDarkFon != null)
-		{
-			if (val)
-			{
-				TweenAlpha.Begin(sprDarkFon.gameObject, 1f, 0.4f);
-			}
-			else
-			{
-				TweenAlpha.Begin(sprDarkFon.gameObject, 0.1f, 0f);
-			}
-		}
-	}
-
-	private void UpdateLabelTimer(string curTime)
-	{
-		SetViewState();
-		if (lbTimer != null)
-		{
-			lbTimer.text = curTime;
-		}
-	}
-
-	private void OnEndTimer()
-	{
-		SetViewState();
+		GiftBannerWindow.u003cOnAnimOpenGiftu003ec__Iterator145 variable = null;
+		return variable;
 	}
 
 	private void OnApplicationPause(bool pausing)
 	{
 		if (!pausing)
 		{
-			ForceCloseAll();
+			this.ForceCloseAll();
 		}
 	}
 
-	public void ForceCloseAll()
+	public void OnClickGift()
 	{
-		if (!(instance == null) && curStateAnimAward == StepAnimation.none && isActiveBanner)
+		if (this.canTapOnGift)
 		{
-			isActiveBanner = false;
-			isForceClose = true;
-			needPlayStartAnim = true;
-			blockedButton = false;
-			BankController.canShowIndication = true;
-			canTapOnGift = true;
-			CloseInfoGift(true);
-			HideDarkFon();
-			SetVisibleBanner(false);
-			MainMenuController.canRotationLobbyPlayer = true;
-			if (GiftBannerWindow.onClose != null)
-			{
-				GiftBannerWindow.onClose();
-			}
-			if (AnimationGift.instance != null)
-			{
-				AnimationGift.instance.ResetAnimation();
-			}
-			curStateAnimAward = StepAnimation.none;
+			this.StartNextStep();
 		}
 	}
 
-	public void UpdateSizeScroll()
+	private void OnCloseBank()
 	{
-		int num = scrollGift.listButton.Count;
-		if (num > 8)
+		this.needPlayStartAnim = true;
+		this.OnOpenBannerWindow();
+	}
+
+	private void OnDestroy()
+	{
+		GiftController.OnUpdateTimer -= new Action<string>(this.UpdateLabelTimer);
+		GiftController.OnTimerEnded -= new Action(this.OnEndTimer);
+		BankController.Instance.BackRequested -= new EventHandler(this.BackFromBank);
+		GiftBannerWindow.instance = null;
+	}
+
+	private void OnDisable()
+	{
+		MainMenuHeroCamera.onEndOpenGift -= new Action(this.OnOpenBannerWindow);
+		this.needPlayStartAnim = true;
+		if (this._backSubscription != null)
 		{
-			num = 8;
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
-		num--;
-		int num2 = num * scrollGift.wrapScript.itemSize;
-		UIPanel panel = scrollGift.scView.panel;
-		sprFonScroll.SetDimensions(num2 + 30, (int)sprFonScroll.localSize.y);
-		panel.baseClipRegion = new Vector4(panel.baseClipRegion.x, panel.baseClipRegion.y, num2, panel.baseClipRegion.w);
+	}
+
+	private void OnEnable()
+	{
+		if (!this.bannerObj.activeSelf)
+		{
+			this.needPlayStartAnim = true;
+		}
+		if (this.objSound)
+		{
+			this.objSound.SetActive(Defs.isSoundFX);
+		}
+		MainMenuHeroCamera.onEndOpenGift += new Action(this.OnOpenBannerWindow);
+		this.SetViewState();
+		if (GiftController.Instance != null)
+		{
+			if (!GiftController.Instance.ActiveGift)
+			{
+				this.SetVisibleBanner(false);
+				if (GiftBannerWindow.onClose != null)
+				{
+					GiftBannerWindow.onClose();
+				}
+			}
+			else
+			{
+				GiftController.Instance.CheckAvaliableSlots();
+			}
+		}
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.CloseBanner), "Gift (Gotcha)");
+	}
+
+	private void OnEndTimer()
+	{
+		this.SetViewState();
+	}
+
+	private void OnOpenBannerWindow()
+	{
+		if (GiftBannerWindow.isForceClose)
+		{
+			return;
+		}
+		if (this.needPlayStartAnim)
+		{
+			this.SetVisibleBanner(true);
+			this.needPlayStartAnim = false;
+			this.scrollGift.SetCanDraggable(true);
+			this.HideDarkFon();
+			this.animatorBanner.SetTrigger("OpenGiftPanel");
+		}
+	}
+
+	private void SetViewState()
+	{
+		this.lbPriceForBuy.text = GiftController.Instance.CostBuyCanGetGift.Value.ToString();
+		string str = LocalizationStore.Get("Key_2196");
+		int freeSpins = GiftController.Instance.FreeSpins + (!GiftController.Instance.CanGetTimerGift ? 0 : 1);
+		if (GiftController.Instance.CanGetFreeSpinGift)
+		{
+			str = string.Format(str, (freeSpins <= 1 ? string.Empty : freeSpins.ToString()));
+		}
+		this._freeSpinsText.Text = str;
+		this._freeSpinsText.gameObject.SetActiveSafe((!GiftController.Instance.CanGetFreeSpinGift ? false : freeSpins > 1));
+		this.butBuy.SetActiveSafe(!GiftController.Instance.CanGetGift);
+		this.butGift.SetActiveSafe(GiftController.Instance.CanGetGift);
+		this.lbTimer.gameObject.SetActive(!GiftController.Instance.CanGetTimerGift);
+		this.objLabelTapGift.SetActiveSafe(GiftController.Instance.CanGetGift);
+	}
+
+	public void SetVisibleBanner(bool val)
+	{
+		if (this.bannerObj != null)
+		{
+			this.bannerObj.SetActive(val);
+		}
+	}
+
+	public void ShowDarkFon()
+	{
+	}
+
+	public void ShowShop()
+	{
+		if (GiftBannerWindow.blockedButton)
+		{
+			return;
+		}
+		this.SetVisibleBanner(false);
+		MainMenuController.sharedController.ShowBankWindow();
 	}
 
 	[ContextMenu("simulate pause")]
 	private void SimPause()
 	{
-		ForceCloseAll();
+		this.ForceCloseAll();
+	}
+
+	private void StartNextStep()
+	{
+		switch (this.curStateAnimAward)
+		{
+			case GiftBannerWindow.StepAnimation.WaitForShowAward:
+			{
+				base.CancelInvoke("StartNextStep");
+				this.curStateAnimAward = GiftBannerWindow.StepAnimation.ShowAward;
+				this.StartNextStep();
+				break;
+			}
+			case GiftBannerWindow.StepAnimation.ShowAward:
+			{
+				this.crtForShowAward = base.StartCoroutine(this.OnAnimOpenGift());
+				break;
+			}
+			case GiftBannerWindow.StepAnimation.waitForClose:
+			{
+				this.CloseInfoGift(false);
+				break;
+			}
+		}
+	}
+
+	public void StartShowAwardGift()
+	{
+		if (this.awardSlot == null)
+		{
+			this.CloseInfoGift(false);
+		}
+		else
+		{
+			this.canTapOnGift = false;
+			this.curStateAnimAward = GiftBannerWindow.StepAnimation.WaitForShowAward;
+			AnimationGift.instance.StartAnimForGetGift();
+			base.CancelInvoke("StartNextStep");
+			base.Invoke("StartNextStep", this.delayBeforeNextStep);
+		}
+	}
+
+	private void UnlockedBut()
+	{
+		GiftBannerWindow.blockedButton = false;
+	}
+
+	private void UpdateLabelTimer(string curTime)
+	{
+		this.SetViewState();
+		if (this.lbTimer != null)
+		{
+			this.lbTimer.text = curTime;
+		}
+	}
+
+	public void UpdateSizeScroll()
+	{
+		int count = this.scrollGift.listButton.Count;
+		if (count > 8)
+		{
+			count = 8;
+		}
+		count--;
+		int num = count * this.scrollGift.wrapScript.itemSize;
+		UIPanel vector4 = this.scrollGift.scView.panel;
+		UISprite uISprite = this.sprFonScroll;
+		Vector2 vector2 = this.sprFonScroll.localSize;
+		uISprite.SetDimensions(num + 30, (int)vector2.y);
+		float single = vector4.baseClipRegion.x;
+		float single1 = vector4.baseClipRegion.y;
+		float single2 = (float)num;
+		Vector4 vector41 = vector4.baseClipRegion;
+		vector4.baseClipRegion = new Vector4(single, single1, single2, vector41.w);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitAndSort()
+	{
+		GiftBannerWindow.u003cWaitAndSortu003ec__Iterator146 variable = null;
+		return variable;
+	}
+
+	public static event Action onClose;
+
+	public static event Action onGetGift;
+
+	public static event Action onHideInfoGift;
+
+	public static event Action onOpenInfoGift;
+
+	public enum StepAnimation
+	{
+		none,
+		WaitForShowAward,
+		ShowAward,
+		waitForClose
 	}
 }

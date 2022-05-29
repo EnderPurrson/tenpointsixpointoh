@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(UIInput))]
@@ -16,32 +20,33 @@ public class UIInputFocusAtEnable : MonoBehaviour
 
 	private bool _alreadyTurned;
 
+	public UIInputFocusAtEnable()
+	{
+	}
+
 	private void Awake()
 	{
-		_input = GetComponent<UIInput>();
-		if (_input == null)
+		this._input = base.GetComponent<UIInput>();
+		if (this._input == null)
 		{
-			Debug.LogError("input not found");
+			UnityEngine.Debug.LogError("input not found");
 		}
 	}
 
 	private void OnEnable()
 	{
-		if (!_onlyOnce || !_alreadyTurned)
+		if (this._onlyOnce && this._alreadyTurned)
 		{
-			StartCoroutine(SetSelected());
-			_alreadyTurned = true;
+			return;
 		}
+		base.StartCoroutine(this.SetSelected());
+		this._alreadyTurned = true;
 	}
 
+	[DebuggerHidden]
 	private IEnumerator SetSelected()
 	{
-		_input.isSelected = false;
-		yield return null;
-		while (!_input.isSelected)
-		{
-			yield return new WaitForSeconds(0.3f);
-			_input.isSelected = true;
-		}
+		UIInputFocusAtEnable.u003cSetSelectedu003ec__Iterator199 variable = null;
+		return variable;
 	}
 }

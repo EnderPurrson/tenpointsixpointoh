@@ -1,6 +1,7 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Reflection;
 
 public class ArrayListWrapper
 {
@@ -10,11 +11,12 @@ public class ArrayListWrapper
 	{
 		get
 		{
-			//Discarded unreachable code: IL_0022
-			using (new ArrayListChecker(_list, "_list"))
+			int count;
+			using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 			{
-				return _list.Count;
+				count = this._list.Count;
 			}
+			return count;
 		}
 	}
 
@@ -22,69 +24,77 @@ public class ArrayListWrapper
 	{
 		get
 		{
-			//Discarded unreachable code: IL_0023
-			using (new ArrayListChecker(_list, "_list"))
+			object item;
+			using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 			{
-				return _list[index];
+				item = this._list[index];
 			}
+			return item;
 		}
 		set
 		{
-			using (new ArrayListChecker(_list, "_list"))
+			using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 			{
-				_list[index] = value;
+				this._list[index] = value;
 			}
 		}
 	}
 
-	public void AddRange(ICollection c)
+	public ArrayListWrapper()
 	{
-		using (new ArrayListChecker(_list, "_list"))
-		{
-			_list.AddRange(c);
-		}
 	}
 
 	public int Add(object item)
 	{
-		//Discarded unreachable code: IL_0023
-		using (new ArrayListChecker(_list, "_list"))
+		int num;
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 		{
-			return _list.Add(item);
+			num = this._list.Add(item);
+		}
+		return num;
+	}
+
+	public void AddRange(ICollection c)
+	{
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
+		{
+			this._list.AddRange(c);
 		}
 	}
 
 	public bool Contains(object item)
 	{
-		//Discarded unreachable code: IL_0023
-		using (new ArrayListChecker(_list, "_list"))
+		bool flag;
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 		{
-			return _list.Contains(item);
+			flag = this._list.Contains(item);
 		}
+		return flag;
 	}
 
-	public Array ToArray(Type type)
+	public void Insert(int index, object obj)
 	{
-		//Discarded unreachable code: IL_0023
-		using (new ArrayListChecker(_list, "_list"))
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 		{
-			return _list.ToArray(type);
+			this._list.Insert(index, obj);
 		}
 	}
 
 	public void RemoveAt(int index)
 	{
-		using (new ArrayListChecker(_list, "_list"))
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 		{
-			_list.RemoveAt(index);
+			this._list.RemoveAt(index);
 		}
 	}
 
-	public void Insert(int index, object obj)
+	public Array ToArray(Type type)
 	{
-		using (new ArrayListChecker(_list, "_list"))
+		Array array;
+		using (ArrayListChecker arrayListChecker = new ArrayListChecker(this._list, "_list"))
 		{
-			_list.Insert(index, obj);
+			array = this._list.ToArray(type);
 		}
+		return array;
 	}
 }

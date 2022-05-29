@@ -1,113 +1,87 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class HighAssetsLoader : MonoBehaviour
 {
-	public static readonly string LightmapsFolder = "Lightmap";
+	public readonly static string LightmapsFolder;
 
-	public static readonly string HighFolder = "High";
+	public readonly static string HighFolder;
 
-	public static readonly string AtlasFolder = "Atlas";
+	public readonly static string AtlasFolder;
 
-	[CompilerGenerated]
-	private static Comparison<Texture2D> _003C_003Ef__am_0024cache3;
-
-	[CompilerGenerated]
-	private static Comparison<Material> _003C_003Ef__am_0024cache4;
-
-	[CompilerGenerated]
-	private static Comparison<Texture2D> _003C_003Ef__am_0024cache5;
-
-	private void Start()
+	static HighAssetsLoader()
 	{
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		HighAssetsLoader.LightmapsFolder = "Lightmap";
+		HighAssetsLoader.HighFolder = "High";
+		HighAssetsLoader.AtlasFolder = "Atlas";
+	}
+
+	public HighAssetsLoader()
+	{
 	}
 
 	private void OnLevelWasLoaded(int lev)
 	{
-		if (Device.isWeakDevice || (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64 && !Application.isEditor))
+		if (Device.isWeakDevice || BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64 && !Application.isEditor)
 		{
 			return;
 		}
-		string path = ResPath.Combine(ResPath.Combine(LightmapsFolder, HighFolder), Application.loadedLevelName);
-		string path2 = ResPath.Combine(ResPath.Combine(AtlasFolder, HighFolder), Application.loadedLevelName);
-		Texture2D[] array = Resources.LoadAll<Texture2D>(path);
-		if (array != null && array.Length > 0)
+		string str = ResPath.Combine(ResPath.Combine(HighAssetsLoader.LightmapsFolder, HighAssetsLoader.HighFolder), Application.loadedLevelName);
+		string str1 = ResPath.Combine(ResPath.Combine(HighAssetsLoader.AtlasFolder, HighAssetsLoader.HighFolder), Application.loadedLevelName);
+		Texture2D[] texture2DArray = Resources.LoadAll<Texture2D>(str);
+		if (texture2DArray != null && (int)texture2DArray.Length > 0)
 		{
-			List<Texture2D> list = new List<Texture2D>();
-			Texture2D[] array2 = array;
-			foreach (Texture2D item in array2)
+			List<Texture2D> texture2Ds = new List<Texture2D>();
+			Texture2D[] texture2DArray1 = texture2DArray;
+			for (int i = 0; i < (int)texture2DArray1.Length; i++)
 			{
-				list.Add(item);
+				texture2Ds.Add(texture2DArray1[i]);
 			}
-			if (_003C_003Ef__am_0024cache3 == null)
+			texture2Ds.Sort((Texture2D lightmap1, Texture2D lightmap2) => lightmap1.name.CompareTo(lightmap2.name));
+			LightmapData lightmapDatum = new LightmapData()
 			{
-				_003C_003Ef__am_0024cache3 = _003COnLevelWasLoaded_003Em__179;
-			}
-			list.Sort(_003C_003Ef__am_0024cache3);
-			LightmapData lightmapData = new LightmapData();
-			lightmapData.lightmapFar = list[0];
-			List<LightmapData> list2 = new List<LightmapData>();
-			list2.Add(lightmapData);
-			LightmapSettings.lightmaps = list2.ToArray();
-		}
-		Texture2D[] array3 = Resources.LoadAll<Texture2D>(path2);
-		string value = Application.loadedLevelName + "_Atlas";
-		if (array3 == null || array3.Length <= 0)
-		{
-			return;
-		}
-		UnityEngine.Object[] array4 = UnityEngine.Object.FindObjectsOfType(typeof(Renderer));
-		List<Material> list3 = new List<Material>();
-		UnityEngine.Object[] array5 = array4;
-		for (int j = 0; j < array5.Length; j++)
-		{
-			Renderer renderer = (Renderer)array5[j];
-			if (renderer != null && renderer.sharedMaterial != null && renderer.sharedMaterial.name != null && renderer.sharedMaterial.name.Contains(value) && !list3.Contains(renderer.sharedMaterial))
+				lightmapFar = texture2Ds[0]
+			};
+			LightmapSettings.lightmaps = (new List<LightmapData>()
 			{
-				list3.Add(renderer.sharedMaterial);
+				lightmapDatum
+			}).ToArray();
+		}
+		Texture2D[] texture2DArray2 = Resources.LoadAll<Texture2D>(str1);
+		string str2 = string.Concat(Application.loadedLevelName, "_Atlas");
+		if (texture2DArray2 != null && (int)texture2DArray2.Length > 0)
+		{
+			UnityEngine.Object[] objArray = UnityEngine.Object.FindObjectsOfType(typeof(Renderer));
+			List<Material> materials = new List<Material>();
+			UnityEngine.Object[] objArray1 = objArray;
+			for (int j = 0; j < (int)objArray1.Length; j++)
+			{
+				Renderer renderer = (Renderer)objArray1[j];
+				if (renderer != null && renderer.sharedMaterial != null && renderer.sharedMaterial.name != null && renderer.sharedMaterial.name.Contains(str2) && !materials.Contains(renderer.sharedMaterial))
+				{
+					materials.Add(renderer.sharedMaterial);
+				}
 			}
-		}
-		List<Texture2D> list4 = new List<Texture2D>();
-		Texture2D[] array6 = array3;
-		foreach (Texture2D item2 in array6)
-		{
-			list4.Add(item2);
-		}
-		if (_003C_003Ef__am_0024cache4 == null)
-		{
-			_003C_003Ef__am_0024cache4 = _003COnLevelWasLoaded_003Em__17A;
-		}
-		list3.Sort(_003C_003Ef__am_0024cache4);
-		if (_003C_003Ef__am_0024cache5 == null)
-		{
-			_003C_003Ef__am_0024cache5 = _003COnLevelWasLoaded_003Em__17B;
-		}
-		list4.Sort(_003C_003Ef__am_0024cache5);
-		for (int l = 0; l < Mathf.Min(list3.Count, list4.Count); l++)
-		{
-			list3[l].mainTexture = list4[l];
+			List<Texture2D> texture2Ds1 = new List<Texture2D>();
+			Texture2D[] texture2DArray3 = texture2DArray2;
+			for (int k = 0; k < (int)texture2DArray3.Length; k++)
+			{
+				texture2Ds1.Add(texture2DArray3[k]);
+			}
+			materials.Sort((Material m1, Material m2) => m1.name.CompareTo(m2.name));
+			texture2Ds1.Sort((Texture2D a1, Texture2D a2) => a1.name.CompareTo(a2.name));
+			for (int l = 0; l < Mathf.Min(materials.Count, texture2Ds1.Count); l++)
+			{
+				materials[l].mainTexture = texture2Ds1[l];
+			}
 		}
 	}
 
-	[CompilerGenerated]
-	private static int _003COnLevelWasLoaded_003Em__179(Texture2D lightmap1, Texture2D lightmap2)
+	private void Start()
 	{
-		return lightmap1.name.CompareTo(lightmap2.name);
-	}
-
-	[CompilerGenerated]
-	private static int _003COnLevelWasLoaded_003Em__17A(Material m1, Material m2)
-	{
-		return m1.name.CompareTo(m2.name);
-	}
-
-	[CompilerGenerated]
-	private static int _003COnLevelWasLoaded_003Em__17B(Texture2D a1, Texture2D a2)
-	{
-		return a1.name.CompareTo(a2.name);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 }

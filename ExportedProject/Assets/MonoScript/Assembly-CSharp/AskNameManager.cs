@@ -1,7 +1,10 @@
+using Rilisoft;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Rilisoft;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class AskNameManager : MonoBehaviour
@@ -36,14 +39,23 @@ public class AskNameManager : MonoBehaviour
 
 	private IDisposable _backSubcripter;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheF;
+	private bool CanSetName
+	{
+		get
+		{
+			if (!string.IsNullOrEmpty(this.curChooseName.Trim()))
+			{
+				return true;
+			}
+			return false;
+		}
+	}
 
 	private bool CanShowWindow
 	{
 		get
 		{
-			if (NameAlreadySet)
+			if (this.NameAlreadySet)
 			{
 				return false;
 			}
@@ -67,91 +79,33 @@ public class AskNameManager : MonoBehaviour
 	{
 		get
 		{
-			if (_NameAlreadySet == -1)
+			if (this._NameAlreadySet == -1)
 			{
-				_NameAlreadySet = Load.LoadInt("keyNameAlreadySet");
+				this._NameAlreadySet = Load.LoadInt("keyNameAlreadySet");
 			}
-			return _NameAlreadySet == 1;
+			return this._NameAlreadySet == 1;
 		}
 		set
 		{
-			_NameAlreadySet = (value ? 1 : 0);
-			Save.SaveInt("keyNameAlreadySet", _NameAlreadySet);
+			this._NameAlreadySet = (!value ? 0 : 1);
+			Save.SaveInt("keyNameAlreadySet", this._NameAlreadySet);
 		}
 	}
 
-	private bool CanSetName
-	{
-		get
-		{
-			string value = curChooseName.Trim();
-			if (!string.IsNullOrEmpty(value))
-			{
-				return true;
-			}
-			return false;
-		}
-	}
-
-	public static event Action onComplete;
-
-	private void Awake()
-	{
-		instance = this;
-		isComplete = false;
-		isShow = false;
-		objWindow.SetActive(false);
-		objPanelSetName.SetActive(false);
-		objPanelEnterName.SetActive(false);
-		objLbWarning.SetActive(false);
-		AskIsCompleted();
-		MainMenuController.onEnableMenuForAskname += ShowWindow;
-	}
-
-	private void OnEnable()
+	static AskNameManager()
 	{
 	}
 
-	private void OnDisable()
+	public AskNameManager()
 	{
-	}
-
-	private void OnDestroy()
-	{
-		MainMenuController.onEnableMenuForAskname -= ShowWindow;
-		instance = null;
-	}
-
-	public void ShowWindow()
-	{
-		StopCoroutine("WaitAndShowWindow");
-		StartCoroutine("WaitAndShowWindow");
-	}
-
-	private IEnumerator WaitAndShowWindow()
-	{
-		if (AskIsCompleted())
-		{
-			yield break;
-		}
-		while (!CanShowWindow)
-		{
-			if (AskIsCompleted())
-			{
-				yield break;
-			}
-			yield return null;
-			yield return null;
-		}
-		OnShowWindowSetName();
 	}
 
 	private bool AskIsCompleted()
 	{
-		bool flag = NameAlreadySet || TrainingController.TrainingCompleted;
+		bool flag = (this.NameAlreadySet ? true : TrainingController.TrainingCompleted);
 		if (flag)
 		{
-			isComplete = true;
+			AskNameManager.isComplete = true;
 			if (AskNameManager.onComplete != null)
 			{
 				AskNameManager.onComplete();
@@ -160,37 +114,34 @@ public class AskNameManager : MonoBehaviour
 		return flag;
 	}
 
-	private void OnShowWindowSetName()
+	private void Awake()
 	{
-		if (_backSubcripter != null)
-		{
-			_backSubcripter.Dispose();
-		}
-		BackSystem backSystem = BackSystem.Instance;
-		if (_003C_003Ef__am_0024cacheF == null)
-		{
-			_003C_003Ef__am_0024cacheF = _003COnShowWindowSetName_003Em__387;
-		}
-		_backSubcripter = backSystem.Register(_003C_003Ef__am_0024cacheF);
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log("+ OnShowWindowSetName");
-		}
-		isShow = true;
-		curChooseName = GetNameForAsk();
-		lbPlayerName.text = curChooseName;
-		inputPlayerName.value = curChooseName;
-		CheckActiveBtnSetName();
-		objPanelSetName.SetActive(true);
-		objWindow.SetActive(true);
-		isAutoName = true;
+		AskNameManager.instance = this;
+		AskNameManager.isComplete = false;
+		AskNameManager.isShow = false;
+		this.objWindow.SetActive(false);
+		this.objPanelSetName.SetActive(false);
+		this.objPanelEnterName.SetActive(false);
+		this.objLbWarning.SetActive(false);
+		this.AskIsCompleted();
+		MainMenuController.onEnableMenuForAskname += new Action(this.ShowWindow);
 	}
 
-	public void OnShowWindowEnterName()
+	private void CheckActiveBtnSetName()
 	{
-		objPanelEnterName.SetActive(true);
-		objPanelSetName.SetActive(false);
-		OnStartEnterName();
+		BoxCollider component = this.btnSetName.GetComponent<BoxCollider>();
+		this.objLbWarning.SetActive(false);
+		if (!this.CanSetName)
+		{
+			this.objLbWarning.SetActive(true);
+			component.enabled = false;
+			this.btnSetName.SetState(UIButtonColor.State.Disabled, true);
+		}
+		else
+		{
+			component.enabled = true;
+			this.btnSetName.SetState(UIButtonColor.State.Normal, true);
+		}
 	}
 
 	private string GetNameForAsk()
@@ -198,89 +149,125 @@ public class AskNameManager : MonoBehaviour
 		return ProfileController.GetPlayerNameOrDefault();
 	}
 
-	private void CheckActiveBtnSetName()
+	private void OnApplicationPause(bool pauseStatus)
 	{
-		BoxCollider component = btnSetName.GetComponent<BoxCollider>();
-		objLbWarning.SetActive(false);
-		if (CanSetName)
+		if (pauseStatus && this.objWindow != null && this.objWindow.activeInHierarchy)
 		{
-			component.enabled = true;
-			btnSetName.SetState(UIButtonColor.State.Normal, true);
-		}
-		else
-		{
-			objLbWarning.SetActive(true);
-			component.enabled = false;
-			btnSetName.SetState(UIButtonColor.State.Disabled, true);
-		}
-	}
-
-	public void OnStartEnterName()
-	{
-		if (isAutoName)
-		{
-			inputPlayerName.isSelected = true;
-			curChooseName = string.Empty;
-			inputPlayerName.value = curChooseName;
-			CheckActiveBtnSetName();
-			isAutoName = false;
+			this.curChooseName = "Player";
+			this.SaveChooseName();
 		}
 	}
 
 	public void OnChangeName()
 	{
-		curChooseName = inputPlayerName.value;
-		CheckActiveBtnSetName();
+		this.curChooseName = this.inputPlayerName.@value;
+		this.CheckActiveBtnSetName();
+	}
+
+	private void OnCloseAllWindow()
+	{
+		if (this._backSubcripter != null)
+		{
+			this._backSubcripter.Dispose();
+		}
+		this.objWindow.SetActive(false);
+		AskNameManager.isComplete = true;
+		if (AskNameManager.onComplete != null)
+		{
+			AskNameManager.onComplete();
+		}
+		AskNameManager.isShow = false;
+	}
+
+	private void OnDestroy()
+	{
+		MainMenuController.onEnableMenuForAskname -= new Action(this.ShowWindow);
+		AskNameManager.instance = null;
+	}
+
+	private void OnDisable()
+	{
+	}
+
+	private void OnEnable()
+	{
+	}
+
+	public void OnShowWindowEnterName()
+	{
+		this.objPanelEnterName.SetActive(true);
+		this.objPanelSetName.SetActive(false);
+		this.OnStartEnterName();
+	}
+
+	private void OnShowWindowSetName()
+	{
+		if (this._backSubcripter != null)
+		{
+			this._backSubcripter.Dispose();
+		}
+		this._backSubcripter = BackSystem.Instance.Register(() => {
+		}, null);
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.Log("+ OnShowWindowSetName");
+		}
+		AskNameManager.isShow = true;
+		this.curChooseName = this.GetNameForAsk();
+		this.lbPlayerName.text = this.curChooseName;
+		this.inputPlayerName.@value = this.curChooseName;
+		this.CheckActiveBtnSetName();
+		this.objPanelSetName.SetActive(true);
+		this.objWindow.SetActive(true);
+		this.isAutoName = true;
+	}
+
+	public void OnStartEnterName()
+	{
+		if (this.isAutoName)
+		{
+			this.inputPlayerName.isSelected = true;
+			this.curChooseName = string.Empty;
+			this.inputPlayerName.@value = this.curChooseName;
+			this.CheckActiveBtnSetName();
+			this.isAutoName = false;
+		}
 	}
 
 	public void SaveChooseName()
 	{
 		if (ProfileController.Instance != null)
 		{
-			ProfileController.Instance.SaveNamePlayer(curChooseName);
+			ProfileController.Instance.SaveNamePlayer(this.curChooseName);
 		}
 		if (MainMenuController.sharedController != null && MainMenuController.sharedController.persNickLabel != null)
 		{
 			MainMenuController.sharedController.persNickLabel.UpdateNickInLobby();
 			MainMenuController.sharedController.persNickLabel.UpdateInfo();
 		}
-		NameAlreadySet = true;
-		OnCloseAllWindow();
+		this.NameAlreadySet = true;
+		this.OnCloseAllWindow();
 	}
 
-	private void OnCloseAllWindow()
+	public void ShowWindow()
 	{
-		if (_backSubcripter != null)
-		{
-			_backSubcripter.Dispose();
-		}
-		objWindow.SetActive(false);
-		isComplete = true;
-		if (AskNameManager.onComplete != null)
-		{
-			AskNameManager.onComplete();
-		}
-		isShow = false;
+		base.StopCoroutine("WaitAndShowWindow");
+		base.StartCoroutine("WaitAndShowWindow");
 	}
 
 	[ContextMenu("Show Window")]
 	public void TestShow()
 	{
-		isComplete = false;
-		OnShowWindowSetName();
+		AskNameManager.isComplete = false;
+		this.OnShowWindowSetName();
 	}
 
-	private void OnApplicationPause(bool pauseStatus)
+	[DebuggerHidden]
+	private IEnumerator WaitAndShowWindow()
 	{
-		if (pauseStatus && objWindow != null && objWindow.activeInHierarchy)
-		{
-			curChooseName = "Player";
-			SaveChooseName();
-		}
+		AskNameManager.u003cWaitAndShowWindowu003ec__Iterator16E variable = null;
+		return variable;
 	}
 
-	[CompilerGenerated]
-	private static void _003COnShowWindowSetName_003Em__387()
-	{
-	}
+	public static event Action onComplete;
 }

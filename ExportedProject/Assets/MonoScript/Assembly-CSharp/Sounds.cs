@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Sounds : MonoBehaviour
@@ -26,5 +27,9 @@ public class Sounds : MonoBehaviour
 
 	public int scorePerKill = 50;
 
-	public float[] attackingSpeedRandomRange = new float[2] { -0.5f, 0.5f };
+	public float[] attackingSpeedRandomRange = new float[] { -0.5f, 0.5f };
+
+	public Sounds()
+	{
+	}
 }

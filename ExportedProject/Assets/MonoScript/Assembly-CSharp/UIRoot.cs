@@ -1,28 +1,14 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/UI/Root")]
+[ExecuteInEditMode]
 public class UIRoot : MonoBehaviour
 {
-	public enum Scaling
-	{
-		Flexible = 0,
-		Constrained = 1,
-		ConstrainedOnMobiles = 2
-	}
+	public static List<UIRoot> list;
 
-	public enum Constraint
-	{
-		Fit = 0,
-		Fill = 1,
-		FitWidth = 2,
-		FitHeight = 3
-	}
-
-	public static List<UIRoot> list = new List<UIRoot>();
-
-	public Scaling scalingStyle;
+	public UIRoot.Scaling scalingStyle;
 
 	public int manualWidth = 1280;
 
@@ -42,79 +28,84 @@ public class UIRoot : MonoBehaviour
 
 	private Transform mTrans;
 
-	public Constraint constraint
+	public int activeHeight
 	{
 		get
 		{
-			if (fitWidth)
+			if (this.activeScaling == UIRoot.Scaling.Flexible)
 			{
-				if (fitHeight)
+				Vector2 vector2 = NGUITools.screenSize;
+				float single = vector2.x / vector2.y;
+				if (vector2.y < (float)this.minimumHeight)
 				{
-					return Constraint.Fit;
+					vector2.y = (float)this.minimumHeight;
+					vector2.x = vector2.y * single;
 				}
-				return Constraint.FitWidth;
+				else if (vector2.y > (float)this.maximumHeight)
+				{
+					vector2.y = (float)this.maximumHeight;
+					vector2.x = vector2.y * single;
+				}
+				int num = Mathf.RoundToInt((!this.shrinkPortraitUI || vector2.y <= vector2.x ? vector2.y : vector2.y / single));
+				return (!this.adjustByDPI ? num : NGUIMath.AdjustByDPI((float)num));
 			}
-			if (fitHeight)
+			UIRoot.Constraint constraint = this.constraint;
+			if (constraint == UIRoot.Constraint.FitHeight)
 			{
-				return Constraint.FitHeight;
+				return this.manualHeight;
 			}
-			return Constraint.Fill;
+			Vector2 vector21 = NGUITools.screenSize;
+			float single1 = vector21.x / vector21.y;
+			float single2 = (float)this.manualWidth / (float)this.manualHeight;
+			switch (constraint)
+			{
+				case UIRoot.Constraint.Fit:
+				{
+					return (single2 <= single1 ? this.manualHeight : Mathf.RoundToInt((float)this.manualWidth / single1));
+				}
+				case UIRoot.Constraint.Fill:
+				{
+					return (single2 >= single1 ? this.manualHeight : Mathf.RoundToInt((float)this.manualWidth / single1));
+				}
+				case UIRoot.Constraint.FitWidth:
+				{
+					return Mathf.RoundToInt((float)this.manualWidth / single1);
+				}
+			}
+			return this.manualHeight;
 		}
 	}
 
-	public Scaling activeScaling
+	public UIRoot.Scaling activeScaling
 	{
 		get
 		{
-			Scaling scaling = scalingStyle;
-			if (scaling == Scaling.ConstrainedOnMobiles)
+			UIRoot.Scaling scaling = this.scalingStyle;
+			if (scaling == UIRoot.Scaling.ConstrainedOnMobiles)
 			{
-				return Scaling.Constrained;
+				return UIRoot.Scaling.Constrained;
 			}
 			return scaling;
 		}
 	}
 
-	public int activeHeight
+	public UIRoot.Constraint constraint
 	{
 		get
 		{
-			if (activeScaling == Scaling.Flexible)
+			if (this.fitWidth)
 			{
-				Vector2 screenSize = NGUITools.screenSize;
-				float num = screenSize.x / screenSize.y;
-				if (screenSize.y < (float)minimumHeight)
+				if (this.fitHeight)
 				{
-					screenSize.y = minimumHeight;
-					screenSize.x = screenSize.y * num;
+					return UIRoot.Constraint.Fit;
 				}
-				else if (screenSize.y > (float)maximumHeight)
-				{
-					screenSize.y = maximumHeight;
-					screenSize.x = screenSize.y * num;
-				}
-				int num2 = Mathf.RoundToInt((!shrinkPortraitUI || !(screenSize.y > screenSize.x)) ? screenSize.y : (screenSize.y / num));
-				return (!adjustByDPI) ? num2 : NGUIMath.AdjustByDPI(num2);
+				return UIRoot.Constraint.FitWidth;
 			}
-			Constraint constraint = this.constraint;
-			if (constraint == Constraint.FitHeight)
+			if (this.fitHeight)
 			{
-				return manualHeight;
+				return UIRoot.Constraint.FitHeight;
 			}
-			Vector2 screenSize2 = NGUITools.screenSize;
-			float num3 = screenSize2.x / screenSize2.y;
-			float num4 = (float)manualWidth / (float)manualHeight;
-			switch (constraint)
-			{
-			case Constraint.FitWidth:
-				return Mathf.RoundToInt((float)manualWidth / num3);
-			case Constraint.Fit:
-				return (!(num4 > num3)) ? manualHeight : Mathf.RoundToInt((float)manualWidth / num3);
-			case Constraint.Fill:
-				return (!(num4 < num3)) ? manualHeight : Mathf.RoundToInt((float)manualWidth / num3);
-			default:
-				return manualHeight;
-			}
+			return UIRoot.Constraint.Fill;
 		}
 	}
 
@@ -123,53 +114,103 @@ public class UIRoot : MonoBehaviour
 		get
 		{
 			int num = Mathf.RoundToInt(NGUITools.screenSize.y);
-			return (num != -1) ? GetPixelSizeAdjustment(num) : 1f;
+			return (num != -1 ? this.GetPixelSizeAdjustment(num) : 1f);
+		}
+	}
+
+	static UIRoot()
+	{
+		UIRoot.list = new List<UIRoot>();
+	}
+
+	public UIRoot()
+	{
+	}
+
+	protected virtual void Awake()
+	{
+		this.mTrans = base.transform;
+	}
+
+	public static void Broadcast(string funcName)
+	{
+		int num = 0;
+		int count = UIRoot.list.Count;
+		while (num < count)
+		{
+			UIRoot item = UIRoot.list[num];
+			if (item != null)
+			{
+				item.BroadcastMessage(funcName, SendMessageOptions.DontRequireReceiver);
+			}
+			num++;
+		}
+	}
+
+	public static void Broadcast(string funcName, object param)
+	{
+		if (param != null)
+		{
+			int num = 0;
+			int count = UIRoot.list.Count;
+			while (num < count)
+			{
+				UIRoot item = UIRoot.list[num];
+				if (item != null)
+				{
+					item.BroadcastMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
+				}
+				num++;
+			}
+		}
+		else
+		{
+			Debug.LogError("SendMessage is bugged when you try to pass 'null' in the parameter field. It behaves as if no parameter was specified.");
 		}
 	}
 
 	public static float GetPixelSizeAdjustment(GameObject go)
 	{
 		UIRoot uIRoot = NGUITools.FindInParents<UIRoot>(go);
-		return (!(uIRoot != null)) ? 1f : uIRoot.pixelSizeAdjustment;
+		return (uIRoot == null ? 1f : uIRoot.pixelSizeAdjustment);
 	}
 
 	public float GetPixelSizeAdjustment(int height)
 	{
 		height = Mathf.Max(2, height);
-		if (activeScaling == Scaling.Constrained)
+		if (this.activeScaling == UIRoot.Scaling.Constrained)
 		{
-			return (float)activeHeight / (float)height;
+			return (float)this.activeHeight / (float)height;
 		}
-		if (height < minimumHeight)
+		if (height < this.minimumHeight)
 		{
-			return (float)minimumHeight / (float)height;
+			return (float)this.minimumHeight / (float)height;
 		}
-		if (height > maximumHeight)
+		if (height <= this.maximumHeight)
 		{
-			return (float)maximumHeight / (float)height;
+			return 1f;
 		}
-		return 1f;
-	}
-
-	protected virtual void Awake()
-	{
-		mTrans = base.transform;
-	}
-
-	protected virtual void OnEnable()
-	{
-		list.Add(this);
+		return (float)this.maximumHeight / (float)height;
 	}
 
 	protected virtual void OnDisable()
 	{
-		list.Remove(this);
+		UIRoot.list.Remove(this);
+	}
+
+	protected virtual void OnEnable()
+	{
+		UIRoot.list.Add(this);
 	}
 
 	protected virtual void Start()
 	{
-		UIOrthoCamera componentInChildren = GetComponentInChildren<UIOrthoCamera>();
-		if (componentInChildren != null)
+		UIOrthoCamera componentInChildren = base.GetComponentInChildren<UIOrthoCamera>();
+		if (componentInChildren == null)
+		{
+			this.UpdateScale(false);
+		}
+		else
 		{
 			Debug.LogWarning("UIRoot should not be active at the same time as UIOrthoCamera. Disabling UIOrthoCamera.", componentInChildren);
 			Camera component = componentInChildren.gameObject.GetComponent<Camera>();
@@ -179,68 +220,46 @@ public class UIRoot : MonoBehaviour
 				component.orthographicSize = 1f;
 			}
 		}
-		else
-		{
-			UpdateScale(false);
-		}
 	}
 
 	private void Update()
 	{
-		UpdateScale();
+		this.UpdateScale(true);
 	}
 
 	public void UpdateScale(bool updateAnchors = true)
 	{
-		if (!(mTrans != null))
+		if (this.mTrans != null)
 		{
-			return;
-		}
-		float num = activeHeight;
-		if (!(num > 0f))
-		{
-			return;
-		}
-		float num2 = 2f / num;
-		Vector3 localScale = mTrans.localScale;
-		if (!(Mathf.Abs(localScale.x - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.y - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.z - num2) <= float.Epsilon))
-		{
-			mTrans.localScale = new Vector3(num2, num2, num2);
-			if (updateAnchors)
+			float single = (float)this.activeHeight;
+			if (single > 0f)
 			{
-				BroadcastMessage("UpdateAnchors");
+				float single1 = 2f / single;
+				Vector3 vector3 = this.mTrans.localScale;
+				if (Mathf.Abs(vector3.x - single1) > 1E-45f || Mathf.Abs(vector3.y - single1) > 1E-45f || Mathf.Abs(vector3.z - single1) > 1E-45f)
+				{
+					this.mTrans.localScale = new Vector3(single1, single1, single1);
+					if (updateAnchors)
+					{
+						base.BroadcastMessage("UpdateAnchors");
+					}
+				}
 			}
 		}
 	}
 
-	public static void Broadcast(string funcName)
+	public enum Constraint
 	{
-		int i = 0;
-		for (int count = list.Count; i < count; i++)
-		{
-			UIRoot uIRoot = list[i];
-			if (uIRoot != null)
-			{
-				uIRoot.BroadcastMessage(funcName, SendMessageOptions.DontRequireReceiver);
-			}
-		}
+		Fit,
+		Fill,
+		FitWidth,
+		FitHeight
 	}
 
-	public static void Broadcast(string funcName, object param)
+	public enum Scaling
 	{
-		if (param == null)
-		{
-			Debug.LogError("SendMessage is bugged when you try to pass 'null' in the parameter field. It behaves as if no parameter was specified.");
-			return;
-		}
-		int i = 0;
-		for (int count = list.Count; i < count; i++)
-		{
-			UIRoot uIRoot = list[i];
-			if (uIRoot != null)
-			{
-				uIRoot.BroadcastMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
-			}
-		}
+		Flexible,
+		Constrained,
+		ConstrainedOnMobiles
 	}
 }

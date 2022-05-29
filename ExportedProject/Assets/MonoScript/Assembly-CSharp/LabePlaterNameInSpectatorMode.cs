@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class LabePlaterNameInSpectatorMode : MonoBehaviour
@@ -8,18 +9,22 @@ public class LabePlaterNameInSpectatorMode : MonoBehaviour
 
 	public UITexture clanTexture;
 
+	public LabePlaterNameInSpectatorMode()
+	{
+	}
+
 	private void Start()
 	{
-		label = GetComponent<UILabel>();
+		this.label = base.GetComponent<UILabel>();
 	}
 
 	private void Update()
 	{
-		if (label != null && WeaponManager.sharedManager.myTable != null)
+		if (this.label != null && WeaponManager.sharedManager.myTable != null)
 		{
-			label.text = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosNick;
-			clanNameLabel.text = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosClanName;
-			clanTexture.mainTexture = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosClanTexture;
+			this.label.text = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosNick;
+			this.clanNameLabel.text = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosClanName;
+			this.clanTexture.mainTexture = WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().playerVidosClanTexture;
 		}
 	}
 }

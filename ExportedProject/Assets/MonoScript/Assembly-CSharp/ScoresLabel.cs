@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ScoresLabel : MonoBehaviour
@@ -8,23 +10,27 @@ public class ScoresLabel : MonoBehaviour
 
 	private string scoreLocalize;
 
+	public ScoresLabel()
+	{
+	}
+
 	private void Start()
 	{
-		isHunger = Defs.isHunger;
-		base.gameObject.SetActive(Defs.IsSurvival || Defs.isCOOP || isHunger);
-		_label = GetComponent<UILabel>();
-		scoreLocalize = ((!isHunger) ? LocalizationStore.Key_0190 : LocalizationStore.Key_0351);
+		this.isHunger = Defs.isHunger;
+		base.gameObject.SetActive((Defs.IsSurvival || Defs.isCOOP ? true : this.isHunger));
+		this._label = base.GetComponent<UILabel>();
+		this.scoreLocalize = (!this.isHunger ? LocalizationStore.Key_0190 : LocalizationStore.Key_0351);
 	}
 
 	private void Update()
 	{
-		if (isHunger)
+		if (!this.isHunger)
 		{
-			_label.text = string.Format("{0}", (Initializer.players != null) ? (Initializer.players.Count - 1) : 0);
+			this._label.text = string.Format("{0}", GlobalGameController.Score);
 		}
 		else
 		{
-			_label.text = string.Format("{0}", GlobalGameController.Score);
+			this._label.text = string.Format("{0}", (Initializer.players == null ? 0 : Initializer.players.Count - 1));
 		}
 	}
 }

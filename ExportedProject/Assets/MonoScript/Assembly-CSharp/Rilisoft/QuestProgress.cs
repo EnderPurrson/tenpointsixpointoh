@@ -1,173 +1,18 @@
+using Rilisoft.DictionaryExtensions;
+using Rilisoft.NullExtensions;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using Rilisoft.DictionaryExtensions;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	public sealed class QuestProgress : IDisposable
 	{
-		[CompilerGenerated]
-		private sealed class _003CDebugDecrementDay_003Ec__AnonStorey2E6
-		{
-			internal long newDay;
-
-			internal bool _003C_003Em__3D0(QuestBase q)
-			{
-				return newDay < q.Day;
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E7
-		{
-			internal int slot;
-
-			internal QuestProgress _003C_003Ef__this;
-
-			private static Func<QuestBase, int> _003C_003Ef__am_0024cache2;
-
-			internal IList<QuestBase> _003C_003Em__3D5()
-			{
-				IEnumerable<int> first = _003C_003Ef__this._currentQuests.Keys.Concat(_003C_003Ef__this._previousQuests.Keys);
-				List<QuestBase> tutorialQuests = _003C_003Ef__this._tutorialQuests;
-				if (_003C_003Ef__am_0024cache2 == null)
-				{
-					_003C_003Ef__am_0024cache2 = _003C_003Em__419;
-				}
-				IEnumerable<int> enumerable = first.Concat(tutorialQuests.Select(_003C_003Ef__am_0024cache2)).Distinct();
-				foreach (int item in enumerable)
-				{
-					List<QuestBase> activeQuestsBySlotReference = _003C_003Ef__this.GetActiveQuestsBySlotReference(item);
-					if (activeQuestsBySlotReference != null && activeQuestsBySlotReference.Count > 0 && slot == item)
-					{
-						activeQuestsBySlotReference.RemoveAt(0);
-						_003C_003Ef__this._dirty = true;
-					}
-					List<QuestBase> activeQuestsBySlotReference2 = _003C_003Ef__this.GetActiveQuestsBySlotReference(item, true);
-					if (activeQuestsBySlotReference2.Count > 1)
-					{
-						activeQuestsBySlotReference2.RemoveRange(1, activeQuestsBySlotReference2.Count - 1);
-						List<QuestBase> value;
-						if (activeQuestsBySlotReference2[0].CalculateProgress() >= 1m && _003C_003Ef__this._currentQuests.TryGetValue(item, out value) && value.Count > 1)
-						{
-							value.RemoveRange(1, value.Count - 1);
-						}
-						_003C_003Ef__this._dirty = true;
-					}
-				}
-				return _003C_003Ef__this.GetActiveQuestsBySlot(slot);
-			}
-
-			private static int _003C_003Em__419(QuestBase q)
-			{
-				return q.Slot;
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CTryRemoveTutorialQuest_003Ec__AnonStorey2E8
-		{
-			internal string questId;
-
-			internal bool _003C_003Em__3DA(QuestBase q)
-			{
-				return questId.Equals(q.Id, StringComparison.Ordinal);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CGetQuestById_003Ec__AnonStorey2E9
-		{
-			internal string id;
-
-			internal bool _003C_003Em__3DE(QuestBase q)
-			{
-				return q.Id.Equals(id, StringComparison.Ordinal);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CFilterQuests_003Ec__AnonStorey2EA
-		{
-			internal string chosenDifficultyKey;
-
-			internal Difficulty chosenDifficulty;
-
-			internal bool _003C_003Em__3F5(KeyValuePair<string, Dictionary<string, object>> kv)
-			{
-				return kv.Value.ContainsKey(chosenDifficultyKey);
-			}
-
-			internal bool _003C_003Em__3FE(Difficulty d)
-			{
-				return d != chosenDifficulty;
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CFilterQuests_003Ec__AnonStorey2EB
-		{
-			internal string existingQuestId;
-
-			internal bool _003C_003Em__3F8(KeyValuePair<string, Dictionary<string, object>> kv)
-			{
-				return StringComparer.OrdinalIgnoreCase.Equals(kv.Key, existingQuestId);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC
-		{
-			internal QuestBase quest;
-
-			internal QuestProgress _003C_003Ef__this;
-
-			internal void _003C_003Em__406(EventHandler<QuestCompletedEventArgs> handler)
-			{
-				handler(_003C_003Ef__this, new QuestCompletedEventArgs
-				{
-					Quest = quest
-				});
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CHandleKillOtherPlayer_003Ec__AnonStorey2ED
-		{
-			internal KillOtherPlayerEventArgs e;
-
-			internal void _003C_003Em__407(ModeAccumulativeQuest quest)
-			{
-				quest.IncrementIf(e.Mode == quest.Mode);
-			}
-
-			internal void _003C_003Em__408(WeaponSlotAccumulativeQuest quest)
-			{
-				quest.IncrementIf(e.WeaponSlot == quest.WeaponSlot);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CHandleKillMonster_003Ec__AnonStorey2EE
-		{
-			internal KillMonsterEventArgs e;
-
-			internal void _003C_003Em__40E(SimpleAccumulativeQuest quest)
-			{
-				quest.IncrementIf(e.Campaign);
-			}
-
-			internal void _003C_003Em__40F(WeaponSlotAccumulativeQuest quest)
-			{
-				quest.IncrementIf(e.WeaponSlot == quest.WeaponSlot);
-			}
-		}
-
 		private const bool TutorialQuestsSupported = true;
 
 		private bool _disposed;
@@ -194,252 +39,21 @@ namespace Rilisoft
 
 		private long _day;
 
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, QuestBase>, bool> _003C_003Ef__am_0024cacheD;
-
-		[CompilerGenerated]
-		private static Func<int, int> _003C_003Ef__am_0024cacheE;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cacheF;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache10;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, List<QuestBase>>, IEnumerable<Difficulty>> _003C_003Ef__am_0024cache11;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache12;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache13;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, QuestBase>, int> _003C_003Ef__am_0024cache15;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, QuestBase>, List<QuestBase>> _003C_003Ef__am_0024cache16;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache17;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache18;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, int> _003C_003Ef__am_0024cache19;
-
-		[CompilerGenerated]
-		private static Func<QuestInfo, bool> _003C_003Ef__am_0024cache1A;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, int> _003C_003Ef__am_0024cache1B;
-
-		[CompilerGenerated]
-		private static Func<int, int> _003C_003Ef__am_0024cache1C;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache1D;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache1E;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, int> _003C_003Ef__am_0024cache1F;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache20;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache21;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache22;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache23;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache24;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache25;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache26;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache27;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache28;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache29;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache2A;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache2B;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache2C;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache2D;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache2E;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache2F;
-
-		[CompilerGenerated]
-		private static Func<AccumulativeQuestBase, bool> _003C_003Ef__am_0024cache30;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache31;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache32;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache33;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache34;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache35;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, QuestBase> _003C_003Ef__am_0024cache36;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, string> _003C_003Ef__am_0024cache37;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<string, object>, string> _003C_003Ef__am_0024cache38;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<string, object>, object> _003C_003Ef__am_0024cache39;
-
-		[CompilerGenerated]
-		private static Func<List<QuestBase>, bool> _003C_003Ef__am_0024cache3A;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<string, object>, string> _003C_003Ef__am_0024cache3B;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<string, object>, object> _003C_003Ef__am_0024cache3C;
-
-		[CompilerGenerated]
-		private static Func<ExperienceController, int> _003C_003Ef__am_0024cache3D;
-
-		[CompilerGenerated]
-		private static Func<ShopNGUIController.CategoryNames?, bool> _003C_003Ef__am_0024cache3E;
-
-		[CompilerGenerated]
-		private static Func<ShopNGUIController.CategoryNames?, ShopNGUIController.CategoryNames> _003C_003Ef__am_0024cache3F;
-
-		[CompilerGenerated]
-		private static Func<ConnectSceneNGUIController.RegimGame?, bool> _003C_003Ef__am_0024cache40;
-
-		[CompilerGenerated]
-		private static Func<ConnectSceneNGUIController.RegimGame?, ConnectSceneNGUIController.RegimGame> _003C_003Ef__am_0024cache41;
-
-		[CompilerGenerated]
-		private static Func<ExperienceController, int> _003C_003Ef__am_0024cache42;
-
-		[CompilerGenerated]
-		private static Predicate<QuestBase> _003C_003Ef__am_0024cache43;
-
-		[CompilerGenerated]
-		private static Func<SimpleAccumulativeQuest, string> _003C_003Ef__am_0024cache44;
-
-		[CompilerGenerated]
-		private static Func<SimpleAccumulativeQuest, SimpleAccumulativeQuest> _003C_003Ef__am_0024cache45;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache46;
-
-		[CompilerGenerated]
-		private static Func<SimpleAccumulativeQuest, string> _003C_003Ef__am_0024cache47;
-
-		[CompilerGenerated]
-		private static Func<SimpleAccumulativeQuest, SimpleAccumulativeQuest> _003C_003Ef__am_0024cache48;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache49;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache4A;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache4B;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache4C;
-
-		[CompilerGenerated]
-		private static Action<SimpleAccumulativeQuest> _003C_003Ef__am_0024cache4D;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, List<QuestBase>>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache4E;
-
-		[CompilerGenerated]
-		private static Func<KeyValuePair<int, List<QuestBase>>, IEnumerable<QuestBase>> _003C_003Ef__am_0024cache4F;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, Difficulty> _003C_003Ef__am_0024cache50;
-
-		[CompilerGenerated]
-		private static Func<QuestBase, bool> _003C_003Ef__am_0024cache51;
-
-		public string ConfigVersion
-		{
-			get
-			{
-				return _configVersion;
-			}
-		}
-
-		public long Day
-		{
-			get
-			{
-				return _day;
-			}
-		}
-
-		public DateTime Timestamp
-		{
-			get
-			{
-				return _timestamp;
-			}
-		}
-
-		public float TimeLeftSeconds
-		{
-			get
-			{
-				return _timeLeftSeconds;
-			}
-		}
+		private EventHandler<QuestCompletedEventArgs> QuestCompleted;
 
 		public bool AnyActiveQuest
 		{
 			get
 			{
-				IDictionary<int, QuestBase> activeQuests = GetActiveQuests();
-				if (_003C_003Ef__am_0024cacheD == null)
-				{
-					_003C_003Ef__am_0024cacheD = _003Cget_AnyActiveQuest_003Em__3C8;
-				}
-				return activeQuests.Any(_003C_003Ef__am_0024cacheD);
+				return this.GetActiveQuests().Any<KeyValuePair<int, QuestBase>>((KeyValuePair<int, QuestBase> q) => !q.Value.Rewarded);
+			}
+		}
+
+		public string ConfigVersion
+		{
+			get
+			{
+				return this._configVersion;
 			}
 		}
 
@@ -447,7 +61,15 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _currentQuests.Count + _previousQuests.Count;
+				return this._currentQuests.Count + this._previousQuests.Count;
+			}
+		}
+
+		public long Day
+		{
+			get
+			{
+				return this._day;
 			}
 		}
 
@@ -455,11 +77,25 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _disposed;
+				return this._disposed;
 			}
 		}
 
-		public event EventHandler<QuestCompletedEventArgs> QuestCompleted;
+		public float TimeLeftSeconds
+		{
+			get
+			{
+				return this._timeLeftSeconds;
+			}
+		}
+
+		public DateTime Timestamp
+		{
+			get
+			{
+				return this._timestamp;
+			}
+		}
 
 		public QuestProgress(string configVersion, long day, DateTime timestamp, float timeLeftSeconds, QuestProgress oldQuestProgress = null)
 		{
@@ -467,168 +103,287 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("ConfigId should not be empty.", "configVersion");
 			}
-			_events = QuestMediator.Events;
-			_events.Win += HandleWin;
-			_events.KillOtherPlayer += HandleKillOtherPlayer;
-			_events.KillOtherPlayerWithFlag += HandleKillOtherPlayerWithFlag;
-			_events.Capture += HandleCapture;
-			_events.KillMonster += HandleKillMonster;
-			_events.BreakSeries += HandleBreakSeries;
-			_events.MakeSeries += HandleMakeSeries;
-			_events.SurviveWaveInArena += HandleSurviveInArena;
-			_events.GetGotcha += HandleGetGotcha;
-			_events.SocialInteraction += HandleSocialInteraction;
-			_configVersion = configVersion;
-			_timestamp = timestamp;
-			_timeLeftSeconds = timeLeftSeconds;
-			_day = day;
+			this._events = QuestMediator.Events;
+			this._events.Win += new EventHandler<WinEventArgs>(this.HandleWin);
+			this._events.KillOtherPlayer += new EventHandler<KillOtherPlayerEventArgs>(this.HandleKillOtherPlayer);
+			this._events.KillOtherPlayerWithFlag += new EventHandler(this.HandleKillOtherPlayerWithFlag);
+			this._events.Capture += new EventHandler<CaptureEventArgs>(this.HandleCapture);
+			this._events.KillMonster += new EventHandler<KillMonsterEventArgs>(this.HandleKillMonster);
+			this._events.BreakSeries += new EventHandler(this.HandleBreakSeries);
+			this._events.MakeSeries += new EventHandler(this.HandleMakeSeries);
+			this._events.SurviveWaveInArena += new EventHandler(this.HandleSurviveInArena);
+			this._events.GetGotcha += new EventHandler(this.HandleGetGotcha);
+			this._events.SocialInteraction += new EventHandler<SocialInteractionEventArgs>(this.HandleSocialInteraction);
+			this._configVersion = configVersion;
+			this._timestamp = timestamp;
+			this._timeLeftSeconds = timeLeftSeconds;
+			this._day = day;
 			if (oldQuestProgress != null)
 			{
-				_tutorialQuests = oldQuestProgress._tutorialQuests;
-				foreach (QuestBase tutorialQuest in _tutorialQuests)
+				this._tutorialQuests = oldQuestProgress._tutorialQuests;
+				foreach (QuestBase _tutorialQuest in this._tutorialQuests)
 				{
-					tutorialQuest.Changed += OnQuestChangedCheckCompletion;
+					_tutorialQuest.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
 				}
 			}
 			UnityEngine.Random.seed = (int)Tools.CurrentUnixTime;
 		}
 
-		public Dictionary<string, object> ToJson()
+		private void ClearQuests(IDictionary<int, List<QuestBase>> quests)
 		{
-			Dictionary<string, List<object>> dictionary = new Dictionary<string, List<object>>(3);
-			foreach (KeyValuePair<int, List<QuestBase>> currentQuest in _currentQuests)
-			{
-				string key = currentQuest.Key.ToString(NumberFormatInfo.InvariantInfo);
-				List<object> list = new List<object>(2);
-				foreach (QuestBase item in currentQuest.Value)
-				{
-					list.Add(item.ToJson());
-				}
-				dictionary[key] = list;
-			}
-			Dictionary<string, List<object>> dictionary2 = new Dictionary<string, List<object>>(3);
-			foreach (KeyValuePair<int, List<QuestBase>> previousQuest in _previousQuests)
-			{
-				string key2 = previousQuest.Key.ToString(NumberFormatInfo.InvariantInfo);
-				List<object> list2 = new List<object>(2);
-				foreach (QuestBase item2 in previousQuest.Value)
-				{
-					list2.Add(item2.ToJson());
-				}
-				dictionary2[key2] = list2;
-			}
-			List<object> list3 = new List<object>(_tutorialQuests.Count);
-			foreach (QuestBase tutorialQuest in _tutorialQuests)
-			{
-				list3.Add(tutorialQuest.ToJson());
-			}
-			Dictionary<string, object> dictionary3 = new Dictionary<string, object>(3);
-			dictionary3.Add("day", _day);
-			dictionary3.Add("timestamp", Timestamp.ToString("s", CultureInfo.InvariantCulture));
-			dictionary3.Add("timeLeftSeconds", TimeLeftSeconds.ToString(CultureInfo.InvariantCulture));
-			dictionary3.Add("tutorialQuests", list3);
-			dictionary3.Add("previousQuests", dictionary2);
-			dictionary3.Add("currentQuests", dictionary);
-			return dictionary3;
-		}
-
-		public void UpdateQuests(long day, Dictionary<string, object> rawQuests, IDictionary<int, List<QuestBase>> newQuests)
-		{
-			if (newQuests == null)
+			if (quests == null)
 			{
 				return;
 			}
-			_day = day;
-			IEnumerable<int> source = _previousQuests.Keys.Concat(_currentQuests.Keys).Distinct();
-			if (_003C_003Ef__am_0024cacheE == null)
+			IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator = quests.GetEnumerator();
+			try
 			{
-				_003C_003Ef__am_0024cacheE = _003CUpdateQuests_003Em__3C9;
+				while (enumerator.MoveNext())
+				{
+					enumerator.Current.Value.Clear();
+				}
 			}
-			Dictionary<int, IList<QuestBase>> dictionary = source.ToDictionary(_003C_003Ef__am_0024cacheE, _003CUpdateQuests_003Em__3CA);
-			ClearQuests(_previousQuests);
-			foreach (KeyValuePair<int, IList<QuestBase>> item in dictionary)
+			finally
 			{
-				int key = item.Key;
-				IList<QuestBase> value = item.Value;
-				foreach (QuestBase item2 in value)
+				if (enumerator == null)
 				{
-					item2.Changed -= OnQuestChangedCheckCompletion;
-					if (!item2.Rewarded)
-					{
-						item2.Changed += OnQuestChangedCheckCompletion;
-					}
 				}
-				IDictionary<int, List<QuestBase>> previousQuests = _previousQuests;
-				if (_003C_003Ef__am_0024cacheF == null)
-				{
-					_003C_003Ef__am_0024cacheF = _003CUpdateQuests_003Em__3CB;
-				}
-				previousQuests[key] = new List<QuestBase>(value.Where(_003C_003Ef__am_0024cacheF));
+				enumerator.Dispose();
 			}
-			ClearQuests(_currentQuests);
-			foreach (KeyValuePair<int, List<QuestBase>> newQuest in newQuests)
-			{
-				int key2 = newQuest.Key;
-				List<QuestBase> value2 = newQuest.Value;
-				List<QuestBase> value3;
-				if (!_previousQuests.TryGetValue(key2, out value3))
-				{
-					value3 = new List<QuestBase>();
-				}
-				QuestBase o = value3.FirstOrDefault();
-				if (_003C_003Ef__am_0024cache10 == null)
-				{
-					_003C_003Ef__am_0024cache10 = _003CUpdateQuests_003Em__3CC;
-				}
-				if (o.Map(_003C_003Ef__am_0024cache10))
-				{
-					continue;
-				}
-				foreach (QuestBase item3 in value2)
-				{
-					item3.Changed -= OnQuestChangedCheckCompletion;
-					item3.Changed += OnQuestChangedCheckCompletion;
-				}
-				_currentQuests[key2] = new List<QuestBase>(value2);
-			}
-			if (rawQuests != null)
-			{
-				IDictionary<int, List<QuestBase>> previousQuests2 = _previousQuests;
-				if (_003C_003Ef__am_0024cache11 == null)
-				{
-					_003C_003Ef__am_0024cache11 = _003CUpdateQuests_003Em__3CD;
-				}
-				Difficulty[] allowedDifficulties = previousQuests2.SelectMany(_003C_003Ef__am_0024cache11).Distinct().ToArray();
-				ParseQuests(rawQuests, day, allowedDifficulties, _previousQuests);
-			}
-			_dirty = true;
+			quests.Clear();
 		}
 
-		public void PopulateQuests(IDictionary<int, List<QuestBase>> currentQuests, IDictionary<int, List<QuestBase>> previousQuests)
+		public static IDictionary<int, List<QuestBase>> CreateQuests(Dictionary<string, object> rawQuests, long day, Difficulty[] allowedDifficulties)
 		{
-			if (currentQuests != null)
+			if (allowedDifficulties == null)
 			{
-				foreach (KeyValuePair<int, List<QuestBase>> currentQuest in currentQuests)
+				allowedDifficulties = new Difficulty[] { Difficulty.Easy, Difficulty.Normal, Difficulty.Hard };
+			}
+			return QuestProgress.ParseQuests(rawQuests, new long?(day), allowedDifficulties);
+		}
+
+		internal void DebugDecrementDay()
+		{
+			long num = this._day - (long)172800;
+			IEnumerable<QuestBase> questBases = 
+				from q in this._previousQuests.Values.SelectMany<List<QuestBase>, QuestBase>((List<QuestBase> q) => q).Concat<QuestBase>(this._currentQuests.Values.SelectMany<List<QuestBase>, QuestBase>((List<QuestBase> q) => q)).Concat<QuestBase>(this._tutorialQuests)
+				where num < q.Day
+				select q;
+			IEnumerator<QuestBase> enumerator = questBases.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
 				{
-					foreach (QuestBase item in currentQuest.Value)
-					{
-						item.Changed += OnQuestChangedCheckCompletion;
-					}
-					_currentQuests[currentQuest.Key] = new List<QuestBase>(currentQuest.Value);
+					enumerator.Current.DebugSetDay(num);
 				}
 			}
-			if (previousQuests != null)
+			finally
 			{
-				foreach (KeyValuePair<int, List<QuestBase>> previousQuest in previousQuests)
+				if (enumerator == null)
 				{
-					foreach (QuestBase item2 in previousQuest.Value)
-					{
-						item2.Changed += OnQuestChangedCheckCompletion;
-					}
-					_previousQuests[previousQuest.Key] = new List<QuestBase>(previousQuest.Value);
+				}
+				enumerator.Dispose();
+			}
+			this._day = num;
+			this._dirty = true;
+		}
+
+		public void Dispose()
+		{
+			if (this._disposed)
+			{
+				return;
+			}
+			foreach (QuestBase _tutorialQuest in this._tutorialQuests)
+			{
+				_tutorialQuest.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
+			}
+			IEnumerator<QuestBase> enumerator = this._currentQuests.SelectMany<KeyValuePair<int, List<QuestBase>>, QuestBase>((KeyValuePair<int, List<QuestBase>> kv) => kv.Value).GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					enumerator.Current.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
 				}
 			}
-			_dirty = true;
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			IEnumerator<QuestBase> enumerator1 = this._previousQuests.SelectMany<KeyValuePair<int, List<QuestBase>>, QuestBase>((KeyValuePair<int, List<QuestBase>> kv) => kv.Value).GetEnumerator();
+			try
+			{
+				while (enumerator1.MoveNext())
+				{
+					enumerator1.Current.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
+				}
+			}
+			finally
+			{
+				if (enumerator1 == null)
+				{
+				}
+				enumerator1.Dispose();
+			}
+			this._events.Win -= new EventHandler<WinEventArgs>(this.HandleWin);
+			this._events.KillOtherPlayer -= new EventHandler<KillOtherPlayerEventArgs>(this.HandleKillOtherPlayer);
+			this._events.KillOtherPlayerWithFlag -= new EventHandler(this.HandleKillOtherPlayerWithFlag);
+			this._events.Capture -= new EventHandler<CaptureEventArgs>(this.HandleCapture);
+			this._events.KillMonster -= new EventHandler<KillMonsterEventArgs>(this.HandleKillMonster);
+			this._events.BreakSeries -= new EventHandler(this.HandleBreakSeries);
+			this._events.MakeSeries -= new EventHandler(this.HandleMakeSeries);
+			this._events.SurviveWaveInArena -= new EventHandler(this.HandleSurviveInArena);
+			this.QuestCompleted = null;
+			this._disposed = true;
+		}
+
+		private static string ExtractMapFromQuestDescription(Dictionary<string, object> q, bool restore)
+		{
+			object obj;
+			object obj1;
+			if (q == null || q.Count == 0)
+			{
+				return string.Empty;
+			}
+			if (restore)
+			{
+				if (!q.TryGetValue("map", out obj))
+				{
+					return null;
+				}
+				return Convert.ToString(obj);
+			}
+			string[] supportedMaps = QuestProgress.GetSupportedMaps();
+			if (!q.TryGetValue("maps", out obj1))
+			{
+				return supportedMaps[UnityEngine.Random.Range(0, (int)supportedMaps.Length - 1)];
+			}
+			List<object> objs = obj1 as List<object>;
+			if (objs == null)
+			{
+				return string.Empty;
+			}
+			string[] array = objs.OfType<string>().Intersect<string>(supportedMaps).ToArray<string>();
+			if ((int)array.Length == 0)
+			{
+				return string.Empty;
+			}
+			return array[UnityEngine.Random.Range(0, (int)array.Length - 1)];
+		}
+
+		private static ConnectSceneNGUIController.RegimGame? ExtractModeFromQuestDescription(Dictionary<string, object> q, bool restore, string questId)
+		{
+			object obj;
+			object obj1;
+			ConnectSceneNGUIController.RegimGame? nullable;
+			if (q == null || q.Count == 0)
+			{
+				return null;
+			}
+			if (restore)
+			{
+				if (!q.TryGetValue("mode", out obj))
+				{
+					return null;
+				}
+				return QuestConstants.ParseMode(Convert.ToString(obj));
+			}
+			List<ConnectSceneNGUIController.RegimGame> regimGames = new List<ConnectSceneNGUIController.RegimGame>(QuestProgress.GetSupportedModes());
+			if ("killInMode".Equals(questId, StringComparison.OrdinalIgnoreCase))
+			{
+				regimGames.Remove(ConnectSceneNGUIController.RegimGame.TimeBattle);
+			}
+			if (!q.TryGetValue("modes", out obj1))
+			{
+				if (regimGames.Count <= 0)
+				{
+					nullable = null;
+				}
+				else
+				{
+					nullable = new ConnectSceneNGUIController.RegimGame?(regimGames[UnityEngine.Random.Range(0, regimGames.Count - 1)]);
+				}
+				return nullable;
+			}
+			List<object> objs = obj1 as List<object>;
+			if (objs == null)
+			{
+				return null;
+			}
+			List<ConnectSceneNGUIController.RegimGame> list = objs.OfType<string>().Select<string, ConnectSceneNGUIController.RegimGame?>(new Func<string, ConnectSceneNGUIController.RegimGame?>(QuestConstants.ParseMode)).Where<ConnectSceneNGUIController.RegimGame?>((ConnectSceneNGUIController.RegimGame? m) => m.HasValue).Select<ConnectSceneNGUIController.RegimGame?, ConnectSceneNGUIController.RegimGame>((ConnectSceneNGUIController.RegimGame? m) => m.Value).Intersect<ConnectSceneNGUIController.RegimGame>(regimGames).ToList<ConnectSceneNGUIController.RegimGame>();
+			if (list.Count == 0)
+			{
+				return null;
+			}
+			return new ConnectSceneNGUIController.RegimGame?(list[UnityEngine.Random.Range(0, list.Count - 1)]);
+		}
+
+		private static IDictionary<int, List<Dictionary<string, object>>> ExtractQuests(Dictionary<string, object> rawQuests)
+		{
+			int num;
+			Dictionary<int, List<Dictionary<string, object>>> nums = new Dictionary<int, List<Dictionary<string, object>>>();
+			foreach (KeyValuePair<string, object> rawQuest in rawQuests)
+			{
+				if (int.TryParse(rawQuest.Key, NumberStyles.Integer, NumberFormatInfo.InvariantInfo, out num))
+				{
+					List<object> value = rawQuest.Value as List<object>;
+					if (value != null)
+					{
+						List<Dictionary<string, object>> list = value.OfType<Dictionary<string, object>>().ToList<Dictionary<string, object>>();
+						nums[num] = list;
+					}
+					else
+					{
+						nums[num] = new List<Dictionary<string, object>>();
+					}
+				}
+			}
+			return nums;
+		}
+
+		private static ShopNGUIController.CategoryNames? ExtractWeaponSlotFromQuestDescription(Dictionary<string, object> q, bool restore, HashSet<ShopNGUIController.CategoryNames> excluded)
+		{
+			object obj;
+			object obj1;
+			if (q == null || q.Count == 0)
+			{
+				return null;
+			}
+			if (restore)
+			{
+				if (!q.TryGetValue("weaponSlot", out obj))
+				{
+					return null;
+				}
+				return QuestConstants.ParseWeaponSlot(Convert.ToString(obj));
+			}
+			if (excluded == null)
+			{
+				excluded = new HashSet<ShopNGUIController.CategoryNames>();
+			}
+			List<ShopNGUIController.CategoryNames> list = Enum.GetValues(typeof(ShopNGUIController.CategoryNames)).Cast<ShopNGUIController.CategoryNames>().Where<ShopNGUIController.CategoryNames>(new Func<ShopNGUIController.CategoryNames, bool>(ShopNGUIController.IsWeaponCategory)).ToList<ShopNGUIController.CategoryNames>();
+			if (!q.TryGetValue("weaponSlots", out obj1))
+			{
+				List<ShopNGUIController.CategoryNames> categoryNames = list.Except<ShopNGUIController.CategoryNames>(excluded).ToList<ShopNGUIController.CategoryNames>();
+				categoryNames = (categoryNames.Count <= 0 ? list : categoryNames);
+				return new ShopNGUIController.CategoryNames?(categoryNames[UnityEngine.Random.Range(0, categoryNames.Count - 1)]);
+			}
+			List<object> objs = obj1 as List<object>;
+			if (objs == null)
+			{
+				return null;
+			}
+			List<ShopNGUIController.CategoryNames> list1 = objs.OfType<string>().Select<string, ShopNGUIController.CategoryNames?>(new Func<string, ShopNGUIController.CategoryNames?>(QuestConstants.ParseWeaponSlot)).Where<ShopNGUIController.CategoryNames?>((ShopNGUIController.CategoryNames? w) => w.HasValue).Select<ShopNGUIController.CategoryNames?, ShopNGUIController.CategoryNames>((ShopNGUIController.CategoryNames? w) => w.Value).Intersect<ShopNGUIController.CategoryNames>(list).ToList<ShopNGUIController.CategoryNames>();
+			if (list1.Count == 0)
+			{
+				return null;
+			}
+			List<ShopNGUIController.CategoryNames> categoryNames1 = list1.Except<ShopNGUIController.CategoryNames>(excluded).ToList<ShopNGUIController.CategoryNames>();
+			categoryNames1 = (categoryNames1.Count <= 0 ? list1 : categoryNames1);
+			return new ShopNGUIController.CategoryNames?(categoryNames1[UnityEngine.Random.Range(0, categoryNames1.Count - 1)]);
 		}
 
 		public void FillTutorialQuests(List<object> questJsons)
@@ -637,407 +392,448 @@ namespace Rilisoft
 			{
 				return;
 			}
-			TutorialQuestManager.Instance.FillTutorialQuests(questJsons, Day, _tutorialQuests);
-			foreach (QuestBase tutorialQuest in _tutorialQuests)
+			TutorialQuestManager.Instance.FillTutorialQuests(questJsons, this.Day, this._tutorialQuests);
+			foreach (QuestBase _tutorialQuest in this._tutorialQuests)
 			{
-				tutorialQuest.Changed -= OnQuestChangedCheckCompletion;
-				tutorialQuest.Changed += OnQuestChangedCheckCompletion;
+				_tutorialQuest.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
+				_tutorialQuest.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
 			}
-			_dirty = true;
+			this._dirty = true;
 		}
 
-		public static IDictionary<int, List<QuestBase>> RestoreQuests(Dictionary<string, object> rawQuests)
+		public void FilterFulfilledTutorialQuests()
 		{
-			Difficulty[] allowedDifficulties = new Difficulty[3]
-			{
-				Difficulty.Easy,
-				Difficulty.Normal,
-				Difficulty.Hard
-			};
-			return ParseQuests(rawQuests, null, allowedDifficulties);
+			this._tutorialQuests.RemoveAll((QuestBase tq) => (!TutorialQuestManager.Instance.CheckQuestIfFulfilled(tq.Id) ? false : tq.CalculateProgress() < new decimal(1)));
 		}
 
-		public static IDictionary<int, List<QuestBase>> CreateQuests(Dictionary<string, object> rawQuests, long day, Difficulty[] allowedDifficulties)
+		private static IDictionary<int, List<Dictionary<string, object>>> FilterQuests(Dictionary<string, object> rawQuests, Difficulty[] allowedDifficulties, IDictionary<int, List<QuestBase>> existingQuests)
 		{
-			if (allowedDifficulties == null)
-			{
-				allowedDifficulties = new Difficulty[3]
-				{
-					Difficulty.Easy,
-					Difficulty.Normal,
-					Difficulty.Hard
-				};
-			}
-			return ParseQuests(rawQuests, day, allowedDifficulties);
-		}
-
-		internal void DebugDecrementDay()
-		{
-			_003CDebugDecrementDay_003Ec__AnonStorey2E6 _003CDebugDecrementDay_003Ec__AnonStorey2E = new _003CDebugDecrementDay_003Ec__AnonStorey2E6();
-			_003CDebugDecrementDay_003Ec__AnonStorey2E.newDay = _day - 172800;
-			ICollection<List<QuestBase>> values = _previousQuests.Values;
-			if (_003C_003Ef__am_0024cache12 == null)
-			{
-				_003C_003Ef__am_0024cache12 = _003CDebugDecrementDay_003Em__3CE;
-			}
-			IEnumerable<QuestBase> first = values.SelectMany(_003C_003Ef__am_0024cache12);
-			ICollection<List<QuestBase>> values2 = _currentQuests.Values;
-			if (_003C_003Ef__am_0024cache13 == null)
-			{
-				_003C_003Ef__am_0024cache13 = _003CDebugDecrementDay_003Em__3CF;
-			}
-			IEnumerable<QuestBase> enumerable = first.Concat(values2.SelectMany(_003C_003Ef__am_0024cache13)).Concat(_tutorialQuests).Where(_003CDebugDecrementDay_003Ec__AnonStorey2E._003C_003Em__3D0);
-			foreach (QuestBase item in enumerable)
-			{
-				item.DebugSetDay(_003CDebugDecrementDay_003Ec__AnonStorey2E.newDay);
-			}
-			_day = _003CDebugDecrementDay_003Ec__AnonStorey2E.newDay;
-			_dirty = true;
-		}
-
-		private static IDictionary<int, List<QuestBase>> ParseQuests(Dictionary<string, object> rawQuests, long? dayOption, Difficulty[] allowedDifficulties)
-		{
-			Dictionary<int, List<QuestBase>> dictionary = new Dictionary<int, List<QuestBase>>(3);
-			ParseQuests(rawQuests, dayOption, allowedDifficulties, dictionary);
-			return dictionary;
-		}
-
-		private static HashSet<ShopNGUIController.CategoryNames> InitializeExcludedWeaponSlots(int slot)
-		{
-			HashSet<ShopNGUIController.CategoryNames> hashSet = new HashSet<ShopNGUIController.CategoryNames>();
-			if (QuestSystem.Instance == null || QuestSystem.Instance.QuestProgress == null)
-			{
-				return hashSet;
-			}
-			QuestBase activeQuestBySlot = QuestSystem.Instance.QuestProgress.GetActiveQuestBySlot(slot);
-			WeaponSlotAccumulativeQuest weaponSlotAccumulativeQuest = activeQuestBySlot as WeaponSlotAccumulativeQuest;
-			if (weaponSlotAccumulativeQuest != null)
-			{
-				hashSet.Add(weaponSlotAccumulativeQuest.WeaponSlot);
-			}
-			return hashSet;
-		}
-
-		private static void ParseQuests(Dictionary<string, object> rawQuests, long? dayOption, Difficulty[] allowedDifficulties, IDictionary<int, List<QuestBase>> actualResult)
-		{
-			if (actualResult == null || rawQuests == null || rawQuests.Count == 0)
-			{
-				return;
-			}
+			object obj;
+			Dictionary<string, Dictionary<string, object>> strs;
+			List<QuestBase> questBases;
 			if (allowedDifficulties == null)
 			{
 				throw new ArgumentNullException("allowedDifficulties");
 			}
-			bool flag = !dayOption.HasValue;
-			Dictionary<int, List<QuestBase>> dictionary;
-			if (QuestSystem.Instance.QuestProgress != null)
+			if ((int)allowedDifficulties.Length == 0)
 			{
-				IDictionary<int, QuestBase> activeQuests = QuestSystem.Instance.QuestProgress.GetActiveQuests();
-				if (_003C_003Ef__am_0024cache15 == null)
+				throw new ArgumentException("List of difficulties should not be empty.", "allowedDifficulties");
+			}
+			if (existingQuests == null)
+			{
+				existingQuests = new Dictionary<int, List<QuestBase>>();
+			}
+			Dictionary<int, Dictionary<string, Dictionary<string, object>>> nums = new Dictionary<int, Dictionary<string, Dictionary<string, object>>>();
+			foreach (KeyValuePair<string, object> rawQuest in rawQuests)
+			{
+				Dictionary<string, object> value = rawQuest.Value as Dictionary<string, object>;
+				if (value != null)
 				{
-					_003C_003Ef__am_0024cache15 = _003CParseQuests_003Em__3D1;
+					if (value.TryGetValue("slot", out obj))
+					{
+						if (QuestConstants.IsSupported(rawQuest.Key))
+						{
+							try
+							{
+								int num = Convert.ToInt32(obj, NumberFormatInfo.InvariantInfo);
+								if (!nums.TryGetValue(num, out strs))
+								{
+									strs = new Dictionary<string, Dictionary<string, object>>(3);
+									nums[num] = strs;
+								}
+								strs[rawQuest.Key] = value;
+							}
+							catch (Exception exception)
+							{
+								Debug.LogException(exception);
+							}
+						}
+					}
 				}
-				Func<KeyValuePair<int, QuestBase>, int> keySelector = _003C_003Ef__am_0024cache15;
-				if (_003C_003Ef__am_0024cache16 == null)
-				{
-					_003C_003Ef__am_0024cache16 = _003CParseQuests_003Em__3D2;
-				}
-				dictionary = activeQuests.ToDictionary(keySelector, _003C_003Ef__am_0024cache16);
 			}
-			else
+			List<Difficulty> difficulties = new List<Difficulty>(nums.Count);
+			for (int i = 0; i != nums.Count; i++)
 			{
-				dictionary = new Dictionary<int, List<QuestBase>>();
+				difficulties.Add(allowedDifficulties[i % (int)allowedDifficulties.Length]);
 			}
-			IDictionary<int, List<QuestBase>> existingQuests = dictionary;
-			IDictionary<int, List<Dictionary<string, object>>> dictionary3;
-			if (flag)
-			{
-				IDictionary<int, List<Dictionary<string, object>>> dictionary2 = ExtractQuests(rawQuests);
-				dictionary3 = dictionary2;
-			}
-			else
-			{
-				dictionary3 = FilterQuests(rawQuests, allowedDifficulties, existingQuests);
-			}
-			IDictionary<int, List<Dictionary<string, object>>> dictionary4 = dictionary3;
-			Difficulty[] array = new Difficulty[3]
+			QuestProgress.ShuffleInPlace<Difficulty>(difficulties);
+			Dictionary<int, List<Dictionary<string, object>>> nums1 = new Dictionary<int, List<Dictionary<string, object>>>();
+			Dictionary<int, Dictionary<string, Dictionary<string, object>>>.Enumerator enumerator = nums.GetEnumerator();
+			List<Difficulty> difficulties1 = new List<Difficulty>()
 			{
 				Difficulty.Easy,
 				Difficulty.Normal,
 				Difficulty.Hard
 			};
-			foreach (KeyValuePair<int, List<Dictionary<string, object>>> item5 in dictionary4)
+			int num1 = 0;
+			while (enumerator.MoveNext())
 			{
-				int key = item5.Key;
-				List<QuestBase> value;
-				if (!actualResult.TryGetValue(key, out value))
+				int key = enumerator.Current.Key;
+				Dictionary<string, Dictionary<string, object>> value1 = enumerator.Current.Value;
+				existingQuests.TryGetValue(key, out questBases);
+				Difficulty item = difficulties[num1];
+				string difficultyKey = QuestConstants.GetDifficultyKey(item);
+				List<KeyValuePair<string, Dictionary<string, object>>> list = (
+					from kv in value1
+					where kv.Value.ContainsKey(difficultyKey)
+					select kv).ToList<KeyValuePair<string, Dictionary<string, object>>>();
+				if (list.Count != 0)
 				{
-					value = new List<QuestBase>(2);
-				}
-				HashSet<ShopNGUIController.CategoryNames> hashSet = InitializeExcludedWeaponSlots(key);
-				foreach (Dictionary<string, object> item6 in item5.Value)
-				{
-					string text = item6.TryGet("id") as string;
-					if (text == null)
+					if (list.Count > 1)
 					{
-						continue;
+						string str = questBases.Map<List<QuestBase>, QuestBase>((List<QuestBase> l) => l.FirstOrDefault<QuestBase>()).Map<QuestBase, string>((QuestBase q) => q.Id);
+						list.RemoveAll((KeyValuePair<string, Dictionary<string, object>> kv) => StringComparer.OrdinalIgnoreCase.Equals(kv.Key, str));
 					}
-					if (!QuestConstants.IsSupported(text))
+					List<int> list1 = Enumerable.Range(0, list.Count).ToList<int>();
+					QuestProgress.ShuffleInPlace<int>(list1);
+					KeyValuePair<string, Dictionary<string, object>> keyValuePair = list[list1[0]];
+					keyValuePair.Value["id"] = keyValuePair.Key;
+					value1.Clear();
+					value1[keyValuePair.Key] = keyValuePair.Value;
+					List<Dictionary<string, object>> dictionaries = new List<Dictionary<string, object>>(2)
 					{
-						Debug.LogWarning("Quest is not supported: " + text);
-						continue;
-					}
-					Difficulty difficulty = Difficulty.None;
-					object value2 = null;
-					Difficulty[] array2 = array;
-					foreach (Difficulty difficulty2 in array2)
+						keyValuePair.Value.ToDictionary<KeyValuePair<string, object>, string, object>((KeyValuePair<string, object> kv) => kv.Key, (KeyValuePair<string, object> kv) => kv.Value)
+					};
+					List<Dictionary<string, object>> dictionaries1 = dictionaries;
+					if (questBases.Map<List<QuestBase>, bool>((List<QuestBase> l) => l.Count == 0, true))
 					{
-						if (item6.TryGetValue(QuestConstants.GetDifficultyKey(difficulty2), out value2))
-						{
-							difficulty = difficulty2;
-							break;
-						}
+						KeyValuePair<string, Dictionary<string, object>> item1 = list[list1[list1.Count - 1]];
+						item1.Value["id"] = item1.Key;
+						dictionaries1.Add(item1.Value.ToDictionary<KeyValuePair<string, object>, string, object>((KeyValuePair<string, object> kv) => kv.Key, (KeyValuePair<string, object> kv) => kv.Value));
 					}
-					Dictionary<string, object> dictionary5 = value2 as Dictionary<string, object>;
-					if (dictionary5 == null || difficulty == Difficulty.None)
-					{
-						continue;
-					}
+					nums1[key] = dictionaries1;
+					IEnumerable<Difficulty> difficulties2 = 
+						from d in difficulties1
+						where d != item
+						select d;
+					IEnumerator<Difficulty> enumerator1 = difficulties2.GetEnumerator();
 					try
 					{
-						List<object> reward = dictionary5["reward"] as List<object>;
-						Reward reward2 = Reward.Create(reward);
-						int requiredCount = Convert.ToInt32(dictionary5.TryGet("parameter") ?? ((object)1));
-						object value3 = item6.TryGet("day");
-						long day = ((!dayOption.HasValue) ? Convert.ToInt64(value3) : dayOption.Value);
-						bool rewarded = item6.TryGet("rewarded").Map(Convert.ToBoolean);
-						bool active = item6.TryGet("active").Map(Convert.ToBoolean);
-						int initialCount = item6.TryGet("currentCount").Map(Convert.ToInt32);
-						switch (text)
+						while (enumerator1.MoveNext())
 						{
-						case "killInMode":
-						case "winInMode":
-						{
-							ConnectSceneNGUIController.RegimGame? regimGame = ExtractModeFromQuestDescription(item6, flag, text);
-							if (regimGame.HasValue)
+							string difficultyKey1 = QuestConstants.GetDifficultyKey(enumerator1.Current);
+							List<Dictionary<string, object>>.Enumerator enumerator2 = dictionaries1.GetEnumerator();
+							try
 							{
-								ModeAccumulativeQuest item3 = new ModeAccumulativeQuest(text, day, key, difficulty, reward2, active, rewarded, requiredCount, regimGame.Value, initialCount);
-								value.Add(item3);
+								while (enumerator2.MoveNext())
+								{
+									enumerator2.Current.Remove(difficultyKey1);
+								}
 							}
-							break;
-						}
-						case "winInMap":
-						{
-							string text2 = ExtractMapFromQuestDescription(item6, flag);
-							if (!string.IsNullOrEmpty(text2))
+							finally
 							{
-								MapAccumulativeQuest item4 = new MapAccumulativeQuest(text, day, key, difficulty, reward2, active, rewarded, requiredCount, text2, initialCount);
-								value.Add(item4);
+								((IDisposable)(object)enumerator2).Dispose();
 							}
-							break;
-						}
-						case "killWithWeapon":
-						case "killNpcWithWeapon":
-						{
-							ShopNGUIController.CategoryNames? categoryNames = ExtractWeaponSlotFromQuestDescription(item6, flag, hashSet);
-							if (categoryNames.HasValue)
-							{
-								hashSet.Add(categoryNames.Value);
-								WeaponSlotAccumulativeQuest item2 = new WeaponSlotAccumulativeQuest(text, day, key, difficulty, reward2, active, rewarded, requiredCount, categoryNames.Value, initialCount);
-								value.Add(item2);
-							}
-							break;
-						}
-						default:
-						{
-							SimpleAccumulativeQuest item = new SimpleAccumulativeQuest(text, day, key, difficulty, reward2, active, rewarded, requiredCount, initialCount);
-							value.Add(item);
-							break;
-						}
 						}
 					}
-					catch (Exception exception)
+					finally
 					{
-						Debug.LogException(exception);
+						if (enumerator1 == null)
+						{
+						}
+						enumerator1.Dispose();
 					}
 				}
-				actualResult[key] = value;
+				else
+				{
+					value1.Clear();
+				}
+				num1++;
 			}
+			return nums1;
 		}
 
 		public QuestBase GetActiveQuestBySlot(int slot)
 		{
-			QuestBase activeTutorialQuest = GetActiveTutorialQuest();
+			QuestBase activeTutorialQuest = this.GetActiveTutorialQuest();
 			if (activeTutorialQuest != null && activeTutorialQuest.Slot == slot)
 			{
 				return activeTutorialQuest;
 			}
-			List<QuestBase> value = null;
-			_previousQuests.TryGetValue(slot, out value);
-			List<QuestBase> o = value;
-			if (_003C_003Ef__am_0024cache17 == null)
-			{
-				_003C_003Ef__am_0024cache17 = _003CGetActiveQuestBySlot_003Em__3D3;
-			}
-			QuestBase questBase = o.Map(_003C_003Ef__am_0024cache17);
+			List<QuestBase> questBases = null;
+			this._previousQuests.TryGetValue(slot, out questBases);
+			QuestBase questBase = questBases.Map<List<QuestBase>, QuestBase>((List<QuestBase> ps) => ps.FirstOrDefault<QuestBase>());
 			if (questBase != null && !questBase.Rewarded)
 			{
 				return questBase;
 			}
-			List<QuestBase> value2 = null;
-			_currentQuests.TryGetValue(slot, out value2);
-			List<QuestBase> o2 = value2;
-			if (_003C_003Ef__am_0024cache18 == null)
+			List<QuestBase> questBases1 = null;
+			this._currentQuests.TryGetValue(slot, out questBases1);
+			QuestBase questBase1 = questBases1.Map<List<QuestBase>, QuestBase>((List<QuestBase> cs) => cs.FirstOrDefault<QuestBase>());
+			if (questBase1 != null)
 			{
-				_003C_003Ef__am_0024cache18 = _003CGetActiveQuestBySlot_003Em__3D4;
-			}
-			QuestBase questBase2 = o2.Map(_003C_003Ef__am_0024cache18);
-			if (questBase2 != null)
-			{
-				return questBase2;
+				return questBase1;
 			}
 			return questBase;
 		}
 
 		public QuestInfo GetActiveQuestInfoBySlot(int slot)
 		{
-			_003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E7 _003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E = new _003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E7();
-			_003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E.slot = slot;
-			_003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E._003C_003Ef__this = this;
-			IList<QuestBase> activeQuestsBySlot = GetActiveQuestsBySlot(_003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E.slot);
-			Func<IList<QuestBase>> skipMethod = _003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E._003C_003Em__3D5;
-			bool forcedSkip = object.ReferenceEquals(_tutorialQuests, GetActiveQuestsBySlotReference(_003CGetActiveQuestInfoBySlot_003Ec__AnonStorey2E.slot));
-			return new QuestInfo(activeQuestsBySlot, skipMethod, forcedSkip);
-		}
-
-		public QuestInfo GetRandomQuestInfo()
-		{
-			IEnumerable<int> first = _previousQuests.Keys.Concat(_currentQuests.Keys);
-			List<QuestBase> tutorialQuests = _tutorialQuests;
-			if (_003C_003Ef__am_0024cache19 == null)
-			{
-				_003C_003Ef__am_0024cache19 = _003CGetRandomQuestInfo_003Em__3D6;
-			}
-			IEnumerable<int> source = first.Concat(tutorialQuests.Select(_003C_003Ef__am_0024cache19)).Distinct();
-			IEnumerable<QuestInfo> source2 = source.Select(GetActiveQuestInfoBySlot);
-			if (_003C_003Ef__am_0024cache1A == null)
-			{
-				_003C_003Ef__am_0024cache1A = _003CGetRandomQuestInfo_003Em__3D7;
-			}
-			List<QuestInfo> list = source2.Where(_003C_003Ef__am_0024cache1A).ToList();
-			if (list.Count < 1)
-			{
-				return null;
-			}
-			QuestInfo questInfo = list[0];
-			for (int i = 1; i < list.Count; i++)
-			{
-				QuestInfo questInfo2 = list[i];
-				if (questInfo2.Quest == null)
+			Func<QuestBase, int> func = null;
+			IList<QuestBase> activeQuestsBySlot = this.GetActiveQuestsBySlot(slot, false);
+			Func<IList<QuestBase>> func1 = () => {
+				List<QuestBase> questBases;
+				IEnumerable<int> nums = this._currentQuests.Keys.Concat<int>(this._previousQuests.Keys);
+				List<QuestBase> u003cu003ef_this = this._tutorialQuests;
+				if (func == null)
 				{
-					continue;
+					func = (QuestBase q) => q.Slot;
 				}
-				if (questInfo.Quest == null)
+				IEnumerator<int> enumerator = nums.Concat<int>(u003cu003ef_this.Select<QuestBase, int>(func)).Distinct<int>().GetEnumerator();
+				try
 				{
-					questInfo = list[i];
-					continue;
-				}
-				AccumulativeQuestBase accumulativeQuestBase = questInfo.Quest as AccumulativeQuestBase;
-				AccumulativeQuestBase accumulativeQuestBase2 = questInfo2.Quest as AccumulativeQuestBase;
-				if (accumulativeQuestBase != null && accumulativeQuestBase2 != null)
-				{
-					if (accumulativeQuestBase2.RequiredCount - accumulativeQuestBase2.CurrentCount < accumulativeQuestBase.RequiredCount - accumulativeQuestBase.CurrentCount)
+					while (enumerator.MoveNext())
 					{
-						questInfo = questInfo2;
+						int current = enumerator.Current;
+						List<QuestBase> activeQuestsBySlotReference = this.GetActiveQuestsBySlotReference(current, false);
+						if (activeQuestsBySlotReference != null && activeQuestsBySlotReference.Count > 0 && slot == current)
+						{
+							activeQuestsBySlotReference.RemoveAt(0);
+							this._dirty = true;
+						}
+						List<QuestBase> activeQuestsBySlotReference1 = this.GetActiveQuestsBySlotReference(current, true);
+						if (activeQuestsBySlotReference1.Count <= 1)
+						{
+							continue;
+						}
+						activeQuestsBySlotReference1.RemoveRange(1, activeQuestsBySlotReference1.Count - 1);
+						if (activeQuestsBySlotReference1[0].CalculateProgress() >= new decimal(1) && this._currentQuests.TryGetValue(current, out questBases) && questBases.Count > 1)
+						{
+							questBases.RemoveRange(1, questBases.Count - 1);
+						}
+						this._dirty = true;
 					}
 				}
-				else if (questInfo.Quest.CalculateProgress() < questInfo2.Quest.CalculateProgress())
+				finally
 				{
-					questInfo = questInfo2;
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
 				}
-			}
-			return questInfo;
+				return this.GetActiveQuestsBySlot(slot, false);
+			};
+			bool flag = object.ReferenceEquals(this._tutorialQuests, this.GetActiveQuestsBySlotReference(slot, false));
+			return new QuestInfo(activeQuestsBySlot, func1, flag);
 		}
 
 		public IDictionary<int, QuestBase> GetActiveQuests()
 		{
-			IEnumerable<int> first = _previousQuests.Keys.Concat(_currentQuests.Keys);
-			List<QuestBase> tutorialQuests = _tutorialQuests;
-			if (_003C_003Ef__am_0024cache1B == null)
-			{
-				_003C_003Ef__am_0024cache1B = _003CGetActiveQuests_003Em__3D8;
-			}
-			IEnumerable<int> source = first.Concat(tutorialQuests.Select(_003C_003Ef__am_0024cache1B)).Distinct();
-			if (_003C_003Ef__am_0024cache1C == null)
-			{
-				_003C_003Ef__am_0024cache1C = _003CGetActiveQuests_003Em__3D9;
-			}
-			return source.ToDictionary(_003C_003Ef__am_0024cache1C, GetActiveQuestBySlot);
-		}
-
-		internal bool TryRemoveTutorialQuest(string questId)
-		{
-			_003CTryRemoveTutorialQuest_003Ec__AnonStorey2E8 _003CTryRemoveTutorialQuest_003Ec__AnonStorey2E = new _003CTryRemoveTutorialQuest_003Ec__AnonStorey2E8();
-			_003CTryRemoveTutorialQuest_003Ec__AnonStorey2E.questId = questId;
-			if (_003CTryRemoveTutorialQuest_003Ec__AnonStorey2E.questId == null)
-			{
-				return false;
-			}
-			int num = _tutorialQuests.FindIndex(_003CTryRemoveTutorialQuest_003Ec__AnonStorey2E._003C_003Em__3DA);
-			if (num < 0)
-			{
-				return false;
-			}
-			_tutorialQuests.RemoveAt(num);
-			_dirty = true;
-			return true;
-		}
-
-		private List<QuestBase> GetActiveQuestsBySlotReference(int slot, bool ignoreTutorialQuests = false)
-		{
-			if (!ignoreTutorialQuests)
-			{
-				QuestBase activeTutorialQuest = GetActiveTutorialQuest();
-				if (activeTutorialQuest != null && activeTutorialQuest.Slot == slot)
-				{
-					return _tutorialQuests;
-				}
-			}
-			List<QuestBase> value;
-			_previousQuests.TryGetValue(slot, out value);
-			List<QuestBase> o = value;
-			if (_003C_003Ef__am_0024cache1D == null)
-			{
-				_003C_003Ef__am_0024cache1D = _003CGetActiveQuestsBySlotReference_003Em__3DB;
-			}
-			if (o.Map(_003C_003Ef__am_0024cache1D))
-			{
-				return value;
-			}
-			List<QuestBase> value2;
-			if (_currentQuests.TryGetValue(slot, out value2))
-			{
-				List<QuestBase> o2 = value2;
-				if (_003C_003Ef__am_0024cache1E == null)
-				{
-					_003C_003Ef__am_0024cache1E = _003CGetActiveQuestsBySlotReference_003Em__3DC;
-				}
-				if (o2.Map(_003C_003Ef__am_0024cache1E))
-				{
-					return value2;
-				}
-			}
-			return value;
+			IEnumerable<int> nums = this._previousQuests.Keys.Concat<int>(this._currentQuests.Keys).Concat<int>(
+				from q in this._tutorialQuests
+				select q.Slot).Distinct<int>();
+			Dictionary<int, QuestBase> dictionary = nums.ToDictionary<int, int, QuestBase>((int s) => s, new Func<int, QuestBase>(this.GetActiveQuestBySlot));
+			return dictionary;
 		}
 
 		private IList<QuestBase> GetActiveQuestsBySlot(int slot, bool ignoreTutorialQuests = false)
 		{
-			List<QuestBase> activeQuestsBySlotReference = GetActiveQuestsBySlotReference(slot, ignoreTutorialQuests);
+			List<QuestBase> activeQuestsBySlotReference = this.GetActiveQuestsBySlotReference(slot, ignoreTutorialQuests);
 			if (activeQuestsBySlotReference == null)
 			{
 				return new List<QuestBase>();
 			}
 			return new List<QuestBase>(activeQuestsBySlotReference);
+		}
+
+		private List<QuestBase> GetActiveQuestsBySlotReference(int slot, bool ignoreTutorialQuests = false)
+		{
+			List<QuestBase> questBases;
+			List<QuestBase> questBases1;
+			if (!ignoreTutorialQuests)
+			{
+				QuestBase activeTutorialQuest = this.GetActiveTutorialQuest();
+				if (activeTutorialQuest != null && activeTutorialQuest.Slot == slot)
+				{
+					return this._tutorialQuests;
+				}
+			}
+			this._previousQuests.TryGetValue(slot, out questBases);
+			if (questBases.Map<List<QuestBase>, bool>((List<QuestBase> qs) => (qs.Count <= 0 ? false : qs.All<QuestBase>((QuestBase q) => !q.Rewarded))))
+			{
+				return questBases;
+			}
+			if (this._currentQuests.TryGetValue(slot, out questBases1))
+			{
+				if (questBases1.Map<List<QuestBase>, bool>((List<QuestBase> qs) => qs.Count > 0))
+				{
+					return questBases1;
+				}
+			}
+			return questBases;
+		}
+
+		private QuestBase GetActiveTutorialQuest()
+		{
+			QuestBase questBase;
+			if (this._tutorialQuests.Count == 0)
+			{
+				return null;
+			}
+			List<QuestBase>.Enumerator enumerator = this._tutorialQuests.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					QuestBase current = enumerator.Current;
+					if (!current.Rewarded)
+					{
+						questBase = current;
+						return questBase;
+					}
+				}
+				return null;
+			}
+			finally
+			{
+				((IDisposable)(object)enumerator).Dispose();
+			}
+			return questBase;
+		}
+
+		private QuestBase GetQuestById(string id)
+		{
+			if (id == null)
+			{
+				throw new ArgumentNullException("id");
+			}
+			IEnumerable<int> nums = this._previousQuests.Keys.Concat<int>(this._currentQuests.Keys).Concat<int>(
+				from q in this._tutorialQuests
+				select q.Slot).Distinct<int>();
+			IEnumerable<QuestBase> questBases = nums.Select<int, QuestBase>(new Func<int, QuestBase>(this.GetActiveQuestBySlot));
+			return questBases.FirstOrDefault<QuestBase>((QuestBase q) => q.Id.Equals(id, StringComparison.Ordinal));
+		}
+
+		[Obsolete]
+		public AccumulativeQuestBase GetRandomInProgressAccumQuest()
+		{
+			List<AccumulativeQuestBase> list = (
+				from qs in this._previousQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>() into q
+				where q.CalculateProgress() < new decimal(1)
+				select q).OfType<AccumulativeQuestBase>().ToList<AccumulativeQuestBase>();
+			if (list.Count > 0)
+			{
+				return list[UnityEngine.Random.Range(0, list.Count)];
+			}
+			List<AccumulativeQuestBase> accumulativeQuestBases = (
+				from qs in this._previousQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>() into q
+				where !q.Rewarded
+				select q).OfType<AccumulativeQuestBase>().ToList<AccumulativeQuestBase>();
+			if (accumulativeQuestBases.Count > 0)
+			{
+				return accumulativeQuestBases[UnityEngine.Random.Range(0, accumulativeQuestBases.Count)];
+			}
+			AccumulativeQuestBase[] array = (
+				from qs in this._currentQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>() into q
+				where q.CalculateProgress() < new decimal(1)
+				select q).OfType<AccumulativeQuestBase>().ToArray<AccumulativeQuestBase>();
+			if ((int)array.Length > 0)
+			{
+				return array[UnityEngine.Random.Range(0, (int)array.Length)];
+			}
+			AccumulativeQuestBase[] accumulativeQuestBaseArray = (
+				from qs in this._currentQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>() into q
+				where !q.Rewarded
+				select q).OfType<AccumulativeQuestBase>().ToArray<AccumulativeQuestBase>();
+			if ((int)accumulativeQuestBaseArray.Length <= 0)
+			{
+				return null;
+			}
+			return accumulativeQuestBaseArray[UnityEngine.Random.Range(0, (int)accumulativeQuestBaseArray.Length)];
+		}
+
+		public QuestInfo GetRandomQuestInfo()
+		{
+			IEnumerable<int> nums = this._previousQuests.Keys.Concat<int>(this._currentQuests.Keys).Concat<int>(
+				from q in this._tutorialQuests
+				select q.Slot).Distinct<int>();
+			List<QuestInfo> list = nums.Select<int, QuestInfo>(new Func<int, QuestInfo>(this.GetActiveQuestInfoBySlot)).Where<QuestInfo>((QuestInfo qi) => (qi.Quest == null ? false : !qi.Quest.Rewarded)).ToList<QuestInfo>();
+			if (list.Count < 1)
+			{
+				return null;
+			}
+			QuestInfo item = list[0];
+			for (int i = 1; i < list.Count; i++)
+			{
+				QuestInfo questInfo = list[i];
+				if (questInfo.Quest != null)
+				{
+					if (item.Quest != null)
+					{
+						AccumulativeQuestBase quest = item.Quest as AccumulativeQuestBase;
+						AccumulativeQuestBase accumulativeQuestBase = questInfo.Quest as AccumulativeQuestBase;
+						if (quest != null && accumulativeQuestBase != null)
+						{
+							if (accumulativeQuestBase.RequiredCount - accumulativeQuestBase.CurrentCount < quest.RequiredCount - quest.CurrentCount)
+							{
+								item = questInfo;
+							}
+						}
+						else if (item.Quest.CalculateProgress() < questInfo.Quest.CalculateProgress())
+						{
+							item = questInfo;
+						}
+					}
+					else
+					{
+						item = list[i];
+					}
+				}
+			}
+			return item;
+		}
+
+		private static string[] GetSupportedMaps()
+		{
+			if (QuestProgress._supportedMapsCache != null && QuestProgress._supportedMapsCache.IsAlive)
+			{
+				return (string[])QuestProgress._supportedMapsCache.Target;
+			}
+			int num = ExperienceController.sharedController.Map<ExperienceController, int>((ExperienceController xp) => xp.currentLevel, 1);
+			HashSet<TypeModeGame> unlockedModesByLevel = SceneInfoController.GetUnlockedModesByLevel(num);
+			unlockedModesByLevel.Remove(TypeModeGame.Dater);
+			HashSet<string> strs = new HashSet<string>();
+			foreach (SceneInfo allScene in SceneInfoController.instance.allScenes)
+			{
+				if (!allScene.isPremium)
+				{
+					if (allScene.NameScene != "Developer_Scene")
+					{
+						foreach (TypeModeGame typeModeGame in unlockedModesByLevel)
+						{
+							if (!allScene.IsAvaliableForMode(typeModeGame))
+							{
+								continue;
+							}
+							strs.Add(allScene.NameScene);
+						}
+					}
+				}
+			}
+			string[] array = strs.ToArray<string>();
+			QuestProgress._supportedMapsCache = new WeakReference(array, false);
+			return array;
+		}
+
+		private static ConnectSceneNGUIController.RegimGame[] GetSupportedModes()
+		{
+			if (QuestProgress._supportedModesCache != null && QuestProgress._supportedModesCache.IsAlive)
+			{
+				return (ConnectSceneNGUIController.RegimGame[])QuestProgress._supportedModesCache.Target;
+			}
+			int num = ExperienceController.sharedController.Map<ExperienceController, int>((ExperienceController xp) => xp.currentLevel, 1);
+			HashSet<TypeModeGame> unlockedModesByLevel = SceneInfoController.GetUnlockedModesByLevel(num);
+			ConnectSceneNGUIController.RegimGame[] array = SceneInfoController.SelectModes(unlockedModesByLevel).ToArray<ConnectSceneNGUIController.RegimGame>();
+			QuestProgress._supportedModesCache = new WeakReference(array, false);
+			return array;
 		}
 
 		private QuestBase GetTutorialQuestById(string id)
@@ -1046,7 +842,7 @@ namespace Rilisoft
 			{
 				return null;
 			}
-			QuestBase activeTutorialQuest = GetActiveTutorialQuest();
+			QuestBase activeTutorialQuest = this.GetActiveTutorialQuest();
 			if (activeTutorialQuest == null)
 			{
 				return null;
@@ -1058,838 +854,35 @@ namespace Rilisoft
 			return activeTutorialQuest;
 		}
 
-		private QuestBase GetActiveTutorialQuest()
-		{
-			if (_tutorialQuests.Count == 0)
-			{
-				return null;
-			}
-			foreach (QuestBase tutorialQuest in _tutorialQuests)
-			{
-				if (tutorialQuest.Rewarded)
-				{
-					continue;
-				}
-				return tutorialQuest;
-			}
-			return null;
-		}
-
-		private QuestBase GetQuestById(string id)
-		{
-			_003CGetQuestById_003Ec__AnonStorey2E9 _003CGetQuestById_003Ec__AnonStorey2E = new _003CGetQuestById_003Ec__AnonStorey2E9();
-			_003CGetQuestById_003Ec__AnonStorey2E.id = id;
-			if (_003CGetQuestById_003Ec__AnonStorey2E.id == null)
-			{
-				throw new ArgumentNullException("id");
-			}
-			IEnumerable<int> first = _previousQuests.Keys.Concat(_currentQuests.Keys);
-			List<QuestBase> tutorialQuests = _tutorialQuests;
-			if (_003C_003Ef__am_0024cache1F == null)
-			{
-				_003C_003Ef__am_0024cache1F = _003CGetQuestById_003Em__3DD;
-			}
-			IEnumerable<int> source = first.Concat(tutorialQuests.Select(_003C_003Ef__am_0024cache1F)).Distinct();
-			IEnumerable<QuestBase> source2 = source.Select(GetActiveQuestBySlot);
-			return source2.FirstOrDefault(_003CGetQuestById_003Ec__AnonStorey2E._003C_003Em__3DE);
-		}
-
-		[Obsolete]
-		public AccumulativeQuestBase GetRandomInProgressAccumQuest()
-		{
-			ICollection<List<QuestBase>> values = _previousQuests.Values;
-			if (_003C_003Ef__am_0024cache20 == null)
-			{
-				_003C_003Ef__am_0024cache20 = _003CGetRandomInProgressAccumQuest_003Em__3DF;
-			}
-			IEnumerable<List<QuestBase>> source = values.Where(_003C_003Ef__am_0024cache20);
-			if (_003C_003Ef__am_0024cache21 == null)
-			{
-				_003C_003Ef__am_0024cache21 = _003CGetRandomInProgressAccumQuest_003Em__3E0;
-			}
-			IEnumerable<QuestBase> source2 = source.Select(_003C_003Ef__am_0024cache21);
-			if (_003C_003Ef__am_0024cache22 == null)
-			{
-				_003C_003Ef__am_0024cache22 = _003CGetRandomInProgressAccumQuest_003Em__3E1;
-			}
-			List<AccumulativeQuestBase> list = source2.Where(_003C_003Ef__am_0024cache22).OfType<AccumulativeQuestBase>().ToList();
-			if (list.Count > 0)
-			{
-				return list[UnityEngine.Random.Range(0, list.Count)];
-			}
-			ICollection<List<QuestBase>> values2 = _previousQuests.Values;
-			if (_003C_003Ef__am_0024cache23 == null)
-			{
-				_003C_003Ef__am_0024cache23 = _003CGetRandomInProgressAccumQuest_003Em__3E2;
-			}
-			IEnumerable<List<QuestBase>> source3 = values2.Where(_003C_003Ef__am_0024cache23);
-			if (_003C_003Ef__am_0024cache24 == null)
-			{
-				_003C_003Ef__am_0024cache24 = _003CGetRandomInProgressAccumQuest_003Em__3E3;
-			}
-			IEnumerable<QuestBase> source4 = source3.Select(_003C_003Ef__am_0024cache24);
-			if (_003C_003Ef__am_0024cache25 == null)
-			{
-				_003C_003Ef__am_0024cache25 = _003CGetRandomInProgressAccumQuest_003Em__3E4;
-			}
-			List<AccumulativeQuestBase> list2 = source4.Where(_003C_003Ef__am_0024cache25).OfType<AccumulativeQuestBase>().ToList();
-			if (list2.Count > 0)
-			{
-				return list2[UnityEngine.Random.Range(0, list2.Count)];
-			}
-			ICollection<List<QuestBase>> values3 = _currentQuests.Values;
-			if (_003C_003Ef__am_0024cache26 == null)
-			{
-				_003C_003Ef__am_0024cache26 = _003CGetRandomInProgressAccumQuest_003Em__3E5;
-			}
-			IEnumerable<List<QuestBase>> source5 = values3.Where(_003C_003Ef__am_0024cache26);
-			if (_003C_003Ef__am_0024cache27 == null)
-			{
-				_003C_003Ef__am_0024cache27 = _003CGetRandomInProgressAccumQuest_003Em__3E6;
-			}
-			IEnumerable<QuestBase> source6 = source5.Select(_003C_003Ef__am_0024cache27);
-			if (_003C_003Ef__am_0024cache28 == null)
-			{
-				_003C_003Ef__am_0024cache28 = _003CGetRandomInProgressAccumQuest_003Em__3E7;
-			}
-			AccumulativeQuestBase[] array = source6.Where(_003C_003Ef__am_0024cache28).OfType<AccumulativeQuestBase>().ToArray();
-			if (array.Length > 0)
-			{
-				return array[UnityEngine.Random.Range(0, array.Length)];
-			}
-			ICollection<List<QuestBase>> values4 = _currentQuests.Values;
-			if (_003C_003Ef__am_0024cache29 == null)
-			{
-				_003C_003Ef__am_0024cache29 = _003CGetRandomInProgressAccumQuest_003Em__3E8;
-			}
-			IEnumerable<List<QuestBase>> source7 = values4.Where(_003C_003Ef__am_0024cache29);
-			if (_003C_003Ef__am_0024cache2A == null)
-			{
-				_003C_003Ef__am_0024cache2A = _003CGetRandomInProgressAccumQuest_003Em__3E9;
-			}
-			IEnumerable<QuestBase> source8 = source7.Select(_003C_003Ef__am_0024cache2A);
-			if (_003C_003Ef__am_0024cache2B == null)
-			{
-				_003C_003Ef__am_0024cache2B = _003CGetRandomInProgressAccumQuest_003Em__3EA;
-			}
-			AccumulativeQuestBase[] array2 = source8.Where(_003C_003Ef__am_0024cache2B).OfType<AccumulativeQuestBase>().ToArray();
-			if (array2.Length > 0)
-			{
-				return array2[UnityEngine.Random.Range(0, array2.Length)];
-			}
-			return null;
-		}
-
-		public bool HasUnrewaredAccumQuests()
-		{
-			ICollection<List<QuestBase>> values = _currentQuests.Values;
-			if (_003C_003Ef__am_0024cache2C == null)
-			{
-				_003C_003Ef__am_0024cache2C = _003CHasUnrewaredAccumQuests_003Em__3EB;
-			}
-			IEnumerable<List<QuestBase>> source = values.Where(_003C_003Ef__am_0024cache2C);
-			if (_003C_003Ef__am_0024cache2D == null)
-			{
-				_003C_003Ef__am_0024cache2D = _003CHasUnrewaredAccumQuests_003Em__3EC;
-			}
-			IEnumerable<QuestBase> first = source.Select(_003C_003Ef__am_0024cache2D);
-			ICollection<List<QuestBase>> values2 = _previousQuests.Values;
-			if (_003C_003Ef__am_0024cache2E == null)
-			{
-				_003C_003Ef__am_0024cache2E = _003CHasUnrewaredAccumQuests_003Em__3ED;
-			}
-			IEnumerable<List<QuestBase>> source2 = values2.Where(_003C_003Ef__am_0024cache2E);
-			if (_003C_003Ef__am_0024cache2F == null)
-			{
-				_003C_003Ef__am_0024cache2F = _003CHasUnrewaredAccumQuests_003Em__3EE;
-			}
-			IEnumerable<QuestBase> second = source2.Select(_003C_003Ef__am_0024cache2F);
-			IEnumerable<AccumulativeQuestBase> source3 = first.Concat(second).Concat(_tutorialQuests).OfType<AccumulativeQuestBase>();
-			if (_003C_003Ef__am_0024cache30 == null)
-			{
-				_003C_003Ef__am_0024cache30 = _003CHasUnrewaredAccumQuests_003Em__3EF;
-			}
-			return source3.Any(_003C_003Ef__am_0024cache30);
-		}
-
-		public bool IsDirty()
-		{
-			int result;
-			if (!_dirty)
-			{
-				ICollection<List<QuestBase>> values = _currentQuests.Values;
-				if (_003C_003Ef__am_0024cache31 == null)
-				{
-					_003C_003Ef__am_0024cache31 = _003CIsDirty_003Em__3F0;
-				}
-				IEnumerable<QuestBase> source = values.SelectMany(_003C_003Ef__am_0024cache31);
-				if (_003C_003Ef__am_0024cache32 == null)
-				{
-					_003C_003Ef__am_0024cache32 = _003CIsDirty_003Em__3F1;
-				}
-				if (!source.Any(_003C_003Ef__am_0024cache32))
-				{
-					ICollection<List<QuestBase>> values2 = _previousQuests.Values;
-					if (_003C_003Ef__am_0024cache33 == null)
-					{
-						_003C_003Ef__am_0024cache33 = _003CIsDirty_003Em__3F2;
-					}
-					IEnumerable<QuestBase> source2 = values2.SelectMany(_003C_003Ef__am_0024cache33);
-					if (_003C_003Ef__am_0024cache34 == null)
-					{
-						_003C_003Ef__am_0024cache34 = _003CIsDirty_003Em__3F3;
-					}
-					if (!source2.Any(_003C_003Ef__am_0024cache34))
-					{
-						List<QuestBase> tutorialQuests = _tutorialQuests;
-						if (_003C_003Ef__am_0024cache35 == null)
-						{
-							_003C_003Ef__am_0024cache35 = _003CIsDirty_003Em__3F4;
-						}
-						result = (tutorialQuests.Any(_003C_003Ef__am_0024cache35) ? 1 : 0);
-						goto IL_00de;
-					}
-				}
-			}
-			result = 1;
-			goto IL_00de;
-			IL_00de:
-			return (byte)result != 0;
-		}
-
-		public void SetClean()
-		{
-			foreach (List<QuestBase> value in _currentQuests.Values)
-			{
-				foreach (QuestBase item in value)
-				{
-					item.SetClean();
-				}
-			}
-			foreach (List<QuestBase> value2 in _previousQuests.Values)
-			{
-				foreach (QuestBase item2 in value2)
-				{
-					item2.SetClean();
-				}
-			}
-			_dirty = false;
-		}
-
-		private void ClearQuests(IDictionary<int, List<QuestBase>> quests)
-		{
-			if (quests == null)
-			{
-				return;
-			}
-			foreach (KeyValuePair<int, List<QuestBase>> quest in quests)
-			{
-				quest.Value.Clear();
-			}
-			quests.Clear();
-		}
-
-		private static IDictionary<int, List<Dictionary<string, object>>> ExtractQuests(Dictionary<string, object> rawQuests)
-		{
-			Dictionary<int, List<Dictionary<string, object>>> dictionary = new Dictionary<int, List<Dictionary<string, object>>>();
-			foreach (KeyValuePair<string, object> rawQuest in rawQuests)
-			{
-				int result;
-				if (int.TryParse(rawQuest.Key, NumberStyles.Integer, NumberFormatInfo.InvariantInfo, out result))
-				{
-					List<object> list = rawQuest.Value as List<object>;
-					if (list == null)
-					{
-						dictionary[result] = new List<Dictionary<string, object>>();
-					}
-					else
-					{
-						List<Dictionary<string, object>> list3 = (dictionary[result] = list.OfType<Dictionary<string, object>>().ToList());
-					}
-				}
-			}
-			return dictionary;
-		}
-
-		private static IDictionary<int, List<Dictionary<string, object>>> FilterQuests(Dictionary<string, object> rawQuests, Difficulty[] allowedDifficulties, IDictionary<int, List<QuestBase>> existingQuests)
-		{
-			//Discarded unreachable code: IL_00e6
-			if (allowedDifficulties == null)
-			{
-				throw new ArgumentNullException("allowedDifficulties");
-			}
-			if (allowedDifficulties.Length == 0)
-			{
-				throw new ArgumentException("List of difficulties should not be empty.", "allowedDifficulties");
-			}
-			if (existingQuests == null)
-			{
-				existingQuests = new Dictionary<int, List<QuestBase>>();
-			}
-			Dictionary<int, Dictionary<string, Dictionary<string, object>>> dictionary = new Dictionary<int, Dictionary<string, Dictionary<string, object>>>();
-			foreach (KeyValuePair<string, object> rawQuest in rawQuests)
-			{
-				Dictionary<string, object> dictionary2 = rawQuest.Value as Dictionary<string, object>;
-				object value;
-				if (dictionary2 == null || !dictionary2.TryGetValue("slot", out value) || !QuestConstants.IsSupported(rawQuest.Key))
-				{
-					continue;
-				}
-				try
-				{
-					int key = Convert.ToInt32(value, NumberFormatInfo.InvariantInfo);
-					Dictionary<string, Dictionary<string, object>> value2;
-					if (!dictionary.TryGetValue(key, out value2))
-					{
-						value2 = (dictionary[key] = new Dictionary<string, Dictionary<string, object>>(3));
-					}
-					value2[rawQuest.Key] = dictionary2;
-				}
-				catch (Exception exception)
-				{
-					Debug.LogException(exception);
-				}
-			}
-			List<Difficulty> list = new List<Difficulty>(dictionary.Count);
-			for (int i = 0; i != dictionary.Count; i++)
-			{
-				Difficulty item = allowedDifficulties[i % allowedDifficulties.Length];
-				list.Add(item);
-			}
-			ShuffleInPlace(list);
-			Dictionary<int, List<Dictionary<string, object>>> dictionary4 = new Dictionary<int, List<Dictionary<string, object>>>();
-			Dictionary<int, Dictionary<string, Dictionary<string, object>>>.Enumerator enumerator2 = dictionary.GetEnumerator();
-			List<Difficulty> list2 = new List<Difficulty>();
-			list2.Add(Difficulty.Easy);
-			list2.Add(Difficulty.Normal);
-			list2.Add(Difficulty.Hard);
-			List<Difficulty> source = list2;
-			int num = 0;
-			while (enumerator2.MoveNext())
-			{
-				_003CFilterQuests_003Ec__AnonStorey2EA _003CFilterQuests_003Ec__AnonStorey2EA = new _003CFilterQuests_003Ec__AnonStorey2EA();
-				int key2 = enumerator2.Current.Key;
-				Dictionary<string, Dictionary<string, object>> value3 = enumerator2.Current.Value;
-				List<QuestBase> value4;
-				bool flag = existingQuests.TryGetValue(key2, out value4);
-				_003CFilterQuests_003Ec__AnonStorey2EA.chosenDifficulty = list[num];
-				_003CFilterQuests_003Ec__AnonStorey2EA.chosenDifficultyKey = QuestConstants.GetDifficultyKey(_003CFilterQuests_003Ec__AnonStorey2EA.chosenDifficulty);
-				List<KeyValuePair<string, Dictionary<string, object>>> list3 = value3.Where(_003CFilterQuests_003Ec__AnonStorey2EA._003C_003Em__3F5).ToList();
-				if (list3.Count == 0)
-				{
-					value3.Clear();
-				}
-				else
-				{
-					if (list3.Count > 1)
-					{
-						_003CFilterQuests_003Ec__AnonStorey2EB _003CFilterQuests_003Ec__AnonStorey2EB = new _003CFilterQuests_003Ec__AnonStorey2EB();
-						List<QuestBase> o = value4;
-						if (_003C_003Ef__am_0024cache36 == null)
-						{
-							_003C_003Ef__am_0024cache36 = _003CFilterQuests_003Em__3F6;
-						}
-						QuestBase o2 = o.Map(_003C_003Ef__am_0024cache36);
-						if (_003C_003Ef__am_0024cache37 == null)
-						{
-							_003C_003Ef__am_0024cache37 = _003CFilterQuests_003Em__3F7;
-						}
-						_003CFilterQuests_003Ec__AnonStorey2EB.existingQuestId = o2.Map(_003C_003Ef__am_0024cache37);
-						list3.RemoveAll(_003CFilterQuests_003Ec__AnonStorey2EB._003C_003Em__3F8);
-					}
-					List<int> list4 = Enumerable.Range(0, list3.Count).ToList();
-					ShuffleInPlace(list4);
-					KeyValuePair<string, Dictionary<string, object>> keyValuePair = list3[list4[0]];
-					keyValuePair.Value["id"] = keyValuePair.Key;
-					value3.Clear();
-					value3[keyValuePair.Key] = keyValuePair.Value;
-					List<Dictionary<string, object>> list5 = new List<Dictionary<string, object>>(2);
-					Dictionary<string, object> value5 = keyValuePair.Value;
-					if (_003C_003Ef__am_0024cache38 == null)
-					{
-						_003C_003Ef__am_0024cache38 = _003CFilterQuests_003Em__3F9;
-					}
-					Func<KeyValuePair<string, object>, string> keySelector = _003C_003Ef__am_0024cache38;
-					if (_003C_003Ef__am_0024cache39 == null)
-					{
-						_003C_003Ef__am_0024cache39 = _003CFilterQuests_003Em__3FA;
-					}
-					list5.Add(value5.ToDictionary(keySelector, _003C_003Ef__am_0024cache39));
-					List<Dictionary<string, object>> list6 = list5;
-					List<QuestBase> o3 = value4;
-					if (_003C_003Ef__am_0024cache3A == null)
-					{
-						_003C_003Ef__am_0024cache3A = _003CFilterQuests_003Em__3FB;
-					}
-					if (o3.Map(_003C_003Ef__am_0024cache3A, true))
-					{
-						KeyValuePair<string, Dictionary<string, object>> keyValuePair2 = list3[list4[list4.Count - 1]];
-						keyValuePair2.Value["id"] = keyValuePair2.Key;
-						Dictionary<string, object> value6 = keyValuePair2.Value;
-						if (_003C_003Ef__am_0024cache3B == null)
-						{
-							_003C_003Ef__am_0024cache3B = _003CFilterQuests_003Em__3FC;
-						}
-						Func<KeyValuePair<string, object>, string> keySelector2 = _003C_003Ef__am_0024cache3B;
-						if (_003C_003Ef__am_0024cache3C == null)
-						{
-							_003C_003Ef__am_0024cache3C = _003CFilterQuests_003Em__3FD;
-						}
-						list6.Add(value6.ToDictionary(keySelector2, _003C_003Ef__am_0024cache3C));
-					}
-					dictionary4[key2] = list6;
-					IEnumerable<Difficulty> enumerable = source.Where(_003CFilterQuests_003Ec__AnonStorey2EA._003C_003Em__3FE);
-					foreach (Difficulty item2 in enumerable)
-					{
-						string difficultyKey = QuestConstants.GetDifficultyKey(item2);
-						foreach (Dictionary<string, object> item3 in list6)
-						{
-							item3.Remove(difficultyKey);
-						}
-					}
-				}
-				num++;
-			}
-			return dictionary4;
-		}
-
-		private static string ExtractMapFromQuestDescription(Dictionary<string, object> q, bool restore)
-		{
-			if (q == null || q.Count == 0)
-			{
-				return string.Empty;
-			}
-			if (restore)
-			{
-				object value;
-				if (!q.TryGetValue("map", out value))
-				{
-					return null;
-				}
-				return Convert.ToString(value);
-			}
-			string[] supportedMaps = GetSupportedMaps();
-			object value2;
-			if (!q.TryGetValue("maps", out value2))
-			{
-				return supportedMaps[UnityEngine.Random.Range(0, supportedMaps.Length - 1)];
-			}
-			List<object> list = value2 as List<object>;
-			if (list == null)
-			{
-				return string.Empty;
-			}
-			string[] array = list.OfType<string>().Intersect(supportedMaps).ToArray();
-			if (array.Length == 0)
-			{
-				return string.Empty;
-			}
-			return array[UnityEngine.Random.Range(0, array.Length - 1)];
-		}
-
-		private static string[] GetSupportedMaps()
-		{
-			if (_supportedMapsCache != null && _supportedMapsCache.IsAlive)
-			{
-				return (string[])_supportedMapsCache.Target;
-			}
-			ExperienceController sharedController = ExperienceController.sharedController;
-			if (_003C_003Ef__am_0024cache3D == null)
-			{
-				_003C_003Ef__am_0024cache3D = _003CGetSupportedMaps_003Em__3FF;
-			}
-			int level = sharedController.Map(_003C_003Ef__am_0024cache3D, 1);
-			HashSet<TypeModeGame> unlockedModesByLevel = SceneInfoController.GetUnlockedModesByLevel(level);
-			unlockedModesByLevel.Remove(TypeModeGame.Dater);
-			HashSet<string> hashSet = new HashSet<string>();
-			foreach (SceneInfo allScene in SceneInfoController.instance.allScenes)
-			{
-				if (allScene.isPremium || allScene.NameScene == "Developer_Scene")
-				{
-					continue;
-				}
-				foreach (TypeModeGame item in unlockedModesByLevel)
-				{
-					if (allScene.IsAvaliableForMode(item))
-					{
-						hashSet.Add(allScene.NameScene);
-					}
-				}
-			}
-			string[] array = hashSet.ToArray();
-			_supportedMapsCache = new WeakReference(array, false);
-			return array;
-		}
-
-		private static ShopNGUIController.CategoryNames? ExtractWeaponSlotFromQuestDescription(Dictionary<string, object> q, bool restore, HashSet<ShopNGUIController.CategoryNames> excluded)
-		{
-			if (q == null || q.Count == 0)
-			{
-				return null;
-			}
-			if (restore)
-			{
-				object value;
-				if (!q.TryGetValue("weaponSlot", out value))
-				{
-					return null;
-				}
-				return QuestConstants.ParseWeaponSlot(Convert.ToString(value));
-			}
-			if (excluded == null)
-			{
-				excluded = new HashSet<ShopNGUIController.CategoryNames>();
-			}
-			List<ShopNGUIController.CategoryNames> list = Enum.GetValues(typeof(ShopNGUIController.CategoryNames)).Cast<ShopNGUIController.CategoryNames>().Where(ShopNGUIController.IsWeaponCategory)
-				.ToList();
-			object value2;
-			if (!q.TryGetValue("weaponSlots", out value2))
-			{
-				List<ShopNGUIController.CategoryNames> list2 = list.Except(excluded).ToList();
-				list2 = ((list2.Count <= 0) ? list : list2);
-				return list2[UnityEngine.Random.Range(0, list2.Count - 1)];
-			}
-			List<object> list3 = value2 as List<object>;
-			if (list3 == null)
-			{
-				return null;
-			}
-			IEnumerable<ShopNGUIController.CategoryNames?> source = list3.OfType<string>().Select(QuestConstants.ParseWeaponSlot);
-			if (_003C_003Ef__am_0024cache3E == null)
-			{
-				_003C_003Ef__am_0024cache3E = _003CExtractWeaponSlotFromQuestDescription_003Em__400;
-			}
-			IEnumerable<ShopNGUIController.CategoryNames?> source2 = source.Where(_003C_003Ef__am_0024cache3E);
-			if (_003C_003Ef__am_0024cache3F == null)
-			{
-				_003C_003Ef__am_0024cache3F = _003CExtractWeaponSlotFromQuestDescription_003Em__401;
-			}
-			List<ShopNGUIController.CategoryNames> list4 = source2.Select(_003C_003Ef__am_0024cache3F).Intersect(list).ToList();
-			if (list4.Count == 0)
-			{
-				return null;
-			}
-			List<ShopNGUIController.CategoryNames> list5 = list4.Except(excluded).ToList();
-			list5 = ((list5.Count <= 0) ? list4 : list5);
-			return list5[UnityEngine.Random.Range(0, list5.Count - 1)];
-		}
-
-		private static ConnectSceneNGUIController.RegimGame? ExtractModeFromQuestDescription(Dictionary<string, object> q, bool restore, string questId)
-		{
-			if (q == null || q.Count == 0)
-			{
-				return null;
-			}
-			if (restore)
-			{
-				object value;
-				if (!q.TryGetValue("mode", out value))
-				{
-					return null;
-				}
-				return QuestConstants.ParseMode(Convert.ToString(value));
-			}
-			List<ConnectSceneNGUIController.RegimGame> list = new List<ConnectSceneNGUIController.RegimGame>(GetSupportedModes());
-			if ("killInMode".Equals(questId, StringComparison.OrdinalIgnoreCase))
-			{
-				list.Remove(ConnectSceneNGUIController.RegimGame.TimeBattle);
-			}
-			object value2;
-			if (!q.TryGetValue("modes", out value2))
-			{
-				return (list.Count <= 0) ? null : new ConnectSceneNGUIController.RegimGame?(list[UnityEngine.Random.Range(0, list.Count - 1)]);
-			}
-			List<object> list2 = value2 as List<object>;
-			if (list2 == null)
-			{
-				return null;
-			}
-			IEnumerable<ConnectSceneNGUIController.RegimGame?> source = list2.OfType<string>().Select(QuestConstants.ParseMode);
-			if (_003C_003Ef__am_0024cache40 == null)
-			{
-				_003C_003Ef__am_0024cache40 = _003CExtractModeFromQuestDescription_003Em__402;
-			}
-			IEnumerable<ConnectSceneNGUIController.RegimGame?> source2 = source.Where(_003C_003Ef__am_0024cache40);
-			if (_003C_003Ef__am_0024cache41 == null)
-			{
-				_003C_003Ef__am_0024cache41 = _003CExtractModeFromQuestDescription_003Em__403;
-			}
-			List<ConnectSceneNGUIController.RegimGame> list3 = source2.Select(_003C_003Ef__am_0024cache41).Intersect(list).ToList();
-			if (list3.Count == 0)
-			{
-				return null;
-			}
-			return list3[UnityEngine.Random.Range(0, list3.Count - 1)];
-		}
-
-		private static ConnectSceneNGUIController.RegimGame[] GetSupportedModes()
-		{
-			if (_supportedModesCache != null && _supportedModesCache.IsAlive)
-			{
-				return (ConnectSceneNGUIController.RegimGame[])_supportedModesCache.Target;
-			}
-			ExperienceController sharedController = ExperienceController.sharedController;
-			if (_003C_003Ef__am_0024cache42 == null)
-			{
-				_003C_003Ef__am_0024cache42 = _003CGetSupportedModes_003Em__404;
-			}
-			int level = sharedController.Map(_003C_003Ef__am_0024cache42, 1);
-			HashSet<TypeModeGame> unlockedModesByLevel = SceneInfoController.GetUnlockedModesByLevel(level);
-			HashSet<ConnectSceneNGUIController.RegimGame> source = SceneInfoController.SelectModes(unlockedModesByLevel);
-			ConnectSceneNGUIController.RegimGame[] array = source.ToArray();
-			_supportedModesCache = new WeakReference(array, false);
-			return array;
-		}
-
-		private static void ShuffleInPlace<T>(List<T> list)
-		{
-			if (list == null)
-			{
-				throw new ArgumentNullException("list");
-			}
-			if (list.Count >= 2)
-			{
-				for (int num = list.Count - 1; num >= 1; num--)
-				{
-					int index = UnityEngine.Random.Range(0, num);
-					T value = list[index];
-					list[index] = list[num];
-					list[num] = value;
-				}
-			}
-		}
-
-		private static List<T> Shuffle<T>(IEnumerable<T> list)
-		{
-			if (list == null)
-			{
-				throw new ArgumentNullException("list");
-			}
-			List<T> list2 = list.ToList();
-			ShuffleInPlace(list2);
-			return list2;
-		}
-
-		public void FilterFulfilledTutorialQuests()
-		{
-			List<QuestBase> tutorialQuests = _tutorialQuests;
-			if (_003C_003Ef__am_0024cache43 == null)
-			{
-				_003C_003Ef__am_0024cache43 = _003CFilterFulfilledTutorialQuests_003Em__405;
-			}
-			tutorialQuests.RemoveAll(_003C_003Ef__am_0024cache43);
-		}
-
-		private void OnQuestChangedCheckCompletion(object sender, EventArgs e)
-		{
-			_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC _003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC = new _003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC();
-			_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC._003C_003Ef__this = this;
-			_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC.quest = sender as QuestBase;
-			if (_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC.quest == null || !(_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC.quest.CalculateProgress() >= 1m))
-			{
-				return;
-			}
-			string callee = string.Format(CultureInfo.InvariantCulture, "{0}.OnQuestChangedCheckCompletion({1})", GetType().Name, _003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC.quest.Id);
-			ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-			try
-			{
-				this.QuestCompleted.Do(_003COnQuestChangedCheckCompletion_003Ec__AnonStorey2EC._003C_003Em__406);
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
-		}
-
-		private void HandleWin(object sender, WinEventArgs e)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("HandleWin(): " + e);
-			}
-			QuestBase questById = GetQuestById("winInMap");
-			if (questById != null)
-			{
-				MapAccumulativeQuest mapAccumulativeQuest = questById as MapAccumulativeQuest;
-				if (mapAccumulativeQuest != null)
-				{
-					mapAccumulativeQuest.IncrementIf(mapAccumulativeQuest.Map.Equals(e.Map, StringComparison.Ordinal));
-				}
-			}
-			questById = GetQuestById("winInMode");
-			if (questById != null)
-			{
-				ModeAccumulativeQuest modeAccumulativeQuest = questById as ModeAccumulativeQuest;
-				if (modeAccumulativeQuest != null)
-				{
-					modeAccumulativeQuest.IncrementIf(modeAccumulativeQuest.Mode == e.Mode);
-				}
-			}
-		}
-
-		private void HandleKillOtherPlayer(object sender, KillOtherPlayerEventArgs e)
-		{
-			_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED _003CHandleKillOtherPlayer_003Ec__AnonStorey2ED = new _003CHandleKillOtherPlayer_003Ec__AnonStorey2ED();
-			_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED.e = e;
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("HandleKillOtherPlayer(): " + _003CHandleKillOtherPlayer_003Ec__AnonStorey2ED.e);
-			}
-			QuestBase questById = GetQuestById("killInMode");
-			if (questById != null)
-			{
-				(questById as ModeAccumulativeQuest).Do(_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED._003C_003Em__407);
-			}
-			questById = GetQuestById("killWithWeapon");
-			if (questById != null)
-			{
-				(questById as WeaponSlotAccumulativeQuest).Do(_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED._003C_003Em__408);
-			}
-			string[] source = new string[3] { "killViaHeadshot", "killWithGrenade", "revenge" };
-			IEnumerable<SimpleAccumulativeQuest> source2 = source.Select(GetQuestById).OfType<SimpleAccumulativeQuest>();
-			if (_003C_003Ef__am_0024cache44 == null)
-			{
-				_003C_003Ef__am_0024cache44 = _003CHandleKillOtherPlayer_003Em__409;
-			}
-			Func<SimpleAccumulativeQuest, string> keySelector = _003C_003Ef__am_0024cache44;
-			if (_003C_003Ef__am_0024cache45 == null)
-			{
-				_003C_003Ef__am_0024cache45 = _003CHandleKillOtherPlayer_003Em__40A;
-			}
-			Dictionary<string, SimpleAccumulativeQuest> dictionary = source2.ToDictionary(keySelector, _003C_003Ef__am_0024cache45);
-			SimpleAccumulativeQuest value;
-			if (dictionary.TryGetValue("killViaHeadshot", out value))
-			{
-				value.IncrementIf(_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED.e.Headshot);
-			}
-			if (dictionary.TryGetValue("killWithGrenade", out value))
-			{
-				value.IncrementIf(_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED.e.Grenade);
-			}
-			if (dictionary.TryGetValue("revenge", out value))
-			{
-				value.IncrementIf(_003CHandleKillOtherPlayer_003Ec__AnonStorey2ED.e.Revenge);
-			}
-		}
-
-		private void HandleKillOtherPlayerWithFlag(object sender, EventArgs e)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("HandleKillOtherPlayerWithFlag(): " + e);
-			}
-			QuestBase questById = GetQuestById("killFlagCarriers");
-			if (questById != null)
-			{
-				SimpleAccumulativeQuest o = questById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache46 == null)
-				{
-					_003C_003Ef__am_0024cache46 = _003CHandleKillOtherPlayerWithFlag_003Em__40B;
-				}
-				o.Do(_003C_003Ef__am_0024cache46);
-			}
-		}
-
-		private void HandleCapture(object sender, CaptureEventArgs e)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("HandleCapture(): " + e);
-			}
-			string[] source = new string[2] { "captureFlags", "capturePoints" };
-			IEnumerable<SimpleAccumulativeQuest> source2 = source.Select(GetQuestById).OfType<SimpleAccumulativeQuest>();
-			if (_003C_003Ef__am_0024cache47 == null)
-			{
-				_003C_003Ef__am_0024cache47 = _003CHandleCapture_003Em__40C;
-			}
-			Func<SimpleAccumulativeQuest, string> keySelector = _003C_003Ef__am_0024cache47;
-			if (_003C_003Ef__am_0024cache48 == null)
-			{
-				_003C_003Ef__am_0024cache48 = _003CHandleCapture_003Em__40D;
-			}
-			Dictionary<string, SimpleAccumulativeQuest> dictionary = source2.ToDictionary(keySelector, _003C_003Ef__am_0024cache48);
-			SimpleAccumulativeQuest value;
-			if (dictionary.TryGetValue("capturePoints", out value))
-			{
-				value.IncrementIf(e.Mode == ConnectSceneNGUIController.RegimGame.CapturePoints);
-			}
-			if (dictionary.TryGetValue("captureFlags", out value))
-			{
-				value.IncrementIf(e.Mode == ConnectSceneNGUIController.RegimGame.FlagCapture);
-			}
-		}
-
-		private void HandleKillMonster(object sender, KillMonsterEventArgs e)
-		{
-			_003CHandleKillMonster_003Ec__AnonStorey2EE _003CHandleKillMonster_003Ec__AnonStorey2EE = new _003CHandleKillMonster_003Ec__AnonStorey2EE();
-			_003CHandleKillMonster_003Ec__AnonStorey2EE.e = e;
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("HandleKillMonster(): " + _003CHandleKillMonster_003Ec__AnonStorey2EE.e);
-			}
-			QuestBase questById = GetQuestById("killInCampaign");
-			if (questById != null)
-			{
-				(questById as SimpleAccumulativeQuest).Do(_003CHandleKillMonster_003Ec__AnonStorey2EE._003C_003Em__40E);
-			}
-			questById = GetQuestById("killNpcWithWeapon");
-			if (questById != null)
-			{
-				(questById as WeaponSlotAccumulativeQuest).Do(_003CHandleKillMonster_003Ec__AnonStorey2EE._003C_003Em__40F);
-			}
-		}
-
 		private void HandleBreakSeries(object sender, EventArgs e)
 		{
 			if (Defs.IsDeveloperBuild)
 			{
 				Debug.Log("HandleBreakSeries()");
 			}
-			QuestBase questById = GetQuestById("breakSeries");
+			QuestBase questById = this.GetQuestById("breakSeries");
 			if (questById != null)
 			{
-				SimpleAccumulativeQuest o = questById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache49 == null)
-				{
-					_003C_003Ef__am_0024cache49 = _003CHandleBreakSeries_003Em__410;
-				}
-				o.Do(_003C_003Ef__am_0024cache49);
+				(questById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
 			}
 		}
 
-		private void HandleMakeSeries(object sender, EventArgs e)
+		private void HandleCapture(object sender, CaptureEventArgs e)
 		{
+			SimpleAccumulativeQuest simpleAccumulativeQuest;
 			if (Defs.IsDeveloperBuild)
 			{
-				Debug.Log("HandleMakeSeries()");
+				Debug.Log(string.Concat("HandleCapture(): ", e));
 			}
-			QuestBase questById = GetQuestById("makeSeries");
-			if (questById != null)
+			string[] strArrays = new string[] { "captureFlags", "capturePoints" };
+			Dictionary<string, SimpleAccumulativeQuest> dictionary = strArrays.Select<string, QuestBase>(new Func<string, QuestBase>(this.GetQuestById)).OfType<SimpleAccumulativeQuest>().ToDictionary<SimpleAccumulativeQuest, string, SimpleAccumulativeQuest>((SimpleAccumulativeQuest q) => q.Id, (SimpleAccumulativeQuest q) => q);
+			if (dictionary.TryGetValue("capturePoints", out simpleAccumulativeQuest))
 			{
-				SimpleAccumulativeQuest o = questById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache4A == null)
-				{
-					_003C_003Ef__am_0024cache4A = _003CHandleMakeSeries_003Em__411;
-				}
-				o.Do(_003C_003Ef__am_0024cache4A);
+				simpleAccumulativeQuest.IncrementIf(e.Mode == ConnectSceneNGUIController.RegimGame.CapturePoints, 1);
 			}
-		}
-
-		private void HandleSurviveInArena(object sender, EventArgs e)
-		{
-			if (Defs.IsDeveloperBuild)
+			if (dictionary.TryGetValue("captureFlags", out simpleAccumulativeQuest))
 			{
-				Debug.Log("HandleSurviveInArena()");
-			}
-			QuestBase questById = GetQuestById("surviveWavesInArena");
-			if (questById != null)
-			{
-				SimpleAccumulativeQuest o = questById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache4B == null)
-				{
-					_003C_003Ef__am_0024cache4B = _003CHandleSurviveInArena_003Em__412;
-				}
-				o.Do(_003C_003Ef__am_0024cache4B);
+				simpleAccumulativeQuest.IncrementIf(e.Mode == ConnectSceneNGUIController.RegimGame.FlagCapture, 1);
 			}
 		}
 
@@ -1899,15 +892,87 @@ namespace Rilisoft
 			{
 				Debug.Log("HandleGetGotcha()");
 			}
-			QuestBase tutorialQuestById = GetTutorialQuestById("getGotcha");
+			QuestBase tutorialQuestById = this.GetTutorialQuestById("getGotcha");
 			if (tutorialQuestById != null)
 			{
-				SimpleAccumulativeQuest o = tutorialQuestById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache4C == null)
-				{
-					_003C_003Ef__am_0024cache4C = _003CHandleGetGotcha_003Em__413;
-				}
-				o.Do(_003C_003Ef__am_0024cache4C);
+				(tutorialQuestById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
+			}
+		}
+
+		private void HandleKillMonster(object sender, KillMonsterEventArgs e)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log(string.Concat("HandleKillMonster(): ", e));
+			}
+			QuestBase questById = this.GetQuestById("killInCampaign");
+			if (questById != null)
+			{
+				(questById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.IncrementIf(e.Campaign, 1));
+			}
+			questById = this.GetQuestById("killNpcWithWeapon");
+			if (questById != null)
+			{
+				(questById as WeaponSlotAccumulativeQuest).Do<WeaponSlotAccumulativeQuest>((WeaponSlotAccumulativeQuest quest) => quest.IncrementIf(e.WeaponSlot == quest.WeaponSlot, 1));
+			}
+		}
+
+		private void HandleKillOtherPlayer(object sender, KillOtherPlayerEventArgs e)
+		{
+			SimpleAccumulativeQuest simpleAccumulativeQuest;
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log(string.Concat("HandleKillOtherPlayer(): ", e));
+			}
+			QuestBase questById = this.GetQuestById("killInMode");
+			if (questById != null)
+			{
+				(questById as ModeAccumulativeQuest).Do<ModeAccumulativeQuest>((ModeAccumulativeQuest quest) => quest.IncrementIf(e.Mode == quest.Mode, 1));
+			}
+			questById = this.GetQuestById("killWithWeapon");
+			if (questById != null)
+			{
+				(questById as WeaponSlotAccumulativeQuest).Do<WeaponSlotAccumulativeQuest>((WeaponSlotAccumulativeQuest quest) => quest.IncrementIf(e.WeaponSlot == quest.WeaponSlot, 1));
+			}
+			string[] strArrays = new string[] { "killViaHeadshot", "killWithGrenade", "revenge" };
+			Dictionary<string, SimpleAccumulativeQuest> dictionary = strArrays.Select<string, QuestBase>(new Func<string, QuestBase>(this.GetQuestById)).OfType<SimpleAccumulativeQuest>().ToDictionary<SimpleAccumulativeQuest, string, SimpleAccumulativeQuest>((SimpleAccumulativeQuest q) => q.Id, (SimpleAccumulativeQuest q) => q);
+			if (dictionary.TryGetValue("killViaHeadshot", out simpleAccumulativeQuest))
+			{
+				simpleAccumulativeQuest.IncrementIf(e.Headshot, 1);
+			}
+			if (dictionary.TryGetValue("killWithGrenade", out simpleAccumulativeQuest))
+			{
+				simpleAccumulativeQuest.IncrementIf(e.Grenade, 1);
+			}
+			if (dictionary.TryGetValue("revenge", out simpleAccumulativeQuest))
+			{
+				simpleAccumulativeQuest.IncrementIf(e.Revenge, 1);
+			}
+		}
+
+		private void HandleKillOtherPlayerWithFlag(object sender, EventArgs e)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log(string.Concat("HandleKillOtherPlayerWithFlag(): ", e));
+			}
+			QuestBase questById = this.GetQuestById("killFlagCarriers");
+			if (questById != null)
+			{
+				(questById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
+			}
+		}
+
+		private void HandleMakeSeries(object sender, EventArgs e)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log("HandleMakeSeries()");
+			}
+			QuestBase questById = this.GetQuestById("makeSeries");
+			if (questById != null)
+			{
+				(questById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
 			}
 		}
 
@@ -1915,490 +980,669 @@ namespace Rilisoft
 		{
 			if (Defs.IsDeveloperBuild)
 			{
-				Debug.LogFormat("HandleSocialInteraction('{0}')", e.Kind);
+				Debug.LogFormat("HandleSocialInteraction('{0}')", new object[] { e.Kind });
 			}
-			QuestBase tutorialQuestById = GetTutorialQuestById(e.Kind);
+			QuestBase tutorialQuestById = this.GetTutorialQuestById(e.Kind);
 			if (tutorialQuestById != null)
 			{
-				SimpleAccumulativeQuest o = tutorialQuestById as SimpleAccumulativeQuest;
-				if (_003C_003Ef__am_0024cache4D == null)
-				{
-					_003C_003Ef__am_0024cache4D = _003CHandleSocialInteraction_003Em__414;
-				}
-				o.Do(_003C_003Ef__am_0024cache4D);
+				(tutorialQuestById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
 			}
 		}
 
-		public void Dispose()
+		private void HandleSurviveInArena(object sender, EventArgs e)
 		{
-			if (_disposed)
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log("HandleSurviveInArena()");
+			}
+			QuestBase questById = this.GetQuestById("surviveWavesInArena");
+			if (questById != null)
+			{
+				(questById as SimpleAccumulativeQuest).Do<SimpleAccumulativeQuest>((SimpleAccumulativeQuest quest) => quest.Increment(1));
+			}
+		}
+
+		private void HandleWin(object sender, WinEventArgs e)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				Debug.Log(string.Concat("HandleWin(): ", e));
+			}
+			QuestBase questById = this.GetQuestById("winInMap");
+			if (questById != null)
+			{
+				MapAccumulativeQuest mapAccumulativeQuest = questById as MapAccumulativeQuest;
+				if (mapAccumulativeQuest != null)
+				{
+					mapAccumulativeQuest.IncrementIf(mapAccumulativeQuest.Map.Equals(e.Map, StringComparison.Ordinal), 1);
+				}
+			}
+			questById = this.GetQuestById("winInMode");
+			if (questById != null)
+			{
+				ModeAccumulativeQuest modeAccumulativeQuest = questById as ModeAccumulativeQuest;
+				if (modeAccumulativeQuest != null)
+				{
+					modeAccumulativeQuest.IncrementIf(modeAccumulativeQuest.Mode == e.Mode, 1);
+				}
+			}
+		}
+
+		public bool HasUnrewaredAccumQuests()
+		{
+			IEnumerable<QuestBase> values = 
+				from qs in this._currentQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>();
+			IEnumerable<QuestBase> questBases = 
+				from qs in this._previousQuests.Values
+				where qs.Count > 0
+				select qs.First<QuestBase>();
+			IEnumerable<AccumulativeQuestBase> accumulativeQuestBases = values.Concat<QuestBase>(questBases).Concat<QuestBase>(this._tutorialQuests).OfType<AccumulativeQuestBase>();
+			return accumulativeQuestBases.Any<AccumulativeQuestBase>((AccumulativeQuestBase q) => (q.CalculateProgress() < new decimal(1) ? false : !q.Rewarded));
+		}
+
+		private static HashSet<ShopNGUIController.CategoryNames> InitializeExcludedWeaponSlots(int slot)
+		{
+			HashSet<ShopNGUIController.CategoryNames> categoryNames = new HashSet<ShopNGUIController.CategoryNames>();
+			if (QuestSystem.Instance == null || QuestSystem.Instance.QuestProgress == null)
+			{
+				return categoryNames;
+			}
+			WeaponSlotAccumulativeQuest activeQuestBySlot = QuestSystem.Instance.QuestProgress.GetActiveQuestBySlot(slot) as WeaponSlotAccumulativeQuest;
+			if (activeQuestBySlot != null)
+			{
+				categoryNames.Add(activeQuestBySlot.WeaponSlot);
+			}
+			return categoryNames;
+		}
+
+		public bool IsDirty()
+		{
+			bool flag;
+			if (!this._dirty)
+			{
+				if (!this._currentQuests.Values.SelectMany<List<QuestBase>, QuestBase>((List<QuestBase> q) => q).Any<QuestBase>((QuestBase q) => q.Dirty))
+				{
+					if (this._previousQuests.Values.SelectMany<List<QuestBase>, QuestBase>((List<QuestBase> q) => q).Any<QuestBase>((QuestBase q) => q.Dirty))
+					{
+						flag = true;
+						return flag;
+					}
+					flag = this._tutorialQuests.Any<QuestBase>((QuestBase q) => q.Dirty);
+					return flag;
+				}
+			}
+			flag = true;
+			return flag;
+		}
+
+		private void OnQuestChangedCheckCompletion(object sender, EventArgs e)
+		{
+			QuestBase questBase = sender as QuestBase;
+			if (questBase == null)
 			{
 				return;
 			}
-			foreach (QuestBase tutorialQuest in _tutorialQuests)
+			if (questBase.CalculateProgress() >= new decimal(1))
 			{
-				tutorialQuest.Changed -= OnQuestChangedCheckCompletion;
-			}
-			IDictionary<int, List<QuestBase>> currentQuests = _currentQuests;
-			if (_003C_003Ef__am_0024cache4E == null)
-			{
-				_003C_003Ef__am_0024cache4E = _003CDispose_003Em__415;
-			}
-			foreach (QuestBase item in currentQuests.SelectMany(_003C_003Ef__am_0024cache4E))
-			{
-				item.Changed -= OnQuestChangedCheckCompletion;
-			}
-			IDictionary<int, List<QuestBase>> previousQuests = _previousQuests;
-			if (_003C_003Ef__am_0024cache4F == null)
-			{
-				_003C_003Ef__am_0024cache4F = _003CDispose_003Em__416;
-			}
-			foreach (QuestBase item2 in previousQuests.SelectMany(_003C_003Ef__am_0024cache4F))
-			{
-				item2.Changed -= OnQuestChangedCheckCompletion;
-			}
-			_events.Win -= HandleWin;
-			_events.KillOtherPlayer -= HandleKillOtherPlayer;
-			_events.KillOtherPlayerWithFlag -= HandleKillOtherPlayerWithFlag;
-			_events.Capture -= HandleCapture;
-			_events.KillMonster -= HandleKillMonster;
-			_events.BreakSeries -= HandleBreakSeries;
-			_events.MakeSeries -= HandleMakeSeries;
-			_events.SurviveWaveInArena -= HandleSurviveInArena;
-			this.QuestCompleted = null;
-			_disposed = true;
-		}
-
-		[CompilerGenerated]
-		private static bool _003Cget_AnyActiveQuest_003Em__3C8(KeyValuePair<int, QuestBase> q)
-		{
-			return !q.Value.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static int _003CUpdateQuests_003Em__3C9(int s)
-		{
-			return s;
-		}
-
-		[CompilerGenerated]
-		private IList<QuestBase> _003CUpdateQuests_003Em__3CA(int s)
-		{
-			return GetActiveQuestsBySlot(s, true);
-		}
-
-		[CompilerGenerated]
-		private static bool _003CUpdateQuests_003Em__3CB(QuestBase q)
-		{
-			return !q.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CUpdateQuests_003Em__3CC(QuestBase q)
-		{
-			return q.CalculateProgress() < 1m && !q.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<Difficulty> _003CUpdateQuests_003Em__3CD(KeyValuePair<int, List<QuestBase>> kv)
-		{
-			List<QuestBase> value = kv.Value;
-			if (_003C_003Ef__am_0024cache50 == null)
-			{
-				_003C_003Ef__am_0024cache50 = _003CUpdateQuests_003Em__417;
-			}
-			return value.Select(_003C_003Ef__am_0024cache50);
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CDebugDecrementDay_003Em__3CE(List<QuestBase> q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CDebugDecrementDay_003Em__3CF(List<QuestBase> q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static int _003CParseQuests_003Em__3D1(KeyValuePair<int, QuestBase> kv)
-		{
-			return kv.Key;
-		}
-
-		[CompilerGenerated]
-		private static List<QuestBase> _003CParseQuests_003Em__3D2(KeyValuePair<int, QuestBase> kv)
-		{
-			return new List<QuestBase> { kv.Value };
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CGetActiveQuestBySlot_003Em__3D3(List<QuestBase> ps)
-		{
-			return ps.FirstOrDefault();
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CGetActiveQuestBySlot_003Em__3D4(List<QuestBase> cs)
-		{
-			return cs.FirstOrDefault();
-		}
-
-		[CompilerGenerated]
-		private static int _003CGetRandomQuestInfo_003Em__3D6(QuestBase q)
-		{
-			return q.Slot;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetRandomQuestInfo_003Em__3D7(QuestInfo qi)
-		{
-			return qi.Quest != null && !qi.Quest.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static int _003CGetActiveQuests_003Em__3D8(QuestBase q)
-		{
-			return q.Slot;
-		}
-
-		[CompilerGenerated]
-		private static int _003CGetActiveQuests_003Em__3D9(int s)
-		{
-			return s;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetActiveQuestsBySlotReference_003Em__3DB(List<QuestBase> qs)
-		{
-			int result;
-			if (qs.Count > 0)
-			{
-				if (_003C_003Ef__am_0024cache51 == null)
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.OnQuestChangedCheckCompletion({1})", new object[] { this.GetType().Name, questBase.Id });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
 				{
-					_003C_003Ef__am_0024cache51 = _003CGetActiveQuestsBySlotReference_003Em__418;
+					this.QuestCompleted.Do<EventHandler<QuestCompletedEventArgs>>((EventHandler<QuestCompletedEventArgs> handler) => handler(this, new QuestCompletedEventArgs()
+					{
+						Quest = questBase
+					}));
 				}
-				result = (qs.All(_003C_003Ef__am_0024cache51) ? 1 : 0);
+				finally
+				{
+					scopeLogger.Dispose();
+				}
 			}
-			else
+		}
+
+		private static IDictionary<int, List<QuestBase>> ParseQuests(Dictionary<string, object> rawQuests, long? dayOption, Difficulty[] allowedDifficulties)
+		{
+			Dictionary<int, List<QuestBase>> nums = new Dictionary<int, List<QuestBase>>(3);
+			QuestProgress.ParseQuests(rawQuests, dayOption, allowedDifficulties, nums);
+			return nums;
+		}
+
+		private static void ParseQuests(Dictionary<string, object> rawQuests, long? dayOption, Difficulty[] allowedDifficulties, IDictionary<int, List<QuestBase>> actualResult)
+		{
+			List<QuestBase> questBases;
+			int num;
+			if (actualResult == null)
 			{
-				result = 0;
+				return;
 			}
-			return (byte)result != 0;
+			if (rawQuests == null || rawQuests.Count == 0)
+			{
+				return;
+			}
+			if (allowedDifficulties == null)
+			{
+				throw new ArgumentNullException("allowedDifficulties");
+			}
+			bool hasValue = !dayOption.HasValue;
+			IDictionary<int, List<QuestBase>> nums = (QuestSystem.Instance.QuestProgress == null ? new Dictionary<int, List<QuestBase>>() : QuestSystem.Instance.QuestProgress.GetActiveQuests().ToDictionary<KeyValuePair<int, QuestBase>, int, List<QuestBase>>((KeyValuePair<int, QuestBase> kv) => kv.Key, (KeyValuePair<int, QuestBase> kv) => new List<QuestBase>()
+			{
+				kv.Value
+			}));
+			IDictionary<int, List<Dictionary<string, object>>> nums1 = (!hasValue ? QuestProgress.FilterQuests(rawQuests, allowedDifficulties, nums) : QuestProgress.ExtractQuests(rawQuests));
+			Difficulty[] difficultyArray = new Difficulty[] { Difficulty.Easy, Difficulty.Normal, Difficulty.Hard };
+			IEnumerator<KeyValuePair<int, List<Dictionary<string, object>>>> enumerator = nums1.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					KeyValuePair<int, List<Dictionary<string, object>>> current = enumerator.Current;
+					int key = current.Key;
+					if (!actualResult.TryGetValue(key, out questBases))
+					{
+						questBases = new List<QuestBase>(2);
+					}
+					HashSet<ShopNGUIController.CategoryNames> categoryNames = QuestProgress.InitializeExcludedWeaponSlots(key);
+					List<Dictionary<string, object>>.Enumerator enumerator1 = current.Value.GetEnumerator();
+					try
+					{
+						while (enumerator1.MoveNext())
+						{
+							Dictionary<string, object> strs = enumerator1.Current;
+							string str = strs.TryGet("id") as string;
+							if (str != null)
+							{
+								if (QuestConstants.IsSupported(str))
+								{
+									Difficulty difficulty = Difficulty.None;
+									object obj = null;
+									Difficulty[] difficultyArray1 = difficultyArray;
+									int num1 = 0;
+									while (num1 < (int)difficultyArray1.Length)
+									{
+										Difficulty difficulty1 = difficultyArray1[num1];
+										if (!strs.TryGetValue(QuestConstants.GetDifficultyKey(difficulty1), out obj))
+										{
+											num1++;
+										}
+										else
+										{
+											difficulty = difficulty1;
+											break;
+										}
+									}
+									Dictionary<string, object> strs1 = obj as Dictionary<string, object>;
+									if (strs1 != null && difficulty != Difficulty.None)
+									{
+										try
+										{
+											Reward reward = Reward.Create(strs1["reward"] as List<object>);
+											int num2 = Convert.ToInt32(strs1.TryGet("parameter") ?? 1);
+											object obj1 = strs.TryGet("day");
+											long num3 = (!dayOption.HasValue ? Convert.ToInt64(obj1) : dayOption.Value);
+											bool flag = strs.TryGet("rewarded").Map<object, bool>(new Func<object, bool>(Convert.ToBoolean));
+											bool flag1 = strs.TryGet("active").Map<object, bool>(new Func<object, bool>(Convert.ToBoolean));
+											int num4 = strs.TryGet("currentCount").Map<object, int>(new Func<object, int>(Convert.ToInt32));
+											string str1 = str;
+											if (str1 != null)
+											{
+												if (QuestProgress.u003cu003ef__switchu0024mapE == null)
+												{
+													Dictionary<string, int> strs2 = new Dictionary<string, int>(5)
+													{
+														{ "killInMode", 0 },
+														{ "winInMode", 0 },
+														{ "winInMap", 1 },
+														{ "killWithWeapon", 2 },
+														{ "killNpcWithWeapon", 2 }
+													};
+													QuestProgress.u003cu003ef__switchu0024mapE = strs2;
+												}
+												if (QuestProgress.u003cu003ef__switchu0024mapE.TryGetValue(str1, out num))
+												{
+													switch (num)
+													{
+														case 0:
+														{
+															ConnectSceneNGUIController.RegimGame? nullable = QuestProgress.ExtractModeFromQuestDescription(strs, hasValue, str);
+															if (nullable.HasValue)
+															{
+																ModeAccumulativeQuest modeAccumulativeQuest = new ModeAccumulativeQuest(str, num3, key, difficulty, reward, flag1, flag, num2, nullable.Value, num4);
+																questBases.Add(modeAccumulativeQuest);
+																goto Label0;
+															}
+															else
+															{
+																continue;
+															}
+														}
+														case 1:
+														{
+															string str2 = QuestProgress.ExtractMapFromQuestDescription(strs, hasValue);
+															if (!string.IsNullOrEmpty(str2))
+															{
+																MapAccumulativeQuest mapAccumulativeQuest = new MapAccumulativeQuest(str, num3, key, difficulty, reward, flag1, flag, num2, str2, num4);
+																questBases.Add(mapAccumulativeQuest);
+																goto Label0;
+															}
+															else
+															{
+																continue;
+															}
+														}
+														case 2:
+														{
+															ShopNGUIController.CategoryNames? nullable1 = QuestProgress.ExtractWeaponSlotFromQuestDescription(strs, hasValue, categoryNames);
+															if (nullable1.HasValue)
+															{
+																categoryNames.Add(nullable1.Value);
+																WeaponSlotAccumulativeQuest weaponSlotAccumulativeQuest = new WeaponSlotAccumulativeQuest(str, num3, key, difficulty, reward, flag1, flag, num2, nullable1.Value, num4);
+																questBases.Add(weaponSlotAccumulativeQuest);
+																goto Label0;
+															}
+															else
+															{
+																continue;
+															}
+														}
+													}
+												}
+											}
+											SimpleAccumulativeQuest simpleAccumulativeQuest = new SimpleAccumulativeQuest(str, num3, key, difficulty, reward, flag1, flag, num2, num4);
+											questBases.Add(simpleAccumulativeQuest);
+										Label0:
+										}
+										catch (Exception exception)
+										{
+											Debug.LogException(exception);
+										}
+									}
+								}
+								else
+								{
+									Debug.LogWarning(string.Concat("Quest is not supported: ", str));
+								}
+							}
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator1).Dispose();
+					}
+					actualResult[key] = questBases;
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetActiveQuestsBySlotReference_003Em__3DC(List<QuestBase> qs)
+		public void PopulateQuests(IDictionary<int, List<QuestBase>> currentQuests, IDictionary<int, List<QuestBase>> previousQuests)
 		{
-			return qs.Count > 0;
+			if (currentQuests != null)
+			{
+				IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator = currentQuests.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						KeyValuePair<int, List<QuestBase>> current = enumerator.Current;
+						List<QuestBase>.Enumerator enumerator1 = current.Value.GetEnumerator();
+						try
+						{
+							while (enumerator1.MoveNext())
+							{
+								enumerator1.Current.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
+							}
+						}
+						finally
+						{
+							((IDisposable)(object)enumerator1).Dispose();
+						}
+						this._currentQuests[current.Key] = new List<QuestBase>(current.Value);
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+			}
+			if (previousQuests != null)
+			{
+				IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator2 = previousQuests.GetEnumerator();
+				try
+				{
+					while (enumerator2.MoveNext())
+					{
+						KeyValuePair<int, List<QuestBase>> questBases = enumerator2.Current;
+						List<QuestBase>.Enumerator enumerator3 = questBases.Value.GetEnumerator();
+						try
+						{
+							while (enumerator3.MoveNext())
+							{
+								enumerator3.Current.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
+							}
+						}
+						finally
+						{
+							((IDisposable)(object)enumerator3).Dispose();
+						}
+						this._previousQuests[questBases.Key] = new List<QuestBase>(questBases.Value);
+					}
+				}
+				finally
+				{
+					if (enumerator2 == null)
+					{
+					}
+					enumerator2.Dispose();
+				}
+			}
+			this._dirty = true;
 		}
 
-		[CompilerGenerated]
-		private static int _003CGetQuestById_003Em__3DD(QuestBase q)
+		public static IDictionary<int, List<QuestBase>> RestoreQuests(Dictionary<string, object> rawQuests)
 		{
-			return q.Slot;
+			return QuestProgress.ParseQuests(rawQuests, null, new Difficulty[] { Difficulty.Easy, Difficulty.Normal, Difficulty.Hard });
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3DF(List<QuestBase> qs)
+		public void SetClean()
 		{
-			return qs.Count > 0;
+			IEnumerator<List<QuestBase>> enumerator = this._currentQuests.Values.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					List<QuestBase>.Enumerator enumerator1 = enumerator.Current.GetEnumerator();
+					try
+					{
+						while (enumerator1.MoveNext())
+						{
+							enumerator1.Current.SetClean();
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator1).Dispose();
+					}
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			IEnumerator<List<QuestBase>> enumerator2 = this._previousQuests.Values.GetEnumerator();
+			try
+			{
+				while (enumerator2.MoveNext())
+				{
+					List<QuestBase>.Enumerator enumerator3 = enumerator2.Current.GetEnumerator();
+					try
+					{
+						while (enumerator3.MoveNext())
+						{
+							enumerator3.Current.SetClean();
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator3).Dispose();
+					}
+				}
+			}
+			finally
+			{
+				if (enumerator2 == null)
+				{
+				}
+				enumerator2.Dispose();
+			}
+			this._dirty = false;
 		}
 
-		[CompilerGenerated]
-		private static QuestBase _003CGetRandomInProgressAccumQuest_003Em__3E0(List<QuestBase> qs)
+		private static List<T> Shuffle<T>(IEnumerable<T> list)
 		{
-			return qs.First();
+			if (list == null)
+			{
+				throw new ArgumentNullException("list");
+			}
+			List<T> ts = list.ToList<T>();
+			QuestProgress.ShuffleInPlace<T>(ts);
+			return ts;
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E1(QuestBase q)
+		private static void ShuffleInPlace<T>(List<T> list)
 		{
-			return q.CalculateProgress() < 1m;
+			if (list == null)
+			{
+				throw new ArgumentNullException("list");
+			}
+			if (list.Count < 2)
+			{
+				return;
+			}
+			for (int i = list.Count - 1; i >= 1; i--)
+			{
+				int item = UnityEngine.Random.Range(0, i);
+				T t = list[item];
+				list[item] = list[i];
+				list[i] = t;
+			}
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E2(List<QuestBase> qs)
+		public Dictionary<string, object> ToJson()
 		{
-			return qs.Count > 0;
+			Dictionary<string, List<object>> strs = new Dictionary<string, List<object>>(3);
+			IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator = this._currentQuests.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					KeyValuePair<int, List<QuestBase>> current = enumerator.Current;
+					string str = current.Key.ToString(NumberFormatInfo.InvariantInfo);
+					List<object> objs = new List<object>(2);
+					List<QuestBase>.Enumerator enumerator1 = current.Value.GetEnumerator();
+					try
+					{
+						while (enumerator1.MoveNext())
+						{
+							objs.Add(enumerator1.Current.ToJson());
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator1).Dispose();
+					}
+					strs[str] = objs;
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			Dictionary<string, List<object>> strs1 = new Dictionary<string, List<object>>(3);
+			IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator2 = this._previousQuests.GetEnumerator();
+			try
+			{
+				while (enumerator2.MoveNext())
+				{
+					KeyValuePair<int, List<QuestBase>> keyValuePair = enumerator2.Current;
+					string str1 = keyValuePair.Key.ToString(NumberFormatInfo.InvariantInfo);
+					List<object> objs1 = new List<object>(2);
+					List<QuestBase>.Enumerator enumerator3 = keyValuePair.Value.GetEnumerator();
+					try
+					{
+						while (enumerator3.MoveNext())
+						{
+							objs1.Add(enumerator3.Current.ToJson());
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator3).Dispose();
+					}
+					strs1[str1] = objs1;
+				}
+			}
+			finally
+			{
+				if (enumerator2 == null)
+				{
+				}
+				enumerator2.Dispose();
+			}
+			List<object> objs2 = new List<object>(this._tutorialQuests.Count);
+			foreach (QuestBase _tutorialQuest in this._tutorialQuests)
+			{
+				objs2.Add(_tutorialQuest.ToJson());
+			}
+			Dictionary<string, object> strs2 = new Dictionary<string, object>(3)
+			{
+				{ "day", this._day }
+			};
+			DateTime timestamp = this.Timestamp;
+			strs2.Add("timestamp", timestamp.ToString("s", CultureInfo.InvariantCulture));
+			float timeLeftSeconds = this.TimeLeftSeconds;
+			strs2.Add("timeLeftSeconds", timeLeftSeconds.ToString(CultureInfo.InvariantCulture));
+			strs2.Add("tutorialQuests", objs2);
+			strs2.Add("previousQuests", strs1);
+			strs2.Add("currentQuests", strs);
+			return strs2;
 		}
 
-		[CompilerGenerated]
-		private static QuestBase _003CGetRandomInProgressAccumQuest_003Em__3E3(List<QuestBase> qs)
+		internal bool TryRemoveTutorialQuest(string questId)
 		{
-			return qs.First();
+			if (questId == null)
+			{
+				return false;
+			}
+			int num = this._tutorialQuests.FindIndex((QuestBase q) => questId.Equals(q.Id, StringComparison.Ordinal));
+			if (num < 0)
+			{
+				return false;
+			}
+			this._tutorialQuests.RemoveAt(num);
+			this._dirty = true;
+			return true;
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E4(QuestBase q)
+		public void UpdateQuests(long day, Dictionary<string, object> rawQuests, IDictionary<int, List<QuestBase>> newQuests)
 		{
-			return !q.Rewarded;
+			List<QuestBase> questBases;
+			if (newQuests == null)
+			{
+				return;
+			}
+			this._day = day;
+			IEnumerable<int> nums = this._previousQuests.Keys.Concat<int>(this._currentQuests.Keys).Distinct<int>();
+			Dictionary<int, IList<QuestBase>> dictionary = nums.ToDictionary<int, int, IList<QuestBase>>((int s) => s, (int s) => this.GetActiveQuestsBySlot(s, true));
+			this.ClearQuests(this._previousQuests);
+			foreach (KeyValuePair<int, IList<QuestBase>> keyValuePair in dictionary)
+			{
+				int key = keyValuePair.Key;
+				IList<QuestBase> value = keyValuePair.Value;
+				IEnumerator<QuestBase> enumerator = value.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						QuestBase current = enumerator.Current;
+						current.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
+						if (current.Rewarded)
+						{
+							continue;
+						}
+						current.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+				this._previousQuests[key] = new List<QuestBase>(
+					from q in value
+					where !q.Rewarded
+					select q);
+			}
+			this.ClearQuests(this._currentQuests);
+			IEnumerator<KeyValuePair<int, List<QuestBase>>> enumerator1 = newQuests.GetEnumerator();
+			try
+			{
+				while (enumerator1.MoveNext())
+				{
+					KeyValuePair<int, List<QuestBase>> current1 = enumerator1.Current;
+					int num = current1.Key;
+					List<QuestBase> value1 = current1.Value;
+					if (!this._previousQuests.TryGetValue(num, out questBases))
+					{
+						questBases = new List<QuestBase>();
+					}
+					if (!questBases.FirstOrDefault<QuestBase>().Map<QuestBase, bool>((QuestBase q) => (q.CalculateProgress() >= new decimal(1) ? false : !q.Rewarded)))
+					{
+						List<QuestBase>.Enumerator enumerator2 = value1.GetEnumerator();
+						try
+						{
+							while (enumerator2.MoveNext())
+							{
+								QuestBase questBase = enumerator2.Current;
+								questBase.Changed -= new EventHandler(this.OnQuestChangedCheckCompletion);
+								questBase.Changed += new EventHandler(this.OnQuestChangedCheckCompletion);
+							}
+						}
+						finally
+						{
+							((IDisposable)(object)enumerator2).Dispose();
+						}
+						this._currentQuests[num] = new List<QuestBase>(value1);
+					}
+				}
+			}
+			finally
+			{
+				if (enumerator1 == null)
+				{
+				}
+				enumerator1.Dispose();
+			}
+			if (rawQuests != null)
+			{
+				Difficulty[] array = this._previousQuests.SelectMany<KeyValuePair<int, List<QuestBase>>, Difficulty>((KeyValuePair<int, List<QuestBase>> kv) => 
+					from q in kv.Value
+					select q.Difficulty).Distinct<Difficulty>().ToArray<Difficulty>();
+				QuestProgress.ParseQuests(rawQuests, new long?(day), array, this._previousQuests);
+			}
+			this._dirty = true;
 		}
 
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E5(List<QuestBase> qs)
+		public event EventHandler<QuestCompletedEventArgs> QuestCompleted
 		{
-			return qs.Count > 0;
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CGetRandomInProgressAccumQuest_003Em__3E6(List<QuestBase> qs)
-		{
-			return qs.First();
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E7(QuestBase q)
-		{
-			return q.CalculateProgress() < 1m;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3E8(List<QuestBase> qs)
-		{
-			return qs.Count > 0;
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CGetRandomInProgressAccumQuest_003Em__3E9(List<QuestBase> qs)
-		{
-			return qs.First();
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetRandomInProgressAccumQuest_003Em__3EA(QuestBase q)
-		{
-			return !q.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CHasUnrewaredAccumQuests_003Em__3EB(List<QuestBase> qs)
-		{
-			return qs.Count > 0;
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CHasUnrewaredAccumQuests_003Em__3EC(List<QuestBase> qs)
-		{
-			return qs.First();
-		}
-
-		[CompilerGenerated]
-		private static bool _003CHasUnrewaredAccumQuests_003Em__3ED(List<QuestBase> qs)
-		{
-			return qs.Count > 0;
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CHasUnrewaredAccumQuests_003Em__3EE(List<QuestBase> qs)
-		{
-			return qs.First();
-		}
-
-		[CompilerGenerated]
-		private static bool _003CHasUnrewaredAccumQuests_003Em__3EF(AccumulativeQuestBase q)
-		{
-			return q.CalculateProgress() >= 1m && !q.Rewarded;
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CIsDirty_003Em__3F0(List<QuestBase> q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CIsDirty_003Em__3F1(QuestBase q)
-		{
-			return q.Dirty;
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CIsDirty_003Em__3F2(List<QuestBase> q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CIsDirty_003Em__3F3(QuestBase q)
-		{
-			return q.Dirty;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CIsDirty_003Em__3F4(QuestBase q)
-		{
-			return q.Dirty;
-		}
-
-		[CompilerGenerated]
-		private static QuestBase _003CFilterQuests_003Em__3F6(List<QuestBase> l)
-		{
-			return l.FirstOrDefault();
-		}
-
-		[CompilerGenerated]
-		private static string _003CFilterQuests_003Em__3F7(QuestBase q)
-		{
-			return q.Id;
-		}
-
-		[CompilerGenerated]
-		private static string _003CFilterQuests_003Em__3F9(KeyValuePair<string, object> kv)
-		{
-			return kv.Key;
-		}
-
-		[CompilerGenerated]
-		private static object _003CFilterQuests_003Em__3FA(KeyValuePair<string, object> kv)
-		{
-			return kv.Value;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CFilterQuests_003Em__3FB(List<QuestBase> l)
-		{
-			return l.Count == 0;
-		}
-
-		[CompilerGenerated]
-		private static string _003CFilterQuests_003Em__3FC(KeyValuePair<string, object> kv)
-		{
-			return kv.Key;
-		}
-
-		[CompilerGenerated]
-		private static object _003CFilterQuests_003Em__3FD(KeyValuePair<string, object> kv)
-		{
-			return kv.Value;
-		}
-
-		[CompilerGenerated]
-		private static int _003CGetSupportedMaps_003Em__3FF(ExperienceController xp)
-		{
-			return xp.currentLevel;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CExtractWeaponSlotFromQuestDescription_003Em__400(ShopNGUIController.CategoryNames? w)
-		{
-			return w.HasValue;
-		}
-
-		[CompilerGenerated]
-		private static ShopNGUIController.CategoryNames _003CExtractWeaponSlotFromQuestDescription_003Em__401(ShopNGUIController.CategoryNames? w)
-		{
-			return w.Value;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CExtractModeFromQuestDescription_003Em__402(ConnectSceneNGUIController.RegimGame? m)
-		{
-			return m.HasValue;
-		}
-
-		[CompilerGenerated]
-		private static ConnectSceneNGUIController.RegimGame _003CExtractModeFromQuestDescription_003Em__403(ConnectSceneNGUIController.RegimGame? m)
-		{
-			return m.Value;
-		}
-
-		[CompilerGenerated]
-		private static int _003CGetSupportedModes_003Em__404(ExperienceController xp)
-		{
-			return xp.currentLevel;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CFilterFulfilledTutorialQuests_003Em__405(QuestBase tq)
-		{
-			return TutorialQuestManager.Instance.CheckQuestIfFulfilled(tq.Id) && tq.CalculateProgress() < 1m;
-		}
-
-		[CompilerGenerated]
-		private static string _003CHandleKillOtherPlayer_003Em__409(SimpleAccumulativeQuest q)
-		{
-			return q.Id;
-		}
-
-		[CompilerGenerated]
-		private static SimpleAccumulativeQuest _003CHandleKillOtherPlayer_003Em__40A(SimpleAccumulativeQuest q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleKillOtherPlayerWithFlag_003Em__40B(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static string _003CHandleCapture_003Em__40C(SimpleAccumulativeQuest q)
-		{
-			return q.Id;
-		}
-
-		[CompilerGenerated]
-		private static SimpleAccumulativeQuest _003CHandleCapture_003Em__40D(SimpleAccumulativeQuest q)
-		{
-			return q;
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleBreakSeries_003Em__410(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleMakeSeries_003Em__411(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleSurviveInArena_003Em__412(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleGetGotcha_003Em__413(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static void _003CHandleSocialInteraction_003Em__414(SimpleAccumulativeQuest quest)
-		{
-			quest.Increment();
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CDispose_003Em__415(KeyValuePair<int, List<QuestBase>> kv)
-		{
-			return kv.Value;
-		}
-
-		[CompilerGenerated]
-		private static IEnumerable<QuestBase> _003CDispose_003Em__416(KeyValuePair<int, List<QuestBase>> kv)
-		{
-			return kv.Value;
-		}
-
-		[CompilerGenerated]
-		private static Difficulty _003CUpdateQuests_003Em__417(QuestBase q)
-		{
-			return q.Difficulty;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetActiveQuestsBySlotReference_003Em__418(QuestBase q)
-		{
-			return !q.Rewarded;
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			add
+			{
+				this.QuestCompleted += value;
+			}
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			remove
+			{
+				this.QuestCompleted -= value;
+			}
 		}
 	}
 }

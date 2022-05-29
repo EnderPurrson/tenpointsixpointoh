@@ -4,7 +4,7 @@ namespace GooglePlayGames.BasicApi
 {
 	public class Achievement
 	{
-		private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		private readonly static DateTime UnixEpoch;
 
 		private string mId = string.Empty;
 
@@ -30,75 +30,15 @@ namespace GooglePlayGames.BasicApi
 
 		private string mUnlockedImageUrl;
 
-		public bool IsIncremental
-		{
-			get
-			{
-				return mIsIncremental;
-			}
-			set
-			{
-				mIsIncremental = value;
-			}
-		}
-
 		public int CurrentSteps
 		{
 			get
 			{
-				return mCurrentSteps;
+				return this.mCurrentSteps;
 			}
 			set
 			{
-				mCurrentSteps = value;
-			}
-		}
-
-		public int TotalSteps
-		{
-			get
-			{
-				return mTotalSteps;
-			}
-			set
-			{
-				mTotalSteps = value;
-			}
-		}
-
-		public bool IsUnlocked
-		{
-			get
-			{
-				return mIsUnlocked;
-			}
-			set
-			{
-				mIsUnlocked = value;
-			}
-		}
-
-		public bool IsRevealed
-		{
-			get
-			{
-				return mIsRevealed;
-			}
-			set
-			{
-				mIsRevealed = value;
-			}
-		}
-
-		public string Id
-		{
-			get
-			{
-				return mId;
-			}
-			set
-			{
-				mId = value;
+				this.mCurrentSteps = value;
 			}
 		}
 
@@ -106,23 +46,59 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mDescription;
+				return this.mDescription;
 			}
 			set
 			{
-				mDescription = value;
+				this.mDescription = value;
 			}
 		}
 
-		public string Name
+		public string Id
 		{
 			get
 			{
-				return mName;
+				return this.mId;
 			}
 			set
 			{
-				mName = value;
+				this.mId = value;
+			}
+		}
+
+		public bool IsIncremental
+		{
+			get
+			{
+				return this.mIsIncremental;
+			}
+			set
+			{
+				this.mIsIncremental = value;
+			}
+		}
+
+		public bool IsRevealed
+		{
+			get
+			{
+				return this.mIsRevealed;
+			}
+			set
+			{
+				this.mIsRevealed = value;
+			}
+		}
+
+		public bool IsUnlocked
+		{
+			get
+			{
+				return this.mIsUnlocked;
+			}
+			set
+			{
+				this.mIsUnlocked = value;
 			}
 		}
 
@@ -130,11 +106,23 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return UnixEpoch.AddMilliseconds(mLastModifiedTime);
+				return Achievement.UnixEpoch.AddMilliseconds((double)this.mLastModifiedTime);
 			}
 			set
 			{
-				mLastModifiedTime = (long)(value - UnixEpoch).TotalMilliseconds;
+				this.mLastModifiedTime = (long)(value - Achievement.UnixEpoch).TotalMilliseconds;
+			}
+		}
+
+		public string Name
+		{
+			get
+			{
+				return this.mName;
+			}
+			set
+			{
+				this.mName = value;
 			}
 		}
 
@@ -142,11 +130,11 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mPoints;
+				return this.mPoints;
 			}
 			set
 			{
-				mPoints = value;
+				this.mPoints = value;
 			}
 		}
 
@@ -154,11 +142,23 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mRevealedImageUrl;
+				return this.mRevealedImageUrl;
 			}
 			set
 			{
-				mRevealedImageUrl = value;
+				this.mRevealedImageUrl = value;
+			}
+		}
+
+		public int TotalSteps
+		{
+			get
+			{
+				return this.mTotalSteps;
+			}
+			set
+			{
+				this.mTotalSteps = value;
 			}
 		}
 
@@ -166,17 +166,32 @@ namespace GooglePlayGames.BasicApi
 		{
 			get
 			{
-				return mUnlockedImageUrl;
+				return this.mUnlockedImageUrl;
 			}
 			set
 			{
-				mUnlockedImageUrl = value;
+				this.mUnlockedImageUrl = value;
 			}
+		}
+
+		static Achievement()
+		{
+			Achievement.UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		}
+
+		public Achievement()
+		{
 		}
 
 		public override string ToString()
 		{
-			return string.Format("[Achievement] id={0}, name={1}, desc={2}, type={3}, revealed={4}, unlocked={5}, steps={6}/{7}", mId, mName, mDescription, (!mIsIncremental) ? "STANDARD" : "INCREMENTAL", mIsRevealed, mIsUnlocked, mCurrentSteps, mTotalSteps);
+			object[] objArray = new object[] { this.mId, this.mName, this.mDescription, null, null, null, null, null };
+			objArray[3] = (!this.mIsIncremental ? "STANDARD" : "INCREMENTAL");
+			objArray[4] = this.mIsRevealed;
+			objArray[5] = this.mIsUnlocked;
+			objArray[6] = this.mCurrentSteps;
+			objArray[7] = this.mTotalSteps;
+			return string.Format("[Achievement] id={0}, name={1}, desc={2}, type={3}, revealed={4}, unlocked={5}, steps={6}/{7}", objArray);
 		}
 	}
 }

@@ -1,17 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class StatisticHUD : MonoBehaviour
 {
-	public enum TypeOpenTab
-	{
-		multiplayer = 0,
-		singleplayer = 1,
-		leagues = 2
-	}
-
 	[Header("Вкладки")]
-	public TypeOpenTab curOpenTab;
+	public StatisticHUD.TypeOpenTab curOpenTab;
 
 	public GameObject tabMultiplayer;
 
@@ -28,37 +22,75 @@ public class StatisticHUD : MonoBehaviour
 
 	public UIButton btnLeagues;
 
-	[Header("КУБКИ")]
 	[Header("добавить в порядке заполнения")]
+	[Header("КУБКИ")]
 	public List<CupHUD> listAllCup = new List<CupHUD>();
+
+	public StatisticHUD()
+	{
+	}
+
+	[ContextMenu("Add all cup")]
+	private void AddAllCup()
+	{
+		this.listAllCup.Clear();
+		this.listAllCup.AddRange(base.GetComponentsInChildren<CupHUD>(true));
+	}
+
+	private void HideAllTab()
+	{
+		this.tabMultiplayer.SetActive(false);
+		this.tabSingleplayer.SetActive(false);
+		this.tabLeaguesOld.SetActive(false);
+		this.tabLeagues.SetActive(false);
+		this.btnMultiplayer.enabled = true;
+		this.btnSingleplayer.enabled = true;
+		this.btnLeagues.enabled = true;
+		this.btnMultiplayer.SetState(UIButtonColor.State.Normal, true);
+		this.btnSingleplayer.SetState(UIButtonColor.State.Normal, true);
+		this.btnLeagues.SetState(UIButtonColor.State.Normal, true);
+	}
 
 	private void OnEnable()
 	{
-		OpenActiveTab();
+		this.OpenActiveTab(false);
 	}
 
-	public void OpenTab(TypeOpenTab tab)
+	private void OnOpenLeagues()
 	{
-		curOpenTab = tab;
-		OpenActiveTab(true);
+		for (int i = 0; i < this.listAllCup.Count; i++)
+		{
+			this.listAllCup[i].UpdateByOrder(i);
+		}
+		this.HideAllTab();
+		this.btnLeagues.enabled = false;
+		this.btnLeagues.SetState(UIButtonColor.State.Pressed, true);
+		if (!FriendsController.isUseRatingSystem)
+		{
+			this.tabLeagues.SetActive(false);
+			this.tabLeaguesOld.SetActive(true);
+		}
+		else
+		{
+			this.tabLeagues.SetActive(true);
+			this.tabLeaguesOld.SetActive(false);
+		}
 	}
 
-	public void OpenMultiplayer()
+	private void OnOpenMultiplayer()
 	{
-		curOpenTab = TypeOpenTab.multiplayer;
-		OpenActiveTab(true);
+		this.HideAllTab();
+		this.btnMultiplayer.enabled = false;
+		this.btnMultiplayer.SetState(UIButtonColor.State.Pressed, true);
+		this.tabMultiplayer.SetActive(true);
 	}
 
-	public void OpenSingleplayer()
+	private void OnOpenSingleplayer()
 	{
-		curOpenTab = TypeOpenTab.singleplayer;
-		OpenActiveTab(true);
-	}
-
-	public void OpenLeagues()
-	{
-		curOpenTab = TypeOpenTab.leagues;
-		OpenActiveTab(true);
+		this.HideAllTab();
+		this.btnSingleplayer.enabled = false;
+		this.btnSingleplayer.SetState(UIButtonColor.State.Pressed, true);
+		this.tabSingleplayer.SetActive(true);
 	}
 
 	private void OpenActiveTab(bool playSound = false)
@@ -67,75 +99,54 @@ public class StatisticHUD : MonoBehaviour
 		{
 			ButtonClickSound.TryPlayClick();
 		}
-		switch (curOpenTab)
+		switch (this.curOpenTab)
 		{
-		case TypeOpenTab.multiplayer:
-			OnOpenMultiplayer();
-			break;
-		case TypeOpenTab.singleplayer:
-			OnOpenSingleplayer();
-			break;
-		case TypeOpenTab.leagues:
-			OnOpenLeagues();
-			break;
+			case StatisticHUD.TypeOpenTab.multiplayer:
+			{
+				this.OnOpenMultiplayer();
+				break;
+			}
+			case StatisticHUD.TypeOpenTab.singleplayer:
+			{
+				this.OnOpenSingleplayer();
+				break;
+			}
+			case StatisticHUD.TypeOpenTab.leagues:
+			{
+				this.OnOpenLeagues();
+				break;
+			}
 		}
 	}
 
-	private void HideAllTab()
+	public void OpenLeagues()
 	{
-		tabMultiplayer.SetActive(false);
-		tabSingleplayer.SetActive(false);
-		tabLeaguesOld.SetActive(false);
-		tabLeagues.SetActive(false);
-		btnMultiplayer.enabled = true;
-		btnSingleplayer.enabled = true;
-		btnLeagues.enabled = true;
-		btnMultiplayer.SetState(UIButtonColor.State.Normal, true);
-		btnSingleplayer.SetState(UIButtonColor.State.Normal, true);
-		btnLeagues.SetState(UIButtonColor.State.Normal, true);
+		this.curOpenTab = StatisticHUD.TypeOpenTab.leagues;
+		this.OpenActiveTab(true);
 	}
 
-	private void OnOpenMultiplayer()
+	public void OpenMultiplayer()
 	{
-		HideAllTab();
-		btnMultiplayer.enabled = false;
-		btnMultiplayer.SetState(UIButtonColor.State.Pressed, true);
-		tabMultiplayer.SetActive(true);
+		this.curOpenTab = StatisticHUD.TypeOpenTab.multiplayer;
+		this.OpenActiveTab(true);
 	}
 
-	private void OnOpenSingleplayer()
+	public void OpenSingleplayer()
 	{
-		HideAllTab();
-		btnSingleplayer.enabled = false;
-		btnSingleplayer.SetState(UIButtonColor.State.Pressed, true);
-		tabSingleplayer.SetActive(true);
+		this.curOpenTab = StatisticHUD.TypeOpenTab.singleplayer;
+		this.OpenActiveTab(true);
 	}
 
-	private void OnOpenLeagues()
+	public void OpenTab(StatisticHUD.TypeOpenTab tab)
 	{
-		for (int i = 0; i < listAllCup.Count; i++)
-		{
-			listAllCup[i].UpdateByOrder(i);
-		}
-		HideAllTab();
-		btnLeagues.enabled = false;
-		btnLeagues.SetState(UIButtonColor.State.Pressed, true);
-		if (FriendsController.isUseRatingSystem)
-		{
-			tabLeagues.SetActive(true);
-			tabLeaguesOld.SetActive(false);
-		}
-		else
-		{
-			tabLeagues.SetActive(false);
-			tabLeaguesOld.SetActive(true);
-		}
+		this.curOpenTab = tab;
+		this.OpenActiveTab(true);
 	}
 
-	[ContextMenu("Add all cup")]
-	private void AddAllCup()
+	public enum TypeOpenTab
 	{
-		listAllCup.Clear();
-		listAllCup.AddRange(GetComponentsInChildren<CupHUD>(true));
+		multiplayer,
+		singleplayer,
+		leagues
 	}
 }

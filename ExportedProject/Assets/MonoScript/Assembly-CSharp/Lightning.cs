@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class Lightning : MonoBehaviour
@@ -7,35 +11,27 @@ public class Lightning : MonoBehaviour
 
 	public GameObject sound;
 
-	private void Start()
+	public Lightning()
 	{
-		if (!(child == null))
-		{
-			if (sound != null)
-			{
-				sound.SetActive(false);
-			}
-			StartCoroutine(lightning());
-		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerator lightning()
 	{
-		while (true)
+		Lightning.u003clightningu003ec__Iterator1B9 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		if (this.child == null)
 		{
-			yield return new WaitForSeconds(Random.Range(30f, 90f));
-			child.SetActive(true);
-			sound.SetActive(false);
-			yield return new WaitForSeconds(0.1f);
-			child.SetActive(false);
-			if (Defs.isSoundFX)
-			{
-				sound.SetActive(true);
-			}
-			yield return new WaitForSeconds(Random.Range(0.1f, 0.1f));
-			child.SetActive(true);
-			yield return new WaitForSeconds(0.1f);
-			child.SetActive(false);
+			return;
 		}
+		if (this.sound != null)
+		{
+			this.sound.SetActive(false);
+		}
+		base.StartCoroutine(this.lightning());
 	}
 }

@@ -4,35 +4,11 @@ using UnityEngine;
 
 public class EnemyPortal : MonoBehaviour
 {
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache1;
-
-	public event Action OnHided;
+	private Action OnHided = new Action(() => {
+	});
 
 	public EnemyPortal()
 	{
-		if (_003C_003Ef__am_0024cache1 == null)
-		{
-			_003C_003Ef__am_0024cache1 = _003COnHided_003Em__263;
-		}
-		this.OnHided = _003C_003Ef__am_0024cache1;
-		base._002Ector();
-	}
-
-	public void OnAnimationOff()
-	{
-		ChangeVisibleState(false, this.OnHided);
-	}
-
-	public void Show(Vector3 position)
-	{
-		RaycastHit hitInfo;
-		if (Physics.Raycast(position, Vector3.down, out hitInfo))
-		{
-			Debug.DrawLine(position, hitInfo.point, Color.blue);
-			base.transform.position = hitInfo.point;
-		}
-		ChangeVisibleState(true);
 	}
 
 	private void ChangeVisibleState(bool state, Action onComplete = null)
@@ -44,8 +20,33 @@ public class EnemyPortal : MonoBehaviour
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003COnHided_003Em__263()
+	public void OnAnimationOff()
 	{
+		this.ChangeVisibleState(false, this.OnHided);
+	}
+
+	public void Show(Vector3 position)
+	{
+		RaycastHit raycastHit;
+		if (Physics.Raycast(position, Vector3.down, out raycastHit))
+		{
+			Debug.DrawLine(position, raycastHit.point, Color.blue);
+			base.transform.position = raycastHit.point;
+		}
+		this.ChangeVisibleState(true, null);
+	}
+
+	public event Action OnHided
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.OnHided += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.OnHided -= value;
+		}
 	}
 }

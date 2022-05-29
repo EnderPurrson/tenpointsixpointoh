@@ -1,11 +1,25 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class EnderButton : MonoBehaviour
 {
+	public EnderButton()
+	{
+	}
+
 	private void Start()
 	{
-		if ((BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer && (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android || Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)) || !Defs.EnderManAvailable)
+		bool flag;
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android ? false : Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon);
+		}
+		if (!flag || !Defs.EnderManAvailable)
 		{
 			base.gameObject.SetActive(false);
 		}

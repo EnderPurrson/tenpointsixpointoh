@@ -1,27 +1,16 @@
+using I2.Loc;
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class VideoRecordingView : MonoBehaviour, IDisposable
 {
-	[CompilerGenerated]
-	private sealed class _003CBindHandler_003Ec__AnonStorey302
-	{
-		internal EventHandler handler;
-
-		internal ButtonHandler buttonHandler;
-
-		internal void _003C_003Em__473()
-		{
-			buttonHandler.Clicked -= handler;
-		}
-	}
-
 	public UIAnchor interfaceContainer;
 
 	public UILabel caption;
@@ -56,21 +45,35 @@ internal sealed class VideoRecordingView : MonoBehaviour, IDisposable
 
 	private bool _interfaceEnabled = true;
 
-	[CompilerGenerated]
-	private static Func<Action, bool> _003C_003Ef__am_0024cache13;
+	private EventHandler Starting;
 
-	[CompilerGenerated]
-	private static Func<UnityEngine.Object, bool> _003C_003Ef__am_0024cache14;
+	private EventHandler Started;
+
+	private EveryplayWrapper.State CurrentState
+	{
+		get
+		{
+			return this._everyplayWrapper.CurrentState;
+		}
+	}
 
 	public bool InterfaceEnabled
 	{
 		get
 		{
-			return _interfaceEnabled;
+			return this._interfaceEnabled;
 		}
 		set
 		{
-			_interfaceEnabled = value;
+			this._interfaceEnabled = value;
+		}
+	}
+
+	private Task IsRecordingSupportedFuture
+	{
+		get
+		{
+			return this._isRecordingSupportedPromise.Task;
 		}
 	}
 
@@ -82,282 +85,318 @@ internal sealed class VideoRecordingView : MonoBehaviour, IDisposable
 			{
 				return true;
 			}
-			return BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon;
+			return (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android ? false : Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon);
 		}
 	}
 
-	private Task IsRecordingSupportedFuture
+	public VideoRecordingView()
 	{
-		get
-		{
-			return _isRecordingSupportedPromise.Task;
-		}
-	}
-
-	private EveryplayWrapper.State CurrentState
-	{
-		get
-		{
-			return _everyplayWrapper.CurrentState;
-		}
-	}
-
-	public event EventHandler Starting;
-
-	public event EventHandler Started;
-
-	public void Dispose()
-	{
-		if (_disposed)
-		{
-			return;
-		}
-		List<Action> disposeActions = _disposeActions;
-		if (_003C_003Ef__am_0024cache13 == null)
-		{
-			_003C_003Ef__am_0024cache13 = _003CDispose_003Em__471;
-		}
-		foreach (Action item in disposeActions.Where(_003C_003Ef__am_0024cache13))
-		{
-			item();
-		}
-		_disposed = true;
-	}
-
-	private void SetButtonsText()
-	{
-		startRecLocalize = LocalizationStore.Key_0207;
-		recLocalize = LocalizationStore.Key_0558;
-		doneLocalize = LocalizationStore.Key_0559;
-	}
-
-	private void Start()
-	{
-		CoroutineRunner.Instance.StartCoroutine(WaitUntilEveryplayRecordingIsSupported());
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
-		SetButtonsText();
-		bool flag = false;
-		try
-		{
-			flag = Application.isEditor || _everyplayWrapper.IsSupported();
-		}
-		catch (Exception exception)
-		{
-			Debug.LogException(exception);
-		}
-		if (!flag)
-		{
-			Debug.Log("Everyplay is not supported.");
-			base.gameObject.SetActive(false);
-			return;
-		}
-		UnityEngine.Object[] source = new UnityEngine.Object[7] { interfaceContainer, caption, pauseButton, recordButton, resumeButton, shareButton, stopButton };
-		if (_003C_003Ef__am_0024cache14 == null)
-		{
-			_003C_003Ef__am_0024cache14 = _003CStart_003Em__472;
-		}
-		if (source.Any(_003C_003Ef__am_0024cache14))
-		{
-			_disposed = true;
-			return;
-		}
-		BindHandler(pauseButton, HandlePauseButton);
-		BindHandler(recordButton, HandleRecordButton);
-		BindHandler(resumeButton, HandleResumeButton);
-		BindHandler(stopButton, HandleStopButton);
-		BindHandler(shareButton, HandleShareButton);
-		pauseButton.gameObject.SetActive(false);
-		recordButton.gameObject.SetActive(true);
-		resumeButton.gameObject.SetActive(false);
-		shareButton.gameObject.SetActive(false);
-		stopButton.gameObject.SetActive(false);
-		interfaceContainer.gameObject.SetActive(_interfaceEnabled && flag);
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
-		Dispose();
-	}
-
-	private void HandleLocalizationChanged()
-	{
-		SetButtonsText();
-	}
-
-	private IEnumerator WaitUntilEveryplayRecordingIsSupported()
-	{
-		WaitForSeconds delay = new WaitForSeconds(5f);
-		Task isRecordingSupportedFuture = IsRecordingSupportedFuture;
-		while (!isRecordingSupportedFuture.IsCompleted)
-		{
-			try
-			{
-				if (_everyplayWrapper.IsRecordingSupported())
-				{
-					_isRecordingSupportedPromise.TrySetResult(true);
-					break;
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogException(ex);
-				_isRecordingSupportedPromise.TrySetException(ex);
-				break;
-			}
-			yield return delay;
-		}
-		Debug.LogFormat("isRecordingSupportedFuture.IsFaulted: {0}", isRecordingSupportedFuture.IsFaulted);
-	}
-
-	private void Update()
-	{
-		if (_disposed)
-		{
-			return;
-		}
-		bool isEditor = Application.isEditor;
-		bool isWeakDevice = IsWeakDevice;
-		bool flag = IsRecordingSupportedFuture.IsCompleted && !IsRecordingSupportedFuture.IsFaulted;
-		interfaceContainer.gameObject.SetActive(_interfaceEnabled && !isWeakDevice && (isEditor || flag));
-		if (interfaceContainer.gameObject.activeInHierarchy)
-		{
-			if (!Application.isEditor)
-			{
-				bool flag2 = _everyplayWrapper.IsPaused();
-				bool flag3 = _everyplayWrapper.IsRecording();
-				pauseButton.isEnabled = flag && !flag2;
-				recordButton.isEnabled = flag && !flag3;
-				resumeButton.isEnabled = flag && flag2;
-				shareButton.isEnabled = flag && !flag3;
-				stopButton.isEnabled = flag3 || flag2;
-			}
-			pauseButton.gameObject.SetActive(CurrentState == EveryplayWrapper.State.Recording);
-			recordButton.gameObject.SetActive(CurrentState == EveryplayWrapper.State.Initial || CurrentState == EveryplayWrapper.State.Idle);
-			resumeButton.gameObject.SetActive(CurrentState == EveryplayWrapper.State.Paused);
-			bool flag4 = CurrentState == EveryplayWrapper.State.Idle;
-			bool flag5 = CurrentState == EveryplayWrapper.State.Recording || CurrentState == EveryplayWrapper.State.Paused;
-			shareButton.gameObject.SetActive(flag4);
-			stopButton.gameObject.SetActive(CurrentState == EveryplayWrapper.State.Recording || CurrentState == EveryplayWrapper.State.Paused);
-			if ((flag4 || flag5) && frame2 != null && !frame2.activeSelf)
-			{
-				if (frame1 != null)
-				{
-					frame1.SetActive(false);
-				}
-				if (frame2 != null)
-				{
-					frame2.SetActive(true);
-				}
-			}
-			TimeSpan elapsed = _everyplayWrapper.Elapsed;
-			string arg = string.Format("{0}:{1:00}", (int)elapsed.TotalMinutes, elapsed.Seconds);
-			switch (CurrentState)
-			{
-			case EveryplayWrapper.State.Recording:
-				caption.text = string.Format("{0}\n{1}", recLocalize, arg);
-				break;
-			case EveryplayWrapper.State.Paused:
-				caption.text = string.Format("{0}\n{1}", recLocalize, arg);
-				break;
-			case EveryplayWrapper.State.Idle:
-				caption.text = string.Format("{0}\n{1}", doneLocalize, arg);
-				break;
-			default:
-				caption.text = startRecLocalize;
-				break;
-			}
-		}
-		if (Time.frameCount % 300 == 0 && _everyplayWrapper.IsSupported())
-		{
-			_everyplayWrapper.CheckState();
-		}
 	}
 
 	private void BindHandler(UIButton button, EventHandler handler)
 	{
-		_003CBindHandler_003Ec__AnonStorey302 _003CBindHandler_003Ec__AnonStorey = new _003CBindHandler_003Ec__AnonStorey302();
-		_003CBindHandler_003Ec__AnonStorey.handler = handler;
-		if (!_disposed && !(button == null))
+		if (this._disposed)
 		{
-			_003CBindHandler_003Ec__AnonStorey.buttonHandler = button.GetComponent<ButtonHandler>();
-			if (_003CBindHandler_003Ec__AnonStorey.buttonHandler != null)
+			return;
+		}
+		if (button == null)
+		{
+			return;
+		}
+		ButtonHandler component = button.GetComponent<ButtonHandler>();
+		if (component != null)
+		{
+			component.Clicked += handler;
+			this._disposeActions.Add(new Action(() => component.Clicked -= handler));
+		}
+	}
+
+	public void Dispose()
+	{
+		if (this._disposed)
+		{
+			return;
+		}
+		IEnumerator<Action> enumerator = (
+			from a in this._disposeActions
+			where a != null
+			select a).GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
 			{
-				_003CBindHandler_003Ec__AnonStorey.buttonHandler.Clicked += _003CBindHandler_003Ec__AnonStorey.handler;
-				_disposeActions.Add(_003CBindHandler_003Ec__AnonStorey._003C_003Em__473);
+				enumerator.Current();
 			}
 		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		this._disposed = true;
+	}
+
+	private void HandleLocalizationChanged()
+	{
+		this.SetButtonsText();
 	}
 
 	private void HandlePauseButton(object sender, EventArgs e)
 	{
-		if (!_disposed && (!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown))
+		if (this._disposed)
 		{
-			_everyplayWrapper.Pause();
+			return;
 		}
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		this._everyplayWrapper.Pause();
 	}
 
 	private void HandleRecordButton(object sender, EventArgs e)
 	{
-		if ((!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !LoadingInAfterGame.isShowLoading && !_disposed)
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
 		{
-			NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.RECORD_AUDIO);
-			NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.CAMERA);
-			EventHandler starting = this.Starting;
-			if (starting != null)
-			{
-				starting(this, EventArgs.Empty);
-			}
-			if (frame1 != null)
-			{
-				frame1.SetActive(false);
-			}
-			if (frame2 != null)
-			{
-				frame2.SetActive(true);
-			}
-			_everyplayWrapper.Record();
-			EventHandler started = this.Started;
-			if (started != null)
-			{
-				started(this, EventArgs.Empty);
-			}
+			return;
+		}
+		if (LoadingInAfterGame.isShowLoading)
+		{
+			return;
+		}
+		if (this._disposed)
+		{
+			return;
+		}
+		NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.RECORD_AUDIO);
+		NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.CAMERA);
+		EventHandler starting = this.Starting;
+		if (starting != null)
+		{
+			starting(this, EventArgs.Empty);
+		}
+		if (this.frame1 != null)
+		{
+			this.frame1.SetActive(false);
+		}
+		if (this.frame2 != null)
+		{
+			this.frame2.SetActive(true);
+		}
+		this._everyplayWrapper.Record();
+		EventHandler started = this.Started;
+		if (started != null)
+		{
+			started(this, EventArgs.Empty);
 		}
 	}
 
 	private void HandleResumeButton(object sender, EventArgs e)
 	{
-		if ((!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !_disposed)
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
 		{
-			_everyplayWrapper.Resume();
+			return;
 		}
+		if (this._disposed)
+		{
+			return;
+		}
+		this._everyplayWrapper.Resume();
 	}
 
 	private void HandleShareButton(object sender, EventArgs e)
 	{
-		if ((!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !_disposed)
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
 		{
-			_everyplayWrapper.Share();
+			return;
 		}
+		if (this._disposed)
+		{
+			return;
+		}
+		this._everyplayWrapper.Share();
 	}
 
 	private void HandleStopButton(object sender, EventArgs e)
 	{
-		if ((!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !_disposed)
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
 		{
-			_everyplayWrapper.Stop();
+			return;
+		}
+		if (this._disposed)
+		{
+			return;
+		}
+		this._everyplayWrapper.Stop();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+		this.Dispose();
+	}
+
+	private void SetButtonsText()
+	{
+		this.startRecLocalize = LocalizationStore.Key_0207;
+		this.recLocalize = LocalizationStore.Key_0558;
+		this.doneLocalize = LocalizationStore.Key_0559;
+	}
+
+	private void Start()
+	{
+		CoroutineRunner.Instance.StartCoroutine(this.WaitUntilEveryplayRecordingIsSupported());
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+		this.SetButtonsText();
+		bool flag = false;
+		try
+		{
+			flag = (Application.isEditor ? true : this._everyplayWrapper.IsSupported());
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogException(exception);
+		}
+		if (!flag)
+		{
+			UnityEngine.Debug.Log("Everyplay is not supported.");
+			base.gameObject.SetActive(false);
+			return;
+		}
+		if (((IEnumerable<UnityEngine.Object>)(new UnityEngine.Object[] { this.interfaceContainer, this.caption, this.pauseButton, this.recordButton, this.resumeButton, this.shareButton, this.stopButton })).Any<UnityEngine.Object>((UnityEngine.Object ri) => ri == null))
+		{
+			this._disposed = true;
+			return;
+		}
+		this.BindHandler(this.pauseButton, new EventHandler(this.HandlePauseButton));
+		this.BindHandler(this.recordButton, new EventHandler(this.HandleRecordButton));
+		this.BindHandler(this.resumeButton, new EventHandler(this.HandleResumeButton));
+		this.BindHandler(this.stopButton, new EventHandler(this.HandleStopButton));
+		this.BindHandler(this.shareButton, new EventHandler(this.HandleShareButton));
+		this.pauseButton.gameObject.SetActive(false);
+		this.recordButton.gameObject.SetActive(true);
+		this.resumeButton.gameObject.SetActive(false);
+		this.shareButton.gameObject.SetActive(false);
+		this.stopButton.gameObject.SetActive(false);
+		this.interfaceContainer.gameObject.SetActive((!this._interfaceEnabled ? false : flag));
+	}
+
+	private void Update()
+	{
+		bool flag;
+		if (this._disposed)
+		{
+			return;
+		}
+		bool flag1 = Application.isEditor;
+		bool isWeakDevice = VideoRecordingView.IsWeakDevice;
+		bool flag2 = (!this.IsRecordingSupportedFuture.IsCompleted ? false : !this.IsRecordingSupportedFuture.IsFaulted);
+		GameObject gameObject = this.interfaceContainer.gameObject;
+		if (!this._interfaceEnabled || isWeakDevice)
+		{
+			flag = false;
+		}
+		else
+		{
+			flag = (!flag1 ? flag2 : true);
+		}
+		gameObject.SetActive(flag);
+		if (this.interfaceContainer.gameObject.activeInHierarchy)
+		{
+			if (!Application.isEditor)
+			{
+				bool flag3 = this._everyplayWrapper.IsPaused();
+				bool flag4 = this._everyplayWrapper.IsRecording();
+				this.pauseButton.isEnabled = (!flag2 ? false : !flag3);
+				this.recordButton.isEnabled = (!flag2 ? false : !flag4);
+				this.resumeButton.isEnabled = (!flag2 ? false : flag3);
+				this.shareButton.isEnabled = (!flag2 ? false : !flag4);
+				this.stopButton.isEnabled = (flag4 ? true : flag3);
+			}
+			this.pauseButton.gameObject.SetActive(this.CurrentState == EveryplayWrapper.State.Recording);
+			this.recordButton.gameObject.SetActive((this.CurrentState == EveryplayWrapper.State.Initial ? true : this.CurrentState == EveryplayWrapper.State.Idle));
+			this.resumeButton.gameObject.SetActive(this.CurrentState == EveryplayWrapper.State.Paused);
+			bool currentState = this.CurrentState == EveryplayWrapper.State.Idle;
+			bool flag5 = (this.CurrentState == EveryplayWrapper.State.Recording ? true : this.CurrentState == EveryplayWrapper.State.Paused);
+			this.shareButton.gameObject.SetActive(currentState);
+			this.stopButton.gameObject.SetActive((this.CurrentState == EveryplayWrapper.State.Recording ? true : this.CurrentState == EveryplayWrapper.State.Paused));
+			if ((currentState || flag5) && this.frame2 != null && !this.frame2.activeSelf)
+			{
+				if (this.frame1 != null)
+				{
+					this.frame1.SetActive(false);
+				}
+				if (this.frame2 != null)
+				{
+					this.frame2.SetActive(true);
+				}
+			}
+			TimeSpan elapsed = this._everyplayWrapper.Elapsed;
+			string str = string.Format("{0}:{1:00}", (int)elapsed.TotalMinutes, elapsed.Seconds);
+			switch (this.CurrentState)
+			{
+				case EveryplayWrapper.State.Recording:
+				{
+					this.caption.text = string.Format("{0}\n{1}", this.recLocalize, str);
+					break;
+				}
+				case EveryplayWrapper.State.Paused:
+				{
+					this.caption.text = string.Format("{0}\n{1}", this.recLocalize, str);
+					break;
+				}
+				case EveryplayWrapper.State.Idle:
+				{
+					this.caption.text = string.Format("{0}\n{1}", this.doneLocalize, str);
+					break;
+				}
+				default:
+				{
+					this.caption.text = this.startRecLocalize;
+					break;
+				}
+			}
+		}
+		if (Time.frameCount % 300 == 0 && this._everyplayWrapper.IsSupported())
+		{
+			this._everyplayWrapper.CheckState();
 		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CDispose_003Em__471(Action a)
+	[DebuggerHidden]
+	private IEnumerator WaitUntilEveryplayRecordingIsSupported()
 	{
-		return a != null;
+		VideoRecordingView.u003cWaitUntilEveryplayRecordingIsSupportedu003ec__Iterator19C variable = null;
+		return variable;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CStart_003Em__472(UnityEngine.Object ri)
+	public event EventHandler Started
 	{
-		return ri == null;
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.Started += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.Started -= value;
+		}
+	}
+
+	public event EventHandler Starting
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.Starting += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.Starting -= value;
+		}
 	}
 }

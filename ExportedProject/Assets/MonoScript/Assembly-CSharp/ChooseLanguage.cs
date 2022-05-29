@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ChooseLanguage : MonoBehaviour
@@ -6,74 +7,79 @@ public class ChooseLanguage : MonoBehaviour
 
 	private UIButton _currentLanguage;
 
-	private void SetSelectCurrentLanguage()
+	public ChooseLanguage()
 	{
-		int currentLanguageIndex = LocalizationStore.GetCurrentLanguageIndex();
-		if (currentLanguageIndex != -1 && currentLanguageIndex < languageButtons.Length)
-		{
-			if (_currentLanguage != null)
-			{
-				_currentLanguage.ResetDefaultColor();
-			}
-			languageButtons[currentLanguageIndex].defaultColor = Color.grey;
-			_currentLanguage = languageButtons[currentLanguageIndex];
-		}
-	}
-
-	private void Start()
-	{
-		SetSelectCurrentLanguage();
 	}
 
 	private void SelectLanguage(string languageName)
 	{
 		ButtonClickSound.TryPlayClick();
 		LocalizationStore.CurrentLanguage = languageName;
-		SetSelectCurrentLanguage();
-	}
-
-	public void SetRussianLanguage()
-	{
-		SelectLanguage("Russian");
-	}
-
-	public void SetEnglishLanguage()
-	{
-		SelectLanguage("English");
-	}
-
-	public void SetFrancianLanguage()
-	{
-		SelectLanguage("French");
-	}
-
-	public void SetDeutschLanguage()
-	{
-		SelectLanguage("German");
-	}
-
-	public void SetJapanLanguage()
-	{
-		SelectLanguage("Japanese");
-	}
-
-	public void SetEspanolaLanguage()
-	{
-		SelectLanguage("Spanish");
-	}
-
-	public void SetChinseLanguage()
-	{
-		SelectLanguage("Chinese (Chinese)");
-	}
-
-	public void SetKoreanLanguage()
-	{
-		SelectLanguage("Korean");
+		this.SetSelectCurrentLanguage();
 	}
 
 	public void SetBrazilLanguage()
 	{
-		SelectLanguage("Portuguese (Brazil)");
+		this.SelectLanguage("Portuguese (Brazil)");
+	}
+
+	public void SetChinseLanguage()
+	{
+		this.SelectLanguage("Chinese (Chinese)");
+	}
+
+	public void SetDeutschLanguage()
+	{
+		this.SelectLanguage("German");
+	}
+
+	public void SetEnglishLanguage()
+	{
+		this.SelectLanguage("English");
+	}
+
+	public void SetEspanolaLanguage()
+	{
+		this.SelectLanguage("Spanish");
+	}
+
+	public void SetFrancianLanguage()
+	{
+		this.SelectLanguage("French");
+	}
+
+	public void SetJapanLanguage()
+	{
+		this.SelectLanguage("Japanese");
+	}
+
+	public void SetKoreanLanguage()
+	{
+		this.SelectLanguage("Korean");
+	}
+
+	public void SetRussianLanguage()
+	{
+		this.SelectLanguage("Russian");
+	}
+
+	private void SetSelectCurrentLanguage()
+	{
+		int currentLanguageIndex = LocalizationStore.GetCurrentLanguageIndex();
+		if (currentLanguageIndex == -1 || currentLanguageIndex >= (int)this.languageButtons.Length)
+		{
+			return;
+		}
+		if (this._currentLanguage != null)
+		{
+			this._currentLanguage.ResetDefaultColor();
+		}
+		this.languageButtons[currentLanguageIndex].defaultColor = Color.grey;
+		this._currentLanguage = this.languageButtons[currentLanguageIndex];
+	}
+
+	private void Start()
+	{
+		this.SetSelectCurrentLanguage();
 	}
 }

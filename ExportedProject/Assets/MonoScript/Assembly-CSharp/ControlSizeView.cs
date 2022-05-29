@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class ControlSizeView : MonoBehaviour
@@ -7,4 +8,8 @@ internal sealed class ControlSizeView : MonoBehaviour
 	public UISlider slider;
 
 	public SettingsToggleButtons leftHandPanel;
+
+	public ControlSizeView()
+	{
+	}
 }

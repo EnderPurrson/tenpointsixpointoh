@@ -1,19 +1,13 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Rilisoft;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class FriendsWindowController : MonoBehaviour
 {
-	private enum WindowState
-	{
-		friendList = 0,
-		findFriends = 1,
-		chat = 2,
-		inbox = 3
-	}
-
 	public static Action UpdateFriendsOnlineEvent;
 
 	public UIButton goInBattleButton;
@@ -50,7 +44,7 @@ public class FriendsWindowController : MonoBehaviour
 
 	public static FriendsWindowController Instance;
 
-	private WindowState currentWindowState;
+	private FriendsWindowController.WindowState currentWindowState;
 
 	private bool _isAnyFriendsDataExists;
 
@@ -65,35 +59,217 @@ public class FriendsWindowController : MonoBehaviour
 
 	private bool _isWindowInStartState;
 
-	public bool NeedUpdateCurrentFriendsList { get; set; }
-
-	public void OnClickGoInBattleButton()
+	public bool NeedUpdateCurrentFriendsList
 	{
-		ButtonClickSound.TryPlayClick();
-		GlobalGameController.GoInBattle();
+		get;
+		set;
+	}
+
+	public FriendsWindowController()
+	{
 	}
 
 	private void Awake()
 	{
-		Instance = this;
+		FriendsWindowController.Instance = this;
 	}
 
-	private void Start()
+	private void CheckShowEmptyStateTabLabel(bool isListNotEmpty, bool isFriendsMax)
 	{
-		currentWindowState = WindowState.friendList;
+		if (isListNotEmpty)
+		{
+			if (this.currentWindowState == FriendsWindowController.WindowState.chat)
+			{
+				this.chatContainer.SetActive(true);
+			}
+			this.HideMessageByEmptyStateTab();
+			return;
+		}
+		if (this.currentWindowState == FriendsWindowController.WindowState.chat)
+		{
+			this.ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1557"));
+			this.chatContainer.SetActive(false);
+		}
+		else if (isFriendsMax)
+		{
+			this.ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1424"));
+		}
+		else if (this.currentWindowState == FriendsWindowController.WindowState.inbox)
+		{
+			this.ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1425"));
+		}
+		else if (this.currentWindowState != FriendsWindowController.WindowState.friendList)
+		{
+			this.ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1423"));
+		}
+		else
+		{
+			this.ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_0223"));
+		}
 	}
 
-	private void OnEnable()
+	private void EventUpdateFriendsOnlineAndSorting()
 	{
-		FriendsController.FriendsUpdated += UpdateFriendsListInterface;
-		FriendsController.OnShowBoxProcessFriendsData = (Action)Delegate.Combine(FriendsController.OnShowBoxProcessFriendsData, new Action(ShowMessageBoxProcessingData));
-		FriendsController.OnHideBoxProcessFriendsData = (Action)Delegate.Combine(FriendsController.OnHideBoxProcessFriendsData, new Action(HideInfoBox));
-		FriendsController.UpdateFriendsInfoAction = (Action)Delegate.Combine(FriendsController.UpdateFriendsInfoAction, new Action(EventUpdateFriendsOnlineAndSorting));
+		if (this.currentWindowState != FriendsWindowController.WindowState.friendList)
+		{
+			return;
+		}
+		this.UpdateFriendsOnlineAndSorting(false);
 	}
 
-	public void ShowMessageBoxProcessingData()
+	private UIWrapContent GetCurrentWrap()
 	{
-		InfoWindowController.ShowProcessingDataBox();
+		switch (this.currentWindowState)
+		{
+			case FriendsWindowController.WindowState.friendList:
+			{
+				return this.friendsListWrap;
+			}
+			case FriendsWindowController.WindowState.findFriends:
+			{
+				return this.findFriendsWrap;
+			}
+			case FriendsWindowController.WindowState.chat:
+			{
+				return null;
+			}
+			case FriendsWindowController.WindowState.inbox:
+			{
+				return this.inviteFriendsWrap;
+			}
+		}
+		return null;
+	}
+
+	private string GetItemFromCurrentState(int index)
+	{
+		switch (this.currentWindowState)
+		{
+			case FriendsWindowController.WindowState.friendList:
+			{
+				if (index < (int)this.localFriendsList.Length)
+				{
+					return this.localFriendsList[index];
+				}
+				if (index - (int)this.localFriendsList.Length >= (int)this.myFriendsList.Length)
+				{
+					return string.Empty;
+				}
+				return this.myFriendsList[index - (int)this.localFriendsList.Length];
+			}
+			case FriendsWindowController.WindowState.findFriends:
+			{
+				if (index >= (int)this.findFriendsList.Length || this._isFriendsMax)
+				{
+					return string.Empty;
+				}
+				return this.findFriendsList[index];
+			}
+			case FriendsWindowController.WindowState.chat:
+			{
+				if (index >= (int)this.myFriendsList.Length)
+				{
+					return string.Empty;
+				}
+				return this.myFriendsList[index];
+			}
+			case FriendsWindowController.WindowState.inbox:
+			{
+				if (index >= (int)this.inviteFriendsList.Length)
+				{
+					return string.Empty;
+				}
+				return this.inviteFriendsList[index];
+			}
+		}
+		return null;
+	}
+
+	private int GetLenghtFromCurrentList()
+	{
+		switch (this.currentWindowState)
+		{
+			case FriendsWindowController.WindowState.friendList:
+			{
+				return (this.localFriendsList == null ? 0 : (int)this.localFriendsList.Length) + (int)this.myFriendsList.Length;
+			}
+			case FriendsWindowController.WindowState.findFriends:
+			{
+				return (this.findFriendsList == null ? 0 : (int)this.findFriendsList.Length);
+			}
+			case FriendsWindowController.WindowState.chat:
+			{
+				return 0;
+			}
+			case FriendsWindowController.WindowState.inbox:
+			{
+				return (this.inviteFriendsList == null ? 0 : (int)this.inviteFriendsList.Length);
+			}
+			default:
+			{
+				return 0;
+			}
+		}
+	}
+
+	private string GetLocalPlayerItem(int index)
+	{
+		if (index >= (int)this.localFriendsList.Length)
+		{
+			return string.Empty;
+		}
+		return this.localFriendsList[index];
+	}
+
+	private int GetMinForCurrentState()
+	{
+		return 4;
+	}
+
+	private int GetModeByInfo(Dictionary<string, string> onlineData)
+	{
+		int num = Convert.ToInt32(onlineData["game_mode"]);
+		if (num == 6)
+		{
+			return 1;
+		}
+		if (num == 7)
+		{
+			return 2;
+		}
+		return 0;
+	}
+
+	private FriendItemPreviewType GetPreviewTypeForCurrentWindowState()
+	{
+		switch (this.currentWindowState)
+		{
+			case FriendsWindowController.WindowState.friendList:
+			{
+				return FriendItemPreviewType.view;
+			}
+			case FriendsWindowController.WindowState.findFriends:
+			{
+				return FriendItemPreviewType.find;
+			}
+			case FriendsWindowController.WindowState.chat:
+			{
+				return FriendItemPreviewType.none;
+			}
+			case FriendsWindowController.WindowState.inbox:
+			{
+				return FriendItemPreviewType.inbox;
+			}
+			default:
+			{
+				return FriendItemPreviewType.none;
+			}
+		}
+	}
+
+	public void Hide()
+	{
+		base.gameObject.SetActive(false);
 	}
 
 	public void HideInfoBox()
@@ -101,197 +277,182 @@ public class FriendsWindowController : MonoBehaviour
 		InfoWindowController.HideProcessing();
 	}
 
-	private void ShowMessageByEmptyStateTab(string text)
-	{
-		emptyStateTabLabel.gameObject.SetActive(true);
-		emptyStateTabLabel.text = text;
-	}
-
 	private void HideMessageByEmptyStateTab()
 	{
-		emptyStateTabLabel.gameObject.SetActive(false);
+		this.emptyStateTabLabel.gameObject.SetActive(false);
 	}
 
-	private void CheckShowEmptyStateTabLabel(bool isListNotEmpty, bool isFriendsMax)
+	public static bool IsActiveFindFriendTab()
 	{
-		if (isListNotEmpty)
+		if (FriendsWindowController.Instance == null)
 		{
-			if (currentWindowState == WindowState.chat)
-			{
-				chatContainer.SetActive(true);
-			}
-			HideMessageByEmptyStateTab();
+			return false;
 		}
-		else if (currentWindowState == WindowState.chat)
+		return FriendsWindowController.Instance.currentWindowState == FriendsWindowController.WindowState.findFriends;
+	}
+
+	public static bool IsActiveFriendListTab()
+	{
+		if (FriendsWindowController.Instance == null)
 		{
-			ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1557"));
-			chatContainer.SetActive(false);
+			return false;
 		}
-		else if (isFriendsMax)
+		return FriendsWindowController.Instance.currentWindowState == FriendsWindowController.WindowState.friendList;
+	}
+
+	public void OnClickClearAllInboxButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		this.statusBar.clearAllInviteButton.isEnabled = false;
+		FriendsController friendsController = FriendsController.sharedController;
+		if (friendsController != null)
 		{
-			ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1424"));
-		}
-		else if (currentWindowState == WindowState.inbox)
-		{
-			ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1425"));
-		}
-		else if (currentWindowState == WindowState.friendList)
-		{
-			ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_0223"));
-		}
-		else
-		{
-			ShowMessageByEmptyStateTab(LocalizationStore.Get("Key_1423"));
+			friendsController.ClearAllFriendsInvites();
 		}
 	}
 
-	private void UpdateFriendsListState()
+	public void OnClickFindFriendsTab(UIToggle toggle)
 	{
-		if (myFriendsList != null)
+		if (toggle.@value)
 		{
-			UpdateList(friendsListWrap, FriendItemPreviewType.view);
+			ButtonClickSound.TryPlayClick();
 		}
-		_isAnyFriendsDataExists = FriendsController.IsFriendsOrLocalDataExist();
-		_isFriendsMax = FriendsController.IsFriendsMax();
-		if (currentWindowState == WindowState.chat)
+		if (!toggle.@value)
 		{
-			CheckShowEmptyStateTabLabel(FriendsController.IsFriendsDataExist(), _isFriendsMax);
-		}
-		else
-		{
-			CheckShowEmptyStateTabLabel(_isAnyFriendsDataExists, _isFriendsMax);
-		}
-		bool active = !_isAnyFriendsDataExists && ProtocolListGetter.currentVersionIsSupported;
-		goInBattleButton.gameObject.SetActive(active);
-		if (currentWindowState == WindowState.friendList)
-		{
-			statusBar.UpdateFriendListState(_isFriendsMax);
-		}
-	}
-
-	private void SetActiveFriendsListContainer()
-	{
-		currentWindowState = WindowState.friendList;
-		UpdateFriendsListState();
-		if (!_isAnyFriendsDataExists)
-		{
-			_isWindowInStartState = false;
 			return;
 		}
-		if (NeedUpdateCurrentFriendsList)
+		this.HideInfoBox();
+		this.NeedUpdateCurrentFriendsList = true;
+		if (this.statusBar.IsFindFriendByIdStateActivate)
 		{
-			StartCoroutine(UpdateCurrentFriendsList());
+			this.UpdateFriendsArray(FriendsWindowController.WindowState.findFriends, false);
+			this.ResetWrapPosition(this.findFriendsWrap);
 		}
-		_isWindowInStartState = false;
+		this.SetActiveFindFriendsContainer();
+		this.statusBar.findFriendInput.@value = string.Empty;
 	}
 
-	private string GetItemFromCurrentState(int index)
+	public void OnClickFriendListTab(UIToggle toggle)
 	{
-		switch (currentWindowState)
+		if (toggle.@value)
 		{
-		case WindowState.friendList:
-			if (index < localFriendsList.Length)
-			{
-				return localFriendsList[index];
-			}
-			if (index - localFriendsList.Length < myFriendsList.Length)
-			{
-				return myFriendsList[index - localFriendsList.Length];
-			}
-			return string.Empty;
-		case WindowState.chat:
-			if (index < myFriendsList.Length)
-			{
-				return myFriendsList[index];
-			}
-			return string.Empty;
-		case WindowState.inbox:
-			if (index < inviteFriendsList.Length)
-			{
-				return inviteFriendsList[index];
-			}
-			return string.Empty;
-		case WindowState.findFriends:
-			if (index < findFriendsList.Length && !_isFriendsMax)
-			{
-				return findFriendsList[index];
-			}
-			return string.Empty;
-		default:
-			return null;
+			ButtonClickSound.TryPlayClick();
+		}
+		if (!toggle.@value)
+		{
+			return;
+		}
+		this.HideInfoBox();
+		this.NeedUpdateCurrentFriendsList = true;
+		this.SetActiveFriendsListContainer();
+	}
+
+	public void OnClickFriendsChatTab(UIToggle toggle)
+	{
+		if (toggle.@value)
+		{
+			ButtonClickSound.TryPlayClick();
+		}
+		if (!toggle.@value)
+		{
+			return;
+		}
+		this.HideInfoBox();
+		this.SetActiveChatFriendsContainer();
+	}
+
+	public void OnClickGoInBattleButton()
+	{
+		ButtonClickSound.TryPlayClick();
+		GlobalGameController.GoInBattle();
+	}
+
+	public void OnClickInboxFriendsTab(UIToggle toggle)
+	{
+		if (toggle.@value)
+		{
+			ButtonClickSound.TryPlayClick();
+		}
+		if (!toggle.@value)
+		{
+			return;
+		}
+		this.HideInfoBox();
+		this.SetActiveInboxFriendsContainer();
+	}
+
+	private void OnCloseProfileWindow(bool needUpdateFriendList)
+	{
+		if (needUpdateFriendList)
+		{
+			this.NeedUpdateCurrentFriendsList = true;
+		}
+		base.gameObject.SetActive(true);
+		this.joinToFriendRoomPhoton.SetActive(true);
+		if (this._selectProfileItem != null)
+		{
+			this._selectProfileItem.UpdateData();
+		}
+		this.UpdateCurrentTabState();
+	}
+
+	private void OnDestroy()
+	{
+		FriendsController.sharedController.StopRefreshingOnline();
+		FriendsController.DisposeProfile();
+		FriendsWindowController.Instance = null;
+	}
+
+	private void OnDisable()
+	{
+		FriendsController.FriendsUpdated -= new Action(this.UpdateFriendsListInterface);
+		FriendsController.OnShowBoxProcessFriendsData -= new Action(this.ShowMessageBoxProcessingData);
+		FriendsController.OnHideBoxProcessFriendsData -= new Action(this.HideInfoBox);
+		FriendsController.UpdateFriendsInfoAction -= new Action(this.EventUpdateFriendsOnlineAndSorting);
+		InfoWindowController.HideCurrentWindow();
+	}
+
+	private void OnEnable()
+	{
+		FriendsController.FriendsUpdated += new Action(this.UpdateFriendsListInterface);
+		FriendsController.OnShowBoxProcessFriendsData += new Action(this.ShowMessageBoxProcessingData);
+		FriendsController.OnHideBoxProcessFriendsData += new Action(this.HideInfoBox);
+		FriendsController.UpdateFriendsInfoAction += new Action(this.EventUpdateFriendsOnlineAndSorting);
+	}
+
+	private void OnFindFriendsItemWrap(GameObject go, int wrapInd, int realInd)
+	{
+		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
+		if (this.currentWindowState == FriendsWindowController.WindowState.findFriends)
+		{
+			this.updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.find);
 		}
 	}
 
-	private string GetLocalPlayerItem(int index)
+	private void OnFriendsItemWrap(GameObject go, int wrapInd, int realInd)
 	{
-		if (index < localFriendsList.Length)
+		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
+		if (this.currentWindowState == FriendsWindowController.WindowState.friendList)
 		{
-			return localFriendsList[index];
-		}
-		return string.Empty;
-	}
-
-	private int GetLenghtFromCurrentList()
-	{
-		switch (currentWindowState)
-		{
-		case WindowState.friendList:
-			return ((localFriendsList != null) ? localFriendsList.Length : 0) + myFriendsList.Length;
-		case WindowState.inbox:
-			return (inviteFriendsList != null) ? inviteFriendsList.Length : 0;
-		case WindowState.findFriends:
-			return (findFriendsList != null) ? findFriendsList.Length : 0;
-		default:
-			return 0;
+			this.updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.view);
 		}
 	}
 
-	private FriendItemPreviewType GetPreviewTypeForCurrentWindowState()
+	private void OnIniviteItemWrap(GameObject go, int wrapInd, int realInd)
 	{
-		switch (currentWindowState)
+		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
+		if (this.currentWindowState == FriendsWindowController.WindowState.inbox)
 		{
-		case WindowState.friendList:
-			return FriendItemPreviewType.view;
-		case WindowState.inbox:
-			return FriendItemPreviewType.inbox;
-		case WindowState.findFriends:
-			return FriendItemPreviewType.find;
-		default:
-			return FriendItemPreviewType.none;
+			this.updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.inbox);
 		}
 	}
 
-	private UIWrapContent GetCurrentWrap()
+	private void OnLocalFriendsItemWrap(GameObject go, int wrapInd, int realInd)
 	{
-		switch (currentWindowState)
+		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
+		if (this.currentWindowState == FriendsWindowController.WindowState.friendList)
 		{
-		case WindowState.chat:
-			return null;
-		case WindowState.friendList:
-			return friendsListWrap;
-		case WindowState.inbox:
-			return inviteFriendsWrap;
-		case WindowState.findFriends:
-			return findFriendsWrap;
-		default:
-			return null;
-		}
-	}
-
-	public void UpdateCurrentFriendsArrayAndItems()
-	{
-		UpdateFriendsArray(currentWindowState);
-		UIWrapContent currentWrap = GetCurrentWrap();
-		if (!(currentWrap == null))
-		{
-			UpdateList(currentWrap, GetPreviewTypeForCurrentWindowState());
-			UIScrollView component = currentWrap.transform.parent.GetComponent<UIScrollView>();
-			int minForCurrentState = GetMinForCurrentState();
-			int lenghtFromCurrentList = GetLenghtFromCurrentList();
-			if (lenghtFromCurrentList > minForCurrentState && component.transform.localPosition.y + (float)(currentWrap.itemSize * minForCurrentState) > (float)(lenghtFromCurrentList * currentWrap.itemSize))
-			{
-				component.MoveRelative(Vector3.down * currentWrap.itemSize);
-			}
+			this.updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.find);
 		}
 	}
 
@@ -301,189 +462,392 @@ public class FriendsWindowController : MonoBehaviour
 		wrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
 	}
 
-	private void UpdateFriendsArray(WindowState state, bool resetScroll = false)
+	private void SetActiveChatFriendsContainer()
 	{
-		switch (state)
-		{
-		case WindowState.friendList:
-		{
-			List<string> list2 = new List<string>();
-			for (int j = 0; j < FriendsController.sharedController.friends.Count; j++)
-			{
-				string text2 = FriendsController.sharedController.friends[j];
-				if (FriendsController.sharedController.friendsInfo.ContainsKey(text2))
-				{
-					list2.Add(text2);
-				}
-			}
-			list2.Sort(SortFriendsByOnlineStatusAndClickJoin);
-			myFriendsList = list2.ToArray();
-			if (localFriendsList == null)
-			{
-				friendsListWrap.minIndex = myFriendsList.Length * -1;
-			}
-			else
-			{
-				friendsListWrap.minIndex = (myFriendsList.Length + localFriendsList.Length) * -1;
-			}
-			if (resetScroll)
-			{
-				friendsListWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
-			}
-			break;
-		}
-		case WindowState.findFriends:
-		{
-			List<string> list3 = new List<string>();
-			foreach (KeyValuePair<string, FriendsController.PossiblleOrigin> item in FriendsController.sharedController.getPossibleFriendsResult)
-			{
-				string key = item.Key;
-				if (FriendsController.sharedController.profileInfo.ContainsKey(key))
-				{
-					list3.Add(key);
-				}
-			}
-			findFriendsList = list3.ToArray();
-			Array.Sort(findFriendsList, SortFriendsByFindOrigin);
-			findFriendsWrap.minIndex = findFriendsList.Length * -1;
-			if (resetScroll)
-			{
-				findFriendsWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
-			}
-			break;
-		}
-		case WindowState.inbox:
-		{
-			List<string> list = new List<string>();
-			for (int i = 0; i < FriendsController.sharedController.invitesToUs.Count; i++)
-			{
-				string text = FriendsController.sharedController.invitesToUs[i];
-				if (FriendsController.sharedController.profileInfo.ContainsKey(text))
-				{
-					list.Add(text);
-				}
-			}
-			inviteFriendsList = list.ToArray();
-			inviteFriendsWrap.minIndex = inviteFriendsList.Length * -1;
-			if (resetScroll)
-			{
-				inviteFriendsWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
-			}
-			break;
-		}
-		case WindowState.chat:
-			break;
-		}
+		this.currentWindowState = FriendsWindowController.WindowState.chat;
+		bool flag = FriendsController.IsFriendsDataExist();
+		this.CheckShowEmptyStateTabLabel(flag, false);
+		this.chatContainer.SetActive(flag);
+		this.statusBar.OnClickChatTab();
 	}
 
-	private void UpdateLocalFriendsArray(bool resetScroll)
+	public void SetActiveChatTab(string id)
 	{
-		List<string> list = new List<string>();
-		foreach (KeyValuePair<string, FriendsController.PossiblleOrigin> item in FriendsController.sharedController.getPossibleFriendsResult)
+		if (PrivateChatController.sharedController != null)
 		{
-			if (FriendsController.sharedController.profileInfo.ContainsKey(item.Key) && item.Value == FriendsController.PossiblleOrigin.Local)
-			{
-				list.Add(item.Key);
-			}
+			PrivateChatController.sharedController.selectedPlayerID = id;
 		}
-		localFriendsList = list.ToArray();
-		friendsListWrap.minIndex = (myFriendsList.Length + localFriendsList.Length) * -1;
+		this.chatTab.Set(true);
+		this.SetActiveChatFriendsContainer();
 	}
 
-	private IEnumerator UpdateCurrentFriendsList()
+	private void SetActiveFindFriendsContainer()
 	{
+		this.currentWindowState = FriendsWindowController.WindowState.findFriends;
+		this.UpdateFindFriendsState();
+	}
+
+	private void SetActiveFriendsListContainer()
+	{
+		this.currentWindowState = FriendsWindowController.WindowState.friendList;
+		this.UpdateFriendsListState();
+		if (!this._isAnyFriendsDataExists)
+		{
+			this._isWindowInStartState = false;
+			return;
+		}
+		if (this.NeedUpdateCurrentFriendsList)
+		{
+			base.StartCoroutine(this.UpdateCurrentFriendsList());
+		}
+		this._isWindowInStartState = false;
+	}
+
+	private void SetActiveInboxFriendsContainer()
+	{
+		this.currentWindowState = FriendsWindowController.WindowState.inbox;
+		this.UpdateFriendsInboxState();
+	}
+
+	public void SetCancelState()
+	{
+		this.friendsTab.Set(false);
+	}
+
+	public void SetStartState()
+	{
+		base.StartCoroutine(this.SetStartStateCoroutine());
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetStartStateCoroutine()
+	{
+		FriendsWindowController.u003cSetStartStateCoroutineu003ec__Iterator140 variable = null;
+		return variable;
+	}
+
+	public void Show()
+	{
+		base.gameObject.SetActive(true);
+	}
+
+	public void ShowMessageBoxProcessingData()
+	{
+		InfoWindowController.ShowProcessingDataBox();
+	}
+
+	private void ShowMessageByEmptyStateTab(string text)
+	{
+		this.emptyStateTabLabel.gameObject.SetActive(true);
+		this.emptyStateTabLabel.text = text;
+	}
+
+	public void ShowProfileWindow(string friendId, FriendPreviewItem selectedItem)
+	{
+		this._selectProfileItem = selectedItem;
+		base.gameObject.SetActive(false);
+		this.joinToFriendRoomPhoton.SetActive(false);
+		FriendsController.ShowProfile(friendId, ProfileWindowType.friend, new Action<bool>(this.OnCloseProfileWindow));
+	}
+
+	[DebuggerHidden]
+	public IEnumerator ShowResultFindPlayer(string param)
+	{
+		FriendsWindowController.u003cShowResultFindPlayeru003ec__Iterator13F variable = null;
+		return variable;
+	}
+
+	private int SortFriendsByFindOrigin(string player1, string player2)
+	{
+		int possibleFriendFindOrigin = (int)FriendsController.GetPossibleFriendFindOrigin(player1);
+		int num = (int)FriendsController.GetPossibleFriendFindOrigin(player2);
+		if (possibleFriendFindOrigin < num)
+		{
+			return -1;
+		}
+		if (possibleFriendFindOrigin > num)
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	private int SortFriendsByOnlineStatusAndClickJoin(string friend1, string friend2)
+	{
+		int num;
+		int num1;
+		if (FriendsController.sharedController.onlineInfo.ContainsKey(friend1))
+		{
+			Dictionary<string, string> item = FriendsController.sharedController.onlineInfo[friend1];
+			num = (item != null ? this.GetModeByInfo(item) : 3);
+		}
+		else
+		{
+			num = 3;
+		}
+		if (FriendsController.sharedController.onlineInfo.ContainsKey(friend2))
+		{
+			Dictionary<string, string> strs = FriendsController.sharedController.onlineInfo[friend2];
+			num1 = (strs != null ? this.GetModeByInfo(strs) : 3);
+		}
+		else
+		{
+			num1 = 3;
+		}
+		if (num < num1)
+		{
+			return -1;
+		}
+		if (num > num1)
+		{
+			return 1;
+		}
 		FriendsController friendsController = FriendsController.sharedController;
 		if (friendsController == null)
 		{
-			yield break;
+			return 0;
 		}
-		UpdateFriendsArray(WindowState.friendList);
-		UpdateFriendsArray(WindowState.findFriends);
-		UpdateFriendsArray(WindowState.inbox);
-		UpdateLocalFriendsArray(false);
-		if (!wrapsInit)
+		DateTime dateLastClickJoinFriend = friendsController.GetDateLastClickJoinFriend(friend1);
+		DateTime dateTime = friendsController.GetDateLastClickJoinFriend(friend2);
+		if (dateLastClickJoinFriend < dateTime)
 		{
-			inviteFriendsWrap.onInitializeItem = OnIniviteItemWrap;
-			friendsListWrap.onInitializeItem = OnFriendsItemWrap;
-			findFriendsWrap.onInitializeItem = OnFindFriendsItemWrap;
-			friendPreviewPrefab.transform.GetComponent<UIDragScrollView>().scrollView = inviteFriendsWrap.GetComponent<UIScrollView>();
-			for (int f3 = 0; f3 < 6; f3++)
+			return -1;
+		}
+		if (dateLastClickJoinFriend > dateTime)
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	private void Start()
+	{
+		this.currentWindowState = FriendsWindowController.WindowState.friendList;
+	}
+
+	public void UpdateCurrentFriendsArrayAndItems()
+	{
+		this.UpdateFriendsArray(this.currentWindowState, false);
+		UIWrapContent currentWrap = this.GetCurrentWrap();
+		if (currentWrap == null)
+		{
+			return;
+		}
+		this.UpdateList(currentWrap, this.GetPreviewTypeForCurrentWindowState());
+		UIScrollView component = currentWrap.transform.parent.GetComponent<UIScrollView>();
+		int minForCurrentState = this.GetMinForCurrentState();
+		int lenghtFromCurrentList = this.GetLenghtFromCurrentList();
+		if (lenghtFromCurrentList > minForCurrentState && component.transform.localPosition.y + (float)(currentWrap.itemSize * minForCurrentState) > (float)(lenghtFromCurrentList * currentWrap.itemSize))
+		{
+			component.MoveRelative(Vector3.down * (float)currentWrap.itemSize);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdateCurrentFriendsList()
+	{
+		FriendsWindowController.u003cUpdateCurrentFriendsListu003ec__Iterator13E variable = null;
+		return variable;
+	}
+
+	public void UpdateCurrentTabState()
+	{
+		if (this.currentWindowState == FriendsWindowController.WindowState.friendList)
+		{
+			this.SetActiveFriendsListContainer();
+		}
+		else if (this.currentWindowState == FriendsWindowController.WindowState.inbox)
+		{
+			this.SetActiveInboxFriendsContainer();
+		}
+		else if (this.currentWindowState == FriendsWindowController.WindowState.findFriends)
+		{
+			this.SetActiveFindFriendsContainer();
+		}
+	}
+
+	private void UpdateFindFriendsState()
+	{
+		FriendsController friendsController = FriendsController.sharedController;
+		this._isFriendsMax = FriendsController.IsFriendsMax();
+		if (!this.statusBar.IsFindFriendByIdStateActivate)
+		{
+			this._isAnyFriendsDataExists = (!FriendsController.IsPossibleFriendsDataExist() ? false : !this._isFriendsMax);
+		}
+		else
+		{
+			this._isAnyFriendsDataExists = !this._isFriendsMax;
+		}
+		this.statusBar.UpdateFindFriendsState(this._isFriendsMax);
+		this.CheckShowEmptyStateTabLabel(this._isAnyFriendsDataExists, this._isFriendsMax);
+		this.UpdateList(this.findFriendsWrap, FriendItemPreviewType.find);
+	}
+
+	private void UpdateFriendsArray(FriendsWindowController.WindowState state, bool resetScroll = false)
+	{
+		switch (state)
+		{
+			case FriendsWindowController.WindowState.friendList:
 			{
-				GameObject friendPreviewItem = NGUITools.AddChild(inviteFriendsWrap.gameObject, friendPreviewPrefab);
-				friendPreviewItem.name = "FriendPreviewItem_" + f3;
+				List<string> strs = new List<string>();
+				for (int i = 0; i < FriendsController.sharedController.friends.Count; i++)
+				{
+					string item = FriendsController.sharedController.friends[i];
+					if (FriendsController.sharedController.friendsInfo.ContainsKey(item))
+					{
+						strs.Add(item);
+					}
+				}
+				strs.Sort(new Comparison<string>(this.SortFriendsByOnlineStatusAndClickJoin));
+				this.myFriendsList = strs.ToArray();
+				if (this.localFriendsList != null)
+				{
+					this.friendsListWrap.minIndex = ((int)this.myFriendsList.Length + (int)this.localFriendsList.Length) * -1;
+				}
+				else
+				{
+					this.friendsListWrap.minIndex = (int)this.myFriendsList.Length * -1;
+				}
+				if (resetScroll)
+				{
+					this.friendsListWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
+				}
+				return;
 			}
-			inviteFriendsWrap.SortAlphabetically();
-			friendPreviewPrefab.transform.GetComponent<UIDragScrollView>().scrollView = friendsListWrap.GetComponent<UIScrollView>();
-			for (int f2 = 0; f2 < 6; f2++)
+			case FriendsWindowController.WindowState.findFriends:
 			{
-				GameObject friendPreviewItem2 = NGUITools.AddChild(friendsListWrap.gameObject, friendPreviewPrefab);
-				friendPreviewItem2.name = "FriendPreviewItem_" + f2;
+				List<string> strs1 = new List<string>();
+				foreach (KeyValuePair<string, FriendsController.PossiblleOrigin> keyValuePair in FriendsController.sharedController.getPossibleFriendsResult)
+				{
+					string key = keyValuePair.Key;
+					if (!FriendsController.sharedController.profileInfo.ContainsKey(key))
+					{
+						continue;
+					}
+					strs1.Add(key);
+				}
+				this.findFriendsList = strs1.ToArray();
+				Array.Sort<string>(this.findFriendsList, new Comparison<string>(this.SortFriendsByFindOrigin));
+				this.findFriendsWrap.minIndex = (int)this.findFriendsList.Length * -1;
+				if (resetScroll)
+				{
+					this.findFriendsWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
+				}
+				return;
 			}
-			friendsListWrap.SortAlphabetically();
-			friendPreviewPrefab.transform.GetComponent<UIDragScrollView>().scrollView = findFriendsWrap.GetComponent<UIScrollView>();
-			for (int f = 0; f < 6; f++)
+			case FriendsWindowController.WindowState.chat:
 			{
-				GameObject friendPreviewItem3 = NGUITools.AddChild(findFriendsWrap.gameObject, friendPreviewPrefab);
-				friendPreviewItem3.name = "FriendPreviewItem_" + f;
+				return;
 			}
-			findFriendsWrap.SortAlphabetically();
-			wrapsInit = true;
-		}
-		if (currentWindowState != WindowState.chat)
-		{
-			UpdateList(GetCurrentWrap(), GetPreviewTypeForCurrentWindowState());
-		}
-		NeedUpdateCurrentFriendsList = false;
-	}
-
-	private void OnIniviteItemWrap(GameObject go, int wrapInd, int realInd)
-	{
-		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
-		if (currentWindowState == WindowState.inbox)
-		{
-			updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.inbox);
-		}
-	}
-
-	private void OnFriendsItemWrap(GameObject go, int wrapInd, int realInd)
-	{
-		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
-		if (currentWindowState == WindowState.friendList)
-		{
-			updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.view);
+			case FriendsWindowController.WindowState.inbox:
+			{
+				List<string> strs2 = new List<string>();
+				for (int j = 0; j < FriendsController.sharedController.invitesToUs.Count; j++)
+				{
+					string str = FriendsController.sharedController.invitesToUs[j];
+					if (FriendsController.sharedController.profileInfo.ContainsKey(str))
+					{
+						strs2.Add(str);
+					}
+				}
+				this.inviteFriendsList = strs2.ToArray();
+				this.inviteFriendsWrap.minIndex = (int)this.inviteFriendsList.Length * -1;
+				if (resetScroll)
+				{
+					this.inviteFriendsWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
+				}
+				return;
+			}
+			default:
+			{
+				return;
+			}
 		}
 	}
 
-	private void OnFindFriendsItemWrap(GameObject go, int wrapInd, int realInd)
+	private void UpdateFriendsInboxState()
 	{
-		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
-		if (currentWindowState == WindowState.findFriends)
+		this.UpdateFriendsArray(FriendsWindowController.WindowState.inbox, false);
+		this.UpdateList(this.inviteFriendsWrap, FriendItemPreviewType.inbox);
+		this._isAnyFriendsDataExists = FriendsController.IsFriendInvitesDataExist();
+		this._isFriendsMax = FriendsController.IsFriendsMax();
+		this.statusBar.OnClickInboxFriendsTab(this._isAnyFriendsDataExists, this._isFriendsMax);
+		this.CheckShowEmptyStateTabLabel(this._isAnyFriendsDataExists, false);
+	}
+
+	private void UpdateFriendsListInterface()
+	{
+		this.UpdateFriendsListState();
+		this.NeedUpdateCurrentFriendsList = true;
+		if (this.currentWindowState == FriendsWindowController.WindowState.inbox)
 		{
-			updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.find);
+			this.NeedUpdateCurrentFriendsList = true;
+			this.UpdateFriendsInboxState();
+		}
+		else if (this.currentWindowState == FriendsWindowController.WindowState.findFriends)
+		{
+			this.NeedUpdateCurrentFriendsList = true;
+			if (!this.statusBar.IsFindFriendByIdStateActivate)
+			{
+				this.UpdateFindFriendsState();
+			}
+		}
+		if (this.NeedUpdateCurrentFriendsList && (this.currentWindowState != FriendsWindowController.WindowState.findFriends || !this.statusBar.IsFindFriendByIdStateActivate))
+		{
+			base.StartCoroutine(this.UpdateCurrentFriendsList());
 		}
 	}
 
-	private void OnLocalFriendsItemWrap(GameObject go, int wrapInd, int realInd)
+	private void UpdateFriendsListState()
 	{
-		go.GetComponent<FriendPreviewItem>().myWrapIndex = Mathf.Abs(realInd);
-		if (currentWindowState == WindowState.friendList)
+		bool flag;
+		if (this.myFriendsList != null)
 		{
-			updateItemInfo(go.GetComponent<FriendPreviewItem>(), FriendItemPreviewType.find);
+			this.UpdateList(this.friendsListWrap, FriendItemPreviewType.view);
+		}
+		this._isAnyFriendsDataExists = FriendsController.IsFriendsOrLocalDataExist();
+		this._isFriendsMax = FriendsController.IsFriendsMax();
+		if (this.currentWindowState != FriendsWindowController.WindowState.chat)
+		{
+			this.CheckShowEmptyStateTabLabel(this._isAnyFriendsDataExists, this._isFriendsMax);
+		}
+		else
+		{
+			this.CheckShowEmptyStateTabLabel(FriendsController.IsFriendsDataExist(), this._isFriendsMax);
+		}
+		flag = (this._isAnyFriendsDataExists ? false : ProtocolListGetter.currentVersionIsSupported);
+		this.goInBattleButton.gameObject.SetActive(flag);
+		if (this.currentWindowState == FriendsWindowController.WindowState.friendList)
+		{
+			this.statusBar.UpdateFriendListState(this._isFriendsMax);
+		}
+	}
+
+	private void UpdateFriendsOnlineAndSorting(bool isNeedReposition)
+	{
+		if (FriendsWindowController.UpdateFriendsOnlineEvent != null)
+		{
+			FriendsWindowController.UpdateFriendsOnlineEvent();
+		}
+		if (this.currentWindowState == FriendsWindowController.WindowState.friendList)
+		{
+			this.UpdateFriendsArray(FriendsWindowController.WindowState.friendList, false);
+			this.UpdateList(this.GetCurrentWrap(), this.GetPreviewTypeForCurrentWindowState());
 		}
 	}
 
 	private void updateItemInfo(FriendPreviewItem previewItem, FriendItemPreviewType _typeItems)
 	{
-		string itemFromCurrentState = GetItemFromCurrentState(previewItem.myWrapIndex);
+		string itemFromCurrentState = this.GetItemFromCurrentState(previewItem.myWrapIndex);
 		if (!string.IsNullOrEmpty(itemFromCurrentState))
 		{
-			if (_typeItems == FriendItemPreviewType.view && previewItem.myWrapIndex < localFriendsList.Length)
+			if (_typeItems != FriendItemPreviewType.view || previewItem.myWrapIndex >= (int)this.localFriendsList.Length)
 			{
-				previewItem.FillData(itemFromCurrentState, FriendItemPreviewType.find);
+				previewItem.FillData(itemFromCurrentState, _typeItems);
 			}
 			else
 			{
-				previewItem.FillData(itemFromCurrentState, _typeItems);
+				previewItem.FillData(itemFromCurrentState, FriendItemPreviewType.find);
 			}
 			previewItem.gameObject.SetActive(false);
 			previewItem.gameObject.SetActive(true);
@@ -494,11 +858,6 @@ public class FriendsWindowController : MonoBehaviour
 		}
 	}
 
-	private int GetMinForCurrentState()
-	{
-		return 4;
-	}
-
 	private void UpdateList(UIWrapContent _wrap, FriendItemPreviewType _typeItems)
 	{
 		if (_wrap == null)
@@ -507,409 +866,50 @@ public class FriendsWindowController : MonoBehaviour
 		}
 		FriendPreviewItem[] componentsInChildren = _wrap.GetComponentsInChildren<FriendPreviewItem>(true);
 		bool flag = false;
-		int minForCurrentState = GetMinForCurrentState();
-		int lenghtFromCurrentList = GetLenghtFromCurrentList();
-		for (int i = 0; i < componentsInChildren.Length; i++)
+		int minForCurrentState = this.GetMinForCurrentState();
+		int lenghtFromCurrentList = this.GetLenghtFromCurrentList();
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
 		{
 			if (lenghtFromCurrentList != 0)
 			{
-				if (lenghtFromCurrentList > minForCurrentState)
-				{
-					componentsInChildren[i].GetComponent<UIDragScrollView>().enabled = true;
-				}
-				else
+				if (lenghtFromCurrentList <= minForCurrentState)
 				{
 					componentsInChildren[i].GetComponent<UIDragScrollView>().enabled = false;
 					flag = true;
 				}
+				else
+				{
+					componentsInChildren[i].GetComponent<UIDragScrollView>().enabled = true;
+				}
 			}
-			updateItemInfo(componentsInChildren[i], _typeItems);
+			this.updateItemInfo(componentsInChildren[i], _typeItems);
 		}
 		if (flag)
 		{
-			ResetWrapPosition(_wrap);
+			this.ResetWrapPosition(_wrap);
 		}
 	}
 
-	private void UpdateFriendsListInterface()
+	private void UpdateLocalFriendsArray(bool resetScroll)
 	{
-		UpdateFriendsListState();
-		NeedUpdateCurrentFriendsList = true;
-		if (currentWindowState == WindowState.inbox)
+		List<string> strs = new List<string>();
+		foreach (KeyValuePair<string, FriendsController.PossiblleOrigin> keyValuePair in FriendsController.sharedController.getPossibleFriendsResult)
 		{
-			NeedUpdateCurrentFriendsList = true;
-			UpdateFriendsInboxState();
-		}
-		else if (currentWindowState == WindowState.findFriends)
-		{
-			NeedUpdateCurrentFriendsList = true;
-			if (!statusBar.IsFindFriendByIdStateActivate)
+			if (!FriendsController.sharedController.profileInfo.ContainsKey(keyValuePair.Key) || keyValuePair.Value != FriendsController.PossiblleOrigin.Local)
 			{
-				UpdateFindFriendsState();
+				continue;
 			}
+			strs.Add(keyValuePair.Key);
 		}
-		if (NeedUpdateCurrentFriendsList && (currentWindowState != WindowState.findFriends || !statusBar.IsFindFriendByIdStateActivate))
-		{
-			StartCoroutine(UpdateCurrentFriendsList());
-		}
+		this.localFriendsList = strs.ToArray();
+		this.friendsListWrap.minIndex = ((int)this.myFriendsList.Length + (int)this.localFriendsList.Length) * -1;
 	}
 
-	public void OnClickFriendListTab(UIToggle toggle)
+	private enum WindowState
 	{
-		if (toggle.value)
-		{
-			ButtonClickSound.TryPlayClick();
-		}
-		if (toggle.value)
-		{
-			HideInfoBox();
-			NeedUpdateCurrentFriendsList = true;
-			SetActiveFriendsListContainer();
-		}
-	}
-
-	private void UpdateFindFriendsState()
-	{
-		FriendsController sharedController = FriendsController.sharedController;
-		_isFriendsMax = FriendsController.IsFriendsMax();
-		if (statusBar.IsFindFriendByIdStateActivate)
-		{
-			_isAnyFriendsDataExists = !_isFriendsMax;
-		}
-		else
-		{
-			_isAnyFriendsDataExists = FriendsController.IsPossibleFriendsDataExist() && !_isFriendsMax;
-		}
-		statusBar.UpdateFindFriendsState(_isFriendsMax);
-		CheckShowEmptyStateTabLabel(_isAnyFriendsDataExists, _isFriendsMax);
-		UpdateList(findFriendsWrap, FriendItemPreviewType.find);
-	}
-
-	private void SetActiveFindFriendsContainer()
-	{
-		currentWindowState = WindowState.findFriends;
-		UpdateFindFriendsState();
-	}
-
-	public void OnClickFindFriendsTab(UIToggle toggle)
-	{
-		if (toggle.value)
-		{
-			ButtonClickSound.TryPlayClick();
-		}
-		if (toggle.value)
-		{
-			HideInfoBox();
-			NeedUpdateCurrentFriendsList = true;
-			if (statusBar.IsFindFriendByIdStateActivate)
-			{
-				UpdateFriendsArray(WindowState.findFriends);
-				ResetWrapPosition(findFriendsWrap);
-			}
-			SetActiveFindFriendsContainer();
-			statusBar.findFriendInput.value = string.Empty;
-		}
-	}
-
-	private void SetActiveChatFriendsContainer()
-	{
-		currentWindowState = WindowState.chat;
-		bool flag = FriendsController.IsFriendsDataExist();
-		CheckShowEmptyStateTabLabel(flag, false);
-		chatContainer.SetActive(flag);
-		statusBar.OnClickChatTab();
-	}
-
-	public void OnClickFriendsChatTab(UIToggle toggle)
-	{
-		if (toggle.value)
-		{
-			ButtonClickSound.TryPlayClick();
-		}
-		if (toggle.value)
-		{
-			HideInfoBox();
-			SetActiveChatFriendsContainer();
-		}
-	}
-
-	private void UpdateFriendsInboxState()
-	{
-		UpdateFriendsArray(WindowState.inbox);
-		UpdateList(inviteFriendsWrap, FriendItemPreviewType.inbox);
-		_isAnyFriendsDataExists = FriendsController.IsFriendInvitesDataExist();
-		_isFriendsMax = FriendsController.IsFriendsMax();
-		statusBar.OnClickInboxFriendsTab(_isAnyFriendsDataExists, _isFriendsMax);
-		CheckShowEmptyStateTabLabel(_isAnyFriendsDataExists, false);
-	}
-
-	private void SetActiveInboxFriendsContainer()
-	{
-		currentWindowState = WindowState.inbox;
-		UpdateFriendsInboxState();
-	}
-
-	public void OnClickInboxFriendsTab(UIToggle toggle)
-	{
-		if (toggle.value)
-		{
-			ButtonClickSound.TryPlayClick();
-		}
-		if (toggle.value)
-		{
-			HideInfoBox();
-			SetActiveInboxFriendsContainer();
-		}
-	}
-
-	public void UpdateCurrentTabState()
-	{
-		if (currentWindowState == WindowState.friendList)
-		{
-			SetActiveFriendsListContainer();
-		}
-		else if (currentWindowState == WindowState.inbox)
-		{
-			SetActiveInboxFriendsContainer();
-		}
-		else if (currentWindowState == WindowState.findFriends)
-		{
-			SetActiveFindFriendsContainer();
-		}
-	}
-
-	private int GetModeByInfo(Dictionary<string, string> onlineData)
-	{
-		switch (Convert.ToInt32(onlineData["game_mode"]))
-		{
-		case 6:
-			return 1;
-		case 7:
-			return 2;
-		default:
-			return 0;
-		}
-	}
-
-	private int SortFriendsByOnlineStatusAndClickJoin(string friend1, string friend2)
-	{
-		int num;
-		if (!FriendsController.sharedController.onlineInfo.ContainsKey(friend1))
-		{
-			num = 3;
-		}
-		else
-		{
-			Dictionary<string, string> dictionary = FriendsController.sharedController.onlineInfo[friend1];
-			num = ((dictionary != null) ? GetModeByInfo(dictionary) : 3);
-		}
-		int num2;
-		if (!FriendsController.sharedController.onlineInfo.ContainsKey(friend2))
-		{
-			num2 = 3;
-		}
-		else
-		{
-			Dictionary<string, string> dictionary2 = FriendsController.sharedController.onlineInfo[friend2];
-			num2 = ((dictionary2 != null) ? GetModeByInfo(dictionary2) : 3);
-		}
-		if (num < num2)
-		{
-			return -1;
-		}
-		if (num > num2)
-		{
-			return 1;
-		}
-		FriendsController sharedController = FriendsController.sharedController;
-		if (sharedController == null)
-		{
-			return 0;
-		}
-		DateTime dateLastClickJoinFriend = sharedController.GetDateLastClickJoinFriend(friend1);
-		DateTime dateLastClickJoinFriend2 = sharedController.GetDateLastClickJoinFriend(friend2);
-		if (dateLastClickJoinFriend < dateLastClickJoinFriend2)
-		{
-			return -1;
-		}
-		if (dateLastClickJoinFriend > dateLastClickJoinFriend2)
-		{
-			return 1;
-		}
-		return 0;
-	}
-
-	private int SortFriendsByFindOrigin(string player1, string player2)
-	{
-		int possibleFriendFindOrigin = (int)FriendsController.GetPossibleFriendFindOrigin(player1);
-		int possibleFriendFindOrigin2 = (int)FriendsController.GetPossibleFriendFindOrigin(player2);
-		if (possibleFriendFindOrigin < possibleFriendFindOrigin2)
-		{
-			return -1;
-		}
-		if (possibleFriendFindOrigin > possibleFriendFindOrigin2)
-		{
-			return 1;
-		}
-		return 0;
-	}
-
-	private void EventUpdateFriendsOnlineAndSorting()
-	{
-		if (currentWindowState == WindowState.friendList)
-		{
-			UpdateFriendsOnlineAndSorting(false);
-		}
-	}
-
-	private void UpdateFriendsOnlineAndSorting(bool isNeedReposition)
-	{
-		if (UpdateFriendsOnlineEvent != null)
-		{
-			UpdateFriendsOnlineEvent();
-		}
-		if (currentWindowState == WindowState.friendList)
-		{
-			UpdateFriendsArray(WindowState.friendList);
-			UpdateList(GetCurrentWrap(), GetPreviewTypeForCurrentWindowState());
-		}
-	}
-
-	private void OnDisable()
-	{
-		FriendsController.FriendsUpdated -= UpdateFriendsListInterface;
-		FriendsController.OnShowBoxProcessFriendsData = (Action)Delegate.Remove(FriendsController.OnShowBoxProcessFriendsData, new Action(ShowMessageBoxProcessingData));
-		FriendsController.OnHideBoxProcessFriendsData = (Action)Delegate.Remove(FriendsController.OnHideBoxProcessFriendsData, new Action(HideInfoBox));
-		FriendsController.UpdateFriendsInfoAction = (Action)Delegate.Remove(FriendsController.UpdateFriendsInfoAction, new Action(EventUpdateFriendsOnlineAndSorting));
-		InfoWindowController.HideCurrentWindow();
-	}
-
-	private void OnDestroy()
-	{
-		FriendsController.sharedController.StopRefreshingOnline();
-		FriendsController.DisposeProfile();
-		Instance = null;
-	}
-
-	public void Hide()
-	{
-		base.gameObject.SetActive(false);
-	}
-
-	public void Show()
-	{
-		base.gameObject.SetActive(true);
-	}
-
-	private void OnCloseProfileWindow(bool needUpdateFriendList)
-	{
-		if (needUpdateFriendList)
-		{
-			NeedUpdateCurrentFriendsList = true;
-		}
-		base.gameObject.SetActive(true);
-		joinToFriendRoomPhoton.SetActive(true);
-		if (_selectProfileItem != null)
-		{
-			_selectProfileItem.UpdateData();
-		}
-		UpdateCurrentTabState();
-	}
-
-	public void ShowProfileWindow(string friendId, FriendPreviewItem selectedItem)
-	{
-		_selectProfileItem = selectedItem;
-		base.gameObject.SetActive(false);
-		joinToFriendRoomPhoton.SetActive(false);
-		FriendsController.ShowProfile(friendId, ProfileWindowType.friend, OnCloseProfileWindow);
-	}
-
-	public void SetActiveChatTab(string id)
-	{
-		if (PrivateChatController.sharedController != null)
-		{
-			PrivateChatController.sharedController.selectedPlayerID = id;
-		}
-		chatTab.Set(true);
-		SetActiveChatFriendsContainer();
-	}
-
-	public IEnumerator ShowResultFindPlayer(string param)
-	{
-		HideMessageByEmptyStateTab();
-		isNeedRebuildFindFriendsList = true;
-		findFriendsList = new string[1] { string.Empty };
-		UpdateList(findFriendsWrap, FriendItemPreviewType.find);
-		FriendsController friendsController = FriendsController.sharedController;
-		if (friendsController != null)
-		{
-			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object> { { "Search Friends", "Search" } });
-			yield return StartCoroutine(friendsController.GetInfoByParamCoroutine(param));
-		}
-		if (statusBar.IsFindFriendByIdStateActivate)
-		{
-			List<string> findResultIds = friendsController.findPlayersByParamResult;
-			if (findResultIds == null)
-			{
-				InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_1426"));
-				CheckShowEmptyStateTabLabel(false, false);
-				yield break;
-			}
-			findFriendsList = findResultIds.ToArray();
-			findFriendsWrap.minIndex = findFriendsList.Length * -1;
-			findFriendsWrap.SortAlphabetically();
-			findFriendsWrap.transform.parent.GetComponent<UIScrollView>().ResetPosition();
-			UpdateList(findFriendsWrap, FriendItemPreviewType.find);
-		}
-	}
-
-	public void OnClickClearAllInboxButton()
-	{
-		ButtonClickSound.TryPlayClick();
-		statusBar.clearAllInviteButton.isEnabled = false;
-		FriendsController sharedController = FriendsController.sharedController;
-		if (sharedController != null)
-		{
-			sharedController.ClearAllFriendsInvites();
-		}
-	}
-
-	public static bool IsActiveFriendListTab()
-	{
-		if (Instance == null)
-		{
-			return false;
-		}
-		return Instance.currentWindowState == WindowState.friendList;
-	}
-
-	public static bool IsActiveFindFriendTab()
-	{
-		if (Instance == null)
-		{
-			return false;
-		}
-		return Instance.currentWindowState == WindowState.findFriends;
-	}
-
-	public void SetStartState()
-	{
-		StartCoroutine(SetStartStateCoroutine());
-	}
-
-	public void SetCancelState()
-	{
-		friendsTab.Set(false);
-	}
-
-	private IEnumerator SetStartStateCoroutine()
-	{
-		_isWindowInStartState = true;
-		UIPanel windowPanel = base.gameObject.GetComponent<UIPanel>();
-		windowPanel.alpha = 0.001f;
-		yield return null;
-		chatContainer.SetActive(false);
-		friendsTab.Set(true);
-		windowPanel.alpha = 1f;
+		friendList,
+		findFriends,
+		chat,
+		inbox
 	}
 }

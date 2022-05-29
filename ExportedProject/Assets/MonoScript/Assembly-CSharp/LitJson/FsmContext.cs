@@ -1,3 +1,5 @@
+using System;
+
 namespace LitJson
 {
 	internal class FsmContext
@@ -9,5 +11,9 @@ namespace LitJson
 		public Lexer L;
 
 		public int StateStack;
+
+		public FsmContext()
+		{
+		}
 	}
 }

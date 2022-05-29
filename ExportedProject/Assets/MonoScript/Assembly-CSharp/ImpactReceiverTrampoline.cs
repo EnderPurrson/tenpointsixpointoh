@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ImpactReceiverTrampoline : MonoBehaviour
@@ -8,26 +9,31 @@ public class ImpactReceiverTrampoline : MonoBehaviour
 
 	private CharacterController character;
 
-	private void Start()
+	public ImpactReceiverTrampoline()
 	{
-		character = GetComponent<CharacterController>();
-	}
-
-	private void Update()
-	{
-		if (impact.magnitude > 0.2f)
-		{
-			character.Move(impact * Time.deltaTime);
-		}
-		else
-		{
-			Object.Destroy(this);
-		}
-		impact = Vector3.Lerp(impact, Vector3.zero, 1f * Time.deltaTime);
 	}
 
 	public void AddImpact(Vector3 dir, float force)
 	{
-		impact += dir.normalized * force / mass;
+		ImpactReceiverTrampoline impactReceiverTrampoline = this;
+		impactReceiverTrampoline.impact = impactReceiverTrampoline.impact + ((dir.normalized * force) / this.mass);
+	}
+
+	private void Start()
+	{
+		this.character = base.GetComponent<CharacterController>();
+	}
+
+	private void Update()
+	{
+		if (this.impact.magnitude <= 0.2f)
+		{
+			UnityEngine.Object.Destroy(this);
+		}
+		else
+		{
+			this.character.Move(this.impact * Time.deltaTime);
+		}
+		this.impact = Vector3.Lerp(this.impact, Vector3.zero, 1f * Time.deltaTime);
 	}
 }

@@ -1,26 +1,31 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class JoinRoomFromFrendsButton : MonoBehaviour
 {
 	public JoinRoomFromFrends joinRoomFromFrends;
 
+	public JoinRoomFromFrendsButton()
+	{
+	}
+
 	private void OnClick()
 	{
 		ButtonClickSound.Instance.PlayClick();
-		string id = base.transform.parent.GetComponent<FriendPreview>().id;
-		if (FriendsController.sharedController.onlineInfo.ContainsKey(id))
+		string component = base.transform.parent.GetComponent<FriendPreview>().id;
+		if (FriendsController.sharedController.onlineInfo.ContainsKey(component))
 		{
-			int game_mode = int.Parse(FriendsController.sharedController.onlineInfo[id]["game_mode"]);
-			string room_name = FriendsController.sharedController.onlineInfo[id]["room_name"];
-			string text = FriendsController.sharedController.onlineInfo[id]["map"];
-			if (joinRoomFromFrends == null)
+			int num = int.Parse(FriendsController.sharedController.onlineInfo[component]["game_mode"]);
+			string item = FriendsController.sharedController.onlineInfo[component]["room_name"];
+			string str = FriendsController.sharedController.onlineInfo[component]["map"];
+			if (this.joinRoomFromFrends == null)
 			{
-				joinRoomFromFrends = JoinRoomFromFrends.sharedJoinRoomFromFrends;
+				this.joinRoomFromFrends = JoinRoomFromFrends.sharedJoinRoomFromFrends;
 			}
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(text));
-			if (infoScene != null)
+			if (SceneInfoController.instance.GetInfoScene(int.Parse(str)) != null)
 			{
-				joinRoomFromFrends.ConnectToRoom(game_mode, room_name, text);
+				this.joinRoomFromFrends.ConnectToRoom(num, item, str);
 			}
 		}
 	}

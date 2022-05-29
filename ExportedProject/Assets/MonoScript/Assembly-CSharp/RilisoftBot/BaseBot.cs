@@ -1,36 +1,16 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
-using Rilisoft;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RilisoftBot
 {
 	public class BaseBot : MonoBehaviour
 	{
-		protected class BotAnimationName
-		{
-			public string Walk = "Norm_Walk";
-
-			public string Run = "Zombie_Walk";
-
-			public string Stop = "Zombie_Off";
-
-			public string Death = "Zombie_Dead";
-
-			public string Attack = "Zombie_Attack";
-
-			public string Idle = "Idle";
-		}
-
-		private enum RunNetworkAnimationType
-		{
-			ZombieWalk = 0,
-			ZombieAttackOrStop = 1,
-			None = 2
-		}
-
 		public const string BaseNameBotGuard = "BossGuard";
 
 		private const int ScoreForDamage = 5;
@@ -69,7 +49,7 @@ namespace RilisoftBot
 
 		public int scorePerKill = 50;
 
-		public float[] attackingSpeedRandomRange = new float[2] { -0.5f, 0.5f };
+		public float[] attackingSpeedRandomRange = new float[] { -0.5f, 0.5f };
 
 		[Header("Effects settings")]
 		public Texture flashDeadthTexture;
@@ -91,7 +71,7 @@ namespace RilisoftBot
 
 		protected SphereCollider headCollider;
 
-		protected BotAnimationName animationsName;
+		protected BaseBot.BotAnimationName animationsName;
 
 		protected AudioSource audioSource;
 
@@ -141,75 +121,34 @@ namespace RilisoftBot
 
 		private Quaternion _botRotation;
 
-		private RunNetworkAnimationType _currentRunNetworkAnimation = RunNetworkAnimationType.None;
+		private BaseBot.RunNetworkAnimationType _currentRunNetworkAnimation = BaseBot.RunNetworkAnimationType.None;
 
-		public bool IsDeath { get; private set; }
-
-		public bool IsFalling { get; private set; }
-
-		public bool needDestroyByMasterClient { get; private set; }
-
-		public float baseHealth { get; private set; }
-
-		private void Awake()
+		public float baseHealth
 		{
-			_effectsManager = GetComponent<IEnemyEffectsManager>();
-			audioSource = GetComponent<AudioSource>();
-			isMobChampion = false;
-			Initialize();
+			get;
+			private set;
 		}
 
-		protected virtual void Initialize()
+		public bool IsDeath
 		{
-			animationsName = new BotAnimationName();
-			AntiHackForCreateMobInInvalidGameMode();
-			_photonView = GetComponent<PhotonView>();
-			_isMultiplayerMode = _photonView != null && Defs.isCOOP;
-			animations = GetComponentInChildren<Animation>();
-			animations.Stop();
-			botAiController = GetComponent<BotAiController>();
-			modelCollider = GetComponentInChildren<BoxCollider>();
-			headCollider = GetComponentInChildren<SphereCollider>();
-			UnityEngine.Random.seed = (int)DateTime.Now.Ticks & 0xFFFF;
-			InitializeRandomAttackSpeed();
-			ModifyParametrsForLocalMode();
-			needDestroyByMasterClient = false;
-			baseHealth = health;
+			get;
+			private set;
 		}
 
-		private void Start()
+		public bool IsFalling
 		{
-			if (_isMultiplayerMode && _photonView.isMine)
-			{
-				_photonView.RPC("SetBotHealthRPC", PhotonTargets.All, health);
-			}
-			if (!_isMultiplayerMode)
-			{
-				ZombieCreator.sharedCreator.NumOfLiveZombies++;
-			}
-			mobModel = modelCollider.transform.GetChild(0);
-			_botMaterials = GetComponentsInChildren<BotChangeDamageMaterial>();
-			InitNetworkStateData();
-			Initializer.enemiesObj.Add(base.gameObject);
-			if (_effectsManager == null)
-			{
-				_effectsManager = base.gameObject.AddComponent<PortalEnemyEffectsManager>();
-			}
-			_effectsManager.ShowSpawnEffect();
+			get;
+			private set;
 		}
 
-		public virtual void DelayShootAfterEvent(float seconds)
+		public bool needDestroyByMasterClient
 		{
+			get;
+			private set;
 		}
 
-		private Texture GetBotSkin()
+		public BaseBot()
 		{
-			Renderer[] componentsInChildren = GetComponentsInChildren<Renderer>(true);
-			if (componentsInChildren.Length == 0)
-			{
-				return null;
-			}
-			return componentsInChildren[componentsInChildren.Length - 1].material.mainTexture;
 		}
 
 		private void AntiHackForCreateMobInInvalidGameMode()
@@ -220,344 +159,527 @@ namespace RilisoftBot
 			}
 		}
 
-		public void OrientToTarget(Vector3 targetPos)
+		public void ApplyDebuff(BotDebuffType type, float timeLife, object parametrs)
 		{
-			base.transform.LookAt(targetPos);
-		}
-
-		[Obfuscation(Exclude = true)]
-		public void PlayAnimationIdle()
-		{
-			animations.Stop();
-			if ((bool)animations[animationsName.Idle])
+			BotDebuff debuffByType = this.GetDebuffByType(type);
+			if (debuffByType != null)
 			{
-				animations.CrossFade(animationsName.Idle);
-			}
-			StopSteps();
-		}
-
-		public void PlayAnimationWalk()
-		{
-			animations.Stop();
-			if ((bool)animations[animationsName.Walk])
-			{
-				animations.CrossFade(animationsName.Walk);
+				this.ReplaceDebuff(debuffByType, timeLife, parametrs);
 			}
 			else
 			{
-				animations.CrossFade(animationsName.Run);
+				BotDebuff botDebuff = new BotDebuff(type, timeLife, parametrs);
+				botDebuff.OnRun += new BotDebuff.OnRunDelegate(this.RunDebuff);
+				botDebuff.OnStop += new BotDebuff.OnStopDelegate(this.StopDebuff);
+				this._botDebufs.Add(botDebuff);
 			}
-			PlayWalkStepSound();
 		}
 
-		private void PlayAnimationZombieWalk()
+		public void ApplyDebuffByMode(BotDebuffType type, float timeLife, object parametrs)
 		{
-			if ((bool)animations[animationsName.Run])
+			if (!this._isMultiplayerMode)
 			{
-				animations.CrossFade(animationsName.Run);
+				this.ApplyDebuff(type, timeLife, parametrs);
+				return;
 			}
-			PlayRunStepSound();
+			this.ApplyDebufForMultiplayer(type, timeLife, parametrs);
 		}
 
-		protected virtual void PlayAnimationZombieAttackOrStop()
+		public void ApplyDebufForMultiplayer(BotDebuffType type, float timeLife, object parametrs)
 		{
-			if ((bool)animations[animationsName.Attack])
+			this.ApplyDebuff(type, timeLife, parametrs);
+			if (type == BotDebuffType.DecreaserSpeed)
 			{
-				animations.CrossFade(animationsName.Attack);
+				this._photonView.RPC("ApplyDebuffRPC", PhotonTargets.Others, new object[] { (int)type, timeLife, (float)parametrs });
 			}
-			else if ((bool)animations[animationsName.Stop])
-			{
-				animations.CrossFade(animationsName.Stop);
-			}
-			StopSteps();
 		}
 
-		private void InitializeRandomAttackSpeed()
+		[PunRPC]
+		[RPC]
+		public void ApplyDebuffRPC(int typeDebuff, float timeLife, float parametr)
 		{
-			if (isAutomaticAnimationEnable)
-			{
-				float min = (attackingSpeed - attackingSpeedRandomRange[0]) / attackingSpeed;
-				float max = (attackingSpeed + attackingSpeedRandomRange[1]) / attackingSpeed;
-				speedAnimationRun = UnityEngine.Random.Range(min, max);
-			}
-			else
-			{
-				attackingSpeed += UnityEngine.Random.Range(0f - attackingSpeedRandomRange[0], attackingSpeedRandomRange[1]);
-			}
+			this.ApplyDebuff((BotDebuffType)typeDebuff, timeLife, parametr);
 		}
 
-		private void SetRangeParametrs()
+		private void Awake()
 		{
-			if (!isMobChampion && !IsBotGuard())
-			{
-				ZombieCreator.LastEnemy += IncreaseRange;
-				if (ZombieCreator.sharedCreator.IsLasTMonsRemains)
-				{
-					IncreaseRange();
-				}
-			}
+			this._effectsManager = base.GetComponent<IEnemyEffectsManager>();
+			this.audioSource = base.GetComponent<AudioSource>();
+			this.isMobChampion = false;
+			this.Initialize();
 		}
 
-		private void ModifyParametrsForLocalMode()
+		private float CheckAnimationSpeedRunMoveForBot(float modSpeed)
 		{
-			float num = 0f;
-			float num2 = 0f;
-			if (isAutomaticAnimationEnable)
-			{
-				num = speedAnimationWalk;
-				num2 = speedAnimationRun;
-			}
-			else
-			{
-				num = notAttackingSpeed;
-				num2 = attackingSpeed;
-			}
-			if (!_isMultiplayerMode)
-			{
-				if (!Defs.IsSurvival)
-				{
-					num2 *= Defs.DiffModif;
-					health *= Defs.DiffModif;
-					num *= Defs.DiffModif;
-				}
-				else if (Defs.IsSurvival && TrainingController.TrainingCompleted)
-				{
-					int currentWave = ZombieCreator.sharedCreator.currentWave;
-					if (currentWave == 0)
-					{
-						num *= 0.75f;
-						num2 *= 0.75f;
-						health *= 0.7f;
-					}
-					else if (currentWave == 1)
-					{
-						num *= 0.85f;
-						num2 *= 0.85f;
-						health *= 0.8f;
-					}
-					else if (currentWave == 2)
-					{
-						num *= 0.9f;
-						num2 *= 0.9f;
-						health *= 0.9f;
-					}
-					else if (currentWave >= 7)
-					{
-						num *= 1.25f;
-						num2 *= 1.25f;
-					}
-					else if (currentWave >= 9)
-					{
-						health *= 1.25f;
-					}
-				}
-			}
-			if (_isMultiplayerMode || Defs.IsSurvival)
-			{
-				num *= 0.9f + (float)ExpController.OurTierForAnyPlace() * 0.1f;
-				health *= 0.9f + (float)ExpController.OurTierForAnyPlace() * 0.1f;
-			}
-			if (isAutomaticAnimationEnable)
-			{
-				speedAnimationWalk = num;
-				speedAnimationRun = num2;
-			}
-			else
-			{
-				notAttackingSpeed = num;
-				attackingSpeed = num2;
-			}
-			if (!Defs.IsSurvival && !_isMultiplayerMode)
-			{
-				SetRangeParametrs();
-			}
+			float single = this.speedAnimationRun * modSpeed;
+			this.animations[this.animationsName.Run].speed = single;
+			return single * this.notAttackingSpeed;
 		}
 
-		private void IncreaseRange()
+		private float CheckAnimationSpeedWalkMoveForBot(float modSpeed)
 		{
-			if (isAutomaticAnimationEnable)
-			{
-				speedAnimationRun = Mathf.Max(speedAnimationRun, 1.5f);
-			}
-			else
-			{
-				attackingSpeed = Mathf.Max(attackingSpeed, 3f);
-			}
-			detectRadius = 150f;
+			float single = this.speedAnimationWalk * modSpeed;
+			this.animations[this.animationsName.Walk].speed = single;
+			return single * this.attackingSpeed;
 		}
 
-		public float GetSquareAttackDistance()
-		{
-			return attackDistance * attackDistance;
-		}
-
-		public float GetSquareDetectRadius()
-		{
-			return detectRadius * detectRadius;
-		}
-
-		public void SetPositionForFallState()
-		{
-			base.transform.position = new Vector3(base.transform.position.x, base.transform.position.y - 7f * Time.deltaTime, base.transform.position.z);
-		}
-
-		public void TryPlayAudioClip(AudioClip audioClip)
-		{
-			if (Defs.isSoundFX && !(audioSource == null) && !(audioClip == null))
-			{
-				audioSource.PlayOneShot(audioClip);
-			}
-		}
-
-		public void PlayVoiceSound()
-		{
-			TryPlayAudioClip(voiceMobSoud);
-		}
-
-		public void PlayWalkStepSound()
-		{
-			if (Defs.isSoundFX && !(stepSound == null) && audioSource.clip != stepSound)
-			{
-				audioSource.loop = true;
-				audioSource.clip = stepSound;
-				audioSource.Play();
-			}
-		}
-
-		public void PlayRunStepSound()
-		{
-			if (Defs.isSoundFX && !(runStepSound == null) && audioSource.clip != runStepSound)
-			{
-				audioSource.loop = true;
-				audioSource.clip = runStepSound;
-				audioSource.Play();
-			}
-		}
-
-		public void StopSteps()
-		{
-			if (!(stepSound == null) && (audioSource.clip == stepSound || audioSource.clip == runStepSound))
-			{
-				audioSource.Pause();
-				audioSource.clip = null;
-			}
-		}
-
-		public void TryPlayDeathSound(float delay)
-		{
-			if (Defs.isSoundFX && !(audioSource == null) && IsCanPlayDeathSound(delay))
-			{
-				audioSource.PlayOneShot(deathSound);
-			}
-		}
-
-		public void TryPlayDamageSound(float delay)
-		{
-			if (Defs.isSoundFX && !(audioSource == null) && !_isPlayingDamageSound)
-			{
-				StartCoroutine(CheckCanPlayDamageAudio(delay));
-				audioSource.PlayOneShot(damageSound);
-			}
-		}
-
+		[DebuggerHidden]
 		private IEnumerator CheckCanPlayDamageAudio(float timeOut)
 		{
-			_isPlayingDamageSound = true;
-			yield return new WaitForSeconds(timeOut);
-			_isPlayingDamageSound = false;
+			BaseBot.u003cCheckCanPlayDamageAudiou003ec__Iterator110 variable = null;
+			return variable;
 		}
 
-		private IEnumerator ResetDeathAudio(float timeOut)
+		public virtual bool CheckEnemyInAttackZone(float distanceToEnemy)
 		{
-			_isDeathAudioPlaying = true;
-			yield return new WaitForSeconds(timeOut);
-			_isDeathAudioPlaying = false;
-		}
-
-		private bool IsCanPlayDeathSound(float timeOut)
-		{
-			if (_isDeathAudioPlaying)
-			{
-				return false;
-			}
-			StartCoroutine(ResetDeathAudio(timeOut));
-			return true;
-		}
-
-		[Obfuscation(Exclude = true)]
-		public void PrepareDeath(bool isOwnerDamage = true)
-		{
-			if (!_isMultiplayerMode)
-			{
-				ZombieCreator.LastEnemy -= IncreaseRange;
-			}
-			botAiController.isDetectPlayer = false;
-			botAiController.IsCanMove = false;
-			IsDeath = true;
-			float num = deathSound.length;
-			TryPlayDeathSound(num);
-			animations.Stop();
-			if ((bool)animations[animationsName.Death])
-			{
-				animations.Play(animationsName.Death);
-				num = Mathf.Max(num, animations[animationsName.Death].length);
-				StartCoroutine(DelayedSetFallState(animations[animationsName.Death].length * 1.25f));
-			}
-			else
-			{
-				IsFalling = true;
-			}
-			StartCoroutine(DelayedDestroySelf(num));
-			modelCollider.enabled = false;
-			if (headCollider != null)
-			{
-				headCollider.enabled = false;
-			}
-			if (isOwnerDamage)
-			{
-				GlobalGameController.Score += scorePerKill;
-			}
-			CheckForceKillGuards();
-		}
-
-		private IEnumerator DelayedSetFallState(float delay)
-		{
-			yield return new WaitForSeconds(delay);
-			IsFalling = true;
-		}
-
-		private IEnumerator DelayedDestroySelf(float delay)
-		{
-			yield return new WaitForSeconds(delay);
-			if (!_isMultiplayerMode && !IsBotGuard())
-			{
-				ZombieCreator.sharedCreator.NumOfDeadZombies++;
-			}
-			DestroyByNetworkType();
+			return false;
 		}
 
 		private void CheckForceKillGuards()
 		{
-			if (guards.Length == 0)
+			if ((int)this.guards.Length == 0)
 			{
 				return;
 			}
-			ZombieCreator sharedCreator = ZombieCreator.sharedCreator;
-			if (sharedCreator == null)
+			ZombieCreator zombieCreator = ZombieCreator.sharedCreator;
+			if (zombieCreator == null)
 			{
 				return;
 			}
-			for (int i = 0; i < sharedCreator.bossGuads.Length; i++)
+			for (int i = 0; i < (int)zombieCreator.bossGuads.Length; i++)
 			{
-				GameObject gameObject = sharedCreator.bossGuads[i];
-				if (!(gameObject.gameObject == null))
+				GameObject gameObject = zombieCreator.bossGuads[i];
+				if (gameObject.gameObject != null)
 				{
-					BaseBot botScriptForObject = GetBotScriptForObject(gameObject.transform);
+					BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(gameObject.transform);
 					if (!botScriptForObject.IsDeath)
 					{
-						botScriptForObject.GetDamage(-2.1474836E+09f, null, false);
+						botScriptForObject.GetDamage(-2.1474836E+09f, null, false, false);
 					}
 				}
+			}
+		}
+
+		[DebuggerHidden]
+		private IEnumerator DelayedDestroySelf(float delay)
+		{
+			BaseBot.u003cDelayedDestroySelfu003ec__Iterator113 variable = null;
+			return variable;
+		}
+
+		[DebuggerHidden]
+		private IEnumerator DelayedSetFallState(float delay)
+		{
+			BaseBot.u003cDelayedSetFallStateu003ec__Iterator112 variable = null;
+			return variable;
+		}
+
+		public virtual void DelayShootAfterEvent(float seconds)
+		{
+		}
+
+		public void DestroyByNetworkType()
+		{
+			if (!this._isMultiplayerMode)
+			{
+				UnityEngine.Object.Destroy(base.gameObject);
+				return;
+			}
+			if (!PhotonNetwork.isMasterClient)
+			{
+				this.needDestroyByMasterClient = true;
+				this.DisableMobForDeleteMasterClient();
+			}
+			else
+			{
+				PhotonNetwork.Destroy(base.gameObject);
+			}
+		}
+
+		private void DisableMobForDeleteMasterClient()
+		{
+			this.modelCollider.gameObject.SetActive(false);
+			if (this.headCollider != null)
+			{
+				this.headCollider.gameObject.SetActive(false);
+			}
+			MonoBehaviour[] components = base.GetComponents<MonoBehaviour>();
+			for (int i = 0; i < (int)components.Length; i++)
+			{
+				bool flag = components[i] is PhotonView;
+				if (!flag && !(components[i] is BaseBot))
+				{
+					components[i].enabled = false;
+				}
+			}
+		}
+
+		public void FireByRPC(Vector3 pointFire, Vector3 positionToFire)
+		{
+			this._photonView.RPC("FireBulletRPC", PhotonTargets.Others, new object[] { pointFire, positionToFire });
+		}
+
+		public float GetAttackSpeedByCompleteLevel()
+		{
+			if (this.isAutomaticAnimationEnable)
+			{
+				return this.CheckAnimationSpeedRunMoveForBot(this._modMoveSpeedByDebuff);
+			}
+			return this.attackingSpeed * this._modMoveSpeedByDebuff;
+		}
+
+		public static BaseBot GetBotScriptForObject(Transform obj)
+		{
+			return obj.GetComponent<BaseBot>();
+		}
+
+		private Texture GetBotSkin()
+		{
+			Renderer[] componentsInChildren = base.GetComponentsInChildren<Renderer>(true);
+			if ((int)componentsInChildren.Length == 0)
+			{
+				return null;
+			}
+			return componentsInChildren[(int)componentsInChildren.Length - 1].material.mainTexture;
+		}
+
+		public void GetDamage(float damage, Transform instigator, string weaponName, bool isOwnerDamage = true, bool isHeadShot = false)
+		{
+			this.GetDamage(damage, instigator, isOwnerDamage, isHeadShot);
+			if (this._killed)
+			{
+				if (Application.isEditor)
+				{
+					UnityEngine.Debug.LogWarning("Bot is receiving damage after death.");
+				}
+				return;
+			}
+			if (this.health != 0f)
+			{
+				return;
+			}
+			if (!isOwnerDamage)
+			{
+				return;
+			}
+			if (!TrainingController.TrainingCompleted)
+			{
+				return;
+			}
+			if (Defs.isMulti && NetworkStartTable.LocalOrPasswordRoom())
+			{
+				return;
+			}
+			ShopNGUIController.CategoryNames categoryName = ShopNGUIController.CategoryNames.BackupCategory | ShopNGUIController.CategoryNames.MeleeCategory | ShopNGUIController.CategoryNames.SpecilCategory | ShopNGUIController.CategoryNames.SniperCategory | ShopNGUIController.CategoryNames.PremiumCategory | ShopNGUIController.CategoryNames.HatsCategory | ShopNGUIController.CategoryNames.ArmorCategory | ShopNGUIController.CategoryNames.SkinsCategory | ShopNGUIController.CategoryNames.CapesCategory | ShopNGUIController.CategoryNames.BootsCategory | ShopNGUIController.CategoryNames.GearCategory | ShopNGUIController.CategoryNames.MaskCategory;
+			string str = weaponName.Replace("(Clone)", string.Empty);
+			ItemRecord byPrefabName = ItemDb.GetByPrefabName(str);
+			if (byPrefabName != null)
+			{
+				categoryName = (ShopNGUIController.CategoryNames)PromoActionsGUIController.CatForTg(byPrefabName.Tag);
+			}
+			QuestMediator.NotifyKillMonster(categoryName, (Defs.isMulti ? false : !Defs.IsSurvival));
+			this._killed = true;
+		}
+
+		public void GetDamage(float damage, Transform instigator, bool isOwnerDamage = true, bool isHeadShot = false)
+		{
+			if (this.IsDeath)
+			{
+				return;
+			}
+			if (damage < 0f && !this._isFlashing)
+			{
+				base.StartCoroutine(this.ShowDamageEffect());
+			}
+			if (!isHeadShot)
+			{
+				this.ShowHitEffect();
+			}
+			else
+			{
+				this.ShowHeadShotEffect();
+				damage *= 2f;
+			}
+			this.health += damage;
+			if (this.health < 0f)
+			{
+				this.health = 0f;
+			}
+			if (this.health == 0f)
+			{
+				this.PrepareDeath(isOwnerDamage);
+				if (isOwnerDamage)
+				{
+					this.TakeBonusForKill();
+				}
+			}
+			else if (isOwnerDamage)
+			{
+				GlobalGameController.Score = GlobalGameController.Score + 5;
+			}
+			this.TryPlayDamageSound(this.damageSound.length);
+			if (instigator != null && this.health > 0f)
+			{
+				this.botAiController.SetTargetForced(instigator);
+			}
+		}
+
+		public void GetDamageForMultiplayer(float damage, Transform instigator, string weaponName, bool isHeadShot = false)
+		{
+			this.GetDamage(damage, instigator, weaponName, true, isHeadShot);
+			this._photonView.RPC("GetDamageRPC", PhotonTargets.Others, new object[] { damage, instigator, false, isHeadShot });
+		}
+
+		public void GetDamageForMultiplayer(float damage, Transform instigator, bool isHeadShot = false)
+		{
+			this.GetDamage(damage, instigator, true, isHeadShot);
+			this._photonView.RPC("GetDamageRPC", PhotonTargets.Others, new object[] { damage, instigator, false, isHeadShot });
+		}
+
+		[PunRPC]
+		[RPC]
+		public void GetDamageRPC(float damage, Transform instigator, bool isOwnerDamage, bool isHeadShot)
+		{
+			this.GetDamage(damage, instigator, isOwnerDamage, isHeadShot);
+		}
+
+		private BotDebuff GetDebuffByType(BotDebuffType type)
+		{
+			for (int i = 0; i < this._botDebufs.Count; i++)
+			{
+				if (this._botDebufs[i].type == type)
+				{
+					return this._botDebufs[i];
+				}
+			}
+			return null;
+		}
+
+		public virtual Vector3 GetHeadPoint()
+		{
+			Vector3 vector3 = base.transform.position;
+			vector3.y = vector3.y + (this.headCollider == null ? this.modelCollider.size.y * 0.75f : this.headCollider.center.y);
+			return vector3;
+		}
+
+		public virtual float GetMaxAttackDistance()
+		{
+			return this.GetMaxAttackDistance();
+		}
+
+		public static Vector3 GetPositionSpawnGuard(Vector3 bossPosition)
+		{
+			float single = UnityEngine.Random.Range(0.5f, 1f);
+			return bossPosition + new Vector3(single, single, single);
+		}
+
+		public float GetSquareAttackDistance()
+		{
+			return this.attackDistance * this.attackDistance;
+		}
+
+		public float GetSquareDetectRadius()
+		{
+			return this.detectRadius * this.detectRadius;
+		}
+
+		public float GetWalkSpeed()
+		{
+			if (this.isAutomaticAnimationEnable)
+			{
+				return this.CheckAnimationSpeedWalkMoveForBot(this._modMoveSpeedByDebuff);
+			}
+			return this.notAttackingSpeed * this._modMoveSpeedByDebuff;
+		}
+
+		private void IncreaseRange()
+		{
+			if (!this.isAutomaticAnimationEnable)
+			{
+				this.attackingSpeed = Mathf.Max(this.attackingSpeed, 3f);
+			}
+			else
+			{
+				this.speedAnimationRun = Mathf.Max(this.speedAnimationRun, 1.5f);
+			}
+			this.detectRadius = 150f;
+		}
+
+		protected virtual void Initialize()
+		{
+			this.animationsName = new BaseBot.BotAnimationName();
+			this.AntiHackForCreateMobInInvalidGameMode();
+			this._photonView = base.GetComponent<PhotonView>();
+			this._isMultiplayerMode = (this._photonView == null ? false : Defs.isCOOP);
+			this.animations = base.GetComponentInChildren<Animation>();
+			this.animations.Stop();
+			this.botAiController = base.GetComponent<BotAiController>();
+			this.modelCollider = base.GetComponentInChildren<BoxCollider>();
+			this.headCollider = base.GetComponentInChildren<SphereCollider>();
+			UnityEngine.Random.seed = (int)DateTime.Now.Ticks & 65535;
+			this.InitializeRandomAttackSpeed();
+			this.ModifyParametrsForLocalMode();
+			this.needDestroyByMasterClient = false;
+			this.baseHealth = this.health;
+		}
+
+		private void InitializeRandomAttackSpeed()
+		{
+			if (!this.isAutomaticAnimationEnable)
+			{
+				this.attackingSpeed += UnityEngine.Random.Range(-this.attackingSpeedRandomRange[0], this.attackingSpeedRandomRange[1]);
+			}
+			else
+			{
+				float single = (this.attackingSpeed - this.attackingSpeedRandomRange[0]) / this.attackingSpeed;
+				float single1 = (this.attackingSpeed + this.attackingSpeedRandomRange[1]) / this.attackingSpeed;
+				this.speedAnimationRun = UnityEngine.Random.Range(single, single1);
+			}
+		}
+
+		private void InitNetworkStateData()
+		{
+			this._botPosition = base.transform.position;
+			this._botRotation = base.transform.rotation;
+		}
+
+		private bool IsBotGuard()
+		{
+			return base.gameObject.name.Contains("BossGuard");
+		}
+
+		private bool IsCanPlayDeathSound(float timeOut)
+		{
+			if (this._isDeathAudioPlaying)
+			{
+				return false;
+			}
+			base.StartCoroutine(this.ResetDeathAudio(timeOut));
+			return true;
+		}
+
+		public static void LogDebugData(string message)
+		{
+		}
+
+		public void MakeDamage(Transform target, float damageValue)
+		{
+			bool flag = false;
+			if (target.CompareTag("Player"))
+			{
+				flag = true;
+				Player_move_c component = target.GetComponent<SkinName>().playerMoveC;
+				if (!this._isMultiplayerMode)
+				{
+					component.hit(damageValue, base.transform.position, false);
+				}
+				else
+				{
+					component.minusLiveFromZombi(damageValue, base.transform.position);
+				}
+			}
+			else if (target.CompareTag("Turret"))
+			{
+				flag = true;
+				target.GetComponent<TurretController>().MinusLive(damageValue, 0, new NetworkViewID());
+			}
+			else if (target.CompareTag("Enemy"))
+			{
+				flag = true;
+				BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(target);
+				if (!this._isMultiplayerMode)
+				{
+					botScriptForObject.GetDamage(damageValue, null, false, false);
+				}
+				else
+				{
+					botScriptForObject.GetDamageForMultiplayer(damageValue, null, false);
+				}
+			}
+			if (flag)
+			{
+				this.TryPlayAudioClip(this.takeDamageSound);
+			}
+		}
+
+		public void MakeDamage(Transform target)
+		{
+			this.MakeDamage(target, this.damagePerHit);
+		}
+
+		private void ModifyParametrsForLocalMode()
+		{
+			float diffModif = 0f;
+			float single = 0f;
+			if (!this.isAutomaticAnimationEnable)
+			{
+				diffModif = this.notAttackingSpeed;
+				single = this.attackingSpeed;
+			}
+			else
+			{
+				diffModif = this.speedAnimationWalk;
+				single = this.speedAnimationRun;
+			}
+			if (!this._isMultiplayerMode)
+			{
+				if (!Defs.IsSurvival)
+				{
+					single *= Defs.DiffModif;
+					this.health *= Defs.DiffModif;
+					diffModif *= Defs.DiffModif;
+				}
+				else if (Defs.IsSurvival && TrainingController.TrainingCompleted)
+				{
+					int num = ZombieCreator.sharedCreator.currentWave;
+					if (num == 0)
+					{
+						diffModif *= 0.75f;
+						single *= 0.75f;
+						this.health *= 0.7f;
+					}
+					else if (num == 1)
+					{
+						diffModif *= 0.85f;
+						single *= 0.85f;
+						this.health *= 0.8f;
+					}
+					else if (num == 2)
+					{
+						diffModif *= 0.9f;
+						single *= 0.9f;
+						this.health *= 0.9f;
+					}
+					else if (num >= 7)
+					{
+						diffModif *= 1.25f;
+						single *= 1.25f;
+					}
+					else if (num >= 9)
+					{
+						this.health *= 1.25f;
+					}
+				}
+			}
+			if (this._isMultiplayerMode || Defs.IsSurvival)
+			{
+				diffModif = diffModif * (0.9f + (float)ExpController.OurTierForAnyPlace() * 0.1f);
+				BaseBot baseBot = this;
+				baseBot.health = baseBot.health * (0.9f + (float)ExpController.OurTierForAnyPlace() * 0.1f);
+			}
+			if (!this.isAutomaticAnimationEnable)
+			{
+				this.notAttackingSpeed = diffModif;
+				this.attackingSpeed = single;
+			}
+			else
+			{
+				this.speedAnimationWalk = diffModif;
+				this.speedAnimationRun = single;
+			}
+			if (!Defs.IsSurvival && !this._isMultiplayerMode)
+			{
+				this.SetRangeParametrs();
 			}
 		}
 
@@ -567,183 +689,297 @@ namespace RilisoftBot
 
 		private void OnDestroy()
 		{
-			OnBotDestroyEvent();
-			if (!_isMultiplayerMode)
+			this.OnBotDestroyEvent();
+			if (!this._isMultiplayerMode)
 			{
-				ZombieCreator.LastEnemy -= IncreaseRange;
+				ZombieCreator.LastEnemy -= new Action(this.IncreaseRange);
 			}
 			Initializer.enemiesObj.Remove(base.gameObject);
 		}
 
-		public static BaseBot GetBotScriptForObject(Transform obj)
+		public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 		{
-			return obj.GetComponent<BaseBot>();
-		}
-
-		public virtual bool CheckEnemyInAttackZone(float distanceToEnemy)
-		{
-			return false;
-		}
-
-		public virtual Vector3 GetHeadPoint()
-		{
-			Vector3 position = base.transform.position;
-			position.y += ((!(headCollider != null)) ? (modelCollider.size.y * 0.75f) : headCollider.center.y);
-			return position;
-		}
-
-		public virtual float GetMaxAttackDistance()
-		{
-			return GetMaxAttackDistance();
-		}
-
-		public static void LogDebugData(string message)
-		{
-		}
-
-		private float CheckAnimationSpeedWalkMoveForBot(float modSpeed)
-		{
-			float num = speedAnimationWalk * modSpeed;
-			animations[animationsName.Walk].speed = num;
-			return num * attackingSpeed;
-		}
-
-		private float CheckAnimationSpeedRunMoveForBot(float modSpeed)
-		{
-			float num = speedAnimationRun * modSpeed;
-			animations[animationsName.Run].speed = num;
-			return num * notAttackingSpeed;
-		}
-
-		public float GetWalkSpeed()
-		{
-			if (isAutomaticAnimationEnable)
+			if (!this._isMultiplayerMode)
 			{
-				return CheckAnimationSpeedWalkMoveForBot(_modMoveSpeedByDebuff);
+				return;
 			}
-			return notAttackingSpeed * _modMoveSpeedByDebuff;
-		}
-
-		public float GetAttackSpeedByCompleteLevel()
-		{
-			if (isAutomaticAnimationEnable)
+			if (!stream.isWriting)
 			{
-				return CheckAnimationSpeedRunMoveForBot(_modMoveSpeedByDebuff);
+				this._botPosition = (Vector3)stream.ReceiveNext();
+				this._botRotation = (Quaternion)stream.ReceiveNext();
 			}
-			return attackingSpeed * _modMoveSpeedByDebuff;
+			else
+			{
+				stream.SendNext(base.transform.position);
+				stream.SendNext(base.transform.rotation);
+			}
 		}
 
-		public static Vector3 GetPositionSpawnGuard(Vector3 bossPosition)
+		public void OrientToTarget(Vector3 targetPos)
 		{
-			float num = UnityEngine.Random.Range(0.5f, 1f);
-			return bossPosition + new Vector3(num, num, num);
+			base.transform.LookAt(targetPos);
 		}
 
-		private bool IsBotGuard()
+		[Obfuscation(Exclude=true)]
+		public void PlayAnimationIdle()
 		{
-			return base.gameObject.name.Contains("BossGuard");
+			this.animations.Stop();
+			if (this.animations[this.animationsName.Idle])
+			{
+				this.animations.CrossFade(this.animationsName.Idle);
+			}
+			this.StopSteps();
+		}
+
+		public void PlayAnimationWalk()
+		{
+			this.animations.Stop();
+			if (!this.animations[this.animationsName.Walk])
+			{
+				this.animations.CrossFade(this.animationsName.Run);
+			}
+			else
+			{
+				this.animations.CrossFade(this.animationsName.Walk);
+			}
+			this.PlayWalkStepSound();
+		}
+
+		protected virtual void PlayAnimationZombieAttackOrStop()
+		{
+			if (this.animations[this.animationsName.Attack])
+			{
+				this.animations.CrossFade(this.animationsName.Attack);
+			}
+			else if (this.animations[this.animationsName.Stop])
+			{
+				this.animations.CrossFade(this.animationsName.Stop);
+			}
+			this.StopSteps();
+		}
+
+		private void PlayAnimationZombieWalk()
+		{
+			if (this.animations[this.animationsName.Run])
+			{
+				this.animations.CrossFade(this.animationsName.Run);
+			}
+			this.PlayRunStepSound();
+		}
+
+		public void PlayAnimZombieAttackOrStopByMode()
+		{
+			if (!this._isMultiplayerMode)
+			{
+				this.PlayAnimationZombieAttackOrStop();
+				return;
+			}
+			if (this._currentRunNetworkAnimation != BaseBot.RunNetworkAnimationType.ZombieAttackOrStop)
+			{
+				this.PlayAnimationZombieAttackOrStop();
+				this._photonView.RPC("PlayZombieAttackRPC", PhotonTargets.Others, new object[0]);
+			}
+			this._currentRunNetworkAnimation = BaseBot.RunNetworkAnimationType.ZombieAttackOrStop;
+		}
+
+		public void PlayAnimZombieWalkByMode()
+		{
+			if (!this._isMultiplayerMode)
+			{
+				this.PlayAnimationZombieWalk();
+				return;
+			}
+			if (this._currentRunNetworkAnimation != BaseBot.RunNetworkAnimationType.ZombieWalk)
+			{
+				this.PlayAnimationZombieWalk();
+				this._photonView.RPC("PlayZombieRunRPC", PhotonTargets.Others, new object[0]);
+			}
+			this._currentRunNetworkAnimation = BaseBot.RunNetworkAnimationType.ZombieWalk;
+		}
+
+		public void PlayRunStepSound()
+		{
+			if (!Defs.isSoundFX)
+			{
+				return;
+			}
+			if (this.runStepSound == null)
+			{
+				return;
+			}
+			if (this.audioSource.clip != this.runStepSound)
+			{
+				this.audioSource.loop = true;
+				this.audioSource.clip = this.runStepSound;
+				this.audioSource.Play();
+			}
+		}
+
+		public void PlayVoiceSound()
+		{
+			this.TryPlayAudioClip(this.voiceMobSoud);
+		}
+
+		public void PlayWalkStepSound()
+		{
+			if (!Defs.isSoundFX)
+			{
+				return;
+			}
+			if (this.stepSound == null)
+			{
+				return;
+			}
+			if (this.audioSource.clip != this.stepSound)
+			{
+				this.audioSource.loop = true;
+				this.audioSource.clip = this.stepSound;
+				this.audioSource.Play();
+			}
+		}
+
+		[PunRPC]
+		[RPC]
+		public void PlayZombieAttackRPC()
+		{
+			this.PlayAnimationZombieAttackOrStop();
+			this._currentRunNetworkAnimation = BaseBot.RunNetworkAnimationType.ZombieAttackOrStop;
+		}
+
+		[PunRPC]
+		[RPC]
+		public void PlayZombieRunRPC()
+		{
+			this.PlayAnimationZombieWalk();
+			this._currentRunNetworkAnimation = BaseBot.RunNetworkAnimationType.ZombieWalk;
+		}
+
+		[Obfuscation(Exclude=true)]
+		public void PrepareDeath(bool isOwnerDamage = true)
+		{
+			if (!this._isMultiplayerMode)
+			{
+				ZombieCreator.LastEnemy -= new Action(this.IncreaseRange);
+			}
+			this.botAiController.isDetectPlayer = false;
+			this.botAiController.IsCanMove = false;
+			this.IsDeath = true;
+			float single = this.deathSound.length;
+			this.TryPlayDeathSound(single);
+			this.animations.Stop();
+			if (!this.animations[this.animationsName.Death])
+			{
+				this.IsFalling = true;
+			}
+			else
+			{
+				this.animations.Play(this.animationsName.Death);
+				single = Mathf.Max(single, this.animations[this.animationsName.Death].length);
+				base.StartCoroutine(this.DelayedSetFallState(this.animations[this.animationsName.Death].length * 1.25f));
+			}
+			base.StartCoroutine(this.DelayedDestroySelf(single));
+			this.modelCollider.enabled = false;
+			if (this.headCollider != null)
+			{
+				this.headCollider.enabled = false;
+			}
+			if (isOwnerDamage)
+			{
+				GlobalGameController.Score = GlobalGameController.Score + this.scorePerKill;
+			}
+			this.CheckForceKillGuards();
+		}
+
+		private void ReplaceDebuff(BotDebuff oldDebuff, float newTimeLife, object newParametrs)
+		{
+			if (oldDebuff.type == BotDebuffType.DecreaserSpeed)
+			{
+				oldDebuff.ReplaceValues(newTimeLife, newParametrs);
+				this.RunDebuff(oldDebuff);
+			}
+		}
+
+		[DebuggerHidden]
+		private IEnumerator ResetDeathAudio(float timeOut)
+		{
+			BaseBot.u003cResetDeathAudiou003ec__Iterator111 variable = null;
+			return variable;
+		}
+
+		private void RunDebuff(BotDebuff debuff)
+		{
+			if (debuff.type == BotDebuffType.DecreaserSpeed)
+			{
+				this._modMoveSpeedByDebuff = debuff.GetFloatParametr();
+			}
+		}
+
+		[PunRPC]
+		[RPC]
+		public void SetBotHealthRPC(float botHealth)
+		{
+			this.health = botHealth;
+		}
+
+		public void SetPositionForFallState()
+		{
+			Transform vector3 = base.transform;
+			float single = base.transform.position.x;
+			Vector3 vector31 = base.transform.position;
+			float single1 = vector31.y - 7f * Time.deltaTime;
+			Vector3 vector32 = base.transform.position;
+			vector3.position = new Vector3(single, single1, vector32.z);
+		}
+
+		private void SetRangeParametrs()
+		{
+			if (this.isMobChampion || this.IsBotGuard())
+			{
+				return;
+			}
+			ZombieCreator.LastEnemy += new Action(this.IncreaseRange);
+			if (ZombieCreator.sharedCreator.IsLasTMonsRemains)
+			{
+				this.IncreaseRange();
+			}
+		}
+
+		[DebuggerHidden]
+		private IEnumerator ShowDamageEffect()
+		{
+			BaseBot.u003cShowDamageEffectu003ec__Iterator114 variable = null;
+			return variable;
 		}
 
 		private void ShowDamageTexture(bool isEnable)
 		{
-			if (_botMaterials == null || _botMaterials.Length == 0)
+			if (this._botMaterials == null || (int)this._botMaterials.Length == 0)
 			{
 				return;
 			}
-			for (int i = 0; i < _botMaterials.Length; i++)
+			for (int i = 0; i < (int)this._botMaterials.Length; i++)
 			{
-				if (isEnable)
+				if (!isEnable)
 				{
-					_botMaterials[i].ShowDamageEffect();
+					this._botMaterials[i].ResetMainMaterial();
 				}
 				else
 				{
-					_botMaterials[i].ResetMainMaterial();
+					this._botMaterials[i].ShowDamageEffect();
 				}
 			}
-		}
-
-		private IEnumerator ShowDamageEffect()
-		{
-			_isFlashing = true;
-			ShowDamageTexture(true);
-			yield return new WaitForSeconds(0.125f);
-			ShowDamageTexture(false);
-			_isFlashing = false;
-		}
-
-		private void TakeBonusForKill()
-		{
-			if (isMobChampion && !_isWeaponCreated && LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
-			{
-				string weaponName = LevelBox.weaponsFromBosses[Application.loadedLevelName];
-				Vector3 pos = base.gameObject.transform.position + new Vector3(0f, 0.25f, 0f);
-				if (Application.loadedLevelName == "Sky_islands")
-				{
-					pos -= new Vector3(0f, 1.5f, 0f);
-				}
-				GameObject weaponBonus = ZombieCreator.sharedCreator.weaponBonus;
-				GameObject gameObject = ((!(weaponBonus != null)) ? BonusCreator._CreateBonus(weaponName, pos) : BonusCreator._CreateBonusFromPrefab(weaponBonus, pos));
-				gameObject.AddComponent<GotToNextLevel>();
-				ZombieCreator.sharedCreator.weaponBonus = null;
-				_isWeaponCreated = true;
-			}
-		}
-
-		public void MakeDamage(Transform target, float damageValue)
-		{
-			bool flag = false;
-			if (target.CompareTag("Player"))
-			{
-				flag = true;
-				Player_move_c playerMoveC = target.GetComponent<SkinName>().playerMoveC;
-				if (_isMultiplayerMode)
-				{
-					playerMoveC.minusLiveFromZombi(damageValue, base.transform.position);
-				}
-				else
-				{
-					playerMoveC.hit(damageValue, base.transform.position);
-				}
-			}
-			else if (target.CompareTag("Turret"))
-			{
-				flag = true;
-				target.GetComponent<TurretController>().MinusLive(damageValue);
-			}
-			else if (target.CompareTag("Enemy"))
-			{
-				flag = true;
-				BaseBot botScriptForObject = GetBotScriptForObject(target);
-				if (_isMultiplayerMode)
-				{
-					botScriptForObject.GetDamageForMultiplayer(damageValue, null);
-				}
-				else
-				{
-					botScriptForObject.GetDamage(damageValue, null, false);
-				}
-			}
-			if (flag)
-			{
-				TryPlayAudioClip(takeDamageSound);
-			}
-		}
-
-		public void MakeDamage(Transform target)
-		{
-			MakeDamage(target, damagePerHit);
 		}
 
 		private void ShowHeadShotEffect()
 		{
-			if (!Device.isPixelGunLow)
+			if (Device.isPixelGunLow)
 			{
-				HitParticle currentParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle != null)
-				{
-					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, headCollider.transform.TransformPoint(headCollider.center));
-				}
+				return;
+			}
+			HitParticle currentParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
+			if (currentParticle != null)
+			{
+				currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, this.headCollider.transform.TransformPoint(this.headCollider.center));
 			}
 		}
 
@@ -756,347 +992,201 @@ namespace RilisoftBot
 			HitParticle currentParticle = HitStackController.sharedController.GetCurrentParticle(false);
 			if (currentParticle != null)
 			{
-				if (headCollider != null)
+				if (this.headCollider == null)
 				{
-					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, headCollider.transform.TransformPoint(headCollider.center));
+					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, base.transform.position + (Vector3.up * this.heightFlyOutHitEffect));
 				}
 				else
 				{
-					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, base.transform.position + Vector3.up * heightFlyOutHitEffect);
+					currentParticle.StartShowParticle(base.transform.position, base.transform.rotation, false, this.headCollider.transform.TransformPoint(this.headCollider.center));
 				}
 			}
 		}
 
-		public void GetDamage(float damage, Transform instigator, string weaponName, bool isOwnerDamage = true, bool isHeadShot = false)
+		private void Start()
 		{
-			GetDamage(damage, instigator, isOwnerDamage, isHeadShot);
-			if (_killed)
+			if (this._isMultiplayerMode && this._photonView.isMine)
 			{
-				if (Application.isEditor)
-				{
-					Debug.LogWarning("Bot is receiving damage after death.");
-				}
+				this._photonView.RPC("SetBotHealthRPC", PhotonTargets.All, new object[] { this.health });
 			}
-			else if (health == 0f && isOwnerDamage && TrainingController.TrainingCompleted && (!Defs.isMulti || !NetworkStartTable.LocalOrPasswordRoom()))
+			if (!this._isMultiplayerMode)
 			{
-				ShopNGUIController.CategoryNames weaponSlot = (ShopNGUIController.CategoryNames)(-1);
-				string prefabName = weaponName.Replace("(Clone)", string.Empty);
-				ItemRecord byPrefabName = ItemDb.GetByPrefabName(prefabName);
-				if (byPrefabName != null)
-				{
-					int num = PromoActionsGUIController.CatForTg(byPrefabName.Tag);
-					weaponSlot = (ShopNGUIController.CategoryNames)num;
-				}
-				bool campaign = !Defs.isMulti && !Defs.IsSurvival;
-				QuestMediator.NotifyKillMonster(weaponSlot, campaign);
-				_killed = true;
+				ZombieCreator numOfLiveZombies = ZombieCreator.sharedCreator;
+				numOfLiveZombies.NumOfLiveZombies = numOfLiveZombies.NumOfLiveZombies + 1;
 			}
-		}
-
-		public void GetDamage(float damage, Transform instigator, bool isOwnerDamage = true, bool isHeadShot = false)
-		{
-			if (IsDeath)
+			this.mobModel = this.modelCollider.transform.GetChild(0);
+			this._botMaterials = base.GetComponentsInChildren<BotChangeDamageMaterial>();
+			this.InitNetworkStateData();
+			Initializer.enemiesObj.Add(base.gameObject);
+			if (this._effectsManager == null)
 			{
-				return;
+				this._effectsManager = base.gameObject.AddComponent<PortalEnemyEffectsManager>();
 			}
-			if (damage < 0f && !_isFlashing)
-			{
-				StartCoroutine(ShowDamageEffect());
-			}
-			if (isHeadShot)
-			{
-				ShowHeadShotEffect();
-				damage *= 2f;
-			}
-			else
-			{
-				ShowHitEffect();
-			}
-			health += damage;
-			if (health < 0f)
-			{
-				health = 0f;
-			}
-			if (health == 0f)
-			{
-				PrepareDeath(isOwnerDamage);
-				if (isOwnerDamage)
-				{
-					TakeBonusForKill();
-				}
-			}
-			else if (isOwnerDamage)
-			{
-				GlobalGameController.Score += 5;
-			}
-			TryPlayDamageSound(damageSound.length);
-			if (instigator != null && health > 0f)
-			{
-				botAiController.SetTargetForced(instigator);
-			}
-		}
-
-		private BotDebuff GetDebuffByType(BotDebuffType type)
-		{
-			for (int i = 0; i < _botDebufs.Count; i++)
-			{
-				if (_botDebufs[i].type == type)
-				{
-					return _botDebufs[i];
-				}
-			}
-			return null;
-		}
-
-		private void RunDebuff(BotDebuff debuff)
-		{
-			if (debuff.type == BotDebuffType.DecreaserSpeed)
-			{
-				float num = (_modMoveSpeedByDebuff = debuff.GetFloatParametr());
-			}
+			this._effectsManager.ShowSpawnEffect();
 		}
 
 		private void StopDebuff(BotDebuff debuff)
 		{
 			if (debuff.type == BotDebuffType.DecreaserSpeed)
 			{
-				_modMoveSpeedByDebuff = 1f;
+				this._modMoveSpeedByDebuff = 1f;
 			}
 		}
 
-		public void ApplyDebuffByMode(BotDebuffType type, float timeLife, object parametrs)
+		public void StopSteps()
 		{
-			if (!_isMultiplayerMode)
+			if (this.stepSound == null)
 			{
-				ApplyDebuff(type, timeLife, parametrs);
+				return;
 			}
-			else
+			if (this.audioSource.clip == this.stepSound || this.audioSource.clip == this.runStepSound)
 			{
-				ApplyDebufForMultiplayer(type, timeLife, parametrs);
+				this.audioSource.Pause();
+				this.audioSource.clip = null;
 			}
 		}
 
-		private void ReplaceDebuff(BotDebuff oldDebuff, float newTimeLife, object newParametrs)
+		private void TakeBonusForKill()
 		{
-			if (oldDebuff.type == BotDebuffType.DecreaserSpeed)
+			if (!this.isMobChampion)
 			{
-				oldDebuff.ReplaceValues(newTimeLife, newParametrs);
-				RunDebuff(oldDebuff);
+				return;
 			}
+			if (this._isWeaponCreated)
+			{
+				return;
+			}
+			if (!LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
+			{
+				return;
+			}
+			string item = LevelBox.weaponsFromBosses[Application.loadedLevelName];
+			Vector3 vector3 = base.gameObject.transform.position + new Vector3(0f, 0.25f, 0f);
+			if (Application.loadedLevelName == "Sky_islands")
+			{
+				vector3 -= new Vector3(0f, 1.5f, 0f);
+			}
+			GameObject gameObject = ZombieCreator.sharedCreator.weaponBonus;
+			((gameObject == null ? BonusCreator._CreateBonus(item, vector3) : BonusCreator._CreateBonusFromPrefab(gameObject, vector3))).AddComponent<GotToNextLevel>();
+			ZombieCreator.sharedCreator.weaponBonus = null;
+			this._isWeaponCreated = true;
 		}
 
-		public void ApplyDebuff(BotDebuffType type, float timeLife, object parametrs)
+		public void TryPlayAudioClip(AudioClip audioClip)
 		{
-			BotDebuff debuffByType = GetDebuffByType(type);
-			if (debuffByType == null)
+			if (!Defs.isSoundFX)
 			{
-				BotDebuff botDebuff = new BotDebuff(type, timeLife, parametrs);
-				botDebuff.OnRun += RunDebuff;
-				botDebuff.OnStop += StopDebuff;
-				_botDebufs.Add(botDebuff);
+				return;
 			}
-			else
+			if (this.audioSource == null || audioClip == null)
 			{
-				ReplaceDebuff(debuffByType, timeLife, parametrs);
+				return;
+			}
+			this.audioSource.PlayOneShot(audioClip);
+		}
+
+		public void TryPlayDamageSound(float delay)
+		{
+			if (!Defs.isSoundFX)
+			{
+				return;
+			}
+			if (this.audioSource == null || this._isPlayingDamageSound)
+			{
+				return;
+			}
+			base.StartCoroutine(this.CheckCanPlayDamageAudio(delay));
+			this.audioSource.PlayOneShot(this.damageSound);
+		}
+
+		public void TryPlayDeathSound(float delay)
+		{
+			if (!Defs.isSoundFX)
+			{
+				return;
+			}
+			if (this.audioSource == null || !this.IsCanPlayDeathSound(delay))
+			{
+				return;
+			}
+			this.audioSource.PlayOneShot(this.deathSound);
+		}
+
+		private void Update()
+		{
+			this.UpdateDebuffState();
+			if (base.GetComponent<AudioSource>().enabled == Time.timeScale == 0f)
+			{
+				base.GetComponent<AudioSource>().enabled = !base.GetComponent<AudioSource>().enabled;
+				if (base.GetComponent<AudioSource>().enabled)
+				{
+					base.GetComponent<AudioSource>().Play();
+				}
+			}
+			if (!this._isMultiplayerMode)
+			{
+				return;
+			}
+			if (PhotonNetwork.isMasterClient && this.needDestroyByMasterClient)
+			{
+				PhotonNetwork.Destroy(base.gameObject);
+			}
+			if (!this._photonView.isMine && !this.needDestroyByMasterClient)
+			{
+				base.transform.position = Vector3.Lerp(base.transform.position, this._botPosition, Time.deltaTime * 5f);
+				base.transform.rotation = Quaternion.Lerp(base.transform.rotation, this._botRotation, Time.deltaTime * 5f);
 			}
 		}
 
 		public void UpdateDebuffState()
 		{
-			if (_botDebufs.Count == 0)
+			if (this._botDebufs.Count == 0)
 			{
 				return;
 			}
-			for (int i = 0; i < _botDebufs.Count; i++)
+			for (int i = 0; i < this._botDebufs.Count; i++)
 			{
-				if (!_botDebufs[i].isRun)
+				if (this._botDebufs[i].isRun)
 				{
-					_botDebufs[i].Run();
-					continue;
-				}
-				_botDebufs[i].timeLife -= Time.deltaTime;
-				if (_botDebufs[i].timeLife <= 0f)
-				{
-					_botDebufs[i].Stop();
-					_botDebufs.Remove(_botDebufs[i]);
-				}
-			}
-		}
-
-		private void InitNetworkStateData()
-		{
-			_botPosition = base.transform.position;
-			_botRotation = base.transform.rotation;
-		}
-
-		private void DisableMobForDeleteMasterClient()
-		{
-			modelCollider.gameObject.SetActive(false);
-			if (headCollider != null)
-			{
-				headCollider.gameObject.SetActive(false);
-			}
-			MonoBehaviour[] components = GetComponents<MonoBehaviour>();
-			for (int i = 0; i < components.Length; i++)
-			{
-				bool flag = components[i] as PhotonView != null;
-				bool flag2 = components[i] as BaseBot != null;
-				if (!flag && !flag2)
-				{
-					components[i].enabled = false;
-				}
-			}
-		}
-
-		public void DestroyByNetworkType()
-		{
-			if (!_isMultiplayerMode)
-			{
-				UnityEngine.Object.Destroy(base.gameObject);
-				return;
-			}
-			if (PhotonNetwork.isMasterClient)
-			{
-				PhotonNetwork.Destroy(base.gameObject);
-				return;
-			}
-			needDestroyByMasterClient = true;
-			DisableMobForDeleteMasterClient();
-		}
-
-		public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
-		{
-			if (_isMultiplayerMode)
-			{
-				if (stream.isWriting)
-				{
-					stream.SendNext(base.transform.position);
-					stream.SendNext(base.transform.rotation);
+					BotDebuff item = this._botDebufs[i];
+					item.timeLife = item.timeLife - Time.deltaTime;
+					if (this._botDebufs[i].timeLife <= 0f)
+					{
+						this._botDebufs[i].Stop();
+						this._botDebufs.Remove(this._botDebufs[i]);
+					}
 				}
 				else
 				{
-					_botPosition = (Vector3)stream.ReceiveNext();
-					_botRotation = (Quaternion)stream.ReceiveNext();
+					this._botDebufs[i].Run();
 				}
 			}
 		}
 
-		private void Update()
+		protected class BotAnimationName
 		{
-			UpdateDebuffState();
-			if (GetComponent<AudioSource>().enabled == (Time.timeScale == 0f))
+			public string Walk;
+
+			public string Run;
+
+			public string Stop;
+
+			public string Death;
+
+			public string Attack;
+
+			public string Idle;
+
+			public BotAnimationName()
 			{
-				GetComponent<AudioSource>().enabled = !GetComponent<AudioSource>().enabled;
-				if (GetComponent<AudioSource>().enabled)
-				{
-					GetComponent<AudioSource>().Play();
-				}
-			}
-			if (_isMultiplayerMode)
-			{
-				if (PhotonNetwork.isMasterClient && needDestroyByMasterClient)
-				{
-					PhotonNetwork.Destroy(base.gameObject);
-				}
-				if (!_photonView.isMine && !needDestroyByMasterClient)
-				{
-					base.transform.position = Vector3.Lerp(base.transform.position, _botPosition, Time.deltaTime * 5f);
-					base.transform.rotation = Quaternion.Lerp(base.transform.rotation, _botRotation, Time.deltaTime * 5f);
-				}
 			}
 		}
 
-		public void FireByRPC(Vector3 pointFire, Vector3 positionToFire)
+		private enum RunNetworkAnimationType
 		{
-			_photonView.RPC("FireBulletRPC", PhotonTargets.Others, pointFire, positionToFire);
-		}
-
-		[PunRPC]
-		[RPC]
-		public void SetBotHealthRPC(float botHealth)
-		{
-			health = botHealth;
-		}
-
-		[RPC]
-		[PunRPC]
-		public void PlayZombieRunRPC()
-		{
-			PlayAnimationZombieWalk();
-			_currentRunNetworkAnimation = RunNetworkAnimationType.ZombieWalk;
-		}
-
-		[PunRPC]
-		[RPC]
-		public void PlayZombieAttackRPC()
-		{
-			PlayAnimationZombieAttackOrStop();
-			_currentRunNetworkAnimation = RunNetworkAnimationType.ZombieAttackOrStop;
-		}
-
-		[RPC]
-		[PunRPC]
-		public void GetDamageRPC(float damage, Transform instigator, bool isOwnerDamage, bool isHeadShot)
-		{
-			GetDamage(damage, instigator, isOwnerDamage, isHeadShot);
-		}
-
-		public void GetDamageForMultiplayer(float damage, Transform instigator, string weaponName, bool isHeadShot = false)
-		{
-			GetDamage(damage, instigator, weaponName, true, isHeadShot);
-			_photonView.RPC("GetDamageRPC", PhotonTargets.Others, damage, instigator, false, isHeadShot);
-		}
-
-		public void GetDamageForMultiplayer(float damage, Transform instigator, bool isHeadShot = false)
-		{
-			GetDamage(damage, instigator, true, isHeadShot);
-			_photonView.RPC("GetDamageRPC", PhotonTargets.Others, damage, instigator, false, isHeadShot);
-		}
-
-		[PunRPC]
-		[RPC]
-		public void ApplyDebuffRPC(int typeDebuff, float timeLife, float parametr)
-		{
-			ApplyDebuff((BotDebuffType)typeDebuff, timeLife, parametr);
-		}
-
-		public void ApplyDebufForMultiplayer(BotDebuffType type, float timeLife, object parametrs)
-		{
-			ApplyDebuff(type, timeLife, parametrs);
-			if (type == BotDebuffType.DecreaserSpeed)
-			{
-				_photonView.RPC("ApplyDebuffRPC", PhotonTargets.Others, (int)type, timeLife, (float)parametrs);
-			}
-		}
-
-		public void PlayAnimZombieWalkByMode()
-		{
-			if (!_isMultiplayerMode)
-			{
-				PlayAnimationZombieWalk();
-				return;
-			}
-			if (_currentRunNetworkAnimation != 0)
-			{
-				PlayAnimationZombieWalk();
-				_photonView.RPC("PlayZombieRunRPC", PhotonTargets.Others);
-			}
-			_currentRunNetworkAnimation = RunNetworkAnimationType.ZombieWalk;
-		}
-
-		public void PlayAnimZombieAttackOrStopByMode()
-		{
-			if (!_isMultiplayerMode)
-			{
-				PlayAnimationZombieAttackOrStop();
-				return;
-			}
-			if (_currentRunNetworkAnimation != RunNetworkAnimationType.ZombieAttackOrStop)
-			{
-				PlayAnimationZombieAttackOrStop();
-				_photonView.RPC("PlayZombieAttackRPC", PhotonTargets.Others);
-			}
-			_currentRunNetworkAnimation = RunNetworkAnimationType.ZombieAttackOrStop;
+			ZombieWalk,
+			ZombieAttackOrStop,
+			None
 		}
 	}
 }

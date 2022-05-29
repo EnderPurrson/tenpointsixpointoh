@@ -10,29 +10,33 @@ namespace Rilisoft
 
 		public FogMode Mode;
 
-		public Color Color;
+		public UnityEngine.Color Color;
 
 		public float Start;
 
 		public float End;
 
+		public FogSettings()
+		{
+		}
+
 		public FogSettings FromCurrent()
 		{
-			Active = RenderSettings.fog;
-			Mode = RenderSettings.fogMode;
-			Color = RenderSettings.fogColor;
-			Start = RenderSettings.fogStartDistance;
-			End = RenderSettings.fogEndDistance;
+			this.Active = RenderSettings.fog;
+			this.Mode = RenderSettings.fogMode;
+			this.Color = RenderSettings.fogColor;
+			this.Start = RenderSettings.fogStartDistance;
+			this.End = RenderSettings.fogEndDistance;
 			return this;
 		}
 
 		public void SetToCurrent()
 		{
-			RenderSettings.fog = Active;
-			RenderSettings.fogMode = Mode;
-			RenderSettings.fogColor = Color;
-			RenderSettings.fogStartDistance = Start;
-			RenderSettings.fogEndDistance = End;
+			RenderSettings.fog = this.Active;
+			RenderSettings.fogMode = this.Mode;
+			RenderSettings.fogColor = this.Color;
+			RenderSettings.fogStartDistance = this.Start;
+			RenderSettings.fogEndDistance = this.End;
 		}
 	}
 }

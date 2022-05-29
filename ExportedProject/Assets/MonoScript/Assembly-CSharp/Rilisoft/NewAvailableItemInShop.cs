@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,9 +14,13 @@ namespace Rilisoft
 
 		public List<UILabel> itemName;
 
+		public NewAvailableItemInShop()
+		{
+		}
+
 		private void OnClick()
 		{
-			LevelUpWithOffers componentInParent = GetComponentInParent<LevelUpWithOffers>();
+			LevelUpWithOffers componentInParent = base.GetComponentInParent<LevelUpWithOffers>();
 			if (componentInParent != null)
 			{
 				ExpController.Instance.HandleNewAvailableItem(componentInParent.gameObject, this);
@@ -25,9 +30,9 @@ namespace Rilisoft
 		[ContextMenu("Set ref")]
 		private void SetRef()
 		{
-			itemImage = GetComponentsInChildren<UITexture>()[1];
-			itemName.Clear();
-			itemName.AddRange(GetComponentsInChildren<UILabel>(true));
+			this.itemImage = base.GetComponentsInChildren<UITexture>()[1];
+			this.itemName.Clear();
+			this.itemName.AddRange(base.GetComponentsInChildren<UILabel>(true));
 		}
 	}
 }

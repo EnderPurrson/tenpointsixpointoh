@@ -1,10 +1,11 @@
+using Rilisoft;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 
 internal sealed class BankController : MonoBehaviour
@@ -25,7 +26,7 @@ internal sealed class BankController : MonoBehaviour
 
 	public ChestBonusView bonusDetailView;
 
-	public static bool canShowIndication = true;
+	public static bool canShowIndication;
 
 	private BankView _bankViewCurrent;
 
@@ -39,81 +40,49 @@ internal sealed class BankController : MonoBehaviour
 
 	private IDisposable _backSubscription;
 
-	private readonly Lazy<bool> _timeTamperingDetected;
+	private readonly Lazy<bool> _timeTamperingDetected = new Lazy<bool>(new Func<bool>(() => {
+		bool flag = FreeAwardController.Instance.TimeTamperingDetected();
+		!flag;
+		return flag;
+	}));
 
 	private static float _lastTimePurchaseButtonPressed;
 
 	private bool _debugOptionsEnabled;
 
-	private string _debugMessage;
+	private string _debugMessage = string.Empty;
 
 	private bool _escapePressed;
 
 	private static BankController _instance;
 
-	[CompilerGenerated]
-	private static Func<bool> _003C_003Ef__am_0024cache16;
+	private EventHandler EscapePressed;
 
-	[CompilerGenerated]
-	private static Func<BankView, UILabel> _003C_003Ef__am_0024cache17;
-
-	[CompilerGenerated]
-	private static Func<UILabel, bool> _003C_003Ef__am_0024cache18;
-
-	[CompilerGenerated]
-	private static Func<PromoActionsManager, PromoActionsManager.AmazonEventInfo> _003C_003Ef__am_0024cache19;
-
-	[CompilerGenerated]
-	private static Func<PromoActionsManager.AmazonEventInfo, string> _003C_003Ef__am_0024cache1A;
-
-	[CompilerGenerated]
-	private static Func<BankView, UILabel> _003C_003Ef__am_0024cache1B;
-
-	[CompilerGenerated]
-	private static Func<UILabel, bool> _003C_003Ef__am_0024cache1C;
-
-	[CompilerGenerated]
-	private static Func<UILabel, UILabel[]> _003C_003Ef__am_0024cache1D;
-
-	[CompilerGenerated]
-	private static Func<PromoActionsManager.AmazonEventInfo, float> _003C_003Ef__am_0024cache1E;
-
-	public static bool ABTestStaticBank { get; private set; }
+	public static bool ABTestStaticBank
+	{
+		get;
+		private set;
+	}
 
 	public BankView bankView
 	{
 		get
 		{
+			BankView bankView;
 			if (PromoActionsManager.sharedManager == null)
 			{
-				Debug.LogWarning("PromoActionsManager.sharedManager == null");
-				return (!ABTestStaticBank) ? bankViewCommon : bankView_AB_NoGrid_Common;
+				UnityEngine.Debug.LogWarning("PromoActionsManager.sharedManager == null");
+				return (!BankController.ABTestStaticBank ? this.bankViewCommon : this.bankView_AB_NoGrid_Common);
 			}
-			return PromoActionsManager.sharedManager.IsEventX3Active ? ((!ABTestStaticBank) ? bankViewX3 : bankView_AB_NoGrid_X3) : ((!ABTestStaticBank) ? bankViewCommon : bankView_AB_NoGrid_Common);
-		}
-	}
-
-	public bool InterfaceEnabled
-	{
-		get
-		{
-			return bankView != null && bankView.interfaceHolder != null && bankView.interfaceHolder.gameObject.activeInHierarchy;
-		}
-		set
-		{
-			if (value)
+			if (!PromoActionsManager.sharedManager.IsEventX3Active)
 			{
-				ABTestStaticBank = FriendsController.isShowStaticBank;
+				bankView = (!BankController.ABTestStaticBank ? this.bankViewCommon : this.bankView_AB_NoGrid_Common);
 			}
-			InterfaceEnabledCoroutine(value);
-		}
-	}
-
-	public bool InterfaceEnabledCoroutineLocked
-	{
-		get
-		{
-			return _lockInterfaceEnabledCoroutine;
+			else
+			{
+				bankView = (!BankController.ABTestStaticBank ? this.bankViewX3 : this.bankView_AB_NoGrid_X3);
+			}
+			return bankView;
 		}
 	}
 
@@ -121,75 +90,100 @@ internal sealed class BankController : MonoBehaviour
 	{
 		get
 		{
-			return _instance;
+			return BankController._instance;
 		}
 	}
 
-	public static event Action onUpdateMoney;
-
-	public event EventHandler BackRequested
+	public bool InterfaceEnabled
 	{
-		add
+		get
 		{
-			if (bankViewCommon != null)
-			{
-				bankViewCommon.BackButtonPressed += value;
-			}
-			if (bankViewX3 != null)
-			{
-				bankViewX3.BackButtonPressed += value;
-			}
-			if (bankView_AB_NoGrid_Common != null)
-			{
-				bankView_AB_NoGrid_Common.BackButtonPressed += value;
-			}
-			if (bankView_AB_NoGrid_X3 != null)
-			{
-				bankView_AB_NoGrid_X3.BackButtonPressed += value;
-			}
-			this.EscapePressed = (EventHandler)Delegate.Combine(this.EscapePressed, value);
+			return (!(this.bankView != null) || !(this.bankView.interfaceHolder != null) ? false : this.bankView.interfaceHolder.gameObject.activeInHierarchy);
 		}
-		remove
+		set
 		{
-			if (bankViewCommon != null)
+			if (value)
 			{
-				bankViewCommon.BackButtonPressed -= value;
+				BankController.ABTestStaticBank = FriendsController.isShowStaticBank;
 			}
-			if (bankViewX3 != null)
-			{
-				bankViewX3.BackButtonPressed -= value;
-			}
-			if (bankView_AB_NoGrid_Common != null)
-			{
-				bankView_AB_NoGrid_Common.BackButtonPressed -= value;
-			}
-			if (bankView_AB_NoGrid_X3 != null)
-			{
-				bankView_AB_NoGrid_X3.BackButtonPressed -= value;
-			}
-			this.EscapePressed = (EventHandler)Delegate.Remove(this.EscapePressed, value);
+			this.InterfaceEnabledCoroutine(value);
 		}
 	}
 
-	private event EventHandler EscapePressed;
+	public bool InterfaceEnabledCoroutineLocked
+	{
+		get
+		{
+			return this._lockInterfaceEnabledCoroutine;
+		}
+	}
+
+	static BankController()
+	{
+		BankController.canShowIndication = true;
+	}
 
 	public BankController()
 	{
-		if (_003C_003Ef__am_0024cache16 == null)
-		{
-			_003C_003Ef__am_0024cache16 = _003C_timeTamperingDetected_003Em__247;
-		}
-		_timeTamperingDetected = new Lazy<bool>(_003C_003Ef__am_0024cache16);
-		_debugMessage = string.Empty;
-		base._002Ector();
 	}
 
-	public static void UpdateAllIndicatorsMoney()
+	public static void AddCoins(int count, bool needIndication = true, AnalyticsConstants.AccrualType accrualType = 0)
 	{
-		if (BankController.onUpdateMoney != null)
+		int num = Storager.getInt("Coins", false);
+		Storager.setInt("Coins", num + count, false);
+		AnalyticsFacade.CurrencyAccrual(count, "Coins", accrualType);
+		if (needIndication)
 		{
-			BankController.onUpdateMoney();
+			CoinsMessage.FireCoinsAddedEvent(false, 2);
 		}
+	}
+
+	public static void AddGems(int count, bool needIndication = true, AnalyticsConstants.AccrualType accrualType = 0)
+	{
+		int num = Storager.getInt("GemsCurrency", false);
+		Storager.setInt("GemsCurrency", num + count, false);
+		AnalyticsFacade.CurrencyAccrual(count, "GemsCurrency", accrualType);
+		if (needIndication)
+		{
+			CoinsMessage.FireCoinsAddedEvent(true, 2);
+		}
+	}
+
+	private void Awake()
+	{
+		BankController.GiveInitialNumOfCoins();
+	}
+
+	private static string ClampCoinCount(int coinCount)
+	{
+		return coinCount.ToString();
+	}
+
+	public void FreeAwardButtonClick()
+	{
+		ButtonClickSound.TryPlayClick();
+		if (FreeAwardController.Instance == null)
+		{
+			return;
+		}
+		if (!FreeAwardController.Instance.AdvertCountLessThanLimit())
+		{
+			return;
+		}
+		List<double> nums = (!MobileAdManager.IsPayingUser() ? PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesNonpaying : PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesPaying);
+		if (nums.Count == 0)
+		{
+			return;
+		}
+		DateTime date = DateTime.UtcNow.Date;
+		KeyValuePair<int, DateTime> keyValuePair = FreeAwardController.Instance.LastAdvertShow(date);
+		int num = Math.Max(0, keyValuePair.Key + 1);
+		if (num > nums.Count)
+		{
+			return;
+		}
+		DateTime dateTime = (keyValuePair.Value >= date ? keyValuePair.Value : date);
+		FreeAwardController.Instance.SetWatchState(dateTime + TimeSpan.FromMinutes(nums[num]));
 	}
 
 	public static void GiveInitialNumOfCoins()
@@ -206,12 +200,25 @@ internal sealed class BankController : MonoBehaviour
 		{
 			switch (BuildSettings.BuildTargetPlatform)
 			{
-			case RuntimePlatform.IPhonePlayer:
-				Storager.setInt("GemsCurrency", 0, false);
-				break;
-			case RuntimePlatform.Android:
-				Storager.setInt("GemsCurrency", 0, false);
-				break;
+				case RuntimePlatform.IPhonePlayer:
+				{
+					Storager.setInt("GemsCurrency", 0, false);
+					break;
+				}
+				case RuntimePlatform.PS3:
+				case RuntimePlatform.XBOX360:
+				{
+					break;
+				}
+				case RuntimePlatform.Android:
+				{
+					Storager.setInt("GemsCurrency", 0, false);
+					break;
+				}
+				default:
+				{
+					goto case RuntimePlatform.XBOX360;
+				}
 			}
 			if (Application.platform != RuntimePlatform.IPhonePlayer)
 			{
@@ -220,237 +227,249 @@ internal sealed class BankController : MonoBehaviour
 		}
 	}
 
+	private void HandleEscape()
+	{
+		if (!(FreeAwardController.Instance != null) || FreeAwardController.Instance.IsInState<FreeAwardController.IdleState>())
+		{
+			this._escapePressed = true;
+			return;
+		}
+		FreeAwardController.Instance.HandleClose();
+		this._escapePressed = false;
+	}
+
+	private void HandlePurchaseButtonPressed(object sender, PurchaseEventArgs e)
+	{
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64 && Time.realtimeSinceStartup - BankController._lastTimePurchaseButtonPressed < 1f)
+		{
+			UnityEngine.Debug.Log(string.Concat("Bank button pressed but ignored: ", e));
+			return;
+		}
+		BankController._lastTimePurchaseButtonPressed = Time.realtimeSinceStartup;
+		UnityEngine.Debug.Log(string.Concat("Bank button pressed: ", e));
+		if (StoreKitEventListener.purchaseInProcess)
+		{
+			UnityEngine.Debug.Log("Cannot perform request while purchase is in progress.");
+		}
+		if (coinsShop.thisScript != null)
+		{
+			coinsShop.thisScript.HandlePurchaseButton(e.Index, e.Currency);
+		}
+	}
+
 	private void InterfaceEnabledCoroutine(bool value)
 	{
-		if (!value && _backSubscription != null)
+		BankView bankView;
+		if (!value && this._backSubscription != null)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
-		_lockInterfaceEnabledCoroutine = true;
-		int num = _counterEn++;
-		Debug.Log("InterfaceEnabledCoroutine " + num + " start: " + value);
+		this._lockInterfaceEnabledCoroutine = true;
+		BankController bankController = this;
+		int num = bankController._counterEn;
+		int num1 = num;
+		bankController._counterEn = num + 1;
+		int num2 = num1;
+		UnityEngine.Debug.Log(string.Concat(new object[] { "InterfaceEnabledCoroutine ", num2, " start: ", value }));
 		try
 		{
-			if (value && !firsEnterToBankOccured)
+			if (value && !this.firsEnterToBankOccured)
 			{
-				firsEnterToBankOccured = true;
-				tmOfFirstEnterTheBank = Time.realtimeSinceStartup;
+				this.firsEnterToBankOccured = true;
+				this.tmOfFirstEnterTheBank = Time.realtimeSinceStartup;
 			}
-			if (!value)
+			value;
+			if (this.bankView != this._bankViewCurrent && this._bankViewCurrent != null && this._bankViewCurrent.interfaceHolder != null)
 			{
+				this._bankViewCurrent.interfaceHolder.gameObject.SetActive(false);
+				this._bankViewCurrent = null;
 			}
-			if (bankView != _bankViewCurrent && _bankViewCurrent != null && _bankViewCurrent.interfaceHolder != null)
+			if (this.bankView != null && this.bankView.interfaceHolder != null)
 			{
-				_bankViewCurrent.interfaceHolder.gameObject.SetActive(false);
-				_bankViewCurrent = null;
-			}
-			if (bankView != null && bankView.interfaceHolder != null)
-			{
-				bankView.interfaceHolder.gameObject.SetActive(value);
-				_bankViewCurrent = ((!value) ? null : bankView);
+				this.bankView.interfaceHolder.gameObject.SetActive(value);
+				if (!value)
+				{
+					bankView = null;
+				}
+				else
+				{
+					bankView = this.bankView;
+				}
+				this._bankViewCurrent = bankView;
 				if (value)
 				{
-					bankView.LoadCurrencyIcons(value);
+					this.bankView.LoadCurrencyIcons(value);
 				}
 			}
-			uiRoot.SetActive(value);
+			this.uiRoot.SetActive(value);
 			if (!value)
 			{
 				ActivityIndicator.IsActiveIndicator = false;
-				bankViewCommon.LoadCurrencyIcons(value);
-				bankViewX3.LoadCurrencyIcons(value);
-				bankView_AB_NoGrid_Common.LoadCurrencyIcons(value);
-				bankView_AB_NoGrid_X3.LoadCurrencyIcons(value);
+				this.bankViewCommon.LoadCurrencyIcons(value);
+				this.bankViewX3.LoadCurrencyIcons(value);
+				this.bankView_AB_NoGrid_Common.LoadCurrencyIcons(value);
+				this.bankView_AB_NoGrid_X3.LoadCurrencyIcons(value);
 			}
 			FreeAwardShowHandler.CheckShowChest(value);
 			if (value)
 			{
-				coinsShop.thisScript.RefreshProductsIfNeed();
-				OnEventX3AmazonBonusUpdated();
+				coinsShop.thisScript.RefreshProductsIfNeed(false);
+				this.OnEventX3AmazonBonusUpdated();
 			}
 		}
 		finally
 		{
 			if (value)
 			{
-				if (_backSubscription != null)
+				if (this._backSubscription != null)
 				{
-					_backSubscription.Dispose();
+					this._backSubscription.Dispose();
 				}
-				_backSubscription = BackSystem.Instance.Register(HandleEscape, "Bank");
+				this._backSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Bank");
 			}
 			if (Device.IsLoweMemoryDevice)
 			{
 				ActivityIndicator.ClearMemory();
 			}
-			_lockInterfaceEnabledCoroutine = false;
-			Debug.Log("InterfaceEnabledCoroutine " + num + " stop: " + value);
-		}
-	}
-
-	private void HandleEscape()
-	{
-		if (FreeAwardController.Instance != null && !FreeAwardController.Instance.IsInState<FreeAwardController.IdleState>())
-		{
-			FreeAwardController.Instance.HandleClose();
-			_escapePressed = false;
-		}
-		else
-		{
-			_escapePressed = true;
-		}
-	}
-
-	private void Awake()
-	{
-		GiveInitialNumOfCoins();
-	}
-
-	private void Start()
-	{
-		_instance = this;
-		PromoActionsManager.EventX3Updated += OnEventX3Updated;
-		if (bankViewCommon != null)
-		{
-			bankViewCommon.PurchaseButtonPressed += HandlePurchaseButtonPressed;
-		}
-		if (bankViewX3 != null)
-		{
-			bankViewX3.PurchaseButtonPressed += HandlePurchaseButtonPressed;
-		}
-		if (bankView_AB_NoGrid_Common != null)
-		{
-			bankView_AB_NoGrid_Common.PurchaseButtonPressed += HandlePurchaseButtonPressed;
-		}
-		if (bankView_AB_NoGrid_X3 != null)
-		{
-			bankView_AB_NoGrid_X3.PurchaseButtonPressed += HandlePurchaseButtonPressed;
-		}
-		PromoActionsManager.EventAmazonX3Updated += OnEventX3AmazonBonusUpdated;
-		HashSet<string> hashSet = new HashSet<string>();
-		hashSet.Add("7FFC6ACA-F568-46C3-86AD-8A4FA2DF4401");
-		HashSet<string> hashSet2 = hashSet;
-		_debugOptionsEnabled = hashSet2.Contains(SystemInfo.deviceUniqueIdentifier);
-		bankView.freeAwardButton.gameObject.SetActive(false);
-	}
-
-	private void OnEventX3Updated()
-	{
-		if (_bankViewCurrent != null)
-		{
-			InterfaceEnabledCoroutine(true);
-		}
-	}
-
-	private void OnEventX3AmazonBonusUpdated()
-	{
-		if (_bankViewCurrent == null || _bankViewCurrent.eventX3AmazonBonusWidget == null)
-		{
-			return;
-		}
-		GameObject gameObject = _bankViewCurrent.eventX3AmazonBonusWidget.gameObject;
-		gameObject.SetActive(PromoActionsManager.sharedManager.IsAmazonEventX3Active);
-		UILabel[] componentsInChildren = gameObject.GetComponentsInChildren<UILabel>();
-		BankView o = bankView;
-		if (_003C_003Ef__am_0024cache17 == null)
-		{
-			_003C_003Ef__am_0024cache17 = _003COnEventX3AmazonBonusUpdated_003Em__248;
-		}
-		UILabel uILabel = o.Map(_003C_003Ef__am_0024cache17);
-		if ((object)uILabel == null)
-		{
-			if (_003C_003Ef__am_0024cache18 == null)
-			{
-				_003C_003Ef__am_0024cache18 = _003COnEventX3AmazonBonusUpdated_003Em__249;
-			}
-			uILabel = componentsInChildren.FirstOrDefault(_003C_003Ef__am_0024cache18);
-		}
-		UILabel uILabel2 = uILabel;
-		PromoActionsManager sharedManager = PromoActionsManager.sharedManager;
-		if (_003C_003Ef__am_0024cache19 == null)
-		{
-			_003C_003Ef__am_0024cache19 = _003COnEventX3AmazonBonusUpdated_003Em__24A;
-		}
-		PromoActionsManager.AmazonEventInfo o2 = sharedManager.Map(_003C_003Ef__am_0024cache19);
-		if (uILabel2 != null)
-		{
-			if (_003C_003Ef__am_0024cache1A == null)
-			{
-				_003C_003Ef__am_0024cache1A = _003COnEventX3AmazonBonusUpdated_003Em__24B;
-			}
-			uILabel2.text = o2.Map(_003C_003Ef__am_0024cache1A) ?? string.Empty;
-		}
-		BankView o3 = bankView;
-		if (_003C_003Ef__am_0024cache1B == null)
-		{
-			_003C_003Ef__am_0024cache1B = _003COnEventX3AmazonBonusUpdated_003Em__24C;
-		}
-		UILabel uILabel3 = o3.Map(_003C_003Ef__am_0024cache1B);
-		if ((object)uILabel3 == null)
-		{
-			if (_003C_003Ef__am_0024cache1C == null)
-			{
-				_003C_003Ef__am_0024cache1C = _003COnEventX3AmazonBonusUpdated_003Em__24D;
-			}
-			uILabel3 = componentsInChildren.FirstOrDefault(_003C_003Ef__am_0024cache1C);
-		}
-		UILabel o4 = uILabel3;
-		if (_003C_003Ef__am_0024cache1D == null)
-		{
-			_003C_003Ef__am_0024cache1D = _003COnEventX3AmazonBonusUpdated_003Em__24E;
-		}
-		UILabel[] array = o4.Map(_003C_003Ef__am_0024cache1D) ?? new UILabel[0];
-		if (_003C_003Ef__am_0024cache1E == null)
-		{
-			_003C_003Ef__am_0024cache1E = _003COnEventX3AmazonBonusUpdated_003Em__24F;
-		}
-		float num = o2.Map(_003C_003Ef__am_0024cache1E);
-		string text = LocalizationStore.Get("Key_1672");
-		UILabel[] array2 = array;
-		foreach (UILabel uILabel4 in array2)
-		{
-			uILabel4.text = ("Key_1672".Equals(text, StringComparison.OrdinalIgnoreCase) ? string.Empty : string.Format(text, num));
-		}
-	}
-
-	private void Update()
-	{
-		if (!InterfaceEnabled)
-		{
-			_escapePressed = false;
-			return;
-		}
-		if (FreeAwardController.Instance == null)
-		{
-			bankView.freeAwardButton.gameObject.SetActive(false);
-		}
-		else if (!Defs.MainMenuScene.Equals(Application.loadedLevelName, StringComparison.Ordinal))
-		{
-			bankView.freeAwardButton.gameObject.SetActive(false);
-		}
-		else if (MobileAdManager.AdIsApplicable(MobileAdManager.Type.Video) && !_timeTamperingDetected.Value && FreeAwardController.Instance.IsInState<FreeAwardController.IdleState>())
-		{
-			bool active = FreeAwardController.Instance.AdvertCountLessThanLimit();
-			bankView.freeAwardButton.gameObject.SetActive(active);
-		}
-		UpdateBankView(bankViewCommon);
-		UpdateBankView(bankViewX3);
-		UpdateBankView(bankView_AB_NoGrid_Common);
-		UpdateBankView(bankView_AB_NoGrid_X3);
-		EventHandler escapePressed = this.EscapePressed;
-		if (_escapePressed && escapePressed != null)
-		{
-			escapePressed(this, EventArgs.Empty);
-			_escapePressed = false;
+			this._lockInterfaceEnabledCoroutine = false;
+			UnityEngine.Debug.Log(string.Concat(new object[] { "InterfaceEnabledCoroutine ", num2, " stop: ", value }));
 		}
 	}
 
 	private void LateUpdate()
 	{
-		if (InterfaceEnabled && ExperienceController.sharedController != null && !_lockInterfaceEnabledCoroutine)
+		if (this.InterfaceEnabled && ExperienceController.sharedController != null && !this._lockInterfaceEnabledCoroutine)
 		{
 			ExperienceController.sharedController.isShowRanks = false;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		PromoActionsManager.EventX3Updated -= new Action(this.OnEventX3Updated);
+		PromoActionsManager.EventAmazonX3Updated -= new Action(this.OnEventX3AmazonBonusUpdated);
+		if (this.bankViewCommon != null)
+		{
+			this.bankViewCommon.PurchaseButtonPressed -= new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankViewX3 != null)
+		{
+			this.bankViewX3.PurchaseButtonPressed -= new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankView_AB_NoGrid_Common != null)
+		{
+			this.bankView_AB_NoGrid_Common.PurchaseButtonPressed -= new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankView_AB_NoGrid_X3 != null)
+		{
+			this.bankView_AB_NoGrid_X3.PurchaseButtonPressed -= new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+	}
+
+	private void OnEventX3AmazonBonusUpdated()
+	{
+		if (this._bankViewCurrent == null || this._bankViewCurrent.eventX3AmazonBonusWidget == null)
+		{
+			return;
+		}
+		GameObject gameObject = this._bankViewCurrent.eventX3AmazonBonusWidget.gameObject;
+		gameObject.SetActive(PromoActionsManager.sharedManager.IsAmazonEventX3Active);
+		UILabel[] componentsInChildren = gameObject.GetComponentsInChildren<UILabel>();
+		UILabel uILabel = this.bankView.Map<BankView, UILabel>((BankView b) => b.amazonEventCaptionLabel) ?? ((IEnumerable<UILabel>)componentsInChildren).FirstOrDefault<UILabel>((UILabel l) => "CaptionLabel".Equals(l.name, StringComparison.OrdinalIgnoreCase));
+		PromoActionsManager.AmazonEventInfo amazonEventInfo = PromoActionsManager.sharedManager.Map<PromoActionsManager, PromoActionsManager.AmazonEventInfo>((PromoActionsManager p) => p.AmazonEvent);
+		if (uILabel != null)
+		{
+			uILabel.text = amazonEventInfo.Map<PromoActionsManager.AmazonEventInfo, string>((PromoActionsManager.AmazonEventInfo e) => e.Caption) ?? string.Empty;
+		}
+		UILabel[] uILabelArray = (this.bankView.Map<BankView, UILabel>((BankView b) => b.amazonEventTitleLabel) ?? ((IEnumerable<UILabel>)componentsInChildren).FirstOrDefault<UILabel>((UILabel l) => "TitleLabel".Equals(l.name, StringComparison.OrdinalIgnoreCase))).Map<UILabel, UILabel[]>((UILabel t) => t.GetComponentsInChildren<UILabel>()) ?? new UILabel[0];
+		float single = amazonEventInfo.Map<PromoActionsManager.AmazonEventInfo, float>((PromoActionsManager.AmazonEventInfo e) => e.Percentage);
+		string str = LocalizationStore.Get("Key_1672");
+		UILabel[] uILabelArray1 = uILabelArray;
+		for (int i = 0; i < (int)uILabelArray1.Length; i++)
+		{
+			uILabelArray1[i].text = ("Key_1672".Equals(str, StringComparison.OrdinalIgnoreCase) ? string.Empty : string.Format(str, single));
+		}
+	}
+
+	private void OnEventX3Updated()
+	{
+		if (this._bankViewCurrent != null)
+		{
+			this.InterfaceEnabledCoroutine(true);
+		}
+	}
+
+	private void Start()
+	{
+		BankController._instance = this;
+		PromoActionsManager.EventX3Updated += new Action(this.OnEventX3Updated);
+		if (this.bankViewCommon != null)
+		{
+			this.bankViewCommon.PurchaseButtonPressed += new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankViewX3 != null)
+		{
+			this.bankViewX3.PurchaseButtonPressed += new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankView_AB_NoGrid_Common != null)
+		{
+			this.bankView_AB_NoGrid_Common.PurchaseButtonPressed += new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		if (this.bankView_AB_NoGrid_X3 != null)
+		{
+			this.bankView_AB_NoGrid_X3.PurchaseButtonPressed += new EventHandler<PurchaseEventArgs>(this.HandlePurchaseButtonPressed);
+		}
+		PromoActionsManager.EventAmazonX3Updated += new Action(this.OnEventX3AmazonBonusUpdated);
+		HashSet<string> strs = new HashSet<string>();
+		strs.Add("7FFC6ACA-F568-46C3-86AD-8A4FA2DF4401");
+		this._debugOptionsEnabled = strs.Contains(SystemInfo.deviceUniqueIdentifier);
+		this.bankView.freeAwardButton.gameObject.SetActive(false);
+	}
+
+	private void Update()
+	{
+		if (!this.InterfaceEnabled)
+		{
+			this._escapePressed = false;
+			return;
+		}
+		if (FreeAwardController.Instance == null)
+		{
+			this.bankView.freeAwardButton.gameObject.SetActive(false);
+		}
+		else if (!Defs.MainMenuScene.Equals(Application.loadedLevelName, StringComparison.Ordinal))
+		{
+			this.bankView.freeAwardButton.gameObject.SetActive(false);
+		}
+		else if (MobileAdManager.AdIsApplicable(MobileAdManager.Type.Video))
+		{
+			if (!this._timeTamperingDetected.Value)
+			{
+				if (FreeAwardController.Instance.IsInState<FreeAwardController.IdleState>())
+				{
+					bool flag = FreeAwardController.Instance.AdvertCountLessThanLimit();
+					this.bankView.freeAwardButton.gameObject.SetActive(flag);
+				}
+			}
+		}
+		this.UpdateBankView(this.bankViewCommon);
+		this.UpdateBankView(this.bankViewX3);
+		this.UpdateBankView(this.bankView_AB_NoGrid_Common);
+		this.UpdateBankView(this.bankView_AB_NoGrid_X3);
+		EventHandler escapePressed = this.EscapePressed;
+		if (this._escapePressed && escapePressed != null)
+		{
+			escapePressed(this, EventArgs.Empty);
+			this._escapePressed = false;
+		}
+	}
+
+	public static void UpdateAllIndicatorsMoney()
+	{
+		if (BankController.onUpdateMoney != null)
+		{
+			BankController.onUpdateMoney();
 		}
 	}
 
@@ -469,18 +488,19 @@ internal sealed class BankController : MonoBehaviour
 			bankView.PurchaseButtonsEnabled = false;
 			bankView.PurchaseSuccessfulLabelEnabled = false;
 		}
-		else
+		else if (coinsShop.thisScript != null)
 		{
-			if (!(coinsShop.thisScript != null))
-			{
-				return;
-			}
-			bankView.NotEnoughCoinsLabelEnabled = coinsShop.thisScript.notEnoughCurrency != null && coinsShop.thisScript.notEnoughCurrency.Equals("Coins");
-			bankView.NotEnoughGemsLabelEnabled = coinsShop.thisScript.notEnoughCurrency != null && coinsShop.thisScript.notEnoughCurrency.Equals("GemsCurrency");
+			bankView.NotEnoughCoinsLabelEnabled = (coinsShop.thisScript.notEnoughCurrency == null ? false : coinsShop.thisScript.notEnoughCurrency.Equals("Coins"));
+			bankView.NotEnoughGemsLabelEnabled = (coinsShop.thisScript.notEnoughCurrency == null ? false : coinsShop.thisScript.notEnoughCurrency.Equals("GemsCurrency"));
 			ActivityIndicator.IsActiveIndicator = StoreKitEventListener.purchaseInProcess;
-			if (coinsShop.IsNoConnection)
+			if (!coinsShop.IsNoConnection)
 			{
-				if (Time.realtimeSinceStartup - tmOfFirstEnterTheBank > 3f)
+				bankView.ConnectionProblemLabelEnabled = false;
+				bankView.PurchaseButtonsEnabled = true;
+			}
+			else
+			{
+				if (Time.realtimeSinceStartup - this.tmOfFirstEnterTheBank > 3f)
 				{
 					bankView.ConnectionProblemLabelEnabled = true;
 				}
@@ -489,168 +509,74 @@ internal sealed class BankController : MonoBehaviour
 				bankView.PurchaseButtonsEnabled = false;
 				bankView.PurchaseSuccessfulLabelEnabled = false;
 			}
-			else
-			{
-				bankView.ConnectionProblemLabelEnabled = false;
-				bankView.PurchaseButtonsEnabled = true;
-			}
 			bankView.PurchaseSuccessfulLabelEnabled = coinsShop.thisScript.ProductPurchasedRecently;
 		}
 	}
 
-	private void OnDestroy()
-	{
-		PromoActionsManager.EventX3Updated -= OnEventX3Updated;
-		PromoActionsManager.EventAmazonX3Updated -= OnEventX3AmazonBonusUpdated;
-		if (bankViewCommon != null)
-		{
-			bankViewCommon.PurchaseButtonPressed -= HandlePurchaseButtonPressed;
-		}
-		if (bankViewX3 != null)
-		{
-			bankViewX3.PurchaseButtonPressed -= HandlePurchaseButtonPressed;
-		}
-		if (bankView_AB_NoGrid_Common != null)
-		{
-			bankView_AB_NoGrid_Common.PurchaseButtonPressed -= HandlePurchaseButtonPressed;
-		}
-		if (bankView_AB_NoGrid_X3 != null)
-		{
-			bankView_AB_NoGrid_X3.PurchaseButtonPressed -= HandlePurchaseButtonPressed;
-		}
-	}
-
-	private void HandlePurchaseButtonPressed(object sender, PurchaseEventArgs e)
-	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64 && Time.realtimeSinceStartup - _lastTimePurchaseButtonPressed < 1f)
-		{
-			Debug.Log("Bank button pressed but ignored: " + e);
-			return;
-		}
-		_lastTimePurchaseButtonPressed = Time.realtimeSinceStartup;
-		Debug.Log("Bank button pressed: " + e);
-		if (StoreKitEventListener.purchaseInProcess)
-		{
-			Debug.Log("Cannot perform request while purchase is in progress.");
-		}
-		if (coinsShop.thisScript != null)
-		{
-			coinsShop.thisScript.HandlePurchaseButton(e.Index, e.Currency);
-		}
-	}
-
-	private static string ClampCoinCount(int coinCount)
-	{
-		return coinCount.ToString();
-	}
-
-	public static void AddCoins(int count, bool needIndication = true, AnalyticsConstants.AccrualType accrualType = AnalyticsConstants.AccrualType.Earned)
-	{
-		int @int = Storager.getInt("Coins", false);
-		Storager.setInt("Coins", @int + count, false);
-		AnalyticsFacade.CurrencyAccrual(count, "Coins", accrualType);
-		if (needIndication)
-		{
-			CoinsMessage.FireCoinsAddedEvent();
-		}
-	}
-
-	public static void AddGems(int count, bool needIndication = true, AnalyticsConstants.AccrualType accrualType = AnalyticsConstants.AccrualType.Earned)
-	{
-		int @int = Storager.getInt("GemsCurrency", false);
-		Storager.setInt("GemsCurrency", @int + count, false);
-		AnalyticsFacade.CurrencyAccrual(count, "GemsCurrency", accrualType);
-		if (needIndication)
-		{
-			CoinsMessage.FireCoinsAddedEvent(true);
-		}
-	}
-
+	[DebuggerHidden]
 	public static IEnumerator WaitForIndicationGems(bool isGems)
 	{
-		while (!canShowIndication)
-		{
-			yield return null;
-		}
-		CoinsMessage.FireCoinsAddedEvent(isGems);
+		BankController.u003cWaitForIndicationGemsu003ec__Iterator107 variable = null;
+		return variable;
 	}
 
-	public void FreeAwardButtonClick()
+	public event EventHandler BackRequested
 	{
-		ButtonClickSound.TryPlayClick();
-		if (FreeAwardController.Instance == null || !FreeAwardController.Instance.AdvertCountLessThanLimit())
+		add
 		{
-			return;
-		}
-		List<double> list = ((!MobileAdManager.IsPayingUser()) ? PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesNonpaying : PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesPaying);
-		if (list.Count != 0)
-		{
-			DateTime date = DateTime.UtcNow.Date;
-			KeyValuePair<int, DateTime> keyValuePair = FreeAwardController.Instance.LastAdvertShow(date);
-			int num = Math.Max(0, keyValuePair.Key + 1);
-			if (num <= list.Count)
+			if (this.bankViewCommon != null)
 			{
-				DateTime dateTime = ((!(keyValuePair.Value < date)) ? keyValuePair.Value : date);
-				FreeAwardController.Instance.SetWatchState(dateTime + TimeSpan.FromMinutes(list[num]));
+				this.bankViewCommon.BackButtonPressed += value;
 			}
+			if (this.bankViewX3 != null)
+			{
+				this.bankViewX3.BackButtonPressed += value;
+			}
+			if (this.bankView_AB_NoGrid_Common != null)
+			{
+				this.bankView_AB_NoGrid_Common.BackButtonPressed += value;
+			}
+			if (this.bankView_AB_NoGrid_X3 != null)
+			{
+				this.bankView_AB_NoGrid_X3.BackButtonPressed += value;
+			}
+			this.EscapePressed += value;
 		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003C_timeTamperingDetected_003Em__247()
-	{
-		bool flag = FreeAwardController.Instance.TimeTamperingDetected();
-		if (flag)
+		remove
 		{
+			if (this.bankViewCommon != null)
+			{
+				this.bankViewCommon.BackButtonPressed -= value;
+			}
+			if (this.bankViewX3 != null)
+			{
+				this.bankViewX3.BackButtonPressed -= value;
+			}
+			if (this.bankView_AB_NoGrid_Common != null)
+			{
+				this.bankView_AB_NoGrid_Common.BackButtonPressed -= value;
+			}
+			if (this.bankView_AB_NoGrid_X3 != null)
+			{
+				this.bankView_AB_NoGrid_X3.BackButtonPressed -= value;
+			}
+			this.EscapePressed -= value;
 		}
-		return flag;
 	}
 
-	[CompilerGenerated]
-	private static UILabel _003COnEventX3AmazonBonusUpdated_003Em__248(BankView b)
+	private event EventHandler EscapePressed
 	{
-		return b.amazonEventCaptionLabel;
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.EscapePressed += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.EscapePressed -= value;
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003COnEventX3AmazonBonusUpdated_003Em__249(UILabel l)
-	{
-		return "CaptionLabel".Equals(l.name, StringComparison.OrdinalIgnoreCase);
-	}
-
-	[CompilerGenerated]
-	private static PromoActionsManager.AmazonEventInfo _003COnEventX3AmazonBonusUpdated_003Em__24A(PromoActionsManager p)
-	{
-		return p.AmazonEvent;
-	}
-
-	[CompilerGenerated]
-	private static string _003COnEventX3AmazonBonusUpdated_003Em__24B(PromoActionsManager.AmazonEventInfo e)
-	{
-		return e.Caption;
-	}
-
-	[CompilerGenerated]
-	private static UILabel _003COnEventX3AmazonBonusUpdated_003Em__24C(BankView b)
-	{
-		return b.amazonEventTitleLabel;
-	}
-
-	[CompilerGenerated]
-	private static bool _003COnEventX3AmazonBonusUpdated_003Em__24D(UILabel l)
-	{
-		return "TitleLabel".Equals(l.name, StringComparison.OrdinalIgnoreCase);
-	}
-
-	[CompilerGenerated]
-	private static UILabel[] _003COnEventX3AmazonBonusUpdated_003Em__24E(UILabel t)
-	{
-		return t.GetComponentsInChildren<UILabel>();
-	}
-
-	[CompilerGenerated]
-	private static float _003COnEventX3AmazonBonusUpdated_003Em__24F(PromoActionsManager.AmazonEventInfo e)
-	{
-		return e.Percentage;
-	}
+	public static event Action onUpdateMoney;
 }

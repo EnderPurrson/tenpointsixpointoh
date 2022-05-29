@@ -7,51 +7,19 @@ using UnityEngine;
 
 public class LANBroadcastService : MonoBehaviour
 {
-	private enum enuState
-	{
-		NotActive = 0,
-		Searching = 1,
-		Announcing = 2
-	}
-
-	public struct ReceivedMessage
-	{
-		public string ipAddress;
-
-		public string name;
-
-		public string map;
-
-		public int connectedPlayers;
-
-		public int playerLimit;
-
-		public string comment;
-
-		public float fTime;
-
-		public int regim;
-
-		public string protocol;
-	}
-
-	public delegate void delJoinServer(string strIP);
-
-	public delegate void delStartServer();
-
-	public ReceivedMessage serverMessage;
+	public LANBroadcastService.ReceivedMessage serverMessage;
 
 	private string strMessage = string.Empty;
 
-	private enuState currentState;
+	private LANBroadcastService.enuState currentState;
 
 	private UdpClient objUDPClient;
 
-	public List<ReceivedMessage> lstReceivedMessages;
+	public List<LANBroadcastService.ReceivedMessage> lstReceivedMessages;
 
-	private delJoinServer delWhenServerFound;
+	private LANBroadcastService.delJoinServer delWhenServerFound;
 
-	private delStartServer delWhenServerMustStarted;
+	private LANBroadcastService.delStartServer delWhenServerMustStarted;
 
 	private string strServerNotReady = "wanttobeaserver";
 
@@ -73,194 +41,239 @@ public class LANBroadcastService : MonoBehaviour
 	{
 		get
 		{
-			return strMessage;
+			return this.strMessage;
+		}
+	}
+
+	public LANBroadcastService()
+	{
+	}
+
+	private void BeginAsyncReceive()
+	{
+		if (this.objUDPClient == null)
+		{
+			return;
+		}
+		this.objUDPClient.BeginReceive(new AsyncCallback(this.EndAsyncReceive), null);
+	}
+
+	private void EndAsyncReceive(IAsyncResult objResult)
+	{
+		if (this.objUDPClient == null)
+		{
+			return;
+		}
+		IPEndPoint pEndPoint = new IPEndPoint(IPAddress.Any, 0);
+		byte[] numArray = this.objUDPClient.EndReceive(objResult, ref pEndPoint);
+		if ((int)numArray.Length > 0 && !pEndPoint.Address.ToString().Equals(this.ipaddress))
+		{
+			string str = Encoding.Unicode.GetString(numArray);
+			string[] strArrays = str.Split(new char[] { 'ý' }, str.Length);
+			if ((int)strArrays.Length == 8 && strArrays[7].Equals(GlobalGameController.MultiplayerProtocolVersion))
+			{
+				for (int i = 0; i < this.lstReceivedMessages.Count; i++)
+				{
+					LANBroadcastService.ReceivedMessage item = this.lstReceivedMessages[i];
+					if (pEndPoint.Address.ToString().Equals(item.ipAddress))
+					{
+						this.lstReceivedMessages.RemoveAt(i);
+					}
+				}
+				LANBroadcastService.ReceivedMessage receivedMessage = new LANBroadcastService.ReceivedMessage()
+				{
+					ipAddress = pEndPoint.Address.ToString(),
+					name = strArrays[1],
+					map = strArrays[2],
+					connectedPlayers = int.Parse(strArrays[3]),
+					playerLimit = int.Parse(strArrays[4]),
+					comment = strArrays[5],
+					regim = int.Parse(strArrays[6]),
+					protocol = strArrays[7],
+					fTime = -1f
+				};
+				this.lstReceivedMessages.Add(receivedMessage);
+			}
+		}
+		if (this.currentState == LANBroadcastService.enuState.Searching)
+		{
+			this.BeginAsyncReceive();
 		}
 	}
 
 	private void Start()
 	{
-		lstReceivedMessages = new List<ReceivedMessage>();
-		ipaddress = Network.player.ipAddress.ToString();
-	}
-
-	private void Update()
-	{
-		if (currentState == enuState.Announcing && Time.time > fTimeLastMessageSent + fIntervalMessageSending)
-		{
-			string s = strServerReady + "ý" + serverMessage.name + "ý" + serverMessage.map + "ý" + serverMessage.connectedPlayers + "ý" + serverMessage.playerLimit + "ý" + serverMessage.comment + "ý" + serverMessage.regim + "ý" + GlobalGameController.MultiplayerProtocolVersion;
-			byte[] bytes = Encoding.Unicode.GetBytes(s);
-			if (objUDPClient != null)
-			{
-				try
-				{
-					objUDPClient.Send(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, 22043));
-				}
-				catch (Exception)
-				{
-					Debug.Log("soccet close");
-				}
-			}
-			else
-			{
-				Debug.Log("objUDPClient=NULL");
-			}
-			fTimeLastMessageSent = Time.time;
-		}
-		if (currentState == enuState.Searching)
-		{
-			bool flag = false;
-			if (lstReceivedMessages == null)
-			{
-				return;
-			}
-			for (int i = 0; i < lstReceivedMessages.Count; i++)
-			{
-				ReceivedMessage item = lstReceivedMessages[i];
-				if (item.fTime < 0f)
-				{
-					ReceivedMessage item2 = default(ReceivedMessage);
-					item2.ipAddress = item.ipAddress;
-					item2.name = item.name;
-					item2.map = item.map;
-					item2.connectedPlayers = item.connectedPlayers;
-					item2.playerLimit = item.playerLimit;
-					item2.comment = item.comment;
-					item2.fTime = Time.time;
-					item2.regim = item.regim;
-					lstReceivedMessages.RemoveAt(i);
-					lstReceivedMessages.Add(item2);
-				}
-				if (Time.time > item.fTime + fTimeMessagesLive)
-				{
-					lstReceivedMessages.Remove(item);
-					break;
-				}
-			}
-		}
-		if (currentState != enuState.Searching)
-		{
-		}
-	}
-
-	private void BeginAsyncReceive()
-	{
-		if (objUDPClient != null)
-		{
-			objUDPClient.BeginReceive(EndAsyncReceive, null);
-		}
-	}
-
-	private void EndAsyncReceive(IAsyncResult objResult)
-	{
-		if (objUDPClient == null)
-		{
-			return;
-		}
-		IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-		byte[] array = objUDPClient.EndReceive(objResult, ref remoteEP);
-		if (array.Length > 0 && !remoteEP.Address.ToString().Equals(ipaddress))
-		{
-			string @string = Encoding.Unicode.GetString(array);
-			string[] array2 = @string.Split(new char[1] { 'ý' }, @string.Length);
-			if (array2.Length == 8 && array2[7].Equals(GlobalGameController.MultiplayerProtocolVersion))
-			{
-				for (int i = 0; i < lstReceivedMessages.Count; i++)
-				{
-					ReceivedMessage receivedMessage = lstReceivedMessages[i];
-					if (remoteEP.Address.ToString().Equals(receivedMessage.ipAddress))
-					{
-						lstReceivedMessages.RemoveAt(i);
-					}
-				}
-				ReceivedMessage item = default(ReceivedMessage);
-				item.ipAddress = remoteEP.Address.ToString();
-				item.name = array2[1];
-				item.map = array2[2];
-				item.connectedPlayers = int.Parse(array2[3]);
-				item.playerLimit = int.Parse(array2[4]);
-				item.comment = array2[5];
-				item.regim = int.Parse(array2[6]);
-				item.protocol = array2[7];
-				item.fTime = -1f;
-				lstReceivedMessages.Add(item);
-			}
-		}
-		if (currentState == enuState.Searching)
-		{
-			BeginAsyncReceive();
-		}
-	}
-
-	private void StartAnnouncing()
-	{
-		currentState = enuState.Announcing;
-		strMessage = "Announcing we are a server...";
-	}
-
-	private void StopAnnouncing()
-	{
-		currentState = enuState.NotActive;
-		strMessage = "Announcements stopped.";
-	}
-
-	private void StartSearching()
-	{
-		if (lstReceivedMessages == null)
-		{
-			lstReceivedMessages = new List<ReceivedMessage>();
-		}
-		lstReceivedMessages.Clear();
-		BeginAsyncReceive();
-		fTimeSearchStarted = Time.time;
-		currentState = enuState.Searching;
-		strMessage = "Searching for other players...";
-	}
-
-	private void StopSearching()
-	{
-		currentState = enuState.NotActive;
-		strMessage = "Search stopped.";
-	}
-
-	public void StartSearchBroadCasting(delJoinServer connectToServer)
-	{
-		delWhenServerFound = connectToServer;
-		StartBroadcastingSession();
-		StartSearching();
+		this.lstReceivedMessages = new List<LANBroadcastService.ReceivedMessage>();
+		this.ipaddress = Network.player.ipAddress.ToString();
 	}
 
 	public void StartAnnounceBroadCasting()
 	{
-		StartBroadcastingSession();
-		StartAnnouncing();
+		this.StartBroadcastingSession();
+		this.StartAnnouncing();
+	}
+
+	private void StartAnnouncing()
+	{
+		this.currentState = LANBroadcastService.enuState.Announcing;
+		this.strMessage = "Announcing we are a server...";
 	}
 
 	private void StartBroadcastingSession()
 	{
-		if (currentState != 0)
+		if (this.currentState != LANBroadcastService.enuState.NotActive)
 		{
-			StopBroadCasting();
+			this.StopBroadCasting();
 		}
-		objUDPClient = new UdpClient(22043);
-		objUDPClient.EnableBroadcast = true;
-		fTimeLastMessageSent = Time.time;
+		this.objUDPClient = new UdpClient(22043)
+		{
+			EnableBroadcast = true
+		};
+		this.fTimeLastMessageSent = Time.time;
+	}
+
+	public void StartSearchBroadCasting(LANBroadcastService.delJoinServer connectToServer)
+	{
+		this.delWhenServerFound = connectToServer;
+		this.StartBroadcastingSession();
+		this.StartSearching();
+	}
+
+	private void StartSearching()
+	{
+		if (this.lstReceivedMessages == null)
+		{
+			this.lstReceivedMessages = new List<LANBroadcastService.ReceivedMessage>();
+		}
+		this.lstReceivedMessages.Clear();
+		this.BeginAsyncReceive();
+		this.fTimeSearchStarted = Time.time;
+		this.currentState = LANBroadcastService.enuState.Searching;
+		this.strMessage = "Searching for other players...";
+	}
+
+	private void StopAnnouncing()
+	{
+		this.currentState = LANBroadcastService.enuState.NotActive;
+		this.strMessage = "Announcements stopped.";
 	}
 
 	public void StopBroadCasting()
 	{
-		if (currentState == enuState.Searching)
+		if (this.currentState == LANBroadcastService.enuState.Searching)
 		{
-			StopSearching();
+			this.StopSearching();
 		}
-		else if (currentState == enuState.Announcing)
+		else if (this.currentState == LANBroadcastService.enuState.Announcing)
 		{
-			StopAnnouncing();
+			this.StopAnnouncing();
 		}
-		if (objUDPClient != null)
+		if (this.objUDPClient != null)
 		{
-			UdpClient udpClient = objUDPClient;
-			objUDPClient = null;
+			UdpClient udpClient = this.objUDPClient;
+			this.objUDPClient = null;
 			udpClient.Close();
 		}
+	}
+
+	private void StopSearching()
+	{
+		this.currentState = LANBroadcastService.enuState.NotActive;
+		this.strMessage = "Search stopped.";
+	}
+
+	private void Update()
+	{
+		if (this.currentState == LANBroadcastService.enuState.Announcing && Time.time > this.fTimeLastMessageSent + this.fIntervalMessageSending)
+		{
+			string str = string.Concat(new object[] { this.strServerReady, "ý", this.serverMessage.name, "ý", this.serverMessage.map, "ý", this.serverMessage.connectedPlayers, "ý", this.serverMessage.playerLimit, "ý", this.serverMessage.comment, "ý", this.serverMessage.regim, "ý", GlobalGameController.MultiplayerProtocolVersion });
+			byte[] bytes = Encoding.Unicode.GetBytes(str);
+			if (this.objUDPClient == null)
+			{
+				Debug.Log("objUDPClient=NULL");
+			}
+			else
+			{
+				try
+				{
+					this.objUDPClient.Send(bytes, (int)bytes.Length, new IPEndPoint(IPAddress.Broadcast, 22043));
+				}
+				catch (Exception exception)
+				{
+					Debug.Log("soccet close");
+				}
+			}
+			this.fTimeLastMessageSent = Time.time;
+		}
+		if (this.currentState == LANBroadcastService.enuState.Searching)
+		{
+			if (this.lstReceivedMessages == null)
+			{
+				return;
+			}
+			int num = 0;
+			while (num < this.lstReceivedMessages.Count)
+			{
+				LANBroadcastService.ReceivedMessage item = this.lstReceivedMessages[num];
+				if (item.fTime < 0f)
+				{
+					LANBroadcastService.ReceivedMessage receivedMessage = new LANBroadcastService.ReceivedMessage()
+					{
+						ipAddress = item.ipAddress,
+						name = item.name,
+						map = item.map,
+						connectedPlayers = item.connectedPlayers,
+						playerLimit = item.playerLimit,
+						comment = item.comment,
+						fTime = Time.time,
+						regim = item.regim
+					};
+					this.lstReceivedMessages.RemoveAt(num);
+					this.lstReceivedMessages.Add(receivedMessage);
+				}
+				if (Time.time <= item.fTime + this.fTimeMessagesLive)
+				{
+					num++;
+				}
+				else
+				{
+					this.lstReceivedMessages.Remove(item);
+					break;
+				}
+			}
+		}
+		this.currentState != LANBroadcastService.enuState.Searching;
+	}
+
+	public delegate void delJoinServer(string strIP);
+
+	public delegate void delStartServer();
+
+	private enum enuState
+	{
+		NotActive,
+		Searching,
+		Announcing
+	}
+
+	public struct ReceivedMessage
+	{
+		public string ipAddress;
+
+		public string name;
+
+		public string map;
+
+		public int connectedPlayers;
+
+		public int playerLimit;
+
+		public string comment;
+
+		public float fTime;
+
+		public int regim;
+
+		public string protocol;
 	}
 }

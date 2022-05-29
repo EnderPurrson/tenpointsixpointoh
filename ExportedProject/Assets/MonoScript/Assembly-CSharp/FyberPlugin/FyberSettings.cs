@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace FyberPlugin
@@ -12,58 +13,62 @@ namespace FyberPlugin
 
 		private static FyberSettings instance;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private string bundlesJson;
 
 		[HideInInspector]
 		[SerializeField]
 		private string configJson;
 
-		[SerializeField]
 		[HideInInspector]
+		[SerializeField]
 		private int bundlesCount;
 
 		public static FyberSettings Instance
 		{
 			get
 			{
-				return GetInstance();
+				return FyberSettings.GetInstance();
 			}
 		}
 
-		private void OnEnable()
+		public FyberSettings()
 		{
-			GetInstance();
-		}
-
-		private static FyberSettings GetInstance()
-		{
-			if (instance == null)
-			{
-				PluginBridge.bridge = new PluginBridgeComponent();
-				instance = Resources.Load("FyberSettings") as FyberSettings;
-				if (instance == null)
-				{
-					instance = ScriptableObject.CreateInstance<FyberSettings>();
-				}
-			}
-			return instance;
-		}
-
-		internal string BundlesInfoJson()
-		{
-			return bundlesJson;
 		}
 
 		internal string BundlesConfigJson()
 		{
-			return configJson;
+			return this.configJson;
 		}
 
 		internal int BundlesCount()
 		{
-			return bundlesCount;
+			return this.bundlesCount;
+		}
+
+		internal string BundlesInfoJson()
+		{
+			return this.bundlesJson;
+		}
+
+		private static FyberSettings GetInstance()
+		{
+			if (FyberSettings.instance == null)
+			{
+				PluginBridge.bridge = new PluginBridgeComponent();
+				FyberSettings.instance = Resources.Load("FyberSettings") as FyberSettings;
+				if (FyberSettings.instance == null)
+				{
+					FyberSettings.instance = ScriptableObject.CreateInstance<FyberSettings>();
+				}
+			}
+			return FyberSettings.instance;
+		}
+
+		private void OnEnable()
+		{
+			FyberSettings.GetInstance();
 		}
 	}
 }

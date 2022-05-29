@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace ExitGames.Client.Photon.Chat
@@ -13,59 +15,64 @@ namespace ExitGames.Client.Photon.Chat
 
 		public int MessageLimit;
 
-		public bool IsPrivate { get; protected internal set; }
+		public bool IsPrivate
+		{
+			get;
+			protected internal set;
+		}
 
 		public int MessageCount
 		{
 			get
 			{
-				return Messages.Count;
+				return this.Messages.Count;
 			}
 		}
 
 		public ChatChannel(string name)
 		{
-			Name = name;
+			this.Name = name;
 		}
 
 		public void Add(string sender, object message)
 		{
-			Senders.Add(sender);
-			Messages.Add(message);
-			TruncateMessages();
+			this.Senders.Add(sender);
+			this.Messages.Add(message);
+			this.TruncateMessages();
 		}
 
 		public void Add(string[] senders, object[] messages)
 		{
-			Senders.AddRange(senders);
-			Messages.AddRange(messages);
-			TruncateMessages();
-		}
-
-		public void TruncateMessages()
-		{
-			if (MessageLimit > 0 && Messages.Count > MessageLimit)
-			{
-				int count = Messages.Count - MessageLimit;
-				Senders.RemoveRange(0, count);
-				Messages.RemoveRange(0, count);
-			}
+			this.Senders.AddRange(senders);
+			this.Messages.AddRange(messages);
+			this.TruncateMessages();
 		}
 
 		public void ClearMessages()
 		{
-			Senders.Clear();
-			Messages.Clear();
+			this.Senders.Clear();
+			this.Messages.Clear();
 		}
 
 		public string ToStringMessages()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			for (int i = 0; i < Messages.Count; i++)
+			for (int i = 0; i < this.Messages.Count; i++)
 			{
-				stringBuilder.AppendLine(string.Format("{0}: {1}", Senders[i], Messages[i]));
+				stringBuilder.AppendLine(string.Format("{0}: {1}", this.Senders[i], this.Messages[i]));
 			}
 			return stringBuilder.ToString();
+		}
+
+		public void TruncateMessages()
+		{
+			if (this.MessageLimit <= 0 || this.Messages.Count <= this.MessageLimit)
+			{
+				return;
+			}
+			int count = this.Messages.Count - this.MessageLimit;
+			this.Senders.RemoveRange(0, count);
+			this.Messages.RemoveRange(0, count);
 		}
 	}
 }

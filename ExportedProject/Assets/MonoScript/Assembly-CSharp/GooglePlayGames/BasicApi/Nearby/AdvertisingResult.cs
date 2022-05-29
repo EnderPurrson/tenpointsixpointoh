@@ -1,4 +1,6 @@
+using GooglePlayGames.BasicApi;
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
@@ -8,11 +10,11 @@ namespace GooglePlayGames.BasicApi.Nearby
 
 		private readonly string mLocalEndpointName;
 
-		public bool Succeeded
+		public string LocalEndpointName
 		{
 			get
 			{
-				return mStatus == ResponseStatus.Success;
+				return this.mLocalEndpointName;
 			}
 		}
 
@@ -20,22 +22,22 @@ namespace GooglePlayGames.BasicApi.Nearby
 		{
 			get
 			{
-				return mStatus;
+				return this.mStatus;
 			}
 		}
 
-		public string LocalEndpointName
+		public bool Succeeded
 		{
 			get
 			{
-				return mLocalEndpointName;
+				return this.mStatus == ResponseStatus.Success;
 			}
 		}
 
 		public AdvertisingResult(ResponseStatus status, string localEndpointName)
 		{
-			mStatus = status;
-			mLocalEndpointName = Misc.CheckNotNull(localEndpointName);
+			this.mStatus = status;
+			this.mLocalEndpointName = Misc.CheckNotNull<string>(localEndpointName);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
@@ -12,19 +13,19 @@ namespace GooglePlayGames.BasicApi.Nearby
 
 		private readonly string mServiceId;
 
-		public string EndpointId
-		{
-			get
-			{
-				return mEndpointId;
-			}
-		}
-
 		public string DeviceId
 		{
 			get
 			{
-				return mDeviceId;
+				return this.mDeviceId;
+			}
+		}
+
+		public string EndpointId
+		{
+			get
+			{
+				return this.mEndpointId;
 			}
 		}
 
@@ -32,7 +33,7 @@ namespace GooglePlayGames.BasicApi.Nearby
 		{
 			get
 			{
-				return mName;
+				return this.mName;
 			}
 		}
 
@@ -40,16 +41,16 @@ namespace GooglePlayGames.BasicApi.Nearby
 		{
 			get
 			{
-				return mServiceId;
+				return this.mServiceId;
 			}
 		}
 
 		public EndpointDetails(string endpointId, string deviceId, string name, string serviceId)
 		{
-			mEndpointId = Misc.CheckNotNull(endpointId);
-			mDeviceId = Misc.CheckNotNull(deviceId);
-			mName = Misc.CheckNotNull(name);
-			mServiceId = Misc.CheckNotNull(serviceId);
+			this.mEndpointId = Misc.CheckNotNull<string>(endpointId);
+			this.mDeviceId = Misc.CheckNotNull<string>(deviceId);
+			this.mName = Misc.CheckNotNull<string>(name);
+			this.mServiceId = Misc.CheckNotNull<string>(serviceId);
 		}
 	}
 }

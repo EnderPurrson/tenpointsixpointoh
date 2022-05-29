@@ -13,51 +13,58 @@ namespace Rilisoft
 
 		private readonly HashAlgorithm _hmac;
 
-		private static readonly Lazy<DigestStorager> _instance;
-
-		[CompilerGenerated]
-		private static Func<DigestStorager> _003C_003Ef__am_0024cache3;
+		private readonly static Lazy<DigestStorager> _instance;
 
 		public static DigestStorager Instance
 		{
 			get
 			{
-				return _instance.Value;
+				return DigestStorager._instance.Value;
 			}
-		}
-
-		public DigestStorager()
-		{
-			byte[] key = new byte[64]
-			{
-				62, 59, 146, 50, 196, 43, 151, 12, 34, 157,
-				74, 34, 25, 226, 239, 167, 46, 226, 151, 253,
-				149, 85, 40, 56, 107, 254, 198, 111, 152, 34,
-				73, 206, 184, 145, 51, 23, 161, 197, 53, 9,
-				59, 16, 106, 151, 54, 115, 158, 48, 176, 147,
-				174, 119, 233, 88, 253, 94, 20, 2, 164, 67,
-				205, 142, 150, 2
-			};
-			_hmac = new HMACSHA1(key, true);
 		}
 
 		static DigestStorager()
 		{
-			if (_003C_003Ef__am_0024cache3 == null)
-			{
-				_003C_003Ef__am_0024cache3 = _003C_instance_003Em__3F;
-			}
-			_instance = new Lazy<DigestStorager>(_003C_003Ef__am_0024cache3);
+			DigestStorager._instance = new Lazy<DigestStorager>(() => new DigestStorager());
+		}
+
+		public DigestStorager()
+		{
+			this._hmac = new HMACSHA1(new byte[] { 62, 59, 146, 50, 196, 43, 151, 12, 34, 157, 74, 34, 25, 226, 239, 167, 46, 226, 151, 253, 149, 85, 40, 56, 107, 254, 198, 111, 152, 34, 73, 206, 184, 145, 51, 23, 161, 197, 53, 9, 59, 16, 106, 151, 54, 115, 158, 48, 176, 147, 174, 119, 233, 88, 253, 94, 20, 2, 164, 67, 205, 142, 150, 2 }, true);
 		}
 
 		public void Clear()
 		{
 		}
 
+		private byte[] ComputeHash(string key, byte[] valueBytes)
+		{
+			byte[] bytes = BitConverter.GetBytes(key.GetHashCode());
+			byte[] numArray = new byte[(int)bytes.Length + (int)valueBytes.Length];
+			bytes.CopyTo(numArray, 0);
+			valueBytes.CopyTo(numArray, (int)bytes.Length);
+			return this._hmac.ComputeHash(numArray);
+		}
+
 		public bool ContainsKey(string key)
 		{
-			string backingStoreKey = GetBackingStoreKey(key);
-			return (!_useCryptoPlayerPrefs) ? PlayerPrefs.HasKey(backingStoreKey) : CryptoPlayerPrefs.HasKey(backingStoreKey);
+			string backingStoreKey = this.GetBackingStoreKey(key);
+			return (!this._useCryptoPlayerPrefs ? PlayerPrefs.HasKey(backingStoreKey) : CryptoPlayerPrefs.HasKey(backingStoreKey));
+		}
+
+		public string GetBackingStoreKey(string key)
+		{
+			string str = string.Format("Digest-9.4.1-{0:d}.", BuildSettings.BuildTargetPlatform);
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
+			if (Application.isEditor)
+			{
+				return string.Concat(str, key);
+			}
+			byte[] bytes = Encoding.UTF8.GetBytes(key);
+			return string.Concat(str, Convert.ToBase64String(bytes));
 		}
 
 		public void Remove(string key)
@@ -66,89 +73,42 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("key");
 			}
-			string backingStoreKey = GetBackingStoreKey(key);
-			if (_useCryptoPlayerPrefs)
+			string backingStoreKey = this.GetBackingStoreKey(key);
+			if (!this._useCryptoPlayerPrefs)
 			{
-				CryptoPlayerPrefs.DeleteKey(backingStoreKey);
+				PlayerPrefs.DeleteKey(backingStoreKey);
 			}
 			else
 			{
-				PlayerPrefs.DeleteKey(backingStoreKey);
+				CryptoPlayerPrefs.DeleteKey(backingStoreKey);
 			}
 		}
 
 		public void Save()
 		{
-			if (_useCryptoPlayerPrefs)
+			if (!this._useCryptoPlayerPrefs)
 			{
-				CryptoPlayerPrefs.Save();
+				PlayerPrefs.Save();
 			}
 			else
 			{
-				PlayerPrefs.Save();
+				CryptoPlayerPrefs.Save();
 			}
 		}
 
 		public void Set(string key, int value)
 		{
-			byte[] bytes = BitConverter.GetBytes(value);
-			SetCore(key, bytes);
+			this.SetCore(key, BitConverter.GetBytes(value));
 		}
 
 		public void Set(string key, string value)
 		{
-			byte[] bytes = Encoding.UTF8.GetBytes(value ?? string.Empty);
-			SetCore(key, bytes);
+			this.SetCore(key, Encoding.UTF8.GetBytes(value ?? string.Empty));
 		}
 
 		public void Set(string key, byte[] value)
 		{
-			byte[] valueBytes = value ?? new byte[0];
-			SetCore(key, valueBytes);
-		}
-
-		public bool Verify(string key, int value)
-		{
-			byte[] bytes = BitConverter.GetBytes(value);
-			return VerifyCore(key, bytes);
-		}
-
-		public bool Verify(string key, string value)
-		{
-			byte[] bytes = Encoding.UTF8.GetBytes(value ?? string.Empty);
-			return VerifyCore(key, bytes);
-		}
-
-		public bool Verify(string key, byte[] value)
-		{
-			byte[] valueBytes = value ?? new byte[0];
-			return VerifyCore(key, valueBytes);
-		}
-
-		public bool VerifyCore(string key, byte[] valueBytes)
-		{
-			if (key == null)
-			{
-				throw new ArgumentNullException("key");
-			}
-			if (!ContainsKey(key))
-			{
-				return false;
-			}
-			byte[] second = ComputeHash(key, valueBytes);
-			string backingStoreKey = GetBackingStoreKey(key);
-			string s = ((!_useCryptoPlayerPrefs) ? PlayerPrefs.GetString(backingStoreKey) : CryptoPlayerPrefs.GetString(backingStoreKey, string.Empty));
-			byte[] first = Convert.FromBase64String(s);
-			return first.SequenceEqual(second);
-		}
-
-		private byte[] ComputeHash(string key, byte[] valueBytes)
-		{
-			byte[] bytes = BitConverter.GetBytes(key.GetHashCode());
-			byte[] array = new byte[bytes.Length + valueBytes.Length];
-			bytes.CopyTo(array, 0);
-			valueBytes.CopyTo(array, bytes.Length);
-			return _hmac.ComputeHash(array);
+			this.SetCore(key, value ?? new byte[0]);
 		}
 
 		private void SetCore(string key, byte[] valueBytes)
@@ -157,39 +117,46 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("key");
 			}
-			byte[] inArray = ComputeHash(key, valueBytes);
-			string text = Convert.ToBase64String(inArray);
-			string backingStoreKey = GetBackingStoreKey(key);
-			if (_useCryptoPlayerPrefs)
+			string base64String = Convert.ToBase64String(this.ComputeHash(key, valueBytes));
+			string backingStoreKey = this.GetBackingStoreKey(key);
+			if (!this._useCryptoPlayerPrefs)
 			{
-				CryptoPlayerPrefs.SetString(backingStoreKey, text);
+				PlayerPrefs.SetString(backingStoreKey, base64String);
 			}
 			else
 			{
-				PlayerPrefs.SetString(backingStoreKey, text);
+				CryptoPlayerPrefs.SetString(backingStoreKey, base64String);
 			}
 		}
 
-		public string GetBackingStoreKey(string key)
+		public bool Verify(string key, int value)
 		{
-			string text = string.Format("Digest-9.4.1-{0:d}.", BuildSettings.BuildTargetPlatform);
+			return this.VerifyCore(key, BitConverter.GetBytes(value));
+		}
+
+		public bool Verify(string key, string value)
+		{
+			return this.VerifyCore(key, Encoding.UTF8.GetBytes(value ?? string.Empty));
+		}
+
+		public bool Verify(string key, byte[] value)
+		{
+			return this.VerifyCore(key, value ?? new byte[0]);
+		}
+
+		public bool VerifyCore(string key, byte[] valueBytes)
+		{
 			if (key == null)
 			{
 				throw new ArgumentNullException("key");
 			}
-			if (Application.isEditor)
+			if (!this.ContainsKey(key))
 			{
-				return text + key;
+				return false;
 			}
-			byte[] bytes = Encoding.UTF8.GetBytes(key);
-			string text2 = Convert.ToBase64String(bytes);
-			return text + text2;
-		}
-
-		[CompilerGenerated]
-		private static DigestStorager _003C_instance_003Em__3F()
-		{
-			return new DigestStorager();
+			byte[] numArray = this.ComputeHash(key, valueBytes);
+			string backingStoreKey = this.GetBackingStoreKey(key);
+			return Convert.FromBase64String((!this._useCryptoPlayerPrefs ? PlayerPrefs.GetString(backingStoreKey) : CryptoPlayerPrefs.GetString(backingStoreKey, string.Empty))).SequenceEqual<byte>(numArray);
 		}
 	}
 }

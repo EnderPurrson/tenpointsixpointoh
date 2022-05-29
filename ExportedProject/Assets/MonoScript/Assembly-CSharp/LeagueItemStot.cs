@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class LeagueItemStot : MonoBehaviour
@@ -10,30 +11,35 @@ public class LeagueItemStot : MonoBehaviour
 
 	private Color _baseTextureColor;
 
+	public LeagueItemStot()
+	{
+	}
+
 	private void Awake()
 	{
-		_baseTextureColor = _texture.color;
+		this._baseTextureColor = this._texture.color;
+		base.gameObject.SetActive(false);
+	}
+
+	public void Hide()
+	{
 		base.gameObject.SetActive(false);
 	}
 
 	public void Set(string itemId, bool opened, bool purchased)
 	{
 		base.gameObject.SetActive(true);
-		if (!opened && !purchased)
+		if (opened || purchased)
 		{
-			_texture.color = Color.white;
-			_lockIndicator.gameObject.SetActive(true);
+			this._texture.color = this._baseTextureColor;
+			this._lockIndicator.gameObject.SetActive(false);
 		}
 		else
 		{
-			_texture.color = _baseTextureColor;
-			_lockIndicator.gameObject.SetActive(false);
+			this._texture.color = Color.white;
+			this._lockIndicator.gameObject.SetActive(true);
 		}
-		_texture.mainTexture = ItemDb.GetItemIcon(itemId, ShopNGUIController.CategoryNames.HatsCategory);
-	}
-
-	public void Hide()
-	{
-		base.gameObject.SetActive(false);
+		int? nullable = null;
+		this._texture.mainTexture = ItemDb.GetItemIcon(itemId, ShopNGUIController.CategoryNames.HatsCategory, nullable);
 	}
 }

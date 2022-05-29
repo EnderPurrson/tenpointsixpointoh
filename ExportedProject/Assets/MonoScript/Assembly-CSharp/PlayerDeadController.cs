@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class PlayerDeadController : MonoBehaviour
@@ -18,48 +19,36 @@ public sealed class PlayerDeadController : MonoBehaviour
 
 	public DeadExplosionController deadExplosionController;
 
-	private void Start()
+	public PlayerDeadController()
 	{
-		myTransform = base.transform;
-		myTransform.position = new Vector3(-10000f, -10000f, -10000f);
 	}
 
-	private void TryPlayAudioClip(GameObject obj)
+	private void Start()
 	{
-		if (Defs.isSoundFX)
-		{
-			AudioSource component = obj.GetComponent<AudioSource>();
-			if (!(component == null))
-			{
-				component.Play();
-			}
-		}
+		this.myTransform = base.transform;
+		this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
 	}
 
 	public void StartShow(Vector3 pos, Quaternion rot, int _typeDead, bool _isUseMine, Texture _skin)
 	{
-		isUseMine = _isUseMine;
-		liveTime = maxliveTime;
-		myTransform.position = pos;
-		myTransform.rotation = rot;
-		switch (_typeDead)
+		this.isUseMine = _isUseMine;
+		this.liveTime = this.maxliveTime;
+		this.myTransform.position = pos;
+		this.myTransform.rotation = rot;
+		if (_typeDead == 1)
 		{
-		case 1:
-			playerDeads[1].SetActive(true);
-			TryPlayAudioClip(playerDeads[1]);
-			deadExplosionController.StartAnim();
-			break;
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
+			this.playerDeads[1].SetActive(true);
+			this.TryPlayAudioClip(this.playerDeads[1]);
+			this.deadExplosionController.StartAnim();
+		}
+		else if (_typeDead < 2 || _typeDead > 9)
 		{
-			playerDeads[2].SetActive(true);
-			TryPlayAudioClip(playerDeads[2]);
+			this.playerDeads[0].SetActive(true);
+		}
+		else
+		{
+			this.playerDeads[2].SetActive(true);
+			this.TryPlayAudioClip(this.playerDeads[2]);
 			Color color = new Color(0f, 0.5f, 1f);
 			if (_typeDead == 3)
 			{
@@ -93,32 +82,41 @@ public sealed class PlayerDeadController : MonoBehaviour
 			{
 				color = new Color(1f, 1f, 1f);
 			}
-			deadEnergyController.StartAnim(color, _skin);
-			break;
+			this.deadEnergyController.StartAnim(color, _skin);
 		}
-		default:
-			playerDeads[0].SetActive(true);
-			break;
+	}
+
+	private void TryPlayAudioClip(GameObject obj)
+	{
+		if (!Defs.isSoundFX)
+		{
+			return;
 		}
+		AudioSource component = obj.GetComponent<AudioSource>();
+		if (component == null)
+		{
+			return;
+		}
+		component.Play();
 	}
 
 	private void Update()
 	{
-		if (liveTime < 0f)
+		if (this.liveTime < 0f)
 		{
 			return;
 		}
-		liveTime -= Time.deltaTime;
-		if (liveTime < 0f)
+		this.liveTime -= Time.deltaTime;
+		if (this.liveTime < 0f)
 		{
-			myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-			playerDeads[0].SetActive(false);
+			this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+			this.playerDeads[0].SetActive(false);
 			if (!Device.isPixelGunLow)
 			{
-				playerDeads[1].SetActive(false);
-				playerDeads[2].SetActive(false);
+				this.playerDeads[1].SetActive(false);
+				this.playerDeads[2].SetActive(false);
 			}
-			isUseMine = false;
+			this.isUseMine = false;
 		}
 	}
 }

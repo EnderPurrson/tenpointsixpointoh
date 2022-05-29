@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BannerWindow : MonoBehaviour
@@ -8,64 +10,74 @@ public class BannerWindow : MonoBehaviour
 
 	private bool _isShow;
 
-	public BannerWindowType type { get; set; }
-
 	public bool IsShow
 	{
 		get
 		{
-			return _isShow;
+			return this._isShow;
 		}
 		set
 		{
-			_isShow = value;
+			this._isShow = value;
 		}
 	}
 
-	public void SetBackgroundImage(Texture2D image)
+	public BannerWindowType type
 	{
-		if (!(Background == null))
-		{
-			Background.mainTexture = image;
-		}
+		get;
+		set;
 	}
 
-	public void SetEnableExitButton(bool enable)
+	public BannerWindow()
 	{
-		if (!(ExitButton == null))
+	}
+
+	public void Hide()
+	{
+		AdmobPerelivWindow component = base.GetComponent<AdmobPerelivWindow>();
+		if (component == null)
 		{
-			ExitButton.gameObject.SetActive(enable);
+			base.gameObject.SetActive(false);
 		}
+		else
+		{
+			component.Hide();
+		}
+		this.IsShow = false;
 	}
 
 	protected virtual void SetActiveAndShow()
 	{
 		base.gameObject.SetActive(true);
-		IsShow = true;
+		this.IsShow = true;
+	}
+
+	public void SetBackgroundImage(Texture2D image)
+	{
+		if (this.Background == null)
+		{
+			return;
+		}
+		this.Background.mainTexture = image;
+	}
+
+	public void SetEnableExitButton(bool enable)
+	{
+		if (this.ExitButton == null)
+		{
+			return;
+		}
+		this.ExitButton.gameObject.SetActive(enable);
 	}
 
 	public virtual void Show()
 	{
-		SetActiveAndShow();
-		AdmobPerelivWindow component = GetComponent<AdmobPerelivWindow>();
+		this.SetActiveAndShow();
+		AdmobPerelivWindow component = base.GetComponent<AdmobPerelivWindow>();
 		if (component != null)
 		{
 			component.Show();
 		}
-	}
-
-	public void Hide()
-	{
-		AdmobPerelivWindow component = GetComponent<AdmobPerelivWindow>();
-		if (component != null)
-		{
-			component.Hide();
-		}
-		else
-		{
-			base.gameObject.SetActive(false);
-		}
-		IsShow = false;
 	}
 
 	internal virtual void Submit()

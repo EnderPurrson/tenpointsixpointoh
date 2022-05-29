@@ -17,7 +17,7 @@ public class EventCode
 	[Obsolete("TCP routing was removed after becoming obsolete.")]
 	public const byte AzureNodeInfo = 210;
 
-	public const byte Join = byte.MaxValue;
+	public const byte Join = 255;
 
 	public const byte Leave = 254;
 
@@ -29,4 +29,8 @@ public class EventCode
 	public const byte ErrorInfo = 251;
 
 	public const byte CacheSliceChanged = 250;
+
+	public EventCode()
+	{
+	}
 }

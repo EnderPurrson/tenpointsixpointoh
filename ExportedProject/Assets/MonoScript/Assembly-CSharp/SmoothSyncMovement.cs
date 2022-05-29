@@ -1,4 +1,5 @@
 using Photon;
+using System;
 using UnityEngine;
 
 public class SmoothSyncMovement : Photon.MonoBehaviour
@@ -8,6 +9,10 @@ public class SmoothSyncMovement : Photon.MonoBehaviour
 	private Vector3 correctPlayerPos = Vector3.zero;
 
 	private Quaternion correctPlayerRot = Quaternion.identity;
+
+	public SmoothSyncMovement()
+	{
+	}
 
 	public void Awake()
 	{
@@ -19,15 +24,15 @@ public class SmoothSyncMovement : Photon.MonoBehaviour
 
 	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			stream.SendNext(base.transform.position);
-			stream.SendNext(base.transform.rotation);
+			this.correctPlayerPos = (Vector3)stream.ReceiveNext();
+			this.correctPlayerRot = (Quaternion)stream.ReceiveNext();
 		}
 		else
 		{
-			correctPlayerPos = (Vector3)stream.ReceiveNext();
-			correctPlayerRot = (Quaternion)stream.ReceiveNext();
+			stream.SendNext(base.transform.position);
+			stream.SendNext(base.transform.rotation);
 		}
 	}
 
@@ -35,8 +40,8 @@ public class SmoothSyncMovement : Photon.MonoBehaviour
 	{
 		if (!base.photonView.isMine)
 		{
-			base.transform.position = Vector3.Lerp(base.transform.position, correctPlayerPos, Time.deltaTime * SmoothingDelay);
-			base.transform.rotation = Quaternion.Lerp(base.transform.rotation, correctPlayerRot, Time.deltaTime * SmoothingDelay);
+			base.transform.position = Vector3.Lerp(base.transform.position, this.correctPlayerPos, Time.deltaTime * this.SmoothingDelay);
+			base.transform.rotation = Quaternion.Lerp(base.transform.rotation, this.correctPlayerRot, Time.deltaTime * this.SmoothingDelay);
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using I2.Loc;
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -10,26 +11,35 @@ public class LocalizeRili : MonoBehaviour
 
 	public bool execute;
 
+	public LocalizeRili()
+	{
+	}
+
 	private void Start()
 	{
 	}
 
 	private void Update()
 	{
-		if (!execute || labels == null)
+		if (!this.execute)
+		{
+			return;
+		}
+		if (this.labels == null)
 		{
 			return;
 		}
 		Debug.Log("Localized");
-		GameObject[] array = labels;
-		foreach (GameObject gameObject in array)
+		GameObject[] gameObjectArray = this.labels;
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
 		{
+			GameObject gameObject = gameObjectArray[i];
 			gameObject.gameObject.AddComponent<Localize>().SetTerm("Key_04B_03", "Key_04B_03");
-			if (term != string.Empty)
+			if (this.term != string.Empty)
 			{
-				gameObject.gameObject.AddComponent<Localize>().SetTerm(term, term);
+				gameObject.gameObject.AddComponent<Localize>().SetTerm(this.term, this.term);
 			}
 		}
-		execute = false;
+		this.execute = false;
 	}
 }

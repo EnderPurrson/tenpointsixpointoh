@@ -4,7 +4,7 @@ namespace Rilisoft
 {
 	public struct SaltedInt : IEquatable<SaltedInt>
 	{
-		private static readonly Random s_prng = new Random();
+		private readonly static Random s_prng;
 
 		private readonly int _salt;
 
@@ -14,28 +14,32 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _salt ^ _saltedValue;
+				return this._salt ^ this._saltedValue;
 			}
 			set
 			{
-				_saltedValue = _salt ^ value;
+				this._saltedValue = this._salt ^ value;
 			}
+		}
+
+		static SaltedInt()
+		{
+			SaltedInt.s_prng = new Random();
 		}
 
 		public SaltedInt(int salt, int value)
 		{
-			_salt = salt;
-			_saltedValue = salt ^ value;
+			this._salt = salt;
+			this._saltedValue = salt ^ value;
 		}
 
-		public SaltedInt(int salt)
-			: this(salt, 0)
+		public SaltedInt(int salt) : this(salt, 0)
 		{
 		}
 
 		public bool Equals(SaltedInt other)
 		{
-			return Value == other.Value;
+			return this.Value == other.Value;
 		}
 
 		public override bool Equals(object obj)
@@ -44,18 +48,17 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			SaltedInt other = (SaltedInt)obj;
-			return Equals(other);
+			return this.Equals((SaltedInt)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return Value.GetHashCode();
+			return this.Value.GetHashCode();
 		}
 
 		public static implicit operator SaltedInt(int i)
 		{
-			return new SaltedInt(s_prng.Next(), i);
+			return new SaltedInt(SaltedInt.s_prng.Next(), i);
 		}
 	}
 }

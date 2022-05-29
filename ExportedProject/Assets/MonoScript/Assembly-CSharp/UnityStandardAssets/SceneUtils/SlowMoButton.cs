@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,9 +18,20 @@ namespace UnityStandardAssets.SceneUtils
 
 		private bool m_SlowMo;
 
-		private void Start()
+		public SlowMoButton()
 		{
-			m_SlowMo = false;
+		}
+
+		public void ChangeSpeed()
+		{
+			this.m_SlowMo = !this.m_SlowMo;
+			Image image = this.button.targetGraphic as Image;
+			if (image != null)
+			{
+				image.sprite = (!this.m_SlowMo ? this.FullSpeedTex : this.SlowSpeedTex);
+			}
+			this.button.targetGraphic = image;
+			Time.timeScale = (!this.m_SlowMo ? this.fullSpeed : this.slowSpeed);
 		}
 
 		private void OnDestroy()
@@ -27,16 +39,9 @@ namespace UnityStandardAssets.SceneUtils
 			Time.timeScale = 1f;
 		}
 
-		public void ChangeSpeed()
+		private void Start()
 		{
-			m_SlowMo = !m_SlowMo;
-			Image image = button.targetGraphic as Image;
-			if (image != null)
-			{
-				image.sprite = ((!m_SlowMo) ? FullSpeedTex : SlowSpeedTex);
-			}
-			button.targetGraphic = image;
-			Time.timeScale = ((!m_SlowMo) ? fullSpeed : slowSpeed);
+			this.m_SlowMo = false;
 		}
 	}
 }

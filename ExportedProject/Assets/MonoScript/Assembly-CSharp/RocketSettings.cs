@@ -1,27 +1,11 @@
+using System;
 using UnityEngine;
 
 public class RocketSettings : MonoBehaviour
 {
-	public enum TypeFlyRocket
-	{
-		Rocket = 0,
-		Grenade = 1,
-		Bullet = 2,
-		MegaBullet = 3,
-		Autoaim = 4,
-		Bomb = 5,
-		AutoaimBullet = 6,
-		Ball = 7,
-		GravityRocket = 8,
-		Lightning = 9,
-		AutoTarget = 10,
-		StickyBomb = 11,
-		Ghost = 12
-	}
-
 	public WeaponSounds.TypeDead typeDead = WeaponSounds.TypeDead.explosion;
 
-	public TypeFlyRocket typeFly;
+	public RocketSettings.TypeFlyRocket typeFly;
 
 	public Player_move_c.TypeKills typeKilsIconChat = Player_move_c.TypeKills.explosion;
 
@@ -40,4 +24,25 @@ public class RocketSettings : MonoBehaviour
 	public float autoRocketForce = 15f;
 
 	public float lifeTime = 7f;
+
+	public RocketSettings()
+	{
+	}
+
+	public enum TypeFlyRocket
+	{
+		Rocket,
+		Grenade,
+		Bullet,
+		MegaBullet,
+		Autoaim,
+		Bomb,
+		AutoaimBullet,
+		Ball,
+		GravityRocket,
+		Lightning,
+		AutoTarget,
+		StickyBomb,
+		Ghost
+	}
 }

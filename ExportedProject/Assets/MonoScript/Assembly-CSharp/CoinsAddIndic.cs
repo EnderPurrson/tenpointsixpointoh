@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CoinsAddIndic : MonoBehaviour
@@ -39,108 +43,97 @@ public class CoinsAddIndic : MonoBehaviour
 	{
 		get
 		{
-			return (!isGems) ? new Color(1f, 1f, 0f, 23f / 51f) : new Color(0f, 0f, 1f, 23f / 51f);
+			return (!this.isGems ? new Color(1f, 1f, 0f, 0.4509804f) : new Color(0f, 0f, 1f, 0.4509804f));
 		}
 	}
 
-	private void Start()
+	public CoinsAddIndic()
 	{
-		ind = GetComponent<UISprite>();
-		isSurvival = Defs.IsSurvival;
-		if (remembeState)
+	}
+
+	private void BackgroundEventAdd(bool gems, int count)
+	{
+		if (this.isGems != gems)
 		{
-			CoinsMessage.CoinsLabelDisappeared -= BackgroundEventAdd;
-			CoinsMessage.CoinsLabelDisappeared += BackgroundEventAdd;
+			return;
+		}
+		if ((BankController.Instance == null || !BankController.Instance.InterfaceEnabled) && GiftBannerWindow.instance != null && GiftBannerWindow.instance.IsShow)
+		{
+			if (gems && this.isGems)
+			{
+				this.backgroundAdd = 1;
+			}
+			if (!gems && !this.isGems)
+			{
+				this.backgroundAdd = 2;
+			}
 		}
 	}
 
-	private void OnEnable()
+	[DebuggerHidden]
+	private IEnumerator blink()
 	{
-		CoinsMessage.CoinsLabelDisappeared += IndicateCoinsAdd;
-		if (ind != null)
-		{
-			ind.color = NormalColor();
-		}
-		if (backgroundAdd > 0)
-		{
-			blinking = false;
-			IndicateCoinsAdd(backgroundAdd == 1, 2);
-			backgroundAdd = 0;
-		}
-		if (blinking && !stopBlinkingOnEnable)
-		{
-			StartCoroutine(blink());
-		}
-		else if (stopBlinkingOnEnable)
-		{
-			blinking = false;
-		}
-	}
-
-	private void OnDisable()
-	{
-		CoinsMessage.CoinsLabelDisappeared -= IndicateCoinsAdd;
-	}
-
-	private void OnDestroy()
-	{
-		if (remembeState)
-		{
-			CoinsMessage.CoinsLabelDisappeared -= BackgroundEventAdd;
-		}
+		CoinsAddIndic.u003cblinku003ec__Iterator17 variable = null;
+		return variable;
 	}
 
 	private void IndicateCoinsAdd(bool gems, int count)
 	{
-		if (isGems == gems && !blinking)
+		if (this.isGems == gems && !this.blinking)
 		{
-			StartCoroutine(blink());
+			base.StartCoroutine(this.blink());
 		}
 	}
 
 	private Color NormalColor()
 	{
-		return (!isX3) ? new Color(0f, 0f, 0f, 23f / 51f) : new Color(1f, 0f, 0f, 0.5882353f);
+		return (!this.isX3 ? new Color(0f, 0f, 0f, 0.4509804f) : new Color(1f, 0f, 0f, 0.5882353f));
 	}
 
-	private IEnumerator blink()
+	private void OnDestroy()
 	{
-		if (ind == null)
+		if (this.remembeState)
 		{
-			Debug.LogWarning("Indicator sprite is null.");
-			yield return null;
-		}
-		blinking = true;
-		try
-		{
-			for (int i = 0; i < 15; i++)
-			{
-				ind.color = BlinkColor;
-				yield return null;
-				yield return StartCoroutine(FriendsController.sharedController.MyWaitForSeconds(0.1f));
-				ind.color = NormalColor();
-				yield return StartCoroutine(FriendsController.sharedController.MyWaitForSeconds(0.1f));
-			}
-			ind.color = NormalColor();
-		}
-		finally
-		{
-			blinking = false;
+			CoinsMessage.CoinsLabelDisappeared -= new CoinsMessage.CoinsLabelDisappearedDelegate(this.BackgroundEventAdd);
 		}
 	}
 
-	private void BackgroundEventAdd(bool gems, int count)
+	private void OnDisable()
 	{
-		if (isGems == gems && (BankController.Instance == null || !BankController.Instance.InterfaceEnabled) && GiftBannerWindow.instance != null && GiftBannerWindow.instance.IsShow)
+		CoinsMessage.CoinsLabelDisappeared -= new CoinsMessage.CoinsLabelDisappearedDelegate(this.IndicateCoinsAdd);
+	}
+
+	private void OnEnable()
+	{
+		CoinsMessage.CoinsLabelDisappeared += new CoinsMessage.CoinsLabelDisappearedDelegate(this.IndicateCoinsAdd);
+		if (this.ind != null)
 		{
-			if (gems && isGems)
-			{
-				backgroundAdd = 1;
-			}
-			if (!gems && !isGems)
-			{
-				backgroundAdd = 2;
-			}
+			this.ind.color = this.NormalColor();
+		}
+		if (this.backgroundAdd > 0)
+		{
+			this.blinking = false;
+			this.IndicateCoinsAdd((this.backgroundAdd != 1 ? false : true), 2);
+			this.backgroundAdd = 0;
+		}
+		if (this.blinking && !this.stopBlinkingOnEnable)
+		{
+			base.StartCoroutine(this.blink());
+		}
+		else if (this.stopBlinkingOnEnable)
+		{
+			this.blinking = false;
+		}
+	}
+
+	private void Start()
+	{
+		this.ind = base.GetComponent<UISprite>();
+		this.isSurvival = Defs.IsSurvival;
+		if (this.remembeState)
+		{
+			CoinsMessage.CoinsLabelDisappeared -= new CoinsMessage.CoinsLabelDisappearedDelegate(this.BackgroundEventAdd);
+			CoinsMessage.CoinsLabelDisappeared += new CoinsMessage.CoinsLabelDisappearedDelegate(this.BackgroundEventAdd);
 		}
 	}
 }

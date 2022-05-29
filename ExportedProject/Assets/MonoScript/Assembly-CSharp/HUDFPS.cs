@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("Utilities/HUDFPS")]
@@ -34,4 +35,8 @@ public class HUDFPS : MonoBehaviour
 	private float sumFps;
 
 	private int countFps;
+
+	public HUDFPS()
+	{
+	}
 }

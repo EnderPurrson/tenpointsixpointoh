@@ -9,20 +9,11 @@ namespace Rilisoft
 {
 	public sealed class Tools
 	{
-		public enum PreviewType
-		{
-			Head = 0,
-			HeadAndBody = 1
-		}
-
-		[CompilerGenerated]
-		private static Func<string, bool> _003C_003Ef__am_0024cache0;
-
-		public static RuntimePlatform RuntimePlatform
+		public static int AllAvailabelBotRaycastMask
 		{
 			get
 			{
-				return Application.platform;
+				return -5 & ~(1 << (LayerMask.NameToLayer("DamageCollider") & 31)) & ~(1 << (LayerMask.NameToLayer("NotDetectMobRaycast") & 31));
 			}
 		}
 
@@ -30,15 +21,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return -5 & ~(1 << LayerMask.NameToLayer("DamageCollider"));
-			}
-		}
-
-		public static int AllWithoutMyPlayerMask
-		{
-			get
-			{
-				return -5 & ~(1 << LayerMask.NameToLayer("MyPlayer"));
+				return -5 & ~(1 << (LayerMask.NameToLayer("DamageCollider") & 31));
 			}
 		}
 
@@ -46,15 +29,15 @@ namespace Rilisoft
 		{
 			get
 			{
-				return -5 & ~(1 << LayerMask.NameToLayer("DamageCollider")) & ~(1 << LayerMask.NameToLayer("Rocket"));
+				return -5 & ~(1 << (LayerMask.NameToLayer("DamageCollider") & 31)) & ~(1 << (LayerMask.NameToLayer("Rocket") & 31));
 			}
 		}
 
-		public static int AllAvailabelBotRaycastMask
+		public static int AllWithoutMyPlayerMask
 		{
 			get
 			{
-				return -5 & ~(1 << LayerMask.NameToLayer("DamageCollider")) & ~(1 << LayerMask.NameToLayer("NotDetectMobRaycast"));
+				return -5 & ~(1 << (LayerMask.NameToLayer("MyPlayer") & 31));
 			}
 		}
 
@@ -67,13 +50,34 @@ namespace Rilisoft
 			}
 		}
 
-		public static bool EscapePressed()
+		public static UnityEngine.RuntimePlatform RuntimePlatform
 		{
-			if (BackSystem.Active)
+			get
 			{
-				return false;
+				return Application.platform;
 			}
-			return Input.GetKeyUp(KeyCode.Escape);
+		}
+
+		public Tools()
+		{
+		}
+
+		public static void AddSessionNumber()
+		{
+			DateTimeOffset dateTimeOffset;
+			DateTimeOffset dateTimeOffset1;
+			int num = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1);
+			PlayerPrefs.SetInt(Defs.SessionNumberKey, num + 1);
+			string str = PlayerPrefs.GetString(Defs.LastTimeSessionDayKey, string.Empty);
+			DateTimeOffset utcNow = DateTimeOffset.UtcNow;
+			DateTimeOffset.TryParse(utcNow.ToString("s"), out dateTimeOffset1);
+			if (string.IsNullOrEmpty(str) || DateTimeOffset.TryParse(str, out dateTimeOffset) && (!Defs.IsDeveloperBuild && (dateTimeOffset1 - dateTimeOffset).TotalHours > 23 || Defs.IsDeveloperBuild && (dateTimeOffset1 - dateTimeOffset).TotalMinutes > 3))
+			{
+				int num1 = PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 0);
+				PlayerPrefs.SetInt(Defs.SessionDayNumberKey, num1 + 1);
+				PlayerPrefs.SetString(Defs.LastTimeSessionDayKey, DateTimeOffset.UtcNow.ToString("s"));
+				GlobalGameController.CountDaySessionInCurrentVersion = GlobalGameController.CountDaySessionInCurrentVersion;
+			}
 		}
 
 		private static bool ConnectedToPhoton()
@@ -83,99 +87,169 @@ namespace Rilisoft
 
 		internal static WWW CreateWww(string url, WWWForm form, string comment = "")
 		{
-			return CreateWwwIf(true, url, form, comment);
-		}
-
-		internal static WWW CreateWwwIfNotConnected(string url, WWWForm form, string comment = "", Dictionary<string, string> headers = null)
-		{
-			return CreateWwwIf(!ConnectedToPhoton(), url, form, comment, headers);
+			return Tools.CreateWwwIf(true, url, form, comment, null);
 		}
 
 		internal static WWW CreateWwwIf(bool condition, string url, WWWForm form, string comment = "", Dictionary<string, string> headers = null)
 		{
-			WWW result = ((!condition) ? null : ((headers == null) ? new WWW(url, form) : new WWW(url, form.data, headers)));
+			WWW wWW;
+			if (!condition)
+			{
+				wWW = null;
+			}
+			else
+			{
+				wWW = (headers == null ? new WWW(url, form) : new WWW(url, form.data, headers));
+			}
+			WWW wWW1 = wWW;
 			if (Application.isEditor && FriendsController.isDebugLogWWW)
 			{
-				byte[] array = form.data ?? new byte[0];
-				string @string = Encoding.UTF8.GetString(array, 0, array.Length);
-				string[] source = @string.Split(new char[1] { '&' }, StringSplitOptions.RemoveEmptyEntries);
-				if (_003C_003Ef__am_0024cache0 == null)
+				byte[] numArray = form.data ?? new byte[0];
+				string str = Encoding.UTF8.GetString(numArray, 0, (int)numArray.Length);
+				string str1 = str.Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault<string>((string p) => p.StartsWith("action=")) ?? url;
+				string str2 = (!string.IsNullOrEmpty(comment) ? string.Format("{0}; {1}", str1, comment) : str1);
+				if (!condition)
 				{
-					_003C_003Ef__am_0024cache0 = _003CCreateWwwIf_003Em__426;
-				}
-				string text = source.FirstOrDefault(_003C_003Ef__am_0024cache0) ?? url;
-				string text2 = ((!string.IsNullOrEmpty(comment)) ? string.Format("{0}; {1}", text, comment) : text);
-				if (condition)
-				{
-					Debug.LogFormat("<b><color=yellow>{0}</color></b>", text2);
+					Debug.LogFormat("<b><color=orange>Skipping {0}</color></b>", new object[] { str2 });
 				}
 				else
 				{
-					Debug.LogFormat("<b><color=orange>Skipping {0}</color></b>", text2);
+					Debug.LogFormat("<b><color=yellow>{0}</color></b>", new object[] { str2 });
 				}
 			}
-			return result;
+			return wWW1;
+		}
+
+		internal static WWW CreateWwwIfNotConnected(string url, WWWForm form, string comment = "", Dictionary<string, string> headers = null)
+		{
+			return Tools.CreateWwwIf(!Tools.ConnectedToPhoton(), url, form, comment, headers);
 		}
 
 		internal static WWW CreateWwwIfNotConnected(string url)
 		{
-			WWW wWW = ((!ConnectedToPhoton()) ? new WWW(url) : null);
+			WWW wWW;
+			if (!Tools.ConnectedToPhoton())
+			{
+				wWW = new WWW(url);
+			}
+			else
+			{
+				wWW = null;
+			}
+			WWW wWW1 = wWW;
 			if (Application.isEditor && FriendsController.isDebugLogWWW)
 			{
-				string[] source = url.Split(new char[1] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-				string text = source.LastOrDefault() ?? url;
-				if (wWW != null)
+				string str = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault<string>() ?? url;
+				if (wWW1 == null)
 				{
-					Debug.LogFormat("<color=yellow>{0}</color>", text);
+					Debug.LogFormat("<color=orange>Skipping {0}</color>", new object[] { str });
 				}
 				else
 				{
-					Debug.LogFormat("<color=orange>Skipping {0}</color>", text);
+					Debug.LogFormat("<color=yellow>{0}</color>", new object[] { str });
 				}
 			}
-			return wWW;
+			return wWW1;
 		}
 
-		public static bool ParseDateTimeFromPlayerPrefs(string dateKey, out DateTime parsedDate)
+		internal static T DeserializeJson<T>(string json)
 		{
-			string @string = Storager.getString(dateKey, false);
-			return DateTime.TryParse(@string, out parsedDate);
+			T t;
+			if (string.IsNullOrEmpty(json))
+			{
+				return default(T);
+			}
+			try
+			{
+				t = JsonUtility.FromJson<T>(json);
+			}
+			catch (Exception exception)
+			{
+				Debug.LogWarning(exception);
+				t = default(T);
+			}
+			return t;
+		}
+
+		public static bool EscapePressed()
+		{
+			if (BackSystem.Active)
+			{
+				return false;
+			}
+			return Input.GetKeyUp(KeyCode.Escape);
+		}
+
+		public static Color[] FlipColorsHorizontally(Color[] colors, int width, int height)
+		{
+			Color[] colorArray = new Color[(int)colors.Length];
+			for (int i = 0; i < width; i++)
+			{
+				for (int j = 0; j < height; j++)
+				{
+					colorArray[i + width * j] = colors[width - i - 1 + width * j];
+				}
+			}
+			return colorArray;
 		}
 
 		public static DateTime GetCurrentTimeByUnixTime(long unixTime)
 		{
-			return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixTime);
+			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+			return dateTime.AddSeconds((double)unixTime);
 		}
 
-		public static void AddSessionNumber()
+		public static Texture2D GetPreviewFromSkin(string skinStr, Tools.PreviewType type)
 		{
-			int @int = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1);
-			PlayerPrefs.SetInt(Defs.SessionNumberKey, @int + 1);
-			string @string = PlayerPrefs.GetString(Defs.LastTimeSessionDayKey, string.Empty);
-			DateTimeOffset result;
-			DateTimeOffset.TryParse(DateTimeOffset.UtcNow.ToString("s"), out result);
-			DateTimeOffset result2;
-			if (string.IsNullOrEmpty(@string) || (DateTimeOffset.TryParse(@string, out result2) && ((!Defs.IsDeveloperBuild && (result - result2).TotalHours > 23.0) || (Defs.IsDeveloperBuild && (result - result2).TotalMinutes > 3.0))))
+			Texture2D texture2D = null;
+			if (string.IsNullOrEmpty(skinStr) || skinStr.Equals("empty"))
 			{
-				int int2 = PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 0);
-				PlayerPrefs.SetInt(Defs.SessionDayNumberKey, int2 + 1);
-				PlayerPrefs.SetString(Defs.LastTimeSessionDayKey, DateTimeOffset.UtcNow.ToString("s"));
-				GlobalGameController.CountDaySessionInCurrentVersion = GlobalGameController.CountDaySessionInCurrentVersion;
+				texture2D = Resources.Load<Texture2D>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1"));
 			}
-		}
-
-		public static Rect SuccessMessageRect()
-		{
-			return new Rect((float)(Screen.width / 2) - (float)Screen.height * 0.5f, (float)Screen.height * 0.5f - (float)Screen.height * 0.0525f, Screen.height, (float)Screen.height * 0.105f);
-		}
-
-		public static void SetVibibleNguiObjectByAlpha(GameObject nguiObject, bool isVisible)
-		{
-			UIWidget component = nguiObject.GetComponent<UIWidget>();
-			if (!(component == null))
+			else
 			{
-				component.alpha = ((!isVisible) ? 0.001f : 1f);
+				texture2D = new Texture2D(64, 32);
+				texture2D.LoadImage(Convert.FromBase64String(skinStr));
 			}
+			Texture2D texture2D1 = null;
+			Tools.PreviewType previewType = type;
+			if (previewType == Tools.PreviewType.Head)
+			{
+				texture2D1 = new Texture2D(8, 8, TextureFormat.ARGB32, false);
+				for (int i = 0; i < texture2D1.width; i++)
+				{
+					for (int j = 0; j < texture2D1.height; j++)
+					{
+						texture2D1.SetPixel(i, j, Color.clear);
+					}
+				}
+				texture2D1.SetPixels(0, 0, 8, 8, texture2D.GetPixels(8, 16, 8, 8));
+			}
+			else if (previewType == Tools.PreviewType.HeadAndBody)
+			{
+				texture2D1 = new Texture2D(16, 14, TextureFormat.ARGB32, false);
+				for (int k = 0; k < texture2D1.width; k++)
+				{
+					for (int l = 0; l < texture2D1.height; l++)
+					{
+						texture2D1.SetPixel(k, l, Color.clear);
+					}
+				}
+				texture2D1.SetPixels(4, 6, 8, 8, texture2D.GetPixels(8, 16, 8, 8));
+				texture2D1.SetPixels(4, 0, 8, 6, texture2D.GetPixels(20, 6, 8, 6));
+				texture2D1.SetPixels(0, 0, 4, 6, texture2D.GetPixels(44, 6, 4, 6));
+				texture2D1.SetPixels(12, 0, 4, 6, Tools.FlipColorsHorizontally(texture2D.GetPixels(44, 6, 4, 6), 4, 6));
+			}
+			texture2D1.anisoLevel = 1;
+			texture2D1.mipMapBias = -0.5f;
+			texture2D1.Apply();
+			texture2D1.filterMode = FilterMode.Point;
+			return texture2D1;
+		}
+
+		public static bool ParseDateTimeFromPlayerPrefs(string dateKey, out DateTime parsedDate)
+		{
+			return DateTime.TryParse(Storager.getString(dateKey, false), out parsedDate);
 		}
 
 		public static void SetLayerRecursively(GameObject obj, int newLayer)
@@ -185,105 +259,37 @@ namespace Rilisoft
 				return;
 			}
 			obj.layer = newLayer;
-			int childCount = obj.transform.childCount;
-			Transform transform = obj.transform;
-			for (int i = 0; i < childCount; i++)
+			int num = obj.transform.childCount;
+			Transform transforms = obj.transform;
+			for (int i = 0; i < num; i++)
 			{
-				Transform child = transform.GetChild(i);
-				if (!(null == child))
+				Transform child = transforms.GetChild(i);
+				if (null != child)
 				{
-					SetLayerRecursively(child.gameObject, newLayer);
+					Tools.SetLayerRecursively(child.gameObject, newLayer);
 				}
 			}
 		}
 
-		public static Color[] FlipColorsHorizontally(Color[] colors, int width, int height)
+		public static void SetVibibleNguiObjectByAlpha(GameObject nguiObject, bool isVisible)
 		{
-			Color[] array = new Color[colors.Length];
-			for (int i = 0; i < width; i++)
+			UIWidget component = nguiObject.GetComponent<UIWidget>();
+			if (component == null)
 			{
-				for (int j = 0; j < height; j++)
-				{
-					array[i + width * j] = colors[width - i - 1 + width * j];
-				}
+				return;
 			}
-			return array;
+			component.alpha = (!isVisible ? 0.001f : 1f);
 		}
 
-		public static Texture2D GetPreviewFromSkin(string skinStr, PreviewType type)
+		public static Rect SuccessMessageRect()
 		{
-			Texture2D texture2D = null;
-			if (!string.IsNullOrEmpty(skinStr) && !skinStr.Equals("empty"))
-			{
-				texture2D = new Texture2D(64, 32);
-				texture2D.LoadImage(Convert.FromBase64String(skinStr));
-			}
-			else
-			{
-				texture2D = Resources.Load<Texture2D>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1"));
-			}
-			Texture2D texture2D2 = null;
-			switch (type)
-			{
-			case PreviewType.Head:
-			{
-				texture2D2 = new Texture2D(8, 8, TextureFormat.ARGB32, false);
-				for (int k = 0; k < texture2D2.width; k++)
-				{
-					for (int l = 0; l < texture2D2.height; l++)
-					{
-						texture2D2.SetPixel(k, l, Color.clear);
-					}
-				}
-				texture2D2.SetPixels(0, 0, 8, 8, texture2D.GetPixels(8, 16, 8, 8));
-				break;
-			}
-			case PreviewType.HeadAndBody:
-			{
-				texture2D2 = new Texture2D(16, 14, TextureFormat.ARGB32, false);
-				for (int i = 0; i < texture2D2.width; i++)
-				{
-					for (int j = 0; j < texture2D2.height; j++)
-					{
-						texture2D2.SetPixel(i, j, Color.clear);
-					}
-				}
-				texture2D2.SetPixels(4, 6, 8, 8, texture2D.GetPixels(8, 16, 8, 8));
-				texture2D2.SetPixels(4, 0, 8, 6, texture2D.GetPixels(20, 6, 8, 6));
-				texture2D2.SetPixels(0, 0, 4, 6, texture2D.GetPixels(44, 6, 4, 6));
-				texture2D2.SetPixels(12, 0, 4, 6, FlipColorsHorizontally(texture2D.GetPixels(44, 6, 4, 6), 4, 6));
-				break;
-			}
-			}
-			texture2D2.anisoLevel = 1;
-			texture2D2.mipMapBias = -0.5f;
-			texture2D2.Apply();
-			texture2D2.filterMode = FilterMode.Point;
-			return texture2D2;
+			return new Rect((float)(Screen.width / 2) - (float)Screen.height * 0.5f, (float)Screen.height * 0.5f - (float)Screen.height * 0.0525f, (float)Screen.height, (float)Screen.height * 0.105f);
 		}
 
-		internal static T DeserializeJson<T>(string json)
+		public enum PreviewType
 		{
-			//Discarded unreachable code: IL_0021, IL_003c
-			if (string.IsNullOrEmpty(json))
-			{
-				return default(T);
-			}
-			try
-			{
-				return JsonUtility.FromJson<T>(json);
-			}
-			catch (Exception message)
-			{
-				Debug.LogWarning(message);
-				return default(T);
-			}
-		}
-
-		[CompilerGenerated]
-		private static bool _003CCreateWwwIf_003Em__426(string p)
-		{
-			return p.StartsWith("action=");
+			Head,
+			HeadAndBody
 		}
 	}
 }

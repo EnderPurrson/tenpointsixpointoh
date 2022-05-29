@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class DeveloperConsoleView : MonoBehaviour
@@ -82,245 +83,13 @@ internal sealed class DeveloperConsoleView : MonoBehaviour
 
 	public UIToggle reviewCheckbox;
 
-	public string LevelLabel
-	{
-		set
-		{
-			if (!(levelLabel == null))
-			{
-				levelLabel.text = value;
-			}
-		}
-	}
-
-	public string ExperienceLabel
-	{
-		set
-		{
-			if (!(experienceLabel == null))
-			{
-				experienceLabel.text = value;
-			}
-		}
-	}
-
-	public float ExperiencePercentage
-	{
-		get
-		{
-			return (!(experienceSlider != null)) ? 0f : experienceSlider.value;
-		}
-		set
-		{
-			if (!(experienceSlider == null))
-			{
-				experienceSlider.value = Mathf.Clamp01(value);
-			}
-		}
-	}
-
-	public float LevelPercentage
-	{
-		get
-		{
-			return (!(levelSlider != null)) ? 0f : levelSlider.value;
-		}
-		set
-		{
-			if (!(levelSlider == null))
-			{
-				levelSlider.value = Mathf.Clamp01(value);
-			}
-		}
-	}
-
-	public string RatingLabel
-	{
-		set
-		{
-			if (!(ratingLabel == null))
-			{
-				ratingLabel.text = value;
-			}
-		}
-	}
-
-	public float RatingPercentage
-	{
-		get
-		{
-			return (!(ratingSlider != null)) ? 0f : ratingSlider.value;
-		}
-		set
-		{
-			if (!(ratingSlider == null))
-			{
-				ratingSlider.value = Mathf.Clamp01(value);
-			}
-		}
-	}
-
 	public int CoinsInput
 	{
 		set
 		{
-			if (coinsInput != null)
+			if (this.coinsInput != null)
 			{
-				coinsInput.value = value.ToString();
-			}
-		}
-	}
-
-	public int GemsInput
-	{
-		set
-		{
-			if (gemsInput != null)
-			{
-				gemsInput.value = value.ToString();
-			}
-		}
-	}
-
-	public int EnemiesInSurvivalWaveInput
-	{
-		set
-		{
-			if (enemyCountInSurvivalWave != null)
-			{
-				enemyCountInSurvivalWave.value = value.ToString();
-			}
-		}
-	}
-
-	public int EnemiesInCampaignInput
-	{
-		set
-		{
-			if (enemiesInCampaignInput != null)
-			{
-				enemiesInCampaignInput.value = value.ToString();
-			}
-		}
-	}
-
-	public bool StrongDevice
-	{
-		set
-		{
-			if (strongDeivceCheckbox != null)
-			{
-				strongDeivceCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool TrainingCompleted
-	{
-		set
-		{
-			if (trainingCheckbox != null)
-			{
-				trainingCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool TempGunActive
-	{
-		set
-		{
-			if (tempGunCheckbox != null)
-			{
-				tempGunCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool Set60FPSActive
-	{
-		set
-		{
-			if (set60FpsCheckbox != null)
-			{
-				set60FpsCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool SetMouseControll
-	{
-		set
-		{
-			if (mouseCOntrollCheckbox != null)
-			{
-				mouseCOntrollCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool SetSpectatorMode
-	{
-		set
-		{
-			if (spectatorModeCheckbox != null)
-			{
-				spectatorModeCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool SetFBReward
-	{
-		set
-		{
-			if (fbRewardCheckbox != null)
-			{
-				fbRewardCheckbox.value = value;
-			}
-		}
-	}
-
-	public bool IsPayingUser
-	{
-		set
-		{
-			if (isPayingCheckbox != null)
-			{
-				isPayingCheckbox.value = value;
-			}
-		}
-	}
-
-	public int MarathonDayInput
-	{
-		set
-		{
-			if (marathonCurrentDay != null)
-			{
-				marathonCurrentDay.value = value.ToString();
-			}
-		}
-	}
-
-	public bool MarathonTestMode
-	{
-		set
-		{
-			if (marathonTestMode != null)
-			{
-				marathonTestMode.value = value;
-			}
-		}
-	}
-
-	public bool GameGUIOffMode
-	{
-		set
-		{
-			if (gameGUIOffMode != null)
-			{
-				gameGUIOffMode.value = value;
+				this.coinsInput.@value = value.ToString();
 			}
 		}
 	}
@@ -329,31 +98,142 @@ internal sealed class DeveloperConsoleView : MonoBehaviour
 	{
 		set
 		{
-			if (devicePushTokenInput != null)
+			if (this.devicePushTokenInput != null)
 			{
-				devicePushTokenInput.value = value;
+				this.devicePushTokenInput.@value = value;
 			}
 		}
 	}
 
-	public string PlayerIdInput
+	public int EnemiesInCampaignInput
 	{
 		set
 		{
-			if (playerIdInput != null)
+			if (this.enemiesInCampaignInput != null)
 			{
-				playerIdInput.value = value;
+				this.enemiesInCampaignInput.@value = value.ToString();
 			}
 		}
 	}
 
-	public string SocialUserName
+	public int EnemiesInSurvivalWaveInput
 	{
 		set
 		{
-			if (socialUsername != null)
+			if (this.enemyCountInSurvivalWave != null)
 			{
-				socialUsername.text = value;
+				this.enemyCountInSurvivalWave.@value = value.ToString();
+			}
+		}
+	}
+
+	public string ExperienceLabel
+	{
+		set
+		{
+			if (this.experienceLabel == null)
+			{
+				return;
+			}
+			this.experienceLabel.text = value;
+		}
+	}
+
+	public float ExperiencePercentage
+	{
+		get
+		{
+			return (this.experienceSlider == null ? 0f : this.experienceSlider.@value);
+		}
+		set
+		{
+			if (this.experienceSlider == null)
+			{
+				return;
+			}
+			this.experienceSlider.@value = Mathf.Clamp01(value);
+		}
+	}
+
+	public bool GameGUIOffMode
+	{
+		set
+		{
+			if (this.gameGUIOffMode != null)
+			{
+				this.gameGUIOffMode.@value = value;
+			}
+		}
+	}
+
+	public int GemsInput
+	{
+		set
+		{
+			if (this.gemsInput != null)
+			{
+				this.gemsInput.@value = value.ToString();
+			}
+		}
+	}
+
+	public bool IsPayingUser
+	{
+		set
+		{
+			if (this.isPayingCheckbox != null)
+			{
+				this.isPayingCheckbox.@value = value;
+			}
+		}
+	}
+
+	public string LevelLabel
+	{
+		set
+		{
+			if (this.levelLabel == null)
+			{
+				return;
+			}
+			this.levelLabel.text = value;
+		}
+	}
+
+	public float LevelPercentage
+	{
+		get
+		{
+			return (this.levelSlider == null ? 0f : this.levelSlider.@value);
+		}
+		set
+		{
+			if (this.levelSlider == null)
+			{
+				return;
+			}
+			this.levelSlider.@value = Mathf.Clamp01(value);
+		}
+	}
+
+	public int MarathonDayInput
+	{
+		set
+		{
+			if (this.marathonCurrentDay != null)
+			{
+				this.marathonCurrentDay.@value = value.ToString();
+			}
+		}
+	}
+
+	public bool MarathonTestMode
+	{
+		set
+		{
+			if (this.marathonTestMode != null)
+			{
+				this.marathonTestMode.@value = value;
 			}
 		}
 	}
@@ -362,18 +242,57 @@ internal sealed class DeveloperConsoleView : MonoBehaviour
 	{
 		get
 		{
-			if ((bool)memoryCheckbox)
+			if (!this.memoryCheckbox)
 			{
-				return memoryCheckbox.value;
+				return false;
 			}
-			return false;
+			return this.memoryCheckbox.@value;
 		}
 		set
 		{
-			if ((bool)memoryCheckbox)
+			if (this.memoryCheckbox)
 			{
-				memoryCheckbox.value = value;
+				this.memoryCheckbox.@value = value;
 			}
+		}
+	}
+
+	public string PlayerIdInput
+	{
+		set
+		{
+			if (this.playerIdInput != null)
+			{
+				this.playerIdInput.@value = value;
+			}
+		}
+	}
+
+	public string RatingLabel
+	{
+		set
+		{
+			if (this.ratingLabel == null)
+			{
+				return;
+			}
+			this.ratingLabel.text = value;
+		}
+	}
+
+	public float RatingPercentage
+	{
+		get
+		{
+			return (this.ratingSlider == null ? 0f : this.ratingSlider.@value);
+		}
+		set
+		{
+			if (this.ratingSlider == null)
+			{
+				return;
+			}
+			this.ratingSlider.@value = Mathf.Clamp01(value);
 		}
 	}
 
@@ -381,29 +300,121 @@ internal sealed class DeveloperConsoleView : MonoBehaviour
 	{
 		get
 		{
-			if ((bool)reviewCheckbox)
+			if (!this.reviewCheckbox)
 			{
-				return reviewCheckbox.value;
+				return false;
 			}
-			return false;
+			return this.reviewCheckbox.@value;
 		}
 		set
 		{
-			if ((bool)reviewCheckbox)
+			if (this.reviewCheckbox)
 			{
-				reviewCheckbox.value = value;
+				this.reviewCheckbox.@value = value;
 			}
 		}
+	}
+
+	public bool Set60FPSActive
+	{
+		set
+		{
+			if (this.set60FpsCheckbox != null)
+			{
+				this.set60FpsCheckbox.@value = value;
+			}
+		}
+	}
+
+	public bool SetFBReward
+	{
+		set
+		{
+			if (this.fbRewardCheckbox != null)
+			{
+				this.fbRewardCheckbox.@value = value;
+			}
+		}
+	}
+
+	public bool SetMouseControll
+	{
+		set
+		{
+			if (this.mouseCOntrollCheckbox != null)
+			{
+				this.mouseCOntrollCheckbox.@value = value;
+			}
+		}
+	}
+
+	public bool SetSpectatorMode
+	{
+		set
+		{
+			if (this.spectatorModeCheckbox != null)
+			{
+				this.spectatorModeCheckbox.@value = value;
+			}
+		}
+	}
+
+	public string SocialUserName
+	{
+		set
+		{
+			if (this.socialUsername != null)
+			{
+				this.socialUsername.text = value;
+			}
+		}
+	}
+
+	public bool StrongDevice
+	{
+		set
+		{
+			if (this.strongDeivceCheckbox != null)
+			{
+				this.strongDeivceCheckbox.@value = value;
+			}
+		}
+	}
+
+	public bool TempGunActive
+	{
+		set
+		{
+			if (this.tempGunCheckbox != null)
+			{
+				this.tempGunCheckbox.@value = value;
+			}
+		}
+	}
+
+	public bool TrainingCompleted
+	{
+		set
+		{
+			if (this.trainingCheckbox != null)
+			{
+				this.trainingCheckbox.@value = value;
+			}
+		}
+	}
+
+	public DeveloperConsoleView()
+	{
 	}
 
 	private void Awake()
 	{
-		instance = this;
-		diagonalInfo.text = "Диагональ: " + Defs.ScreenDiagonal;
+		DeveloperConsoleView.instance = this;
+		this.diagonalInfo.text = string.Concat("Диагональ: ", Defs.ScreenDiagonal);
 	}
 
 	private void OnDestroy()
 	{
-		instance = null;
+		DeveloperConsoleView.instance = null;
 	}
 }

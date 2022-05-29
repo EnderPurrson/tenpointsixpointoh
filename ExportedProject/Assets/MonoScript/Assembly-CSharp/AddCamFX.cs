@@ -4,7 +4,7 @@ using UnityEngine;
 
 internal sealed class AddCamFX : MonoBehaviour
 {
-	private void Start()
+	public AddCamFX()
 	{
 	}
 
@@ -13,11 +13,15 @@ internal sealed class AddCamFX : MonoBehaviour
 		Type type = original.GetType();
 		Component component = destination.AddComponent(type);
 		FieldInfo[] fields = type.GetFields();
-		FieldInfo[] array = fields;
-		foreach (FieldInfo fieldInfo in array)
+		for (int i = 0; i < (int)fields.Length; i++)
 		{
+			FieldInfo fieldInfo = fields[i];
 			fieldInfo.SetValue(component, fieldInfo.GetValue(original));
 		}
 		return component;
+	}
+
+	private void Start()
+	{
 	}
 }

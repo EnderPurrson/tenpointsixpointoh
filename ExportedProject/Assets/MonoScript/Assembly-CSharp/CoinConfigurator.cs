@@ -1,4 +1,5 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class CoinConfigurator : MonoBehaviour
@@ -8,7 +9,7 @@ internal sealed class CoinConfigurator : MonoBehaviour
 
 	public bool CoinIsPresent = true;
 
-	public Vector3 pos = default(Vector3);
+	public Vector3 pos = new Vector3();
 
 	public Transform coinCreatePoint;
 
@@ -16,7 +17,11 @@ internal sealed class CoinConfigurator : MonoBehaviour
 	{
 		get
 		{
-			return bonusType;
+			return this.bonusType;
 		}
+	}
+
+	public CoinConfigurator()
+	{
 	}
 }

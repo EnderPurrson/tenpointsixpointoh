@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PreloadTexture : MonoBehaviour
@@ -9,48 +13,45 @@ public class PreloadTexture : MonoBehaviour
 
 	private UITexture nguiTexture;
 
-	private void OnEnable()
+	public PreloadTexture()
 	{
-		if (Device.IsLoweMemoryDevice)
-		{
-			if (nguiTexture == null)
-			{
-				nguiTexture = GetComponent<UITexture>();
-			}
-			if (nguiTexture != null)
-			{
-				StartCoroutine(Crt_LoadTexture());
-			}
-		}
-		else
-		{
-			Object.Destroy(this);
-		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerator Crt_LoadTexture()
 	{
-		while (string.IsNullOrEmpty(pathTexture))
-		{
-			yield return null;
-		}
-		Texture needTx = Resources.Load<Texture>(pathTexture);
-		if (nguiTexture != null)
-		{
-			nguiTexture.mainTexture = needTx;
-		}
-		yield return null;
+		PreloadTexture.u003cCrt_LoadTextureu003ec__Iterator19A variable = null;
+		return variable;
 	}
 
 	private void OnDisable()
 	{
 		if (Device.IsLoweMemoryDevice)
 		{
-			if (nguiTexture != null)
+			if (this.nguiTexture != null)
 			{
-				nguiTexture.mainTexture = null;
+				this.nguiTexture.mainTexture = null;
 			}
 			ActivityIndicator.ClearMemory();
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (!Device.IsLoweMemoryDevice)
+		{
+			UnityEngine.Object.Destroy(this);
+		}
+		else
+		{
+			if (this.nguiTexture == null)
+			{
+				this.nguiTexture = base.GetComponent<UITexture>();
+			}
+			if (this.nguiTexture != null)
+			{
+				base.StartCoroutine(this.Crt_LoadTexture());
+			}
 		}
 	}
 }

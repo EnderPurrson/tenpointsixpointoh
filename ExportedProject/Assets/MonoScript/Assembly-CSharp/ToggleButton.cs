@@ -1,6 +1,6 @@
+using Rilisoft;
 using System;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class ToggleButton : MonoBehaviour
@@ -13,64 +13,70 @@ public class ToggleButton : MonoBehaviour
 
 	private bool _isChecked;
 
+	private EventHandler<ToggleButtonEventArgs> Clicked;
+
 	public bool IsChecked
 	{
 		get
 		{
-			return _isChecked;
+			return this._isChecked;
 		}
 		set
 		{
-			SetCheckedWithoutEvent(value);
+			this.SetCheckedWithoutEvent(value);
 			EventHandler<ToggleButtonEventArgs> clicked = this.Clicked;
 			if (clicked != null)
 			{
-				clicked(this, new ToggleButtonEventArgs
+				clicked(this, new ToggleButtonEventArgs()
 				{
-					IsChecked = _isChecked
+					IsChecked = this._isChecked
 				});
 			}
 		}
 	}
 
-	public event EventHandler<ToggleButtonEventArgs> Clicked;
+	public ToggleButton()
+	{
+	}
 
 	public void SetCheckedImage(bool c)
 	{
-		offButton.gameObject.SetActive(!c);
-		onButton.gameObject.SetActive(c);
-		if (useForMultipleToggle)
+		this.offButton.gameObject.SetActive(!c);
+		this.onButton.gameObject.SetActive(c);
+		if (this.useForMultipleToggle)
 		{
-			onButton.isEnabled = !onButton.gameObject.activeSelf;
+			this.onButton.isEnabled = !this.onButton.gameObject.activeSelf;
 		}
 	}
 
 	public void SetCheckedWithoutEvent(bool val)
 	{
-		_isChecked = val;
-		offButton.gameObject.SetActive(!_isChecked);
-		onButton.gameObject.SetActive(_isChecked);
-		if (useForMultipleToggle)
+		this._isChecked = val;
+		this.offButton.gameObject.SetActive(!this._isChecked);
+		this.onButton.gameObject.SetActive(this._isChecked);
+		if (this.useForMultipleToggle)
 		{
-			onButton.isEnabled = !onButton.gameObject.activeSelf;
+			this.onButton.isEnabled = !this.onButton.gameObject.activeSelf;
 		}
 	}
 
 	private void Start()
 	{
-		onButton.GetComponent<ButtonHandler>().Clicked += _003CStart_003Em__58B;
-		offButton.GetComponent<ButtonHandler>().Clicked += _003CStart_003Em__58C;
+		this.onButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.IsChecked = false);
+		this.offButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.IsChecked = true);
 	}
 
-	[CompilerGenerated]
-	private void _003CStart_003Em__58B(object sender, EventArgs e)
+	public event EventHandler<ToggleButtonEventArgs> Clicked
 	{
-		IsChecked = false;
-	}
-
-	[CompilerGenerated]
-	private void _003CStart_003Em__58C(object sender, EventArgs e)
-	{
-		IsChecked = true;
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.Clicked += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.Clicked -= value;
+		}
 	}
 }

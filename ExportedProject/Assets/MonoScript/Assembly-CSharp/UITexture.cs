@@ -5,158 +5,45 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UITexture : UIBasicSprite
 {
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Rect mRect = new Rect(0f, 0f, 1f, 1f);
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Texture mTexture;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Material mMat;
 
 	[HideInInspector]
 	[SerializeField]
 	private Shader mShader;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Vector4 mBorder = Vector4.zero;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool mFixedAspect;
 
 	[NonSerialized]
 	private int mPMA = -1;
 
-	public override Texture mainTexture
-	{
-		get
-		{
-			if (mTexture != null)
-			{
-				return mTexture;
-			}
-			if (mMat != null)
-			{
-				return mMat.mainTexture;
-			}
-			return null;
-		}
-		set
-		{
-			if (mTexture != value)
-			{
-				if (drawCall != null && drawCall.widgetCount == 1 && mMat == null)
-				{
-					mTexture = value;
-					drawCall.mainTexture = value;
-					return;
-				}
-				RemoveFromPanel();
-				mTexture = value;
-				mPMA = -1;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public override Material material
-	{
-		get
-		{
-			return mMat;
-		}
-		set
-		{
-			if (mMat != value)
-			{
-				RemoveFromPanel();
-				mShader = null;
-				mMat = value;
-				mPMA = -1;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public override Shader shader
-	{
-		get
-		{
-			if (mMat != null)
-			{
-				return mMat.shader;
-			}
-			if (mShader == null)
-			{
-				mShader = Shader.Find("Unlit/Transparent Colored");
-			}
-			return mShader;
-		}
-		set
-		{
-			if (mShader != value)
-			{
-				if (drawCall != null && drawCall.widgetCount == 1 && mMat == null)
-				{
-					mShader = value;
-					drawCall.shader = value;
-					return;
-				}
-				RemoveFromPanel();
-				mShader = value;
-				mPMA = -1;
-				mMat = null;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public override bool premultipliedAlpha
-	{
-		get
-		{
-			if (mPMA == -1)
-			{
-				Material material = this.material;
-				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
-			}
-			return mPMA == 1;
-		}
-	}
-
 	public override Vector4 border
 	{
 		get
 		{
-			return mBorder;
+			return this.mBorder;
 		}
 		set
 		{
-			if (mBorder != value)
+			if (this.mBorder != value)
 			{
-				mBorder = value;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public Rect uvRect
-	{
-		get
-		{
-			return mRect;
-		}
-		set
-		{
-			if (mRect != value)
-			{
-				mRect = value;
-				MarkAsChanged();
+				this.mBorder = value;
+				this.MarkAsChanged();
 			}
 		}
 	}
@@ -165,67 +52,67 @@ public class UITexture : UIBasicSprite
 	{
 		get
 		{
-			Vector2 vector = base.pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float num3 = num + (float)mWidth;
-			float num4 = num2 + (float)mHeight;
-			if (mTexture != null && mType != Type.Tiled)
+			float single;
+			float single1;
+			Vector2 vector2 = base.pivotOffset;
+			float single2 = -vector2.x * (float)this.mWidth;
+			float single3 = -vector2.y * (float)this.mHeight;
+			float single4 = single2 + (float)this.mWidth;
+			float single5 = single3 + (float)this.mHeight;
+			if (this.mTexture != null && this.mType != UIBasicSprite.Type.Tiled)
 			{
-				int num5 = mTexture.width;
-				int num6 = mTexture.height;
-				int num7 = 0;
-				int num8 = 0;
-				float num9 = 1f;
-				float num10 = 1f;
-				if (num5 > 0 && num6 > 0 && (mType == Type.Simple || mType == Type.Filled))
+				int num = this.mTexture.width;
+				int num1 = this.mTexture.height;
+				int num2 = 0;
+				int num3 = 0;
+				float single6 = 1f;
+				float single7 = 1f;
+				if (num > 0 && num1 > 0 && (this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled))
 				{
-					if (((uint)num5 & (true ? 1u : 0u)) != 0)
+					if ((num & 1) != 0)
 					{
-						num7++;
+						num2++;
 					}
-					if (((uint)num6 & (true ? 1u : 0u)) != 0)
+					if ((num1 & 1) != 0)
 					{
-						num8++;
+						num3++;
 					}
-					num9 = 1f / (float)num5 * (float)mWidth;
-					num10 = 1f / (float)num6 * (float)mHeight;
+					single6 = 1f / (float)num * (float)this.mWidth;
+					single7 = 1f / (float)num1 * (float)this.mHeight;
 				}
-				if (mFlip == Flip.Horizontally || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Horizontally || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num += (float)num7 * num9;
+					single2 = single2 + (float)num2 * single6;
 				}
 				else
 				{
-					num3 -= (float)num7 * num9;
+					single4 = single4 - (float)num2 * single6;
 				}
-				if (mFlip == Flip.Vertically || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Vertically || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num2 += (float)num8 * num10;
+					single3 = single3 + (float)num3 * single7;
 				}
 				else
 				{
-					num4 -= (float)num8 * num10;
+					single5 = single5 - (float)num3 * single7;
 				}
 			}
-			float num11;
-			float num12;
-			if (mFixedAspect)
+			if (!this.mFixedAspect)
 			{
-				num11 = 0f;
-				num12 = 0f;
+				Vector4 vector4 = this.border;
+				single = vector4.x + vector4.z;
+				single1 = vector4.y + vector4.w;
 			}
 			else
 			{
-				Vector4 vector2 = border;
-				num11 = vector2.x + vector2.z;
-				num12 = vector2.y + vector2.w;
+				single = 0f;
+				single1 = 0f;
 			}
-			float x = Mathf.Lerp(num, num3 - num11, mDrawRegion.x);
-			float y = Mathf.Lerp(num2, num4 - num12, mDrawRegion.y);
-			float z = Mathf.Lerp(num + num11, num3, mDrawRegion.z);
-			float w = Mathf.Lerp(num2 + num12, num4, mDrawRegion.w);
-			return new Vector4(x, y, z, w);
+			float single8 = Mathf.Lerp(single2, single4 - single, this.mDrawRegion.x);
+			float single9 = Mathf.Lerp(single3, single5 - single1, this.mDrawRegion.y);
+			float single10 = Mathf.Lerp(single2 + single, single4, this.mDrawRegion.z);
+			float single11 = Mathf.Lerp(single3 + single1, single5, this.mDrawRegion.w);
+			return new Vector4(single8, single9, single10, single11);
 		}
 	}
 
@@ -233,108 +120,233 @@ public class UITexture : UIBasicSprite
 	{
 		get
 		{
-			return mFixedAspect;
+			return this.mFixedAspect;
 		}
 		set
 		{
-			if (mFixedAspect != value)
+			if (this.mFixedAspect != value)
 			{
-				mFixedAspect = value;
-				mDrawRegion = new Vector4(0f, 0f, 1f, 1f);
-				MarkAsChanged();
+				this.mFixedAspect = value;
+				this.mDrawRegion = new Vector4(0f, 0f, 1f, 1f);
+				this.MarkAsChanged();
 			}
 		}
+	}
+
+	public override Texture mainTexture
+	{
+		get
+		{
+			if (this.mTexture != null)
+			{
+				return this.mTexture;
+			}
+			if (this.mMat == null)
+			{
+				return null;
+			}
+			return this.mMat.mainTexture;
+		}
+		set
+		{
+			if (this.mTexture != value)
+			{
+				if (!(this.drawCall != null) || this.drawCall.widgetCount != 1 || !(this.mMat == null))
+				{
+					base.RemoveFromPanel();
+					this.mTexture = value;
+					this.mPMA = -1;
+					this.MarkAsChanged();
+				}
+				else
+				{
+					this.mTexture = value;
+					this.drawCall.mainTexture = value;
+				}
+			}
+		}
+	}
+
+	public override Material material
+	{
+		get
+		{
+			return this.mMat;
+		}
+		set
+		{
+			if (this.mMat != value)
+			{
+				base.RemoveFromPanel();
+				this.mShader = null;
+				this.mMat = value;
+				this.mPMA = -1;
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public override bool premultipliedAlpha
+	{
+		get
+		{
+			if (this.mPMA == -1)
+			{
+				Material material = this.material;
+				this.mPMA = (!(material != null) || !(material.shader != null) || !material.shader.name.Contains("Premultiplied") ? 0 : 1);
+			}
+			return this.mPMA == 1;
+		}
+	}
+
+	public override Shader shader
+	{
+		get
+		{
+			if (this.mMat != null)
+			{
+				return this.mMat.shader;
+			}
+			if (this.mShader == null)
+			{
+				this.mShader = Shader.Find("Unlit/Transparent Colored");
+			}
+			return this.mShader;
+		}
+		set
+		{
+			if (this.mShader != value)
+			{
+				if (!(this.drawCall != null) || this.drawCall.widgetCount != 1 || !(this.mMat == null))
+				{
+					base.RemoveFromPanel();
+					this.mShader = value;
+					this.mPMA = -1;
+					this.mMat = null;
+					this.MarkAsChanged();
+				}
+				else
+				{
+					this.mShader = value;
+					this.drawCall.shader = value;
+				}
+			}
+		}
+	}
+
+	public Rect uvRect
+	{
+		get
+		{
+			return this.mRect;
+		}
+		set
+		{
+			if (this.mRect != value)
+			{
+				this.mRect = value;
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public UITexture()
+	{
 	}
 
 	public override void MakePixelPerfect()
 	{
 		base.MakePixelPerfect();
-		if (mType == Type.Tiled)
+		if (this.mType == UIBasicSprite.Type.Tiled)
 		{
 			return;
 		}
-		Texture texture = mainTexture;
-		if (!(texture == null) && (mType == Type.Simple || mType == Type.Filled || !base.hasBorder) && texture != null)
+		Texture texture = this.mainTexture;
+		if (texture == null)
+		{
+			return;
+		}
+		if ((this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled || !base.hasBorder) && texture != null)
 		{
 			int num = texture.width;
-			int num2 = texture.height;
+			int num1 = texture.height;
 			if ((num & 1) == 1)
 			{
 				num++;
 			}
-			if ((num2 & 1) == 1)
+			if ((num1 & 1) == 1)
 			{
-				num2++;
+				num1++;
 			}
 			base.width = num;
-			base.height = num2;
+			base.height = num1;
+		}
+	}
+
+	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+		Texture texture = this.mainTexture;
+		if (texture == null)
+		{
+			return;
+		}
+		Rect rect = new Rect(this.mRect.x * (float)texture.width, this.mRect.y * (float)texture.height, (float)texture.width * this.mRect.width, (float)texture.height * this.mRect.height);
+		Rect rect1 = rect;
+		Vector4 vector4 = this.border;
+		rect1.xMin = rect1.xMin + vector4.x;
+		rect1.yMin = rect1.yMin + vector4.y;
+		rect1.xMax = rect1.xMax - vector4.z;
+		rect1.yMax = rect1.yMax - vector4.w;
+		float single = 1f / (float)texture.width;
+		float single1 = 1f / (float)texture.height;
+		rect.xMin = rect.xMin * single;
+		rect.xMax = rect.xMax * single;
+		rect.yMin = rect.yMin * single1;
+		rect.yMax = rect.yMax * single1;
+		rect1.xMin = rect1.xMin * single;
+		rect1.xMax = rect1.xMax * single;
+		rect1.yMin = rect1.yMin * single1;
+		rect1.yMax = rect1.yMax * single1;
+		int num = verts.size;
+		base.Fill(verts, uvs, cols, rect, rect1);
+		if (this.onPostFill != null)
+		{
+			this.onPostFill(this, num, verts, uvs, cols);
 		}
 	}
 
 	protected override void OnUpdate()
 	{
 		base.OnUpdate();
-		if (!mFixedAspect)
+		if (this.mFixedAspect)
 		{
-			return;
-		}
-		Texture texture = mainTexture;
-		if (texture != null)
-		{
-			int num = texture.width;
-			int num2 = texture.height;
-			if ((num & 1) == 1)
+			Texture texture = this.mainTexture;
+			if (texture != null)
 			{
-				num++;
-			}
-			if ((num2 & 1) == 1)
-			{
-				num2++;
-			}
-			float num3 = mWidth;
-			float num4 = mHeight;
-			float num5 = num3 / num4;
-			float num6 = (float)num / (float)num2;
-			if (num6 < num5)
-			{
-				float num7 = (num3 - num4 * num6) / num3 * 0.5f;
-				base.drawRegion = new Vector4(num7, 0f, 1f - num7, 1f);
-			}
-			else
-			{
-				float num8 = (num4 - num3 / num6) / num4 * 0.5f;
-				base.drawRegion = new Vector4(0f, num8, 1f, 1f - num8);
-			}
-		}
-	}
-
-	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
-	{
-		Texture texture = mainTexture;
-		if (!(texture == null))
-		{
-			Rect rect = new Rect(mRect.x * (float)texture.width, mRect.y * (float)texture.height, (float)texture.width * mRect.width, (float)texture.height * mRect.height);
-			Rect inner = rect;
-			Vector4 vector = border;
-			inner.xMin += vector.x;
-			inner.yMin += vector.y;
-			inner.xMax -= vector.z;
-			inner.yMax -= vector.w;
-			float num = 1f / (float)texture.width;
-			float num2 = 1f / (float)texture.height;
-			rect.xMin *= num;
-			rect.xMax *= num;
-			rect.yMin *= num2;
-			rect.yMax *= num2;
-			inner.xMin *= num;
-			inner.xMax *= num;
-			inner.yMin *= num2;
-			inner.yMax *= num2;
-			int size = verts.size;
-			Fill(verts, uvs, cols, rect, inner);
-			if (onPostFill != null)
-			{
-				onPostFill(this, size, verts, uvs, cols);
+				int num = texture.width;
+				int num1 = texture.height;
+				if ((num & 1) == 1)
+				{
+					num++;
+				}
+				if ((num1 & 1) == 1)
+				{
+					num1++;
+				}
+				float single = (float)this.mWidth;
+				float single1 = (float)this.mHeight;
+				float single2 = single / single1;
+				float single3 = (float)num / (float)num1;
+				if (single3 >= single2)
+				{
+					float single4 = (single1 - single / single3) / single1 * 0.5f;
+					base.drawRegion = new Vector4(0f, single4, 1f, 1f - single4);
+				}
+				else
+				{
+					float single5 = (single - single1 * single3) / single * 0.5f;
+					base.drawRegion = new Vector4(single5, 0f, 1f - single5, 1f);
+				}
 			}
 		}
 	}

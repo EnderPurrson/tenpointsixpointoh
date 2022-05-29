@@ -1,38 +1,45 @@
+using System;
 using System.Collections.Generic;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public abstract class Jsonable
 	{
-		public static Dictionary<string, object> unrollObjectIntoMap<T>(Dictionary<string, T> obj) where T : Jsonable
+		protected Jsonable()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			foreach (KeyValuePair<string, T> item in obj)
-			{
-				dictionary.Add(item.Key, item.Value.GetObjectDictionary());
-			}
-			return dictionary;
 		}
 
-		public static List<object> unrollObjectIntoList<T>(List<T> obj) where T : Jsonable
+		public static void CheckForErrors(Dictionary<string, object> jsonMap)
 		{
-			List<object> list = new List<object>();
-			foreach (T item in obj)
+			object obj;
+			if (jsonMap.TryGetValue("error", out obj))
 			{
-				list.Add(item.GetObjectDictionary());
+				throw new AmazonException(obj as string);
 			}
-			return list;
 		}
 
 		public abstract Dictionary<string, object> GetObjectDictionary();
 
-		public static void CheckForErrors(Dictionary<string, object> jsonMap)
+		public static List<object> unrollObjectIntoList<T>(List<T> obj)
+		where T : Jsonable
 		{
-			object value;
-			if (jsonMap.TryGetValue("error", out value))
+			List<object> objs = new List<object>();
+			foreach (T t in obj)
 			{
-				throw new AmazonException(value as string);
+				objs.Add(t.GetObjectDictionary());
 			}
+			return objs;
+		}
+
+		public static Dictionary<string, object> unrollObjectIntoMap<T>(Dictionary<string, T> obj)
+		where T : Jsonable
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>();
+			foreach (KeyValuePair<string, T> keyValuePair in obj)
+			{
+				strs.Add(keyValuePair.Key, keyValuePair.Value.GetObjectDictionary());
+			}
+			return strs;
 		}
 	}
 }

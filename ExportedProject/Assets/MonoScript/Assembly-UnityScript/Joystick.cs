@@ -1,30 +1,13 @@
+using Boo.Lang;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Boo.Lang;
 using UnityEngine;
 
 [Serializable]
 public class Joystick : MonoBehaviour
 {
-	[Serializable]
-	[CompilerGenerated]
-	internal sealed class _0024BlinkReload_002425 : GenericGenerator<WaitForSeconds>
-	{
-		internal Joystick _0024self__002427;
-
-		public _0024BlinkReload_002425(Joystick self_)
-		{
-			_0024self__002427 = self_;
-		}
-
-		public override IEnumerator<WaitForSeconds> GetEnumerator()
-		{
-			return new _0024(_0024self__002427);
-		}
-	}
-
 	[NonSerialized]
 	private static Joystick[] joysticks;
 
@@ -32,7 +15,7 @@ public class Joystick : MonoBehaviour
 	private static bool enumeratedJoysticks;
 
 	[NonSerialized]
-	private static float tapTimeDelta = 0.3f;
+	private static float tapTimeDelta;
 
 	public bool touchPad;
 
@@ -104,335 +87,366 @@ public class Joystick : MonoBehaviour
 
 	private bool touchBeginsOnFireZone;
 
+	static Joystick()
+	{
+		Joystick.tapTimeDelta = 0.3f;
+	}
+
 	public Joystick()
 	{
-		deadZone = Vector2.zero;
-		lastFingerId = -1;
-		firstDeltaTime = 0.5f;
-		guiBoundary = new Boundary();
-		NormalReloadMode = true;
-		pos = new Vector3(0f, 0f, 0f);
-		guiCoeff = (float)Screen.height / 640f;
-	}
-
-	public override void NoAmmo()
-	{
-		if (NormalReloadMode)
-		{
-			NormalReloadMode = false;
-			StartCoroutine("BlinkReload");
-		}
-	}
-
-	public override void HasAmmo()
-	{
-		if (!NormalReloadMode)
-		{
-			NormalReloadMode = true;
-			StopCoroutine("BlinkReload");
-			blink = false;
-		}
-	}
-
-	public override IEnumerator BlinkReload()
-	{
-		return new _0024BlinkReload_002425(this).GetEnumerator();
+		this.deadZone = Vector2.zero;
+		this.lastFingerId = -1;
+		this.firstDeltaTime = 0.5f;
+		this.guiBoundary = new Boundary();
+		this.NormalReloadMode = true;
+		this.pos = new Vector3((float)0, (float)0, (float)0);
+		this.guiCoeff = (float)Screen.height / 640f;
 	}
 
 	public override void Awake()
 	{
 	}
 
-	public override void Start()
+	public override IEnumerator BlinkReload()
 	{
-		if (!touchPad)
-		{
-			guiPixelInset = new Rect(0f, 0f, 128f, 128f);
-			gui = (Texture2D)(Resources.Load("Move") as Texture);
-		}
-		else
-		{
-			guiPixelInset = new Rect(-200f, 0f, 200f, 125f);
-			gui = (Texture2D)(Resources.Load("Jump") as Texture);
-		}
-		if (touchPad)
-		{
-			int num = 1;
-			Vector3 vector = transform.position;
-			float num2 = (vector.x = num);
-			Vector3 vector3 = (transform.position = vector);
-		}
-		guiPixelInset = new Rect(guiPixelInset.x * (float)Screen.height / 640f, guiPixelInset.y * (float)Screen.height / 640f, guiPixelInset.width * (float)Screen.height / 640f, guiPixelInset.height * (float)Screen.height / 640f);
-		defaultRect = guiPixelInset;
-		defaultRect.x += pos.x * (float)Screen.width;
-		defaultRect.y += pos.y * (float)Screen.height;
-		float num3 = 1.2f;
-		if (halfScreenZone)
-		{
-			defaultRect.y = 0f;
-			defaultRect.x = (float)Screen.width / 2f;
-			defaultRect.width = (float)Screen.width / 2f;
-			defaultRect.height = (float)Screen.height * 0.6f;
-			jumpTexture = gui;
-			float num4 = (num3 - 1f) * 0.5f;
-			jumpTexture = gui;
-			jumpTexturePixelInset = new Rect((float)Screen.width - (float)jumpTexture.width * (num4 + 1f) * (float)Screen.height / 640f, (float)(jumpTexture.height * Screen.height / 640) * num4 / 2f, jumpTexture.width * Screen.height / 640, jumpTexture.height * Screen.height / 640);
-			guiPixelInset = jumpTexturePixelInset;
-			int num5 = fireTexture.width * Screen.height / 640;
-			fireZone = new Rect((float)Screen.width - (float)Screen.height * 0.4f, (float)Screen.height * 0.15f - (float)(num5 / 2), num5, num5);
-			if ((bool)reloadTexture)
-			{
-				reloadZone = new Rect((float)Screen.width - (float)reloadTexture.width * 1.1f * (float)Screen.height / 640f, (float)Screen.height * 0.4f, fireZone.width * 0.65f, fireZone.height * 0.65f);
-			}
-		}
-		else if ((bool)reloadTexture)
-		{
-			reloadZone = new Rect((float)Screen.width - (float)reloadTexture.width * 1.1f * (float)Screen.height / 640f, (float)Screen.height * 0.4f, fireZone.width * 0.65f, fireZone.height * 0.65f);
-		}
-		pos.x = 0f;
-		pos.y = 0f;
-		if (touchPad)
-		{
-			touchZone = defaultRect;
-			return;
-		}
-		joystickZone = new Rect(0f, 0f, (float)Screen.width / 2f, (float)Screen.height / 2f);
-		defaultRect = guiPixelInset;
-		defaultRect.x = (float)Screen.height * 0.1f;
-		defaultRect.y = (float)Screen.height * 0.1f;
-		guiTouchOffset.x = defaultRect.width * 0.5f;
-		guiTouchOffset.y = defaultRect.height * 0.5f;
-		guiCenter.x = defaultRect.x + guiTouchOffset.x;
-		guiCenter.y = defaultRect.y + guiTouchOffset.y;
-		guiBoundary.min.x = defaultRect.x - guiTouchOffset.x;
-		guiBoundary.max.x = defaultRect.x + guiTouchOffset.x;
-		guiBoundary.min.y = defaultRect.y - guiTouchOffset.y;
-		guiBoundary.max.y = defaultRect.y + guiTouchOffset.y;
+		return (new Joystick.u0024BlinkReloadu002425(this)).GetEnumerator();
 	}
 
 	public override void Disable()
 	{
-		gameObject.active = false;
-		enumeratedJoysticks = false;
+		this.gameObject.active = false;
+		Joystick.enumeratedJoysticks = false;
 	}
 
 	public override void Enable()
 	{
-		gameObject.active = true;
+		this.gameObject.active = true;
 	}
 
-	public override void ResetJoystick()
+	public override void HasAmmo()
 	{
-		if ((!halfScreenZone || !touchPad || !touchPad) && (bool)gui)
+		if (!this.NormalReloadMode)
 		{
-			guiPixelInset = defaultRect;
+			this.NormalReloadMode = true;
+			this.StopCoroutine("BlinkReload");
+			this.blink = false;
 		}
-		lastFingerId = -1;
-		position = Vector2.zero;
-		fingerDownPos = Vector2.zero;
 	}
 
 	public override bool IsFingerDown()
 	{
-		return lastFingerId != -1;
+		return this.lastFingerId != -1;
 	}
 
 	public override void LatchedFinger(int fingerId)
 	{
-		if (lastFingerId == fingerId)
+		if (this.lastFingerId == fingerId)
 		{
-			ResetJoystick();
+			this.ResetJoystick();
 		}
 	}
 
-	public override void Update()
+	public override void Main()
 	{
-		if (!enumeratedJoysticks)
+	}
+
+	public override void NoAmmo()
+	{
+		if (this.NormalReloadMode)
 		{
-			joysticks = ((Joystick[])UnityEngine.Object.FindObjectsOfType(typeof(Joystick))) as Joystick[];
-			enumeratedJoysticks = true;
-		}
-		int touchCount = Input.touchCount;
-		if (!(tapTimeWindow <= 0f))
-		{
-			tapTimeWindow -= Time.deltaTime;
-		}
-		else
-		{
-			tapCount = 0;
-		}
-		if (touchCount == 0)
-		{
-			ResetJoystick();
-		}
-		else
-		{
-			for (int i = 0; i < touchCount; i++)
-			{
-				Touch touch = Input.GetTouch(i);
-				Vector2 vector = touch.position - guiTouchOffset;
-				bool flag = false;
-				if (touchPad)
-				{
-					if (touchZone.Contains(touch.position))
-					{
-						flag = true;
-					}
-				}
-				else if (guiPixelInset.Contains(touch.position))
-				{
-					flag = true;
-				}
-				isSerialShooting = PlayerPrefs.GetInt("setSeriya") == 1;
-				bool num = flag;
-				if (num)
-				{
-					num = lastFingerId == -1;
-					if (!num)
-					{
-						num = lastFingerId != touch.fingerId;
-					}
-				}
-				bool flag2 = num;
-				if (flag2)
-				{
-					touchBeginsOnFireZone = fireZone.Contains(touch.position);
-				}
-				if (isSerialShooting && touchPad && flag)
-				{
-					if ((bool)fireTexture && touchZone.Contains(touch.position) && touchBeginsOnFireZone && !blink)
-					{
-						_playerGun.SendMessage("ShotPressed");
-					}
-					else
-					{
-						touchBeginsOnFireZone = false;
-					}
-				}
-				if (flag2)
-				{
-					if (touchPad)
-					{
-						lastFingerId = touch.fingerId;
-						fingerDownPos = touch.position;
-						fingerDownTime = Time.time;
-					}
-					lastFingerId = touch.fingerId;
-					if (!(tapTimeWindow <= 0f))
-					{
-						tapCount++;
-					}
-					else
-					{
-						tapCount = 1;
-						tapTimeWindow = tapTimeDelta;
-					}
-					int j = 0;
-					Joystick[] array = joysticks;
-					for (int length = array.Length; j < length; j++)
-					{
-						if (array[j] != this)
-						{
-							array[j].LatchedFinger(touch.fingerId);
-						}
-					}
-					if ((bool)fireTexture && fireZone.Contains(touch.position) && !isSerialShooting)
-					{
-						_playerGun.SendMessage("ShotPressed");
-						continue;
-					}
-					if ((bool)jumpTexture && jumpTexturePixelInset.Contains(touch.position))
-					{
-						jumpPressed = true;
-					}
-					if (touchPad && reloadZone.Contains(touch.position))
-					{
-						_playerGun.SendMessage("ReloadPressed");
-					}
-					if (touchPad)
-					{
-						_lastFingerPosition = touch.position;
-					}
-				}
-				if (lastFingerId == touch.fingerId)
-				{
-					if (touch.tapCount > tapCount)
-					{
-						tapCount = touch.tapCount;
-					}
-					if (touchPad)
-					{
-						float num2 = 25f;
-						position.x = Mathf.Clamp((touch.position.x - fingerDownPos.x) * 1f / 1f, 0f - num2, num2);
-						position.y = Mathf.Clamp((touch.position.y - fingerDownPos.y) * 1f / 1f, 0f - num2, num2);
-						fingerDownPos = touch.position;
-					}
-					else
-					{
-						guiPixelInset.x = Mathf.Clamp(vector.x, guiBoundary.min.x, guiBoundary.max.x);
-						guiPixelInset.y = Mathf.Clamp(vector.y, guiBoundary.min.y, guiBoundary.max.y);
-					}
-					if (!flag2 && touchPad && touchZone.Contains(touch.position))
-					{
-						_lastFingerPosition = touch.position;
-					}
-					if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-					{
-						ResetJoystick();
-					}
-				}
-			}
-		}
-		if (!touchPad)
-		{
-			position.x = (guiPixelInset.x + guiTouchOffset.x - guiCenter.x) / guiTouchOffset.x;
-			position.y = (guiPixelInset.y + guiTouchOffset.y - guiCenter.y) / guiTouchOffset.y;
-		}
-		float num3 = Mathf.Abs(position.x);
-		float num4 = Mathf.Abs(position.y);
-		if (!(num3 >= deadZone.x))
-		{
-			position.x = 0f;
-		}
-		else if (normalize)
-		{
-			position.x = Mathf.Sign(position.x) * (num3 - deadZone.x) / (1f - deadZone.x);
-		}
-		if (!(num4 >= deadZone.y))
-		{
-			position.y = 0f;
-		}
-		else if (normalize)
-		{
-			position.y = Mathf.Sign(position.y) * (num4 - deadZone.y) / (1f - deadZone.y);
+			this.NormalReloadMode = false;
+			this.StartCoroutine("BlinkReload");
 		}
 	}
 
 	public override void OnGUI()
 	{
+		Texture texture;
 		Color color = GUI.color;
-		GUI.color = new Color(color.r, color.g, color.b, 38f);
-		if ((bool)fireTexture)
+		GUI.color = new Color(color.r, color.g, color.b, (float)38);
+		if (this.fireTexture)
 		{
-			GUI.DrawTexture(new Rect(fireZone.x, (float)Screen.height - fireZone.height - fireZone.y, fireZone.width, fireZone.height), fireTexture);
+			GUI.DrawTexture(new Rect(this.fireZone.x, (float)Screen.height - this.fireZone.height - this.fireZone.y, this.fireZone.width, this.fireZone.height), this.fireTexture);
 		}
-		if ((bool)reloadTexture)
+		if (this.reloadTexture)
 		{
-			GUI.DrawTexture(new Rect(reloadZone.x, (float)Screen.height - reloadZone.height - reloadZone.y, reloadZone.height, reloadZone.height), NormalReloadMode ? reloadTexture : ((!blink) ? reloadTexture : reloadTextureNoAmmo));
+			Rect rect = new Rect(this.reloadZone.x, (float)Screen.height - this.reloadZone.height - this.reloadZone.y, this.reloadZone.height, this.reloadZone.height);
+			if (!this.NormalReloadMode)
+			{
+				texture = (!this.blink ? this.reloadTexture : this.reloadTextureNoAmmo);
+			}
+			else
+			{
+				texture = this.reloadTexture;
+			}
+			GUI.DrawTexture(rect, texture);
 		}
-		if ((bool)gui)
+		if (this.gui)
 		{
-			GUI.DrawTexture(new Rect(guiPixelInset.x, (float)Screen.height - guiPixelInset.height - guiPixelInset.y, guiPixelInset.width, guiPixelInset.height), gui);
+			GUI.DrawTexture(new Rect(this.guiPixelInset.x, (float)Screen.height - this.guiPixelInset.height - this.guiPixelInset.y, this.guiPixelInset.width, this.guiPixelInset.height), this.gui);
 		}
 		GUI.color = color;
 	}
 
-	public override void setSeriya(bool isSeriya)
+	public override void ResetJoystick()
 	{
-		isSerialShooting = isSeriya;
+		if ((!this.halfScreenZone || !this.touchPad || !this.touchPad) && this.gui)
+		{
+			this.guiPixelInset = this.defaultRect;
+		}
+		this.lastFingerId = -1;
+		this.position = Vector2.zero;
+		this.fingerDownPos = Vector2.zero;
 	}
 
-	public override void Main()
+	public override void setSeriya(bool isSeriya)
 	{
+		this.isSerialShooting = isSeriya;
+	}
+
+	public override void Start()
+	{
+		if (this.touchPad)
+		{
+			this.guiPixelInset = new Rect((float)-200, (float)0, (float)200, (float)125);
+			this.gui = (Texture2D)(Resources.Load("Jump") as Texture);
+		}
+		else
+		{
+			this.guiPixelInset = new Rect((float)0, (float)0, (float)128, (float)128);
+			this.gui = (Texture2D)(Resources.Load("Move") as Texture);
+		}
+		if (this.touchPad)
+		{
+			int num = 1;
+			int num1 = num;
+			Vector3 vector3 = this.transform.position;
+			Vector3 vector31 = vector3;
+			float single = (float)num1;
+			float single1 = single;
+			vector31.x = single;
+			Vector3 vector32 = vector31;
+			Vector3 vector33 = vector32;
+			this.transform.position = vector32;
+		}
+		this.guiPixelInset = new Rect(this.guiPixelInset.x * (float)Screen.height / (float)640, this.guiPixelInset.y * (float)Screen.height / (float)640, this.guiPixelInset.width * (float)Screen.height / (float)640, this.guiPixelInset.height * (float)Screen.height / (float)640);
+		this.defaultRect = this.guiPixelInset;
+		this.defaultRect.x = this.defaultRect.x + this.pos.x * (float)Screen.width;
+		this.defaultRect.y = this.defaultRect.y + this.pos.y * (float)Screen.height;
+		float single2 = 1.2f;
+		if (this.halfScreenZone)
+		{
+			this.defaultRect.y = (float)0;
+			this.defaultRect.x = (float)Screen.width / 2f;
+			this.defaultRect.width = (float)Screen.width / 2f;
+			this.defaultRect.height = (float)Screen.height * 0.6f;
+			this.jumpTexture = this.gui;
+			float single3 = (single2 - 1f) * 0.5f;
+			this.jumpTexture = this.gui;
+			this.jumpTexturePixelInset = new Rect((float)Screen.width - (float)this.jumpTexture.width * (single3 + 1f) * (float)Screen.height / (float)640, (float)(this.jumpTexture.height * Screen.height / 640) * single3 / (float)2, (float)(this.jumpTexture.width * Screen.height / 640), (float)(this.jumpTexture.height * Screen.height / 640));
+			this.guiPixelInset = this.jumpTexturePixelInset;
+			int num2 = this.fireTexture.width * Screen.height / 640;
+			this.fireZone = new Rect((float)Screen.width - (float)Screen.height * 0.4f, (float)Screen.height * 0.15f - (float)(num2 / 2), (float)num2, (float)num2);
+			if (this.reloadTexture)
+			{
+				this.reloadZone = new Rect((float)Screen.width - (float)this.reloadTexture.width * 1.1f * (float)Screen.height / (float)640, (float)Screen.height * 0.4f, this.fireZone.width * 0.65f, this.fireZone.height * 0.65f);
+			}
+		}
+		else if (this.reloadTexture)
+		{
+			this.reloadZone = new Rect((float)Screen.width - (float)this.reloadTexture.width * 1.1f * (float)Screen.height / (float)640, (float)Screen.height * 0.4f, this.fireZone.width * 0.65f, this.fireZone.height * 0.65f);
+		}
+		this.pos.x = (float)0;
+		this.pos.y = (float)0;
+		if (!this.touchPad)
+		{
+			this.joystickZone = new Rect((float)0, (float)0, (float)Screen.width / 2f, (float)Screen.height / 2f);
+			this.defaultRect = this.guiPixelInset;
+			this.defaultRect.x = (float)Screen.height * 0.1f;
+			this.defaultRect.y = (float)Screen.height * 0.1f;
+			this.guiTouchOffset.x = this.defaultRect.width * 0.5f;
+			this.guiTouchOffset.y = this.defaultRect.height * 0.5f;
+			this.guiCenter.x = this.defaultRect.x + this.guiTouchOffset.x;
+			this.guiCenter.y = this.defaultRect.y + this.guiTouchOffset.y;
+			this.guiBoundary.min.x = this.defaultRect.x - this.guiTouchOffset.x;
+			this.guiBoundary.max.x = this.defaultRect.x + this.guiTouchOffset.x;
+			this.guiBoundary.min.y = this.defaultRect.y - this.guiTouchOffset.y;
+			this.guiBoundary.max.y = this.defaultRect.y + this.guiTouchOffset.y;
+		}
+		else
+		{
+			this.touchZone = this.defaultRect;
+		}
+	}
+
+	public override void Update()
+	{
+		if (!Joystick.enumeratedJoysticks)
+		{
+			Joystick.joysticks = (Joystick[])UnityEngine.Object.FindObjectsOfType(typeof(Joystick)) as Joystick[];
+			Joystick.enumeratedJoysticks = true;
+		}
+		int num = Input.touchCount;
+		if (this.tapTimeWindow <= (float)0)
+		{
+			this.tapCount = 0;
+		}
+		else
+		{
+			this.tapTimeWindow -= Time.deltaTime;
+		}
+		if (num != 0)
+		{
+			for (int i = 0; i < num; i++)
+			{
+				Touch touch = Input.GetTouch(i);
+				Vector2 vector2 = touch.position - this.guiTouchOffset;
+				bool flag = false;
+				if (this.touchPad)
+				{
+					if (this.touchZone.Contains(touch.position))
+					{
+						flag = true;
+					}
+				}
+				else if (this.guiPixelInset.Contains(touch.position))
+				{
+					flag = true;
+				}
+				this.isSerialShooting = PlayerPrefs.GetInt("setSeriya") == 1;
+				bool flag1 = flag;
+				if (flag1)
+				{
+					flag1 = this.lastFingerId == -1;
+					if (!flag1)
+					{
+						flag1 = this.lastFingerId != touch.fingerId;
+					}
+				}
+				bool flag2 = flag1;
+				if (flag2)
+				{
+					this.touchBeginsOnFireZone = this.fireZone.Contains(touch.position);
+				}
+				if (this.isSerialShooting && this.touchPad && flag)
+				{
+					if (!this.fireTexture || !this.touchZone.Contains(touch.position) || !this.touchBeginsOnFireZone || this.blink)
+					{
+						this.touchBeginsOnFireZone = false;
+					}
+					else
+					{
+						this._playerGun.SendMessage("ShotPressed");
+					}
+				}
+				if (flag2)
+				{
+					if (this.touchPad)
+					{
+						this.lastFingerId = touch.fingerId;
+						this.fingerDownPos = touch.position;
+						this.fingerDownTime = Time.time;
+					}
+					this.lastFingerId = touch.fingerId;
+					if (this.tapTimeWindow <= (float)0)
+					{
+						this.tapCount = 1;
+						this.tapTimeWindow = Joystick.tapTimeDelta;
+					}
+					else
+					{
+						this.tapCount++;
+					}
+					int num1 = 0;
+					Joystick[] joystickArray = Joystick.joysticks;
+					int length = joystickArray.Length;
+					while (num1 < length)
+					{
+						if (joystickArray[num1] != this)
+						{
+							joystickArray[num1].LatchedFinger(touch.fingerId);
+						}
+						num1++;
+					}
+					if (this.fireTexture && this.fireZone.Contains(touch.position) && !this.isSerialShooting)
+					{
+						goto Label1;
+					}
+					if (this.jumpTexture && this.jumpTexturePixelInset.Contains(touch.position))
+					{
+						this.jumpPressed = true;
+					}
+					if (this.touchPad && this.reloadZone.Contains(touch.position))
+					{
+						this._playerGun.SendMessage("ReloadPressed");
+					}
+					if (this.touchPad)
+					{
+						this._lastFingerPosition = touch.position;
+					}
+				}
+				if (this.lastFingerId == touch.fingerId)
+				{
+					if (touch.tapCount > this.tapCount)
+					{
+						this.tapCount = touch.tapCount;
+					}
+					if (!this.touchPad)
+					{
+						this.guiPixelInset.x = Mathf.Clamp(vector2.x, this.guiBoundary.min.x, this.guiBoundary.max.x);
+						this.guiPixelInset.y = Mathf.Clamp(vector2.y, this.guiBoundary.min.y, this.guiBoundary.max.y);
+					}
+					else
+					{
+						float single = (float)25;
+						Vector2 vector21 = touch.position;
+						this.position.x = Mathf.Clamp((vector21.x - this.fingerDownPos.x) * 1f / (float)1, -single, single);
+						Vector2 vector22 = touch.position;
+						this.position.y = Mathf.Clamp((vector22.y - this.fingerDownPos.y) * 1f / (float)1, -single, single);
+						this.fingerDownPos = touch.position;
+					}
+					if (!flag2 && this.touchPad && this.touchZone.Contains(touch.position))
+					{
+						this._lastFingerPosition = touch.position;
+					}
+					if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+					{
+						this.ResetJoystick();
+					}
+				}
+			Label0:
+			}
+		}
+		else
+		{
+			this.ResetJoystick();
+		}
+		if (!this.touchPad)
+		{
+			this.position.x = (this.guiPixelInset.x + this.guiTouchOffset.x - this.guiCenter.x) / this.guiTouchOffset.x;
+			this.position.y = (this.guiPixelInset.y + this.guiTouchOffset.y - this.guiCenter.y) / this.guiTouchOffset.y;
+		}
+		float single1 = Mathf.Abs(this.position.x);
+		float single2 = Mathf.Abs(this.position.y);
+		if (single1 < this.deadZone.x)
+		{
+			this.position.x = (float)0;
+		}
+		else if (this.normalize)
+		{
+			this.position.x = Mathf.Sign(this.position.x) * (single1 - this.deadZone.x) / ((float)1 - this.deadZone.x);
+		}
+		if (single2 < this.deadZone.y)
+		{
+			this.position.y = (float)0;
+		}
+		else if (this.normalize)
+		{
+			this.position.y = Mathf.Sign(this.position.y) * (single2 - this.deadZone.y) / ((float)1 - this.deadZone.y);
+		}
+		return;
+	Label1:
+		this._playerGun.SendMessage("ShotPressed");
+		goto Label0;
 	}
 }

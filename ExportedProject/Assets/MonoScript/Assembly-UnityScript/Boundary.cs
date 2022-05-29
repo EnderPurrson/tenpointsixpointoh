@@ -10,7 +10,7 @@ public class Boundary
 
 	public Boundary()
 	{
-		min = Vector2.zero;
-		max = Vector2.zero;
+		this.min = Vector2.zero;
+		this.max = Vector2.zero;
 	}
 }

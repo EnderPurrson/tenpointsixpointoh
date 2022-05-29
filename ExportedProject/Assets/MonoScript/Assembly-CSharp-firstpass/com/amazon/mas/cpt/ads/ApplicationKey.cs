@@ -1,100 +1,121 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.mas.cpt.ads.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public sealed class ApplicationKey : Jsonable
 	{
-		private static AmazonLogger logger = new AmazonLogger("Pi");
+		private static AmazonLogger logger;
 
-		public string StringValue { get; set; }
-
-		public string ToJson()
+		public string StringValue
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		static ApplicationKey()
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("stringValue", StringValue);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			ApplicationKey.logger = new AmazonLogger("Pi");
+		}
+
+		public ApplicationKey()
+		{
 		}
 
 		public static ApplicationKey CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			ApplicationKey applicationKey;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					ApplicationKey item = new ApplicationKey();
+					if (jsonMap.ContainsKey("stringValue"))
+					{
+						item.StringValue = (string)jsonMap["stringValue"];
+					}
+					applicationKey = item;
 				}
-				ApplicationKey applicationKey = new ApplicationKey();
-				if (jsonMap.ContainsKey("stringValue"))
+				else
 				{
-					applicationKey.StringValue = (string)jsonMap["stringValue"];
+					applicationKey = null;
 				}
-				return applicationKey;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return applicationKey;
 		}
 
 		public static ApplicationKey CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			ApplicationKey applicationKey;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				applicationKey = ApplicationKey.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return applicationKey;
 		}
 
-		public static Dictionary<string, ApplicationKey> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, ApplicationKey> dictionary = new Dictionary<string, ApplicationKey>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				ApplicationKey value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "stringValue", this.StringValue }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<ApplicationKey> ListFromJson(List<object> array)
 		{
-			List<ApplicationKey> list = new List<ApplicationKey>();
-			foreach (object item in array)
+			List<ApplicationKey> applicationKeys = new List<ApplicationKey>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				applicationKeys.Add(ApplicationKey.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return applicationKeys;
+		}
+
+		public static Dictionary<string, ApplicationKey> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, ApplicationKey> strs = new Dictionary<string, ApplicationKey>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				ApplicationKey applicationKey = ApplicationKey.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, applicationKey);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class StickersPackItem : MonoBehaviour
@@ -16,62 +17,68 @@ public class StickersPackItem : MonoBehaviour
 	{
 		get
 		{
-			return StickersController.KeyForBuyPack(typePack);
+			return StickersController.KeyForBuyPack(this.typePack);
 		}
 	}
 
-	private void Start()
+	public StickersPackItem()
 	{
-		if ((bool)priceLabel)
-		{
-			priceLabel.text = StickersController.GetPricePack(typePack).Price.ToString();
-		}
-		buyPackController = GetComponentInParent<BuySmileBannerController>();
-	}
-
-	private void OnEnable()
-	{
-		CheckStateBtn();
 	}
 
 	public void CheckStateBtn()
 	{
-		if (StickersController.IsBuyPack(typePack))
+		if (!StickersController.IsBuyPack(this.typePack))
 		{
-			if ((bool)btnForBuyPack)
+			if (this.btnForBuyPack)
 			{
-				btnForBuyPack.SetActive(false);
+				this.btnForBuyPack.SetActive(true);
 			}
-			if ((bool)btnAvaliablePack)
+			if (this.btnAvaliablePack)
 			{
-				btnAvaliablePack.SetActive(true);
+				this.btnAvaliablePack.SetActive(false);
 			}
 		}
 		else
 		{
-			if ((bool)btnForBuyPack)
+			if (this.btnForBuyPack)
 			{
-				btnForBuyPack.SetActive(true);
+				this.btnForBuyPack.SetActive(false);
 			}
-			if ((bool)btnAvaliablePack)
+			if (this.btnAvaliablePack)
 			{
-				btnAvaliablePack.SetActive(false);
+				this.btnAvaliablePack.SetActive(true);
 			}
-		}
-	}
-
-	public void TryBuyPack()
-	{
-		if (buyPackController != null)
-		{
-			ButtonClickSound.Instance.PlayClick();
-			buyPackController.BuyStickersPack(this);
 		}
 	}
 
 	public void OnBuy()
 	{
-		CheckStateBtn();
+		this.CheckStateBtn();
 		StickersController.EventPackBuy();
+	}
+
+	private void OnEnable()
+	{
+		this.CheckStateBtn();
+	}
+
+	private void Start()
+	{
+		if (this.priceLabel)
+		{
+			UILabel str = this.priceLabel;
+			int price = StickersController.GetPricePack(this.typePack).Price;
+			str.text = price.ToString();
+		}
+		this.buyPackController = base.GetComponentInParent<BuySmileBannerController>();
+	}
+
+	public void TryBuyPack()
+	{
+		if (this.buyPackController != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+			this.buyPackController.BuyStickersPack(this);
+		}
 	}
 }

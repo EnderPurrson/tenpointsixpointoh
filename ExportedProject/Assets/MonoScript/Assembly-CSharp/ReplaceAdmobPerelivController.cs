@@ -1,8 +1,10 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Rilisoft;
-using Rilisoft.MiniJson;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class ReplaceAdmobPerelivController : MonoBehaviour
@@ -13,33 +15,17 @@ public sealed class ReplaceAdmobPerelivController : MonoBehaviour
 
 	private string _adUrl;
 
-	private static int _timesWantToShow = -1;
+	private static int _timesWantToShow;
 
 	private static int _timesShown;
 
 	private long _timeSuspended;
 
-	public static bool ShouldShowAtThisTime
-	{
-		get
-		{
-			return PromoActionsManager.ReplaceAdmobPereliv != null && _timesWantToShow % ((PromoActionsManager.ReplaceAdmobPereliv.ShowEveryTimes == 0) ? 1 : PromoActionsManager.ReplaceAdmobPereliv.ShowEveryTimes) == 0;
-		}
-	}
-
-	public Texture2D Image
-	{
-		get
-		{
-			return _image;
-		}
-	}
-
 	public string AdUrl
 	{
 		get
 		{
-			return _adUrl;
+			return this._adUrl;
 		}
 	}
 
@@ -47,13 +33,23 @@ public sealed class ReplaceAdmobPerelivController : MonoBehaviour
 	{
 		get
 		{
-			return _image != null && _adUrl != null;
+			return (this._image == null ? false : this._adUrl != null);
 		}
 	}
 
-	public bool DataLoading { get; private set; }
+	public bool DataLoading
+	{
+		get;
+		private set;
+	}
 
-	public bool ShouldShowInLobby { get; set; }
+	public Texture2D Image
+	{
+		get
+		{
+			return this._image;
+		}
+	}
 
 	private static bool LimitReached
 	{
@@ -67,154 +63,155 @@ public sealed class ReplaceAdmobPerelivController : MonoBehaviour
 			{
 				return false;
 			}
-			return _timesShown >= PromoActionsManager.ReplaceAdmobPereliv.ShowTimesTotal;
+			return ReplaceAdmobPerelivController._timesShown >= PromoActionsManager.ReplaceAdmobPereliv.ShowTimesTotal;
 		}
 	}
 
-	public static void IncreaseTimesCounter()
+	public static bool ShouldShowAtThisTime
 	{
-		_timesWantToShow++;
-	}
-
-	public static void TryShowPereliv(string context)
-	{
-		if (sharedController != null && sharedController.Image != null && sharedController.AdUrl != null)
+		get
 		{
-			AdmobPerelivWindow.admobTexture = sharedController.Image;
-			AdmobPerelivWindow.admobUrl = sharedController.AdUrl;
-			AdmobPerelivWindow.Context = context;
-			PlayerPrefs.SetString(Defs.LastTimeShowBanerKey, DateTime.UtcNow.ToString("s"));
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Replace Admob With Pereliv Show", FlurryPluginWrapper.LevelAndTierParameters);
-			_timesShown++;
+			return (PromoActionsManager.ReplaceAdmobPereliv == null ? false : ReplaceAdmobPerelivController._timesWantToShow % (PromoActionsManager.ReplaceAdmobPereliv.ShowEveryTimes == 0 ? 1 : PromoActionsManager.ReplaceAdmobPereliv.ShowEveryTimes) == 0);
 		}
+	}
+
+	public bool ShouldShowInLobby
+	{
+		get;
+		set;
+	}
+
+	static ReplaceAdmobPerelivController()
+	{
+		ReplaceAdmobPerelivController._timesWantToShow = -1;
+	}
+
+	public ReplaceAdmobPerelivController()
+	{
+	}
+
+	private void Awake()
+	{
+		ReplaceAdmobPerelivController.sharedController = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	public void DestroyImage()
 	{
-		if (Image != null)
+		if (this.Image != null)
 		{
-			_image = null;
-		}
-	}
-
-	public static bool ReplaceAdmobWithPerelivApplicable()
-	{
-		if (PromoActionsManager.ReplaceAdmobPereliv == null)
-		{
-			return false;
-		}
-		bool flag = ExperienceController.sharedController != null && (PromoActionsManager.ReplaceAdmobPereliv.MinLevel == -1 || PromoActionsManager.ReplaceAdmobPereliv.MinLevel <= ExperienceController.sharedController.currentLevel) && (PromoActionsManager.ReplaceAdmobPereliv.MaxLevel == -1 || PromoActionsManager.ReplaceAdmobPereliv.MaxLevel >= ExperienceController.sharedController.currentLevel);
-		bool showToPaying = PromoActionsManager.ReplaceAdmobPereliv.ShowToPaying;
-		bool showToNew = PromoActionsManager.ReplaceAdmobPereliv.ShowToNew;
-		bool flag2 = MobileAdManager.UserPredicate(MobileAdManager.Type.Image, Defs.IsDeveloperBuild, showToPaying, showToNew);
-		if (Debug.isDebugBuild)
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>(7);
-			dictionary.Add("MinLevel", PromoActionsManager.ReplaceAdmobPereliv.MinLevel);
-			dictionary.Add("MaxLevel", PromoActionsManager.ReplaceAdmobPereliv.MaxLevel);
-			dictionary.Add("levelConstraintIsOk", flag);
-			dictionary.Add("LimitReached", LimitReached);
-			dictionary.Add("adIsApplicable", flag2);
-			dictionary.Add("PromoActionsManager.ReplaceAdmobPereliv.enabled", PromoActionsManager.ReplaceAdmobPereliv.enabled);
-			Dictionary<string, object> obj = dictionary;
-			string message = string.Format("ReplaceAdmobWithPerelivApplicable Details: {0}", Json.Serialize(obj));
-			Debug.Log(message);
-		}
-		return flag2 && PromoActionsManager.ReplaceAdmobPereliv.enabled && !LimitReached && flag;
-	}
-
-	public void LoadPerelivData()
-	{
-		if (DataLoading)
-		{
-			Debug.LogWarning("ReplaceAdmobPerelivController: data is already loading. returning...");
-			return;
-		}
-		if (_image != null)
-		{
-			UnityEngine.Object.Destroy(_image);
-		}
-		_image = null;
-		_adUrl = null;
-		int num = 0;
-		if (PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count > 0)
-		{
-			num = UnityEngine.Random.Range(0, PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count);
-			StartCoroutine(LoadDataCoroutine(num));
-		}
-		else
-		{
-			Debug.LogWarning("ReplaceAdmobPerelivController:PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count = 0. returning...");
+			this._image = null;
 		}
 	}
 
 	private string GetImageURLForOurQuality(string urlString)
 	{
-		string value = string.Empty;
+		string empty = string.Empty;
 		if (Screen.height >= 500)
 		{
-			value = "-Medium";
+			empty = "-Medium";
 		}
 		if (Screen.height >= 900)
 		{
-			value = "-Hi";
+			empty = "-Hi";
 		}
-		urlString = urlString.Insert(urlString.LastIndexOf("."), value);
+		urlString = urlString.Insert(urlString.LastIndexOf("."), empty);
 		return urlString;
 	}
 
-	private IEnumerator LoadDataCoroutine(int index)
+	public static void IncreaseTimesCounter()
 	{
-		DataLoading = true;
-		string replaceAdmobUrl = GetImageURLForOurQuality(PromoActionsManager.ReplaceAdmobPereliv.imageUrls[index]);
-		WWW imageRequest = Tools.CreateWwwIfNotConnected(replaceAdmobUrl);
-		if (imageRequest == null)
-		{
-			DataLoading = false;
-			yield break;
-		}
-		yield return imageRequest;
-		if (!string.IsNullOrEmpty(imageRequest.error))
-		{
-			Debug.LogWarningFormat("ReplaceAdmobPerelivController: {0}", imageRequest.error);
-			DataLoading = false;
-		}
-		else if (!imageRequest.texture)
-		{
-			DataLoading = false;
-			Debug.LogWarning("ReplaceAdmobPerelivController: imageRequest.texture = null. returning...");
-		}
-		else if (imageRequest.texture.width < 20)
-		{
-			DataLoading = false;
-			Debug.LogWarning("ReplaceAdmobPerelivController: imageRequest.texture is dummy. returning...");
-		}
-		else
-		{
-			_image = imageRequest.texture;
-			_adUrl = PromoActionsManager.ReplaceAdmobPereliv.adUrls[index];
-			DataLoading = false;
-		}
+		ReplaceAdmobPerelivController._timesWantToShow++;
 	}
 
-	private void Awake()
+	[DebuggerHidden]
+	private IEnumerator LoadDataCoroutine(int index)
 	{
-		sharedController = this;
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		ReplaceAdmobPerelivController.u003cLoadDataCoroutineu003ec__Iterator1BD variable = null;
+		return variable;
+	}
+
+	public void LoadPerelivData()
+	{
+		if (this.DataLoading)
+		{
+			UnityEngine.Debug.LogWarning("ReplaceAdmobPerelivController: data is already loading. returning...");
+			return;
+		}
+		if (this._image != null)
+		{
+			UnityEngine.Object.Destroy(this._image);
+		}
+		this._image = null;
+		this._adUrl = null;
+		int num = 0;
+		if (PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count <= 0)
+		{
+			UnityEngine.Debug.LogWarning("ReplaceAdmobPerelivController:PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count = 0. returning...");
+			return;
+		}
+		num = UnityEngine.Random.Range(0, PromoActionsManager.ReplaceAdmobPereliv.imageUrls.Count);
+		base.StartCoroutine(this.LoadDataCoroutine(num));
 	}
 
 	private void OnApplicationPause(bool pausing)
 	{
-		if (!pausing)
+		if (pausing)
 		{
-			if (PromoActionsManager.CurrentUnixTime - _timeSuspended > 3600)
-			{
-				_timesShown = 0;
-			}
+			this._timeSuspended = PromoActionsManager.CurrentUnixTime;
+		}
+		else if (PromoActionsManager.CurrentUnixTime - this._timeSuspended > (long)3600)
+		{
+			ReplaceAdmobPerelivController._timesShown = 0;
+		}
+	}
+
+	public static bool ReplaceAdmobWithPerelivApplicable()
+	{
+		bool flag;
+		if (PromoActionsManager.ReplaceAdmobPereliv == null)
+		{
+			return false;
+		}
+		if (!(ExperienceController.sharedController != null) || PromoActionsManager.ReplaceAdmobPereliv.MinLevel != -1 && PromoActionsManager.ReplaceAdmobPereliv.MinLevel > ExperienceController.sharedController.currentLevel)
+		{
+			flag = false;
 		}
 		else
 		{
-			_timeSuspended = PromoActionsManager.CurrentUnixTime;
+			flag = (PromoActionsManager.ReplaceAdmobPereliv.MaxLevel == -1 ? true : PromoActionsManager.ReplaceAdmobPereliv.MaxLevel >= ExperienceController.sharedController.currentLevel);
+		}
+		bool flag1 = flag;
+		bool showToPaying = PromoActionsManager.ReplaceAdmobPereliv.ShowToPaying;
+		bool showToNew = PromoActionsManager.ReplaceAdmobPereliv.ShowToNew;
+		bool flag2 = MobileAdManager.UserPredicate(MobileAdManager.Type.Image, Defs.IsDeveloperBuild, showToPaying, showToNew);
+		if (UnityEngine.Debug.isDebugBuild)
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>(7)
+			{
+				{ "MinLevel", PromoActionsManager.ReplaceAdmobPereliv.MinLevel },
+				{ "MaxLevel", PromoActionsManager.ReplaceAdmobPereliv.MaxLevel },
+				{ "levelConstraintIsOk", flag1 },
+				{ "LimitReached", ReplaceAdmobPerelivController.LimitReached },
+				{ "adIsApplicable", flag2 },
+				{ "PromoActionsManager.ReplaceAdmobPereliv.enabled", PromoActionsManager.ReplaceAdmobPereliv.enabled }
+			};
+			string str = string.Format("ReplaceAdmobWithPerelivApplicable Details: {0}", Json.Serialize(strs));
+			UnityEngine.Debug.Log(str);
+		}
+		return (!flag2 || !PromoActionsManager.ReplaceAdmobPereliv.enabled || ReplaceAdmobPerelivController.LimitReached ? false : flag1);
+	}
+
+	public static void TryShowPereliv(string context)
+	{
+		if (ReplaceAdmobPerelivController.sharedController != null && ReplaceAdmobPerelivController.sharedController.Image != null && ReplaceAdmobPerelivController.sharedController.AdUrl != null)
+		{
+			AdmobPerelivWindow.admobTexture = ReplaceAdmobPerelivController.sharedController.Image;
+			AdmobPerelivWindow.admobUrl = ReplaceAdmobPerelivController.sharedController.AdUrl;
+			AdmobPerelivWindow.Context = context;
+			PlayerPrefs.SetString(Defs.LastTimeShowBanerKey, DateTime.UtcNow.ToString("s"));
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Replace Admob With Pereliv Show", FlurryPluginWrapper.LevelAndTierParameters, true);
+			ReplaceAdmobPerelivController._timesShown++;
 		}
 	}
 }

@@ -1,17 +1,24 @@
+using System;
+using UnityEngine;
+
 public class MyCenterScrollonClick : UIDragScrollView
 {
 	private MyCenterOnChild center;
 
+	public MyCenterScrollonClick()
+	{
+	}
+
 	private void Awake()
 	{
-		if (center == null)
+		if (this.center == null)
 		{
-			center = NGUITools.FindInParents<MyCenterOnChild>(base.gameObject);
+			this.center = NGUITools.FindInParents<MyCenterOnChild>(base.gameObject);
 		}
 	}
 
 	private void OnClick()
 	{
-		center.CenterOn(base.transform);
+		this.center.CenterOn(base.transform);
 	}
 }

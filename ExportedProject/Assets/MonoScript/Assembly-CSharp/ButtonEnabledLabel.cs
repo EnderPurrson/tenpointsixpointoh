@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ButtonEnabledLabel : MonoBehaviour
@@ -8,21 +9,25 @@ public class ButtonEnabledLabel : MonoBehaviour
 
 	public GameObject disableLabel;
 
+	public ButtonEnabledLabel()
+	{
+	}
+
 	private void Start()
 	{
 	}
 
 	private void Update()
 	{
-		if (myButton.isEnabled && !enabledLabel.activeSelf)
+		if (this.myButton.isEnabled && !this.enabledLabel.activeSelf)
 		{
-			enabledLabel.SetActive(true);
-			disableLabel.SetActive(false);
+			this.enabledLabel.SetActive(true);
+			this.disableLabel.SetActive(false);
 		}
-		if (!myButton.isEnabled && enabledLabel.activeSelf)
+		if (!this.myButton.isEnabled && this.enabledLabel.activeSelf)
 		{
-			enabledLabel.SetActive(false);
-			disableLabel.SetActive(true);
+			this.enabledLabel.SetActive(false);
+			this.disableLabel.SetActive(true);
 		}
 	}
 }

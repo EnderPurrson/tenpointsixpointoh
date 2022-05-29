@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class NetworkInterpolatedTransform : MonoBehaviour
@@ -16,81 +17,84 @@ public sealed class NetworkInterpolatedTransform : MonoBehaviour
 
 	private Transform myTransform;
 
+	public NetworkInterpolatedTransform()
+	{
+	}
+
 	private void Awake()
 	{
 		if (!Defs.isMulti || Defs.isInet)
 		{
 			base.enabled = false;
 		}
-		correctPlayerPos = new Vector3(0f, -10000f, 0f);
-		myTransform = base.transform;
+		this.correctPlayerPos = new Vector3(0f, -10000f, 0f);
+		this.myTransform = base.transform;
 	}
 
 	private void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			Vector3 value = base.transform.localPosition;
-			Quaternion value2 = base.transform.localRotation;
-			stream.Serialize(ref value);
-			stream.Serialize(ref value2);
-			iskilled = playerMovec.isKilled;
-			stream.Serialize(ref iskilled);
+			Vector3 vector3 = Vector3.zero;
+			Quaternion quaternion = Quaternion.identity;
+			stream.Serialize(ref vector3);
+			stream.Serialize(ref quaternion);
+			this.correctPlayerPos = vector3;
+			this.correctPlayerRot = quaternion;
+			this.oldIsKilled = this.iskilled;
+			stream.Serialize(ref this.iskilled);
+			this.playerMovec.isKilled = this.iskilled;
 		}
 		else
 		{
-			Vector3 value3 = Vector3.zero;
-			Quaternion value4 = Quaternion.identity;
-			stream.Serialize(ref value3);
-			stream.Serialize(ref value4);
-			correctPlayerPos = value3;
-			correctPlayerRot = value4;
-			oldIsKilled = iskilled;
-			stream.Serialize(ref iskilled);
-			playerMovec.isKilled = iskilled;
+			Vector3 vector31 = base.transform.localPosition;
+			Quaternion quaternion1 = base.transform.localRotation;
+			stream.Serialize(ref vector31);
+			stream.Serialize(ref quaternion1);
+			this.iskilled = this.playerMovec.isKilled;
+			stream.Serialize(ref this.iskilled);
 		}
 	}
 
 	public void StartAngel()
 	{
-		isStartAngel = true;
+		this.isStartAngel = true;
 	}
 
 	private void Update()
 	{
-		if (Defs.isInet || GetComponent<NetworkView>().isMine)
+		if (!Defs.isInet && !base.GetComponent<NetworkView>().isMine)
 		{
-			return;
-		}
-		if (iskilled)
-		{
-			if (!oldIsKilled)
+			if (this.iskilled)
 			{
-				oldIsKilled = iskilled;
-				if (!isStartAngel)
+				if (!this.oldIsKilled)
 				{
-					StartAngel();
+					this.oldIsKilled = this.iskilled;
+					if (!this.isStartAngel)
+					{
+						this.StartAngel();
+					}
+					this.isStartAngel = false;
 				}
-				isStartAngel = false;
+				this.myTransform.position = new Vector3(0f, -1000f, 0f);
 			}
-			myTransform.position = new Vector3(0f, -1000f, 0f);
-		}
-		else if (!oldIsKilled)
-		{
-			if (Vector3.SqrMagnitude(myTransform.position - correctPlayerPos) > 0.04f)
+			else if (this.oldIsKilled)
 			{
-				myTransform.position = Vector3.Lerp(myTransform.position, correctPlayerPos, Time.deltaTime * 5f);
+				this.myTransform.position = this.correctPlayerPos;
+				this.myTransform.rotation = this.correctPlayerRot;
 			}
-			myTransform.rotation = Quaternion.Lerp(myTransform.rotation, correctPlayerRot, Time.deltaTime * 5f);
-		}
-		else
-		{
-			myTransform.position = correctPlayerPos;
-			myTransform.rotation = correctPlayerRot;
-		}
-		if (isStartAngel)
-		{
-			myTransform.position = new Vector3(0f, -1000f, 0f);
+			else
+			{
+				if (Vector3.SqrMagnitude(this.myTransform.position - this.correctPlayerPos) > 0.04f)
+				{
+					this.myTransform.position = Vector3.Lerp(this.myTransform.position, this.correctPlayerPos, Time.deltaTime * 5f);
+				}
+				this.myTransform.rotation = Quaternion.Lerp(this.myTransform.rotation, this.correctPlayerRot, Time.deltaTime * 5f);
+			}
+			if (this.isStartAngel)
+			{
+				this.myTransform.position = new Vector3(0f, -1000f, 0f);
+			}
 		}
 	}
 }

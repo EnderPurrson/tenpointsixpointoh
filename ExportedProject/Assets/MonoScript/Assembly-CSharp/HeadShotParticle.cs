@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class HeadShotParticle : MonoBehaviour
@@ -12,33 +13,38 @@ public class HeadShotParticle : MonoBehaviour
 
 	public ParticleEmitter myParticleSystem;
 
+	public HeadShotParticle()
+	{
+	}
+
 	private void Start()
 	{
-		myTransform = base.transform;
-		myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-		myParticleSystem.emit = false;
+		this.myTransform = base.transform;
+		this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+		this.myParticleSystem.emit = false;
 	}
 
 	public void StartShowParticle(Vector3 pos, Quaternion rot, bool _isUseMine)
 	{
-		isUseMine = _isUseMine;
-		liveTime = maxliveTime;
-		myTransform.position = pos;
-		myTransform.rotation = rot;
-		myParticleSystem.emit = true;
+		this.isUseMine = _isUseMine;
+		this.liveTime = this.maxliveTime;
+		this.myTransform.position = pos;
+		this.myTransform.rotation = rot;
+		this.myParticleSystem.emit = true;
 	}
 
 	private void Update()
 	{
-		if (!(liveTime < 0f))
+		if (this.liveTime < 0f)
 		{
-			liveTime -= Time.deltaTime;
-			if (liveTime < 0f)
-			{
-				myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-				myParticleSystem.emit = false;
-				isUseMine = false;
-			}
+			return;
+		}
+		this.liveTime -= Time.deltaTime;
+		if (this.liveTime < 0f)
+		{
+			this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+			this.myParticleSystem.emit = false;
+			this.isUseMine = false;
 		}
 	}
 }

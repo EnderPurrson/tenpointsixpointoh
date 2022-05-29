@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace com.amazon.device.iap.cpt
@@ -11,17 +12,17 @@ namespace com.amazon.device.iap.cpt
 			this.responseDelegate = responseDelegate;
 		}
 
+		public void ExecuteError(AmazonException e)
+		{
+		}
+
 		public void ExecuteSuccess()
 		{
 		}
 
 		public void ExecuteSuccess(Dictionary<string, object> objectDictionary)
 		{
-			responseDelegate(GetProductDataResponse.CreateFromDictionary(objectDictionary));
-		}
-
-		public void ExecuteError(AmazonException e)
-		{
+			this.responseDelegate(GetProductDataResponse.CreateFromDictionary(objectDictionary));
 		}
 	}
 }

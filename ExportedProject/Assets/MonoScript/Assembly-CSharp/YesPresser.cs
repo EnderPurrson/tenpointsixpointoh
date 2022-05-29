@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class YesPresser : SkipTrainingButton
@@ -6,14 +7,19 @@ public sealed class YesPresser : SkipTrainingButton
 
 	private bool _clicked;
 
+	public YesPresser()
+	{
+	}
+
 	protected override void OnClick()
 	{
-		if (!_clicked)
+		if (this._clicked)
 		{
-			noButton.GetComponent<UIButton>().enabled = false;
-			base.enabled = false;
-			GotToNextLevel.GoToNextLevel();
-			_clicked = true;
+			return;
 		}
+		this.noButton.GetComponent<UIButton>().enabled = false;
+		base.enabled = false;
+		GotToNextLevel.GoToNextLevel();
+		this._clicked = true;
 	}
 }

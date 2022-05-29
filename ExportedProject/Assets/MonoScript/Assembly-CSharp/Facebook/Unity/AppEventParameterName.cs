@@ -1,3 +1,5 @@
+using System;
+
 namespace Facebook.Unity
 {
 	public static class AppEventParameterName

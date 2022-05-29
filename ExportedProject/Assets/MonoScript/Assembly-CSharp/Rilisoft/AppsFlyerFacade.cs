@@ -12,10 +12,11 @@ namespace Rilisoft
 		{
 			set
 			{
-				if (!Application.isEditor)
+				if (Application.isEditor)
 				{
-					AppsFlyer.setIsDebug(value);
+					return;
 				}
+				AppsFlyer.setIsDebug(value);
 			}
 		}
 
@@ -29,12 +30,26 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException(appId);
 			}
-			_appId = appId;
-			if (!Application.isEditor)
+			this._appId = appId;
+			if (Application.isEditor)
 			{
-				AppsFlyer.setAppsFlyerKey(appKey);
-				AppsFlyer.setAppID(appId);
+				return;
 			}
+			AppsFlyer.setAppsFlyerKey(appKey);
+			AppsFlyer.setAppID(appId);
+		}
+
+		public void TrackAppLaunch()
+		{
+			if (string.IsNullOrEmpty(this._appId))
+			{
+				return;
+			}
+			if (Application.isEditor)
+			{
+				return;
+			}
+			AppsFlyer.trackAppLaunch();
 		}
 
 		public void TrackEvent(string eventName, string eventValue)
@@ -51,10 +66,15 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Event name must not be empty.", "eventName");
 			}
-			if (!string.IsNullOrEmpty(_appId) && !Application.isEditor)
+			if (string.IsNullOrEmpty(this._appId))
 			{
-				AppsFlyer.trackEvent(eventName, eventValue);
+				return;
 			}
+			if (Application.isEditor)
+			{
+				return;
+			}
+			AppsFlyer.trackEvent(eventName, eventValue);
 		}
 
 		public void TrackRichEvent(string eventName, Dictionary<string, string> eventValues)
@@ -71,18 +91,15 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Event name must not be empty.", "eventName");
 			}
-			if (!string.IsNullOrEmpty(_appId) && !Application.isEditor)
+			if (string.IsNullOrEmpty(this._appId))
 			{
-				AppsFlyer.trackRichEvent(eventName, eventValues);
+				return;
 			}
-		}
-
-		public void TrackAppLaunch()
-		{
-			if (!string.IsNullOrEmpty(_appId) && !Application.isEditor)
+			if (Application.isEditor)
 			{
-				AppsFlyer.trackAppLaunch();
+				return;
 			}
+			AppsFlyer.trackRichEvent(eventName, eventValues);
 		}
 	}
 }

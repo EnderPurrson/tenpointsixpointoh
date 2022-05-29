@@ -8,30 +8,34 @@ public class Region
 
 	public int Ping;
 
+	public Region()
+	{
+	}
+
 	public static CloudRegionCode Parse(string codeAsString)
 	{
 		codeAsString = codeAsString.ToLower();
-		CloudRegionCode result = CloudRegionCode.none;
+		CloudRegionCode cloudRegionCode = CloudRegionCode.none;
 		if (Enum.IsDefined(typeof(CloudRegionCode), codeAsString))
 		{
-			result = (CloudRegionCode)(int)Enum.Parse(typeof(CloudRegionCode), codeAsString);
+			cloudRegionCode = (CloudRegionCode)((int)Enum.Parse(typeof(CloudRegionCode), codeAsString));
 		}
-		return result;
+		return cloudRegionCode;
 	}
 
 	internal static CloudRegionFlag ParseFlag(string codeAsString)
 	{
 		codeAsString = codeAsString.ToLower();
-		CloudRegionFlag result = (CloudRegionFlag)0;
+		CloudRegionFlag cloudRegionFlag = (CloudRegionFlag)0;
 		if (Enum.IsDefined(typeof(CloudRegionFlag), codeAsString))
 		{
-			result = (CloudRegionFlag)(int)Enum.Parse(typeof(CloudRegionFlag), codeAsString);
+			cloudRegionFlag = (CloudRegionFlag)((int)Enum.Parse(typeof(CloudRegionFlag), codeAsString));
 		}
-		return result;
+		return cloudRegionFlag;
 	}
 
 	public override string ToString()
 	{
-		return string.Format("'{0}' \t{1}ms \t{2}", Code, Ping, HostAndPort);
+		return string.Format("'{0}' \t{1}ms \t{2}", this.Code, this.Ping, this.HostAndPort);
 	}
 }

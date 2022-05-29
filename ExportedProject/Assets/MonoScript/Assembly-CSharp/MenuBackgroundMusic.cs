@@ -1,8 +1,10 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
-using Rilisoft;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,279 +14,243 @@ internal sealed class MenuBackgroundMusic : MonoBehaviour
 
 	private AudioSource currentAudioSource;
 
-	public static bool keepPlaying = false;
+	public static bool keepPlaying;
 
 	public static MenuBackgroundMusic sharedMusic;
 
-	private static string[] scenetsToPlayMusicOn = new string[10]
-	{
-		Defs.MainMenuScene,
-		"ConnectScene",
-		"ConnectSceneSandbox",
-		"SettingScene",
-		"SkinEditor",
-		"ChooseLevel",
-		"CampaignChooseBox",
-		"ProfileShop",
-		"Friends",
-		"Clans"
-	};
+	private static string[] scenetsToPlayMusicOn;
 
-	public void PlayCustomMusicFrom(GameObject audioSourceObj)
+	static MenuBackgroundMusic()
 	{
-		RemoveNullsFromCustomMusicStack();
-		if (audioSourceObj != null && Defs.isSoundMusic)
+		MenuBackgroundMusic.keepPlaying = false;
+		MenuBackgroundMusic.scenetsToPlayMusicOn = new string[] { Defs.MainMenuScene, "ConnectScene", "ConnectSceneSandbox", "SettingScene", "SkinEditor", "ChooseLevel", "CampaignChooseBox", "ProfileShop", "Friends", "Clans" };
+	}
+
+	public MenuBackgroundMusic()
+	{
+	}
+
+	private void HandleFreeAwardControllerStateChanged(object sender, FreeAwardController.StateEventArgs e)
+	{
+		string str = string.Format(CultureInfo.InvariantCulture, "HandleFreeAwardControllerStateChanged({0} -> {1})", new object[] { e.OldState, e.State });
+		ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+		try
 		{
-			AudioSource component = audioSourceObj.GetComponent<AudioSource>();
-			PlayMusic(component);
-			if (!_customMusicStack.Contains(component))
+			if (e.State is FreeAwardController.WatchingState)
 			{
-				if (_customMusicStack.Count > 0)
-				{
-					StopMusic(_customMusicStack[_customMusicStack.Count - 1]);
-				}
-				_customMusicStack.Add(audioSourceObj.GetComponent<AudioSource>());
+				this.Stop();
+			}
+			else if (e.OldState is FreeAwardController.WatchingState)
+			{
+				this.Play();
 			}
 		}
-		string value = SceneManager.GetActiveScene().name;
-		if (Array.IndexOf(scenetsToPlayMusicOn, value) >= 0)
+		finally
 		{
-			Stop();
-			return;
-		}
-		GameObject gameObject = GameObject.FindGameObjectWithTag("BackgroundMusic");
-		if (gameObject != null)
-		{
-			AudioSource component2 = gameObject.GetComponent<AudioSource>();
-			if (component2 != null)
-			{
-				StopMusic(component2);
-			}
+			scopeLogger.Dispose();
 		}
 	}
 
-	public void StopCustomMusicFrom(GameObject audioSourceObj)
+	private void OnApplicationPause(bool pausing)
 	{
-		RemoveNullsFromCustomMusicStack();
-		AudioSource component = audioSourceObj.GetComponent<AudioSource>();
-		if (audioSourceObj != null && component != null)
+		if (pausing)
 		{
-			StopMusic(component);
-			_customMusicStack.Remove(component);
+			this.PauseCurrentMusic();
 		}
-		if (_customMusicStack.Count > 0)
+		else
 		{
-			PlayMusic(_customMusicStack[_customMusicStack.Count - 1]);
-			return;
-		}
-		if (Array.IndexOf(scenetsToPlayMusicOn, Application.loadedLevelName) >= 0)
-		{
-			Play();
-			return;
-		}
-		GameObject gameObject = GameObject.FindGameObjectWithTag("BackgroundMusic");
-		if (gameObject != null)
-		{
-			AudioSource component2 = gameObject.GetComponent<AudioSource>();
-			if (component2 != null)
-			{
-				PlayMusic(component2);
-			}
+			this.PlayCurrentMusic();
 		}
 	}
 
-	internal void Start()
+	private void OnLevelWasLoaded(int idx)
 	{
-		sharedMusic = this;
-		Defs.isSoundMusic = PlayerPrefsX.GetBool(PlayerPrefsX.SoundMusicSetting, true);
-		Defs.isSoundFX = PlayerPrefsX.GetBool(PlayerPrefsX.SoundFXSetting, true);
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		base.StopAllCoroutines();
+		CoroutineRunner.Instance.StartCoroutine(this.WaitFreeAwardControllerAndSubscribeCoroutine());
+		foreach (AudioSource audioSource in this._customMusicStack)
+		{
+			audioSource.Stop();
+		}
+		this._customMusicStack.Clear();
+		if (Array.IndexOf<string>(MenuBackgroundMusic.scenetsToPlayMusicOn, Application.loadedLevelName) < 0 && !MenuBackgroundMusic.keepPlaying)
+		{
+			this.StopMusic(base.GetComponent<AudioSource>());
+		}
+		else if (!base.GetComponent<AudioSource>().isPlaying && PlayerPrefsX.GetBool(PlayerPrefsX.SoundMusicSetting, true))
+		{
+			this.PlayMusic(base.GetComponent<AudioSource>());
+		}
+		MenuBackgroundMusic.keepPlaying = false;
+	}
+
+	private void PauseCurrentMusic()
+	{
+		if (this.currentAudioSource != null)
+		{
+			this.currentAudioSource.Pause();
+		}
 	}
 
 	internal void Play()
 	{
 		if (Defs.isSoundMusic)
 		{
-			PlayMusic(GetComponent<AudioSource>());
+			this.PlayMusic(base.GetComponent<AudioSource>());
 		}
 	}
 
-	public void Stop()
+	private void PlayCurrentMusic()
 	{
-		StopMusic(GetComponent<AudioSource>());
+		if (this.currentAudioSource != null)
+		{
+			this.PlayMusic(this.currentAudioSource);
+		}
 	}
 
-	private void RemoveNullsFromCustomMusicStack()
+	public void PlayCustomMusicFrom(GameObject audioSourceObj)
 	{
-		List<AudioSource> customMusicStack = _customMusicStack;
-		_customMusicStack = new List<AudioSource>();
-		foreach (AudioSource item in customMusicStack)
+		this.RemoveNullsFromCustomMusicStack();
+		if (audioSourceObj != null && Defs.isSoundMusic)
 		{
-			if (item != null)
+			AudioSource component = audioSourceObj.GetComponent<AudioSource>();
+			this.PlayMusic(component);
+			if (!this._customMusicStack.Contains(component))
 			{
-				_customMusicStack.Add(item);
+				if (this._customMusicStack.Count > 0)
+				{
+					this.StopMusic(this._customMusicStack[this._customMusicStack.Count - 1]);
+				}
+				this._customMusicStack.Add(audioSourceObj.GetComponent<AudioSource>());
 			}
 		}
-	}
-
-	private IEnumerator WaitFreeAwardControllerAndSubscribeCoroutine()
-	{
-		ScopeLogger scopeLogger = new ScopeLogger("WaitFreeAwardControllerAndSubscribeCoroutine", Defs.IsDeveloperBuild);
-		try
+		string activeScene = SceneManager.GetActiveScene().name;
+		if (Array.IndexOf<string>(MenuBackgroundMusic.scenetsToPlayMusicOn, activeScene) < 0)
 		{
-			while (FreeAwardController.Instance == null)
+			GameObject gameObject = GameObject.FindGameObjectWithTag("BackgroundMusic");
+			if (gameObject != null)
 			{
-				yield return null;
-			}
-			FreeAwardController.Instance.StateChanged -= HandleFreeAwardControllerStateChanged;
-			FreeAwardController.Instance.StateChanged += HandleFreeAwardControllerStateChanged;
-		}
-		finally
-		{
-			scopeLogger.Dispose();
-		}
-	}
-
-	private void OnLevelWasLoaded(int idx)
-	{
-		StopAllCoroutines();
-		CoroutineRunner.Instance.StartCoroutine(WaitFreeAwardControllerAndSubscribeCoroutine());
-		foreach (AudioSource item in _customMusicStack)
-		{
-			item.Stop();
-		}
-		_customMusicStack.Clear();
-		if (Array.IndexOf(scenetsToPlayMusicOn, Application.loadedLevelName) >= 0 || keepPlaying)
-		{
-			if (!GetComponent<AudioSource>().isPlaying && PlayerPrefsX.GetBool(PlayerPrefsX.SoundMusicSetting, true))
-			{
-				PlayMusic(GetComponent<AudioSource>());
+				AudioSource audioSource = gameObject.GetComponent<AudioSource>();
+				if (audioSource != null)
+				{
+					this.StopMusic(audioSource);
+				}
 			}
 		}
 		else
 		{
-			StopMusic(GetComponent<AudioSource>());
-		}
-		keepPlaying = false;
-	}
-
-	private void HandleFreeAwardControllerStateChanged(object sender, FreeAwardController.StateEventArgs e)
-	{
-		string callee = string.Format(CultureInfo.InvariantCulture, "HandleFreeAwardControllerStateChanged({0} -> {1})", e.OldState, e.State);
-		ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-		try
-		{
-			if (e.State is FreeAwardController.WatchingState)
-			{
-				Stop();
-			}
-			else if (e.OldState is FreeAwardController.WatchingState)
-			{
-				Play();
-			}
-		}
-		finally
-		{
-			scopeLogger.Dispose();
+			this.Stop();
 		}
 	}
 
 	public void PlayMusic(AudioSource audioSource)
 	{
-		if (!(audioSource == null) && Defs.isSoundMusic)
+		if (audioSource == null)
 		{
-			if (Switcher.comicsSound != null && audioSource != Switcher.comicsSound.GetComponent<AudioSource>())
+			return;
+		}
+		if (!Defs.isSoundMusic)
+		{
+			return;
+		}
+		if (Switcher.comicsSound != null && audioSource != Switcher.comicsSound.GetComponent<AudioSource>())
+		{
+			UnityEngine.Object.Destroy(Switcher.comicsSound);
+			Switcher.comicsSound = null;
+		}
+		if (PhotonNetwork.connected)
+		{
+			float single = 0f;
+			single = Convert.ToSingle(PhotonNetwork.time) - audioSource.clip.length * (float)Mathf.FloorToInt(Convert.ToSingle(PhotonNetwork.time) / audioSource.clip.length);
+			audioSource.time = single;
+		}
+		audioSource.Play();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator PlayMusicInternal(AudioSource audioSource)
+	{
+		MenuBackgroundMusic.u003cPlayMusicInternalu003ec__IteratorBC variable = null;
+		return variable;
+	}
+
+	private void RemoveNullsFromCustomMusicStack()
+	{
+		List<AudioSource> audioSources = this._customMusicStack;
+		this._customMusicStack = new List<AudioSource>();
+		foreach (AudioSource audioSource in audioSources)
+		{
+			if (audioSource == null)
 			{
-				UnityEngine.Object.Destroy(Switcher.comicsSound);
-				Switcher.comicsSound = null;
+				continue;
 			}
-			if (PhotonNetwork.connected)
+			this._customMusicStack.Add(audioSource);
+		}
+	}
+
+	internal void Start()
+	{
+		MenuBackgroundMusic.sharedMusic = this;
+		Defs.isSoundMusic = PlayerPrefsX.GetBool(PlayerPrefsX.SoundMusicSetting, true);
+		Defs.isSoundFX = PlayerPrefsX.GetBool(PlayerPrefsX.SoundFXSetting, true);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+	}
+
+	public void Stop()
+	{
+		this.StopMusic(base.GetComponent<AudioSource>());
+	}
+
+	public void StopCustomMusicFrom(GameObject audioSourceObj)
+	{
+		this.RemoveNullsFromCustomMusicStack();
+		AudioSource component = audioSourceObj.GetComponent<AudioSource>();
+		if (audioSourceObj != null && component != null)
+		{
+			this.StopMusic(component);
+			this._customMusicStack.Remove(component);
+		}
+		if (this._customMusicStack.Count > 0)
+		{
+			this.PlayMusic(this._customMusicStack[this._customMusicStack.Count - 1]);
+		}
+		else if (Array.IndexOf<string>(MenuBackgroundMusic.scenetsToPlayMusicOn, Application.loadedLevelName) < 0)
+		{
+			GameObject gameObject = GameObject.FindGameObjectWithTag("BackgroundMusic");
+			if (gameObject != null)
 			{
-				float num = 0f;
-				num = (audioSource.time = Convert.ToSingle(PhotonNetwork.time) - audioSource.clip.length * (float)Mathf.FloorToInt(Convert.ToSingle(PhotonNetwork.time) / audioSource.clip.length));
+				AudioSource audioSource = gameObject.GetComponent<AudioSource>();
+				if (audioSource != null)
+				{
+					this.PlayMusic(audioSource);
+				}
 			}
-			audioSource.Play();
+		}
+		else
+		{
+			this.Play();
 		}
 	}
 
 	public void StopMusic(AudioSource audioSource)
 	{
-		if (!(audioSource == null))
+		if (audioSource == null)
 		{
-			audioSource.Stop();
+			return;
 		}
+		audioSource.Stop();
 	}
 
-	private IEnumerator PlayMusicInternal(AudioSource audioSource)
-	{
-		float targetVolume = 1f;
-		audioSource.volume = 1f;
-		audioSource.Play();
-		currentAudioSource = audioSource;
-		float startTime = Time.realtimeSinceStartup;
-		float fadeTime = 0.5f;
-		while (Time.realtimeSinceStartup - startTime <= fadeTime)
-		{
-			if (audioSource == null)
-			{
-				audioSource.volume = 1f;
-				yield break;
-			}
-			audioSource.volume = targetVolume * (Time.realtimeSinceStartup - startTime) / fadeTime;
-			Debug.Log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ PlayMusicInternal " + audioSource.volume);
-			yield return null;
-		}
-		audioSource.volume = 1f;
-		Debug.Log("----------------------------------------------------------------- PlayMusicInternal " + audioSource.volume);
-	}
-
+	[DebuggerHidden]
 	private IEnumerator StopMusicInternal(AudioSource audioSource)
 	{
-		float currentVolume = 1f;
-		float startTime = Time.realtimeSinceStartup;
-		float fadeTime = 0.5f;
-		while (Time.realtimeSinceStartup - startTime <= fadeTime)
-		{
-			if (audioSource == null)
-			{
-				yield break;
-			}
-			audioSource.volume = currentVolume * (1f - (Time.realtimeSinceStartup - startTime) / fadeTime);
-			Debug.Log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ StopMusicInternal " + audioSource.volume);
-			yield return null;
-		}
-		audioSource.volume = 0f;
-		audioSource.Stop();
-		currentAudioSource = null;
-		audioSource.volume = 1f;
-		Debug.Log("----------------------------------------------------------------- StopMusicInternal " + audioSource.volume);
+		MenuBackgroundMusic.u003cStopMusicInternalu003ec__IteratorBD variable = null;
+		return variable;
 	}
 
-	private void PlayCurrentMusic()
+	[DebuggerHidden]
+	private IEnumerator WaitFreeAwardControllerAndSubscribeCoroutine()
 	{
-		if (currentAudioSource != null)
-		{
-			PlayMusic(currentAudioSource);
-		}
-	}
-
-	private void PauseCurrentMusic()
-	{
-		if (currentAudioSource != null)
-		{
-			currentAudioSource.Pause();
-		}
-	}
-
-	private void OnApplicationPause(bool pausing)
-	{
-		if (!pausing)
-		{
-			PlayCurrentMusic();
-		}
-		else
-		{
-			PauseCurrentMusic();
-		}
+		MenuBackgroundMusic.u003cWaitFreeAwardControllerAndSubscribeCoroutineu003ec__IteratorBB variable = null;
+		return variable;
 	}
 }

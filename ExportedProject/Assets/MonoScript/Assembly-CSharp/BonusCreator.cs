@@ -1,5 +1,9 @@
-using System.Collections;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class BonusCreator : MonoBehaviour
@@ -10,7 +14,7 @@ internal sealed class BonusCreator : MonoBehaviour
 
 	public float weaponCreationInterval = 30f;
 
-	private Object[] weaponPrefabs;
+	private UnityEngine.Object[] weaponPrefabs;
 
 	private int _lastWeapon = -1;
 
@@ -28,177 +32,158 @@ internal sealed class BonusCreator : MonoBehaviour
 
 	private ArrayList _weaponsProbDistr = new ArrayList();
 
+	public BonusCreator()
+	{
+	}
+
+	public static GameObject _CreateBonus(string _weaponName, Vector3 pos)
+	{
+		GameObject gameObject = BonusCreator._CreateBonusPrefab(_weaponName);
+		if (gameObject == null)
+		{
+			UnityEngine.Debug.Log("null");
+			return null;
+		}
+		return BonusCreator._CreateBonusFromPrefab(gameObject, pos);
+	}
+
+	public static GameObject _CreateBonusFromPrefab(UnityEngine.Object bonus, Vector3 pos)
+	{
+		GameObject vector3 = (GameObject)UnityEngine.Object.Instantiate(bonus, pos, Quaternion.identity);
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		return vector3;
+	}
+
+	public static GameObject _CreateBonusPrefab(string _weaponName)
+	{
+		GameObject gameObject = Resources.Load(string.Concat("Weapon_Bonuses/", _weaponName, "_Bonus")) as GameObject;
+		if (gameObject != null)
+		{
+			return gameObject;
+		}
+		UnityEngine.Debug.Log("null");
+		return null;
+	}
+
+	private int _curLevel()
+	{
+		return (Defs.isMulti ? GlobalGameController.currentLevel : CurrentCampaignGame.currentLevel);
+	}
+
 	private float _DistrSum()
 	{
-		float num = 0f;
-		foreach (int item in _weaponsProbDistr)
+		float current = 0f;
+		IEnumerator enumerator = this._weaponsProbDistr.GetEnumerator();
+		try
 		{
-			num += (float)item;
+			while (enumerator.MoveNext())
+			{
+				current += (float)((int)enumerator.Current);
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		return current;
+	}
+
+	private int _indexForType(int type)
+	{
+		int num = 0;
+		if (type == 9 || type == 10)
+		{
+			num = 1;
+		}
+		else if (type == 8)
+		{
+			num = 2;
 		}
 		return num;
+	}
+
+	public void addBonusFromPhotonRPC(int _id, int _type, Vector3 _pos, Quaternion rot)
+	{
+		GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(this.bonusPrefabs[this._indexForType(_type)], _pos, rot);
+		gameObject.GetComponent<PhotonView>().viewID = _id;
+		gameObject.GetComponent<SettingBonus>().typeOfMass = _type;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AddWeapon()
+	{
+		BonusCreator.u003cAddWeaponu003ec__IteratorD variable = null;
+		return variable;
 	}
 
 	private void Awake()
 	{
 		if (Defs.IsSurvival)
 		{
-			creationInterval = 9f;
-			weaponCreationInterval = 15f;
+			this.creationInterval = 9f;
+			this.weaponCreationInterval = 15f;
 		}
-		if (Defs.isMulti)
+		if (!Defs.isMulti)
 		{
-			_isMultiplayer = true;
+			this._isMultiplayer = false;
 		}
 		else
 		{
-			_isMultiplayer = false;
+			this._isMultiplayer = true;
 		}
-		if (!_isMultiplayer)
+		if (!this._isMultiplayer)
 		{
-			weaponPrefabs = WeaponManager.sharedManager.weaponsInGame;
-			Object[] array = weaponPrefabs;
-			for (int i = 0; i < array.Length; i++)
+			this.weaponPrefabs = WeaponManager.sharedManager.weaponsInGame;
+			UnityEngine.Object[] objArray = this.weaponPrefabs;
+			for (int i = 0; i < (int)objArray.Length; i++)
 			{
-				GameObject gameObject = (GameObject)array[i];
-				WeaponSounds component = gameObject.GetComponent<WeaponSounds>();
-				_weaponsProbDistr.Add(component.Probability);
+				WeaponSounds component = ((GameObject)objArray[i]).GetComponent<WeaponSounds>();
+				this._weaponsProbDistr.Add(component.Probability);
+			}
+		}
+	}
+
+	public void BeginCreateBonuses()
+	{
+		if (Application.isEditor && Defs.IsSurvival && !SceneLoader.ActiveSceneName.Equals(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % (int)Defs.SurvivalMaps.Length]))
+		{
+			return;
+		}
+		if (Defs.IsSurvival)
+		{
+			base.StartCoroutine(this.AddWeapon());
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void delBonus(NetworkViewID id)
+	{
+		GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Bonus");
+		int num = 0;
+		while (num < (int)gameObjectArray.Length)
+		{
+			GameObject gameObject = gameObjectArray[num];
+			if (!id.Equals(gameObject.GetComponent<NetworkView>().viewID))
+			{
+				num++;
+			}
+			else
+			{
+				UnityEngine.Object.Destroy(gameObject);
+				break;
 			}
 		}
 	}
 
 	private void Start()
 	{
-		_bonusCreationZones = GameObject.FindGameObjectsWithTag("BonusCreationZone");
-		_zombieCreator = base.gameObject.GetComponent<ZombieCreator>();
-		_weaponManager = WeaponManager.sharedManager;
-	}
-
-	public void BeginCreateBonuses()
-	{
-		if ((!Application.isEditor || !Defs.IsSurvival || SceneLoader.ActiveSceneName.Equals(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % Defs.SurvivalMaps.Length])) && Defs.IsSurvival)
-		{
-			StartCoroutine(AddWeapon());
-		}
-	}
-
-	public void addBonusFromPhotonRPC(int _id, int _type, Vector3 _pos, Quaternion rot)
-	{
-		GameObject gameObject = (GameObject)Object.Instantiate(bonusPrefabs[_indexForType(_type)], _pos, rot);
-		gameObject.GetComponent<PhotonView>().viewID = _id;
-		gameObject.GetComponent<SettingBonus>().typeOfMass = _type;
-	}
-
-	private int _indexForType(int type)
-	{
-		int result = 0;
-		switch (type)
-		{
-		case 9:
-		case 10:
-			result = 1;
-			break;
-		case 8:
-			result = 2;
-			break;
-		}
-		return result;
-	}
-
-	[RPC]
-	[PunRPC]
-	private void delBonus(NetworkViewID id)
-	{
-		GameObject[] array = GameObject.FindGameObjectsWithTag("Bonus");
-		GameObject[] array2 = array;
-		foreach (GameObject gameObject in array2)
-		{
-			if (id.Equals(gameObject.GetComponent<NetworkView>().viewID))
-			{
-				Object.Destroy(gameObject);
-				break;
-			}
-		}
-	}
-
-	private IEnumerator AddWeapon()
-	{
-		while (true)
-		{
-			yield return new WaitForSeconds(weaponCreationInterval);
-			while (_zombieCreator.stopGeneratingBonuses)
-			{
-				yield return null;
-			}
-			int enemiesLeft = GlobalGameController.EnemiesToKill - _zombieCreator.NumOfDeadZombies;
-			if (!Defs.IsSurvival && enemiesLeft <= 0 && !_zombieCreator.bossShowm)
-			{
-				break;
-			}
-			GameObject spawnZone = _bonusCreationZones[Random.Range(0, _bonusCreationZones.Length)];
-			BoxCollider spawnZoneCollider = spawnZone.GetComponent<BoxCollider>();
-			Vector2 sz = new Vector2(spawnZoneCollider.size.x * spawnZone.transform.localScale.x, spawnZoneCollider.size.z * spawnZone.transform.localScale.z);
-			Rect zoneRect = new Rect(spawnZone.transform.position.x - sz.x / 2f, spawnZone.transform.position.z - sz.y / 2f, sz.x, sz.y);
-			Vector3 pos = new Vector3(zoneRect.x + Random.Range(0f, zoneRect.width), spawnZone.transform.position.y, zoneRect.y + Random.Range(0f, zoneRect.height));
-			float sum = _DistrSum();
-			int weaponNumber;
-			do
-			{
-				weaponNumber = 0;
-				float val = Random.Range(0f, sum);
-				float curSum = 0f;
-				for (int i = 0; i < _weaponsProbDistr.Count; i++)
-				{
-					if (val < curSum + (float)(int)_weaponsProbDistr[i])
-					{
-						weaponNumber = i;
-						break;
-					}
-					curSum += (float)(int)_weaponsProbDistr[i];
-				}
-			}
-			while (weaponNumber == _lastWeapon || (Defs.IsSurvival && !ZombieCreator.survivalAvailableWeapons.Contains(weaponPrefabs[weaponNumber].name)) || !ItemDb.IsWeaponCanDrop(ItemDb.GetByPrefabName((weaponPrefabs[weaponNumber] as GameObject).name.Replace("(Clone)", string.Empty)).Tag));
-			GameObject wp = (GameObject)weaponPrefabs[weaponNumber];
-			GameObject newBonus = _CreateBonus(wp.name, pos);
-			_weapons.Add(newBonus);
-			if (_weapons.Count > ((!Defs.IsSurvival) ? 5 : 3))
-			{
-				Object.Destroy((GameObject)_weapons[0]);
-				_weapons.RemoveAt(0);
-			}
-		}
-	}
-
-	public static GameObject _CreateBonusPrefab(string _weaponName)
-	{
-		GameObject gameObject = Resources.Load("Weapon_Bonuses/" + _weaponName + "_Bonus") as GameObject;
-		if (gameObject == null)
-		{
-			Debug.Log("null");
-			return null;
-		}
-		return gameObject;
-	}
-
-	public static GameObject _CreateBonus(string _weaponName, Vector3 pos)
-	{
-		GameObject gameObject = _CreateBonusPrefab(_weaponName);
-		if (gameObject == null)
-		{
-			Debug.Log("null");
-			return null;
-		}
-		return _CreateBonusFromPrefab(gameObject, pos);
-	}
-
-	public static GameObject _CreateBonusFromPrefab(Object bonus, Vector3 pos)
-	{
-		GameObject gameObject = (GameObject)Object.Instantiate(bonus, pos, Quaternion.identity);
-		gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-		return gameObject;
-	}
-
-	private int _curLevel()
-	{
-		return Defs.isMulti ? GlobalGameController.currentLevel : CurrentCampaignGame.currentLevel;
+		this._bonusCreationZones = GameObject.FindGameObjectsWithTag("BonusCreationZone");
+		this._zombieCreator = base.gameObject.GetComponent<ZombieCreator>();
+		this._weaponManager = WeaponManager.sharedManager;
 	}
 }

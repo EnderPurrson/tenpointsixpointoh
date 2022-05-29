@@ -1,23 +1,28 @@
+using System;
 using UnityEngine;
 
 public class AudioSourseOnOff : MonoBehaviour
 {
 	private AudioSource myAudioSourse;
 
+	public AudioSourseOnOff()
+	{
+	}
+
 	private void Awake()
 	{
-		myAudioSourse = GetComponent<AudioSource>();
-		if (myAudioSourse != null)
+		this.myAudioSourse = base.GetComponent<AudioSource>();
+		if (this.myAudioSourse != null)
 		{
-			myAudioSourse.enabled = Defs.isSoundFX;
+			this.myAudioSourse.enabled = Defs.isSoundFX;
 		}
 	}
 
 	private void Update()
 	{
-		if (myAudioSourse != null && myAudioSourse.enabled != Defs.isSoundFX)
+		if (this.myAudioSourse != null && this.myAudioSourse.enabled != Defs.isSoundFX)
 		{
-			myAudioSourse.enabled = Defs.isSoundFX;
+			this.myAudioSourse.enabled = Defs.isSoundFX;
 		}
 	}
 }

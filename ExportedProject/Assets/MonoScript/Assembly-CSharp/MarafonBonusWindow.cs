@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class MarafonBonusWindow : BannerWindow
@@ -18,36 +21,68 @@ public class MarafonBonusWindow : BannerWindow
 
 	public BonusEverydayItem[] superPrizes;
 
+	public MarafonBonusWindow()
+	{
+	}
+
+	private void CentralizeScrollByCurrentBonus()
+	{
+		if (this.bonusScroll == null)
+		{
+			return;
+		}
+		int currentBonusIndex = MarafonBonusController.Get.GetCurrentBonusIndex();
+		Transform child = this.bonusScroll.GetChild(currentBonusIndex);
+		if (child != null)
+		{
+			if (currentBonusIndex > 2 && currentBonusIndex < 27)
+			{
+				this.bonusScroll.GetComponent<UICenterOnChild>().springStrength = 8f;
+				this.bonusScroll.GetComponent<UICenterOnChild>().CenterOn(child);
+			}
+			else if (currentBonusIndex >= 27)
+			{
+				this.bonusScroll.GetComponent<UICenterOnChild>().springStrength = 8f;
+				Transform transforms = this.bonusScroll.GetChild(27);
+				if (transforms != null)
+				{
+					this.bonusScroll.GetComponent<UICenterOnChild>().CenterOn(transforms);
+				}
+			}
+			child.localScale = Vector3.one;
+		}
+		this.bonusScroll.GetComponent<UICenterOnChild>().onCenter = new UICenterOnChild.OnCenterCallback(this.ResetScrollPosition);
+	}
+
 	private void FillBonusesForEveryday()
 	{
 		List<BonusMarafonItem> bonusItems = MarafonBonusController.Get.BonusItems;
 		int currentBonusIndex = MarafonBonusController.Get.GetCurrentBonusIndex();
-		BonusEverydayItem[] componentsInChildren = bonusScroll.GetComponentsInChildren<BonusEverydayItem>(true);
-		bool flag = componentsInChildren.Length != 0;
-		BonusEverydayItem bonusEverydayItem = null;
+		BonusEverydayItem[] componentsInChildren = this.bonusScroll.GetComponentsInChildren<BonusEverydayItem>(true);
+		bool length = (int)componentsInChildren.Length != 0;
+		BonusEverydayItem vector3 = null;
 		GameObject gameObject = null;
 		for (int i = 0; i < bonusItems.Count; i++)
 		{
-			if (!flag)
+			if (!length)
 			{
-				gameObject = Object.Instantiate(this.bonusEverydayItem);
+				gameObject = UnityEngine.Object.Instantiate<GameObject>(this.bonusEverydayItem);
 				gameObject.name = string.Format("{0:00}", i);
 			}
-			bonusEverydayItem = ((!flag) ? gameObject.GetComponent<BonusEverydayItem>() : componentsInChildren[i]);
-			if (bonusEverydayItem != null)
+			vector3 = (!length ? gameObject.GetComponent<BonusEverydayItem>() : componentsInChildren[i]);
+			if (vector3 != null)
 			{
-				bool isBonusWeekly = (i + 1) % 7 == 0 || i == bonusItems.Count - 1;
-				bonusEverydayItem.FillData(i, currentBonusIndex, isBonusWeekly);
+				vector3.FillData(i, currentBonusIndex, ((i + 1) % 7 == 0 ? true : i == bonusItems.Count - 1));
 			}
-			if (!flag)
+			if (!length)
 			{
-				bonusScroll.AddChild(gameObject.transform);
+				this.bonusScroll.AddChild(gameObject.transform);
 				gameObject.gameObject.SetActive(true);
 			}
-			bonusEverydayItem.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
+			vector3.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
 		}
-		bonusEverydayItem.SetBackgroundForBonusWeek();
-		bonusScroll.Reposition();
+		vector3.SetBackgroundForBonusWeek();
+		this.bonusScroll.Reposition();
 	}
 
 	private void FillPrizesForEveryweek()
@@ -57,90 +92,62 @@ public class MarafonBonusWindow : BannerWindow
 		int num = 0;
 		for (int i = 6; i < bonusItems.Count; i += 7)
 		{
-			BonusEverydayItem bonusEverydayItem = superPrizes[num];
+			BonusEverydayItem bonusEverydayItem = this.superPrizes[num];
 			num++;
 			if (bonusEverydayItem != null)
 			{
 				bonusEverydayItem.FillData(i, currentBonusIndex, false);
 			}
 		}
-		int num2 = superPrizes.Length - 1;
-		int bonusIndex = bonusItems.Count - 1;
-		superPrizes[num2].FillData(bonusIndex, currentBonusIndex, false);
+		int length = (int)this.superPrizes.Length - 1;
+		int count = bonusItems.Count - 1;
+		this.superPrizes[length].FillData(count, currentBonusIndex, false);
 	}
 
 	private void OnEnable()
 	{
-		StartCoroutine(StartCentralizeBonusItem());
-	}
-
-	public override void Show()
-	{
-		MarafonBonusController.Get.InitializeBonusItems();
-		FillBonusesForEveryday();
-		FillPrizesForEveryweek();
-		base.Show();
-	}
-
-	public IEnumerator StartCentralizeBonusItem()
-	{
-		yield return null;
-		CentralizeScrollByCurrentBonus();
-	}
-
-	private void ResetScrollPosition(GameObject centerElement)
-	{
-		bonusScroll.GetComponent<UICenterOnChild>().enabled = false;
-		bonusScroll.Reposition();
+		base.StartCoroutine(this.StartCentralizeBonusItem());
 	}
 
 	public void OnGetRewardClick()
 	{
 		ButtonClickSound.TryPlayClick();
-		scrollView.ResetPosition();
+		this.scrollView.ResetPosition();
 		MarafonBonusController.Get.TakeMarafonBonus();
 		BannerWindowController.SharedController.HideBannerWindow();
 	}
 
-	private void CentralizeScrollByCurrentBonus()
+	private void ResetScrollPosition(GameObject centerElement)
 	{
-		if (bonusScroll == null)
-		{
-			return;
-		}
-		int currentBonusIndex = MarafonBonusController.Get.GetCurrentBonusIndex();
-		Transform child = bonusScroll.GetChild(currentBonusIndex);
-		if (child != null)
-		{
-			if (currentBonusIndex > 2 && currentBonusIndex < 27)
-			{
-				bonusScroll.GetComponent<UICenterOnChild>().springStrength = 8f;
-				bonusScroll.GetComponent<UICenterOnChild>().CenterOn(child);
-			}
-			else if (currentBonusIndex >= 27)
-			{
-				bonusScroll.GetComponent<UICenterOnChild>().springStrength = 8f;
-				Transform child2 = bonusScroll.GetChild(27);
-				if (child2 != null)
-				{
-					bonusScroll.GetComponent<UICenterOnChild>().CenterOn(child2);
-				}
-			}
-			child.localScale = Vector3.one;
-		}
-		bonusScroll.GetComponent<UICenterOnChild>().onCenter = ResetScrollPosition;
+		this.bonusScroll.GetComponent<UICenterOnChild>().enabled = false;
+		this.bonusScroll.Reposition();
+	}
+
+	public override void Show()
+	{
+		MarafonBonusController.Get.InitializeBonusItems();
+		this.FillBonusesForEveryday();
+		this.FillPrizesForEveryweek();
+		base.Show();
+	}
+
+	[DebuggerHidden]
+	public IEnumerator StartCentralizeBonusItem()
+	{
+		MarafonBonusWindow.u003cStartCentralizeBonusItemu003ec__Iterator16F variable = null;
+		return variable;
 	}
 
 	internal sealed override void Submit()
 	{
-		OnGetRewardClick();
+		this.OnGetRewardClick();
 	}
 
 	private void Update()
 	{
-		if (premiumInterface.activeSelf != (PremiumAccountController.Instance != null && PremiumAccountController.Instance.isAccountActive))
+		if (this.premiumInterface.activeSelf != (PremiumAccountController.Instance == null ? false : PremiumAccountController.Instance.isAccountActive))
 		{
-			premiumInterface.SetActive(PremiumAccountController.Instance != null && PremiumAccountController.Instance.isAccountActive);
+			this.premiumInterface.SetActive((PremiumAccountController.Instance == null ? false : PremiumAccountController.Instance.isAccountActive));
 		}
 	}
 }

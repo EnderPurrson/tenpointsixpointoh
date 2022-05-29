@@ -1,9 +1,10 @@
+using System;
+
 namespace Facebook.Unity
 {
 	internal class AppInviteResult : ResultBase, IAppInviteResult, IResult
 	{
-		public AppInviteResult(string result)
-			: base(result)
+		public AppInviteResult(string result) : base(result)
 		{
 		}
 	}

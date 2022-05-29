@@ -18,31 +18,15 @@ namespace Rilisoft
 		[SerializeField]
 		private int starCount;
 
-		internal string LevelId
-		{
-			get
-			{
-				if (levelId == null)
-				{
-					levelId = string.Empty;
-				}
-				return levelId;
-			}
-			set
-			{
-				levelId = value ?? string.Empty;
-			}
-		}
-
 		internal int CoinCount
 		{
 			get
 			{
-				return coinCount;
+				return this.coinCount;
 			}
 			set
 			{
-				coinCount = value;
+				this.coinCount = value;
 			}
 		}
 
@@ -50,11 +34,27 @@ namespace Rilisoft
 		{
 			get
 			{
-				return gemCount;
+				return this.gemCount;
 			}
 			set
 			{
-				gemCount = value;
+				this.gemCount = value;
+			}
+		}
+
+		internal string LevelId
+		{
+			get
+			{
+				if (this.levelId == null)
+				{
+					this.levelId = string.Empty;
+				}
+				return this.levelId;
+			}
+			set
+			{
+				this.levelId = value ?? string.Empty;
 			}
 		}
 
@@ -62,11 +62,11 @@ namespace Rilisoft
 		{
 			get
 			{
-				return starCount;
+				return this.starCount;
 			}
 			set
 			{
-				starCount = value;
+				this.starCount = value;
 			}
 		}
 
@@ -85,19 +85,19 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			if (CoinCount != other.CoinCount)
+			if (this.CoinCount != other.CoinCount)
 			{
 				return false;
 			}
-			if (GemCount != other.GemCount)
+			if (this.GemCount != other.GemCount)
 			{
 				return false;
 			}
-			if (StarCount != other.StarCount)
+			if (this.StarCount != other.StarCount)
 			{
 				return false;
 			}
-			if (LevelId != other.LevelId)
+			if (this.LevelId != other.LevelId)
 			{
 				return false;
 			}
@@ -111,17 +111,14 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			return Equals(levelProgressMemento);
+			return this.Equals(levelProgressMemento);
 		}
 
 		public override int GetHashCode()
 		{
-			return LevelId.GetHashCode() ^ CoinCount.GetHashCode() ^ GemCount.GetHashCode() ^ StarCount.GetHashCode();
-		}
-
-		public override string ToString()
-		{
-			return JsonUtility.ToJson(this);
+			int hashCode = this.LevelId.GetHashCode() ^ this.CoinCount.GetHashCode();
+			int gemCount = this.GemCount;
+			return hashCode ^ gemCount.GetHashCode() ^ this.StarCount.GetHashCode();
 		}
 
 		internal static LevelProgressMemento Merge(LevelProgressMemento left, LevelProgressMemento right)
@@ -138,11 +135,18 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Level ids shoud be equal.");
 			}
-			LevelProgressMemento levelProgressMemento = new LevelProgressMemento(left.LevelId);
-			levelProgressMemento.CoinCount = Math.Max(left.CoinCount, right.CoinCount);
-			levelProgressMemento.GemCount = Math.Max(left.GemCount, right.GemCount);
-			levelProgressMemento.StarCount = Math.Max(left.StarCount, right.StarCount);
+			LevelProgressMemento levelProgressMemento = new LevelProgressMemento(left.LevelId)
+			{
+				CoinCount = Math.Max(left.CoinCount, right.CoinCount),
+				GemCount = Math.Max(left.GemCount, right.GemCount),
+				StarCount = Math.Max(left.StarCount, right.StarCount)
+			};
 			return levelProgressMemento;
+		}
+
+		public override string ToString()
+		{
+			return JsonUtility.ToJson(this);
 		}
 	}
 }

@@ -1,19 +1,24 @@
+using System;
 using UnityEngine;
 
 internal sealed class BackgroundMusicController : MonoBehaviour
 {
-	private void Start()
+	public BackgroundMusicController()
 	{
-		MenuBackgroundMusic.sharedMusic.PlayMusic(GetComponent<AudioSource>());
 	}
 
 	public void Play()
 	{
-		MenuBackgroundMusic.sharedMusic.PlayMusic(GetComponent<AudioSource>());
+		MenuBackgroundMusic.sharedMusic.PlayMusic(base.GetComponent<AudioSource>());
+	}
+
+	private void Start()
+	{
+		MenuBackgroundMusic.sharedMusic.PlayMusic(base.GetComponent<AudioSource>());
 	}
 
 	public void Stop()
 	{
-		MenuBackgroundMusic.sharedMusic.StopMusic(GetComponent<AudioSource>());
+		MenuBackgroundMusic.sharedMusic.StopMusic(base.GetComponent<AudioSource>());
 	}
 }

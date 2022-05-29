@@ -1,27 +1,14 @@
-using System;
 using Rilisoft;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 internal sealed class BackFacebookFriens : MonoBehaviour
 {
 	private IDisposable _backSubscription;
 
-	private void OnEnable()
+	public BackFacebookFriens()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(OnClick, "Facebook Friends");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
 	}
 
 	private void OnClick()
@@ -31,5 +18,23 @@ internal sealed class BackFacebookFriens : MonoBehaviour
 		FriendsController.sharedController.facebookFriendsInfo.Clear();
 		FacebookFriendsGUIController.sharedController._infoRequested = false;
 		ButtonClickSound.Instance.PlayClick();
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.OnClick), "Facebook Friends");
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class HitStackController : MonoBehaviour
@@ -8,22 +9,8 @@ public class HitStackController : MonoBehaviour
 
 	private int currentIndexHole;
 
-	private void Start()
+	public HitStackController()
 	{
-		if (Device.isPixelGunLow)
-		{
-			Object.Destroy(base.gameObject);
-			return;
-		}
-		sharedController = this;
-		Transform transform = base.transform;
-		transform.position = Vector3.zero;
-		int childCount = transform.childCount;
-		particles = new HitParticle[childCount];
-		for (int i = 0; i < childCount; i++)
-		{
-			particles[i] = transform.GetChild(i).GetComponent<HitParticle>();
-		}
 	}
 
 	public HitParticle GetCurrentParticle(bool _isUseMine)
@@ -31,23 +18,42 @@ public class HitStackController : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexHole++;
-			if (currentIndexHole >= particles.Length)
+			this.currentIndexHole++;
+			if (this.currentIndexHole < (int)this.particles.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexHole = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexHole = 0;
+			flag = false;
 		}
-		while (particles[currentIndexHole].isUseMine && !_isUseMine);
-		return particles[currentIndexHole];
+		while (this.particles[this.currentIndexHole].isUseMine && !_isUseMine);
+		return this.particles[this.currentIndexHole];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		HitStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		if (Device.isPixelGunLow)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+			return;
+		}
+		HitStackController.sharedController = this;
+		Transform transforms = base.transform;
+		transforms.position = Vector3.zero;
+		int num = transforms.childCount;
+		this.particles = new HitParticle[num];
+		for (int i = 0; i < num; i++)
+		{
+			this.particles[i] = transforms.GetChild(i).GetComponent<HitParticle>();
+		}
 	}
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace I2.Loc
 {
 	public static class ScriptLocalization
@@ -6,7 +8,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0000");
+				return ScriptLocalization.Get("Key_0000");
 			}
 		}
 
@@ -14,7 +16,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0001");
+				return ScriptLocalization.Get("Key_0001");
 			}
 		}
 
@@ -22,7 +24,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0002");
+				return ScriptLocalization.Get("Key_0002");
 			}
 		}
 
@@ -30,7 +32,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0003");
+				return ScriptLocalization.Get("Key_0003");
 			}
 		}
 
@@ -38,7 +40,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0004");
+				return ScriptLocalization.Get("Key_0004");
 			}
 		}
 
@@ -46,7 +48,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0005");
+				return ScriptLocalization.Get("Key_0005");
 			}
 		}
 
@@ -54,7 +56,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0006");
+				return ScriptLocalization.Get("Key_0006");
 			}
 		}
 
@@ -62,7 +64,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0007");
+				return ScriptLocalization.Get("Key_0007");
 			}
 		}
 
@@ -70,7 +72,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0008");
+				return ScriptLocalization.Get("Key_0008");
 			}
 		}
 
@@ -78,7 +80,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0009");
+				return ScriptLocalization.Get("Key_0009");
 			}
 		}
 
@@ -86,7 +88,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0010");
+				return ScriptLocalization.Get("Key_0010");
 			}
 		}
 
@@ -94,7 +96,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0011");
+				return ScriptLocalization.Get("Key_0011");
 			}
 		}
 
@@ -102,7 +104,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0012");
+				return ScriptLocalization.Get("Key_0012");
 			}
 		}
 
@@ -110,7 +112,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0013");
+				return ScriptLocalization.Get("Key_0013");
 			}
 		}
 
@@ -118,7 +120,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0014");
+				return ScriptLocalization.Get("Key_0014");
 			}
 		}
 
@@ -126,7 +128,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0015");
+				return ScriptLocalization.Get("Key_0015");
 			}
 		}
 
@@ -134,7 +136,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0016");
+				return ScriptLocalization.Get("Key_0016");
 			}
 		}
 
@@ -142,7 +144,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0017");
+				return ScriptLocalization.Get("Key_0017");
 			}
 		}
 
@@ -150,7 +152,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0018");
+				return ScriptLocalization.Get("Key_0018");
 			}
 		}
 
@@ -158,7 +160,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0019");
+				return ScriptLocalization.Get("Key_0019");
 			}
 		}
 
@@ -166,7 +168,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0020");
+				return ScriptLocalization.Get("Key_0020");
 			}
 		}
 
@@ -174,7 +176,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0021");
+				return ScriptLocalization.Get("Key_0021");
 			}
 		}
 
@@ -182,7 +184,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0022");
+				return ScriptLocalization.Get("Key_0022");
 			}
 		}
 
@@ -190,7 +192,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0024");
+				return ScriptLocalization.Get("Key_0024");
 			}
 		}
 
@@ -198,7 +200,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0025");
+				return ScriptLocalization.Get("Key_0025");
 			}
 		}
 
@@ -206,7 +208,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0026");
+				return ScriptLocalization.Get("Key_0026");
 			}
 		}
 
@@ -214,7 +216,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0027");
+				return ScriptLocalization.Get("Key_0027");
 			}
 		}
 
@@ -222,7 +224,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0028");
+				return ScriptLocalization.Get("Key_0028");
 			}
 		}
 
@@ -230,7 +232,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0029");
+				return ScriptLocalization.Get("Key_0029");
 			}
 		}
 
@@ -238,7 +240,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0030");
+				return ScriptLocalization.Get("Key_0030");
 			}
 		}
 
@@ -246,7 +248,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0031");
+				return ScriptLocalization.Get("Key_0031");
 			}
 		}
 
@@ -254,7 +256,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0032");
+				return ScriptLocalization.Get("Key_0032");
 			}
 		}
 
@@ -262,7 +264,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0033");
+				return ScriptLocalization.Get("Key_0033");
 			}
 		}
 
@@ -270,7 +272,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0034");
+				return ScriptLocalization.Get("Key_0034");
 			}
 		}
 
@@ -278,7 +280,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0035");
+				return ScriptLocalization.Get("Key_0035");
 			}
 		}
 
@@ -286,7 +288,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0036");
+				return ScriptLocalization.Get("Key_0036");
 			}
 		}
 
@@ -294,7 +296,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0037");
+				return ScriptLocalization.Get("Key_0037");
 			}
 		}
 
@@ -302,7 +304,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0038");
+				return ScriptLocalization.Get("Key_0038");
 			}
 		}
 
@@ -310,7 +312,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0039");
+				return ScriptLocalization.Get("Key_0039");
 			}
 		}
 
@@ -318,7 +320,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0040");
+				return ScriptLocalization.Get("Key_0040");
 			}
 		}
 
@@ -326,7 +328,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0041");
+				return ScriptLocalization.Get("Key_0041");
 			}
 		}
 
@@ -334,7 +336,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0042");
+				return ScriptLocalization.Get("Key_0042");
 			}
 		}
 
@@ -342,7 +344,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0043");
+				return ScriptLocalization.Get("Key_0043");
 			}
 		}
 
@@ -350,7 +352,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0044");
+				return ScriptLocalization.Get("Key_0044");
 			}
 		}
 
@@ -358,7 +360,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0045");
+				return ScriptLocalization.Get("Key_0045");
 			}
 		}
 
@@ -366,7 +368,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0046");
+				return ScriptLocalization.Get("Key_0046");
 			}
 		}
 
@@ -374,7 +376,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0047");
+				return ScriptLocalization.Get("Key_0047");
 			}
 		}
 
@@ -382,7 +384,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0048");
+				return ScriptLocalization.Get("Key_0048");
 			}
 		}
 
@@ -390,7 +392,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0049");
+				return ScriptLocalization.Get("Key_0049");
 			}
 		}
 
@@ -398,7 +400,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0050");
+				return ScriptLocalization.Get("Key_0050");
 			}
 		}
 
@@ -406,7 +408,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0051");
+				return ScriptLocalization.Get("Key_0051");
 			}
 		}
 
@@ -414,7 +416,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0052");
+				return ScriptLocalization.Get("Key_0052");
 			}
 		}
 
@@ -422,7 +424,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0053");
+				return ScriptLocalization.Get("Key_0053");
 			}
 		}
 
@@ -430,7 +432,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0054");
+				return ScriptLocalization.Get("Key_0054");
 			}
 		}
 
@@ -438,7 +440,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0056");
+				return ScriptLocalization.Get("Key_0056");
 			}
 		}
 
@@ -446,7 +448,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0057");
+				return ScriptLocalization.Get("Key_0057");
 			}
 		}
 
@@ -454,7 +456,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0058");
+				return ScriptLocalization.Get("Key_0058");
 			}
 		}
 
@@ -462,7 +464,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0059");
+				return ScriptLocalization.Get("Key_0059");
 			}
 		}
 
@@ -470,7 +472,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0060");
+				return ScriptLocalization.Get("Key_0060");
 			}
 		}
 
@@ -478,7 +480,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0061");
+				return ScriptLocalization.Get("Key_0061");
 			}
 		}
 
@@ -486,7 +488,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0062");
+				return ScriptLocalization.Get("Key_0062");
 			}
 		}
 
@@ -494,7 +496,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0063");
+				return ScriptLocalization.Get("Key_0063");
 			}
 		}
 
@@ -502,7 +504,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0064");
+				return ScriptLocalization.Get("Key_0064");
 			}
 		}
 
@@ -510,7 +512,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0065");
+				return ScriptLocalization.Get("Key_0065");
 			}
 		}
 
@@ -518,7 +520,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0066");
+				return ScriptLocalization.Get("Key_0066");
 			}
 		}
 
@@ -526,7 +528,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0067");
+				return ScriptLocalization.Get("Key_0067");
 			}
 		}
 
@@ -534,7 +536,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0068");
+				return ScriptLocalization.Get("Key_0068");
 			}
 		}
 
@@ -542,7 +544,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0069");
+				return ScriptLocalization.Get("Key_0069");
 			}
 		}
 
@@ -550,7 +552,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0070");
+				return ScriptLocalization.Get("Key_0070");
 			}
 		}
 
@@ -558,7 +560,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0071");
+				return ScriptLocalization.Get("Key_0071");
 			}
 		}
 
@@ -566,7 +568,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0072");
+				return ScriptLocalization.Get("Key_0072");
 			}
 		}
 
@@ -574,7 +576,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0073");
+				return ScriptLocalization.Get("Key_0073");
 			}
 		}
 
@@ -582,7 +584,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0074");
+				return ScriptLocalization.Get("Key_0074");
 			}
 		}
 
@@ -590,7 +592,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0075");
+				return ScriptLocalization.Get("Key_0075");
 			}
 		}
 
@@ -598,7 +600,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0076");
+				return ScriptLocalization.Get("Key_0076");
 			}
 		}
 
@@ -606,7 +608,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0077");
+				return ScriptLocalization.Get("Key_0077");
 			}
 		}
 
@@ -614,7 +616,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0078");
+				return ScriptLocalization.Get("Key_0078");
 			}
 		}
 
@@ -622,7 +624,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0079");
+				return ScriptLocalization.Get("Key_0079");
 			}
 		}
 
@@ -630,7 +632,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0080");
+				return ScriptLocalization.Get("Key_0080");
 			}
 		}
 
@@ -638,7 +640,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0082");
+				return ScriptLocalization.Get("Key_0082");
 			}
 		}
 
@@ -646,7 +648,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0083");
+				return ScriptLocalization.Get("Key_0083");
 			}
 		}
 
@@ -654,7 +656,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0084");
+				return ScriptLocalization.Get("Key_0084");
 			}
 		}
 
@@ -662,7 +664,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0085");
+				return ScriptLocalization.Get("Key_0085");
 			}
 		}
 
@@ -670,7 +672,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0086");
+				return ScriptLocalization.Get("Key_0086");
 			}
 		}
 
@@ -678,7 +680,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0087");
+				return ScriptLocalization.Get("Key_0087");
 			}
 		}
 
@@ -686,7 +688,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0088");
+				return ScriptLocalization.Get("Key_0088");
 			}
 		}
 
@@ -694,7 +696,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0089");
+				return ScriptLocalization.Get("Key_0089");
 			}
 		}
 
@@ -702,7 +704,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0090");
+				return ScriptLocalization.Get("Key_0090");
 			}
 		}
 
@@ -710,7 +712,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0092");
+				return ScriptLocalization.Get("Key_0092");
 			}
 		}
 
@@ -718,7 +720,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0093");
+				return ScriptLocalization.Get("Key_0093");
 			}
 		}
 
@@ -726,7 +728,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0094");
+				return ScriptLocalization.Get("Key_0094");
 			}
 		}
 
@@ -734,7 +736,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0095");
+				return ScriptLocalization.Get("Key_0095");
 			}
 		}
 
@@ -742,7 +744,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0096");
+				return ScriptLocalization.Get("Key_0096");
 			}
 		}
 
@@ -750,7 +752,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0097");
+				return ScriptLocalization.Get("Key_0097");
 			}
 		}
 
@@ -758,7 +760,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0098");
+				return ScriptLocalization.Get("Key_0098");
 			}
 		}
 
@@ -766,7 +768,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0099");
+				return ScriptLocalization.Get("Key_0099");
 			}
 		}
 
@@ -774,7 +776,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0100");
+				return ScriptLocalization.Get("Key_0100");
 			}
 		}
 
@@ -782,7 +784,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0101");
+				return ScriptLocalization.Get("Key_0101");
 			}
 		}
 
@@ -790,7 +792,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0102");
+				return ScriptLocalization.Get("Key_0102");
 			}
 		}
 
@@ -798,7 +800,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0103");
+				return ScriptLocalization.Get("Key_0103");
 			}
 		}
 
@@ -806,7 +808,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0104");
+				return ScriptLocalization.Get("Key_0104");
 			}
 		}
 
@@ -814,7 +816,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0105");
+				return ScriptLocalization.Get("Key_0105");
 			}
 		}
 
@@ -822,7 +824,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0107");
+				return ScriptLocalization.Get("Key_0107");
 			}
 		}
 
@@ -830,7 +832,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0108");
+				return ScriptLocalization.Get("Key_0108");
 			}
 		}
 
@@ -838,7 +840,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0109");
+				return ScriptLocalization.Get("Key_0109");
 			}
 		}
 
@@ -846,7 +848,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0110");
+				return ScriptLocalization.Get("Key_0110");
 			}
 		}
 
@@ -854,7 +856,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0111");
+				return ScriptLocalization.Get("Key_0111");
 			}
 		}
 
@@ -862,7 +864,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0112");
+				return ScriptLocalization.Get("Key_0112");
 			}
 		}
 
@@ -870,7 +872,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0113");
+				return ScriptLocalization.Get("Key_0113");
 			}
 		}
 
@@ -878,7 +880,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0114");
+				return ScriptLocalization.Get("Key_0114");
 			}
 		}
 
@@ -886,7 +888,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0115");
+				return ScriptLocalization.Get("Key_0115");
 			}
 		}
 
@@ -894,7 +896,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0116");
+				return ScriptLocalization.Get("Key_0116");
 			}
 		}
 
@@ -902,7 +904,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0117");
+				return ScriptLocalization.Get("Key_0117");
 			}
 		}
 
@@ -910,7 +912,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0118");
+				return ScriptLocalization.Get("Key_0118");
 			}
 		}
 
@@ -918,7 +920,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0119");
+				return ScriptLocalization.Get("Key_0119");
 			}
 		}
 
@@ -926,7 +928,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0120");
+				return ScriptLocalization.Get("Key_0120");
 			}
 		}
 
@@ -934,7 +936,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0121");
+				return ScriptLocalization.Get("Key_0121");
 			}
 		}
 
@@ -942,7 +944,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0125");
+				return ScriptLocalization.Get("Key_0125");
 			}
 		}
 
@@ -950,7 +952,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0127");
+				return ScriptLocalization.Get("Key_0127");
 			}
 		}
 
@@ -958,7 +960,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0128");
+				return ScriptLocalization.Get("Key_0128");
 			}
 		}
 
@@ -966,7 +968,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0129");
+				return ScriptLocalization.Get("Key_0129");
 			}
 		}
 
@@ -974,7 +976,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0130");
+				return ScriptLocalization.Get("Key_0130");
 			}
 		}
 
@@ -982,7 +984,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0131");
+				return ScriptLocalization.Get("Key_0131");
 			}
 		}
 
@@ -990,7 +992,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0132");
+				return ScriptLocalization.Get("Key_0132");
 			}
 		}
 
@@ -998,7 +1000,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0133");
+				return ScriptLocalization.Get("Key_0133");
 			}
 		}
 
@@ -1006,7 +1008,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0134");
+				return ScriptLocalization.Get("Key_0134");
 			}
 		}
 
@@ -1014,7 +1016,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0135");
+				return ScriptLocalization.Get("Key_0135");
 			}
 		}
 
@@ -1022,7 +1024,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0136");
+				return ScriptLocalization.Get("Key_0136");
 			}
 		}
 
@@ -1030,7 +1032,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0137");
+				return ScriptLocalization.Get("Key_0137");
 			}
 		}
 
@@ -1038,7 +1040,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0138");
+				return ScriptLocalization.Get("Key_0138");
 			}
 		}
 
@@ -1046,7 +1048,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0139");
+				return ScriptLocalization.Get("Key_0139");
 			}
 		}
 
@@ -1054,7 +1056,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0141");
+				return ScriptLocalization.Get("Key_0141");
 			}
 		}
 
@@ -1062,7 +1064,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0142");
+				return ScriptLocalization.Get("Key_0142");
 			}
 		}
 
@@ -1070,7 +1072,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0143");
+				return ScriptLocalization.Get("Key_0143");
 			}
 		}
 
@@ -1078,7 +1080,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0144");
+				return ScriptLocalization.Get("Key_0144");
 			}
 		}
 
@@ -1086,7 +1088,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0145");
+				return ScriptLocalization.Get("Key_0145");
 			}
 		}
 
@@ -1094,7 +1096,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0146");
+				return ScriptLocalization.Get("Key_0146");
 			}
 		}
 
@@ -1102,7 +1104,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0147");
+				return ScriptLocalization.Get("Key_0147");
 			}
 		}
 
@@ -1110,7 +1112,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0148");
+				return ScriptLocalization.Get("Key_0148");
 			}
 		}
 
@@ -1118,7 +1120,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0149");
+				return ScriptLocalization.Get("Key_0149");
 			}
 		}
 
@@ -1126,7 +1128,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0150");
+				return ScriptLocalization.Get("Key_0150");
 			}
 		}
 
@@ -1134,7 +1136,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0151");
+				return ScriptLocalization.Get("Key_0151");
 			}
 		}
 
@@ -1142,7 +1144,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0152");
+				return ScriptLocalization.Get("Key_0152");
 			}
 		}
 
@@ -1150,7 +1152,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0153");
+				return ScriptLocalization.Get("Key_0153");
 			}
 		}
 
@@ -1158,7 +1160,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0154");
+				return ScriptLocalization.Get("Key_0154");
 			}
 		}
 
@@ -1166,7 +1168,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0155");
+				return ScriptLocalization.Get("Key_0155");
 			}
 		}
 
@@ -1174,7 +1176,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0156");
+				return ScriptLocalization.Get("Key_0156");
 			}
 		}
 
@@ -1182,7 +1184,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0157");
+				return ScriptLocalization.Get("Key_0157");
 			}
 		}
 
@@ -1190,7 +1192,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0158");
+				return ScriptLocalization.Get("Key_0158");
 			}
 		}
 
@@ -1198,7 +1200,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0159");
+				return ScriptLocalization.Get("Key_0159");
 			}
 		}
 
@@ -1206,7 +1208,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0160");
+				return ScriptLocalization.Get("Key_0160");
 			}
 		}
 
@@ -1214,7 +1216,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0161");
+				return ScriptLocalization.Get("Key_0161");
 			}
 		}
 
@@ -1222,7 +1224,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0162");
+				return ScriptLocalization.Get("Key_0162");
 			}
 		}
 
@@ -1230,7 +1232,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0163");
+				return ScriptLocalization.Get("Key_0163");
 			}
 		}
 
@@ -1238,7 +1240,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0164");
+				return ScriptLocalization.Get("Key_0164");
 			}
 		}
 
@@ -1246,7 +1248,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0165");
+				return ScriptLocalization.Get("Key_0165");
 			}
 		}
 
@@ -1254,7 +1256,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0166");
+				return ScriptLocalization.Get("Key_0166");
 			}
 		}
 
@@ -1262,7 +1264,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0167");
+				return ScriptLocalization.Get("Key_0167");
 			}
 		}
 
@@ -1270,7 +1272,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0168");
+				return ScriptLocalization.Get("Key_0168");
 			}
 		}
 
@@ -1278,7 +1280,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0169");
+				return ScriptLocalization.Get("Key_0169");
 			}
 		}
 
@@ -1286,7 +1288,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0170");
+				return ScriptLocalization.Get("Key_0170");
 			}
 		}
 
@@ -1294,7 +1296,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0171");
+				return ScriptLocalization.Get("Key_0171");
 			}
 		}
 
@@ -1302,7 +1304,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0172");
+				return ScriptLocalization.Get("Key_0172");
 			}
 		}
 
@@ -1310,7 +1312,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0173");
+				return ScriptLocalization.Get("Key_0173");
 			}
 		}
 
@@ -1318,7 +1320,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0174");
+				return ScriptLocalization.Get("Key_0174");
 			}
 		}
 
@@ -1326,7 +1328,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0175");
+				return ScriptLocalization.Get("Key_0175");
 			}
 		}
 
@@ -1334,7 +1336,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0176");
+				return ScriptLocalization.Get("Key_0176");
 			}
 		}
 
@@ -1342,7 +1344,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0177");
+				return ScriptLocalization.Get("Key_0177");
 			}
 		}
 
@@ -1350,7 +1352,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0178");
+				return ScriptLocalization.Get("Key_0178");
 			}
 		}
 
@@ -1358,7 +1360,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0179");
+				return ScriptLocalization.Get("Key_0179");
 			}
 		}
 
@@ -1366,7 +1368,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0183");
+				return ScriptLocalization.Get("Key_0183");
 			}
 		}
 
@@ -1374,7 +1376,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0184");
+				return ScriptLocalization.Get("Key_0184");
 			}
 		}
 
@@ -1382,7 +1384,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0185");
+				return ScriptLocalization.Get("Key_0185");
 			}
 		}
 
@@ -1390,7 +1392,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0188");
+				return ScriptLocalization.Get("Key_0188");
 			}
 		}
 
@@ -1398,7 +1400,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0189");
+				return ScriptLocalization.Get("Key_0189");
 			}
 		}
 
@@ -1406,7 +1408,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0190");
+				return ScriptLocalization.Get("Key_0190");
 			}
 		}
 
@@ -1414,7 +1416,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0191");
+				return ScriptLocalization.Get("Key_0191");
 			}
 		}
 
@@ -1422,7 +1424,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0192");
+				return ScriptLocalization.Get("Key_0192");
 			}
 		}
 
@@ -1430,7 +1432,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0193");
+				return ScriptLocalization.Get("Key_0193");
 			}
 		}
 
@@ -1438,7 +1440,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0194");
+				return ScriptLocalization.Get("Key_0194");
 			}
 		}
 
@@ -1446,7 +1448,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0195");
+				return ScriptLocalization.Get("Key_0195");
 			}
 		}
 
@@ -1454,7 +1456,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0196");
+				return ScriptLocalization.Get("Key_0196");
 			}
 		}
 
@@ -1462,7 +1464,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0197");
+				return ScriptLocalization.Get("Key_0197");
 			}
 		}
 
@@ -1470,7 +1472,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0198");
+				return ScriptLocalization.Get("Key_0198");
 			}
 		}
 
@@ -1478,7 +1480,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0199");
+				return ScriptLocalization.Get("Key_0199");
 			}
 		}
 
@@ -1486,7 +1488,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0203");
+				return ScriptLocalization.Get("Key_0203");
 			}
 		}
 
@@ -1494,7 +1496,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0204");
+				return ScriptLocalization.Get("Key_0204");
 			}
 		}
 
@@ -1502,7 +1504,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0205");
+				return ScriptLocalization.Get("Key_0205");
 			}
 		}
 
@@ -1510,7 +1512,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0206");
+				return ScriptLocalization.Get("Key_0206");
 			}
 		}
 
@@ -1518,7 +1520,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0207");
+				return ScriptLocalization.Get("Key_0207");
 			}
 		}
 
@@ -1526,7 +1528,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0208");
+				return ScriptLocalization.Get("Key_0208");
 			}
 		}
 
@@ -1534,7 +1536,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0209");
+				return ScriptLocalization.Get("Key_0209");
 			}
 		}
 
@@ -1542,7 +1544,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0210");
+				return ScriptLocalization.Get("Key_0210");
 			}
 		}
 
@@ -1550,7 +1552,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0211");
+				return ScriptLocalization.Get("Key_0211");
 			}
 		}
 
@@ -1558,7 +1560,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0212");
+				return ScriptLocalization.Get("Key_0212");
 			}
 		}
 
@@ -1566,7 +1568,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0213");
+				return ScriptLocalization.Get("Key_0213");
 			}
 		}
 
@@ -1574,7 +1576,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0214");
+				return ScriptLocalization.Get("Key_0214");
 			}
 		}
 
@@ -1582,7 +1584,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0215");
+				return ScriptLocalization.Get("Key_0215");
 			}
 		}
 
@@ -1590,7 +1592,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0216");
+				return ScriptLocalization.Get("Key_0216");
 			}
 		}
 
@@ -1598,7 +1600,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0217");
+				return ScriptLocalization.Get("Key_0217");
 			}
 		}
 
@@ -1606,7 +1608,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0218");
+				return ScriptLocalization.Get("Key_0218");
 			}
 		}
 
@@ -1614,7 +1616,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0219");
+				return ScriptLocalization.Get("Key_0219");
 			}
 		}
 
@@ -1622,7 +1624,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0220");
+				return ScriptLocalization.Get("Key_0220");
 			}
 		}
 
@@ -1630,7 +1632,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0221");
+				return ScriptLocalization.Get("Key_0221");
 			}
 		}
 
@@ -1638,7 +1640,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0222");
+				return ScriptLocalization.Get("Key_0222");
 			}
 		}
 
@@ -1646,7 +1648,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0223");
+				return ScriptLocalization.Get("Key_0223");
 			}
 		}
 
@@ -1654,7 +1656,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0225");
+				return ScriptLocalization.Get("Key_0225");
 			}
 		}
 
@@ -1662,7 +1664,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0226");
+				return ScriptLocalization.Get("Key_0226");
 			}
 		}
 
@@ -1670,7 +1672,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0227");
+				return ScriptLocalization.Get("Key_0227");
 			}
 		}
 
@@ -1678,7 +1680,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0228");
+				return ScriptLocalization.Get("Key_0228");
 			}
 		}
 
@@ -1686,7 +1688,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0229");
+				return ScriptLocalization.Get("Key_0229");
 			}
 		}
 
@@ -1694,7 +1696,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0230");
+				return ScriptLocalization.Get("Key_0230");
 			}
 		}
 
@@ -1702,7 +1704,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0231");
+				return ScriptLocalization.Get("Key_0231");
 			}
 		}
 
@@ -1710,7 +1712,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0232");
+				return ScriptLocalization.Get("Key_0232");
 			}
 		}
 
@@ -1718,7 +1720,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0233");
+				return ScriptLocalization.Get("Key_0233");
 			}
 		}
 
@@ -1726,7 +1728,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0234");
+				return ScriptLocalization.Get("Key_0234");
 			}
 		}
 
@@ -1734,7 +1736,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0235");
+				return ScriptLocalization.Get("Key_0235");
 			}
 		}
 
@@ -1742,7 +1744,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0236");
+				return ScriptLocalization.Get("Key_0236");
 			}
 		}
 
@@ -1750,7 +1752,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0237");
+				return ScriptLocalization.Get("Key_0237");
 			}
 		}
 
@@ -1758,7 +1760,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0238");
+				return ScriptLocalization.Get("Key_0238");
 			}
 		}
 
@@ -1766,7 +1768,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0239");
+				return ScriptLocalization.Get("Key_0239");
 			}
 		}
 
@@ -1774,7 +1776,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0240");
+				return ScriptLocalization.Get("Key_0240");
 			}
 		}
 
@@ -1782,7 +1784,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0241");
+				return ScriptLocalization.Get("Key_0241");
 			}
 		}
 
@@ -1790,7 +1792,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0242");
+				return ScriptLocalization.Get("Key_0242");
 			}
 		}
 
@@ -1798,7 +1800,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0243");
+				return ScriptLocalization.Get("Key_0243");
 			}
 		}
 
@@ -1806,7 +1808,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0244");
+				return ScriptLocalization.Get("Key_0244");
 			}
 		}
 
@@ -1814,7 +1816,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0245");
+				return ScriptLocalization.Get("Key_0245");
 			}
 		}
 
@@ -1822,7 +1824,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0246");
+				return ScriptLocalization.Get("Key_0246");
 			}
 		}
 
@@ -1830,7 +1832,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0247");
+				return ScriptLocalization.Get("Key_0247");
 			}
 		}
 
@@ -1838,7 +1840,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0248");
+				return ScriptLocalization.Get("Key_0248");
 			}
 		}
 
@@ -1846,7 +1848,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0249");
+				return ScriptLocalization.Get("Key_0249");
 			}
 		}
 
@@ -1854,7 +1856,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0254");
+				return ScriptLocalization.Get("Key_0254");
 			}
 		}
 
@@ -1862,7 +1864,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0255");
+				return ScriptLocalization.Get("Key_0255");
 			}
 		}
 
@@ -1870,7 +1872,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0256");
+				return ScriptLocalization.Get("Key_0256");
 			}
 		}
 
@@ -1878,7 +1880,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0257");
+				return ScriptLocalization.Get("Key_0257");
 			}
 		}
 
@@ -1886,7 +1888,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0258");
+				return ScriptLocalization.Get("Key_0258");
 			}
 		}
 
@@ -1894,7 +1896,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0259");
+				return ScriptLocalization.Get("Key_0259");
 			}
 		}
 
@@ -1902,7 +1904,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0260");
+				return ScriptLocalization.Get("Key_0260");
 			}
 		}
 
@@ -1910,7 +1912,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0261");
+				return ScriptLocalization.Get("Key_0261");
 			}
 		}
 
@@ -1918,7 +1920,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0262");
+				return ScriptLocalization.Get("Key_0262");
 			}
 		}
 
@@ -1926,7 +1928,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0263");
+				return ScriptLocalization.Get("Key_0263");
 			}
 		}
 
@@ -1934,7 +1936,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0264");
+				return ScriptLocalization.Get("Key_0264");
 			}
 		}
 
@@ -1942,7 +1944,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0265");
+				return ScriptLocalization.Get("Key_0265");
 			}
 		}
 
@@ -1950,7 +1952,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0266");
+				return ScriptLocalization.Get("Key_0266");
 			}
 		}
 
@@ -1958,7 +1960,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0267");
+				return ScriptLocalization.Get("Key_0267");
 			}
 		}
 
@@ -1966,7 +1968,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0268");
+				return ScriptLocalization.Get("Key_0268");
 			}
 		}
 
@@ -1974,7 +1976,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0269");
+				return ScriptLocalization.Get("Key_0269");
 			}
 		}
 
@@ -1982,7 +1984,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0270");
+				return ScriptLocalization.Get("Key_0270");
 			}
 		}
 
@@ -1990,7 +1992,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0271");
+				return ScriptLocalization.Get("Key_0271");
 			}
 		}
 
@@ -1998,7 +2000,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0272");
+				return ScriptLocalization.Get("Key_0272");
 			}
 		}
 
@@ -2006,7 +2008,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0273");
+				return ScriptLocalization.Get("Key_0273");
 			}
 		}
 
@@ -2014,7 +2016,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0274");
+				return ScriptLocalization.Get("Key_0274");
 			}
 		}
 
@@ -2022,7 +2024,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0275");
+				return ScriptLocalization.Get("Key_0275");
 			}
 		}
 
@@ -2030,7 +2032,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0276");
+				return ScriptLocalization.Get("Key_0276");
 			}
 		}
 
@@ -2038,7 +2040,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0277");
+				return ScriptLocalization.Get("Key_0277");
 			}
 		}
 
@@ -2046,7 +2048,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0278");
+				return ScriptLocalization.Get("Key_0278");
 			}
 		}
 
@@ -2054,7 +2056,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0279");
+				return ScriptLocalization.Get("Key_0279");
 			}
 		}
 
@@ -2062,7 +2064,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0280");
+				return ScriptLocalization.Get("Key_0280");
 			}
 		}
 
@@ -2070,7 +2072,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0281");
+				return ScriptLocalization.Get("Key_0281");
 			}
 		}
 
@@ -2078,7 +2080,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0282");
+				return ScriptLocalization.Get("Key_0282");
 			}
 		}
 
@@ -2086,7 +2088,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0283");
+				return ScriptLocalization.Get("Key_0283");
 			}
 		}
 
@@ -2094,7 +2096,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0287");
+				return ScriptLocalization.Get("Key_0287");
 			}
 		}
 
@@ -2102,7 +2104,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0288");
+				return ScriptLocalization.Get("Key_0288");
 			}
 		}
 
@@ -2110,7 +2112,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0289");
+				return ScriptLocalization.Get("Key_0289");
 			}
 		}
 
@@ -2118,7 +2120,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0290");
+				return ScriptLocalization.Get("Key_0290");
 			}
 		}
 
@@ -2126,7 +2128,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0291");
+				return ScriptLocalization.Get("Key_0291");
 			}
 		}
 
@@ -2134,7 +2136,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0292");
+				return ScriptLocalization.Get("Key_0292");
 			}
 		}
 
@@ -2142,7 +2144,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0293");
+				return ScriptLocalization.Get("Key_0293");
 			}
 		}
 
@@ -2150,7 +2152,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0294");
+				return ScriptLocalization.Get("Key_0294");
 			}
 		}
 
@@ -2158,7 +2160,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0295");
+				return ScriptLocalization.Get("Key_0295");
 			}
 		}
 
@@ -2166,7 +2168,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0296");
+				return ScriptLocalization.Get("Key_0296");
 			}
 		}
 
@@ -2174,7 +2176,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0297");
+				return ScriptLocalization.Get("Key_0297");
 			}
 		}
 
@@ -2182,7 +2184,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0298");
+				return ScriptLocalization.Get("Key_0298");
 			}
 		}
 
@@ -2190,7 +2192,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0299");
+				return ScriptLocalization.Get("Key_0299");
 			}
 		}
 
@@ -2198,7 +2200,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0300");
+				return ScriptLocalization.Get("Key_0300");
 			}
 		}
 
@@ -2206,7 +2208,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0301");
+				return ScriptLocalization.Get("Key_0301");
 			}
 		}
 
@@ -2214,7 +2216,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0302");
+				return ScriptLocalization.Get("Key_0302");
 			}
 		}
 
@@ -2222,7 +2224,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0303");
+				return ScriptLocalization.Get("Key_0303");
 			}
 		}
 
@@ -2230,7 +2232,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0304");
+				return ScriptLocalization.Get("Key_0304");
 			}
 		}
 
@@ -2238,7 +2240,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0305");
+				return ScriptLocalization.Get("Key_0305");
 			}
 		}
 
@@ -2246,7 +2248,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0306");
+				return ScriptLocalization.Get("Key_0306");
 			}
 		}
 
@@ -2254,7 +2256,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0307");
+				return ScriptLocalization.Get("Key_0307");
 			}
 		}
 
@@ -2262,7 +2264,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0308");
+				return ScriptLocalization.Get("Key_0308");
 			}
 		}
 
@@ -2270,7 +2272,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0309");
+				return ScriptLocalization.Get("Key_0309");
 			}
 		}
 
@@ -2278,7 +2280,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0310");
+				return ScriptLocalization.Get("Key_0310");
 			}
 		}
 
@@ -2286,7 +2288,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0311");
+				return ScriptLocalization.Get("Key_0311");
 			}
 		}
 
@@ -2294,7 +2296,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0312");
+				return ScriptLocalization.Get("Key_0312");
 			}
 		}
 
@@ -2302,7 +2304,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0313");
+				return ScriptLocalization.Get("Key_0313");
 			}
 		}
 
@@ -2310,7 +2312,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0314");
+				return ScriptLocalization.Get("Key_0314");
 			}
 		}
 
@@ -2318,7 +2320,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0315");
+				return ScriptLocalization.Get("Key_0315");
 			}
 		}
 
@@ -2326,7 +2328,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0316");
+				return ScriptLocalization.Get("Key_0316");
 			}
 		}
 
@@ -2334,7 +2336,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0317");
+				return ScriptLocalization.Get("Key_0317");
 			}
 		}
 
@@ -2342,7 +2344,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0318");
+				return ScriptLocalization.Get("Key_0318");
 			}
 		}
 
@@ -2350,7 +2352,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0319");
+				return ScriptLocalization.Get("Key_0319");
 			}
 		}
 
@@ -2358,7 +2360,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0321");
+				return ScriptLocalization.Get("Key_0321");
 			}
 		}
 
@@ -2366,7 +2368,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0322");
+				return ScriptLocalization.Get("Key_0322");
 			}
 		}
 
@@ -2374,7 +2376,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0323");
+				return ScriptLocalization.Get("Key_0323");
 			}
 		}
 
@@ -2382,7 +2384,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0324");
+				return ScriptLocalization.Get("Key_0324");
 			}
 		}
 
@@ -2390,7 +2392,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0325");
+				return ScriptLocalization.Get("Key_0325");
 			}
 		}
 
@@ -2398,7 +2400,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0327");
+				return ScriptLocalization.Get("Key_0327");
 			}
 		}
 
@@ -2406,7 +2408,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0329");
+				return ScriptLocalization.Get("Key_0329");
 			}
 		}
 
@@ -2414,7 +2416,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0330");
+				return ScriptLocalization.Get("Key_0330");
 			}
 		}
 
@@ -2422,7 +2424,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0331");
+				return ScriptLocalization.Get("Key_0331");
 			}
 		}
 
@@ -2430,7 +2432,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0332");
+				return ScriptLocalization.Get("Key_0332");
 			}
 		}
 
@@ -2438,7 +2440,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0333");
+				return ScriptLocalization.Get("Key_0333");
 			}
 		}
 
@@ -2446,7 +2448,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0335");
+				return ScriptLocalization.Get("Key_0335");
 			}
 		}
 
@@ -2454,7 +2456,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0337");
+				return ScriptLocalization.Get("Key_0337");
 			}
 		}
 
@@ -2462,7 +2464,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0339");
+				return ScriptLocalization.Get("Key_0339");
 			}
 		}
 
@@ -2470,7 +2472,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0341");
+				return ScriptLocalization.Get("Key_0341");
 			}
 		}
 
@@ -2478,7 +2480,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0342");
+				return ScriptLocalization.Get("Key_0342");
 			}
 		}
 
@@ -2486,7 +2488,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0343");
+				return ScriptLocalization.Get("Key_0343");
 			}
 		}
 
@@ -2494,7 +2496,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0344");
+				return ScriptLocalization.Get("Key_0344");
 			}
 		}
 
@@ -2502,7 +2504,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0345");
+				return ScriptLocalization.Get("Key_0345");
 			}
 		}
 
@@ -2510,7 +2512,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0346");
+				return ScriptLocalization.Get("Key_0346");
 			}
 		}
 
@@ -2518,7 +2520,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0347");
+				return ScriptLocalization.Get("Key_0347");
 			}
 		}
 
@@ -2526,7 +2528,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0348");
+				return ScriptLocalization.Get("Key_0348");
 			}
 		}
 
@@ -2534,7 +2536,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0349");
+				return ScriptLocalization.Get("Key_0349");
 			}
 		}
 
@@ -2542,7 +2544,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0350");
+				return ScriptLocalization.Get("Key_0350");
 			}
 		}
 
@@ -2550,7 +2552,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0351");
+				return ScriptLocalization.Get("Key_0351");
 			}
 		}
 
@@ -2558,7 +2560,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0352");
+				return ScriptLocalization.Get("Key_0352");
 			}
 		}
 
@@ -2566,7 +2568,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0354");
+				return ScriptLocalization.Get("Key_0354");
 			}
 		}
 
@@ -2574,7 +2576,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0355");
+				return ScriptLocalization.Get("Key_0355");
 			}
 		}
 
@@ -2582,7 +2584,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0356");
+				return ScriptLocalization.Get("Key_0356");
 			}
 		}
 
@@ -2590,7 +2592,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0357");
+				return ScriptLocalization.Get("Key_0357");
 			}
 		}
 
@@ -2598,7 +2600,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0358");
+				return ScriptLocalization.Get("Key_0358");
 			}
 		}
 
@@ -2606,7 +2608,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0359");
+				return ScriptLocalization.Get("Key_0359");
 			}
 		}
 
@@ -2614,7 +2616,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0360");
+				return ScriptLocalization.Get("Key_0360");
 			}
 		}
 
@@ -2622,7 +2624,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0361");
+				return ScriptLocalization.Get("Key_0361");
 			}
 		}
 
@@ -2630,7 +2632,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0362");
+				return ScriptLocalization.Get("Key_0362");
 			}
 		}
 
@@ -2638,7 +2640,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0363");
+				return ScriptLocalization.Get("Key_0363");
 			}
 		}
 
@@ -2646,7 +2648,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0364");
+				return ScriptLocalization.Get("Key_0364");
 			}
 		}
 
@@ -2654,7 +2656,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0365");
+				return ScriptLocalization.Get("Key_0365");
 			}
 		}
 
@@ -2662,7 +2664,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0366");
+				return ScriptLocalization.Get("Key_0366");
 			}
 		}
 
@@ -2670,7 +2672,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0367");
+				return ScriptLocalization.Get("Key_0367");
 			}
 		}
 
@@ -2678,7 +2680,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0368");
+				return ScriptLocalization.Get("Key_0368");
 			}
 		}
 
@@ -2686,7 +2688,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0369");
+				return ScriptLocalization.Get("Key_0369");
 			}
 		}
 
@@ -2694,7 +2696,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0370");
+				return ScriptLocalization.Get("Key_0370");
 			}
 		}
 
@@ -2702,7 +2704,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0371");
+				return ScriptLocalization.Get("Key_0371");
 			}
 		}
 
@@ -2710,7 +2712,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0372");
+				return ScriptLocalization.Get("Key_0372");
 			}
 		}
 
@@ -2718,7 +2720,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0373");
+				return ScriptLocalization.Get("Key_0373");
 			}
 		}
 
@@ -2726,7 +2728,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0374");
+				return ScriptLocalization.Get("Key_0374");
 			}
 		}
 
@@ -2734,7 +2736,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0375");
+				return ScriptLocalization.Get("Key_0375");
 			}
 		}
 
@@ -2742,7 +2744,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0376");
+				return ScriptLocalization.Get("Key_0376");
 			}
 		}
 
@@ -2750,7 +2752,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0377");
+				return ScriptLocalization.Get("Key_0377");
 			}
 		}
 
@@ -2758,7 +2760,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0378");
+				return ScriptLocalization.Get("Key_0378");
 			}
 		}
 
@@ -2766,7 +2768,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0381");
+				return ScriptLocalization.Get("Key_0381");
 			}
 		}
 
@@ -2774,7 +2776,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0384");
+				return ScriptLocalization.Get("Key_0384");
 			}
 		}
 
@@ -2782,7 +2784,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0385");
+				return ScriptLocalization.Get("Key_0385");
 			}
 		}
 
@@ -2790,7 +2792,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0386");
+				return ScriptLocalization.Get("Key_0386");
 			}
 		}
 
@@ -2798,7 +2800,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0387");
+				return ScriptLocalization.Get("Key_0387");
 			}
 		}
 
@@ -2806,7 +2808,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0388");
+				return ScriptLocalization.Get("Key_0388");
 			}
 		}
 
@@ -2814,7 +2816,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0390");
+				return ScriptLocalization.Get("Key_0390");
 			}
 		}
 
@@ -2822,7 +2824,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0391");
+				return ScriptLocalization.Get("Key_0391");
 			}
 		}
 
@@ -2830,7 +2832,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0392");
+				return ScriptLocalization.Get("Key_0392");
 			}
 		}
 
@@ -2838,7 +2840,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0393");
+				return ScriptLocalization.Get("Key_0393");
 			}
 		}
 
@@ -2846,7 +2848,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0394");
+				return ScriptLocalization.Get("Key_0394");
 			}
 		}
 
@@ -2854,7 +2856,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0395");
+				return ScriptLocalization.Get("Key_0395");
 			}
 		}
 
@@ -2862,7 +2864,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0396");
+				return ScriptLocalization.Get("Key_0396");
 			}
 		}
 
@@ -2870,7 +2872,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0397");
+				return ScriptLocalization.Get("Key_0397");
 			}
 		}
 
@@ -2878,7 +2880,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0398");
+				return ScriptLocalization.Get("Key_0398");
 			}
 		}
 
@@ -2886,7 +2888,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0399");
+				return ScriptLocalization.Get("Key_0399");
 			}
 		}
 
@@ -2894,7 +2896,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0400");
+				return ScriptLocalization.Get("Key_0400");
 			}
 		}
 
@@ -2902,7 +2904,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0401");
+				return ScriptLocalization.Get("Key_0401");
 			}
 		}
 
@@ -2910,7 +2912,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0402");
+				return ScriptLocalization.Get("Key_0402");
 			}
 		}
 
@@ -2918,7 +2920,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0403");
+				return ScriptLocalization.Get("Key_0403");
 			}
 		}
 
@@ -2926,7 +2928,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0404");
+				return ScriptLocalization.Get("Key_0404");
 			}
 		}
 
@@ -2934,7 +2936,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0405");
+				return ScriptLocalization.Get("Key_0405");
 			}
 		}
 
@@ -2942,7 +2944,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0406");
+				return ScriptLocalization.Get("Key_0406");
 			}
 		}
 
@@ -2950,7 +2952,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0407");
+				return ScriptLocalization.Get("Key_0407");
 			}
 		}
 
@@ -2958,7 +2960,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0408");
+				return ScriptLocalization.Get("Key_0408");
 			}
 		}
 
@@ -2966,7 +2968,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0409");
+				return ScriptLocalization.Get("Key_0409");
 			}
 		}
 
@@ -2974,7 +2976,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0410");
+				return ScriptLocalization.Get("Key_0410");
 			}
 		}
 
@@ -2982,7 +2984,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0411");
+				return ScriptLocalization.Get("Key_0411");
 			}
 		}
 
@@ -2990,7 +2992,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0412");
+				return ScriptLocalization.Get("Key_0412");
 			}
 		}
 
@@ -2998,7 +3000,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0415");
+				return ScriptLocalization.Get("Key_0415");
 			}
 		}
 
@@ -3006,7 +3008,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0416");
+				return ScriptLocalization.Get("Key_0416");
 			}
 		}
 
@@ -3014,7 +3016,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0417");
+				return ScriptLocalization.Get("Key_0417");
 			}
 		}
 
@@ -3022,7 +3024,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0419");
+				return ScriptLocalization.Get("Key_0419");
 			}
 		}
 
@@ -3030,7 +3032,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0420");
+				return ScriptLocalization.Get("Key_0420");
 			}
 		}
 
@@ -3038,7 +3040,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0421");
+				return ScriptLocalization.Get("Key_0421");
 			}
 		}
 
@@ -3046,7 +3048,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0422");
+				return ScriptLocalization.Get("Key_0422");
 			}
 		}
 
@@ -3054,7 +3056,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0423");
+				return ScriptLocalization.Get("Key_0423");
 			}
 		}
 
@@ -3062,7 +3064,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0424");
+				return ScriptLocalization.Get("Key_0424");
 			}
 		}
 
@@ -3070,7 +3072,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0425");
+				return ScriptLocalization.Get("Key_0425");
 			}
 		}
 
@@ -3078,7 +3080,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0426");
+				return ScriptLocalization.Get("Key_0426");
 			}
 		}
 
@@ -3086,7 +3088,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0427");
+				return ScriptLocalization.Get("Key_0427");
 			}
 		}
 
@@ -3094,7 +3096,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0428");
+				return ScriptLocalization.Get("Key_0428");
 			}
 		}
 
@@ -3102,7 +3104,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0429");
+				return ScriptLocalization.Get("Key_0429");
 			}
 		}
 
@@ -3110,7 +3112,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0430");
+				return ScriptLocalization.Get("Key_0430");
 			}
 		}
 
@@ -3118,7 +3120,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0432");
+				return ScriptLocalization.Get("Key_0432");
 			}
 		}
 
@@ -3126,7 +3128,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0434");
+				return ScriptLocalization.Get("Key_0434");
 			}
 		}
 
@@ -3134,7 +3136,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0435");
+				return ScriptLocalization.Get("Key_0435");
 			}
 		}
 
@@ -3142,7 +3144,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0437");
+				return ScriptLocalization.Get("Key_0437");
 			}
 		}
 
@@ -3150,7 +3152,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0438");
+				return ScriptLocalization.Get("Key_0438");
 			}
 		}
 
@@ -3158,7 +3160,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0439");
+				return ScriptLocalization.Get("Key_0439");
 			}
 		}
 
@@ -3166,7 +3168,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0440");
+				return ScriptLocalization.Get("Key_0440");
 			}
 		}
 
@@ -3174,7 +3176,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0441");
+				return ScriptLocalization.Get("Key_0441");
 			}
 		}
 
@@ -3182,7 +3184,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0442");
+				return ScriptLocalization.Get("Key_0442");
 			}
 		}
 
@@ -3190,7 +3192,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0443");
+				return ScriptLocalization.Get("Key_0443");
 			}
 		}
 
@@ -3198,7 +3200,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0445");
+				return ScriptLocalization.Get("Key_0445");
 			}
 		}
 
@@ -3206,7 +3208,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0446");
+				return ScriptLocalization.Get("Key_0446");
 			}
 		}
 
@@ -3214,7 +3216,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0447");
+				return ScriptLocalization.Get("Key_0447");
 			}
 		}
 
@@ -3222,7 +3224,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0448");
+				return ScriptLocalization.Get("Key_0448");
 			}
 		}
 
@@ -3230,7 +3232,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0449");
+				return ScriptLocalization.Get("Key_0449");
 			}
 		}
 
@@ -3238,7 +3240,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0450");
+				return ScriptLocalization.Get("Key_0450");
 			}
 		}
 
@@ -3246,7 +3248,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0451");
+				return ScriptLocalization.Get("Key_0451");
 			}
 		}
 
@@ -3254,7 +3256,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0452");
+				return ScriptLocalization.Get("Key_0452");
 			}
 		}
 
@@ -3262,7 +3264,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0453");
+				return ScriptLocalization.Get("Key_0453");
 			}
 		}
 
@@ -3270,7 +3272,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0454");
+				return ScriptLocalization.Get("Key_0454");
 			}
 		}
 
@@ -3278,7 +3280,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0455");
+				return ScriptLocalization.Get("Key_0455");
 			}
 		}
 
@@ -3286,7 +3288,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0456");
+				return ScriptLocalization.Get("Key_0456");
 			}
 		}
 
@@ -3294,7 +3296,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0457");
+				return ScriptLocalization.Get("Key_0457");
 			}
 		}
 
@@ -3302,7 +3304,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0458");
+				return ScriptLocalization.Get("Key_0458");
 			}
 		}
 
@@ -3310,7 +3312,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0459");
+				return ScriptLocalization.Get("Key_0459");
 			}
 		}
 
@@ -3318,7 +3320,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0460");
+				return ScriptLocalization.Get("Key_0460");
 			}
 		}
 
@@ -3326,7 +3328,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0461");
+				return ScriptLocalization.Get("Key_0461");
 			}
 		}
 
@@ -3334,7 +3336,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0462");
+				return ScriptLocalization.Get("Key_0462");
 			}
 		}
 
@@ -3342,7 +3344,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0463");
+				return ScriptLocalization.Get("Key_0463");
 			}
 		}
 
@@ -3350,7 +3352,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0464");
+				return ScriptLocalization.Get("Key_0464");
 			}
 		}
 
@@ -3358,7 +3360,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0465");
+				return ScriptLocalization.Get("Key_0465");
 			}
 		}
 
@@ -3366,7 +3368,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0466");
+				return ScriptLocalization.Get("Key_0466");
 			}
 		}
 
@@ -3374,7 +3376,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0467");
+				return ScriptLocalization.Get("Key_0467");
 			}
 		}
 
@@ -3382,7 +3384,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0468");
+				return ScriptLocalization.Get("Key_0468");
 			}
 		}
 
@@ -3390,7 +3392,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0469");
+				return ScriptLocalization.Get("Key_0469");
 			}
 		}
 
@@ -3398,7 +3400,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0470");
+				return ScriptLocalization.Get("Key_0470");
 			}
 		}
 
@@ -3406,7 +3408,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0471");
+				return ScriptLocalization.Get("Key_0471");
 			}
 		}
 
@@ -3414,7 +3416,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0472");
+				return ScriptLocalization.Get("Key_0472");
 			}
 		}
 
@@ -3422,7 +3424,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0473");
+				return ScriptLocalization.Get("Key_0473");
 			}
 		}
 
@@ -3430,7 +3432,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0474");
+				return ScriptLocalization.Get("Key_0474");
 			}
 		}
 
@@ -3438,7 +3440,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0475");
+				return ScriptLocalization.Get("Key_0475");
 			}
 		}
 
@@ -3446,7 +3448,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0476");
+				return ScriptLocalization.Get("Key_0476");
 			}
 		}
 
@@ -3454,7 +3456,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0477");
+				return ScriptLocalization.Get("Key_0477");
 			}
 		}
 
@@ -3462,7 +3464,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0478");
+				return ScriptLocalization.Get("Key_0478");
 			}
 		}
 
@@ -3470,7 +3472,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0479");
+				return ScriptLocalization.Get("Key_0479");
 			}
 		}
 
@@ -3478,7 +3480,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0480");
+				return ScriptLocalization.Get("Key_0480");
 			}
 		}
 
@@ -3486,7 +3488,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0481");
+				return ScriptLocalization.Get("Key_0481");
 			}
 		}
 
@@ -3494,7 +3496,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0482");
+				return ScriptLocalization.Get("Key_0482");
 			}
 		}
 
@@ -3502,7 +3504,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0483");
+				return ScriptLocalization.Get("Key_0483");
 			}
 		}
 
@@ -3510,7 +3512,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0484");
+				return ScriptLocalization.Get("Key_0484");
 			}
 		}
 
@@ -3518,7 +3520,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0485");
+				return ScriptLocalization.Get("Key_0485");
 			}
 		}
 
@@ -3526,7 +3528,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0486");
+				return ScriptLocalization.Get("Key_0486");
 			}
 		}
 
@@ -3534,7 +3536,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0487");
+				return ScriptLocalization.Get("Key_0487");
 			}
 		}
 
@@ -3542,7 +3544,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0488");
+				return ScriptLocalization.Get("Key_0488");
 			}
 		}
 
@@ -3550,7 +3552,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0489");
+				return ScriptLocalization.Get("Key_0489");
 			}
 		}
 
@@ -3558,7 +3560,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0490");
+				return ScriptLocalization.Get("Key_0490");
 			}
 		}
 
@@ -3566,7 +3568,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0491");
+				return ScriptLocalization.Get("Key_0491");
 			}
 		}
 
@@ -3574,7 +3576,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0492");
+				return ScriptLocalization.Get("Key_0492");
 			}
 		}
 
@@ -3582,7 +3584,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0493");
+				return ScriptLocalization.Get("Key_0493");
 			}
 		}
 
@@ -3590,7 +3592,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0494");
+				return ScriptLocalization.Get("Key_0494");
 			}
 		}
 
@@ -3598,7 +3600,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0495");
+				return ScriptLocalization.Get("Key_0495");
 			}
 		}
 
@@ -3606,7 +3608,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0496");
+				return ScriptLocalization.Get("Key_0496");
 			}
 		}
 
@@ -3614,7 +3616,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0497");
+				return ScriptLocalization.Get("Key_0497");
 			}
 		}
 
@@ -3622,7 +3624,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0498");
+				return ScriptLocalization.Get("Key_0498");
 			}
 		}
 
@@ -3630,7 +3632,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0499");
+				return ScriptLocalization.Get("Key_0499");
 			}
 		}
 
@@ -3638,7 +3640,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0500");
+				return ScriptLocalization.Get("Key_0500");
 			}
 		}
 
@@ -3646,7 +3648,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0501");
+				return ScriptLocalization.Get("Key_0501");
 			}
 		}
 
@@ -3654,7 +3656,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0502");
+				return ScriptLocalization.Get("Key_0502");
 			}
 		}
 
@@ -3662,7 +3664,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0503");
+				return ScriptLocalization.Get("Key_0503");
 			}
 		}
 
@@ -3670,7 +3672,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0504");
+				return ScriptLocalization.Get("Key_0504");
 			}
 		}
 
@@ -3678,7 +3680,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0505");
+				return ScriptLocalization.Get("Key_0505");
 			}
 		}
 
@@ -3686,7 +3688,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0506");
+				return ScriptLocalization.Get("Key_0506");
 			}
 		}
 
@@ -3694,7 +3696,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0507");
+				return ScriptLocalization.Get("Key_0507");
 			}
 		}
 
@@ -3702,7 +3704,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0508");
+				return ScriptLocalization.Get("Key_0508");
 			}
 		}
 
@@ -3710,7 +3712,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0509");
+				return ScriptLocalization.Get("Key_0509");
 			}
 		}
 
@@ -3718,7 +3720,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0510");
+				return ScriptLocalization.Get("Key_0510");
 			}
 		}
 
@@ -3726,7 +3728,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0511");
+				return ScriptLocalization.Get("Key_0511");
 			}
 		}
 
@@ -3734,7 +3736,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0512");
+				return ScriptLocalization.Get("Key_0512");
 			}
 		}
 
@@ -3742,7 +3744,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0513");
+				return ScriptLocalization.Get("Key_0513");
 			}
 		}
 
@@ -3750,7 +3752,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0514");
+				return ScriptLocalization.Get("Key_0514");
 			}
 		}
 
@@ -3758,7 +3760,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0515");
+				return ScriptLocalization.Get("Key_0515");
 			}
 		}
 
@@ -3766,7 +3768,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0516");
+				return ScriptLocalization.Get("Key_0516");
 			}
 		}
 
@@ -3774,7 +3776,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0517");
+				return ScriptLocalization.Get("Key_0517");
 			}
 		}
 
@@ -3782,7 +3784,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0518");
+				return ScriptLocalization.Get("Key_0518");
 			}
 		}
 
@@ -3790,7 +3792,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0519");
+				return ScriptLocalization.Get("Key_0519");
 			}
 		}
 
@@ -3798,7 +3800,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0520");
+				return ScriptLocalization.Get("Key_0520");
 			}
 		}
 
@@ -3806,7 +3808,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0521");
+				return ScriptLocalization.Get("Key_0521");
 			}
 		}
 
@@ -3814,7 +3816,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0522");
+				return ScriptLocalization.Get("Key_0522");
 			}
 		}
 
@@ -3822,7 +3824,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0523");
+				return ScriptLocalization.Get("Key_0523");
 			}
 		}
 
@@ -3830,7 +3832,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0524");
+				return ScriptLocalization.Get("Key_0524");
 			}
 		}
 
@@ -3838,7 +3840,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0525");
+				return ScriptLocalization.Get("Key_0525");
 			}
 		}
 
@@ -3846,7 +3848,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0526");
+				return ScriptLocalization.Get("Key_0526");
 			}
 		}
 
@@ -3854,7 +3856,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0527");
+				return ScriptLocalization.Get("Key_0527");
 			}
 		}
 
@@ -3862,7 +3864,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0528");
+				return ScriptLocalization.Get("Key_0528");
 			}
 		}
 
@@ -3870,7 +3872,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0529");
+				return ScriptLocalization.Get("Key_0529");
 			}
 		}
 
@@ -3878,7 +3880,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0530");
+				return ScriptLocalization.Get("Key_0530");
 			}
 		}
 
@@ -3886,7 +3888,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0531");
+				return ScriptLocalization.Get("Key_0531");
 			}
 		}
 
@@ -3894,7 +3896,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0532");
+				return ScriptLocalization.Get("Key_0532");
 			}
 		}
 
@@ -3902,7 +3904,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0533");
+				return ScriptLocalization.Get("Key_0533");
 			}
 		}
 
@@ -3910,7 +3912,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0534");
+				return ScriptLocalization.Get("Key_0534");
 			}
 		}
 
@@ -3918,7 +3920,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0535");
+				return ScriptLocalization.Get("Key_0535");
 			}
 		}
 
@@ -3926,7 +3928,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0536");
+				return ScriptLocalization.Get("Key_0536");
 			}
 		}
 
@@ -3934,7 +3936,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0537");
+				return ScriptLocalization.Get("Key_0537");
 			}
 		}
 
@@ -3942,7 +3944,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0538");
+				return ScriptLocalization.Get("Key_0538");
 			}
 		}
 
@@ -3950,7 +3952,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0539");
+				return ScriptLocalization.Get("Key_0539");
 			}
 		}
 
@@ -3958,7 +3960,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0540");
+				return ScriptLocalization.Get("Key_0540");
 			}
 		}
 
@@ -3966,7 +3968,7 @@ namespace I2.Loc
 		{
 			get
 			{
-				return Get("Key_0541");
+				return ScriptLocalization.Get("Key_0541");
 			}
 		}
 

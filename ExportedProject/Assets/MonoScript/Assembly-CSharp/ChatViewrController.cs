@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class ChatViewrController : MonoBehaviour
@@ -52,43 +54,140 @@ public sealed class ChatViewrController : MonoBehaviour
 
 	private bool needReset;
 
+	static ChatViewrController()
+	{
+	}
+
+	public ChatViewrController()
+	{
+	}
+
 	private void Awake()
 	{
-		isBuySmile = StickersController.IsBuyAnyPack();
-		buySmileBannerPrefab.SetActive(false);
-		hideSmileButton.SetActive(false);
-		sendMessageInput.gameObject.SetActive(false);
-		sendMessageInput = sendMessageInputDater;
-		fastCommands.SetActive(false);
-		if (isBuySmile)
+		this.isBuySmile = StickersController.IsBuyAnyPack();
+		this.buySmileBannerPrefab.SetActive(false);
+		this.hideSmileButton.SetActive(false);
+		this.sendMessageInput.gameObject.SetActive(false);
+		this.sendMessageInput = this.sendMessageInputDater;
+		this.fastCommands.SetActive(false);
+		if (!this.isBuySmile)
 		{
-			showSmileButton.SetActive(true);
-			buySmileButton.SetActive(false);
+			this.showSmileButton.SetActive(false);
+			this.buySmileButton.SetActive(true);
 		}
 		else
 		{
-			showSmileButton.SetActive(false);
-			buySmileButton.SetActive(true);
+			this.showSmileButton.SetActive(true);
+			this.buySmileButton.SetActive(false);
 		}
-		if (sendMessageInput != null)
+		if (this.sendMessageInput != null)
 		{
-			MyUIInput myUIInput = sendMessageInput;
-			myUIInput.onKeyboardInter = (Action)Delegate.Combine(myUIInput.onKeyboardInter, new Action(SendMessageFromInput));
-			MyUIInput myUIInput2 = sendMessageInput;
-			myUIInput2.onKeyboardCancel = (Action)Delegate.Combine(myUIInput2.onKeyboardCancel, new Action(CancelSendPrivateMessage));
-			MyUIInput myUIInput3 = sendMessageInput;
-			myUIInput3.onKeyboardVisible = (Action)Delegate.Combine(myUIInput3.onKeyboardVisible, new Action(OnKeyboardVisible));
-			MyUIInput myUIInput4 = sendMessageInput;
-			myUIInput4.onKeyboardHide = (Action)Delegate.Combine(myUIInput4.onKeyboardHide, new Action(OnKeyboardHide));
+			this.sendMessageInput.onKeyboardInter += new Action(this.SendMessageFromInput);
+			this.sendMessageInput.onKeyboardCancel += new Action(this.CancelSendPrivateMessage);
+			this.sendMessageInput.onKeyboardVisible += new Action(this.OnKeyboardVisible);
+			this.sendMessageInput.onKeyboardHide += new Action(this.OnKeyboardHide);
 		}
 	}
 
-	private void Start()
+	public void BuySmileOnClick()
 	{
-		sharedController = this;
-		if (sendMessageInput != null)
+		this.buySmileBannerPrefab.SetActive(true);
+		this.sendMessageInput.isSelected = false;
+		this.sendMessageInput.DeselectInput();
+	}
+
+	public void CancelSendPrivateMessage()
+	{
+		this.sendMessageInput.@value = string.Empty;
+	}
+
+	public void CloseChat(bool isHardClose = false)
+	{
+		if (!isHardClose && this.buySmileBannerPrefab.activeSelf)
 		{
-			sendMessageInput.isSelected = true;
+			UnityEngine.Debug.LogFormat("Ignoring CloseChat({0}), buySmiley: {1}", new object[] { isHardClose, this.buySmileBannerPrefab.activeSelf });
+			return;
+		}
+		if (WeaponManager.sharedManager.myPlayerMoveC != null)
+		{
+			WeaponManager.sharedManager.myPlayerMoveC.showChat = false;
+			WeaponManager.sharedManager.myPlayerMoveC.AddButtonHandlers();
+			WeaponManager.sharedManager.myPlayerMoveC.inGameGUI.gameObject.SetActive(true);
+			if (!WeaponManager.sharedManager.myPlayerMoveC.isMechActive)
+			{
+				WeaponManager.sharedManager.currentWeaponSounds.gameObject.SetActive(true);
+			}
+			else
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.mechPoint.SetActive(true);
+			}
+		}
+		UnityEngine.Object.Destroy(base.gameObject);
+		ChatViewrController.sharedController = null;
+	}
+
+	public void HandleCloseChat()
+	{
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.Log("[Close Chat] pressed.");
+		}
+		this.CloseChat(false);
+	}
+
+	private void HideSmilePannel()
+	{
+		this.isShowSmilePanel = false;
+		this.showSmileButton.SetActive(true);
+		this.hideSmileButton.SetActive(false);
+	}
+
+	public void HideSmilePannelOnClick()
+	{
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		this.HideSmilePannel();
+	}
+
+	private void LateUpdate()
+	{
+		if (this.needReset)
+		{
+			this.needReset = false;
+			this.scrollLabels.ResetPosition();
+		}
+	}
+
+	public void OnClickSendMessageFromButton()
+	{
+		if (!string.IsNullOrEmpty(this.sendMessageInput.@value))
+		{
+			this.PostChat(this.sendMessageInput.@value);
+			this.sendMessageInput.@value = string.Empty;
+		}
+		if (this.isShowSmilePanel)
+		{
+			this.HideSmilePannel();
+		}
+		this.needReset = true;
+	}
+
+	private void OnDestroy()
+	{
+		this.sendMessageInput.onKeyboardInter -= new Action(this.SendMessageFromInput);
+		this.sendMessageInput.onKeyboardCancel -= new Action(this.CancelSendPrivateMessage);
+		this.sendMessageInput.onKeyboardVisible -= new Action(this.OnKeyboardVisible);
+		this.sendMessageInput.onKeyboardHide -= new Action(this.OnKeyboardHide);
+		ChatViewrController.sharedController = null;
+	}
+
+	private void OnDisable()
+	{
+		if (WeaponManager.sharedManager.myPlayerMoveC != null)
+		{
+			WeaponManager.sharedManager.myPlayerMoveC.messageDelegate -= new Player_move_c.OnMessagesUpdate(this.UpdateMessages);
 		}
 	}
 
@@ -96,118 +195,69 @@ public sealed class ChatViewrController : MonoBehaviour
 	{
 		if (WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.messageDelegate += UpdateMessages;
+			WeaponManager.sharedManager.myPlayerMoveC.messageDelegate += new Player_move_c.OnMessagesUpdate(this.UpdateMessages);
 		}
-		UpdateMessages();
+		this.UpdateMessages();
 	}
 
-	private void OnDisable()
+	public void OnKeyboardHide()
 	{
+		Transform vector3 = this.bottomAnchor;
+		float single = this.bottomAnchor.localPosition.x;
+		Vector3 vector31 = this.bottomAnchor.localPosition;
+		float coef = vector31.y - this.keyboardSize / Defs.Coef;
+		Vector3 vector32 = this.bottomAnchor.localPosition;
+		vector3.localPosition = new Vector3(single, coef, vector32.z);
+		base.StartCoroutine(this.ResetpositionCoroutine());
+		this.smilePanelTransform.gameObject.SetActive(false);
+		this.smilePanelTransform.gameObject.SetActive(true);
+	}
+
+	public void OnKeyboardVisible()
+	{
+		this.keyboardSize = this.sendMessageInput.heightKeyboard;
+		if (Application.isEditor)
+		{
+			this.keyboardSize = 200f;
+		}
+		Transform vector3 = this.bottomAnchor;
+		float single = this.bottomAnchor.localPosition.x;
+		Vector3 vector31 = this.bottomAnchor.localPosition;
+		float coef = vector31.y + this.keyboardSize / Defs.Coef;
+		Vector3 vector32 = this.bottomAnchor.localPosition;
+		vector3.localPosition = new Vector3(single, coef, vector32.z);
+		base.StartCoroutine(this.ResetpositionCoroutine());
+	}
+
+	public void PostChat(string _text)
+	{
+		if (Defs.isSoundFX)
+		{
+			NGUITools.PlaySound(this.sendChatClip);
+		}
 		if (WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.messageDelegate -= UpdateMessages;
+			WeaponManager.sharedManager.myPlayerMoveC.SendChat(_text, this.isClanMode, string.Empty);
 		}
 	}
 
-	private void UpdateMessages()
+	[DebuggerHidden]
+	private IEnumerator ResetpositionCoroutine()
 	{
-		if (WeaponManager.sharedManager.myPlayer == null)
-		{
-			return;
-		}
-		Player_move_c myPlayerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
-		while (labelChat.Count < myPlayerMoveC.messages.Count)
-		{
-			GameObject gameObject = NGUITools.AddChild(labelTable.gameObject, chatLabelPrefab);
-			labelChat.Add(gameObject.GetComponent<ChatLabel>());
-		}
-		for (int i = 0; i < labelChat.Count; i++)
-		{
-			string text = "[00FF26]";
-			if ((!Defs.isInet && myPlayerMoveC.messages[i].IDLocal == WeaponManager.sharedManager.myPlayer.GetComponent<NetworkView>().viewID) || (Defs.isInet && myPlayerMoveC.messages[i].ID == WeaponManager.sharedManager.myPlayer.GetComponent<PhotonView>().viewID))
-			{
-				text = "[00FF26]";
-			}
-			else
-			{
-				if (myPlayerMoveC.messages[i].command == 0)
-				{
-					text = "[FFFF26]";
-				}
-				if (myPlayerMoveC.messages[i].command == 1)
-				{
-					text = "[0000FF]";
-				}
-				if (myPlayerMoveC.messages[i].command == 2)
-				{
-					text = "[FF0000]";
-				}
-			}
-			ChatLabel chatLabel = labelChat[labelChat.Count - i - 1];
-			chatLabel.nickLabel.text = text + myPlayerMoveC.messages[i].text;
-			if (string.IsNullOrEmpty(myPlayerMoveC.messages[i].iconName))
-			{
-				if (chatLabel.stickerObject.activeInHierarchy)
-				{
-					chatLabel.stickerObject.SetActive(false);
-				}
-			}
-			else
-			{
-				if (!chatLabel.stickerObject.activeInHierarchy)
-				{
-					chatLabel.stickerObject.SetActive(true);
-				}
-				chatLabel.iconSprite.spriteName = myPlayerMoveC.messages[i].iconName;
-			}
-			Transform transform = chatLabel.iconSprite.transform;
-			transform.localPosition = new Vector3(chatLabel.nickLabel.width + 20, transform.localPosition.y, transform.localPosition.z);
-			chatLabel.clanTexture.mainTexture = myPlayerMoveC.messages[i].clanLogo;
-			labelChat[i].gameObject.SetActive(true);
-		}
-		labelTable.Reposition();
+		ChatViewrController.u003cResetpositionCoroutineu003ec__IteratorF variable = null;
+		return variable;
 	}
 
-	private void Update()
+	public void SendMessageFromInput()
 	{
-		if (isShowSmilePanel && smilePanelTransform.localPosition.y < -150f)
+		if (!string.IsNullOrEmpty(this.sendMessageInput.@value))
 		{
-			smilesPanel.SetActive(false);
-			smilesPanel.SetActive(true);
-			smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, smilePanelTransform.localPosition.y + Time.deltaTime * 500f, smilePanelTransform.localPosition.z);
-			scrollLabels.MoveRelative(Vector3.up * Time.deltaTime * 500f);
-			if (smilePanelTransform.localPosition.y > -150f)
-			{
-				smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, -150f, smilePanelTransform.localPosition.z);
-				scrollLabels.ResetPosition();
-				smilePanelTransform.gameObject.SetActive(false);
-				smilePanelTransform.gameObject.SetActive(true);
-			}
+			this.PostChat(this.sendMessageInput.@value);
+			this.sendMessageInput.@value = string.Empty;
 		}
-		if (!isShowSmilePanel && smilePanelTransform.localPosition.y > -314f)
+		if (this.isShowSmilePanel)
 		{
-			smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, smilePanelTransform.localPosition.y - Time.deltaTime * 500f, smilePanelTransform.localPosition.z);
-			scrollLabels.MoveRelative(Vector3.down * Time.deltaTime * 500f);
-			if (smilePanelTransform.localPosition.y < -314f)
-			{
-				smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, -314f, smilePanelTransform.localPosition.z);
-				scrollLabels.ResetPosition();
-				smilePanelTransform.gameObject.SetActive(false);
-				smilePanelTransform.gameObject.SetActive(true);
-			}
-		}
-		if (sendMessageButton.isEnabled == string.IsNullOrEmpty(sendMessageInput.value))
-		{
-			sendMessageButton.isEnabled = !string.IsNullOrEmpty(sendMessageInput.value);
-		}
-	}
-
-	private void LateUpdate()
-	{
-		if (needReset)
-		{
-			needReset = false;
-			scrollLabels.ResetPosition();
+			this.HideSmilePannel();
 		}
 	}
 
@@ -217,150 +267,127 @@ public sealed class ChatViewrController : MonoBehaviour
 		{
 			ButtonClickSound.Instance.PlayClick();
 		}
-		isShowSmilePanel = true;
-		showSmileButton.SetActive(false);
-		hideSmileButton.SetActive(true);
-		scrollLabels.ResetPosition();
+		this.isShowSmilePanel = true;
+		this.showSmileButton.SetActive(false);
+		this.hideSmileButton.SetActive(true);
+		this.scrollLabels.ResetPosition();
 	}
 
-	public void HideSmilePannelOnClick()
+	private void Start()
 	{
-		if (ButtonClickSound.Instance != null)
+		ChatViewrController.sharedController = this;
+		if (this.sendMessageInput != null)
 		{
-			ButtonClickSound.Instance.PlayClick();
-		}
-		HideSmilePannel();
-	}
-
-	public void OnClickSendMessageFromButton()
-	{
-		if (!string.IsNullOrEmpty(sendMessageInput.value))
-		{
-			PostChat(sendMessageInput.value);
-			sendMessageInput.value = string.Empty;
-		}
-		if (isShowSmilePanel)
-		{
-			HideSmilePannel();
-		}
-		needReset = true;
-	}
-
-	public void SendMessageFromInput()
-	{
-		if (!string.IsNullOrEmpty(sendMessageInput.value))
-		{
-			PostChat(sendMessageInput.value);
-			sendMessageInput.value = string.Empty;
-		}
-		if (isShowSmilePanel)
-		{
-			HideSmilePannel();
+			this.sendMessageInput.isSelected = true;
 		}
 	}
 
-	private void HideSmilePannel()
+	private void Update()
 	{
-		isShowSmilePanel = false;
-		showSmileButton.SetActive(true);
-		hideSmileButton.SetActive(false);
-	}
-
-	public void CancelSendPrivateMessage()
-	{
-		sendMessageInput.value = string.Empty;
-	}
-
-	public void OnKeyboardVisible()
-	{
-		keyboardSize = sendMessageInput.heightKeyboard;
-		if (Application.isEditor)
+		if (this.isShowSmilePanel && this.smilePanelTransform.localPosition.y < -150f)
 		{
-			keyboardSize = 200f;
+			this.smilesPanel.SetActive(false);
+			this.smilesPanel.SetActive(true);
+			Transform vector3 = this.smilePanelTransform;
+			float single = this.smilePanelTransform.localPosition.x;
+			Vector3 vector31 = this.smilePanelTransform.localPosition;
+			Vector3 vector32 = this.smilePanelTransform.localPosition;
+			vector3.localPosition = new Vector3(single, vector31.y + Time.deltaTime * 500f, vector32.z);
+			this.scrollLabels.MoveRelative((Vector3.up * Time.deltaTime) * 500f);
+			if (this.smilePanelTransform.localPosition.y > -150f)
+			{
+				Transform transforms = this.smilePanelTransform;
+				float single1 = this.smilePanelTransform.localPosition.x;
+				Vector3 vector33 = this.smilePanelTransform.localPosition;
+				transforms.localPosition = new Vector3(single1, -150f, vector33.z);
+				this.scrollLabels.ResetPosition();
+				this.smilePanelTransform.gameObject.SetActive(false);
+				this.smilePanelTransform.gameObject.SetActive(true);
+			}
 		}
-		bottomAnchor.localPosition = new Vector3(bottomAnchor.localPosition.x, bottomAnchor.localPosition.y + keyboardSize / Defs.Coef, bottomAnchor.localPosition.z);
-		StartCoroutine(ResetpositionCoroutine());
-	}
-
-	public void OnKeyboardHide()
-	{
-		bottomAnchor.localPosition = new Vector3(bottomAnchor.localPosition.x, bottomAnchor.localPosition.y - keyboardSize / Defs.Coef, bottomAnchor.localPosition.z);
-		StartCoroutine(ResetpositionCoroutine());
-		smilePanelTransform.gameObject.SetActive(false);
-		smilePanelTransform.gameObject.SetActive(true);
-	}
-
-	private IEnumerator ResetpositionCoroutine()
-	{
-		yield return null;
-		scrollLabels.ResetPosition();
-		smilePanelTransform.gameObject.SetActive(false);
-		smilePanelTransform.gameObject.SetActive(true);
-	}
-
-	public void PostChat(string _text)
-	{
-		if (Defs.isSoundFX)
+		if (!this.isShowSmilePanel && this.smilePanelTransform.localPosition.y > -314f)
 		{
-			NGUITools.PlaySound(sendChatClip);
+			Transform transforms1 = this.smilePanelTransform;
+			float single2 = this.smilePanelTransform.localPosition.x;
+			Vector3 vector34 = this.smilePanelTransform.localPosition;
+			Vector3 vector35 = this.smilePanelTransform.localPosition;
+			transforms1.localPosition = new Vector3(single2, vector34.y - Time.deltaTime * 500f, vector35.z);
+			this.scrollLabels.MoveRelative((Vector3.down * Time.deltaTime) * 500f);
+			if (this.smilePanelTransform.localPosition.y < -314f)
+			{
+				Transform transforms2 = this.smilePanelTransform;
+				float single3 = this.smilePanelTransform.localPosition.x;
+				Vector3 vector36 = this.smilePanelTransform.localPosition;
+				transforms2.localPosition = new Vector3(single3, -314f, vector36.z);
+				this.scrollLabels.ResetPosition();
+				this.smilePanelTransform.gameObject.SetActive(false);
+				this.smilePanelTransform.gameObject.SetActive(true);
+			}
 		}
-		if (WeaponManager.sharedManager.myPlayerMoveC != null)
+		if (this.sendMessageButton.isEnabled == string.IsNullOrEmpty(this.sendMessageInput.@value))
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.SendChat(_text, isClanMode, string.Empty);
+			this.sendMessageButton.isEnabled = !string.IsNullOrEmpty(this.sendMessageInput.@value);
 		}
 	}
 
-	public void HandleCloseChat()
+	private void UpdateMessages()
 	{
-		if (Defs.IsDeveloperBuild)
+		if (WeaponManager.sharedManager.myPlayer == null)
 		{
-			Debug.Log("[Close Chat] pressed.");
-		}
-		CloseChat();
-	}
-
-	public void CloseChat(bool isHardClose = false)
-	{
-		if (!isHardClose && buySmileBannerPrefab.activeSelf)
-		{
-			Debug.LogFormat("Ignoring CloseChat({0}), buySmiley: {1}", isHardClose, buySmileBannerPrefab.activeSelf);
 			return;
 		}
-		if (WeaponManager.sharedManager.myPlayerMoveC != null)
+		Player_move_c playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
+		while (this.labelChat.Count < playerMoveC.messages.Count)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.showChat = false;
-			WeaponManager.sharedManager.myPlayerMoveC.AddButtonHandlers();
-			WeaponManager.sharedManager.myPlayerMoveC.inGameGUI.gameObject.SetActive(true);
-			if (WeaponManager.sharedManager.myPlayerMoveC.isMechActive)
+			GameObject gameObject = NGUITools.AddChild(this.labelTable.gameObject, this.chatLabelPrefab);
+			this.labelChat.Add(gameObject.GetComponent<ChatLabel>());
+		}
+		for (int i = 0; i < this.labelChat.Count; i++)
+		{
+			string str = "[00FF26]";
+			if ((Defs.isInet || !(playerMoveC.messages[i].IDLocal == WeaponManager.sharedManager.myPlayer.GetComponent<NetworkView>().viewID)) && (!Defs.isInet || playerMoveC.messages[i].ID != WeaponManager.sharedManager.myPlayer.GetComponent<PhotonView>().viewID))
 			{
-				WeaponManager.sharedManager.myPlayerMoveC.mechPoint.SetActive(true);
+				if (playerMoveC.messages[i].command == 0)
+				{
+					str = "[FFFF26]";
+				}
+				if (playerMoveC.messages[i].command == 1)
+				{
+					str = "[0000FF]";
+				}
+				if (playerMoveC.messages[i].command == 2)
+				{
+					str = "[FF0000]";
+				}
 			}
 			else
 			{
-				WeaponManager.sharedManager.currentWeaponSounds.gameObject.SetActive(true);
+				str = "[00FF26]";
 			}
+			ChatLabel item = this.labelChat[this.labelChat.Count - i - 1];
+			UILabel uILabel = item.nickLabel;
+			Player_move_c.MessageChat messageChat = playerMoveC.messages[i];
+			uILabel.text = string.Concat(str, messageChat.text);
+			if (!string.IsNullOrEmpty(playerMoveC.messages[i].iconName))
+			{
+				if (!item.stickerObject.activeInHierarchy)
+				{
+					item.stickerObject.SetActive(true);
+				}
+				item.iconSprite.spriteName = playerMoveC.messages[i].iconName;
+			}
+			else if (item.stickerObject.activeInHierarchy)
+			{
+				item.stickerObject.SetActive(false);
+			}
+			Transform vector3 = item.iconSprite.transform;
+			float single = (float)(item.nickLabel.width + 20);
+			float single1 = vector3.localPosition.y;
+			Vector3 vector31 = vector3.localPosition;
+			vector3.localPosition = new Vector3(single, single1, vector31.z);
+			item.clanTexture.mainTexture = playerMoveC.messages[i].clanLogo;
+			this.labelChat[i].gameObject.SetActive(true);
 		}
-		UnityEngine.Object.Destroy(base.gameObject);
-		sharedController = null;
-	}
-
-	private void OnDestroy()
-	{
-		MyUIInput myUIInput = sendMessageInput;
-		myUIInput.onKeyboardInter = (Action)Delegate.Remove(myUIInput.onKeyboardInter, new Action(SendMessageFromInput));
-		MyUIInput myUIInput2 = sendMessageInput;
-		myUIInput2.onKeyboardCancel = (Action)Delegate.Remove(myUIInput2.onKeyboardCancel, new Action(CancelSendPrivateMessage));
-		MyUIInput myUIInput3 = sendMessageInput;
-		myUIInput3.onKeyboardVisible = (Action)Delegate.Remove(myUIInput3.onKeyboardVisible, new Action(OnKeyboardVisible));
-		MyUIInput myUIInput4 = sendMessageInput;
-		myUIInput4.onKeyboardHide = (Action)Delegate.Remove(myUIInput4.onKeyboardHide, new Action(OnKeyboardHide));
-		sharedController = null;
-	}
-
-	public void BuySmileOnClick()
-	{
-		buySmileBannerPrefab.SetActive(true);
-		sendMessageInput.isSelected = false;
-		sendMessageInput.DeselectInput();
+		this.labelTable.Reposition();
 	}
 }

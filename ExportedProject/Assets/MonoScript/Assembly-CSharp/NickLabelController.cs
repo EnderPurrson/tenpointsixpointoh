@@ -3,22 +3,11 @@ using UnityEngine;
 
 public sealed class NickLabelController : MonoBehaviour
 {
-	public enum TypeNickLabel
-	{
-		None = 0,
-		Player = 1,
-		Turret = 2,
-		Point = 3,
-		PlayerLobby = 4,
-		FreeCoins = 5,
-		GetGift = 6
-	}
-
 	public static Camera currentCamera;
 
 	public Transform target;
 
-	public TypeNickLabel currentType;
+	public NickLabelController.TypeNickLabel currentType;
 
 	[Header("Player label")]
 	public UILabel nickLabel;
@@ -95,303 +84,337 @@ public sealed class NickLabelController : MonoBehaviour
 
 	private bool isHideLabel;
 
+	static NickLabelController()
+	{
+	}
+
+	public NickLabelController()
+	{
+	}
+
 	private void Awake()
 	{
-		thisTransform = base.transform;
-		HideLabel();
-	}
-
-	public void StartShow(TypeNickLabel _type, Transform _target)
-	{
-		thisTransform = base.transform;
-		for (int i = 0; i < thisTransform.childCount; i++)
-		{
-			thisTransform.GetChild(i).gameObject.SetActive(false);
-		}
-		currentType = _type;
-		target = _target;
-		base.gameObject.SetActive(true);
-		placeMarker.SetActive(false);
-		nickLabel.color = Color.white;
-		healthSprite.enabled = true;
-		offset = new Vector3(0f, 0.6f, 0f);
-		float num = 1f;
-		SetCommandColor();
-		if (currentType == TypeNickLabel.Player)
-		{
-			nickLabel.gameObject.SetActive(true);
-			playerScript = target.GetComponent<Player_move_c>();
-		}
-		if (currentType == TypeNickLabel.PlayerLobby)
-		{
-			num = 1f;
-			expFrameLobby.SetActive(true);
-			nickLabel.gameObject.SetActive(true);
-			clanName.gameObject.SetActive(true);
-			clanTexture.gameObject.SetActive(true);
-			offset = new Vector3(0f, 2.26f, 0f);
-		}
-		if (currentType == TypeNickLabel.Point)
-		{
-			pointScript = target.GetComponent<BasePointController>();
-			pointSprite.spriteName = "Point_" + pointScript.nameBase;
-			pointFillSprite.spriteName = pointSprite.spriteName;
-			pointSprite.gameObject.SetActive(true);
-			offset = new Vector3(0f, 2.25f, 0f);
-		}
-		if (currentType == TypeNickLabel.Turret)
-		{
-			turretScript = target.GetComponent<TurretController>();
-			playerScript = ((!(turretScript.myPlayer != null)) ? null : turretScript.myPlayer.GetComponent<SkinName>().playerMoveC);
-			nickLabel.gameObject.SetActive(true);
-			if (!Defs.isDaterRegim)
-			{
-				healthObj.SetActive(true);
-			}
-			offset = new Vector3(0f, 1.76f, 0f);
-		}
-		if (currentType == TypeNickLabel.FreeCoins)
-		{
-			thisTransform.localScale = new Vector3(num, num, num);
-			freeAwardTitle.gameObject.SetActive(true);
-		}
-		if (currentType == TypeNickLabel.GetGift)
-		{
-			thisTransform.localScale = new Vector3(num, num, num);
-			lbGetGift.gameObject.SetActive(true);
-		}
-		thisTransform.localScale = new Vector3(num, num, num);
-		if (currentType == TypeNickLabel.PlayerLobby)
-		{
-			UpdateNickInLobby();
-		}
-		UpdateInfo();
-		HideLabel();
-	}
-
-	public void UpdateInfo()
-	{
-		if (currentType == TypeNickLabel.Player)
-		{
-			nickLabel.text = FilterBadWorld.FilterString(playerScript.mySkinName.NickName);
-		}
-		if (currentType == TypeNickLabel.Turret && playerScript != null)
-		{
-			if (Defs.isMulti)
-			{
-				nickLabel.text = FilterBadWorld.FilterString(playerScript.mySkinName.NickName);
-			}
-			else
-			{
-				nickLabel.text = FilterBadWorld.FilterString(ProfileController.GetPlayerNameOrDefault());
-			}
-			if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
-			{
-				SetCommandColor((!(WeaponManager.sharedManager.myPlayerMoveC == null)) ? ((WeaponManager.sharedManager.myPlayerMoveC.myCommand == playerScript.myCommand) ? 1 : 2) : 0);
-			}
-			else
-			{
-				SetCommandColor((!playerScript.Equals(WeaponManager.sharedManager.myPlayerMoveC) && !Defs.isDaterRegim && !Defs.isCOOP) ? 2 : 0);
-			}
-		}
-		if (currentType != TypeNickLabel.PlayerLobby)
-		{
-			return;
-		}
-		nickLabel.text = myLobbyNickname;
-		clanName.text = FriendsController.sharedController.clanName;
-		if (!string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
-		{
-			if (clanTexture.mainTexture == null)
-			{
-				byte[] data = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
-				Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
-				texture2D.LoadImage(data);
-				texture2D.filterMode = FilterMode.Point;
-				texture2D.Apply();
-				clanTexture.mainTexture = texture2D;
-				Transform transform = clanTexture.transform;
-				transform.localPosition = new Vector3((float)(-clanName.width) * 0.5f - 16f, transform.localPosition.y, transform.localPosition.z);
-			}
-		}
-		else
-		{
-			clanTexture.mainTexture = null;
-		}
-		UpdateExpFrameInLobby();
-	}
-
-	public void UpdateNickInLobby()
-	{
-		myLobbyNickname = FilterBadWorld.FilterString(ProfileController.GetPlayerNameOrDefault());
-	}
-
-	private void UpdateExpFrameInLobby()
-	{
-		int currentLevel = ExperienceController.sharedController.currentLevel;
-		ranksSpriteForLobby.spriteName = "Rank_" + currentLevel;
-		int num = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
-		int num2 = Mathf.Clamp(ExperienceController.sharedController.CurrentExperience, 0, num);
-		string text = string.Format("{0} {1}/{2}", LocalizationStore.Get("Key_0204"), num2, num);
-		if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
-		{
-			text = LocalizationStore.Get("Key_0928");
-		}
-		expLabel.text = text;
-		expProgressSprite.width = Mathf.RoundToInt(146f * ((ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel) ? ((float)num2 / (float)num) : 1f));
-	}
-
-	public void SetCommandColor(int _command = 0)
-	{
-		switch (_command)
-		{
-		case 1:
-			nickLabel.color = Color.blue;
-			break;
-		case 2:
-			nickLabel.color = Color.red;
-			break;
-		default:
-			nickLabel.color = Color.white;
-			break;
-		}
-	}
-
-	public void ResetTimeShow(float _time = 0.1f)
-	{
-		timeShow = _time;
-	}
-
-	private void StopShow()
-	{
-		currentType = TypeNickLabel.None;
-		HideLabel();
-		base.gameObject.SetActive(false);
-		playerScript = null;
-		pointScript = null;
-		turretScript = null;
+		this.thisTransform = base.transform;
+		this.HideLabel();
 	}
 
 	private void CheckShow()
 	{
 		if (ShopNGUIController.sharedShop != null && ShopNGUIController.GuiActive)
 		{
-			ResetTimeShow(-1f);
+			this.ResetTimeShow(-1f);
+			return;
 		}
-		else if (Defs.isDaterRegim)
+		if (Defs.isDaterRegim)
 		{
-			ResetTimeShow();
+			this.ResetTimeShow(0.1f);
+			return;
 		}
-		else if (currentType == TypeNickLabel.Point)
+		if (this.currentType == NickLabelController.TypeNickLabel.Point)
 		{
-			if (pointScript != null && pointScript.isBaseActive)
+			if (!(this.pointScript != null) || !this.pointScript.isBaseActive)
 			{
-				ResetTimeShow();
+				this.ResetTimeShow(-1f);
 			}
 			else
 			{
-				ResetTimeShow(-1f);
+				this.ResetTimeShow(0.1f);
 			}
+			return;
 		}
-		else if (currentType == TypeNickLabel.PlayerLobby || currentType == TypeNickLabel.FreeCoins || currentType == TypeNickLabel.GetGift)
+		if (this.currentType == NickLabelController.TypeNickLabel.PlayerLobby || this.currentType == NickLabelController.TypeNickLabel.FreeCoins || this.currentType == NickLabelController.TypeNickLabel.GetGift)
 		{
 			if (AskNameManager.isComplete)
 			{
-				ResetTimeShow(1f);
+				this.ResetTimeShow(1f);
 			}
-		}
-		else if ((Defs.isHunger && HungerGameController.Instance != null && !HungerGameController.Instance.isGo) || WeaponManager.sharedManager.myPlayer == null)
-		{
-			ResetTimeShow();
-		}
-		else if (WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.isKilled)
-		{
-			ResetTimeShow();
-		}
-		else if ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints) && WeaponManager.sharedManager.myPlayer != null && WeaponManager.sharedManager.myPlayerMoveC != null && playerScript != null && WeaponManager.sharedManager.myPlayerMoveC.myCommand == playerScript.myCommand)
-		{
-			ResetTimeShow();
-		}
-	}
-
-	private void UpdateTurrethealthSprite()
-	{
-		float num = Mathf.RoundToInt((float)maxHeathWidth * (((!(turretScript.health < 0f)) ? turretScript.health : 0f) / turretScript.maxHealth));
-		if (num < 0.1f)
-		{
-			num = 0f;
-			healthSprite.enabled = false;
-		}
-		else if (!healthSprite.enabled)
-		{
-			healthSprite.enabled = true;
-		}
-		healthSprite.width = Mathf.RoundToInt(num);
-	}
-
-	public void LateUpdate()
-	{
-		if (target == null)
-		{
-			StopShow();
 			return;
 		}
-		CheckShow();
-		if (timeShow > 0f)
+		if (Defs.isHunger && HungerGameController.Instance != null && !HungerGameController.Instance.isGo || WeaponManager.sharedManager.myPlayer == null)
 		{
-			timeShow -= Time.deltaTime;
+			this.ResetTimeShow(0.1f);
+			return;
 		}
-		if (timeShow > 0f && target.position.y > -1000f && currentCamera != null)
+		if (WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.isKilled)
 		{
-			posLabel = currentCamera.WorldToViewportPoint(target.position + offset + ((currentType != TypeNickLabel.Player || !(playerScript != null) || !playerScript.isMechActive) ? Vector3.zero : offsetMech));
-			if (posLabel.z >= 0f)
-			{
-				if (currentType == TypeNickLabel.Turret)
-				{
-					UpdateTurrethealthSprite();
-				}
-				if (currentType == TypeNickLabel.PlayerLobby)
-				{
-					UpdateInfo();
-				}
-				if (currentType == TypeNickLabel.Player || currentType == TypeNickLabel.Turret)
-				{
-					if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
-					{
-						if (WeaponManager.sharedManager.myPlayerMoveC == null)
-						{
-							SetCommandColor();
-						}
-						else
-						{
-							SetCommandColor((WeaponManager.sharedManager.myPlayerMoveC.myCommand == playerScript.myCommand) ? 1 : 2);
-						}
-					}
-					else
-					{
-						SetCommandColor((!Defs.isDaterRegim && !Defs.isCOOP) ? 2 : 0);
-					}
-				}
-				thisTransform.localPosition = new Vector3((posLabel.x - 0.5f) * coefScreen.x, (posLabel.y - 0.5f) * coefScreen.y, 0f);
-				isHideLabel = false;
-			}
-			else
-			{
-				HideLabel();
-			}
+			this.ResetTimeShow(0.1f);
+			return;
 		}
-		else
+		if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TeamFight && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.FlagCapture && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.CapturePoints || !(WeaponManager.sharedManager.myPlayer != null) || !(WeaponManager.sharedManager.myPlayerMoveC != null) || !(this.playerScript != null) || WeaponManager.sharedManager.myPlayerMoveC.myCommand != this.playerScript.myCommand)
 		{
-			HideLabel();
+			return;
 		}
+		this.ResetTimeShow(0.1f);
 	}
 
 	private void HideLabel()
 	{
-		if (!isHideLabel)
+		if (!this.isHideLabel)
 		{
-			isHideLabel = true;
-			thisTransform.localPosition = new Vector3(0f, -10000f, 0f);
+			this.isHideLabel = true;
+			this.thisTransform.localPosition = new Vector3(0f, -10000f, 0f);
 		}
+	}
+
+	public void LateUpdate()
+	{
+		if (this.target == null)
+		{
+			this.StopShow();
+			return;
+		}
+		this.CheckShow();
+		if (this.timeShow > 0f)
+		{
+			this.timeShow -= Time.deltaTime;
+		}
+		if (this.timeShow <= 0f || this.target.position.y <= -1000f || !(NickLabelController.currentCamera != null))
+		{
+			this.HideLabel();
+			return;
+		}
+		this.posLabel = NickLabelController.currentCamera.WorldToViewportPoint((this.target.position + this.offset) + (this.currentType != NickLabelController.TypeNickLabel.Player || !(this.playerScript != null) || !this.playerScript.isMechActive ? Vector3.zero : this.offsetMech));
+		if (this.posLabel.z < 0f)
+		{
+			this.HideLabel();
+			return;
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.Turret)
+		{
+			this.UpdateTurrethealthSprite();
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.PlayerLobby)
+		{
+			this.UpdateInfo();
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.Player || this.currentType == NickLabelController.TypeNickLabel.Turret)
+		{
+			if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.CapturePoints && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TeamFight && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.FlagCapture)
+			{
+				this.SetCommandColor((Defs.isDaterRegim || Defs.isCOOP ? 0 : 2));
+			}
+			else if (WeaponManager.sharedManager.myPlayerMoveC != null)
+			{
+				this.SetCommandColor((WeaponManager.sharedManager.myPlayerMoveC.myCommand != this.playerScript.myCommand ? 2 : 1));
+			}
+			else
+			{
+				this.SetCommandColor(0);
+			}
+		}
+		this.thisTransform.localPosition = new Vector3((this.posLabel.x - 0.5f) * this.coefScreen.x, (this.posLabel.y - 0.5f) * this.coefScreen.y, 0f);
+		this.isHideLabel = false;
+	}
+
+	public void ResetTimeShow(float _time = 0.1f)
+	{
+		this.timeShow = _time;
+	}
+
+	public void SetCommandColor(int _command = 0)
+	{
+		if (_command == 1)
+		{
+			this.nickLabel.color = Color.blue;
+			return;
+		}
+		if (_command == 2)
+		{
+			this.nickLabel.color = Color.red;
+			return;
+		}
+		this.nickLabel.color = Color.white;
+	}
+
+	public void StartShow(NickLabelController.TypeNickLabel _type, Transform _target)
+	{
+		Player_move_c component;
+		this.thisTransform = base.transform;
+		for (int i = 0; i < this.thisTransform.childCount; i++)
+		{
+			this.thisTransform.GetChild(i).gameObject.SetActive(false);
+		}
+		this.currentType = _type;
+		this.target = _target;
+		base.gameObject.SetActive(true);
+		this.placeMarker.SetActive(false);
+		this.nickLabel.color = Color.white;
+		this.healthSprite.enabled = true;
+		this.offset = new Vector3(0f, 0.6f, 0f);
+		float single = 1f;
+		this.SetCommandColor(0);
+		if (this.currentType == NickLabelController.TypeNickLabel.Player)
+		{
+			this.nickLabel.gameObject.SetActive(true);
+			this.playerScript = this.target.GetComponent<Player_move_c>();
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.PlayerLobby)
+		{
+			single = 1f;
+			this.expFrameLobby.SetActive(true);
+			this.nickLabel.gameObject.SetActive(true);
+			this.clanName.gameObject.SetActive(true);
+			this.clanTexture.gameObject.SetActive(true);
+			this.offset = new Vector3(0f, 2.26f, 0f);
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.Point)
+		{
+			this.pointScript = this.target.GetComponent<BasePointController>();
+			this.pointSprite.spriteName = string.Concat("Point_", this.pointScript.nameBase);
+			this.pointFillSprite.spriteName = this.pointSprite.spriteName;
+			this.pointSprite.gameObject.SetActive(true);
+			this.offset = new Vector3(0f, 2.25f, 0f);
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.Turret)
+		{
+			this.turretScript = this.target.GetComponent<TurretController>();
+			if (this.turretScript.myPlayer == null)
+			{
+				component = null;
+			}
+			else
+			{
+				component = this.turretScript.myPlayer.GetComponent<SkinName>().playerMoveC;
+			}
+			this.playerScript = component;
+			this.nickLabel.gameObject.SetActive(true);
+			if (!Defs.isDaterRegim)
+			{
+				this.healthObj.SetActive(true);
+			}
+			this.offset = new Vector3(0f, 1.76f, 0f);
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.FreeCoins)
+		{
+			this.thisTransform.localScale = new Vector3(single, single, single);
+			this.freeAwardTitle.gameObject.SetActive(true);
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.GetGift)
+		{
+			this.thisTransform.localScale = new Vector3(single, single, single);
+			this.lbGetGift.gameObject.SetActive(true);
+		}
+		this.thisTransform.localScale = new Vector3(single, single, single);
+		if (this.currentType == NickLabelController.TypeNickLabel.PlayerLobby)
+		{
+			this.UpdateNickInLobby();
+		}
+		this.UpdateInfo();
+		this.HideLabel();
+	}
+
+	private void StopShow()
+	{
+		this.currentType = NickLabelController.TypeNickLabel.None;
+		this.HideLabel();
+		base.gameObject.SetActive(false);
+		this.playerScript = null;
+		this.pointScript = null;
+		this.turretScript = null;
+	}
+
+	private void UpdateExpFrameInLobby()
+	{
+		int num = ExperienceController.sharedController.currentLevel;
+		this.ranksSpriteForLobby.spriteName = string.Concat("Rank_", num.ToString());
+		int maxExpLevels = ExperienceController.MaxExpLevels[ExperienceController.sharedController.currentLevel];
+		int num1 = Mathf.Clamp(ExperienceController.sharedController.CurrentExperience, 0, maxExpLevels);
+		string str = string.Format("{0} {1}/{2}", LocalizationStore.Get("Key_0204"), num1, maxExpLevels);
+		if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
+		{
+			str = LocalizationStore.Get("Key_0928");
+		}
+		this.expLabel.text = str;
+		this.expProgressSprite.width = Mathf.RoundToInt(146f * (ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel ? (float)num1 / (float)maxExpLevels : 1f));
+	}
+
+	public void UpdateInfo()
+	{
+		int num;
+		if (this.currentType == NickLabelController.TypeNickLabel.Player)
+		{
+			this.nickLabel.text = FilterBadWorld.FilterString(this.playerScript.mySkinName.NickName);
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.Turret && this.playerScript != null)
+		{
+			if (!Defs.isMulti)
+			{
+				this.nickLabel.text = FilterBadWorld.FilterString(ProfileController.GetPlayerNameOrDefault());
+			}
+			else
+			{
+				this.nickLabel.text = FilterBadWorld.FilterString(this.playerScript.mySkinName.NickName);
+			}
+			if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+			{
+				if (WeaponManager.sharedManager.myPlayerMoveC != null)
+				{
+					num = (WeaponManager.sharedManager.myPlayerMoveC.myCommand != this.playerScript.myCommand ? 2 : 1);
+				}
+				else
+				{
+					num = 0;
+				}
+				this.SetCommandColor(num);
+			}
+			else
+			{
+				this.SetCommandColor((this.playerScript.Equals(WeaponManager.sharedManager.myPlayerMoveC) || Defs.isDaterRegim || Defs.isCOOP ? 0 : 2));
+			}
+		}
+		if (this.currentType == NickLabelController.TypeNickLabel.PlayerLobby)
+		{
+			this.nickLabel.text = this.myLobbyNickname;
+			this.clanName.text = FriendsController.sharedController.clanName;
+			if (string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
+			{
+				this.clanTexture.mainTexture = null;
+			}
+			else if (this.clanTexture.mainTexture == null)
+			{
+				byte[] numArray = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
+				Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
+				texture2D.LoadImage(numArray);
+				texture2D.filterMode = FilterMode.Point;
+				texture2D.Apply();
+				this.clanTexture.mainTexture = texture2D;
+				Transform vector3 = this.clanTexture.transform;
+				float single = vector3.localPosition.y;
+				Vector3 vector31 = vector3.localPosition;
+				vector3.localPosition = new Vector3((float)(-this.clanName.width) * 0.5f - 16f, single, vector31.z);
+			}
+			this.UpdateExpFrameInLobby();
+		}
+	}
+
+	public void UpdateNickInLobby()
+	{
+		this.myLobbyNickname = FilterBadWorld.FilterString(ProfileController.GetPlayerNameOrDefault());
+	}
+
+	private void UpdateTurrethealthSprite()
+	{
+		float num = (float)Mathf.RoundToInt((float)this.maxHeathWidth * ((this.turretScript.health >= 0f ? this.turretScript.health : 0f) / this.turretScript.maxHealth));
+		if (num < 0.1f)
+		{
+			num = 0f;
+			this.healthSprite.enabled = false;
+		}
+		else if (!this.healthSprite.enabled)
+		{
+			this.healthSprite.enabled = true;
+		}
+		this.healthSprite.width = Mathf.RoundToInt(num);
+	}
+
+	public enum TypeNickLabel
+	{
+		None,
+		Player,
+		Turret,
+		Point,
+		PlayerLobby,
+		FreeCoins,
+		GetGift
 	}
 }

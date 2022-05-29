@@ -1,23 +1,830 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+using GooglePlayGames;
 using GooglePlayGames.BasicApi.Multiplayer;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.Native.PInvoke;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace GooglePlayGames.Native
 {
 	public class NativeRealtimeMultiplayerClient : IRealTimeMultiplayerClient
 	{
-		private class NoopListener : RealTimeMultiplayerListener
+		private readonly object mSessionLock = new object();
+
+		private readonly NativeClient mNativeClient;
+
+		private readonly RealtimeManager mRealtimeManager;
+
+		private volatile NativeRealtimeMultiplayerClient.RoomSession mCurrentSession;
+
+		internal NativeRealtimeMultiplayerClient(NativeClient nativeClient, RealtimeManager manager)
 		{
-			public void OnRoomSetupProgress(float percent)
+			this.mNativeClient = Misc.CheckNotNull<NativeClient>(nativeClient);
+			this.mRealtimeManager = Misc.CheckNotNull<RealtimeManager>(manager);
+			this.mCurrentSession = this.GetTerminatedSession();
+			PlayGamesHelperObject.AddPauseCallback(new Action<bool>(this.HandleAppPausing));
+		}
+
+		public void AcceptFromInbox(RealTimeMultiplayerListener listener)
+		{
+			object obj = this.mSessionLock;
+			Monitor.Enter(obj);
+			try
+			{
+				NativeRealtimeMultiplayerClient.RoomSession roomSession = new NativeRealtimeMultiplayerClient.RoomSession(this.mRealtimeManager, listener);
+				if (!this.mCurrentSession.IsActive())
+				{
+					this.mCurrentSession = roomSession;
+					this.mCurrentSession.ShowingUI = true;
+					this.mRealtimeManager.ShowRoomInboxUI((RealtimeManager.RoomInboxUIResponse response) => {
+						this.mCurrentSession.ShowingUI = false;
+						if (response.ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
+						{
+							Logger.d("User did not complete invitation screen.");
+							roomSession.LeaveRoom();
+							return;
+						}
+						GooglePlayGames.Native.PInvoke.MultiplayerInvitation multiplayerInvitation = response.Invitation();
+						using (GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper realTimeEventListenerHelper = NativeRealtimeMultiplayerClient.HelperForSession(roomSession))
+						{
+							Logger.d(string.Concat("About to accept invitation ", multiplayerInvitation.Id()));
+							roomSession.StartRoomCreation(this.mNativeClient.GetUserId(), () => this.mRealtimeManager.AcceptInvitation(multiplayerInvitation, realTimeEventListenerHelper, (RealtimeManager.RealTimeRoomResponse acceptResponse) => {
+								using (multiplayerInvitation)
+								{
+									roomSession.HandleRoomResponse(acceptResponse);
+									roomSession.SetInvitation(multiplayerInvitation.AsInvitation());
+								}
+							}));
+						}
+					});
+				}
+				else
+				{
+					Logger.e("Received attempt to accept invitation without cleaning up active session.");
+					roomSession.LeaveRoom();
+				}
+			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+		}
+
+		public void AcceptInvitation(string invitationId, RealTimeMultiplayerListener listener)
+		{
+			NativeRealtimeMultiplayerClient.u003cAcceptInvitationu003ec__AnonStorey23D variable;
+			object obj = this.mSessionLock;
+			Monitor.Enter(obj);
+			try
+			{
+				NativeRealtimeMultiplayerClient.RoomSession roomSession = new NativeRealtimeMultiplayerClient.RoomSession(this.mRealtimeManager, listener);
+				if (!this.mCurrentSession.IsActive())
+				{
+					this.mCurrentSession = roomSession;
+					this.mRealtimeManager.FetchInvitations((RealtimeManager.FetchInvitationsResponse response) => {
+						if (!response.RequestSucceeded())
+						{
+							Logger.e("Couldn't load invitations.");
+							roomSession.LeaveRoom();
+							return;
+						}
+						IEnumerator<GooglePlayGames.Native.PInvoke.MultiplayerInvitation> enumerator = response.Invitations().GetEnumerator();
+						try
+						{
+							while (enumerator.MoveNext())
+							{
+								GooglePlayGames.Native.PInvoke.MultiplayerInvitation current = enumerator.Current;
+								using (current)
+								{
+									if (current.Id().Equals(invitationId))
+									{
+										this.mCurrentSession.MinPlayersToStart = current.AutomatchingSlots() + current.ParticipantCount();
+										Logger.d(string.Concat("Setting MinPlayersToStart with invitation to : ", this.mCurrentSession.MinPlayersToStart));
+										using (GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper realTimeEventListenerHelper = NativeRealtimeMultiplayerClient.HelperForSession(roomSession))
+										{
+											roomSession.StartRoomCreation(this.mNativeClient.GetUserId(), () => this.mRealtimeManager.AcceptInvitation(current, realTimeEventListenerHelper, new Action<RealtimeManager.RealTimeRoomResponse>(roomSession.HandleRoomResponse)));
+											return;
+										}
+									}
+								}
+							}
+						}
+						finally
+						{
+							if (enumerator == null)
+							{
+							}
+							enumerator.Dispose();
+						}
+						Logger.e(string.Concat("Room creation failed since we could not find invitation with ID ", invitationId));
+						roomSession.LeaveRoom();
+					});
+				}
+				else
+				{
+					Logger.e("Received attempt to accept invitation without cleaning up active session.");
+					roomSession.LeaveRoom();
+				}
+			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+		}
+
+		public void CreateQuickGame(uint minOpponents, uint maxOpponents, uint variant, RealTimeMultiplayerListener listener)
+		{
+			this.CreateQuickGame(minOpponents, maxOpponents, variant, (ulong)0, listener);
+		}
+
+		public void CreateQuickGame(uint minOpponents, uint maxOpponents, uint variant, ulong exclusiveBitMask, RealTimeMultiplayerListener listener)
+		{
+			object obj = this.mSessionLock;
+			Monitor.Enter(obj);
+			try
+			{
+				NativeRealtimeMultiplayerClient.RoomSession roomSession = new NativeRealtimeMultiplayerClient.RoomSession(this.mRealtimeManager, listener);
+				if (!this.mCurrentSession.IsActive())
+				{
+					this.mCurrentSession = roomSession;
+					Logger.d(string.Concat("QuickGame: Setting MinPlayersToStart = ", minOpponents));
+					this.mCurrentSession.MinPlayersToStart = minOpponents;
+					using (RealtimeRoomConfigBuilder realtimeRoomConfigBuilder = RealtimeRoomConfigBuilder.Create())
+					{
+						RealtimeRoomConfig realtimeRoomConfig = realtimeRoomConfigBuilder.SetMinimumAutomatchingPlayers(minOpponents).SetMaximumAutomatchingPlayers(maxOpponents).SetVariant(variant).SetExclusiveBitMask(exclusiveBitMask).Build();
+						using (realtimeRoomConfig)
+						{
+							using (GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper realTimeEventListenerHelper = NativeRealtimeMultiplayerClient.HelperForSession(roomSession))
+							{
+								roomSession.StartRoomCreation(this.mNativeClient.GetUserId(), () => this.mRealtimeManager.CreateRoom(realtimeRoomConfig, realTimeEventListenerHelper, new Action<RealtimeManager.RealTimeRoomResponse>(roomSession.HandleRoomResponse)));
+							}
+						}
+					}
+				}
+				else
+				{
+					Logger.e("Received attempt to create a new room without cleaning up the old one.");
+					roomSession.LeaveRoom();
+				}
+			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+		}
+
+		public void CreateWithInvitationScreen(uint minOpponents, uint maxOppponents, uint variant, RealTimeMultiplayerListener listener)
+		{
+			object obj = this.mSessionLock;
+			Monitor.Enter(obj);
+			try
+			{
+				NativeRealtimeMultiplayerClient.RoomSession roomSession = new NativeRealtimeMultiplayerClient.RoomSession(this.mRealtimeManager, listener);
+				if (!this.mCurrentSession.IsActive())
+				{
+					this.mCurrentSession = roomSession;
+					this.mCurrentSession.ShowingUI = true;
+					this.mRealtimeManager.ShowPlayerSelectUI(minOpponents, maxOppponents, true, (PlayerSelectUIResponse response) => {
+						this.mCurrentSession.ShowingUI = false;
+						if (response.Status() != CommonErrorStatus.UIStatus.VALID)
+						{
+							Logger.d("User did not complete invitation screen.");
+							roomSession.LeaveRoom();
+							return;
+						}
+						this.mCurrentSession.MinPlayersToStart = response.MinimumAutomatchingPlayers() + response.Count<string>() + 1;
+						using (RealtimeRoomConfigBuilder realtimeRoomConfigBuilder = RealtimeRoomConfigBuilder.Create())
+						{
+							realtimeRoomConfigBuilder.SetVariant(variant);
+							realtimeRoomConfigBuilder.PopulateFromUIResponse(response);
+							using (RealtimeRoomConfig realtimeRoomConfig = realtimeRoomConfigBuilder.Build())
+							{
+								using (GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper realTimeEventListenerHelper = NativeRealtimeMultiplayerClient.HelperForSession(roomSession))
+								{
+									roomSession.StartRoomCreation(this.mNativeClient.GetUserId(), () => this.mRealtimeManager.CreateRoom(realtimeRoomConfig, realTimeEventListenerHelper, new Action<RealtimeManager.RealTimeRoomResponse>(roomSession.HandleRoomResponse)));
+								}
+							}
+						}
+					});
+				}
+				else
+				{
+					Logger.e("Received attempt to create a new room without cleaning up the old one.");
+					roomSession.LeaveRoom();
+				}
+			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+		}
+
+		public void DeclineInvitation(string invitationId)
+		{
+			this.mRealtimeManager.FetchInvitations((RealtimeManager.FetchInvitationsResponse response) => {
+				if (!response.RequestSucceeded())
+				{
+					Logger.e("Couldn't load invitations.");
+					return;
+				}
+				IEnumerator<GooglePlayGames.Native.PInvoke.MultiplayerInvitation> enumerator = response.Invitations().GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						GooglePlayGames.Native.PInvoke.MultiplayerInvitation current = enumerator.Current;
+						using (current)
+						{
+							if (current.Id().Equals(invitationId))
+							{
+								this.mRealtimeManager.DeclineInvitation(current);
+							}
+						}
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+			});
+		}
+
+		public void GetAllInvitations(Action<Invitation[]> callback)
+		{
+			this.mRealtimeManager.FetchInvitations((RealtimeManager.FetchInvitationsResponse response) => {
+				if (!response.RequestSucceeded())
+				{
+					Logger.e("Couldn't load invitations.");
+					callback(new Invitation[0]);
+					return;
+				}
+				List<Invitation> invitations = new List<Invitation>();
+				IEnumerator<GooglePlayGames.Native.PInvoke.MultiplayerInvitation> enumerator = response.Invitations().GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						GooglePlayGames.Native.PInvoke.MultiplayerInvitation current = enumerator.Current;
+						using (current)
+						{
+							invitations.Add(current.AsInvitation());
+						}
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+				callback(invitations.ToArray());
+			});
+		}
+
+		public List<Participant> GetConnectedParticipants()
+		{
+			return this.mCurrentSession.GetConnectedParticipants();
+		}
+
+		public Invitation GetInvitation()
+		{
+			return this.mCurrentSession.GetInvitation();
+		}
+
+		public Participant GetParticipant(string participantId)
+		{
+			return this.mCurrentSession.GetParticipant(participantId);
+		}
+
+		public Participant GetSelf()
+		{
+			return this.mCurrentSession.GetSelf();
+		}
+
+		private NativeRealtimeMultiplayerClient.RoomSession GetTerminatedSession()
+		{
+			NativeRealtimeMultiplayerClient.RoomSession roomSession = new NativeRealtimeMultiplayerClient.RoomSession(this.mRealtimeManager, new NativeRealtimeMultiplayerClient.NoopListener());
+			roomSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(roomSession), false);
+			return roomSession;
+		}
+
+		private void HandleAppPausing(bool paused)
+		{
+			if (paused)
+			{
+				Logger.d("Application is pausing, which disconnects the RTMP  client.  Leaving room.");
+				this.LeaveRoom();
+			}
+		}
+
+		private static GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper HelperForSession(NativeRealtimeMultiplayerClient.RoomSession session)
+		{
+			return GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper.Create().SetOnDataReceivedCallback((NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant, byte[] data, bool isReliable) => session.OnDataReceived(room, participant, data, isReliable)).SetOnParticipantStatusChangedCallback((NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant) => session.OnParticipantStatusChanged(room, participant)).SetOnRoomConnectedSetChangedCallback((NativeRealTimeRoom room) => session.OnConnectedSetChanged(room)).SetOnRoomStatusChangedCallback((NativeRealTimeRoom room) => session.OnRoomStatusChanged(room));
+		}
+
+		public bool IsRoomConnected()
+		{
+			return this.mCurrentSession.IsRoomConnected();
+		}
+
+		public void LeaveRoom()
+		{
+			this.mCurrentSession.LeaveRoom();
+		}
+
+		public void SendMessage(bool reliable, string participantId, byte[] data)
+		{
+			this.mCurrentSession.SendMessage(reliable, participantId, data);
+		}
+
+		public void SendMessage(bool reliable, string participantId, byte[] data, int offset, int length)
+		{
+			this.mCurrentSession.SendMessage(reliable, participantId, data, offset, length);
+		}
+
+		public void SendMessageToAll(bool reliable, byte[] data)
+		{
+			this.mCurrentSession.SendMessageToAll(reliable, data);
+		}
+
+		public void SendMessageToAll(bool reliable, byte[] data, int offset, int length)
+		{
+			this.mCurrentSession.SendMessageToAll(reliable, data, offset, length);
+		}
+
+		public void ShowWaitingRoomUI()
+		{
+			object obj = this.mSessionLock;
+			Monitor.Enter(obj);
+			try
+			{
+				this.mCurrentSession.ShowWaitingRoomUI();
+			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+		}
+
+		private static T WithDefault<T>(T presented, T defaultValue)
+		where T : class
+		{
+			return (presented == null ? defaultValue : presented);
+		}
+
+		private class AbortingRoomCreationState : NativeRealtimeMultiplayerClient.State
+		{
+			private readonly NativeRealtimeMultiplayerClient.RoomSession mSession;
+
+			internal AbortingRoomCreationState(NativeRealtimeMultiplayerClient.RoomSession session)
+			{
+				this.mSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
+			}
+
+			internal override void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
+			{
+				if (!response.RequestSucceeded())
+				{
+					this.mSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(this.mSession));
+					this.mSession.OnGameThreadListener().RoomConnected(false);
+					return;
+				}
+				this.mSession.EnterState(new NativeRealtimeMultiplayerClient.LeavingRoom(this.mSession, response.Room(), () => this.mSession.OnGameThreadListener().RoomConnected(false)));
+			}
+
+			internal override bool IsActive()
+			{
+				return false;
+			}
+		}
+
+		private class ActiveState : NativeRealtimeMultiplayerClient.MessagingEnabledState
+		{
+			internal ActiveState(NativeRealTimeRoom room, NativeRealtimeMultiplayerClient.RoomSession session) : base(session, room)
 			{
 			}
 
-			public void OnRoomConnected(bool success)
+			internal override Participant GetParticipant(string participantId)
+			{
+				if (this.mParticipants.ContainsKey(participantId))
+				{
+					return this.mParticipants[participantId];
+				}
+				Logger.e(string.Concat("Attempted to retrieve unknown participant ", participantId));
+				return null;
+			}
+
+			internal override Participant GetSelf()
+			{
+				Participant participant;
+				Dictionary<string, Participant>.ValueCollection.Enumerator enumerator = this.mParticipants.Values.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						Participant current = enumerator.Current;
+						if (current.Player == null || !current.Player.id.Equals(this.mSession.SelfPlayerId()))
+						{
+							continue;
+						}
+						participant = current;
+						return participant;
+					}
+					return null;
+				}
+				finally
+				{
+					((IDisposable)(object)enumerator).Dispose();
+				}
+				return participant;
+			}
+
+			internal override void HandleConnectedSetChanged(NativeRealTimeRoom room)
+			{
+				List<string> strs = new List<string>();
+				List<string> list = new List<string>();
+				Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant> dictionary = room.Participants().ToDictionary<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, string>((GooglePlayGames.Native.PInvoke.MultiplayerParticipant p) => p.Id());
+				foreach (string key in this.mNativeParticipants.Keys)
+				{
+					GooglePlayGames.Native.PInvoke.MultiplayerParticipant item = dictionary[key];
+					GooglePlayGames.Native.PInvoke.MultiplayerParticipant multiplayerParticipant = this.mNativeParticipants[key];
+					if (!item.IsConnectedToRoom())
+					{
+						list.Add(key);
+					}
+					if (multiplayerParticipant.IsConnectedToRoom() || !item.IsConnectedToRoom())
+					{
+						continue;
+					}
+					strs.Add(key);
+				}
+				foreach (GooglePlayGames.Native.PInvoke.MultiplayerParticipant value in this.mNativeParticipants.Values)
+				{
+					value.Dispose();
+				}
+				this.mNativeParticipants = dictionary;
+				this.mParticipants = (
+					from p in this.mNativeParticipants.Values
+					select p.AsParticipant()).ToDictionary<Participant, string>((Participant p) => p.ParticipantId);
+				Logger.d(string.Concat("Updated participant statuses: ", string.Join(",", (
+					from p in this.mParticipants.Values
+					select p.ToString()).ToArray<string>())));
+				if (list.Contains(this.GetSelf().ParticipantId))
+				{
+					Logger.w("Player was disconnected from the multiplayer session.");
+				}
+				string participantId = this.GetSelf().ParticipantId;
+				strs = (
+					from peerId in strs
+					where !peerId.Equals(participantId)
+					select peerId).ToList<string>();
+				list = (
+					from peerId in list
+					where !peerId.Equals(participantId)
+					select peerId).ToList<string>();
+				if (strs.Count > 0)
+				{
+					strs.Sort();
+					this.mSession.OnGameThreadListener().PeersConnected((
+						from peer in strs
+						where !peer.Equals(participantId)
+						select peer).ToArray<string>());
+				}
+				if (list.Count > 0)
+				{
+					list.Sort();
+					this.mSession.OnGameThreadListener().PeersDisconnected((
+						from peer in list
+						where !peer.Equals(participantId)
+						select peer).ToArray<string>());
+				}
+			}
+
+			internal override bool IsRoomConnected()
+			{
+				return true;
+			}
+
+			internal override void LeaveRoom()
+			{
+				this.mSession.EnterState(new NativeRealtimeMultiplayerClient.LeavingRoom(this.mSession, this.mRoom, () => this.mSession.OnGameThreadListener().LeftRoom()));
+			}
+
+			internal override void OnStateEntered()
+			{
+				if (this.GetSelf() == null)
+				{
+					Logger.e("Room reached active state with unknown participant for the player");
+					this.LeaveRoom();
+				}
+			}
+		}
+
+		private class BeforeRoomCreateStartedState : NativeRealtimeMultiplayerClient.State
+		{
+			private readonly NativeRealtimeMultiplayerClient.RoomSession mContainingSession;
+
+			internal BeforeRoomCreateStartedState(NativeRealtimeMultiplayerClient.RoomSession session)
+			{
+				this.mContainingSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
+			}
+
+			internal override void LeaveRoom()
+			{
+				Logger.d("Session was torn down before room was created.");
+				this.mContainingSession.OnGameThreadListener().RoomConnected(false);
+				this.mContainingSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(this.mContainingSession));
+			}
+		}
+
+		private class ConnectingState : NativeRealtimeMultiplayerClient.MessagingEnabledState
+		{
+			private const float InitialPercentComplete = 20f;
+
+			private readonly static HashSet<Types.ParticipantStatus> FailedStatuses;
+
+			private HashSet<string> mConnectedParticipants;
+
+			private float mPercentComplete;
+
+			private float mPercentPerParticipant;
+
+			static ConnectingState()
+			{
+				HashSet<Types.ParticipantStatus> participantStatuses = new HashSet<Types.ParticipantStatus>();
+				participantStatuses.Add(Types.ParticipantStatus.DECLINED);
+				participantStatuses.Add(Types.ParticipantStatus.LEFT);
+				NativeRealtimeMultiplayerClient.ConnectingState.FailedStatuses = participantStatuses;
+			}
+
+			internal ConnectingState(NativeRealTimeRoom room, NativeRealtimeMultiplayerClient.RoomSession session) : base(session, room)
+			{
+				this.mPercentPerParticipant = 80f / (float)((float)session.MinPlayersToStart);
+			}
+
+			internal override void HandleConnectedSetChanged(NativeRealTimeRoom room)
+			{
+				HashSet<string> strs = new HashSet<string>();
+				if ((room.Status() == Types.RealTimeRoomStatus.AUTO_MATCHING || room.Status() == Types.RealTimeRoomStatus.CONNECTING) && this.mSession.MinPlayersToStart <= room.ParticipantCount())
+				{
+					this.mSession.MinPlayersToStart = this.mSession.MinPlayersToStart + room.ParticipantCount();
+					this.mPercentPerParticipant = 80f / (float)((float)this.mSession.MinPlayersToStart);
+				}
+				IEnumerator<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> enumerator = room.Participants().GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						GooglePlayGames.Native.PInvoke.MultiplayerParticipant current = enumerator.Current;
+						using (current)
+						{
+							if (current.IsConnectedToRoom())
+							{
+								strs.Add(current.Id());
+							}
+						}
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+				if (this.mConnectedParticipants.Equals(strs))
+				{
+					Logger.w("Received connected set callback with unchanged connected set!");
+					return;
+				}
+				IEnumerable<string> strs1 = this.mConnectedParticipants.Except<string>(strs);
+				if (room.Status() == Types.RealTimeRoomStatus.DELETED)
+				{
+					Logger.e(string.Concat("Participants disconnected during room setup, failing. Participants were: ", string.Join(",", strs1.ToArray<string>())));
+					this.mSession.OnGameThreadListener().RoomConnected(false);
+					this.mSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(this.mSession));
+					return;
+				}
+				IEnumerable<string> strs2 = strs.Except<string>(this.mConnectedParticipants);
+				Logger.d(string.Concat("New participants connected: ", string.Join(",", strs2.ToArray<string>())));
+				if (room.Status() == Types.RealTimeRoomStatus.ACTIVE)
+				{
+					Logger.d("Fully connected! Transitioning to active state.");
+					this.mSession.EnterState(new NativeRealtimeMultiplayerClient.ActiveState(room, this.mSession));
+					this.mSession.OnGameThreadListener().RoomConnected(true);
+					return;
+				}
+				NativeRealtimeMultiplayerClient.ConnectingState connectingState = this;
+				connectingState.mPercentComplete = connectingState.mPercentComplete + this.mPercentPerParticipant * (float)strs2.Count<string>();
+				this.mConnectedParticipants = strs;
+				this.mSession.OnGameThreadListener().RoomSetupProgress(this.mPercentComplete);
+			}
+
+			internal override void HandleParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			{
+				if (!NativeRealtimeMultiplayerClient.ConnectingState.FailedStatuses.Contains(participant.Status()))
+				{
+					return;
+				}
+				this.mSession.OnGameThreadListener().ParticipantLeft(participant.AsParticipant());
+				if (room.Status() != Types.RealTimeRoomStatus.CONNECTING && room.Status() != Types.RealTimeRoomStatus.AUTO_MATCHING)
+				{
+					this.LeaveRoom();
+				}
+			}
+
+			internal override void LeaveRoom()
+			{
+				this.mSession.EnterState(new NativeRealtimeMultiplayerClient.LeavingRoom(this.mSession, this.mRoom, () => this.mSession.OnGameThreadListener().RoomConnected(false)));
+			}
+
+			internal override void OnStateEntered()
+			{
+				this.mSession.OnGameThreadListener().RoomSetupProgress(this.mPercentComplete);
+			}
+
+			internal override void ShowWaitingRoomUI(uint minimumParticipantsBeforeStarting)
+			{
+				this.mSession.ShowingUI = true;
+				this.mSession.Manager().ShowWaitingRoomUI(this.mRoom, minimumParticipantsBeforeStarting, (RealtimeManager.WaitingRoomUIResponse response) => {
+					this.mSession.ShowingUI = false;
+					Logger.d(string.Concat("ShowWaitingRoomUI Response: ", response.ResponseStatus()));
+					if (response.ResponseStatus() == CommonErrorStatus.UIStatus.VALID)
+					{
+						Logger.d(string.Concat(new object[] { "Connecting state ShowWaitingRoomUI: room pcount:", response.Room().ParticipantCount(), " status: ", response.Room().Status() }));
+						if (response.Room().Status() == Types.RealTimeRoomStatus.ACTIVE)
+						{
+							this.mSession.EnterState(new NativeRealtimeMultiplayerClient.ActiveState(response.Room(), this.mSession));
+						}
+					}
+					else if (response.ResponseStatus() != CommonErrorStatus.UIStatus.ERROR_LEFT_ROOM)
+					{
+						this.mSession.OnGameThreadListener().RoomSetupProgress(this.mPercentComplete);
+					}
+					else
+					{
+						this.LeaveRoom();
+					}
+				});
+			}
+		}
+
+		private class LeavingRoom : NativeRealtimeMultiplayerClient.State
+		{
+			private readonly NativeRealtimeMultiplayerClient.RoomSession mSession;
+
+			private readonly NativeRealTimeRoom mRoomToLeave;
+
+			private readonly Action mLeavingCompleteCallback;
+
+			internal LeavingRoom(NativeRealtimeMultiplayerClient.RoomSession session, NativeRealTimeRoom room, Action leavingCompleteCallback)
+			{
+				this.mSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
+				this.mRoomToLeave = Misc.CheckNotNull<NativeRealTimeRoom>(room);
+				this.mLeavingCompleteCallback = Misc.CheckNotNull<Action>(leavingCompleteCallback);
+			}
+
+			internal override bool IsActive()
+			{
+				return false;
+			}
+
+			internal override void OnStateEntered()
+			{
+				this.mSession.Manager().LeaveRoom(this.mRoomToLeave, (CommonErrorStatus.ResponseStatus status) => {
+					this.mLeavingCompleteCallback();
+					this.mSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(this.mSession));
+				});
+			}
+		}
+
+		private abstract class MessagingEnabledState : NativeRealtimeMultiplayerClient.State
+		{
+			protected readonly NativeRealtimeMultiplayerClient.RoomSession mSession;
+
+			protected NativeRealTimeRoom mRoom;
+
+			protected Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant> mNativeParticipants;
+
+			protected Dictionary<string, Participant> mParticipants;
+
+			internal MessagingEnabledState(NativeRealtimeMultiplayerClient.RoomSession session, NativeRealTimeRoom room)
+			{
+				this.mSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
+				this.UpdateCurrentRoom(room);
+			}
+
+			internal sealed override List<Participant> GetConnectedParticipants()
+			{
+				List<Participant> list = (
+					from p in this.mParticipants.Values
+					where p.IsConnectedToRoom
+					select p).ToList<Participant>();
+				list.Sort();
+				return list;
+			}
+
+			internal virtual void HandleConnectedSetChanged(NativeRealTimeRoom room)
+			{
+			}
+
+			internal virtual void HandleParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			{
+			}
+
+			internal virtual void HandleRoomStatusChanged(NativeRealTimeRoom room)
+			{
+			}
+
+			internal sealed override void OnConnectedSetChanged(NativeRealTimeRoom room)
+			{
+				this.HandleConnectedSetChanged(room);
+				this.UpdateCurrentRoom(room);
+			}
+
+			internal override void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
+			{
+				this.mSession.OnGameThreadListener().RealTimeMessageReceived(isReliable, sender.Id(), data);
+			}
+
+			internal sealed override void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			{
+				this.HandleParticipantStatusChanged(room, participant);
+				this.UpdateCurrentRoom(room);
+			}
+
+			internal sealed override void OnRoomStatusChanged(NativeRealTimeRoom room)
+			{
+				this.HandleRoomStatusChanged(room);
+				this.UpdateCurrentRoom(room);
+			}
+
+			internal override void SendToAll(byte[] data, int offset, int length, bool isReliable)
+			{
+				byte[] subsetBytes = Misc.GetSubsetBytes(data, offset, length);
+				if (!isReliable)
+				{
+					this.mSession.Manager().SendUnreliableMessageToAll(this.mRoom, subsetBytes);
+				}
+				else
+				{
+					foreach (string key in this.mNativeParticipants.Keys)
+					{
+						this.SendToSpecificRecipient(key, subsetBytes, 0, (int)subsetBytes.Length, true);
+					}
+				}
+			}
+
+			internal override void SendToSpecificRecipient(string recipientId, byte[] data, int offset, int length, bool isReliable)
+			{
+				if (!this.mNativeParticipants.ContainsKey(recipientId))
+				{
+					Logger.e(string.Concat("Attempted to send message to unknown participant ", recipientId));
+					return;
+				}
+				if (!isReliable)
+				{
+					RealtimeManager realtimeManager = this.mSession.Manager();
+					NativeRealTimeRoom nativeRealTimeRoom = this.mRoom;
+					List<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> multiplayerParticipants = new List<GooglePlayGames.Native.PInvoke.MultiplayerParticipant>()
+					{
+						this.mNativeParticipants[recipientId]
+					};
+					realtimeManager.SendUnreliableMessageToSpecificParticipants(nativeRealTimeRoom, multiplayerParticipants, Misc.GetSubsetBytes(data, offset, length));
+				}
+				else
+				{
+					this.mSession.Manager().SendReliableMessage(this.mRoom, this.mNativeParticipants[recipientId], Misc.GetSubsetBytes(data, offset, length), null);
+				}
+			}
+
+			internal void UpdateCurrentRoom(NativeRealTimeRoom room)
+			{
+				if (this.mRoom != null)
+				{
+					this.mRoom.Dispose();
+				}
+				this.mRoom = Misc.CheckNotNull<NativeRealTimeRoom>(room);
+				this.mNativeParticipants = this.mRoom.Participants().ToDictionary<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, string>((GooglePlayGames.Native.PInvoke.MultiplayerParticipant p) => p.Id());
+				this.mParticipants = (
+					from p in this.mNativeParticipants.Values
+					select p.AsParticipant()).ToDictionary<Participant, string>((Participant p) => p.ParticipantId);
+			}
+		}
+
+		private class NoopListener : RealTimeMultiplayerListener
+		{
+			public NoopListener()
 			{
 			}
 
@@ -40,653 +847,79 @@ namespace GooglePlayGames.Native
 			public void OnRealTimeMessageReceived(bool isReliable, string senderId, byte[] data)
 			{
 			}
-		}
 
-		private class RoomSession
-		{
-			private readonly object mLifecycleLock = new object();
-
-			private readonly OnGameThreadForwardingListener mListener;
-
-			private readonly RealtimeManager mManager;
-
-			private volatile string mCurrentPlayerId;
-
-			private volatile State mState;
-
-			private volatile bool mStillPreRoomCreation;
-
-			private Invitation mInvitation;
-
-			private volatile bool mShowingUI;
-
-			private uint mMinPlayersToStart;
-
-			internal bool ShowingUI
+			public void OnRoomConnected(bool success)
 			{
-				get
-				{
-					return mShowingUI;
-				}
-				set
-				{
-					mShowingUI = value;
-				}
 			}
 
-			internal uint MinPlayersToStart
+			public void OnRoomSetupProgress(float percent)
 			{
-				get
-				{
-					return mMinPlayersToStart;
-				}
-				set
-				{
-					mMinPlayersToStart = value;
-				}
-			}
-
-			internal RoomSession(RealtimeManager manager, RealTimeMultiplayerListener listener)
-			{
-				mManager = Misc.CheckNotNull(manager);
-				mListener = new OnGameThreadForwardingListener(listener);
-				EnterState(new BeforeRoomCreateStartedState(this), false);
-				mStillPreRoomCreation = true;
-			}
-
-			internal RealtimeManager Manager()
-			{
-				return mManager;
-			}
-
-			internal bool IsActive()
-			{
-				return mState.IsActive();
-			}
-
-			internal string SelfPlayerId()
-			{
-				return mCurrentPlayerId;
-			}
-
-			public void SetInvitation(Invitation invitation)
-			{
-				mInvitation = invitation;
-			}
-
-			public Invitation GetInvitation()
-			{
-				return mInvitation;
-			}
-
-			internal OnGameThreadForwardingListener OnGameThreadListener()
-			{
-				return mListener;
-			}
-
-			internal void EnterState(State handler)
-			{
-				EnterState(handler, true);
-			}
-
-			internal void EnterState(State handler, bool fireStateEnteredEvent)
-			{
-				lock (mLifecycleLock)
-				{
-					mState = Misc.CheckNotNull(handler);
-					if (fireStateEnteredEvent)
-					{
-						Logger.d("Entering state: " + handler.GetType().Name);
-						mState.OnStateEntered();
-					}
-				}
-			}
-
-			internal void LeaveRoom()
-			{
-				if (!ShowingUI)
-				{
-					lock (mLifecycleLock)
-					{
-						mState.LeaveRoom();
-						return;
-					}
-				}
-				Logger.d("Not leaving room since showing UI");
-			}
-
-			internal void ShowWaitingRoomUI()
-			{
-				mState.ShowWaitingRoomUI(MinPlayersToStart);
-			}
-
-			internal void StartRoomCreation(string currentPlayerId, Action createRoom)
-			{
-				lock (mLifecycleLock)
-				{
-					if (!mStillPreRoomCreation)
-					{
-						Logger.e("Room creation started more than once, this shouldn't happen!");
-						return;
-					}
-					if (!mState.IsActive())
-					{
-						Logger.w("Received an attempt to create a room after the session was already torn down!");
-						return;
-					}
-					mCurrentPlayerId = Misc.CheckNotNull(currentPlayerId);
-					mStillPreRoomCreation = false;
-					EnterState(new RoomCreationPendingState(this));
-					createRoom();
-				}
-			}
-
-			internal void OnRoomStatusChanged(NativeRealTimeRoom room)
-			{
-				lock (mLifecycleLock)
-				{
-					mState.OnRoomStatusChanged(room);
-				}
-			}
-
-			internal void OnConnectedSetChanged(NativeRealTimeRoom room)
-			{
-				lock (mLifecycleLock)
-				{
-					mState.OnConnectedSetChanged(room);
-				}
-			}
-
-			internal void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
-			{
-				lock (mLifecycleLock)
-				{
-					mState.OnParticipantStatusChanged(room, participant);
-				}
-			}
-
-			internal void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
-			{
-				lock (mLifecycleLock)
-				{
-					mState.HandleRoomResponse(response);
-				}
-			}
-
-			internal void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
-			{
-				mState.OnDataReceived(room, sender, data, isReliable);
-			}
-
-			internal void SendMessageToAll(bool reliable, byte[] data)
-			{
-				SendMessageToAll(reliable, data, 0, data.Length);
-			}
-
-			internal void SendMessageToAll(bool reliable, byte[] data, int offset, int length)
-			{
-				mState.SendToAll(data, offset, length, reliable);
-			}
-
-			internal void SendMessage(bool reliable, string participantId, byte[] data)
-			{
-				SendMessage(reliable, participantId, data, 0, data.Length);
-			}
-
-			internal void SendMessage(bool reliable, string participantId, byte[] data, int offset, int length)
-			{
-				mState.SendToSpecificRecipient(participantId, data, offset, length, reliable);
-			}
-
-			internal List<Participant> GetConnectedParticipants()
-			{
-				return mState.GetConnectedParticipants();
-			}
-
-			internal virtual Participant GetSelf()
-			{
-				return mState.GetSelf();
-			}
-
-			internal virtual Participant GetParticipant(string participantId)
-			{
-				return mState.GetParticipant(participantId);
-			}
-
-			internal virtual bool IsRoomConnected()
-			{
-				return mState.IsRoomConnected();
 			}
 		}
 
 		private class OnGameThreadForwardingListener
 		{
-			[CompilerGenerated]
-			private sealed class _003CRoomSetupProgress_003Ec__AnonStorey241
-			{
-				internal float percent;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__D6()
-				{
-					_003C_003Ef__this.mListener.OnRoomSetupProgress(percent);
-				}
-			}
-
-			[CompilerGenerated]
-			private sealed class _003CRoomConnected_003Ec__AnonStorey242
-			{
-				internal bool success;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__D7()
-				{
-					_003C_003Ef__this.mListener.OnRoomConnected(success);
-				}
-			}
-
-			[CompilerGenerated]
-			private sealed class _003CPeersConnected_003Ec__AnonStorey243
-			{
-				internal string[] participantIds;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__D9()
-				{
-					_003C_003Ef__this.mListener.OnPeersConnected(participantIds);
-				}
-			}
-
-			[CompilerGenerated]
-			private sealed class _003CPeersDisconnected_003Ec__AnonStorey244
-			{
-				internal string[] participantIds;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__DA()
-				{
-					_003C_003Ef__this.mListener.OnPeersDisconnected(participantIds);
-				}
-			}
-
-			[CompilerGenerated]
-			private sealed class _003CRealTimeMessageReceived_003Ec__AnonStorey245
-			{
-				internal bool isReliable;
-
-				internal string senderId;
-
-				internal byte[] data;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__DB()
-				{
-					_003C_003Ef__this.mListener.OnRealTimeMessageReceived(isReliable, senderId, data);
-				}
-			}
-
-			[CompilerGenerated]
-			private sealed class _003CParticipantLeft_003Ec__AnonStorey246
-			{
-				internal Participant participant;
-
-				internal OnGameThreadForwardingListener _003C_003Ef__this;
-
-				internal void _003C_003Em__DC()
-				{
-					_003C_003Ef__this.mListener.OnParticipantLeft(participant);
-				}
-			}
-
 			private readonly RealTimeMultiplayerListener mListener;
 
 			internal OnGameThreadForwardingListener(RealTimeMultiplayerListener listener)
 			{
-				mListener = Misc.CheckNotNull(listener);
-			}
-
-			public void RoomSetupProgress(float percent)
-			{
-				_003CRoomSetupProgress_003Ec__AnonStorey241 _003CRoomSetupProgress_003Ec__AnonStorey = new _003CRoomSetupProgress_003Ec__AnonStorey241();
-				_003CRoomSetupProgress_003Ec__AnonStorey.percent = percent;
-				_003CRoomSetupProgress_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CRoomSetupProgress_003Ec__AnonStorey._003C_003Em__D6);
-			}
-
-			public void RoomConnected(bool success)
-			{
-				_003CRoomConnected_003Ec__AnonStorey242 _003CRoomConnected_003Ec__AnonStorey = new _003CRoomConnected_003Ec__AnonStorey242();
-				_003CRoomConnected_003Ec__AnonStorey.success = success;
-				_003CRoomConnected_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CRoomConnected_003Ec__AnonStorey._003C_003Em__D7);
+				this.mListener = Misc.CheckNotNull<RealTimeMultiplayerListener>(listener);
 			}
 
 			public void LeftRoom()
 			{
-				PlayGamesHelperObject.RunOnGameThread(_003CLeftRoom_003Em__D8);
-			}
-
-			public void PeersConnected(string[] participantIds)
-			{
-				_003CPeersConnected_003Ec__AnonStorey243 _003CPeersConnected_003Ec__AnonStorey = new _003CPeersConnected_003Ec__AnonStorey243();
-				_003CPeersConnected_003Ec__AnonStorey.participantIds = participantIds;
-				_003CPeersConnected_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CPeersConnected_003Ec__AnonStorey._003C_003Em__D9);
-			}
-
-			public void PeersDisconnected(string[] participantIds)
-			{
-				_003CPeersDisconnected_003Ec__AnonStorey244 _003CPeersDisconnected_003Ec__AnonStorey = new _003CPeersDisconnected_003Ec__AnonStorey244();
-				_003CPeersDisconnected_003Ec__AnonStorey.participantIds = participantIds;
-				_003CPeersDisconnected_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CPeersDisconnected_003Ec__AnonStorey._003C_003Em__DA);
-			}
-
-			public void RealTimeMessageReceived(bool isReliable, string senderId, byte[] data)
-			{
-				_003CRealTimeMessageReceived_003Ec__AnonStorey245 _003CRealTimeMessageReceived_003Ec__AnonStorey = new _003CRealTimeMessageReceived_003Ec__AnonStorey245();
-				_003CRealTimeMessageReceived_003Ec__AnonStorey.isReliable = isReliable;
-				_003CRealTimeMessageReceived_003Ec__AnonStorey.senderId = senderId;
-				_003CRealTimeMessageReceived_003Ec__AnonStorey.data = data;
-				_003CRealTimeMessageReceived_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CRealTimeMessageReceived_003Ec__AnonStorey._003C_003Em__DB);
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnLeftRoom());
 			}
 
 			public void ParticipantLeft(Participant participant)
 			{
-				_003CParticipantLeft_003Ec__AnonStorey246 _003CParticipantLeft_003Ec__AnonStorey = new _003CParticipantLeft_003Ec__AnonStorey246();
-				_003CParticipantLeft_003Ec__AnonStorey.participant = participant;
-				_003CParticipantLeft_003Ec__AnonStorey._003C_003Ef__this = this;
-				PlayGamesHelperObject.RunOnGameThread(_003CParticipantLeft_003Ec__AnonStorey._003C_003Em__DC);
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnParticipantLeft(participant));
 			}
 
-			[CompilerGenerated]
-			private void _003CLeftRoom_003Em__D8()
+			public void PeersConnected(string[] participantIds)
 			{
-				mListener.OnLeftRoom();
-			}
-		}
-
-		internal abstract class State
-		{
-			internal virtual void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
-			{
-				Logger.d(GetType().Name + ".HandleRoomResponse: Defaulting to no-op.");
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnPeersConnected(participantIds));
 			}
 
-			internal virtual bool IsActive()
+			public void PeersDisconnected(string[] participantIds)
 			{
-				Logger.d(GetType().Name + ".IsNonPreemptable: Is preemptable by default.");
-				return true;
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnPeersDisconnected(participantIds));
 			}
 
-			internal virtual void LeaveRoom()
+			public void RealTimeMessageReceived(bool isReliable, string senderId, byte[] data)
 			{
-				Logger.d(GetType().Name + ".LeaveRoom: Defaulting to no-op.");
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnRealTimeMessageReceived(isReliable, senderId, data));
 			}
 
-			internal virtual void ShowWaitingRoomUI(uint minimumParticipantsBeforeStarting)
+			public void RoomConnected(bool success)
 			{
-				Logger.d(GetType().Name + ".ShowWaitingRoomUI: Defaulting to no-op.");
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnRoomConnected(success));
 			}
 
-			internal virtual void OnStateEntered()
+			public void RoomSetupProgress(float percent)
 			{
-				Logger.d(GetType().Name + ".OnStateEntered: Defaulting to no-op.");
-			}
-
-			internal virtual void OnRoomStatusChanged(NativeRealTimeRoom room)
-			{
-				Logger.d(GetType().Name + ".OnRoomStatusChanged: Defaulting to no-op.");
-			}
-
-			internal virtual void OnConnectedSetChanged(NativeRealTimeRoom room)
-			{
-				Logger.d(GetType().Name + ".OnConnectedSetChanged: Defaulting to no-op.");
-			}
-
-			internal virtual void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
-			{
-				Logger.d(GetType().Name + ".OnParticipantStatusChanged: Defaulting to no-op.");
-			}
-
-			internal virtual void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
-			{
-				Logger.d(GetType().Name + ".OnDataReceived: Defaulting to no-op.");
-			}
-
-			internal virtual void SendToSpecificRecipient(string recipientId, byte[] data, int offset, int length, bool isReliable)
-			{
-				Logger.d(GetType().Name + ".SendToSpecificRecipient: Defaulting to no-op.");
-			}
-
-			internal virtual void SendToAll(byte[] data, int offset, int length, bool isReliable)
-			{
-				Logger.d(GetType().Name + ".SendToApp: Defaulting to no-op.");
-			}
-
-			internal virtual List<Participant> GetConnectedParticipants()
-			{
-				Logger.d(GetType().Name + ".GetConnectedParticipants: Returning empty connected participants");
-				return new List<Participant>();
-			}
-
-			internal virtual Participant GetSelf()
-			{
-				Logger.d(GetType().Name + ".GetSelf: Returning null self.");
-				return null;
-			}
-
-			internal virtual Participant GetParticipant(string participantId)
-			{
-				Logger.d(GetType().Name + ".GetSelf: Returning null participant.");
-				return null;
-			}
-
-			internal virtual bool IsRoomConnected()
-			{
-				Logger.d(GetType().Name + ".IsRoomConnected: Returning room not connected.");
-				return false;
+				PlayGamesHelperObject.RunOnGameThread(() => this.mListener.OnRoomSetupProgress(percent));
 			}
 		}
 
-		private abstract class MessagingEnabledState : State
+		private class RoomCreationPendingState : NativeRealtimeMultiplayerClient.State
 		{
-			protected readonly RoomSession mSession;
+			private readonly NativeRealtimeMultiplayerClient.RoomSession mContainingSession;
 
-			protected NativeRealTimeRoom mRoom;
-
-			protected Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant> mNativeParticipants;
-
-			protected Dictionary<string, Participant> mParticipants;
-
-			[CompilerGenerated]
-			private static Func<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, string> _003C_003Ef__am_0024cache4;
-
-			[CompilerGenerated]
-			private static Func<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, Participant> _003C_003Ef__am_0024cache5;
-
-			[CompilerGenerated]
-			private static Func<Participant, string> _003C_003Ef__am_0024cache6;
-
-			[CompilerGenerated]
-			private static Func<Participant, bool> _003C_003Ef__am_0024cache7;
-
-			internal MessagingEnabledState(RoomSession session, NativeRealTimeRoom room)
+			internal RoomCreationPendingState(NativeRealtimeMultiplayerClient.RoomSession session)
 			{
-				mSession = Misc.CheckNotNull(session);
-				UpdateCurrentRoom(room);
-			}
-
-			internal void UpdateCurrentRoom(NativeRealTimeRoom room)
-			{
-				if (mRoom != null)
-				{
-					mRoom.Dispose();
-				}
-				mRoom = Misc.CheckNotNull(room);
-				IEnumerable<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> source = mRoom.Participants();
-				if (_003C_003Ef__am_0024cache4 == null)
-				{
-					_003C_003Ef__am_0024cache4 = _003CUpdateCurrentRoom_003Em__DD;
-				}
-				mNativeParticipants = source.ToDictionary(_003C_003Ef__am_0024cache4);
-				Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant>.ValueCollection values = mNativeParticipants.Values;
-				if (_003C_003Ef__am_0024cache5 == null)
-				{
-					_003C_003Ef__am_0024cache5 = _003CUpdateCurrentRoom_003Em__DE;
-				}
-				IEnumerable<Participant> source2 = values.Select(_003C_003Ef__am_0024cache5);
-				if (_003C_003Ef__am_0024cache6 == null)
-				{
-					_003C_003Ef__am_0024cache6 = _003CUpdateCurrentRoom_003Em__DF;
-				}
-				mParticipants = source2.ToDictionary(_003C_003Ef__am_0024cache6);
-			}
-
-			internal sealed override void OnRoomStatusChanged(NativeRealTimeRoom room)
-			{
-				HandleRoomStatusChanged(room);
-				UpdateCurrentRoom(room);
-			}
-
-			internal virtual void HandleRoomStatusChanged(NativeRealTimeRoom room)
-			{
-			}
-
-			internal sealed override void OnConnectedSetChanged(NativeRealTimeRoom room)
-			{
-				HandleConnectedSetChanged(room);
-				UpdateCurrentRoom(room);
-			}
-
-			internal virtual void HandleConnectedSetChanged(NativeRealTimeRoom room)
-			{
-			}
-
-			internal sealed override void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
-			{
-				HandleParticipantStatusChanged(room, participant);
-				UpdateCurrentRoom(room);
-			}
-
-			internal virtual void HandleParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
-			{
-			}
-
-			internal sealed override List<Participant> GetConnectedParticipants()
-			{
-				Dictionary<string, Participant>.ValueCollection values = mParticipants.Values;
-				if (_003C_003Ef__am_0024cache7 == null)
-				{
-					_003C_003Ef__am_0024cache7 = _003CGetConnectedParticipants_003Em__E0;
-				}
-				List<Participant> list = values.Where(_003C_003Ef__am_0024cache7).ToList();
-				list.Sort();
-				return list;
-			}
-
-			internal override void SendToSpecificRecipient(string recipientId, byte[] data, int offset, int length, bool isReliable)
-			{
-				if (!mNativeParticipants.ContainsKey(recipientId))
-				{
-					Logger.e("Attempted to send message to unknown participant " + recipientId);
-					return;
-				}
-				if (isReliable)
-				{
-					mSession.Manager().SendReliableMessage(mRoom, mNativeParticipants[recipientId], Misc.GetSubsetBytes(data, offset, length), null);
-					return;
-				}
-				mSession.Manager().SendUnreliableMessageToSpecificParticipants(mRoom, new List<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> { mNativeParticipants[recipientId] }, Misc.GetSubsetBytes(data, offset, length));
-			}
-
-			internal override void SendToAll(byte[] data, int offset, int length, bool isReliable)
-			{
-				byte[] subsetBytes = Misc.GetSubsetBytes(data, offset, length);
-				if (isReliable)
-				{
-					foreach (string key in mNativeParticipants.Keys)
-					{
-						SendToSpecificRecipient(key, subsetBytes, 0, subsetBytes.Length, true);
-					}
-					return;
-				}
-				mSession.Manager().SendUnreliableMessageToAll(mRoom, subsetBytes);
-			}
-
-			internal override void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
-			{
-				mSession.OnGameThreadListener().RealTimeMessageReceived(isReliable, sender.Id(), data);
-			}
-
-			[CompilerGenerated]
-			private static string _003CUpdateCurrentRoom_003Em__DD(GooglePlayGames.Native.PInvoke.MultiplayerParticipant p)
-			{
-				return p.Id();
-			}
-
-			[CompilerGenerated]
-			private static Participant _003CUpdateCurrentRoom_003Em__DE(GooglePlayGames.Native.PInvoke.MultiplayerParticipant p)
-			{
-				return p.AsParticipant();
-			}
-
-			[CompilerGenerated]
-			private static string _003CUpdateCurrentRoom_003Em__DF(Participant p)
-			{
-				return p.ParticipantId;
-			}
-
-			[CompilerGenerated]
-			private static bool _003CGetConnectedParticipants_003Em__E0(Participant p)
-			{
-				return p.IsConnectedToRoom;
-			}
-		}
-
-		private class BeforeRoomCreateStartedState : State
-		{
-			private readonly RoomSession mContainingSession;
-
-			internal BeforeRoomCreateStartedState(RoomSession session)
-			{
-				mContainingSession = Misc.CheckNotNull(session);
-			}
-
-			internal override void LeaveRoom()
-			{
-				Logger.d("Session was torn down before room was created.");
-				mContainingSession.OnGameThreadListener().RoomConnected(false);
-				mContainingSession.EnterState(new ShutdownState(mContainingSession));
-			}
-		}
-
-		private class RoomCreationPendingState : State
-		{
-			private readonly RoomSession mContainingSession;
-
-			internal RoomCreationPendingState(RoomSession session)
-			{
-				mContainingSession = Misc.CheckNotNull(session);
+				this.mContainingSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
 			}
 
 			internal override void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
 			{
-				if (!response.RequestSucceeded())
+				if (response.RequestSucceeded())
 				{
-					mContainingSession.EnterState(new ShutdownState(mContainingSession));
-					mContainingSession.OnGameThreadListener().RoomConnected(false);
+					this.mContainingSession.EnterState(new NativeRealtimeMultiplayerClient.ConnectingState(response.Room(), this.mContainingSession));
+					return;
 				}
-				else
-				{
-					mContainingSession.EnterState(new ConnectingState(response.Room(), mContainingSession));
-				}
+				this.mContainingSession.EnterState(new NativeRealtimeMultiplayerClient.ShutdownState(this.mContainingSession));
+				this.mContainingSession.OnGameThreadListener().RoomConnected(false);
 			}
 
 			internal override bool IsActive()
@@ -697,993 +930,377 @@ namespace GooglePlayGames.Native
 			internal override void LeaveRoom()
 			{
 				Logger.d("Received request to leave room during room creation, aborting creation.");
-				mContainingSession.EnterState(new AbortingRoomCreationState(mContainingSession));
+				this.mContainingSession.EnterState(new NativeRealtimeMultiplayerClient.AbortingRoomCreationState(this.mContainingSession));
 			}
 		}
 
-		private class ConnectingState : MessagingEnabledState
+		private class RoomSession
 		{
-			private const float InitialPercentComplete = 20f;
+			private readonly object mLifecycleLock;
 
-			private static readonly HashSet<Types.ParticipantStatus> FailedStatuses = new HashSet<Types.ParticipantStatus>
+			private readonly NativeRealtimeMultiplayerClient.OnGameThreadForwardingListener mListener;
+
+			private readonly RealtimeManager mManager;
+
+			private volatile string mCurrentPlayerId;
+
+			private volatile NativeRealtimeMultiplayerClient.State mState;
+
+			private volatile bool mStillPreRoomCreation;
+
+			private Invitation mInvitation;
+
+			private volatile bool mShowingUI;
+
+			private uint mMinPlayersToStart;
+
+			internal uint MinPlayersToStart
 			{
-				Types.ParticipantStatus.DECLINED,
-				Types.ParticipantStatus.LEFT
-			};
-
-			private HashSet<string> mConnectedParticipants = new HashSet<string>();
-
-			private float mPercentComplete = 20f;
-
-			private float mPercentPerParticipant;
-
-			internal ConnectingState(NativeRealTimeRoom room, RoomSession session)
-				: base(session, room)
-			{
-				mPercentPerParticipant = 80f / (float)session.MinPlayersToStart;
-			}
-
-			internal override void OnStateEntered()
-			{
-				mSession.OnGameThreadListener().RoomSetupProgress(mPercentComplete);
-			}
-
-			internal override void HandleConnectedSetChanged(NativeRealTimeRoom room)
-			{
-				HashSet<string> hashSet = new HashSet<string>();
-				if ((room.Status() == Types.RealTimeRoomStatus.AUTO_MATCHING || room.Status() == Types.RealTimeRoomStatus.CONNECTING) && mSession.MinPlayersToStart <= room.ParticipantCount())
+				get
 				{
-					mSession.MinPlayersToStart += room.ParticipantCount();
-					mPercentPerParticipant = 80f / (float)mSession.MinPlayersToStart;
+					return this.mMinPlayersToStart;
 				}
-				foreach (GooglePlayGames.Native.PInvoke.MultiplayerParticipant item in room.Participants())
+				set
 				{
-					using (item)
-					{
-						if (item.IsConnectedToRoom())
-						{
-							hashSet.Add(item.Id());
-						}
-					}
-				}
-				if (mConnectedParticipants.Equals(hashSet))
-				{
-					Logger.w("Received connected set callback with unchanged connected set!");
-					return;
-				}
-				IEnumerable<string> source = mConnectedParticipants.Except(hashSet);
-				if (room.Status() == Types.RealTimeRoomStatus.DELETED)
-				{
-					Logger.e("Participants disconnected during room setup, failing. Participants were: " + string.Join(",", source.ToArray()));
-					mSession.OnGameThreadListener().RoomConnected(false);
-					mSession.EnterState(new ShutdownState(mSession));
-					return;
-				}
-				IEnumerable<string> source2 = hashSet.Except(mConnectedParticipants);
-				Logger.d("New participants connected: " + string.Join(",", source2.ToArray()));
-				if (room.Status() == Types.RealTimeRoomStatus.ACTIVE)
-				{
-					Logger.d("Fully connected! Transitioning to active state.");
-					mSession.EnterState(new ActiveState(room, mSession));
-					mSession.OnGameThreadListener().RoomConnected(true);
-				}
-				else
-				{
-					mPercentComplete += mPercentPerParticipant * (float)source2.Count();
-					mConnectedParticipants = hashSet;
-					mSession.OnGameThreadListener().RoomSetupProgress(mPercentComplete);
+					this.mMinPlayersToStart = value;
 				}
 			}
 
-			internal override void HandleParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			internal bool ShowingUI
 			{
-				if (FailedStatuses.Contains(participant.Status()))
+				get
 				{
-					mSession.OnGameThreadListener().ParticipantLeft(participant.AsParticipant());
-					if (room.Status() != Types.RealTimeRoomStatus.CONNECTING && room.Status() != Types.RealTimeRoomStatus.AUTO_MATCHING)
-					{
-						LeaveRoom();
-					}
+					return this.mShowingUI;
+				}
+				set
+				{
+					this.mShowingUI = value;
 				}
 			}
 
-			internal override void LeaveRoom()
+			internal RoomSession(RealtimeManager manager, RealTimeMultiplayerListener listener)
 			{
-				mSession.EnterState(new LeavingRoom(mSession, mRoom, _003CLeaveRoom_003Em__E1));
+				this.mManager = Misc.CheckNotNull<RealtimeManager>(manager);
+				this.mListener = new NativeRealtimeMultiplayerClient.OnGameThreadForwardingListener(listener);
+				this.EnterState(new NativeRealtimeMultiplayerClient.BeforeRoomCreateStartedState(this), false);
+				this.mStillPreRoomCreation = true;
 			}
 
-			internal override void ShowWaitingRoomUI(uint minimumParticipantsBeforeStarting)
+			internal void EnterState(NativeRealtimeMultiplayerClient.State handler)
 			{
-				mSession.ShowingUI = true;
-				mSession.Manager().ShowWaitingRoomUI(mRoom, minimumParticipantsBeforeStarting, _003CShowWaitingRoomUI_003Em__E2);
+				this.EnterState(handler, true);
 			}
 
-			[CompilerGenerated]
-			private void _003CLeaveRoom_003Em__E1()
+			internal void EnterState(NativeRealtimeMultiplayerClient.State handler, bool fireStateEnteredEvent)
 			{
-				mSession.OnGameThreadListener().RoomConnected(false);
-			}
-
-			[CompilerGenerated]
-			private void _003CShowWaitingRoomUI_003Em__E2(RealtimeManager.WaitingRoomUIResponse response)
-			{
-				mSession.ShowingUI = false;
-				Logger.d("ShowWaitingRoomUI Response: " + response.ResponseStatus());
-				if (response.ResponseStatus() == CommonErrorStatus.UIStatus.VALID)
-				{
-					Logger.d("Connecting state ShowWaitingRoomUI: room pcount:" + response.Room().ParticipantCount() + " status: " + response.Room().Status());
-					if (response.Room().Status() == Types.RealTimeRoomStatus.ACTIVE)
-					{
-						mSession.EnterState(new ActiveState(response.Room(), mSession));
-					}
-				}
-				else if (response.ResponseStatus() == CommonErrorStatus.UIStatus.ERROR_LEFT_ROOM)
-				{
-					LeaveRoom();
-				}
-				else
-				{
-					mSession.OnGameThreadListener().RoomSetupProgress(mPercentComplete);
-				}
-			}
-		}
-
-		private class ActiveState : MessagingEnabledState
-		{
-			[CompilerGenerated]
-			private sealed class _003CHandleConnectedSetChanged_003Ec__AnonStorey247
-			{
-				internal string selfId;
-
-				internal bool _003C_003Em__E7(string peerId)
-				{
-					return !peerId.Equals(selfId);
-				}
-
-				internal bool _003C_003Em__E8(string peerId)
-				{
-					return !peerId.Equals(selfId);
-				}
-
-				internal bool _003C_003Em__E9(string peer)
-				{
-					return !peer.Equals(selfId);
-				}
-
-				internal bool _003C_003Em__EA(string peer)
-				{
-					return !peer.Equals(selfId);
-				}
-			}
-
-			[CompilerGenerated]
-			private static Func<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, string> _003C_003Ef__am_0024cache0;
-
-			[CompilerGenerated]
-			private static Func<GooglePlayGames.Native.PInvoke.MultiplayerParticipant, Participant> _003C_003Ef__am_0024cache1;
-
-			[CompilerGenerated]
-			private static Func<Participant, string> _003C_003Ef__am_0024cache2;
-
-			[CompilerGenerated]
-			private static Func<Participant, string> _003C_003Ef__am_0024cache3;
-
-			internal ActiveState(NativeRealTimeRoom room, RoomSession session)
-				: base(session, room)
-			{
-			}
-
-			internal override void OnStateEntered()
-			{
-				if (GetSelf() == null)
-				{
-					Logger.e("Room reached active state with unknown participant for the player");
-					LeaveRoom();
-				}
-			}
-
-			internal override bool IsRoomConnected()
-			{
-				return true;
-			}
-
-			internal override Participant GetParticipant(string participantId)
-			{
-				if (!mParticipants.ContainsKey(participantId))
-				{
-					Logger.e("Attempted to retrieve unknown participant " + participantId);
-					return null;
-				}
-				return mParticipants[participantId];
-			}
-
-			internal override Participant GetSelf()
-			{
-				foreach (Participant value in mParticipants.Values)
-				{
-					if (value.Player != null && value.Player.id.Equals(mSession.SelfPlayerId()))
-					{
-						return value;
-					}
-				}
-				return null;
-			}
-
-			internal override void HandleConnectedSetChanged(NativeRealTimeRoom room)
-			{
-				_003CHandleConnectedSetChanged_003Ec__AnonStorey247 _003CHandleConnectedSetChanged_003Ec__AnonStorey = new _003CHandleConnectedSetChanged_003Ec__AnonStorey247();
-				List<string> list = new List<string>();
-				List<string> list2 = new List<string>();
-				IEnumerable<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> source = room.Participants();
-				if (_003C_003Ef__am_0024cache0 == null)
-				{
-					_003C_003Ef__am_0024cache0 = _003CHandleConnectedSetChanged_003Em__E3;
-				}
-				Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant> dictionary = source.ToDictionary(_003C_003Ef__am_0024cache0);
-				foreach (string key in mNativeParticipants.Keys)
-				{
-					GooglePlayGames.Native.PInvoke.MultiplayerParticipant multiplayerParticipant = dictionary[key];
-					GooglePlayGames.Native.PInvoke.MultiplayerParticipant multiplayerParticipant2 = mNativeParticipants[key];
-					if (!multiplayerParticipant.IsConnectedToRoom())
-					{
-						list2.Add(key);
-					}
-					if (!multiplayerParticipant2.IsConnectedToRoom() && multiplayerParticipant.IsConnectedToRoom())
-					{
-						list.Add(key);
-					}
-				}
-				foreach (GooglePlayGames.Native.PInvoke.MultiplayerParticipant value in mNativeParticipants.Values)
-				{
-					value.Dispose();
-				}
-				mNativeParticipants = dictionary;
-				Dictionary<string, GooglePlayGames.Native.PInvoke.MultiplayerParticipant>.ValueCollection values = mNativeParticipants.Values;
-				if (_003C_003Ef__am_0024cache1 == null)
-				{
-					_003C_003Ef__am_0024cache1 = _003CHandleConnectedSetChanged_003Em__E4;
-				}
-				IEnumerable<Participant> source2 = values.Select(_003C_003Ef__am_0024cache1);
-				if (_003C_003Ef__am_0024cache2 == null)
-				{
-					_003C_003Ef__am_0024cache2 = _003CHandleConnectedSetChanged_003Em__E5;
-				}
-				mParticipants = source2.ToDictionary(_003C_003Ef__am_0024cache2);
-				Dictionary<string, Participant>.ValueCollection values2 = mParticipants.Values;
-				if (_003C_003Ef__am_0024cache3 == null)
-				{
-					_003C_003Ef__am_0024cache3 = _003CHandleConnectedSetChanged_003Em__E6;
-				}
-				Logger.d("Updated participant statuses: " + string.Join(",", values2.Select(_003C_003Ef__am_0024cache3).ToArray()));
-				if (list2.Contains(GetSelf().ParticipantId))
-				{
-					Logger.w("Player was disconnected from the multiplayer session.");
-				}
-				_003CHandleConnectedSetChanged_003Ec__AnonStorey.selfId = GetSelf().ParticipantId;
-				list = list.Where(_003CHandleConnectedSetChanged_003Ec__AnonStorey._003C_003Em__E7).ToList();
-				list2 = list2.Where(_003CHandleConnectedSetChanged_003Ec__AnonStorey._003C_003Em__E8).ToList();
-				if (list.Count > 0)
-				{
-					list.Sort();
-					mSession.OnGameThreadListener().PeersConnected(list.Where(_003CHandleConnectedSetChanged_003Ec__AnonStorey._003C_003Em__E9).ToArray());
-				}
-				if (list2.Count > 0)
-				{
-					list2.Sort();
-					mSession.OnGameThreadListener().PeersDisconnected(list2.Where(_003CHandleConnectedSetChanged_003Ec__AnonStorey._003C_003Em__EA).ToArray());
-				}
-			}
-
-			internal override void LeaveRoom()
-			{
-				mSession.EnterState(new LeavingRoom(mSession, mRoom, _003CLeaveRoom_003Em__EB));
-			}
-
-			[CompilerGenerated]
-			private static string _003CHandleConnectedSetChanged_003Em__E3(GooglePlayGames.Native.PInvoke.MultiplayerParticipant p)
-			{
-				return p.Id();
-			}
-
-			[CompilerGenerated]
-			private static Participant _003CHandleConnectedSetChanged_003Em__E4(GooglePlayGames.Native.PInvoke.MultiplayerParticipant p)
-			{
-				return p.AsParticipant();
-			}
-
-			[CompilerGenerated]
-			private static string _003CHandleConnectedSetChanged_003Em__E5(Participant p)
-			{
-				return p.ParticipantId;
-			}
-
-			[CompilerGenerated]
-			private static string _003CHandleConnectedSetChanged_003Em__E6(Participant p)
-			{
-				return p.ToString();
-			}
-
-			[CompilerGenerated]
-			private void _003CLeaveRoom_003Em__EB()
-			{
-				mSession.OnGameThreadListener().LeftRoom();
-			}
-		}
-
-		private class ShutdownState : State
-		{
-			private readonly RoomSession mSession;
-
-			internal ShutdownState(RoomSession session)
-			{
-				mSession = Misc.CheckNotNull(session);
-			}
-
-			internal override bool IsActive()
-			{
-				return false;
-			}
-
-			internal override void LeaveRoom()
-			{
-				mSession.OnGameThreadListener().LeftRoom();
-			}
-		}
-
-		private class LeavingRoom : State
-		{
-			private readonly RoomSession mSession;
-
-			private readonly NativeRealTimeRoom mRoomToLeave;
-
-			private readonly Action mLeavingCompleteCallback;
-
-			internal LeavingRoom(RoomSession session, NativeRealTimeRoom room, Action leavingCompleteCallback)
-			{
-				mSession = Misc.CheckNotNull(session);
-				mRoomToLeave = Misc.CheckNotNull(room);
-				mLeavingCompleteCallback = Misc.CheckNotNull(leavingCompleteCallback);
-			}
-
-			internal override bool IsActive()
-			{
-				return false;
-			}
-
-			internal override void OnStateEntered()
-			{
-				mSession.Manager().LeaveRoom(mRoomToLeave, _003COnStateEntered_003Em__EC);
-			}
-
-			[CompilerGenerated]
-			private void _003COnStateEntered_003Em__EC(CommonErrorStatus.ResponseStatus status)
-			{
-				mLeavingCompleteCallback();
-				mSession.EnterState(new ShutdownState(mSession));
-			}
-		}
-
-		private class AbortingRoomCreationState : State
-		{
-			private readonly RoomSession mSession;
-
-			internal AbortingRoomCreationState(RoomSession session)
-			{
-				mSession = Misc.CheckNotNull(session);
-			}
-
-			internal override bool IsActive()
-			{
-				return false;
-			}
-
-			internal override void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
-			{
-				if (!response.RequestSucceeded())
-				{
-					mSession.EnterState(new ShutdownState(mSession));
-					mSession.OnGameThreadListener().RoomConnected(false);
-				}
-				else
-				{
-					mSession.EnterState(new LeavingRoom(mSession, response.Room(), _003CHandleRoomResponse_003Em__ED));
-				}
-			}
-
-			[CompilerGenerated]
-			private void _003CHandleRoomResponse_003Em__ED()
-			{
-				mSession.OnGameThreadListener().RoomConnected(false);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CCreateQuickGame_003Ec__AnonStorey232
-		{
-			internal RoomSession newSession;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CCreateQuickGame_003Ec__AnonStorey230
-		{
-			internal RealtimeRoomConfig config;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CCreateQuickGame_003Ec__AnonStorey231
-		{
-			internal GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper helper;
-
-			internal _003CCreateQuickGame_003Ec__AnonStorey232 _003C_003Ef__ref_0024562;
-
-			internal _003CCreateQuickGame_003Ec__AnonStorey230 _003C_003Ef__ref_0024560;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-
-			internal void _003C_003Em__C8()
-			{
-				_003C_003Ef__this.mRealtimeManager.CreateRoom(_003C_003Ef__ref_0024560.config, helper, _003C_003Ef__ref_0024562.newSession.HandleRoomResponse);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CHelperForSession_003Ec__AnonStorey233
-		{
-			internal RoomSession session;
-
-			internal void _003C_003Em__C9(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant, byte[] data, bool isReliable)
-			{
-				session.OnDataReceived(room, participant, data, isReliable);
-			}
-
-			internal void _003C_003Em__CA(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
-			{
-				session.OnParticipantStatusChanged(room, participant);
-			}
-
-			internal void _003C_003Em__CB(NativeRealTimeRoom room)
-			{
-				session.OnConnectedSetChanged(room);
-			}
-
-			internal void _003C_003Em__CC(NativeRealTimeRoom room)
-			{
-				session.OnRoomStatusChanged(room);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CCreateWithInvitationScreen_003Ec__AnonStorey235
-		{
-			internal uint variant;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CCreateWithInvitationScreen_003Ec__AnonStorey234
-		{
-			private sealed class _003CCreateWithInvitationScreen_003Ec__AnonStorey236
-			{
-				internal RealtimeRoomConfig config;
-
-				internal _003CCreateWithInvitationScreen_003Ec__AnonStorey234 _003C_003Ef__ref_0024564;
-			}
-
-			private sealed class _003CCreateWithInvitationScreen_003Ec__AnonStorey237
-			{
-				internal GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper helper;
-
-				internal _003CCreateWithInvitationScreen_003Ec__AnonStorey234 _003C_003Ef__ref_0024564;
-
-				internal _003CCreateWithInvitationScreen_003Ec__AnonStorey236 _003C_003Ef__ref_0024566;
-
-				internal void _003C_003Em__D2()
-				{
-					_003C_003Ef__ref_0024564._003C_003Ef__this.mRealtimeManager.CreateRoom(_003C_003Ef__ref_0024566.config, helper, _003C_003Ef__ref_0024564.newRoom.HandleRoomResponse);
-				}
-			}
-
-			internal RoomSession newRoom;
-
-			internal _003CCreateWithInvitationScreen_003Ec__AnonStorey235 _003C_003Ef__ref_0024565;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-
-			internal void _003C_003Em__CD(PlayerSelectUIResponse response)
-			{
-				_003C_003Ef__this.mCurrentSession.ShowingUI = false;
-				if (response.Status() != CommonErrorStatus.UIStatus.VALID)
-				{
-					Logger.d("User did not complete invitation screen.");
-					newRoom.LeaveRoom();
-					return;
-				}
-				_003C_003Ef__this.mCurrentSession.MinPlayersToStart = (uint)((int)response.MinimumAutomatchingPlayers() + response.Count() + 1);
-				using (RealtimeRoomConfigBuilder realtimeRoomConfigBuilder = RealtimeRoomConfigBuilder.Create())
-				{
-					realtimeRoomConfigBuilder.SetVariant(_003C_003Ef__ref_0024565.variant);
-					realtimeRoomConfigBuilder.PopulateFromUIResponse(response);
-					_003CCreateWithInvitationScreen_003Ec__AnonStorey236 _003CCreateWithInvitationScreen_003Ec__AnonStorey = new _003CCreateWithInvitationScreen_003Ec__AnonStorey236();
-					_003CCreateWithInvitationScreen_003Ec__AnonStorey._003C_003Ef__ref_0024564 = this;
-					_003CCreateWithInvitationScreen_003Ec__AnonStorey.config = realtimeRoomConfigBuilder.Build();
-					try
-					{
-						_003CCreateWithInvitationScreen_003Ec__AnonStorey237 _003CCreateWithInvitationScreen_003Ec__AnonStorey2 = new _003CCreateWithInvitationScreen_003Ec__AnonStorey237();
-						_003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Ef__ref_0024564 = this;
-						_003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Ef__ref_0024566 = _003CCreateWithInvitationScreen_003Ec__AnonStorey;
-						_003CCreateWithInvitationScreen_003Ec__AnonStorey2.helper = HelperForSession(newRoom);
-						try
-						{
-							newRoom.StartRoomCreation(_003C_003Ef__this.mNativeClient.GetUserId(), _003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Em__D2);
-						}
-						finally
-						{
-							if (_003CCreateWithInvitationScreen_003Ec__AnonStorey2.helper != null)
-							{
-								((IDisposable)_003CCreateWithInvitationScreen_003Ec__AnonStorey2.helper).Dispose();
-							}
-						}
-					}
-					finally
-					{
-						if (_003CCreateWithInvitationScreen_003Ec__AnonStorey.config != null)
-						{
-							((IDisposable)_003CCreateWithInvitationScreen_003Ec__AnonStorey.config).Dispose();
-						}
-					}
-				}
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CGetAllInvitations_003Ec__AnonStorey238
-		{
-			internal Action<Invitation[]> callback;
-
-			internal void _003C_003Em__CE(RealtimeManager.FetchInvitationsResponse response)
-			{
-				if (!response.RequestSucceeded())
-				{
-					Logger.e("Couldn't load invitations.");
-					callback(new Invitation[0]);
-					return;
-				}
-				List<Invitation> list = new List<Invitation>();
-				foreach (GooglePlayGames.Native.PInvoke.MultiplayerInvitation item in response.Invitations())
-				{
-					using (item)
-					{
-						list.Add(item.AsInvitation());
-					}
-				}
-				callback(list.ToArray());
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CAcceptFromInbox_003Ec__AnonStorey239
-		{
-			private sealed class _003CAcceptFromInbox_003Ec__AnonStorey23A
-			{
-				internal GooglePlayGames.Native.PInvoke.MultiplayerInvitation invitation;
-
-				internal _003CAcceptFromInbox_003Ec__AnonStorey239 _003C_003Ef__ref_0024569;
-			}
-
-			private sealed class _003CAcceptFromInbox_003Ec__AnonStorey23B
-			{
-				internal GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper helper;
-
-				internal _003CAcceptFromInbox_003Ec__AnonStorey239 _003C_003Ef__ref_0024569;
-
-				internal _003CAcceptFromInbox_003Ec__AnonStorey23A _003C_003Ef__ref_0024570;
-
-				internal void _003C_003Em__D3()
-				{
-					_003C_003Ef__ref_0024569._003C_003Ef__this.mRealtimeManager.AcceptInvitation(_003C_003Ef__ref_0024570.invitation, helper, _003C_003Em__D4);
-				}
-
-				internal void _003C_003Em__D4(RealtimeManager.RealTimeRoomResponse acceptResponse)
-				{
-					using (_003C_003Ef__ref_0024570.invitation)
-					{
-						_003C_003Ef__ref_0024569.newRoom.HandleRoomResponse(acceptResponse);
-						_003C_003Ef__ref_0024569.newRoom.SetInvitation(_003C_003Ef__ref_0024570.invitation.AsInvitation());
-					}
-				}
-			}
-
-			internal RoomSession newRoom;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-
-			internal void _003C_003Em__CF(RealtimeManager.RoomInboxUIResponse response)
-			{
-				_003CAcceptFromInbox_003Ec__AnonStorey23A _003CAcceptFromInbox_003Ec__AnonStorey23A = new _003CAcceptFromInbox_003Ec__AnonStorey23A();
-				_003CAcceptFromInbox_003Ec__AnonStorey23A._003C_003Ef__ref_0024569 = this;
-				_003C_003Ef__this.mCurrentSession.ShowingUI = false;
-				if (response.ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
-				{
-					Logger.d("User did not complete invitation screen.");
-					newRoom.LeaveRoom();
-					return;
-				}
-				_003CAcceptFromInbox_003Ec__AnonStorey23A.invitation = response.Invitation();
-				_003CAcceptFromInbox_003Ec__AnonStorey23B _003CAcceptFromInbox_003Ec__AnonStorey23B = new _003CAcceptFromInbox_003Ec__AnonStorey23B();
-				_003CAcceptFromInbox_003Ec__AnonStorey23B._003C_003Ef__ref_0024569 = this;
-				_003CAcceptFromInbox_003Ec__AnonStorey23B._003C_003Ef__ref_0024570 = _003CAcceptFromInbox_003Ec__AnonStorey23A;
-				_003CAcceptFromInbox_003Ec__AnonStorey23B.helper = HelperForSession(newRoom);
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
 				try
 				{
-					Logger.d("About to accept invitation " + _003CAcceptFromInbox_003Ec__AnonStorey23A.invitation.Id());
-					newRoom.StartRoomCreation(_003C_003Ef__this.mNativeClient.GetUserId(), _003CAcceptFromInbox_003Ec__AnonStorey23B._003C_003Em__D3);
+					this.mState = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.State>(handler);
+					if (fireStateEnteredEvent)
+					{
+						Logger.d(string.Concat("Entering state: ", handler.GetType().Name));
+						this.mState.OnStateEntered();
+					}
 				}
 				finally
 				{
-					if (_003CAcceptFromInbox_003Ec__AnonStorey23B.helper != null)
-					{
-						((IDisposable)_003CAcceptFromInbox_003Ec__AnonStorey23B.helper).Dispose();
-					}
-				}
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CAcceptInvitation_003Ec__AnonStorey23D
-		{
-			internal string invitationId;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CAcceptInvitation_003Ec__AnonStorey23C
-		{
-			private sealed class _003CAcceptInvitation_003Ec__AnonStorey23E
-			{
-				internal GooglePlayGames.Native.PInvoke.MultiplayerInvitation invitation;
-
-				internal _003CAcceptInvitation_003Ec__AnonStorey23D _003C_003Ef__ref_0024573;
-
-				internal _003CAcceptInvitation_003Ec__AnonStorey23C _003C_003Ef__ref_0024572;
-			}
-
-			private sealed class _003CAcceptInvitation_003Ec__AnonStorey23F
-			{
-				internal GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper helper;
-
-				internal _003CAcceptInvitation_003Ec__AnonStorey23C _003C_003Ef__ref_0024572;
-
-				internal _003CAcceptInvitation_003Ec__AnonStorey23E _003C_003Ef__ref_0024574;
-
-				internal void _003C_003Em__D5()
-				{
-					_003C_003Ef__ref_0024572._003C_003Ef__this.mRealtimeManager.AcceptInvitation(_003C_003Ef__ref_0024574.invitation, helper, _003C_003Ef__ref_0024572.newRoom.HandleRoomResponse);
+					Monitor.Exit(obj);
 				}
 			}
 
-			internal RoomSession newRoom;
-
-			internal _003CAcceptInvitation_003Ec__AnonStorey23D _003C_003Ef__ref_0024573;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-
-			internal void _003C_003Em__D0(RealtimeManager.FetchInvitationsResponse response)
+			internal List<Participant> GetConnectedParticipants()
 			{
-				//Discarded unreachable code: IL_011e
-				if (!response.RequestSucceeded())
-				{
-					Logger.e("Couldn't load invitations.");
-					newRoom.LeaveRoom();
-					return;
-				}
-				_003CAcceptInvitation_003Ec__AnonStorey23E _003CAcceptInvitation_003Ec__AnonStorey23E = new _003CAcceptInvitation_003Ec__AnonStorey23E();
-				_003CAcceptInvitation_003Ec__AnonStorey23E._003C_003Ef__ref_0024573 = _003C_003Ef__ref_0024573;
-				_003CAcceptInvitation_003Ec__AnonStorey23E._003C_003Ef__ref_0024572 = this;
-				foreach (GooglePlayGames.Native.PInvoke.MultiplayerInvitation item in response.Invitations())
-				{
-					_003CAcceptInvitation_003Ec__AnonStorey23E.invitation = item;
-					using (_003CAcceptInvitation_003Ec__AnonStorey23E.invitation)
-					{
-						if (!_003CAcceptInvitation_003Ec__AnonStorey23E.invitation.Id().Equals(_003C_003Ef__ref_0024573.invitationId))
-						{
-							continue;
-						}
-						_003C_003Ef__this.mCurrentSession.MinPlayersToStart = _003CAcceptInvitation_003Ec__AnonStorey23E.invitation.AutomatchingSlots() + _003CAcceptInvitation_003Ec__AnonStorey23E.invitation.ParticipantCount();
-						Logger.d("Setting MinPlayersToStart with invitation to : " + _003C_003Ef__this.mCurrentSession.MinPlayersToStart);
-						_003CAcceptInvitation_003Ec__AnonStorey23F _003CAcceptInvitation_003Ec__AnonStorey23F = new _003CAcceptInvitation_003Ec__AnonStorey23F();
-						_003CAcceptInvitation_003Ec__AnonStorey23F._003C_003Ef__ref_0024572 = this;
-						_003CAcceptInvitation_003Ec__AnonStorey23F._003C_003Ef__ref_0024574 = _003CAcceptInvitation_003Ec__AnonStorey23E;
-						_003CAcceptInvitation_003Ec__AnonStorey23F.helper = HelperForSession(newRoom);
-						try
-						{
-							newRoom.StartRoomCreation(_003C_003Ef__this.mNativeClient.GetUserId(), _003CAcceptInvitation_003Ec__AnonStorey23F._003C_003Em__D5);
-							return;
-						}
-						finally
-						{
-							if (_003CAcceptInvitation_003Ec__AnonStorey23F.helper != null)
-							{
-								((IDisposable)_003CAcceptInvitation_003Ec__AnonStorey23F.helper).Dispose();
-							}
-						}
-					}
-				}
-				Logger.e("Room creation failed since we could not find invitation with ID " + _003C_003Ef__ref_0024573.invitationId);
-				newRoom.LeaveRoom();
+				return this.mState.GetConnectedParticipants();
 			}
-		}
 
-		[CompilerGenerated]
-		private sealed class _003CDeclineInvitation_003Ec__AnonStorey240
-		{
-			internal string invitationId;
-
-			internal NativeRealtimeMultiplayerClient _003C_003Ef__this;
-
-			internal void _003C_003Em__D1(RealtimeManager.FetchInvitationsResponse response)
+			public Invitation GetInvitation()
 			{
-				if (!response.RequestSucceeded())
+				return this.mInvitation;
+			}
+
+			internal virtual Participant GetParticipant(string participantId)
+			{
+				return this.mState.GetParticipant(participantId);
+			}
+
+			internal virtual Participant GetSelf()
+			{
+				return this.mState.GetSelf();
+			}
+
+			internal void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
+			{
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
+				try
 				{
-					Logger.e("Couldn't load invitations.");
-					return;
+					this.mState.HandleRoomResponse(response);
 				}
-				foreach (GooglePlayGames.Native.PInvoke.MultiplayerInvitation item in response.Invitations())
+				finally
 				{
-					using (item)
-					{
-						if (item.Id().Equals(invitationId))
-						{
-							_003C_003Ef__this.mRealtimeManager.DeclineInvitation(item);
-						}
-					}
+					Monitor.Exit(obj);
 				}
 			}
-		}
 
-		private readonly object mSessionLock = new object();
-
-		private readonly NativeClient mNativeClient;
-
-		private readonly RealtimeManager mRealtimeManager;
-
-		private volatile RoomSession mCurrentSession;
-
-		internal NativeRealtimeMultiplayerClient(NativeClient nativeClient, RealtimeManager manager)
-		{
-			mNativeClient = Misc.CheckNotNull(nativeClient);
-			mRealtimeManager = Misc.CheckNotNull(manager);
-			mCurrentSession = GetTerminatedSession();
-			PlayGamesHelperObject.AddPauseCallback(HandleAppPausing);
-		}
-
-		private RoomSession GetTerminatedSession()
-		{
-			RoomSession roomSession = new RoomSession(mRealtimeManager, new NoopListener());
-			roomSession.EnterState(new ShutdownState(roomSession), false);
-			return roomSession;
-		}
-
-		public void CreateQuickGame(uint minOpponents, uint maxOpponents, uint variant, RealTimeMultiplayerListener listener)
-		{
-			CreateQuickGame(minOpponents, maxOpponents, variant, 0uL, listener);
-		}
-
-		public void CreateQuickGame(uint minOpponents, uint maxOpponents, uint variant, ulong exclusiveBitMask, RealTimeMultiplayerListener listener)
-		{
-			lock (mSessionLock)
+			internal bool IsActive()
 			{
-				_003CCreateQuickGame_003Ec__AnonStorey232 _003CCreateQuickGame_003Ec__AnonStorey = new _003CCreateQuickGame_003Ec__AnonStorey232();
-				_003CCreateQuickGame_003Ec__AnonStorey._003C_003Ef__this = this;
-				_003CCreateQuickGame_003Ec__AnonStorey.newSession = new RoomSession(mRealtimeManager, listener);
-				if (mCurrentSession.IsActive())
-				{
-					Logger.e("Received attempt to create a new room without cleaning up the old one.");
-					_003CCreateQuickGame_003Ec__AnonStorey.newSession.LeaveRoom();
-					return;
-				}
-				mCurrentSession = _003CCreateQuickGame_003Ec__AnonStorey.newSession;
-				Logger.d("QuickGame: Setting MinPlayersToStart = " + minOpponents);
-				mCurrentSession.MinPlayersToStart = minOpponents;
-				using (RealtimeRoomConfigBuilder realtimeRoomConfigBuilder = RealtimeRoomConfigBuilder.Create())
-				{
-					_003CCreateQuickGame_003Ec__AnonStorey230 _003CCreateQuickGame_003Ec__AnonStorey2 = new _003CCreateQuickGame_003Ec__AnonStorey230();
-					_003CCreateQuickGame_003Ec__AnonStorey2._003C_003Ef__this = this;
-					_003CCreateQuickGame_003Ec__AnonStorey2.config = realtimeRoomConfigBuilder.SetMinimumAutomatchingPlayers(minOpponents).SetMaximumAutomatchingPlayers(maxOpponents).SetVariant(variant)
-						.SetExclusiveBitMask(exclusiveBitMask)
-						.Build();
-					using (_003CCreateQuickGame_003Ec__AnonStorey2.config)
-					{
-						_003CCreateQuickGame_003Ec__AnonStorey231 _003CCreateQuickGame_003Ec__AnonStorey3 = new _003CCreateQuickGame_003Ec__AnonStorey231();
-						_003CCreateQuickGame_003Ec__AnonStorey3._003C_003Ef__ref_0024562 = _003CCreateQuickGame_003Ec__AnonStorey;
-						_003CCreateQuickGame_003Ec__AnonStorey3._003C_003Ef__ref_0024560 = _003CCreateQuickGame_003Ec__AnonStorey2;
-						_003CCreateQuickGame_003Ec__AnonStorey3._003C_003Ef__this = this;
-						_003CCreateQuickGame_003Ec__AnonStorey3.helper = HelperForSession(_003CCreateQuickGame_003Ec__AnonStorey.newSession);
-						try
-						{
-							_003CCreateQuickGame_003Ec__AnonStorey.newSession.StartRoomCreation(mNativeClient.GetUserId(), _003CCreateQuickGame_003Ec__AnonStorey3._003C_003Em__C8);
-						}
-						finally
-						{
-							if (_003CCreateQuickGame_003Ec__AnonStorey3.helper != null)
-							{
-								((IDisposable)_003CCreateQuickGame_003Ec__AnonStorey3.helper).Dispose();
-							}
-						}
-					}
-				}
+				return this.mState.IsActive();
 			}
-		}
 
-		private static GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper HelperForSession(RoomSession session)
-		{
-			_003CHelperForSession_003Ec__AnonStorey233 _003CHelperForSession_003Ec__AnonStorey = new _003CHelperForSession_003Ec__AnonStorey233();
-			_003CHelperForSession_003Ec__AnonStorey.session = session;
-			return GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper.Create().SetOnDataReceivedCallback(_003CHelperForSession_003Ec__AnonStorey._003C_003Em__C9).SetOnParticipantStatusChangedCallback(_003CHelperForSession_003Ec__AnonStorey._003C_003Em__CA)
-				.SetOnRoomConnectedSetChangedCallback(_003CHelperForSession_003Ec__AnonStorey._003C_003Em__CB)
-				.SetOnRoomStatusChangedCallback(_003CHelperForSession_003Ec__AnonStorey._003C_003Em__CC);
-		}
-
-		private void HandleAppPausing(bool paused)
-		{
-			if (paused)
+			internal virtual bool IsRoomConnected()
 			{
-				Logger.d("Application is pausing, which disconnects the RTMP  client.  Leaving room.");
-				LeaveRoom();
+				return this.mState.IsRoomConnected();
 			}
-		}
 
-		public void CreateWithInvitationScreen(uint minOpponents, uint maxOppponents, uint variant, RealTimeMultiplayerListener listener)
-		{
-			_003CCreateWithInvitationScreen_003Ec__AnonStorey235 _003CCreateWithInvitationScreen_003Ec__AnonStorey = new _003CCreateWithInvitationScreen_003Ec__AnonStorey235();
-			_003CCreateWithInvitationScreen_003Ec__AnonStorey.variant = variant;
-			_003CCreateWithInvitationScreen_003Ec__AnonStorey._003C_003Ef__this = this;
-			lock (mSessionLock)
+			internal void LeaveRoom()
 			{
-				_003CCreateWithInvitationScreen_003Ec__AnonStorey234 _003CCreateWithInvitationScreen_003Ec__AnonStorey2 = new _003CCreateWithInvitationScreen_003Ec__AnonStorey234();
-				_003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Ef__ref_0024565 = _003CCreateWithInvitationScreen_003Ec__AnonStorey;
-				_003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Ef__this = this;
-				_003CCreateWithInvitationScreen_003Ec__AnonStorey2.newRoom = new RoomSession(mRealtimeManager, listener);
-				if (mCurrentSession.IsActive())
+				if (this.ShowingUI)
 				{
-					Logger.e("Received attempt to create a new room without cleaning up the old one.");
-					_003CCreateWithInvitationScreen_003Ec__AnonStorey2.newRoom.LeaveRoom();
+					Logger.d("Not leaving room since showing UI");
 				}
 				else
 				{
-					mCurrentSession = _003CCreateWithInvitationScreen_003Ec__AnonStorey2.newRoom;
-					mCurrentSession.ShowingUI = true;
-					mRealtimeManager.ShowPlayerSelectUI(minOpponents, maxOppponents, true, _003CCreateWithInvitationScreen_003Ec__AnonStorey2._003C_003Em__CD);
+					object obj = this.mLifecycleLock;
+					Monitor.Enter(obj);
+					try
+					{
+						this.mState.LeaveRoom();
+					}
+					finally
+					{
+						Monitor.Exit(obj);
+					}
 				}
 			}
-		}
 
-		public void ShowWaitingRoomUI()
-		{
-			lock (mSessionLock)
+			internal RealtimeManager Manager()
 			{
-				mCurrentSession.ShowWaitingRoomUI();
+				return this.mManager;
 			}
-		}
 
-		public void GetAllInvitations(Action<Invitation[]> callback)
-		{
-			_003CGetAllInvitations_003Ec__AnonStorey238 _003CGetAllInvitations_003Ec__AnonStorey = new _003CGetAllInvitations_003Ec__AnonStorey238();
-			_003CGetAllInvitations_003Ec__AnonStorey.callback = callback;
-			mRealtimeManager.FetchInvitations(_003CGetAllInvitations_003Ec__AnonStorey._003C_003Em__CE);
-		}
-
-		public void AcceptFromInbox(RealTimeMultiplayerListener listener)
-		{
-			lock (mSessionLock)
+			internal void OnConnectedSetChanged(NativeRealTimeRoom room)
 			{
-				_003CAcceptFromInbox_003Ec__AnonStorey239 _003CAcceptFromInbox_003Ec__AnonStorey = new _003CAcceptFromInbox_003Ec__AnonStorey239();
-				_003CAcceptFromInbox_003Ec__AnonStorey._003C_003Ef__this = this;
-				_003CAcceptFromInbox_003Ec__AnonStorey.newRoom = new RoomSession(mRealtimeManager, listener);
-				if (mCurrentSession.IsActive())
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
+				try
 				{
-					Logger.e("Received attempt to accept invitation without cleaning up active session.");
-					_003CAcceptFromInbox_003Ec__AnonStorey.newRoom.LeaveRoom();
+					this.mState.OnConnectedSetChanged(room);
 				}
-				else
+				finally
 				{
-					mCurrentSession = _003CAcceptFromInbox_003Ec__AnonStorey.newRoom;
-					mCurrentSession.ShowingUI = true;
-					mRealtimeManager.ShowRoomInboxUI(_003CAcceptFromInbox_003Ec__AnonStorey._003C_003Em__CF);
+					Monitor.Exit(obj);
 				}
 			}
-		}
 
-		public void AcceptInvitation(string invitationId, RealTimeMultiplayerListener listener)
-		{
-			_003CAcceptInvitation_003Ec__AnonStorey23D _003CAcceptInvitation_003Ec__AnonStorey23D = new _003CAcceptInvitation_003Ec__AnonStorey23D();
-			_003CAcceptInvitation_003Ec__AnonStorey23D.invitationId = invitationId;
-			_003CAcceptInvitation_003Ec__AnonStorey23D._003C_003Ef__this = this;
-			lock (mSessionLock)
+			internal void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
 			{
-				_003CAcceptInvitation_003Ec__AnonStorey23C _003CAcceptInvitation_003Ec__AnonStorey23C = new _003CAcceptInvitation_003Ec__AnonStorey23C();
-				_003CAcceptInvitation_003Ec__AnonStorey23C._003C_003Ef__ref_0024573 = _003CAcceptInvitation_003Ec__AnonStorey23D;
-				_003CAcceptInvitation_003Ec__AnonStorey23C._003C_003Ef__this = this;
-				_003CAcceptInvitation_003Ec__AnonStorey23C.newRoom = new RoomSession(mRealtimeManager, listener);
-				if (mCurrentSession.IsActive())
+				this.mState.OnDataReceived(room, sender, data, isReliable);
+			}
+
+			internal NativeRealtimeMultiplayerClient.OnGameThreadForwardingListener OnGameThreadListener()
+			{
+				return this.mListener;
+			}
+
+			internal void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			{
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
+				try
 				{
-					Logger.e("Received attempt to accept invitation without cleaning up active session.");
-					_003CAcceptInvitation_003Ec__AnonStorey23C.newRoom.LeaveRoom();
+					this.mState.OnParticipantStatusChanged(room, participant);
 				}
-				else
+				finally
 				{
-					mCurrentSession = _003CAcceptInvitation_003Ec__AnonStorey23C.newRoom;
-					mRealtimeManager.FetchInvitations(_003CAcceptInvitation_003Ec__AnonStorey23C._003C_003Em__D0);
+					Monitor.Exit(obj);
+				}
+			}
+
+			internal void OnRoomStatusChanged(NativeRealTimeRoom room)
+			{
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
+				try
+				{
+					this.mState.OnRoomStatusChanged(room);
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+
+			internal string SelfPlayerId()
+			{
+				return this.mCurrentPlayerId;
+			}
+
+			internal void SendMessage(bool reliable, string participantId, byte[] data)
+			{
+				this.SendMessage(reliable, participantId, data, 0, (int)data.Length);
+			}
+
+			internal void SendMessage(bool reliable, string participantId, byte[] data, int offset, int length)
+			{
+				this.mState.SendToSpecificRecipient(participantId, data, offset, length, reliable);
+			}
+
+			internal void SendMessageToAll(bool reliable, byte[] data)
+			{
+				this.SendMessageToAll(reliable, data, 0, (int)data.Length);
+			}
+
+			internal void SendMessageToAll(bool reliable, byte[] data, int offset, int length)
+			{
+				this.mState.SendToAll(data, offset, length, reliable);
+			}
+
+			public void SetInvitation(Invitation invitation)
+			{
+				this.mInvitation = invitation;
+			}
+
+			internal void ShowWaitingRoomUI()
+			{
+				this.mState.ShowWaitingRoomUI(this.MinPlayersToStart);
+			}
+
+			internal void StartRoomCreation(string currentPlayerId, Action createRoom)
+			{
+				object obj = this.mLifecycleLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!this.mStillPreRoomCreation)
+					{
+						Logger.e("Room creation started more than once, this shouldn't happen!");
+					}
+					else if (this.mState.IsActive())
+					{
+						this.mCurrentPlayerId = Misc.CheckNotNull<string>(currentPlayerId);
+						this.mStillPreRoomCreation = false;
+						this.EnterState(new NativeRealtimeMultiplayerClient.RoomCreationPendingState(this));
+						createRoom();
+					}
+					else
+					{
+						Logger.w("Received an attempt to create a room after the session was already torn down!");
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
 				}
 			}
 		}
 
-		public Invitation GetInvitation()
+		private class ShutdownState : NativeRealtimeMultiplayerClient.State
 		{
-			return mCurrentSession.GetInvitation();
+			private readonly NativeRealtimeMultiplayerClient.RoomSession mSession;
+
+			internal ShutdownState(NativeRealtimeMultiplayerClient.RoomSession session)
+			{
+				this.mSession = Misc.CheckNotNull<NativeRealtimeMultiplayerClient.RoomSession>(session);
+			}
+
+			internal override bool IsActive()
+			{
+				return false;
+			}
+
+			internal override void LeaveRoom()
+			{
+				this.mSession.OnGameThreadListener().LeftRoom();
+			}
 		}
 
-		public void LeaveRoom()
+		internal abstract class State
 		{
-			mCurrentSession.LeaveRoom();
-		}
+			protected State()
+			{
+			}
 
-		public void SendMessageToAll(bool reliable, byte[] data)
-		{
-			mCurrentSession.SendMessageToAll(reliable, data);
-		}
+			internal virtual List<Participant> GetConnectedParticipants()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".GetConnectedParticipants: Returning empty connected participants"));
+				return new List<Participant>();
+			}
 
-		public void SendMessageToAll(bool reliable, byte[] data, int offset, int length)
-		{
-			mCurrentSession.SendMessageToAll(reliable, data, offset, length);
-		}
+			internal virtual Participant GetParticipant(string participantId)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".GetSelf: Returning null participant."));
+				return null;
+			}
 
-		public void SendMessage(bool reliable, string participantId, byte[] data)
-		{
-			mCurrentSession.SendMessage(reliable, participantId, data);
-		}
+			internal virtual Participant GetSelf()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".GetSelf: Returning null self."));
+				return null;
+			}
 
-		public void SendMessage(bool reliable, string participantId, byte[] data, int offset, int length)
-		{
-			mCurrentSession.SendMessage(reliable, participantId, data, offset, length);
-		}
+			internal virtual void HandleRoomResponse(RealtimeManager.RealTimeRoomResponse response)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".HandleRoomResponse: Defaulting to no-op."));
+			}
 
-		public List<Participant> GetConnectedParticipants()
-		{
-			return mCurrentSession.GetConnectedParticipants();
-		}
+			internal virtual bool IsActive()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".IsNonPreemptable: Is preemptable by default."));
+				return true;
+			}
 
-		public Participant GetSelf()
-		{
-			return mCurrentSession.GetSelf();
-		}
+			internal virtual bool IsRoomConnected()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".IsRoomConnected: Returning room not connected."));
+				return false;
+			}
 
-		public Participant GetParticipant(string participantId)
-		{
-			return mCurrentSession.GetParticipant(participantId);
-		}
+			internal virtual void LeaveRoom()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".LeaveRoom: Defaulting to no-op."));
+			}
 
-		public bool IsRoomConnected()
-		{
-			return mCurrentSession.IsRoomConnected();
-		}
+			internal virtual void OnConnectedSetChanged(NativeRealTimeRoom room)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".OnConnectedSetChanged: Defaulting to no-op."));
+			}
 
-		public void DeclineInvitation(string invitationId)
-		{
-			_003CDeclineInvitation_003Ec__AnonStorey240 _003CDeclineInvitation_003Ec__AnonStorey = new _003CDeclineInvitation_003Ec__AnonStorey240();
-			_003CDeclineInvitation_003Ec__AnonStorey.invitationId = invitationId;
-			_003CDeclineInvitation_003Ec__AnonStorey._003C_003Ef__this = this;
-			mRealtimeManager.FetchInvitations(_003CDeclineInvitation_003Ec__AnonStorey._003C_003Em__D1);
-		}
+			internal virtual void OnDataReceived(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant sender, byte[] data, bool isReliable)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".OnDataReceived: Defaulting to no-op."));
+			}
 
-		private static T WithDefault<T>(T presented, T defaultValue) where T : class
-		{
-			return (presented == null) ? defaultValue : presented;
+			internal virtual void OnParticipantStatusChanged(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".OnParticipantStatusChanged: Defaulting to no-op."));
+			}
+
+			internal virtual void OnRoomStatusChanged(NativeRealTimeRoom room)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".OnRoomStatusChanged: Defaulting to no-op."));
+			}
+
+			internal virtual void OnStateEntered()
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".OnStateEntered: Defaulting to no-op."));
+			}
+
+			internal virtual void SendToAll(byte[] data, int offset, int length, bool isReliable)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".SendToApp: Defaulting to no-op."));
+			}
+
+			internal virtual void SendToSpecificRecipient(string recipientId, byte[] data, int offset, int length, bool isReliable)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".SendToSpecificRecipient: Defaulting to no-op."));
+			}
+
+			internal virtual void ShowWaitingRoomUI(uint minimumParticipantsBeforeStarting)
+			{
+				Logger.d(string.Concat(this.GetType().Name, ".ShowWaitingRoomUI: Defaulting to no-op."));
+			}
 		}
 	}
 }

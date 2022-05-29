@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public sealed class LeveUpPanelShowOptions
@@ -13,4 +14,8 @@ public sealed class LeveUpPanelShowOptions
 	public int GemsReward;
 
 	public bool ShareButtonEnabled;
+
+	public LeveUpPanelShowOptions()
+	{
+	}
 }

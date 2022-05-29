@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,15 +8,19 @@ public class EnableNotifier : MonoBehaviour
 
 	public bool isSoundFX;
 
+	public EnableNotifier()
+	{
+	}
+
 	private void OnEnable()
 	{
-		if (!isSoundFX)
+		if (!this.isSoundFX)
 		{
-			EventDelegate.Execute(onEnable);
+			EventDelegate.Execute(this.onEnable);
 		}
 		else if (Defs.isSoundFX)
 		{
-			EventDelegate.Execute(onEnable);
+			EventDelegate.Execute(this.onEnable);
 		}
 	}
 }

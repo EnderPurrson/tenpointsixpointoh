@@ -1,8 +1,10 @@
+using System;
+
 namespace FyberPlugin
 {
 	public enum UserConnection
 	{
-		wifi = 0,
-		three_g = 1
+		wifi,
+		three_g
 	}
 }

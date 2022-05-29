@@ -1,8 +1,18 @@
+using System;
+
 public class BtnBannerPereliv : ButtonBannerBase
 {
+	public BtnBannerPereliv()
+	{
+	}
+
 	public override bool BannerIsActive()
 	{
 		return MainMenuController.trafficForwardActive;
+	}
+
+	public override void OnChangeLocalize()
+	{
 	}
 
 	public override void OnClickButton()
@@ -15,10 +25,6 @@ public class BtnBannerPereliv : ButtonBannerBase
 	}
 
 	public override void OnShow()
-	{
-	}
-
-	public override void OnChangeLocalize()
 	{
 	}
 }

@@ -1,115 +1,25 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading;
 using com.amazon.device.iap.cpt;
+using ExitGames.Client.Photon;
 using Holoville.HOTween;
 using Rilisoft;
 using Rilisoft.MiniJson;
 using Rilisoft.NullExtensions;
 using RilisoftBot;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms;
 
 public sealed class Player_move_c : MonoBehaviour
 {
-	public enum TypeBonuses
-	{
-		Ammo = 0,
-		Health = 1,
-		Armor = 2,
-		Grenade = 3
-	}
-
-	public enum TypeKills
-	{
-		none = 0,
-		himself = 1,
-		headshot = 2,
-		explosion = 3,
-		zoomingshot = 4,
-		flag = 5,
-		grenade = 6,
-		grenade_hell = 7,
-		turret = 8,
-		killTurret = 9,
-		mech = 10,
-		like = 11
-	}
-
-	public struct SystemMessage
-	{
-		public string nick1;
-
-		public string message2;
-
-		public string nick2;
-
-		public string message;
-
-		public Color textColor;
-
-		public SystemMessage(string nick1, string message2, string nick2, string message, Color textColor)
-		{
-			this.nick1 = nick1;
-			this.message2 = message2;
-			this.nick2 = nick2;
-			this.message = message;
-			this.textColor = textColor;
-		}
-	}
-
-	public struct MessageChat
-	{
-		public string text;
-
-		public float time;
-
-		public int ID;
-
-		public int command;
-
-		public bool isClanMessage;
-
-		public Texture clanLogo;
-
-		public string clanID;
-
-		public string clanName;
-
-		public NetworkViewID IDLocal;
-
-		public string iconName;
-	}
-
-	public struct RayHitsInfo
-	{
-		public RaycastHit[] hits;
-
-		public bool obstacleFound;
-
-		public float lenRay;
-
-		public Ray rayReflect;
-	}
-
-	public delegate void OnMessagesUpdate();
-
-	[CompilerGenerated]
-	private sealed class _003CAddWeapon_003Ec__AnonStorey28F
-	{
-		internal GameObject weaponPrefab;
-
-		internal bool _003C_003Em__1FE(Weapon w)
-		{
-			return w.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor == weaponPrefab.GetComponent<WeaponSounds>().categoryNabor;
-		}
-	}
-
 	private const string keyKilledPlayerCharactersCount = "KilledPlayerCharactersCount";
 
 	private const string startShootAnimName = "Shoot_start";
@@ -282,21 +192,7 @@ public sealed class Player_move_c : MonoBehaviour
 
 	private int countMultyFlag;
 
-	private string[] iconShotName = new string[12]
-	{
-		string.Empty,
-		"Chat_Death",
-		"Chat_HeadShot",
-		"Chat_Explode",
-		"Chat_Sniper",
-		"Chat_Flag",
-		"Chat_grenade",
-		"Chat_grenade_hell",
-		"Chat_Turret",
-		"Chat_Turret_Explode",
-		string.Empty,
-		"Smile_1_15"
-	};
+	private string[] iconShotName = new string[] { string.Empty, "Chat_Death", "Chat_HeadShot", "Chat_Explode", "Chat_Sniper", "Chat_Flag", "Chat_grenade", "Chat_grenade_hell", "Chat_Turret", "Chat_Turret_Explode", string.Empty, "Smile_1_15" };
 
 	public bool isImVisible;
 
@@ -402,7 +298,7 @@ public sealed class Player_move_c : MonoBehaviour
 
 	public bool showRanks;
 
-	public SystemMessage[] killedSpisok = new SystemMessage[3];
+	public Player_move_c.SystemMessage[] killedSpisok = new Player_move_c.SystemMessage[3];
 
 	public GUIStyle combatRifleStyle;
 
@@ -494,7 +390,7 @@ public sealed class Player_move_c : MonoBehaviour
 
 	private bool isHunger;
 
-	public static float maxTimerShowMultyKill = 3f;
+	public static float maxTimerShowMultyKill;
 
 	public FlagController flag1;
 
@@ -557,7 +453,7 @@ public sealed class Player_move_c : MonoBehaviour
 
 	public int ScoreBoxOffset = 10;
 
-	public float[] timerShow = new float[3] { -1f, -1f, -1f };
+	public float[] timerShow = new float[] { -1f, -1f, -1f };
 
 	public AudioClip deadPlayerSound;
 
@@ -639,7 +535,7 @@ public sealed class Player_move_c : MonoBehaviour
 
 	public AudioClip clickShop;
 
-	public List<MessageChat> messages = new List<MessageChat>();
+	public List<Player_move_c.MessageChat> messages = new List<Player_move_c.MessageChat>();
 
 	public bool isSurvival;
 
@@ -773,172 +669,35 @@ public sealed class Player_move_c : MonoBehaviour
 
 	public bool isGrenadePress;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache147;
+	private Player_move_c.OnMessagesUpdate messageDelegate;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache148;
+	private EventHandler<EventArgs> WeaponChanged;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache149;
+	private Action<float> FreezerFired;
 
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cache14A;
-
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cache14B;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cache14D;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cache14E;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cache14F;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cache150;
-
-	public bool isPlacemarker
+	private float _curHealth
 	{
 		get
 		{
-			return _isPlacemarker;
+			return this._curHealthSalt.@value;
 		}
 		set
 		{
-			_isPlacemarker = value;
-			placemarkerMark.SetActive(value);
+			this._curHealthSalt.@value = value;
 		}
 	}
 
-	public float koofDamageWeaponFromPotoins
+	public NetworkView _networkView
 	{
-		get
-		{
-			return _koofDamageWeaponFromPotoins;
-		}
-		set
-		{
-			_koofDamageWeaponFromPotoins = value;
-		}
+		get;
+		set;
 	}
 
-	private float maxTimerRegenerationArmor
+	public static int _ShootRaycastLayerMask
 	{
 		get
 		{
-			return EffectsController.RegeneratingArmorTime;
-		}
-	}
-
-	public float[] byCatDamageModifs
-	{
-		get
-		{
-			return _byCatDamageModifs;
-		}
-	}
-
-	public int myCommand
-	{
-		get
-		{
-			return _myCommand;
-		}
-		set
-		{
-			_myCommand = value;
-			UpdateNickLabelColor();
-		}
-	}
-
-	public int countKills
-	{
-		get
-		{
-			return _killCount.Value;
-		}
-		set
-		{
-			_killCount.Value = value;
-		}
-	}
-
-	public KillerInfo killerInfo
-	{
-		get
-		{
-			return _killerInfo;
-		}
-	}
-
-	internal static bool NeedApply { get; set; }
-
-	internal static bool AnotherNeedApply { get; set; }
-
-	private float maxBaseArmor
-	{
-		get
-		{
-			return 9f + EffectsController.ArmorBonus;
-		}
-	}
-
-	private float CurrentBaseArmor
-	{
-		get
-		{
-			return _curBaseArmor;
-		}
-		set
-		{
-			_curBaseArmor = value;
-		}
-	}
-
-	public bool isInappWinOpen
-	{
-		get
-		{
-			return _isInappWinOpen;
-		}
-		set
-		{
-			_isInappWinOpen = value;
-			ShopNGUIController.GuiActive = value;
-			if (!(myCurrentWeaponSounds != null))
-			{
-				return;
-			}
-			if (PauseGUIController.Instance != null && PauseGUIController.Instance.IsPaused)
-			{
-				myCurrentWeaponSounds.animationObject.SetActive(false);
-			}
-			else
-			{
-				myCurrentWeaponSounds.animationObject.SetActive(!value);
-			}
-			if (myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
-			{
-				if (value)
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Stop();
-				}
-				else
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
-				}
-			}
-		}
-	}
-
-	public static int FontSizeForMessages
-	{
-		get
-		{
-			return Mathf.RoundToInt((float)Screen.height * 0.03f);
+			return -2053 & ~(1 << (LayerMask.NameToLayer("DamageCollider") & 31)) & ~(1 << (LayerMask.NameToLayer("TransparentFX") & 31));
 		}
 	}
 
@@ -946,11 +705,37 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			return ___weaponManager;
+			return this.___weaponManager;
 		}
 		set
 		{
-			___weaponManager = value;
+			this.___weaponManager = value;
+		}
+	}
+
+	internal static bool AnotherNeedApply
+	{
+		get;
+		set;
+	}
+
+	public float[] byCatDamageModifs
+	{
+		get
+		{
+			return this._byCatDamageModifs;
+		}
+	}
+
+	public int countKills
+	{
+		get
+		{
+			return this._killCount.Value;
+		}
+		set
+		{
+			this._killCount.Value = value;
 		}
 	}
 
@@ -958,11 +743,11 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			return _countKillsCommandBlue.Value;
+			return this._countKillsCommandBlue.Value;
 		}
 		set
 		{
-			_countKillsCommandBlue.Value = value;
+			this._countKillsCommandBlue.Value = value;
 		}
 	}
 
@@ -970,54 +755,87 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			return _countKillsCommandRed.Value;
+			return this._countKillsCommandRed.Value;
 		}
 		set
 		{
-			_countKillsCommandRed.Value = value;
+			this._countKillsCommandRed.Value = value;
 		}
 	}
 
-	public NetworkView _networkView { get; set; }
-
-	private Material mainDamageMaterial
+	public float curArmor
 	{
 		get
 		{
-			if (isMechActive)
-			{
-				curMainSelect = _mechMaterial;
-				return _mechMaterial;
-			}
-			if (isBearActive)
-			{
-				curMainSelect = _bearMaterial;
-				return _bearMaterial;
-			}
-			curMainSelect = _bodyMaterial;
-			return _bodyMaterial;
-		}
-	}
-
-	public bool isNeedTakePremiumAccountRewards { get; private set; }
-
-	public int GrenadeCount
-	{
-		get
-		{
-			return numberOfGrenades.Value;
+			return this.CurrentBaseArmor + this.CurrentBodyArmor + this.CurrentHatArmor;
 		}
 		set
 		{
-			numberOfGrenades.Value = value;
+			float currentHatArmor = this.curArmor - value;
+			if (currentHatArmor >= 0f)
+			{
+				if (this.CurrentHatArmor < currentHatArmor)
+				{
+					currentHatArmor -= this.CurrentHatArmor;
+					this.CurrentHatArmor = 0f;
+					if (this.CurrentBodyArmor < currentHatArmor)
+					{
+						currentHatArmor -= this.CurrentBodyArmor;
+						this.CurrentBodyArmor = 0f;
+						Player_move_c currentBaseArmor = this;
+						currentBaseArmor.CurrentBaseArmor = currentBaseArmor.CurrentBaseArmor - currentHatArmor;
+					}
+					else
+					{
+						Player_move_c currentBodyArmor = this;
+						currentBodyArmor.CurrentBodyArmor = currentBodyArmor.CurrentBodyArmor - currentHatArmor;
+					}
+				}
+				else
+				{
+					Player_move_c playerMoveC = this;
+					playerMoveC.CurrentHatArmor = playerMoveC.CurrentHatArmor - currentHatArmor;
+				}
+			}
+			else if (currentHatArmor < 0f)
+			{
+				currentHatArmor *= -1f;
+				if (this.WearedMaxArmor <= 0f)
+				{
+					currentHatArmor = 1f;
+				}
+				else
+				{
+					currentHatArmor = (this.WearedMaxArmor <= 5f ? this.WearedMaxArmor - this.WearedCurrentArmor : Mathf.Min(this.WearedMaxArmor - this.WearedCurrentArmor, this.WearedMaxArmor * 0.5f));
+				}
+				this.AddArmor(currentHatArmor);
+			}
 		}
 	}
 
-	private float WearedCurrentArmor
+	public float CurHealth
 	{
 		get
 		{
-			return CurrentBodyArmor + CurrentHatArmor;
+			return this._curHealth;
+		}
+		set
+		{
+			float single = this._curHealth - value;
+			Player_move_c playerMoveC = this;
+			playerMoveC._curHealth = playerMoveC._curHealth - single;
+		}
+	}
+
+	private float CurrentBaseArmor
+	{
+		get
+		{
+			return this._curBaseArmor;
+		}
+		set
+		{
+			this._curBaseArmor = value;
 		}
 	}
 
@@ -1025,9 +843,9 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			float value = 0f;
-			Wear.curArmor.TryGetValue(Storager.getString(Defs.ArmorNewEquppedSN, false) ?? string.Empty, out value);
-			return value;
+			float single = 0f;
+			Wear.curArmor.TryGetValue(Storager.getString(Defs.ArmorNewEquppedSN, false) ?? string.Empty, out single);
+			return single;
 		}
 		set
 		{
@@ -1042,9 +860,9 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			float value = 0f;
-			Wear.curArmor.TryGetValue(Storager.getString(Defs.HatEquppedSN, false) ?? string.Empty, out value);
-			return value;
+			float single = 0f;
+			Wear.curArmor.TryGetValue(Storager.getString(Defs.HatEquppedSN, false) ?? string.Empty, out single);
+			return single;
 		}
 		set
 		{
@@ -1055,11 +873,148 @@ public sealed class Player_move_c : MonoBehaviour
 		}
 	}
 
-	public static int _ShootRaycastLayerMask
+	public static int FontSizeForMessages
 	{
 		get
 		{
-			return -2053 & ~(1 << LayerMask.NameToLayer("DamageCollider")) & ~(1 << LayerMask.NameToLayer("TransparentFX"));
+			return Mathf.RoundToInt((float)Screen.height * 0.03f);
+		}
+	}
+
+	public int GrenadeCount
+	{
+		get
+		{
+			return this.numberOfGrenades.Value;
+		}
+		set
+		{
+			this.numberOfGrenades.Value = value;
+		}
+	}
+
+	public bool isInappWinOpen
+	{
+		get
+		{
+			return this._isInappWinOpen;
+		}
+		set
+		{
+			this._isInappWinOpen = value;
+			ShopNGUIController.GuiActive = value;
+			if (this.myCurrentWeaponSounds != null)
+			{
+				if (!(PauseGUIController.Instance != null) || !PauseGUIController.Instance.IsPaused)
+				{
+					this.myCurrentWeaponSounds.animationObject.SetActive(!value);
+				}
+				else
+				{
+					this.myCurrentWeaponSounds.animationObject.SetActive(false);
+				}
+				if (this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
+				{
+					if (!value)
+					{
+						this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
+					}
+					else
+					{
+						this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Stop();
+					}
+				}
+			}
+		}
+	}
+
+	private bool isNeedShowRespawnWindow
+	{
+		get
+		{
+			return (this.isHunger || Defs.isRegimVidosDebug || this._killerInfo.isSuicide || !Defs.isMulti ? false : !Defs.isCOOP);
+		}
+	}
+
+	public bool isNeedTakePremiumAccountRewards
+	{
+		get;
+		private set;
+	}
+
+	public bool isPlacemarker
+	{
+		get
+		{
+			return this._isPlacemarker;
+		}
+		set
+		{
+			this._isPlacemarker = value;
+			this.placemarkerMark.SetActive(value);
+		}
+	}
+
+	public KillerInfo killerInfo
+	{
+		get
+		{
+			return this._killerInfo;
+		}
+	}
+
+	public float koofDamageWeaponFromPotoins
+	{
+		get
+		{
+			return this._koofDamageWeaponFromPotoins;
+		}
+		set
+		{
+			this._koofDamageWeaponFromPotoins = value;
+		}
+	}
+
+	private Material mainDamageMaterial
+	{
+		get
+		{
+			if (this.isMechActive)
+			{
+				this.curMainSelect = this._mechMaterial;
+				return this._mechMaterial;
+			}
+			if (this.isBearActive)
+			{
+				this.curMainSelect = this._bearMaterial;
+				return this._bearMaterial;
+			}
+			this.curMainSelect = this._bodyMaterial;
+			return this._bodyMaterial;
+		}
+	}
+
+	public float MaxArmor
+	{
+		get
+		{
+			return this.maxBaseArmor + this.WearedMaxArmor;
+		}
+	}
+
+	private float maxBaseArmor
+	{
+		get
+		{
+			return 9f + EffectsController.ArmorBonus;
+		}
+	}
+
+	public float MaxHealth
+	{
+		get
+		{
+			return (!Defs.isMulti || !Defs.isHunger ? ExperienceController.HealthByLevel[(!Defs.isMulti || !(this.myNetworkStartTable != null) ? ExperienceController.sharedController.currentLevel : this.myNetworkStartTable.myRanks)] : ExperienceController.HealthByLevel[1]);
 		}
 	}
 
@@ -1071,80 +1026,38 @@ public sealed class Player_move_c : MonoBehaviour
 		}
 	}
 
-	private float _curHealth
+	private float maxTimerRegenerationArmor
 	{
 		get
 		{
-			return _curHealthSalt.value;
+			return EffectsController.RegeneratingArmorTime;
+		}
+	}
+
+	public int myCommand
+	{
+		get
+		{
+			return this._myCommand;
 		}
 		set
 		{
-			_curHealthSalt.value = value;
+			this._myCommand = value;
+			this.UpdateNickLabelColor();
 		}
 	}
 
-	public float CurHealth
+	internal static bool NeedApply
 	{
-		get
-		{
-			return _curHealth;
-		}
-		set
-		{
-			float num = _curHealth - value;
-			_curHealth -= num;
-		}
+		get;
+		set;
 	}
 
-	public float MaxHealth
+	private float WearedCurrentArmor
 	{
 		get
 		{
-			return (!Defs.isMulti || !Defs.isHunger) ? ExperienceController.HealthByLevel[(!Defs.isMulti || !(myNetworkStartTable != null)) ? ExperienceController.sharedController.currentLevel : myNetworkStartTable.myRanks] : ExperienceController.HealthByLevel[1];
-		}
-	}
-
-	public float curArmor
-	{
-		get
-		{
-			return CurrentBaseArmor + CurrentBodyArmor + CurrentHatArmor;
-		}
-		set
-		{
-			float num = curArmor - value;
-			if (num >= 0f)
-			{
-				if (CurrentHatArmor >= num)
-				{
-					CurrentHatArmor -= num;
-					return;
-				}
-				num -= CurrentHatArmor;
-				CurrentHatArmor = 0f;
-				if (CurrentBodyArmor >= num)
-				{
-					CurrentBodyArmor -= num;
-					return;
-				}
-				num -= CurrentBodyArmor;
-				CurrentBodyArmor = 0f;
-				CurrentBaseArmor -= num;
-			}
-			else if (num < 0f)
-			{
-				num *= -1f;
-				num = ((!(WearedMaxArmor > 0f)) ? 1f : ((!(WearedMaxArmor > 5f)) ? (WearedMaxArmor - WearedCurrentArmor) : Mathf.Min(WearedMaxArmor - WearedCurrentArmor, WearedMaxArmor * 0.5f)));
-				AddArmor(num);
-			}
-		}
-	}
-
-	public float MaxArmor
-	{
-		get
-		{
-			return maxBaseArmor + WearedMaxArmor;
+			return this.CurrentBodyArmor + this.CurrentHatArmor;
 		}
 	}
 
@@ -1152,1299 +1065,687 @@ public sealed class Player_move_c : MonoBehaviour
 	{
 		get
 		{
-			float num = Wear.MaxArmorForItem(Storager.getString(Defs.ArmorNewEquppedSN, false), TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			float num2 = Wear.MaxArmorForItem(Storager.getString(Defs.HatEquppedSN, false), TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			return num + num2;
+			float single = Wear.MaxArmorForItem(Storager.getString(Defs.ArmorNewEquppedSN, false), this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+			float single1 = Wear.MaxArmorForItem(Storager.getString(Defs.HatEquppedSN, false), this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+			return single + single1;
 		}
 	}
 
-	private bool isNeedShowRespawnWindow
+	static Player_move_c()
 	{
-		get
-		{
-			return !isHunger && !Defs.isRegimVidosDebug && !_killerInfo.isSuicide && Defs.isMulti && !Defs.isCOOP;
-		}
+		Player_move_c.maxTimerShowMultyKill = 3f;
 	}
 
-	public static event Action StopBlinkShop;
-
-	public event OnMessagesUpdate messageDelegate;
-
-	public event EventHandler<EventArgs> WeaponChanged;
-
-	public event Action<float> FreezerFired;
-
-	private void SaveKillRate()
+	public Player_move_c()
 	{
-		try
-		{
-			if (isMulti && !Defs.isHunger && !Defs.isCOOP && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None) && !Defs.IsSurvival)
-			{
-				Action<Dictionary<string, int>, Dictionary<string, Dictionary<int, int>>> action = _003CSaveKillRate_003Em__1FD;
-				action(weKillForKillRate, KillRateStatisticsManager.WeKillOld);
-				action(weWereKilledForKillRate, KillRateStatisticsManager.WeWereKilledOld);
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("version", GlobalGameController.AppVersion);
-				dictionary.Add("wekill", KillRateStatisticsManager.WeKillOld);
-				dictionary.Add("wewerekilled", KillRateStatisticsManager.WeWereKilledOld);
-				Dictionary<string, object> obj = dictionary;
-				Storager.setString("KillRateKeyStatistics", Json.Serialize(obj), false);
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in save kill rate statistics: " + ex);
-		}
 	}
 
-	private void AddWeKillStatisctics(string weaponName)
+	private void _DoHit(RaycastHit _hit, bool slowdown = false)
 	{
-		if (string.IsNullOrEmpty(weaponName))
+		bool flag = false;
+		if (_hit.transform.parent)
 		{
-			Debug.LogError("AddWeKillStatisctics string.IsNullOrEmpty (weaponName)");
-		}
-		else if (weKillForKillRate.ContainsKey(weaponName))
-		{
-			Dictionary<string, int> dictionary;
-			Dictionary<string, int> dictionary2 = (dictionary = weKillForKillRate);
-			string key;
-			string key2 = (key = weaponName);
-			int num = dictionary[key];
-			dictionary2[key2] = num + 1;
-		}
-		else
-		{
-			weKillForKillRate.Add(weaponName, 1);
-		}
-	}
-
-	private void AddWeWereKilledStatisctics(string weaponName)
-	{
-		if (string.IsNullOrEmpty(weaponName))
-		{
-			Debug.LogError("AddWeWereKilledStatisctics string.IsNullOrEmpty (weaponName)");
-		}
-		else if (weWereKilledForKillRate.ContainsKey(weaponName))
-		{
-			Dictionary<string, int> dictionary;
-			Dictionary<string, int> dictionary2 = (dictionary = weWereKilledForKillRate);
-			string key;
-			string key2 = (key = weaponName);
-			int num = dictionary[key];
-			dictionary2[key2] = num + 1;
-		}
-		else
-		{
-			weWereKilledForKillRate.Add(weaponName, 1);
-		}
-	}
-
-	private void UpdateNickLabelColor()
-	{
-		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
-		{
-			if (WeaponManager.sharedManager.myNetworkStartTable == null || WeaponManager.sharedManager.myNetworkStartTable.myCommand == 0)
+			if (_hit.transform.parent.CompareTag("Enemy"))
 			{
-				if (_nickColorInd != 0)
-				{
-					nickLabel.color = Color.white;
-					_nickColorInd = 0;
-				}
-			}
-			else if (WeaponManager.sharedManager.myNetworkStartTable.myCommand == myCommand)
-			{
-				if (_nickColorInd != 1)
-				{
-					nickLabel.color = Color.blue;
-					_nickColorInd = 1;
-				}
-			}
-			else if (_nickColorInd != 2)
-			{
-				nickLabel.color = Color.red;
-				_nickColorInd = 2;
-			}
-		}
-		else if (Defs.isDaterRegim)
-		{
-			if (_nickColorInd != 0)
-			{
-				nickLabel.color = Color.white;
-				_nickColorInd = 0;
-			}
-		}
-		else if (Defs.isCOOP)
-		{
-			if (_nickColorInd != 1)
-			{
-				nickLabel.color = Color.blue;
-				_nickColorInd = 1;
-			}
-		}
-		else if (_nickColorInd != 2)
-		{
-			nickLabel.color = Color.red;
-			_nickColorInd = 2;
-		}
-	}
-
-	public void IndicateDamage()
-	{
-		isDeadFrame = true;
-		Invoke("setisDeadFrameFalse", 1f);
-	}
-
-	private void AddArmor(float dt)
-	{
-		if (WearedMaxArmor > 0f)
-		{
-			float num = Wear.MaxArmorForItem(Storager.getString(Defs.ArmorNewEquppedSN, false), TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			float num2 = num - CurrentBodyArmor;
-			if (num2 < 0f)
-			{
-				num2 = 0f;
-			}
-			if (dt <= num2)
-			{
-				CurrentBodyArmor += dt;
+				flag = (_hit.collider.name == "HeadCollider" ? true : _hit.collider is SphereCollider);
+				this._HitEnemy(_hit.transform.parent.gameObject, flag, 0f);
 				return;
 			}
-			CurrentBodyArmor += num2;
-			dt -= num2;
-			float num3 = Wear.MaxArmorForItem(Storager.getString(Defs.HatEquppedSN, false), TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			float num4 = num3 - CurrentHatArmor;
-			if (num4 < 0f)
+			if (_hit.transform.parent.CompareTag("Player"))
 			{
-				num4 = 0f;
-			}
-			CurrentHatArmor += Mathf.Min(num4, dt);
-		}
-		else
-		{
-			float num5 = maxBaseArmor - CurrentBaseArmor;
-			if (num5 < 0f)
-			{
-				num5 = 0f;
-			}
-			if (dt <= num5)
-			{
-				CurrentBaseArmor += dt;
-			}
-			else
-			{
-				CurrentBaseArmor += num5;
+				flag = _hit.collider.name == "HeadCollider";
+				this._HitEnemy(_hit.transform.parent.gameObject, flag, 0f);
+				return;
 			}
 		}
+		flag = _hit.collider.name == "HeadCollider";
+		this._HitEnemy(_hit.transform.gameObject, flag, 0f);
 	}
 
-	private void Awake()
+	private void _FireFlash(bool isFlash = true, int numFlash = 0)
 	{
-		isSurvival = Defs.IsSurvival;
-		isMulti = Defs.isMulti;
-		isInet = Defs.isInet;
-		isCompany = Defs.isCompany;
-		isCOOP = Defs.isCOOP;
-		isHunger = Defs.isHunger;
-		if (isHunger)
-		{
-			GameObject gameObject = GameObject.FindGameObjectWithTag("HungerGameController");
-			if (gameObject == null)
-			{
-				Debug.LogError("hungerGameControllerObject == null");
-			}
-			else
-			{
-				hungerGameController = gameObject.GetComponent<HungerGameController>();
-			}
-		}
-		myCamera.fieldOfView = stdFov;
-	}
-
-	public void SetJetpackEnabled(bool _isEnabled)
-	{
-		Defs.isJetpackEnabled = _isEnabled;
-		if (Defs.isSoundFX && _isEnabled)
-		{
-			AudioSource component = GetComponent<AudioSource>();
-			if (component != null)
-			{
-				component.PlayOneShot(jetpackActivSound);
-			}
-		}
-		if (!Defs.isMulti)
+		if (this.myCurrentWeaponSounds.isLoopShoot)
 		{
 			return;
 		}
-		if (Defs.isInet)
+		if (this.isMulti)
 		{
-			if (photonView != null)
+			if (!this.isInet)
 			{
-				photonView.RPC("SetJetpackEnabledRPC", PhotonTargets.Others, _isEnabled);
-			}
-		}
-		else if (_networkView != null)
-		{
-			_networkView.RPC("SetJetpackEnabledRPC", RPCMode.Others, _isEnabled);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	public void SetJetpackEnabledRPC(bool _isEnabled)
-	{
-		if (Defs.isSoundFX && _isEnabled)
-		{
-			GetComponent<AudioSource>().PlayOneShot(jetpackActivSound);
-		}
-		if (Defs.isDaterRegim)
-		{
-			wingsPoint.SetActive(_isEnabled);
-			wingsPointBear.SetActive(_isEnabled);
-		}
-		else
-		{
-			jetPackPoint.SetActive(_isEnabled);
-			jetPackPointMech.SetActive(_isEnabled);
-		}
-		if (!_isEnabled)
-		{
-			for (int i = 0; i < jetPackParticle.Length; i++)
-			{
-				jetPackParticle[i].enableEmission = _isEnabled;
-			}
-		}
-	}
-
-	public void SetJetpackParticleEnabled(bool _isEnabled)
-	{
-		if (_isEnabled)
-		{
-			if (Defs.isDaterRegim)
-			{
-				isPlayerFlying = true;
-			}
-			if (ButtonClickSound.Instance != null && Defs.isSoundFX && !Defs.isDaterRegim)
-			{
-				jetPackSound.SetActive(true);
-			}
-		}
-		else if (Defs.isDaterRegim)
-		{
-			isPlayerFlying = false;
-		}
-		else
-		{
-			jetPackSound.SetActive(false);
-		}
-		if (Defs.isMulti)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("SetJetpackParticleEnabledRPC", PhotonTargets.Others, _isEnabled);
+				this._networkView.RPC("fireFlash", RPCMode.Others, new object[] { isFlash, numFlash });
 			}
 			else
 			{
-				_networkView.RPC("SetJetpackParticleEnabledRPC", RPCMode.Others, _isEnabled);
+				this.photonView.RPC("fireFlash", PhotonTargets.Others, new object[] { isFlash, numFlash });
 			}
 		}
 	}
 
-	[RPC]
-	[PunRPC]
-	public void SetJetpackParticleEnabledRPC(bool _isEnabled)
+	private void _FireFlashWithHole(bool _isBloodParticle, Vector3 _pos, Quaternion _rot, bool isFlash = true, int numFlash = 0)
 	{
-		if (_isEnabled)
+		if (this.isMulti && this.isInet)
 		{
-			if (Defs.isDaterRegim)
-			{
-				isPlayerFlying = true;
-			}
-			if (ButtonClickSound.Instance != null && Defs.isSoundFX && !Defs.isDaterRegim)
-			{
-				jetPackSound.SetActive(true);
-			}
-		}
-		else if (Defs.isDaterRegim)
-		{
-			isPlayerFlying = false;
-		}
-		else
-		{
-			jetPackSound.SetActive(false);
-		}
-		for (int i = 0; i < jetPackParticle.Length; i++)
-		{
-			jetPackParticle[i].enableEmission = _isEnabled;
+			this.photonView.RPC("fireFlashWithHole", PhotonTargets.Others, new object[] { _isBloodParticle, _pos, _rot, isFlash, numFlash });
 		}
 	}
 
-	[RPC]
-	[PunRPC]
-	private void SendChatMessageWithIcon(string text, bool _clanMode, string _clanLogo, string _ClanID, string _clanName, string _iconName)
+	private void _FireFlashWithManyHoles(bool[] _isBloodParticle, Vector3[] _pos, Quaternion[] _rot, bool isFlash = true, int numFlash = 0)
 	{
-		if ((!_clanMode || _ClanID.Equals(FriendsController.sharedController.ClanID)) && !(_weaponManager == null) && !(_weaponManager.myPlayerMoveC == null))
+		if (this.isMulti && this.isInet)
 		{
-			if (!isInet)
-			{
-				_weaponManager.myPlayerMoveC.AddMessage(text, Time.time, -1, myPlayerTransform.GetComponent<NetworkView>().viewID, 0, _clanLogo, _iconName);
-			}
-			else
-			{
-				_weaponManager.myPlayerMoveC.AddMessage(text, Time.time, mySkinName.photonView.viewID, myPlayerTransform.GetComponent<NetworkView>().viewID, myCommand, _clanLogo, _iconName);
-			}
+			this.photonView.RPC("fireFlashWithManyHoles", PhotonTargets.Others, new object[] { _isBloodParticle, _pos, _rot, isFlash, numFlash });
 		}
 	}
 
-	[PunRPC]
-	[RPC]
-	private void SendChatMessage(string text, bool _clanMode, string _clanLogo, string _ClanID, string _clanName)
+	private void _HitChest(GameObject go)
 	{
-		SendChatMessageWithIcon(text, _clanMode, _clanLogo, _ClanID, _clanName, string.Empty);
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		go.GetComponent<ChestController>().MinusLive(((float)weaponSound.damage + UnityEngine.Random.Range(weaponSound.damageRange.x, weaponSound.damageRange.y)) * (1f + this.koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1)));
 	}
 
-	public void SendChat(string text, bool clanMode, string iconName)
+	private void _HitEnemy(GameObject hitEnemy, bool headshot = false, float sqrDistance = 0)
 	{
-		text = (text.Equals("-=ATTACK!=-") ? LocalizationStore.Get("Key_1086") : (text.Equals("-=HELP!=-") ? LocalizationStore.Get("Key_1087") : (text.Equals("-=OK!=-") ? LocalizationStore.Get("Key_1088") : ((!text.Equals("-=NO!=-")) ? FilterBadWorld.FilterString(text) : LocalizationStore.Get("Key_1089")))));
-		if (!string.IsNullOrEmpty(text) || !string.IsNullOrEmpty(iconName))
+		int num;
+		string str = hitEnemy.tag;
+		if (str != null)
 		{
-			if (!isInet)
+			if (Player_move_c.u003cu003ef__switchu0024map8 == null)
 			{
-				_networkView.RPC("SendChatMessageWithIcon", RPCMode.All, "< " + _weaponManager.myNetworkStartTable.NamePlayer + " > " + text, clanMode, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName, iconName);
-			}
-			else
-			{
-				photonView.RPC("SendChatMessageWithIcon", PhotonTargets.All, "< " + _weaponManager.myNetworkStartTable.NamePlayer + " > " + text, clanMode, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName, iconName);
-			}
-		}
-	}
-
-	public void SendDaterChat(string nick1, string text, string nick2)
-	{
-		if (text != string.Empty)
-		{
-			if (!isInet)
-			{
-				_networkView.RPC("SendDaterChatRPC", RPCMode.All, nick1, text, nick2, false, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName);
-			}
-			else
-			{
-				photonView.RPC("SendDaterChatRPC", PhotonTargets.All, nick1, text, nick2, false, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName);
-			}
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void SendDaterChatRPC(string nick1, string text, string nick2, bool _clanMode, string _clanLogo, string _ClanID, string _clanName)
-	{
-		text = "< " + nick1 + "[-] > " + LocalizationStore.Get(text) + " < " + nick2 + "[-] >";
-		SendChatMessage(text, _clanMode, _clanLogo, _ClanID, _clanName);
-	}
-
-	public void AddMessage(string text, float time, int ID, NetworkViewID IDLocal, int _command, string clanLogo, string iconName)
-	{
-		MessageChat item = default(MessageChat);
-		item.text = text;
-		item.iconName = iconName;
-		item.time = time;
-		item.ID = ID;
-		item.IDLocal = IDLocal;
-		item.command = _command;
-		if (!string.IsNullOrEmpty(clanLogo))
-		{
-			byte[] data = Convert.FromBase64String(clanLogo);
-			Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
-			texture2D.LoadImage(data);
-			texture2D.filterMode = FilterMode.Point;
-			texture2D.Apply();
-			item.clanLogo = texture2D;
-		}
-		else
-		{
-			item.clanLogo = null;
-		}
-		messages.Add(item);
-		if (messages.Count > 30)
-		{
-			messages.RemoveAt(0);
-		}
-		OnMessagesUpdate onMessagesUpdate = this.messageDelegate;
-		if (onMessagesUpdate != null)
-		{
-			onMessagesUpdate();
-		}
-	}
-
-	public void WalkAnimation()
-	{
-		if (_singleOrMultiMine() || (Defs.isDaterRegim && isBearActive))
-		{
-			if ((isBearActive || isMechActive) && !mechGunAnimation.IsPlaying("Shoot"))
-			{
-				mechGunAnimation.CrossFade("Walk");
-			}
-			if ((bool)_weaponManager && (bool)_weaponManager.currentWeaponSounds && _weaponManager.currentWeaponSounds.animationObject != null)
-			{
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().CrossFade("Walk");
-			}
-		}
-	}
-
-	public void IdleAnimation()
-	{
-		if (_singleOrMultiMine() || (Defs.isDaterRegim && isBearActive))
-		{
-			if ((isBearActive || isMechActive) && !mechGunAnimation.IsPlaying("Shoot"))
-			{
-				mechGunAnimation.CrossFade("Idle");
-			}
-			if ((bool)___weaponManager && (bool)___weaponManager.currentWeaponSounds && ___weaponManager.currentWeaponSounds.animationObject != null)
-			{
-				___weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().CrossFade("Idle");
-			}
-		}
-	}
-
-	public void ZoomPress()
-	{
-		if (WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon)
-		{
-			return;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
-		{
-			showZoomHint = false;
-			HintController.instance.HideHintByName("use_zoom");
-		}
-		isZooming = !isZooming;
-		if (isZooming)
-		{
-			if (Defs.isSoundFX && _weaponManager.currentWeaponSounds.zoomIn != null)
-			{
-				GetComponent<AudioSource>().PlayOneShot(_weaponManager.currentWeaponSounds.zoomIn);
-			}
-			myCamera.fieldOfView = _weaponManager.currentWeaponSounds.fieldOfViewZomm;
-			gunCamera.gameObject.SetActive(false);
-			inGameGUI.SetScopeForWeapon(_weaponManager.currentWeaponSounds.scopeNum.ToString());
-			myTransform.localPosition = new Vector3(myTransform.localPosition.x, myTransform.localPosition.y, myTransform.localPosition.z);
-		}
-		else
-		{
-			if (Defs.isSoundFX && _weaponManager.currentWeaponSounds.zoomOut != null)
-			{
-				GetComponent<AudioSource>().PlayOneShot(_weaponManager.currentWeaponSounds.zoomOut);
-			}
-			myCamera.fieldOfView = stdFov;
-			gunCamera.fieldOfView = 75f;
-			gunCamera.gameObject.SetActive(true);
-			if (inGameGUI != null)
-			{
-				inGameGUI.ResetScope();
-			}
-		}
-		if (isMulti && isInet)
-		{
-			photonView.RPC("SynhIsZoming", PhotonTargets.All, isZooming);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void SynhIsZoming(bool _isZoomming)
-	{
-		isZooming = _isZoomming;
-	}
-
-	public void hideGUI()
-	{
-		showGUI = false;
-	}
-
-	public void setMyTamble(GameObject _myTable)
-	{
-		if (myTable == null || _myTable == null)
-		{
-			return;
-		}
-		NetworkStartTable component = myTable.GetComponent<NetworkStartTable>();
-		if (component == null)
-		{
-			return;
-		}
-		component.myPlayerMoveC = this;
-		myTable = _myTable;
-		myNetworkStartTable = myTable.GetComponent<NetworkStartTable>();
-		if (myNetworkStartTable == null)
-		{
-			return;
-		}
-		CurHealth = MaxHealth;
-		myCommand = myNetworkStartTable.myCommand;
-		if (Initializer.redPlayers.Contains(this) && myCommand == 1)
-		{
-			Initializer.redPlayers.Remove(this);
-		}
-		if (Initializer.bluePlayers.Contains(this) && myCommand == 2)
-		{
-			Initializer.bluePlayers.Remove(this);
-		}
-		if (myCommand == 1 && !Initializer.bluePlayers.Contains(this))
-		{
-			Initializer.bluePlayers.Add(this);
-		}
-		if (myCommand == 2 && !Initializer.redPlayers.Contains(this))
-		{
-			Initializer.redPlayers.Add(this);
-		}
-		_skin = myNetworkStartTable.mySkin;
-		SetTextureForBodyPlayer(_skin);
-		if (isMine)
-		{
-			if (FriendsController.useBuffSystem)
-			{
-				BuffSystem.instance.CheckForPlayerBuff();
-			}
-			else if (KillRateCheck.instance.buffEnabled)
-			{
-				SetupBuffParameters(KillRateCheck.instance.damageBuff, KillRateCheck.instance.healthBuff);
-			}
-			else
-			{
-				SetupBuffParameters(1f, 1f);
-			}
-		}
-		if (Defs.isMulti && Defs.isInet && myNetworkStartTable.myRanks < 4)
-		{
-			BonusController.sharedController.lowLevelPlayers.Add(photonView.ownerId);
-		}
-	}
-
-	public void SetupBuffParameters(float damage, float protection)
-	{
-		bool flag = damageBuff != damage || protectionBuff != protection;
-		SetBuffParameters(damage, protection);
-		if (flag && Defs.isMulti && Defs.isInet)
-		{
-			photonView.RPC("SendBuffParameters", PhotonTargets.Others, damageBuff, protectionBuff);
-		}
-	}
-
-	private void SetBuffParameters(float damage, float protection)
-	{
-		damageBuff = Mathf.Clamp(damage, 0.01f, 10f);
-		protectionBuff = Mathf.Clamp(protection, 0.01f, 10f);
-		Debug.Log(string.Format("<color=green>{0}Damage: {1}, Protection: {2}</color>", (!isMine) ? ("(" + mySkinName.NickName + ") ") : "(you) ", damageBuff, protectionBuff));
-	}
-
-	[PunRPC]
-	private void SendBuffParameters(float damage, float protection)
-	{
-		if (!isMine)
-		{
-			SetBuffParameters(damage, protection);
-		}
-	}
-
-	public void AddWeapon(GameObject weaponPrefab)
-	{
-		_003CAddWeapon_003Ec__AnonStorey28F _003CAddWeapon_003Ec__AnonStorey28F = new _003CAddWeapon_003Ec__AnonStorey28F();
-		_003CAddWeapon_003Ec__AnonStorey28F.weaponPrefab = weaponPrefab;
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			int num = WeaponManager.sharedManager.playerWeapons.OfType<Weapon>().ToList().FindIndex(_003CAddWeapon_003Ec__AnonStorey28F._003C_003Em__1FE);
-			if (num >= 0)
-			{
-				ChangeWeapon(num, false);
-			}
-			return;
-		}
-		int score;
-		if (_weaponManager.AddWeapon(_003CAddWeapon_003Ec__AnonStorey28F.weaponPrefab, out score))
-		{
-			ChangeWeapon(_weaponManager.CurrentWeaponIndex, false);
-			return;
-		}
-		if (ItemDb.IsWeaponCanDrop(ItemDb.GetByPrefabName(_003CAddWeapon_003Ec__AnonStorey28F.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag))
-		{
-			GlobalGameController.Score += score;
-			if (Defs.isSoundFX)
-			{
-				if (WeaponBonusClip != null)
+				Dictionary<string, int> strs = new Dictionary<string, int>(5)
 				{
-					base.gameObject.GetComponent<AudioSource>().PlayOneShot(WeaponBonusClip);
-				}
-				else
+					{ "Enemy", 0 },
+					{ "Player", 1 },
+					{ "Chest", 2 },
+					{ "Turret", 3 },
+					{ "DamagedExplosion", 4 }
+				};
+				Player_move_c.u003cu003ef__switchu0024map8 = strs;
+			}
+			if (Player_move_c.u003cu003ef__switchu0024map8.TryGetValue(str, out num))
+			{
+				switch (num)
 				{
-					base.gameObject.GetComponent<AudioSource>().PlayOneShot(ChangeWeaponClip);
-				}
-			}
-			return;
-		}
-		foreach (Weapon playerWeapon in _weaponManager.playerWeapons)
-		{
-			if (playerWeapon.weaponPrefab == _003CAddWeapon_003Ec__AnonStorey28F.weaponPrefab)
-			{
-				ChangeWeapon(_weaponManager.playerWeapons.IndexOf(playerWeapon), false);
-				break;
-			}
-		}
-	}
-
-	public void minusLiveFromZombi(float _minusLive, Vector3 posZombi)
-	{
-		photonView.RPC("minusLiveFromZombiRPC", PhotonTargets.All, _minusLive, posZombi);
-	}
-
-	[PunRPC]
-	[RPC]
-	public void StartFlashRPC()
-	{
-		StartCoroutine(Flash(myPlayerTransform.gameObject));
-	}
-
-	public void SendStartFlashMine()
-	{
-		if (!isInet)
-		{
-			_networkView.RPC("StartFlashRPC", RPCMode.All);
-		}
-		else
-		{
-			photonView.RPC("StartFlashRPC", PhotonTargets.All);
-		}
-	}
-
-	public void StartFlash(GameObject _obj)
-	{
-		StartCoroutine(Flash(_obj));
-	}
-
-	public static void SetLayerRecursively(GameObject obj, int newLayer)
-	{
-		if (null == obj)
-		{
-			return;
-		}
-		obj.layer = newLayer;
-		int childCount = obj.transform.childCount;
-		Transform transform = obj.transform;
-		for (int i = 0; i < childCount; i++)
-		{
-			Transform child = transform.GetChild(i);
-			if (!(null == child))
-			{
-				SetLayerRecursively(child.gameObject, newLayer);
-			}
-		}
-	}
-
-	public static void PerformActionRecurs(GameObject obj, Action<Transform> act)
-	{
-		if (act == null || null == obj)
-		{
-			return;
-		}
-		act(obj.transform);
-		int childCount = obj.transform.childCount;
-		Transform transform = obj.transform;
-		for (int i = 0; i < childCount; i++)
-		{
-			Transform child = transform.GetChild(i);
-			if (!(null == child))
-			{
-				PerformActionRecurs(child.gameObject, act);
-			}
-		}
-	}
-
-	public void ChangeWeapon(int index, bool shouldSetMaxAmmo = true)
-	{
-		if (index == 1001)
-		{
-			currentWeaponBeforeTurret = WeaponManager.sharedManager.CurrentWeaponIndex;
-		}
-		indexWeapon = index;
-		shouldSetMaxAmmoWeapon = shouldSetMaxAmmo;
-		StopCoroutine("ChangeWeaponCorutine");
-		StopCoroutine(BazookaShoot());
-		StartCoroutine("ChangeWeaponCorutine");
-		if (GetComponent<AudioSource>() != null && !isMechActive)
-		{
-			GetComponent<AudioSource>().Stop();
-		}
-	}
-
-	private IEnumerator ChangeWeaponCorutine()
-	{
-		_changingWeapon = true;
-		if (inGameGUI != null)
-		{
-			inGameGUI.StopAllCircularIndicators();
-		}
-		photonView.synchronization = ViewSynchronization.Off;
-		_networkView.stateSynchronization = NetworkStateSynchronization.Off;
-		if (!Defs.isTurretWeapon)
-		{
-			while (deltaAngle < 40f && !Defs.isTurretWeapon && !isMechActive)
-			{
-				deltaAngle += 300f * Time.deltaTime;
-				yield return null;
-			}
-		}
-		else
-		{
-			if (!isMechActive)
-			{
-				deltaAngle = 40f;
-			}
-			Defs.isTurretWeapon = false;
-		}
-		GameObject nw2 = null;
-		GameObject _weaponPrefab = ((indexWeapon == 1000) ? ((!Defs.isDaterRegim) ? grenadePrefab : likePrefab) : ((indexWeapon != 1001) ? ((Weapon)_weaponManager.playerWeapons[indexWeapon]).weaponPrefab : turretPrefab));
-		string innerPath = ResPath.Combine(Defs.InnerWeaponsFolder, _weaponPrefab.name.Replace("(Clone)", string.Empty) + Defs.InnerWeapons_Suffix);
-		LoadAsyncTool.ObjectRequest weaponRequest = LoadAsyncTool.Get(innerPath);
-		while (!weaponRequest.isDone)
-		{
-			yield return null;
-		}
-		nw2 = (GameObject)UnityEngine.Object.Instantiate(_weaponPrefab, Vector3.zero, Quaternion.identity);
-		nw2.GetComponent<WeaponSounds>().Initialize(weaponRequest.asset as GameObject);
-		ChangeWeaponReal(_weaponPrefab, nw2, indexWeapon, shouldSetMaxAmmoWeapon);
-		if (indexWeapon != 1001 && !isMechActive)
-		{
-			while (deltaAngle > 0f)
-			{
-				deltaAngle -= 300f * Time.deltaTime;
-				if (deltaAngle < 0f)
-				{
-					deltaAngle = -0.01f;
-				}
-				yield return null;
-			}
-		}
-		if (indexWeapon == 1001)
-		{
-			deltaAngle = 0f;
-		}
-		photonView.synchronization = ViewSynchronization.Unreliable;
-		_networkView.stateSynchronization = NetworkStateSynchronization.Unreliable;
-		_changingWeapon = false;
-	}
-
-	public void ChangeWeaponReal(int index, bool shouldSetMaxAmmo = true)
-	{
-		GameObject gameObject = null;
-		object obj;
-		switch (index)
-		{
-		case 1000:
-			obj = ((!Defs.isDaterRegim) ? grenadePrefab : likePrefab);
-			break;
-		case 1001:
-			obj = turretPrefab;
-			break;
-		default:
-			obj = ((Weapon)_weaponManager.playerWeapons[index]).weaponPrefab;
-			break;
-		}
-		GameObject gameObject2 = (GameObject)obj;
-		string path = ResPath.Combine(Defs.InnerWeaponsFolder, gameObject2.name.Replace("(Clone)", string.Empty) + Defs.InnerWeapons_Suffix);
-		GameObject pref = LoadAsyncTool.Get(path, true).asset as GameObject;
-		gameObject = (GameObject)UnityEngine.Object.Instantiate(gameObject2, Vector3.zero, Quaternion.identity);
-		gameObject.GetComponent<WeaponSounds>().Initialize(pref);
-		ChangeWeaponReal(gameObject2, gameObject, index, shouldSetMaxAmmo);
-	}
-
-	public void ChangeWeaponReal(GameObject _weaponPrefab, GameObject nw, int index, bool shouldSetMaxAmmo = true)
-	{
-		if (inGameGUI != null)
-		{
-			inGameGUI.StopAllCircularIndicators();
-		}
-		EventHandler<EventArgs> weaponChanged = this.WeaponChanged;
-		if (weaponChanged != null)
-		{
-			weaponChanged(this, EventArgs.Empty);
-		}
-		if (isZooming)
-		{
-			ZoomPress();
-		}
-		photonView = PhotonView.Get(this);
-		_networkView = GetComponent<NetworkView>();
-		Quaternion rotation = Quaternion.identity;
-		if ((bool)_player)
-		{
-			rotation = _player.transform.rotation;
-		}
-		ShotUnPressed(true);
-		if ((bool)_weaponManager.currentWeaponSounds)
-		{
-			rotation = _weaponManager.currentWeaponSounds.gameObject.transform.rotation;
-			_SetGunFlashActive(false);
-			_weaponManager.currentWeaponSounds.gameObject.transform.parent = null;
-			UnityEngine.Object.Destroy(_weaponManager.currentWeaponSounds.gameObject);
-			_weaponManager.currentWeaponSounds = null;
-		}
-		ResetShootingBurst();
-		myCurrentWeapon = nw;
-		myCurrentWeaponSounds = myCurrentWeapon.GetComponent<WeaponSounds>();
-		if (!ShopNGUIController.GuiActive && myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
-		}
-		if (myCurrentWeaponSounds.isDoubleShot && !isMechActive)
-		{
-			gunCamera.transform.localPosition = Vector3.zero;
-		}
-		else
-		{
-			gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
-		}
-		nw.transform.parent = base.gameObject.transform;
-		nw.transform.rotation = rotation;
-		myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
-		if (isMechActive)
-		{
-			myCurrentWeapon.SetActive(false);
-		}
-		if (Defs.isDaterRegim)
-		{
-			SetWeaponVisible(!isBearActive);
-		}
-		if (myCurrentWeaponSounds != null && PhotonNetwork.room != null)
-		{
-			Statistics.Instance.IncrementWeaponPopularity(LocalizationStore.GetByDefault(myCurrentWeaponSounds.localizeWeaponKey), false);
-			_weaponPopularityCacheIsDirty = true;
-		}
-		if (isMulti)
-		{
-			if (isInet)
-			{
-				photonView.RPC("SetWeaponRPC", PhotonTargets.Others, _weaponPrefab.name, _weaponPrefab.GetComponent<WeaponSounds>().alternativeName);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("SetWeaponRPC", RPCMode.OthersBuffered, _weaponPrefab.name, _weaponPrefab.GetComponent<WeaponSounds>().alternativeName);
-			}
-		}
-		if (index == 1000)
-		{
-			WeaponSounds component = _weaponPrefab.GetComponent<WeaponSounds>();
-			GameObject rocket = RocketStack.sharedController.GetRocket();
-			if (rocket != null)
-			{
-				Rocket component2 = rocket.GetComponent<Rocket>();
-				component2.rocketNum = ((!Defs.isDaterRegim) ? 10 : 40);
-				component2.weaponName = ((!Defs.isDaterRegim) ? "WeaponGrenade" : "WeaponLike");
-				component2.weaponPrefabName = component2.weaponName;
-				component2.damage = (float)component.damage * (1f + koofDamageWeaponFromPotoins + EffectsController.GrenadeExplosionDamageIncreaseCoef);
-				component2.radiusDamage = component.bazookaExplosionRadius * EffectsController.GrenadeExplosionRadiusIncreaseCoef;
-				component2.radiusDamageSelf = component.bazookaExplosionRadiusSelf;
-				component2.radiusImpulse = component.bazookaImpulseRadius * (1f + EffectsController.ExplosionImpulseRadiusIncreaseCoef);
-				component2.impulseForce = component.impulseForce;
-				component2.impulseForceSelf = component.impulseForceSelf;
-				component2.damageRange = component.damageRange * (1f + koofDamageWeaponFromPotoins);
-				float num = ((ExpController.Instance != null && ExpController.Instance.OurTier < component.DamageByTier.Length) ? component.DamageByTier[TierOrRoomTier(ExpController.Instance.OurTier)] : ((component.DamageByTier.Length <= 0) ? 0f : component.DamageByTier[0]));
-				component2.multiplayerDamage = num * (1f + koofDamageWeaponFromPotoins + EffectsController.GrenadeExplosionDamageIncreaseCoef);
-				rocket.GetComponent<Rigidbody>().useGravity = false;
-				rocket.GetComponent<Rigidbody>().isKinematic = true;
-				component2.SendSetRocketActiveRPC();
-				if (Defs.isMulti && !Defs.isInet)
-				{
-					component2.SendNetworkViewMyPlayer(myPlayerTransform.GetComponent<NetworkView>().viewID);
-				}
-			}
-			currentGrenade = rocket;
-		}
-		if (index == 1001)
-		{
-			Defs.isTurretWeapon = true;
-			turretUpgrade = GearManager.CurrentNumberOfUphradesForGear(GearManager.Turret);
-			if (isMulti)
-			{
-				if (isInet)
-				{
-					photonView.RPC("SyncTurretUpgrade", PhotonTargets.Others, turretUpgrade);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("SyncTurretUpgrade", RPCMode.Others, turretUpgrade);
-				}
-			}
-			GameObject gameObject;
-			if (isMulti)
-			{
-				if (!isInet)
-				{
-					UnityEngine.Object prefab = Resources.Load((!Defs.isDaterRegim) ? "Turret" : "MusicBox");
-					gameObject = (GameObject)Network.Instantiate(prefab, new Vector3(-10000f, -10000f, -10000f), base.transform.rotation, 0);
-				}
-				else
-				{
-					gameObject = PhotonNetwork.Instantiate((!Defs.isDaterRegim) ? "Turret" : "MusicBox", new Vector3(-10000f, -10000f, -10000f), base.transform.rotation, 0);
-				}
-			}
-			else
-			{
-				GameObject original = Resources.Load((!Defs.isDaterRegim) ? "Turret" : "MusicBox") as GameObject;
-				gameObject = UnityEngine.Object.Instantiate(original, new Vector3(-10000f, -10000f, -10000f), base.transform.rotation) as GameObject;
-			}
-			if (gameObject != null)
-			{
-				TurretController component3 = gameObject.GetComponent<TurretController>();
-				gameObject.GetComponent<Rigidbody>().useGravity = false;
-				gameObject.GetComponent<Rigidbody>().isKinematic = true;
-				if (Defs.isMulti && !Defs.isInet)
-				{
-					component3.SendNetworkViewMyPlayer(myPlayerTransform.GetComponent<NetworkView>().viewID);
-				}
-			}
-			currentTurret = gameObject;
-		}
-		GameObject gameObject2 = null;
-		if (!myCurrentWeaponSounds.isMelee)
-		{
-			foreach (Transform item in nw.transform)
-			{
-				if (item.gameObject.name.Equals("BulletSpawnPoint") && item.childCount > 0)
-				{
-					gameObject2 = item.GetChild(0).gameObject;
-					WeaponManager.SetGunFlashActive(gameObject2, false);
-					break;
-				}
-			}
-		}
-		SetTextureForBodyPlayer(_skin);
-		SetLayerRecursively(nw, 9);
-		_weaponManager.currentWeaponSounds = myCurrentWeaponSounds;
-		if (index < 1000)
-		{
-			_weaponManager.CurrentWeaponIndex = index;
-			_weaponManager.SaveWeaponAsLastUsed(_weaponManager.CurrentWeaponIndex);
-			if (inGameGUI != null)
-			{
-				if (_weaponManager.currentWeaponSounds.isMelee && !_weaponManager.currentWeaponSounds.isShotMelee && !isMechActive)
-				{
-					inGameGUI.fireButtonSprite.spriteName = "controls_strike";
-					inGameGUI.fireButtonSprite2.spriteName = "controls_strike";
-				}
-				else
-				{
-					inGameGUI.fireButtonSprite.spriteName = "controls_fire";
-					inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
-				}
-			}
-		}
-		if (nw.transform.parent == null)
-		{
-			Debug.LogWarning("nw.transform.parent == null");
-		}
-		else if (_weaponManager.currentWeaponSounds == null)
-		{
-			Debug.LogWarning("_weaponManager.currentWeaponSounds == null");
-		}
-		else
-		{
-			nw.transform.position = nw.transform.parent.TransformPoint(_weaponManager.currentWeaponSounds.gunPosition);
-		}
-		TouchPadController rightJoystick = JoystickController.rightJoystick;
-		if (index < 1000 && rightJoystick != null)
-		{
-			if (((Weapon)_weaponManager.playerWeapons[index]).currentAmmoInClip > 0 || (_weaponManager.currentWeaponSounds.isMelee && !_weaponManager.currentWeaponSounds.isShotMelee))
-			{
-				rightJoystick.HasAmmo();
-				if (inGameGUI != null)
-				{
-					inGameGUI.BlinkNoAmmo(0);
-				}
-			}
-			else
-			{
-				rightJoystick.NoAmmo();
-				if (inGameGUI != null)
-				{
-					inGameGUI.BlinkNoAmmo(1);
-				}
-			}
-		}
-		if (_weaponManager.currentWeaponSounds.animationObject != null)
-		{
-			if (_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
-			{
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
-			}
-			if (!_weaponManager.currentWeaponSounds.isDoubleShot)
-			{
-				if (_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
-				{
-					_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
-				}
-			}
-			else
-			{
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
-			}
-		}
-		if (!_weaponManager.currentWeaponSounds.isMelee)
-		{
-			foreach (Transform item2 in _weaponManager.currentWeaponSounds.gameObject.transform)
-			{
-				if (item2.name.Equals("BulletSpawnPoint"))
-				{
-					_bulletSpawnPoint = item2.gameObject;
-					break;
-				}
-			}
-			GunFlash = _bulletSpawnPoint.transform.GetChild(0);
-		}
-		if (Defs.isSoundFX && !Defs.isDaterRegim && !isMechActive)
-		{
-			base.gameObject.GetComponent<AudioSource>().PlayOneShot((index != 1000) ? ChangeWeaponClip : ChangeGrenadeClip);
-		}
-		if (!Defs.isDaterRegim && isInvisible)
-		{
-			SetInVisibleShaders(isInvisible);
-		}
-		if (inGameGUI != null)
-		{
-			if (isMechActive)
-			{
-				inGameGUI.SetCrosshair(mechWeaponSounds);
-			}
-			else
-			{
-				inGameGUI.SetCrosshair(_weaponManager.currentWeaponSounds);
-			}
-		}
-		UpdateEffectsForCurrentWeapon(mySkinName.currentCape, mySkinName.currentMask, mySkinName.currentHat);
-		if (myCurrentWeaponSounds.isZooming && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showZoomHint)
-		{
-			Invoke("TrainingShowZoomHint", 3f);
-		}
-	}
-
-	private void TrainingShowZoomHint()
-	{
-		if (myCurrentWeaponSounds.isZooming && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showZoomHint)
-		{
-			HintController.instance.ShowHintByName("use_zoom", 0f);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private IEnumerator SetWeaponRPC(string _nameWeapon, string _alternativeNameWeapon)
-	{
-		isWeaponSet = true;
-		GameObject _weapon = null;
-		if (_nameWeapon.Equals("WeaponGrenade"))
-		{
-			_weapon = grenadePrefab;
-			currentWeapon = null;
-		}
-		else if (_nameWeapon.Equals("WeaponLike"))
-		{
-			_weapon = likePrefab;
-			currentWeapon = null;
-		}
-		else if (_nameWeapon.Equals("WeaponTurret"))
-		{
-			_weapon = turretPrefab;
-			currentWeapon = null;
-		}
-		else
-		{
-			if (_nameWeapon != null && _alternativeNameWeapon != null && WeaponManager.Removed150615_PrefabNames.Contains(_nameWeapon))
-			{
-				_nameWeapon = _alternativeNameWeapon;
-			}
-			_weapon = Resources.Load("Weapons/" + _nameWeapon) as GameObject;
-			if (_weapon != null)
-			{
-				WeaponSounds ws = _weapon.GetComponent<WeaponSounds>();
-				if (ws != null && ws.tier > 100)
-				{
-					_weapon = null;
-				}
-			}
-			if (_weapon != null)
-			{
-				currentWeapon = ItemDb.GetByPrefabName(_weapon.name.Replace("(Clone)", string.Empty)).Tag;
-			}
-		}
-		if (_weapon == null)
-		{
-			_weapon = Resources.Load("Weapons/" + _alternativeNameWeapon) as GameObject;
-			if (_weapon != null)
-			{
-				currentWeapon = ItemDb.GetByPrefabName(_weapon.name.Replace("(Clone)", string.Empty)).Tag;
-			}
-		}
-		if (_nameWeapon.Equals("WeaponGrenade") && Defs.isSoundFX && !Defs.isDaterRegim)
-		{
-			base.gameObject.GetComponent<AudioSource>().PlayOneShot(ChangeGrenadeClip);
-		}
-		if (_weapon != null)
-		{
-			GameObject nw2 = null;
-			string innerPath = ResPath.Combine(Defs.InnerWeaponsFolder, _weapon.name.Replace("(Clone)", string.Empty) + Defs.InnerWeapons_Suffix);
-			LoadAsyncTool.ObjectRequest weaponRequest = LoadAsyncTool.Get(innerPath, _nameWeapon.Equals("WeaponTurret"));
-			while (!weaponRequest.isDone)
-			{
-				yield return null;
-			}
-			nw2 = (GameObject)UnityEngine.Object.Instantiate(_weapon, Vector3.zero, Quaternion.identity);
-			nw2.GetComponent<WeaponSounds>().Initialize(weaponRequest.asset as GameObject);
-			if (isMechActive)
-			{
-				nw2.SetActive(false);
-			}
-			myCurrentWeapon = nw2;
-			myCurrentWeaponSounds = myCurrentWeapon.GetComponent<WeaponSounds>();
-			if (myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
-			{
-				myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
-			}
-			if (Defs.isDaterRegim)
-			{
-				SetWeaponVisible(!isBearActive);
-			}
-			GunFlash = myCurrentWeaponSounds.gunFlash;
-			Transform ap = mySkinName.armorPoint.transform;
-			if (ap.childCount > 0)
-			{
-				ArmorRefs ar = ap.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
-				ar.leftBone.GetComponent<SetPosInArmor>().target = myCurrentWeaponSounds.LeftArmorHand;
-				ar.rightBone.GetComponent<SetPosInArmor>().target = myCurrentWeaponSounds.RightArmorHand;
-			}
-			foreach (Transform ch in base.transform)
-			{
-				UnityEngine.Object.Destroy(ch.gameObject);
-			}
-			nw2.transform.parent = base.gameObject.transform;
-			GameObject _gunFlashTemp2 = null;
-			nw2.transform.position = Vector3.zero;
-			if (!myCurrentWeaponSounds.isMelee)
-			{
-				foreach (Transform chaild in nw2.transform)
-				{
-					if (chaild.gameObject.name.Equals("BulletSpawnPoint") && chaild.childCount > 0)
+					case 0:
 					{
-						_gunFlashTemp2 = chaild.GetChild(0).gameObject;
-						WeaponManager.SetGunFlashActive(_gunFlashTemp2, false);
+						this._HitZombie(hitEnemy.transform.GetChild(0).gameObject, headshot, sqrDistance);
+						break;
+					}
+					case 1:
+					{
+						this._HitPlayer(hitEnemy, headshot, sqrDistance);
+						break;
+					}
+					case 2:
+					{
+						this._HitChest(hitEnemy);
+						break;
+					}
+					case 3:
+					{
+						this._HitTurret(hitEnemy, sqrDistance);
+						break;
+					}
+					case 4:
+					{
+						float damageForBotsAndExplosionObjects = this.GetDamageForBotsAndExplosionObjects(false);
+						if (((!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds)).isCharging)
+						{
+							damageForBotsAndExplosionObjects *= this.chargeValue;
+						}
+						DamagedExplosionObject.TryApplyDamageToObject(hitEnemy, damageForBotsAndExplosionObjects);
 						break;
 					}
 				}
 			}
-			if (base.transform.FindChild("BulletSpawnPoint") != null)
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _HitEnemyWithDelay(GameObject hitEnemy, float time, bool headshot = false)
+	{
+		Player_move_c.u003c_HitEnemyWithDelayu003ec__IteratorE8 variable = null;
+		return variable;
+	}
+
+	private void _HitPlayer(GameObject plr, bool isHeadShot, float sqrDistance)
+	{
+		Player_move_c.TypeKills typeKill;
+		PlayerEventScoreController.ScoreEvent scoreEvent;
+		string str;
+		float damageByTier;
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		Player_move_c component = plr.GetComponent<SkinName>().playerMoveC;
+		float single = 1f;
+		if (isHeadShot)
+		{
+			isHeadShot = UnityEngine.Random.Range(0f, 1f) >= component._chanceToIgnoreHeadshot;
+		}
+		if (isHeadShot)
+		{
+			single = 2f;
+			if (!this.isMechActive)
 			{
-				_bulletSpawnPoint = base.transform.FindChild("BulletSpawnPoint").gameObject;
+				single += EffectsController.AddingForHeadshot(weaponSound.categoryNabor - 1);
 			}
-			base.transform.localPosition = new Vector3(0f, 0.4f, 0f);
-			nw2.transform.localPosition = new Vector3(0f, -1.4f, 0f);
-			nw2.transform.rotation = base.transform.rotation;
-			SetTextureForBodyPlayer(_skin);
 		}
-		UpdateEffectsForCurrentWeapon(mySkinName.currentCape, mySkinName.currentMask, mySkinName.currentHat);
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void SetStealthModifier()
-	{
-		if (!(_player != null))
+		if (this.isMulti && !this.isCOOP && !this.isCompany && !Defs.isFlag && !Defs.isCapturePoints || (this.isCompany || Defs.isFlag || Defs.isCapturePoints) && this.myCommand != component.myCommand)
 		{
-		}
-	}
-
-	public bool NeedAmmo()
-	{
-		if (_weaponManager == null)
-		{
-			return false;
-		}
-		int currentWeaponIndex = _weaponManager.CurrentWeaponIndex;
-		Weapon weapon = (Weapon)_weaponManager.playerWeapons[currentWeaponIndex];
-		return weapon.currentAmmoInBackpack < _weaponManager.currentWeaponSounds.MaxAmmoWithEffectApplied;
-	}
-
-	private void SwitchPause()
-	{
-		if (CurHealth > 0f)
-		{
-			SetPause();
-		}
-	}
-
-	private void ShopPressed()
-	{
-		ShotUnPressed(true);
-		JoystickController.rightJoystick.jumpPressed = false;
-		JoystickController.leftTouchPad.isJumpPressed = false;
-		JoystickController.rightJoystick.Reset();
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			if (TrainingController.stepTrainingList.ContainsKey("InterTheShop"))
+			if (!Defs.isDaterRegim || !weaponSound.isDaterWeapon)
 			{
-				TrainingController.isNextStep = TrainingState.EnterTheShop;
-				if (Player_move_c.StopBlinkShop != null)
+				if (this.isMechActive)
 				{
-					Player_move_c.StopBlinkShop();
+					typeKill = Player_move_c.TypeKills.mech;
+				}
+				else if (!isHeadShot)
+				{
+					typeKill = (!this.isZooming ? Player_move_c.TypeKills.none : Player_move_c.TypeKills.zoomingshot);
+				}
+				else
+				{
+					typeKill = Player_move_c.TypeKills.headshot;
+				}
+				Player_move_c.TypeKills typeKill1 = typeKill;
+				float multyDamage = 0f;
+				if (!weaponSound.isRoundMelee)
+				{
+					multyDamage = this.GetMultyDamage() * single * (1f + this.koofDamageWeaponFromPotoins + (!this.isMechActive ? EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1) : 0f));
+				}
+				else
+				{
+					if (!(ExpController.Instance != null) || ExpController.Instance.OurTier >= (int)weaponSound.DamageByTier.Length)
+					{
+						damageByTier = ((int)weaponSound.DamageByTier.Length <= 0 ? 0f : weaponSound.DamageByTier[0]);
+					}
+					else
+					{
+						damageByTier = weaponSound.DamageByTier[this.TierOrRoomTier(ExpController.Instance.OurTier)];
+					}
+					float single1 = damageByTier;
+					float single2 = single1 * 0.7f;
+					float single3 = single1;
+					multyDamage = (single2 + (single3 - single2) * (1f - sqrDistance / (weaponSound.radiusRoundMelee * weaponSound.radiusRoundMelee))) * (1f + this.koofDamageWeaponFromPotoins + (!this.isMechActive ? EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1) : 0f));
+				}
+				if (weaponSound.isCharging)
+				{
+					multyDamage *= this.chargeValue;
+				}
+				PlayerScoreController playerScoreController = this.myScoreController;
+				if (!component.isMechActive)
+				{
+					scoreEvent = (!isHeadShot ? PlayerEventScoreController.ScoreEvent.damageBody : PlayerEventScoreController.ScoreEvent.damageHead);
+				}
+				else
+				{
+					scoreEvent = (!isHeadShot ? PlayerEventScoreController.ScoreEvent.damageMechBody : PlayerEventScoreController.ScoreEvent.damageMechHead);
+				}
+				playerScoreController.AddScoreOnEvent(scoreEvent, multyDamage);
+				if (this.isInet)
+				{
+					component.MinusLive(this.myPlayerID, multyDamage, typeKill1, (int)weaponSound.typeDead, (!this.isMechActive ? weaponSound.gameObject.name.Replace("(Clone)", string.Empty) : "Chat_Mech"), 0);
+				}
+				else
+				{
+					Player_move_c playerMoveC = component;
+					NetworkViewID networkViewID = this.myPlayerIDLocal;
+					float single4 = multyDamage;
+					Player_move_c.TypeKills typeKill2 = typeKill1;
+					WeaponSounds.TypeDead typeDead = weaponSound.typeDead;
+					str = (!this.isMechActive ? weaponSound.gameObject.name.Replace("(Clone)", string.Empty) : "Chat_Mech");
+					NetworkViewID networkViewID1 = new NetworkViewID();
+					playerMoveC.MinusLive(networkViewID, single4, typeKill2, (int)typeDead, str, networkViewID1);
 				}
 			}
 			else
 			{
-				TrainingController.isNextStep = TrainingState.TapToShoot;
-			}
-		}
-		if (CurHealth > 0f)
-		{
-			SetInApp();
-			SetPause(false);
-			if (Defs.isSoundFX)
-			{
-				NGUITools.PlaySound(clickShop);
+				component.SendDaterChat(this.mySkinName.NickName, weaponSound.daterMessage, component.mySkinName.NickName);
 			}
 		}
 	}
 
-	public void PlayPortalSound()
+	private void _HitTurret(GameObject _turret, float sqrDistance)
 	{
-		if (Defs.isMulti)
+		float damageByTier;
+		if (Defs.isCOOP)
 		{
-			if (Defs.isInet)
+			return;
+		}
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		TurretController component = _turret.GetComponent<TurretController>();
+		if (!component.isEnemyTurret)
+		{
+			return;
+		}
+		float multyDamage = 0f;
+		if (!weaponSound.isRoundMelee)
+		{
+			multyDamage = this.GetMultyDamage() * (1f + this.koofDamageWeaponFromPotoins);
+		}
+		else
+		{
+			if (!(ExpController.Instance != null) || ExpController.Instance.OurTier >= (int)weaponSound.DamageByTier.Length)
 			{
-				photonView.RPC("PlayPortalSoundRPC", PhotonTargets.All);
+				damageByTier = ((int)weaponSound.DamageByTier.Length <= 0 ? 0f : weaponSound.DamageByTier[0]);
 			}
 			else
 			{
-				GetComponent<NetworkView>().RPC("PlayPortalSoundRPC", RPCMode.All);
+				damageByTier = weaponSound.DamageByTier[this.TierOrRoomTier(ExpController.Instance.OurTier)];
+			}
+			float single = damageByTier;
+			float single1 = single * 0.7f;
+			float single2 = single;
+			multyDamage = (single1 + (single2 - single1) * (1f - sqrDistance / (weaponSound.radiusRoundMelee * weaponSound.radiusRoundMelee))) * (1f + this.koofDamageWeaponFromPotoins + (!this.isMechActive ? EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1) : 0f));
+		}
+		if (weaponSound.isCharging)
+		{
+			multyDamage *= this.chargeValue;
+		}
+		this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.damageTurret, multyDamage);
+		if (!Defs.isInet)
+		{
+			component.MinusLive(multyDamage, 0, this.myPlayerTransform.GetComponent<NetworkView>().viewID);
+		}
+		else
+		{
+			component.MinusLive(multyDamage, this.myPlayerTransform.GetComponent<PhotonView>().viewID, new NetworkViewID());
+		}
+	}
+
+	private void _HitZombie(GameObject zmb, bool isHeadShot, float sqrDistance)
+	{
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		float damageValueForTargetsInRadius = 0f;
+		if (!weaponSound.isRoundMelee)
+		{
+			damageValueForTargetsInRadius = ((float)weaponSound.damage + UnityEngine.Random.Range(weaponSound.damageRange.x, weaponSound.damageRange.y)) * (1f + this.koofDamageWeaponFromPotoins + (!this.isMechActive ? EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1) : 0f));
+		}
+		else
+		{
+			damageValueForTargetsInRadius = this.GetDamageValueForTargetsInRadius(sqrDistance, weaponSound.radiusRoundMelee * weaponSound.radiusRoundMelee);
+			UnityEngine.Debug.Log(damageValueForTargetsInRadius);
+		}
+		if (weaponSound.isCharging)
+		{
+			damageValueForTargetsInRadius *= this.chargeValue;
+		}
+		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(zmb.transform.parent);
+		if (!this.isMulti)
+		{
+			if (botScriptForObject == null)
+			{
+				TrainingEnemy componentInParent = zmb.GetComponentInParent<TrainingEnemy>();
+				if (componentInParent != null)
+				{
+					componentInParent.ApplyDamage(damageValueForTargetsInRadius, isHeadShot);
+				}
+			}
+			else
+			{
+				botScriptForObject.GetDamage(-damageValueForTargetsInRadius, this.myPlayerTransform, this.myCurrentWeaponSounds.name, true, isHeadShot);
+			}
+		}
+		else if (this.isCOOP && !botScriptForObject.IsDeath)
+		{
+			botScriptForObject.GetDamageForMultiplayer(-damageValueForTargetsInRadius, null, this.myCurrentWeaponSounds.name, isHeadShot);
+			this._weaponManager.myNetworkStartTable.score = GlobalGameController.Score;
+			this._weaponManager.myNetworkStartTable.SynhScore();
+		}
+	}
+
+	private void _SetGunFlashActive(bool state)
+	{
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		if (weaponSound.isDoubleShot && !this._weaponManager.currentWeaponSounds.isMelee)
+		{
+			weaponSound.gunFlashDouble[this.numShootInDoubleShot - 1].GetChild(0).gameObject.SetActive(state);
+			if (state)
+			{
+				return;
+			}
+		}
+		if (this.GunFlash != null && !this._weaponManager.currentWeaponSounds.isMelee && (!this.isZooming || this.isZooming && !state))
+		{
+			WeaponManager.SetGunFlashActive(this.GunFlash.gameObject, state);
+		}
+	}
+
+	private void _Shot()
+	{
+		if (!TrainingController.TrainingCompleted)
+		{
+			TrainingController.timeShowFire = 1000f;
+			HintController.instance.HideHintByName("press_fire");
+		}
+		if (this.isGrenadePress || this.showChat)
+		{
+			return;
+		}
+		if (Defs.isMulti)
+		{
+			ProfileController.OnGameShoot();
+		}
+		float item = 0f;
+		if (!this.isMechActive)
+		{
+			if (this._weaponManager.currentWeaponSounds.isDoubleShot)
+			{
+				int numShootInDouble = this.GetNumShootInDouble();
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play(string.Concat("Shoot", numShootInDouble));
+				item = this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()[string.Concat("Shoot", numShootInDouble)].length;
+			}
+			else
+			{
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play("Shoot");
+				item = this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].length;
+			}
+			if (Defs.isSoundFX)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this._weaponManager.currentWeaponSounds.shoot);
 			}
 		}
 		else
 		{
-			PlayPortalSoundRPC();
+			int num = this.GetNumShootInDouble();
+			this.mechGunAnimation.Play(string.Concat("Shoot", num));
+			item = this.mechGunAnimation[string.Concat("Shoot", num)].length;
+			if (Defs.isSoundFX)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this.shootMechClip);
+			}
 		}
+		if (this.inGameGUI != null)
+		{
+			this.inGameGUI.StartFireCircularIndicators(item);
+		}
+		this.shootS();
+	}
+
+	public bool _singleOrMultiMine()
+	{
+		return (!this.isMulti ? true : this.isMine);
+	}
+
+	public void ActivateBear()
+	{
+		if (this.isBearActive)
+		{
+			return;
+		}
+		float item = -1f;
+		if (this.myCurrentWeaponSounds != null && this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Reload"))
+		{
+			item = this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time;
+		}
+		this.mechPoint = this.mechBearPoint;
+		this.mechBody = this.mechBearBody;
+		this.mechBodyAnimation = this.mechBearBodyAnimation;
+		this.mechGunAnimation = this.mechBearGunAnimation;
+		this.mechBodyRenderer = this.mechBearBodyRenderer;
+		this.mechHandRenderer = this.mechBearHandRenderer;
+		this.shootMechClip = this.shootMechBearClip;
+		this.mechExplossionSound = this.mechBearExplosionSound;
+		this.mySkinName.walkMech = this.mySkinName.walkMechBear;
+		this.mechExplossion = this.bearExplosion;
+		if ((!Defs.isMulti || this.isMine) && this.isZooming)
+		{
+			this.ZoomPress();
+		}
+		this.deltaAngle = 0f;
+		this.mechUpgrade = 0;
+		if (Defs.isSoundFX)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this.mechBearActivSound);
+		}
+		this.isBearActive = true;
+		this.fpsPlayerBody.SetActive(false);
+		if (this.myCurrentWeapon != null)
+		{
+			this.SetWeaponVisible(false);
+		}
+		if (this.isMine || !this.isMine && !this.isInvisible || !this.isMulti)
+		{
+			this.mechPoint.SetActive(true);
+		}
+		this.mechPoint.GetComponent<DisableObjectFromTimer>().timer = -1f;
+		if (!this.isMulti || this.isMine)
+		{
+			base.transform.localPosition = this.myCamera.transform.localPosition;
+			this.mechBody.SetActive(false);
+			this.mechBearSyncRot.enabled = true;
+			this.mechPoint.transform.localPosition = Vector3.zero;
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
+			if (this.myCurrentWeaponSounds.animationObject != null)
+			{
+				if (this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
+				{
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
+				}
+				if (this.myCurrentWeaponSounds.isDoubleShot)
+				{
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
+				}
+				else if (this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
+				{
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
+				}
+			}
+		}
+		else
+		{
+			this.bodyCollayder.height = 2.07f;
+			this.bodyCollayder.center = new Vector3(0f, 0.19f, 0f);
+			this.headCollayder.center = new Vector3(0f, 0.54f, 0f);
+			if (!this.isBigHead)
+			{
+				this.nickLabel.transform.localPosition = Vector3.up * 1.54f;
+			}
+			else
+			{
+				this.nickLabel.transform.localPosition = 2.549f * Vector3.up;
+			}
+		}
+		this.liveMech = this.liveMechByTier[0];
+		this._mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
+		if (this.isMulti && this.isMine)
+		{
+			if (!Defs.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("ActivateMechRPC", RPCMode.Others, new object[] { 0 });
+			}
+			else
+			{
+				this.photonView.RPC("ActivateMechRPC", PhotonTargets.Others, new object[] { 0 });
+			}
+		}
+		if (item != -1f)
+		{
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time = item;
+		}
+		this.mySkinName.SetAnim(this.mySkinName.currentAnim, EffectsController.WeAreStealth);
+	}
+
+	public void ActivateMech(int num = 0)
+	{
+		if (this.isMechActive)
+		{
+			return;
+		}
+		if (Defs.isDaterRegim)
+		{
+			this.ActivateBear();
+			return;
+		}
+		if ((!Defs.isMulti || this.isMine) && this.isZooming)
+		{
+			this.ZoomPress();
+		}
+		this.deltaAngle = 0f;
+		this.mechUpgrade = num;
+		if (Defs.isSoundFX)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this.mechActivSound);
+		}
+		this.ShotUnPressed(true);
+		this.isMechActive = true;
+		this.fpsPlayerBody.SetActive(false);
+		if (this.myCurrentWeapon != null)
+		{
+			this.myCurrentWeapon.SetActive(false);
+		}
+		if (this.isMine || !this.isMine && !this.isInvisible || !this.isMulti)
+		{
+			this.mechPoint.SetActive(true);
+		}
+		this.mechPoint.GetComponent<DisableObjectFromTimer>().timer = -1f;
+		this.myCamera.transform.localPosition = new Vector3(0.12f, 0.7f, -0.3f);
+		if (!this.isMulti || this.isMine)
+		{
+			num = GearManager.CurrentNumberOfUphradesForGear(GearManager.Mech);
+			this.mechBody.SetActive(false);
+			this.mechBearSyncRot.enabled = true;
+			this.mechPoint.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+			this.gunCamera.fieldOfView = 45f;
+			this.gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
+			if (this.inGameGUI != null)
+			{
+				this.inGameGUI.fireButtonSprite.spriteName = "controls_fire";
+				this.inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
+			}
+		}
+		else
+		{
+			this.bodyCollayder.height = 2.07f;
+			this.bodyCollayder.center = new Vector3(0f, 0.19f, 0f);
+			this.headCollayder.center = new Vector3(0f, 0.54f, 0f);
+			this.nickLabel.transform.localPosition = Vector3.up * 1.72f;
+		}
+		this.liveMech = this.liveMechByTier[num];
+		if (!Defs.isDaterRegim)
+		{
+			this._mechMaterial = new Material(this.mechBodyMaterials[num]);
+			this.mechBodyRenderer.sharedMaterial = this._mechMaterial;
+			this.mechHandRenderer.sharedMaterial = this._mechMaterial;
+			this.mechGunRenderer.material = this.mechGunMaterials[num];
+		}
+		if (Defs.isDaterRegim || !this.isInvisible || this.isMulti && !this.isMine)
+		{
+			this._mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
+		}
+		else
+		{
+			this._mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+			this.mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+		}
+		if (this.isMulti && this.isMine)
+		{
+			if (!Defs.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("ActivateMechRPC", RPCMode.Others, new object[] { num });
+			}
+			else
+			{
+				this.photonView.RPC("ActivateMechRPC", PhotonTargets.Others, new object[] { num });
+			}
+		}
+		if (!Defs.isDaterRegim)
+		{
+			for (int i = 0; i < (int)this.mechWeaponSounds.gunFlashDouble.Length; i++)
+			{
+				this.mechWeaponSounds.gunFlashDouble[i].GetChild(0).gameObject.SetActive(false);
+			}
+		}
+		if ((!this.isMulti || this.isMine) && this.inGameGUI != null)
+		{
+			this.inGameGUI.SetCrosshair(this.mechWeaponSounds);
+		}
+		this.mySkinName.SetAnim(this.mySkinName.currentAnim, EffectsController.WeAreStealth);
+		this.UpdateEffectsForCurrentWeapon(this.mySkinName.currentCape, this.mySkinName.currentMask, this.mySkinName.currentHat);
 	}
 
 	[PunRPC]
 	[RPC]
-	public void PlayPortalSoundRPC()
+	public void ActivateMechRPC(int num)
 	{
-		if (Defs.isSoundFX && portalSound != null)
+		this.ActivateMech(num);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void ActivateMechRPC()
+	{
+		this.ActivateMech(0);
+	}
+
+	private void ActualizeNumberOfGrenades()
+	{
+		if (!Defs.isHunger && !SceneLoader.ActiveSceneName.Equals(Defs.TrainingSceneName))
 		{
-			GetComponent<AudioSource>().PlayOneShot(portalSound);
+			if (this.numberOfGrenades.Value != this.numberOfGrenadesOnStart.Value)
+			{
+				Storager.setInt((!Defs.isDaterRegim ? "GrenadeID" : "LikeID"), this.numberOfGrenades.Value, false);
+				this.numberOfGrenadesOnStart.Value = this.numberOfGrenades.Value;
+			}
+		}
+	}
+
+	private void AddArmor(float dt)
+	{
+		if (this.WearedMaxArmor <= 0f)
+		{
+			float currentBaseArmor = this.maxBaseArmor - this.CurrentBaseArmor;
+			if (currentBaseArmor < 0f)
+			{
+				currentBaseArmor = 0f;
+			}
+			if (dt > currentBaseArmor)
+			{
+				Player_move_c playerMoveC = this;
+				playerMoveC.CurrentBaseArmor = playerMoveC.CurrentBaseArmor + currentBaseArmor;
+			}
+			else
+			{
+				Player_move_c currentBaseArmor1 = this;
+				currentBaseArmor1.CurrentBaseArmor = currentBaseArmor1.CurrentBaseArmor + dt;
+			}
+		}
+		else
+		{
+			float single = Wear.MaxArmorForItem(Storager.getString(Defs.ArmorNewEquppedSN, false), this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+			float currentBodyArmor = single - this.CurrentBodyArmor;
+			if (currentBodyArmor < 0f)
+			{
+				currentBodyArmor = 0f;
+			}
+			if (dt > currentBodyArmor)
+			{
+				Player_move_c currentBodyArmor1 = this;
+				currentBodyArmor1.CurrentBodyArmor = currentBodyArmor1.CurrentBodyArmor + currentBodyArmor;
+				dt -= currentBodyArmor;
+				float single1 = Wear.MaxArmorForItem(Storager.getString(Defs.HatEquppedSN, false), this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+				float currentHatArmor = single1 - this.CurrentHatArmor;
+				if (currentHatArmor < 0f)
+				{
+					currentHatArmor = 0f;
+				}
+				Player_move_c currentHatArmor1 = this;
+				currentHatArmor1.CurrentHatArmor = currentHatArmor1.CurrentHatArmor + Mathf.Min(currentHatArmor, dt);
+			}
+			else
+			{
+				Player_move_c playerMoveC1 = this;
+				playerMoveC1.CurrentBodyArmor = playerMoveC1.CurrentBodyArmor + dt;
+			}
 		}
 	}
 
 	public void AddButtonHandlers()
 	{
-		PauseTapReceiver.PauseClicked += SwitchPause;
-		ShopTapReceiver.ShopClicked += ShopPressed;
-		RanksTapReceiver.RanksClicked += RanksPressed;
-		TopPanelsTapReceiver.OnClicked += RanksPressed;
-		ChatTapReceiver.ChatClicked += ShowChat;
+		PauseTapReceiver.PauseClicked += new Action(this.SwitchPause);
+		ShopTapReceiver.ShopClicked += new Action(this.ShopPressed);
+		RanksTapReceiver.RanksClicked += new Action(this.RanksPressed);
+		TopPanelsTapReceiver.OnClicked += new Action(this.RanksPressed);
+		ChatTapReceiver.ChatClicked += new Action(this.ShowChat);
 		if (JoystickController.leftJoystick != null)
 		{
 			JoystickController.leftJoystick.SetJoystickActive(true);
@@ -2455,64 +1756,971 @@ public sealed class Player_move_c : MonoBehaviour
 		}
 	}
 
-	public void RemoveButtonHandelrs()
+	private void AddCountSerials(int categoryNabor, Player_move_c killerPlayerMoveC)
 	{
-		PauseTapReceiver.PauseClicked -= SwitchPause;
-		ShopTapReceiver.ShopClicked -= ShopPressed;
-		RanksTapReceiver.RanksClicked -= RanksPressed;
-		TopPanelsTapReceiver.OnClicked -= RanksPressed;
-		ChatTapReceiver.ChatClicked -= ShowChat;
-		if (JoystickController.leftJoystick != null)
+		killerPlayerMoveC.counterSerials[categoryNabor]++;
+		switch (killerPlayerMoveC.counterSerials[categoryNabor])
 		{
-			JoystickController.leftJoystick.SetJoystickActive(false);
-		}
-		if (JoystickController.leftTouchPad != null)
-		{
-			JoystickController.leftTouchPad.SetJoystickActive(false);
+			case 1:
+			{
+				if (categoryNabor == 2)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee, 1f);
+				}
+				return;
+			}
+			case 2:
+			{
+				if (categoryNabor == 2)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee2, 1f);
+				}
+				return;
+			}
+			case 3:
+			{
+				if (categoryNabor == 0)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary1, 1f);
+				}
+				if (categoryNabor == 1)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup1, 1f);
+				}
+				if (categoryNabor == 2)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee3, 1f);
+				}
+				if (categoryNabor == 3)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special1, 1f);
+				}
+				if (categoryNabor == 4)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper1, 1f);
+				}
+				if (categoryNabor == 5)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium1, 1f);
+				}
+				return;
+			}
+			case 4:
+			case 6:
+			{
+				return;
+			}
+			case 5:
+			{
+				if (categoryNabor == 0)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary2, 1f);
+				}
+				if (categoryNabor == 1)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup2, 1f);
+				}
+				if (categoryNabor == 2)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee5, 1f);
+				}
+				if (categoryNabor == 3)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special2, 1f);
+				}
+				if (categoryNabor == 4)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper2, 1f);
+				}
+				if (categoryNabor == 5)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium2, 1f);
+				}
+				return;
+			}
+			case 7:
+			{
+				if (categoryNabor == 0)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary3, 1f);
+				}
+				if (categoryNabor == 1)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup3, 1f);
+				}
+				if (categoryNabor == 2)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee7, 1f);
+				}
+				if (categoryNabor == 3)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special3, 1f);
+				}
+				if (categoryNabor == 4)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper3, 1f);
+				}
+				if (categoryNabor == 5)
+				{
+					killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium3, 1f);
+				}
+				return;
+			}
+			default:
+			{
+				return;
+			}
 		}
 	}
 
-	public void RanksPressed()
+	[PunRPC]
+	[RPC]
+	public void AddFreezerRayWithLength(float len)
 	{
-		if (!mySkinName.playerMoveC.isKilled)
+		Transform gunFlash = this.GunFlash;
+		if (gunFlash == null && this.myTransform.childCount > 0)
 		{
-			ShotUnPressed(true);
-			JoystickController.rightJoystick.jumpPressed = false;
-			JoystickController.leftTouchPad.isJumpPressed = false;
-			JoystickController.rightJoystick.Reset();
-			RemoveButtonHandelrs();
-			showRanks = true;
-			networkStartTableNGUIController.winnerPanelCom1.SetActive(false);
-			networkStartTableNGUIController.winnerPanelCom2.SetActive(false);
-			networkStartTableNGUIController.ShowRanksTable();
-			inGameGUI.gameObject.SetActive(false);
+			FlashFire component = this.myTransform.GetChild(0).GetComponent<FlashFire>();
+			if (component != null && component.gunFlashObj != null)
+			{
+				gunFlash = component.gunFlashObj.transform;
+			}
 		}
+		if (gunFlash != null)
+		{
+			if (this.FreezerFired == null)
+			{
+				GameObject gameObject = WeaponManager.AddRay(gunFlash.gameObject.transform.parent.position, gunFlash.gameObject.transform.parent.parent.forward, gunFlash.gameObject.transform.parent.parent.GetComponent<WeaponSounds>().railName, len);
+				if (gameObject != null)
+				{
+					FreezerRay freezerRay = gameObject.GetComponent<FreezerRay>();
+					if (freezerRay != null)
+					{
+						freezerRay.SetParentMoveC(this);
+					}
+				}
+			}
+			else
+			{
+				this.FreezerFired(len);
+			}
+		}
+	}
+
+	public void AddMessage(string text, float time, int ID, NetworkViewID IDLocal, int _command, string clanLogo, string iconName)
+	{
+		Player_move_c.MessageChat messageChat = new Player_move_c.MessageChat()
+		{
+			text = text,
+			iconName = iconName,
+			time = time,
+			ID = ID,
+			IDLocal = IDLocal,
+			command = _command
+		};
+		if (string.IsNullOrEmpty(clanLogo))
+		{
+			messageChat.clanLogo = null;
+		}
+		else
+		{
+			byte[] numArray = Convert.FromBase64String(clanLogo);
+			Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoWidth);
+			texture2D.LoadImage(numArray);
+			texture2D.filterMode = FilterMode.Point;
+			texture2D.Apply();
+			messageChat.clanLogo = texture2D;
+		}
+		this.messages.Add(messageChat);
+		if (this.messages.Count > 30)
+		{
+			this.messages.RemoveAt(0);
+		}
+		Player_move_c.OnMessagesUpdate onMessagesUpdate = this.messageDelegate;
+		if (onMessagesUpdate != null)
+		{
+			onMessagesUpdate();
+		}
+	}
+
+	public void addMultyKill()
+	{
+		this.multiKill++;
+		if (this.multiKill > 1)
+		{
+			if (this.multiKill > 1 && !NetworkStartTable.LocalOrPasswordRoom())
+			{
+				QuestMediator.NotifyMakeSeries();
+			}
+			int num = this.multiKill;
+			switch (num)
+			{
+				case 2:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill2, 1f);
+					break;
+				}
+				case 3:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill3, 1f);
+					break;
+				}
+				case 4:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill4, 1f);
+					break;
+				}
+				case 5:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill5, 1f);
+					break;
+				}
+				case 6:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill6, 1f);
+					break;
+				}
+				case 10:
+				{
+					this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill10, 1f);
+					break;
+				}
+				default:
+				{
+					if (num == 20)
+					{
+						this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill20, 1f);
+						break;
+					}
+					else if (num == 50)
+					{
+						this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.multyKill50, 1f);
+						break;
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			if (Defs.isMulti)
+			{
+				if (!Defs.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("ShowMultyKillRPC", RPCMode.Others, new object[] { this.multiKill });
+				}
+				else
+				{
+					this.photonView.RPC("ShowMultyKillRPC", PhotonTargets.Others, new object[] { this.multiKill });
+				}
+			}
+		}
+	}
+
+	public void AddScoreDuckHunt()
+	{
+		if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("AddScoreDuckHuntRPC", RPCMode.All, new object[0]);
+		}
+		else
+		{
+			this.photonView.RPC("AddScoreDuckHuntRPC", PhotonTargets.All, new object[0]);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void AddScoreDuckHuntRPC()
+	{
+		if (this.isMine)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.duckHunt, 1f);
+		}
+	}
+
+	public void AddSystemMessage(string _nick1, string _message2, string _nick2, string _message = null)
+	{
+		this.AddSystemMessage(_nick1, _message2, _nick2, Color.white, _message);
+	}
+
+	public void AddSystemMessage(string _nick1, string _message2, string _nick2, Color color, string _message = null)
+	{
+		this.killedSpisok[2] = this.killedSpisok[1];
+		this.killedSpisok[1] = this.killedSpisok[0];
+		this.killedSpisok[0] = new Player_move_c.SystemMessage(_nick1, _message2, _nick2, _message, color);
+		this.timerShow[2] = this.timerShow[1];
+		this.timerShow[1] = this.timerShow[0];
+		this.timerShow[0] = 3f;
+	}
+
+	public void AddSystemMessage(string nick1, int _typeKills, Color color)
+	{
+		this.AddSystemMessage(nick1, this.iconShotName[_typeKills], string.Empty, color, null);
+	}
+
+	public void AddSystemMessage(string nick1, int _typeKills)
+	{
+		this.AddSystemMessage(nick1, this.iconShotName[_typeKills], string.Empty, null);
+	}
+
+	public void AddSystemMessage(string nick1, int _typeKills, string nick2, Color color, string iconWeapon = null)
+	{
+		this.AddSystemMessage(nick1, this.iconShotName[_typeKills], nick2, color, iconWeapon);
+	}
+
+	public void AddSystemMessage(string nick1, int _typeKills, string nick2, string iconWeapon = null)
+	{
+		this.AddSystemMessage(nick1, this.iconShotName[_typeKills], nick2, iconWeapon);
+	}
+
+	public void AddSystemMessage(string _message)
+	{
+		this.AddSystemMessage(_message, string.Empty, string.Empty, null);
+	}
+
+	public void AddSystemMessage(string _message, Color color)
+	{
+		this.AddSystemMessage(_message, string.Empty, string.Empty, color, null);
+	}
+
+	public void AddWeapon(GameObject weaponPrefab)
+	{
+		int num;
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			int num1 = WeaponManager.sharedManager.playerWeapons.OfType<Weapon>().ToList<Weapon>().FindIndex((Weapon w) => w.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor == weaponPrefab.GetComponent<WeaponSounds>().categoryNabor);
+			if (num1 >= 0)
+			{
+				this.ChangeWeapon(num1, false);
+			}
+			return;
+		}
+		if (this._weaponManager.AddWeapon(weaponPrefab, out num))
+		{
+			this.ChangeWeapon(this._weaponManager.CurrentWeaponIndex, false);
+		}
+		else if (!ItemDb.IsWeaponCanDrop(ItemDb.GetByPrefabName(weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag))
+		{
+			IEnumerator enumerator = this._weaponManager.playerWeapons.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					Weapon current = (Weapon)enumerator.Current;
+					if (current.weaponPrefab != weaponPrefab)
+					{
+						continue;
+					}
+					this.ChangeWeapon(this._weaponManager.playerWeapons.IndexOf(current), false);
+					break;
+				}
+			}
+			finally
+			{
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
+			}
+		}
+		else
+		{
+			GlobalGameController.Score = GlobalGameController.Score + num;
+			if (Defs.isSoundFX)
+			{
+				if (this.WeaponBonusClip == null)
+				{
+					base.gameObject.GetComponent<AudioSource>().PlayOneShot(this.ChangeWeaponClip);
+				}
+				else
+				{
+					base.gameObject.GetComponent<AudioSource>().PlayOneShot(this.WeaponBonusClip);
+				}
+			}
+		}
+	}
+
+	private void AddWeaponToInv(string shopId)
+	{
+		string tagByShopId = ItemDb.GetTagByShopId(shopId);
+		ItemRecord byTag = ItemDb.GetByTag(tagByShopId);
+		if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None) && byTag != null && !byTag.TemporaryGun)
+		{
+			Player_move_c.SaveWeaponInPrefs(tagByShopId, 0);
+		}
+		this.AddWeapon(this._weaponManager.GetPrefabByTag(tagByShopId));
+	}
+
+	private void AddWeKillStatisctics(string weaponName)
+	{
+		if (string.IsNullOrEmpty(weaponName))
+		{
+			UnityEngine.Debug.LogError("AddWeKillStatisctics string.IsNullOrEmpty (weaponName)");
+			return;
+		}
+		if (!this.weKillForKillRate.ContainsKey(weaponName))
+		{
+			this.weKillForKillRate.Add(weaponName, 1);
+		}
+		else
+		{
+			Dictionary<string, int> item = this.weKillForKillRate;
+			Dictionary<string, int> strs = item;
+			string str = weaponName;
+			item[str] = strs[str] + 1;
+		}
+	}
+
+	private void AddWeWereKilledStatisctics(string weaponName)
+	{
+		if (string.IsNullOrEmpty(weaponName))
+		{
+			UnityEngine.Debug.LogError("AddWeWereKilledStatisctics string.IsNullOrEmpty (weaponName)");
+			return;
+		}
+		if (!this.weWereKilledForKillRate.ContainsKey(weaponName))
+		{
+			this.weWereKilledForKillRate.Add(weaponName, 1);
+		}
+		else
+		{
+			Dictionary<string, int> item = this.weWereKilledForKillRate;
+			Dictionary<string, int> strs = item;
+			string str = weaponName;
+			item[str] = strs[str] + 1;
+		}
+	}
+
+	private void Awake()
+	{
+		this.isSurvival = Defs.IsSurvival;
+		this.isMulti = Defs.isMulti;
+		this.isInet = Defs.isInet;
+		this.isCompany = Defs.isCompany;
+		this.isCOOP = Defs.isCOOP;
+		this.isHunger = Defs.isHunger;
+		if (this.isHunger)
+		{
+			GameObject gameObject = GameObject.FindGameObjectWithTag("HungerGameController");
+			if (gameObject != null)
+			{
+				this.hungerGameController = gameObject.GetComponent<HungerGameController>();
+			}
+			else
+			{
+				UnityEngine.Debug.LogError("hungerGameControllerObject == null");
+			}
+		}
+		this.myCamera.fieldOfView = this.stdFov;
 	}
 
 	public void BackRanksPressed()
 	{
-		AddButtonHandlers();
-		showRanks = false;
-		if (inGameGUI != null && inGameGUI.interfacePanel != null)
+		this.AddButtonHandlers();
+		this.showRanks = false;
+		if (this.inGameGUI != null && this.inGameGUI.interfacePanel != null)
 		{
-			inGameGUI.gameObject.SetActive(true);
+			this.inGameGUI.gameObject.SetActive(true);
 		}
 	}
 
-	private void OnDisable()
+	[DebuggerHidden]
+	private IEnumerator BazookaShoot()
 	{
-		if (_backSubscription != null)
+		Player_move_c.u003cBazookaShootu003ec__IteratorE6 variable = null;
+		return variable;
+	}
+
+	public void BlockPlayerInEnd()
+	{
+		this.mySkinName.BlockFirstPersonController();
+		this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().enabled = false;
+		if (this.GunFlash != null)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			this.GunFlash.gameObject.SetActive(false);
+		}
+		this.mySkinName.character.enabled = false;
+		base.enabled = false;
+	}
+
+	private void BulletShot(WeaponSounds weapon)
+	{
+		RaycastHit raycastHit;
+		int num = (!weapon.isShotGun ? 1 : weapon.countShots);
+		float single = (!weapon.isShotGun ? 100f : 30f);
+		Vector3[] vector3Array = null;
+		Quaternion[] quaternionArray = null;
+		bool[] flagArray = null;
+		int num1 = Mathf.Min(7, num);
+		bool flag = false;
+		bool flag1 = false;
+		Vector3 vector3 = Vector3.zero;
+		Quaternion rotation = Quaternion.identity;
+		if (weapon.bulletExplode)
+		{
+			single = 250f;
+		}
+		for (int i = 0; i < num; i++)
+		{
+			float single1 = weapon.tekKoof * Defs.Coef;
+			Ray ray = Camera.main.ScreenPointToRay(new Vector3(((float)Screen.width - weapon.startZone.x * single1) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.x * single1)), ((float)Screen.height - weapon.startZone.y * single1) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.y * single1)), 0f));
+			if ((!weapon.isDoubleShot ? this.GunFlash : weapon.gunFlashDouble[this.numShootInDoubleShot - 1]) != null && !Defs.isDaterRegim)
+			{
+				GameObject currentBullet = BulletStackController.sharedController.GetCurrentBullet((int)weapon.typeTracer);
+				if (currentBullet != null)
+				{
+					currentBullet.transform.rotation = this.myTransform.rotation;
+					Bullet component = currentBullet.GetComponent<Bullet>();
+					component.endPos = ray.GetPoint(200f);
+					component.startPos = (!weapon.isDoubleShot ? this.GunFlash.position : weapon.gunFlashDouble[this.numShootInDoubleShot - 1].position);
+					component.StartBullet();
+				}
+				weapon.fire();
+			}
+			if (Physics.Raycast(ray, out raycastHit, single, Player_move_c._ShootRaycastLayerMask))
+			{
+				if (weapon.bulletExplode)
+				{
+					Rocket rocket = Player_move_c.CreateRocket(raycastHit.point, Quaternion.identity, this.koofDamageWeaponFromPotoins, this.isMulti, this.isInet, this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+					rocket.dontExecStart = true;
+					rocket.SendSetRocketActiveRPC();
+					rocket.KillRocket(raycastHit.collider);
+				}
+				else
+				{
+					if (!raycastHit.collider.gameObject.transform.CompareTag("DamagedExplosion"))
+					{
+						vector3 = raycastHit.point + (raycastHit.normal * 0.001f);
+						rotation = Quaternion.FromToRotation(Vector3.up, raycastHit.normal);
+						flag1 = true;
+						flag = (!(raycastHit.collider.gameObject.transform.parent != null) || raycastHit.collider.gameObject.transform.parent.CompareTag("Enemy") || raycastHit.collider.gameObject.transform.parent.CompareTag("Player") ? true : false);
+						this.HoleRPC(flag, vector3, rotation);
+						if (this.isMulti)
+						{
+							if (!this.isInet)
+							{
+								this._networkView.RPC("HoleRPC", RPCMode.Others, new object[] { flag, vector3, rotation });
+							}
+							else if (num1 > 1 && i < num1)
+							{
+								if (vector3Array == null)
+								{
+									vector3Array = new Vector3[num1];
+									quaternionArray = new Quaternion[num1];
+									flagArray = new bool[num1];
+								}
+								vector3Array[i] = vector3;
+								quaternionArray[i] = rotation;
+								flagArray[i] = flag;
+							}
+						}
+					}
+					this._DoHit(raycastHit, false);
+				}
+			}
+		}
+		if (!flag1 || !this.isInet)
+		{
+			this._FireFlash(true, (!weapon.isDoubleShot ? 0 : this.numShootInDoubleShot));
+		}
+		else if (num1 <= 1)
+		{
+			this._FireFlashWithHole(flag, vector3, rotation, true, (!weapon.isDoubleShot ? 0 : this.numShootInDoubleShot));
+		}
+		else
+		{
+			this._FireFlashWithManyHoles(flagArray, vector3Array, quaternionArray, true, (!weapon.isDoubleShot ? 0 : this.numShootInDoubleShot));
 		}
 	}
 
-	[RPC]
-	[PunRPC]
-	private void setIp(string _ip)
+	public void CancelTurret()
 	{
-		myIp = _ip;
+		this.ChangeWeapon(this.currentWeaponBeforeTurret, false);
+		this.currentWeaponBeforeTurret = -1;
+		if (!Defs.isMulti)
+		{
+			UnityEngine.Object.Destroy(this.currentTurret);
+		}
+		else if (!Defs.isInet)
+		{
+			Network.RemoveRPCs(this.currentTurret.GetComponent<NetworkView>().viewID);
+			Network.Destroy(this.currentTurret);
+		}
+		else
+		{
+			PhotonNetwork.Destroy(this.currentTurret);
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void ChangePositionAfterRespawn()
+	{
+		Transform transforms = this.myPlayerTransform;
+		transforms.position = transforms.position + (Vector3.forward * 0.01f);
+	}
+
+	public void ChangeWeapon(int index, bool shouldSetMaxAmmo = true)
+	{
+		if (index == 1001)
+		{
+			this.currentWeaponBeforeTurret = WeaponManager.sharedManager.CurrentWeaponIndex;
+		}
+		this.indexWeapon = index;
+		this.shouldSetMaxAmmoWeapon = shouldSetMaxAmmo;
+		base.StopCoroutine("ChangeWeaponCorutine");
+		base.StopCoroutine(this.BazookaShoot());
+		base.StartCoroutine("ChangeWeaponCorutine");
+		if (base.GetComponent<AudioSource>() != null && !this.isMechActive)
+		{
+			base.GetComponent<AudioSource>().Stop();
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ChangeWeaponCorutine()
+	{
+		Player_move_c.u003cChangeWeaponCorutineu003ec__IteratorD6 variable = null;
+		return variable;
+	}
+
+	public void ChangeWeaponReal(int index, bool shouldSetMaxAmmo = true)
+	{
+		GameObject gameObject;
+		GameObject gameObject1 = null;
+		if (index != 1000)
+		{
+			gameObject = (index != 1001 ? ((Weapon)this._weaponManager.playerWeapons[index]).weaponPrefab : this.turretPrefab);
+		}
+		else
+		{
+			gameObject = (!Defs.isDaterRegim ? this.grenadePrefab : this.likePrefab);
+		}
+		GameObject gameObject2 = gameObject;
+		string str = ResPath.Combine(Defs.InnerWeaponsFolder, string.Concat(gameObject2.name.Replace("(Clone)", string.Empty), Defs.InnerWeapons_Suffix));
+		GameObject gameObject3 = LoadAsyncTool.Get(str, true).asset as GameObject;
+		gameObject1 = (GameObject)UnityEngine.Object.Instantiate(gameObject2, Vector3.zero, Quaternion.identity);
+		gameObject1.GetComponent<WeaponSounds>().Initialize(gameObject3);
+		this.ChangeWeaponReal(gameObject2, gameObject1, index, shouldSetMaxAmmo);
+	}
+
+	public void ChangeWeaponReal(GameObject _weaponPrefab, GameObject nw, int index, bool shouldSetMaxAmmo = true)
+	{
+		GameObject gameObject;
+		float damageByTier;
+		if (this.inGameGUI != null)
+		{
+			this.inGameGUI.StopAllCircularIndicators();
+		}
+		EventHandler<EventArgs> weaponChanged = this.WeaponChanged;
+		if (weaponChanged != null)
+		{
+			weaponChanged(this, EventArgs.Empty);
+		}
+		if (this.isZooming)
+		{
+			this.ZoomPress();
+		}
+		this.photonView = PhotonView.Get(this);
+		this._networkView = base.GetComponent<NetworkView>();
+		Quaternion quaternion = Quaternion.identity;
+		if (this._player)
+		{
+			quaternion = this._player.transform.rotation;
+		}
+		this.ShotUnPressed(true);
+		if (this._weaponManager.currentWeaponSounds)
+		{
+			quaternion = this._weaponManager.currentWeaponSounds.gameObject.transform.rotation;
+			this._SetGunFlashActive(false);
+			this._weaponManager.currentWeaponSounds.gameObject.transform.parent = null;
+			UnityEngine.Object.Destroy(this._weaponManager.currentWeaponSounds.gameObject);
+			this._weaponManager.currentWeaponSounds = null;
+		}
+		this.ResetShootingBurst();
+		this.myCurrentWeapon = nw;
+		this.myCurrentWeaponSounds = this.myCurrentWeapon.GetComponent<WeaponSounds>();
+		if (!ShopNGUIController.GuiActive && this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
+		{
+			this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
+		}
+		if (!this.myCurrentWeaponSounds.isDoubleShot || this.isMechActive)
+		{
+			this.gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
+		}
+		else
+		{
+			this.gunCamera.transform.localPosition = Vector3.zero;
+		}
+		nw.transform.parent = base.gameObject.transform;
+		nw.transform.rotation = quaternion;
+		this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
+		if (this.isMechActive)
+		{
+			this.myCurrentWeapon.SetActive(false);
+		}
+		if (Defs.isDaterRegim)
+		{
+			this.SetWeaponVisible(!this.isBearActive);
+		}
+		if (this.myCurrentWeaponSounds != null && PhotonNetwork.room != null)
+		{
+			Statistics.Instance.IncrementWeaponPopularity(LocalizationStore.GetByDefault(this.myCurrentWeaponSounds.localizeWeaponKey), false);
+			this._weaponPopularityCacheIsDirty = true;
+		}
+		if (this.isMulti)
+		{
+			if (!this.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("SetWeaponRPC", RPCMode.OthersBuffered, new object[] { _weaponPrefab.name, _weaponPrefab.GetComponent<WeaponSounds>().alternativeName });
+			}
+			else
+			{
+				this.photonView.RPC("SetWeaponRPC", PhotonTargets.Others, new object[] { _weaponPrefab.name, _weaponPrefab.GetComponent<WeaponSounds>().alternativeName });
+			}
+		}
+		if (index == 1000)
+		{
+			WeaponSounds component = _weaponPrefab.GetComponent<WeaponSounds>();
+			GameObject rocket = RocketStack.sharedController.GetRocket();
+			if (rocket != null)
+			{
+				Rocket grenadeExplosionDamageIncreaseCoef = rocket.GetComponent<Rocket>();
+				grenadeExplosionDamageIncreaseCoef.rocketNum = (!Defs.isDaterRegim ? 10 : 40);
+				grenadeExplosionDamageIncreaseCoef.weaponName = (!Defs.isDaterRegim ? "WeaponGrenade" : "WeaponLike");
+				grenadeExplosionDamageIncreaseCoef.weaponPrefabName = grenadeExplosionDamageIncreaseCoef.weaponName;
+				grenadeExplosionDamageIncreaseCoef.damage = (float)component.damage * (1f + this.koofDamageWeaponFromPotoins + EffectsController.GrenadeExplosionDamageIncreaseCoef);
+				grenadeExplosionDamageIncreaseCoef.radiusDamage = component.bazookaExplosionRadius * EffectsController.GrenadeExplosionRadiusIncreaseCoef;
+				grenadeExplosionDamageIncreaseCoef.radiusDamageSelf = component.bazookaExplosionRadiusSelf;
+				grenadeExplosionDamageIncreaseCoef.radiusImpulse = component.bazookaImpulseRadius * (1f + EffectsController.ExplosionImpulseRadiusIncreaseCoef);
+				grenadeExplosionDamageIncreaseCoef.impulseForce = component.impulseForce;
+				grenadeExplosionDamageIncreaseCoef.impulseForceSelf = component.impulseForceSelf;
+				grenadeExplosionDamageIncreaseCoef.damageRange = component.damageRange * (1f + this.koofDamageWeaponFromPotoins);
+				if (!(ExpController.Instance != null) || ExpController.Instance.OurTier >= (int)component.DamageByTier.Length)
+				{
+					damageByTier = ((int)component.DamageByTier.Length <= 0 ? 0f : component.DamageByTier[0]);
+				}
+				else
+				{
+					damageByTier = component.DamageByTier[this.TierOrRoomTier(ExpController.Instance.OurTier)];
+				}
+				float single = damageByTier;
+				grenadeExplosionDamageIncreaseCoef.multiplayerDamage = single * (1f + this.koofDamageWeaponFromPotoins + EffectsController.GrenadeExplosionDamageIncreaseCoef);
+				rocket.GetComponent<Rigidbody>().useGravity = false;
+				rocket.GetComponent<Rigidbody>().isKinematic = true;
+				grenadeExplosionDamageIncreaseCoef.SendSetRocketActiveRPC();
+				if (Defs.isMulti && !Defs.isInet)
+				{
+					grenadeExplosionDamageIncreaseCoef.SendNetworkViewMyPlayer(this.myPlayerTransform.GetComponent<NetworkView>().viewID);
+				}
+			}
+			this.currentGrenade = rocket;
+		}
+		if (index == 1001)
+		{
+			Defs.isTurretWeapon = true;
+			this.turretUpgrade = GearManager.CurrentNumberOfUphradesForGear(GearManager.Turret);
+			if (this.isMulti)
+			{
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("SyncTurretUpgrade", RPCMode.Others, new object[] { this.turretUpgrade });
+				}
+				else
+				{
+					this.photonView.RPC("SyncTurretUpgrade", PhotonTargets.Others, new object[] { this.turretUpgrade });
+				}
+			}
+			if (!this.isMulti)
+			{
+				GameObject gameObject1 = Resources.Load((!Defs.isDaterRegim ? "Turret" : "MusicBox")) as GameObject;
+				gameObject = UnityEngine.Object.Instantiate(gameObject1, new Vector3(-10000f, -10000f, -10000f), base.transform.rotation) as GameObject;
+			}
+			else if (this.isInet)
+			{
+				gameObject = PhotonNetwork.Instantiate((!Defs.isDaterRegim ? "Turret" : "MusicBox"), new Vector3(-10000f, -10000f, -10000f), base.transform.rotation, 0);
+			}
+			else
+			{
+				UnityEngine.Object obj = Resources.Load((!Defs.isDaterRegim ? "Turret" : "MusicBox"));
+				gameObject = (GameObject)Network.Instantiate(obj, new Vector3(-10000f, -10000f, -10000f), base.transform.rotation, 0);
+			}
+			if (gameObject != null)
+			{
+				TurretController turretController = gameObject.GetComponent<TurretController>();
+				gameObject.GetComponent<Rigidbody>().useGravity = false;
+				gameObject.GetComponent<Rigidbody>().isKinematic = true;
+				if (Defs.isMulti && !Defs.isInet)
+				{
+					turretController.SendNetworkViewMyPlayer(this.myPlayerTransform.GetComponent<NetworkView>().viewID);
+				}
+			}
+			this.currentTurret = gameObject;
+		}
+		if (!this.myCurrentWeaponSounds.isMelee)
+		{
+			IEnumerator enumerator = nw.transform.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					Transform current = (Transform)enumerator.Current;
+					if (!current.gameObject.name.Equals("BulletSpawnPoint") || current.childCount <= 0)
+					{
+						continue;
+					}
+					WeaponManager.SetGunFlashActive(current.GetChild(0).gameObject, false);
+					break;
+				}
+			}
+			finally
+			{
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
+			}
+		}
+		this.SetTextureForBodyPlayer(this._skin);
+		Player_move_c.SetLayerRecursively(nw, 9);
+		this._weaponManager.currentWeaponSounds = this.myCurrentWeaponSounds;
+		if (index < 1000)
+		{
+			this._weaponManager.CurrentWeaponIndex = index;
+			this._weaponManager.SaveWeaponAsLastUsed(this._weaponManager.CurrentWeaponIndex);
+			if (this.inGameGUI != null)
+			{
+				if (!this._weaponManager.currentWeaponSounds.isMelee || this._weaponManager.currentWeaponSounds.isShotMelee || this.isMechActive)
+				{
+					this.inGameGUI.fireButtonSprite.spriteName = "controls_fire";
+					this.inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
+				}
+				else
+				{
+					this.inGameGUI.fireButtonSprite.spriteName = "controls_strike";
+					this.inGameGUI.fireButtonSprite2.spriteName = "controls_strike";
+				}
+			}
+		}
+		if (nw.transform.parent == null)
+		{
+			UnityEngine.Debug.LogWarning("nw.transform.parent == null");
+		}
+		else if (this._weaponManager.currentWeaponSounds != null)
+		{
+			nw.transform.position = nw.transform.parent.TransformPoint(this._weaponManager.currentWeaponSounds.gunPosition);
+		}
+		else
+		{
+			UnityEngine.Debug.LogWarning("_weaponManager.currentWeaponSounds == null");
+		}
+		TouchPadController touchPadController = JoystickController.rightJoystick;
+		if (index < 1000 && touchPadController != null)
+		{
+			if (((Weapon)this._weaponManager.playerWeapons[index]).currentAmmoInClip > 0 || this._weaponManager.currentWeaponSounds.isMelee && !this._weaponManager.currentWeaponSounds.isShotMelee)
+			{
+				touchPadController.HasAmmo();
+				if (this.inGameGUI != null)
+				{
+					this.inGameGUI.BlinkNoAmmo(0);
+				}
+			}
+			else
+			{
+				touchPadController.NoAmmo();
+				if (this.inGameGUI != null)
+				{
+					this.inGameGUI.BlinkNoAmmo(1);
+				}
+			}
+		}
+		if (this._weaponManager.currentWeaponSounds.animationObject != null)
+		{
+			if (this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
+			{
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
+			}
+			if (this._weaponManager.currentWeaponSounds.isDoubleShot)
+			{
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
+			}
+			else if (this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
+			{
+				this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
+			}
+		}
+		if (!this._weaponManager.currentWeaponSounds.isMelee)
+		{
+			IEnumerator enumerator1 = this._weaponManager.currentWeaponSounds.gameObject.transform.GetEnumerator();
+			try
+			{
+				while (enumerator1.MoveNext())
+				{
+					Transform transforms = (Transform)enumerator1.Current;
+					if (!transforms.name.Equals("BulletSpawnPoint"))
+					{
+						continue;
+					}
+					this._bulletSpawnPoint = transforms.gameObject;
+					break;
+				}
+			}
+			finally
+			{
+				IDisposable disposable1 = enumerator1 as IDisposable;
+				if (disposable1 == null)
+				{
+				}
+				disposable1.Dispose();
+			}
+			this.GunFlash = this._bulletSpawnPoint.transform.GetChild(0);
+		}
+		if (Defs.isSoundFX && !Defs.isDaterRegim && !this.isMechActive)
+		{
+			base.gameObject.GetComponent<AudioSource>().PlayOneShot((index != 1000 ? this.ChangeWeaponClip : this.ChangeGrenadeClip));
+		}
+		if (!Defs.isDaterRegim && this.isInvisible)
+		{
+			this.SetInVisibleShaders(this.isInvisible);
+		}
+		if (this.inGameGUI != null)
+		{
+			if (!this.isMechActive)
+			{
+				this.inGameGUI.SetCrosshair(this._weaponManager.currentWeaponSounds);
+			}
+			else
+			{
+				this.inGameGUI.SetCrosshair(this.mechWeaponSounds);
+			}
+		}
+		this.UpdateEffectsForCurrentWeapon(this.mySkinName.currentCape, this.mySkinName.currentMask, this.mySkinName.currentHat);
+		if (this.myCurrentWeaponSounds.isZooming && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showZoomHint)
+		{
+			base.Invoke("TrainingShowZoomHint", 3f);
+		}
+	}
+
+	private void CheckRookieKillerAchievement()
+	{
+		int num = this.oldKilledPlayerCharactersCount + 1;
+		if (num <= 15)
+		{
+			Storager.setInt("KilledPlayerCharactersCount", num, false);
+		}
+		this.oldKilledPlayerCharactersCount = num;
+		if (Social.localUser.authenticated && !Storager.hasKey("RookieKillerAchievmentCompleted") && num >= 15)
+		{
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+			{
+				GpgFacade instance = GpgFacade.Instance;
+				instance.IncrementAchievement("CgkIr8rGkPIJEAIQBw", 1, (bool success) => UnityEngine.Debug.Log(string.Concat("Achievement Rookie Killer incremented: ", success)));
+			}
+			Storager.setInt("RookieKillerAchievmentCompleted", 1, false);
+		}
 	}
 
 	private void CheckTimeCondition()
@@ -2526,599 +2734,2176 @@ public sealed class Player_move_c : MonoBehaviour
 			}
 			foreach (CampaignLevel level in campaignBox.levels)
 			{
-				if (level.sceneName.Equals(CurrentCampaignGame.levelSceneName))
+				if (!level.sceneName.Equals(CurrentCampaignGame.levelSceneName))
 				{
-					campaignLevel = level;
-					break;
+					continue;
 				}
+				campaignLevel = level;
+				break;
 			}
 			break;
 		}
-		float timeToComplete = campaignLevel.timeToComplete;
-		if (inGameTime >= timeToComplete)
+		float single = campaignLevel.timeToComplete;
+		if (this.inGameTime >= single)
 		{
 			CurrentCampaignGame.completeInTime = false;
 		}
 	}
 
-	private IEnumerator GetHardwareKeysInput()
+	[PunRPC]
+	[RPC]
+	private void CountKillsCommandSynch(int _blue, int _red)
 	{
-		while (true)
+		GlobalGameController.countKillsBlue = _blue;
+		GlobalGameController.countKillsRed = _red;
+	}
+
+	public static Rocket CreateRocket(Vector3 pos, Quaternion rot, float customDamageAdd, bool isMulti, bool isInet, int tierOrRoomTier)
+	{
+		float damageByTier;
+		GameObject rocket = null;
+		rocket = RocketStack.sharedController.GetRocket();
+		rocket.transform.position = pos;
+		rocket.transform.rotation = rot;
+		Rocket component = rocket.GetComponent<Rocket>();
+		component.rocketNum = WeaponManager.sharedManager.currentWeaponSounds.rocketNum;
+		component.weaponPrefabName = WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Replace("(Clone)", string.Empty);
+		component.weaponName = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionName;
+		component.damage = (float)WeaponManager.sharedManager.currentWeaponSounds.damage * (1f + customDamageAdd + EffectsController.DamageModifsByCats(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1));
+		component.radiusDamage = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionRadius;
+		component.radiusDamageSelf = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionRadiusSelf;
+		component.radiusImpulse = WeaponManager.sharedManager.currentWeaponSounds.bazookaImpulseRadius * (1f + EffectsController.ExplosionImpulseRadiusIncreaseCoef);
+		component.damageRange = WeaponManager.sharedManager.currentWeaponSounds.damageRange * (1f + customDamageAdd + EffectsController.DamageModifsByCats(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1));
+		component.isSlowdown = WeaponManager.sharedManager.currentWeaponSounds.isSlowdown;
+		component.slowdownCoeff = WeaponManager.sharedManager.currentWeaponSounds.slowdownCoeff;
+		component.slowdownTime = WeaponManager.sharedManager.currentWeaponSounds.slowdownTime;
+		component.impulseForce = WeaponManager.sharedManager.currentWeaponSounds.impulseForce;
+		component.impulseForceSelf = WeaponManager.sharedManager.currentWeaponSounds.impulseForceSelf;
+		if (!(ExpController.Instance != null) || ExpController.Instance.OurTier >= (int)WeaponManager.sharedManager.currentWeaponSounds.DamageByTier.Length)
 		{
-			bool androidBackPressed2 = false;
-			if (true)
+			damageByTier = ((int)WeaponManager.sharedManager.currentWeaponSounds.DamageByTier.Length <= 0 ? 0f : WeaponManager.sharedManager.currentWeaponSounds.DamageByTier[0]);
+		}
+		else
+		{
+			damageByTier = WeaponManager.sharedManager.currentWeaponSounds.DamageByTier[tierOrRoomTier];
+		}
+		component.multiplayerDamage = damageByTier;
+		rocket.GetComponent<Rigidbody>().useGravity = WeaponManager.sharedManager.currentWeaponSounds.grenadeLauncher;
+		return component;
+	}
+
+	private bool DamagePlayerAndCheckDeath(float damage)
+	{
+		if (!this.isMechActive)
+		{
+			if (this.curArmor < damage)
 			{
-				if (_escapePressed)
+				Player_move_c curHealth = this;
+				curHealth.CurHealth = curHealth.CurHealth - (damage - this.curArmor);
+				this.curArmor = 0f;
+				CurrentCampaignGame.withoutHits = false;
+			}
+			else
+			{
+				Player_move_c playerMoveC = this;
+				playerMoveC.curArmor = playerMoveC.curArmor - damage;
+			}
+			if (this.CurHealth <= 0f)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			this.MinusMechHealth(damage);
+		}
+		return false;
+	}
+
+	public void DeactivateBear()
+	{
+		if (!this.isBearActive)
+		{
+			return;
+		}
+		this.isBearActive = false;
+		float item = -1f;
+		if (this.myCurrentWeaponSounds != null && this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Reload"))
+		{
+			item = this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time;
+		}
+		if (this.myCurrentWeapon != null)
+		{
+			this.SetWeaponVisible(true);
+		}
+		this.myCamera.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+		if (Defs.isSoundFX)
+		{
+			this.mechExplossionSound.Play();
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			this.mechPoint.SetActive(false);
+			this.gunCamera.fieldOfView = 75f;
+			base.transform.localPosition = this.myCamera.transform.localPosition;
+			this.gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
+		}
+		else
+		{
+			if (!this.isInvisible)
+			{
+				this.fpsPlayerBody.SetActive(true);
+			}
+			this.bodyCollayder.height = 1.51f;
+			this.bodyCollayder.center = Vector3.zero;
+			this.headCollayder.center = Vector3.zero;
+			this.mechExplossion.SetActive(true);
+			this.mechExplossion.GetComponent<DisableObjectFromTimer>().timer = 1f;
+			this.mechBodyAnimation.Play("Dead");
+			this.mechGunAnimation.Play("Dead");
+			this.mechPoint.GetComponent<DisableObjectFromTimer>().timer = 0.46f;
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
+			if (this.myCurrentWeaponSounds.animationObject != null)
+			{
+				if (this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
 				{
-					if (Application.isEditor)
-					{
-						Debug.Log("[Escape] presed in PlayerMoveC");
-					}
-					_escapePressed = false;
-					_backWasPressed = true;
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
+				}
+				if (this.myCurrentWeaponSounds.isDoubleShot)
+				{
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
+				}
+				else if (this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
+				{
+					this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
+				}
+			}
+			if (!this.isBigHead)
+			{
+				this.nickLabel.transform.localPosition = Vector3.up * 1.08f;
+			}
+			else
+			{
+				this.nickLabel.transform.localPosition = Vector3.up * 1.54f;
+			}
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			PotionsController.sharedController.DeActivePotion(GearManager.Mech, this, true);
+		}
+		if (this.isMulti && this.isMine)
+		{
+			if (!Defs.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("DeactivateMechRPC", RPCMode.Others, new object[0]);
+			}
+			else
+			{
+				this.photonView.RPC("DeactivateMechRPC", PhotonTargets.Others, new object[0]);
+			}
+		}
+		if (item != -1f)
+		{
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
+			this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time = Mathf.Min(item, this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].length);
+		}
+		this.mySkinName.SetAnim(this.mySkinName.currentAnim, EffectsController.WeAreStealth);
+	}
+
+	public void DeactivateMech()
+	{
+		if (Defs.isDaterRegim)
+		{
+			this.DeactivateBear();
+			return;
+		}
+		if (!this.isMechActive)
+		{
+			return;
+		}
+		this.isMechActive = false;
+		if (this.myCurrentWeapon != null)
+		{
+			this.myCurrentWeapon.SetActive(true);
+		}
+		this.myCamera.transform.localPosition = new Vector3(0f, 0.7f, 0f);
+		if (Defs.isSoundFX)
+		{
+			this.mechExplossionSound.Play();
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			this.mechPoint.SetActive(false);
+			this.gunCamera.fieldOfView = 75f;
+			if (!this.myCurrentWeaponSounds.isDoubleShot)
+			{
+				this.gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
+			}
+			else
+			{
+				this.gunCamera.transform.localPosition = Vector3.zero;
+			}
+			if (this.inGameGUI != null)
+			{
+				if (!this._weaponManager.currentWeaponSounds.isMelee || this._weaponManager.currentWeaponSounds.isShotMelee)
+				{
+					this.inGameGUI.fireButtonSprite.spriteName = "controls_fire";
+					this.inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
 				}
 				else
 				{
-					if (_backWasPressed)
-					{
-						androidBackPressed2 = true;
-					}
-					_backWasPressed = false;
+					this.inGameGUI.fireButtonSprite.spriteName = "controls_strike";
+					this.inGameGUI.fireButtonSprite2.spriteName = "controls_strike";
 				}
 			}
-			if (androidBackPressed2 && !isInappWinOpen)
-			{
-				androidBackPressed2 = false;
-				if (inGameGUI == null || inGameGUI.pausePanel == null)
-				{
-					yield return null;
-					continue;
-				}
-				if (inGameGUI.blockedCollider.activeSelf)
-				{
-					yield return null;
-					continue;
-				}
-				SwitchPause();
-			}
-			yield return null;
 		}
+		else
+		{
+			if (!this.isInvisible)
+			{
+				this.fpsPlayerBody.SetActive(true);
+			}
+			this.bodyCollayder.height = 1.51f;
+			this.bodyCollayder.center = Vector3.zero;
+			this.headCollayder.center = Vector3.zero;
+			this.mechExplossion.SetActive(true);
+			this.mechExplossion.GetComponent<DisableObjectFromTimer>().timer = 1f;
+			this.mechBodyAnimation.Play("Dead");
+			this.mechGunAnimation.Play("Dead");
+			this.mechPoint.GetComponent<DisableObjectFromTimer>().timer = 0.46f;
+			this.nickLabel.transform.localPosition = Vector3.up * 1.08f;
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			PotionsController.sharedController.DeActivePotion(GearManager.Mech, this, true);
+		}
+		if (this.isMulti && this.isMine)
+		{
+			if (!Defs.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("DeactivateMechRPC", RPCMode.Others, new object[0]);
+			}
+			else
+			{
+				this.photonView.RPC("DeactivateMechRPC", PhotonTargets.Others, new object[0]);
+			}
+		}
+		if ((!this.isMulti || this.isMine) && this.inGameGUI != null)
+		{
+			this.inGameGUI.SetCrosshair(this._weaponManager.currentWeaponSounds);
+		}
+		this.mySkinName.SetAnim(this.mySkinName.currentAnim, EffectsController.WeAreStealth);
+		this.UpdateEffectsForCurrentWeapon(this.mySkinName.currentCape, this.mySkinName.currentMask, this.mySkinName.currentHat);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void DeactivateMechRPC()
+	{
+		this.DeactivateMech();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Fade(float start, float end, float length, GameObject currentObject)
+	{
+		Player_move_c.u003cFadeu003ec__IteratorDD variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void fireFlash(bool isFlash, int numFlash)
+	{
+		string str;
+		WeaponSounds weaponSound = (!this.isMechActive ? this.myCurrentWeaponSounds : this.mechWeaponSounds);
+		if (weaponSound == null)
+		{
+			return;
+		}
+		if (isFlash)
+		{
+			if (numFlash == 0)
+			{
+				FlashFire component = weaponSound.GetComponent<FlashFire>();
+				if (component != null)
+				{
+					component.fire(this);
+				}
+			}
+			else if ((int)weaponSound.gunFlashDouble.Length > numFlash - 1)
+			{
+				weaponSound.gunFlashDouble[numFlash - 1].GetComponent<FlashFire>().fire(this);
+			}
+		}
+		if (weaponSound.isRoundMelee)
+		{
+			float single = Player_move_c.TimeOfMeleeAttack(weaponSound);
+			base.StartCoroutine(this.RunOnGroundEffectCoroutine(weaponSound.gameObject.name.Replace("(Clone)", string.Empty), single));
+		}
+		str = (weaponSound.isDoubleShot ? string.Concat("Shoot", numFlash.ToString()) : "Shoot");
+		if (!this.isMechActive)
+		{
+			weaponSound.animationObject.GetComponent<Animation>().Play(str);
+		}
+		else
+		{
+			this.mechGunAnimation.Play(str);
+			if (Defs.isSoundFX)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this.shootMechClip);
+			}
+		}
+		if (Defs.isSoundFX && !this.isMechActive)
+		{
+			base.GetComponent<AudioSource>().Stop();
+			base.GetComponent<AudioSource>().PlayOneShot(weaponSound.shoot);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void fireFlashWithHole(bool _isBloodParticle, Vector3 _pos, Quaternion _rot, bool isFlash, int numFlash)
+	{
+		this.fireFlash(isFlash, numFlash);
+		this.HoleRPC(_isBloodParticle, _pos, _rot);
+	}
+
+	[PunRPC]
+	[RPC]
+	private void fireFlashWithManyHoles(bool[] _isBloodParticle, Vector3[] _pos, Quaternion[] _rot, bool isFlash, int numFlash)
+	{
+		this.fireFlash(isFlash, numFlash);
+		if (_isBloodParticle != null)
+		{
+			for (int i = 0; i < (int)_isBloodParticle.Length; i++)
+			{
+				this.HoleRPC(_isBloodParticle[i], _pos[i], _rot[i]);
+			}
+		}
+	}
+
+	private void FixedUpdate()
+	{
+		if (this.rocketToLaunch != null)
+		{
+			Rocket component = this.rocketToLaunch.GetComponent<Rocket>();
+			this.rocketToLaunch.GetComponent<Rigidbody>().AddForce(component.currentRocketSettings.startForce * this.rocketToLaunch.transform.forward);
+			this.rocketToLaunch = null;
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			ShopNGUIController.sharedShop.SetInGame(true);
+			if ((JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed ? Defs.isJetpackEnabled : false) != this.isJumpPresedOld && (Defs.isJetpackEnabled || this.isJumpPresedOld))
+			{
+				this.SetJetpackParticleEnabled((JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed ? Defs.isJetpackEnabled : false));
+				this.isJumpPresedOld = (JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed ? Defs.isJetpackEnabled : false);
+			}
+		}
+		if (!this.isMulti || !this.isMine)
+		{
+			return;
+		}
+		if (Camera.main == null)
+		{
+			return;
+		}
+	}
+
+	private void FlamethrowerShot(WeaponSounds weapon)
+	{
+		RaycastHit raycastHit;
+		this._FireFlash(true, 0);
+		GameObject gameObject = null;
+		if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out raycastHit, weapon.range, Player_move_c._ShootRaycastLayerMask) && raycastHit.collider.gameObject != null)
+		{
+			gameObject = (!raycastHit.transform.parent || !raycastHit.transform.parent.CompareTag("Enemy") && !raycastHit.transform.parent.CompareTag("Player") ? raycastHit.transform.gameObject : raycastHit.transform.parent.gameObject);
+			this._HitEnemy(gameObject, false, 0f);
+		}
+		List<GameObject> allTargets = this.GetAllTargets();
+		float single = weapon.range * weapon.range;
+		for (int i = 0; i < allTargets.Count; i++)
+		{
+			if (!(allTargets[i] == this._player) && !(gameObject == allTargets[i]))
+			{
+				Vector3 item = allTargets[i].transform.position - this._player.transform.position;
+				if (item.sqrMagnitude < single && Vector3.Angle(base.gameObject.transform.forward, item) < weapon.meleeAngle)
+				{
+					this._HitEnemy(allTargets[i], false, 0f);
+				}
+			}
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Flash(GameObject _obj)
+	{
+		Player_move_c.u003cFlashu003ec__IteratorDB variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator FlashWhenDead()
+	{
+		Player_move_c.u003cFlashWhenDeadu003ec__IteratorE1 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator FlashWhenHit()
+	{
+		Player_move_c.u003cFlashWhenHitu003ec__IteratorE0 variable = null;
+		return variable;
+	}
+
+	private List<GameObject> GetAllTargets()
+	{
+		List<GameObject> gameObjects = new List<GameObject>();
+		if (!this.isMulti || this.isCOOP)
+		{
+			gameObjects.AddRange(Initializer.enemiesObj);
+		}
+		else
+		{
+			gameObjects.AddRange(Initializer.playersObj);
+			gameObjects.AddRange(Initializer.turretsObj);
+		}
+		if (Defs.isHunger)
+		{
+			gameObjects.AddRange(Initializer.chestsObj);
+		}
+		gameObjects.AddRange(Initializer.damagedObj);
+		return gameObjects;
+	}
+
+	private float GetDamageForBotsAndExplosionObjects(bool isTakeDamageMech = false)
+	{
+		WeaponSounds weaponSound = (!isTakeDamageMech ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		float single = ((float)(-weaponSound.damage) + UnityEngine.Random.Range(weaponSound.damageRange.x, weaponSound.damageRange.y)) * (1f + this.koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(weaponSound.categoryNabor - 1));
+		return single;
+	}
+
+	public void GetDamageFromEnv(float damage, Vector3 pos)
+	{
+		if (this.isKilled || this.isImmortality)
+		{
+			return;
+		}
+		if (pos != Vector3.zero)
+		{
+			this.ShowDamageDirection(pos);
+		}
+		if (Defs.isSoundFX)
+		{
+			NGUITools.PlaySound((this.curArmor > 0f || this.isMechActive ? this.damageArmorPlayerSound : this.damagePlayerSound));
+		}
+		if (this.DamagePlayerAndCheckDeath(damage) && Defs.isMulti)
+		{
+			this.ImSuicide();
+			if (!Defs.isCOOP)
+			{
+				this.SendImKilled();
+			}
+		}
+		if (!Defs.isMulti)
+		{
+			this.StartFlashRPC();
+		}
+		else
+		{
+			this.SendStartFlashMine();
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void GetDamageFromEnvRPC(float damage, Vector3 pos)
+	{
+		base.StartCoroutine(this.Flash(this.myPlayerTransform.gameObject));
+		if (!this.isMine || this.isKilled || this.isImmortality)
+		{
+			return;
+		}
+		if (pos != Vector3.zero)
+		{
+			this.ShowDamageDirection(pos);
+		}
+		if (Defs.isSoundFX)
+		{
+			NGUITools.PlaySound((this.curArmor > 0f || this.isMechActive ? this.damageArmorPlayerSound : this.damagePlayerSound));
+		}
+		if (this.DamagePlayerAndCheckDeath(damage) && Defs.isMulti)
+		{
+			this.ImSuicide();
+			if (!Defs.isCOOP)
+			{
+				this.SendImKilled();
+			}
+		}
+	}
+
+	private float GetDamageValueForTargetsInRadius(float distanceToTagetSqr, float radiusDamageSqr)
+	{
+		float single = (float)this._weaponManager.currentWeaponSounds.damage + WeaponManager.sharedManager.currentWeaponSounds.damageRange.x;
+		float single1 = (float)this._weaponManager.currentWeaponSounds.damage + WeaponManager.sharedManager.currentWeaponSounds.damageRange.y;
+		float single2 = single;
+		single1 = single2;
+		float single3 = (single + single2 * (1f - distanceToTagetSqr / radiusDamageSqr)) * (1f + this.koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(this._weaponManager.currentWeaponSounds.categoryNabor - 1));
+		return single3;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetHardwareKeysInput()
+	{
+		Player_move_c.u003cGetHardwareKeysInputu003ec__IteratorD8 variable = null;
+		return variable;
+	}
+
+	public Player_move_c.RayHitsInfo GetHitsFromRay(Ray ray, bool getAll = true)
+	{
+		Player_move_c.RayHitsInfo array = new Player_move_c.RayHitsInfo()
+		{
+			obstacleFound = false,
+			lenRay = 150f
+		};
+		RaycastHit[] raycastHitArray = Physics.RaycastAll(ray, 150f, Player_move_c._ShootRaycastLayerMask);
+		if (raycastHitArray == null || (int)raycastHitArray.Length == 0)
+		{
+			raycastHitArray = new RaycastHit[0];
+		}
+		if (getAll)
+		{
+			array.hits = raycastHitArray;
+		}
+		else
+		{
+			Array.Sort<RaycastHit>(raycastHitArray, (RaycastHit hit1, RaycastHit hit2) => {
+				float single = (hit1.point - this.GunFlash.position).sqrMagnitude - (hit2.point - this.GunFlash.position).sqrMagnitude;
+				return (single <= 0f ? (single != 0f ? -1 : 0) : 1);
+			});
+			bool flag = false;
+			RaycastHit raycastHit = new RaycastHit();
+			List<RaycastHit> raycastHits = new List<RaycastHit>();
+			RaycastHit[] raycastHitArray1 = raycastHitArray;
+			for (int i = 0; i < (int)raycastHitArray1.Length; i++)
+			{
+				RaycastHit raycastHit1 = raycastHitArray1[i];
+				if (this.isHunger && raycastHit1.collider.gameObject != null && raycastHit1.collider.gameObject.CompareTag("Chest"))
+				{
+					raycastHits.Add(raycastHit1);
+				}
+				else if (raycastHit1.collider.gameObject.transform.parent != null && raycastHit1.collider.gameObject.transform.parent.CompareTag("Enemy"))
+				{
+					raycastHits.Add(raycastHit1);
+				}
+				else if (raycastHit1.collider.gameObject.transform.parent != null && raycastHit1.collider.gameObject.transform.parent.CompareTag("Player"))
+				{
+					raycastHits.Add(raycastHit1);
+				}
+				else if (raycastHit1.collider.gameObject != null && raycastHit1.collider.gameObject.CompareTag("Turret"))
+				{
+					raycastHits.Add(raycastHit1);
+				}
+				else if (!(raycastHit1.collider.gameObject != null) || !raycastHit1.collider.gameObject.CompareTag("DamagedExplosion"))
+				{
+					flag = true;
+					raycastHit = raycastHit1;
+					array.obstacleFound = true;
+					Vector3 vector3 = raycastHit1.point;
+					Vector3 vector31 = vector3 - ray.origin;
+					array.lenRay = Vector3.Magnitude(vector31);
+					array.rayReflect = new Ray(vector3, Vector3.Reflect(ray.direction, raycastHit1.normal));
+					break;
+				}
+				else
+				{
+					raycastHits.Add(raycastHit1);
+				}
+			}
+			array.hits = raycastHits.ToArray();
+		}
+		return array;
+	}
+
+	private float GetMultyDamage()
+	{
+		float damageByTier;
+		float single;
+		WeaponSounds weaponSound = (!this.isMechActive ? this._weaponManager.currentWeaponSounds : this.mechWeaponSounds);
+		if (!this.isMechActive)
+		{
+			if (!(ExpController.Instance != null) || ExpController.Instance.OurTier >= (int)this._weaponManager.currentWeaponSounds.DamageByTier.Length)
+			{
+				single = ((int)this._weaponManager.currentWeaponSounds.DamageByTier.Length <= 0 ? 0f : this._weaponManager.currentWeaponSounds.DamageByTier[0]);
+			}
+			else
+			{
+				single = this._weaponManager.currentWeaponSounds.DamageByTier[this.TierOrRoomTier(ExpController.Instance.OurTier)];
+			}
+			damageByTier = single;
+		}
+		else
+		{
+			damageByTier = weaponSound.DamageByTier[this.TierOrRoomTier(GearManager.CurrentNumberOfUphradesForGear(GearManager.Mech))];
+		}
+		return damageByTier;
+	}
+
+	private int GetNumShootInDouble()
+	{
+		this.numShootInDoubleShot++;
+		if (this.numShootInDoubleShot == 3)
+		{
+			this.numShootInDoubleShot = 1;
+		}
+		return this.numShootInDoubleShot;
+	}
+
+	public Vector3 GetPointAutoAim(Vector3 _posTo)
+	{
+		RaycastHit raycastHit;
+		if (this.timerUpdatePointAutoAi < 0f)
+		{
+			this.rayAutoAim = this.myCamera.ScreenPointToRay(new Vector3((float)Screen.width * 0.5f, (float)Screen.height * 0.5f, 0f));
+			if (!Physics.Raycast(this.rayAutoAim, out raycastHit, 300f, Tools.AllWithoutDamageCollidersMaskAndWithoutRocket))
+			{
+				this.pointAutoAim = Vector3.down * 10000f;
+			}
+			else
+			{
+				if (raycastHit.collider.gameObject.name.Equals("Rocket(Clone)"))
+				{
+					UnityEngine.Debug.Log("Rocket(Clone)");
+				}
+				this.pointAutoAim = raycastHit.point;
+			}
+			this.timerUpdatePointAutoAi = 0.2f;
+		}
+		if (this.pointAutoAim.y >= -1000f)
+		{
+			return this.pointAutoAim;
+		}
+		return this.rayAutoAim.GetPoint(Vector3.Magnitude(this.myCamera.transform.position - _posTo));
+	}
+
+	public static GameObject[] GetStopObjFromPlayer(GameObject _obj)
+	{
+		List<GameObject> gameObjects = new List<GameObject>();
+		Transform transforms = _obj.transform;
+		int num = 0;
+		while (num < transforms.childCount)
+		{
+			Transform child = transforms.GetChild(num);
+			if (!child.gameObject.name.Equals("GameObject") || child.transform.childCount <= 0)
+			{
+				num++;
+			}
+			else
+			{
+				for (int i = 0; i < child.transform.childCount; i++)
+				{
+					GameObject gameObject = null;
+					GameObject gameObject1 = null;
+					WeaponSounds component = child.transform.GetChild(i).gameObject.GetComponent<WeaponSounds>();
+					gameObject = component.bonusPrefab;
+					if (!component.isMelee)
+					{
+						gameObject1 = child.transform.GetChild(i).Find("BulletSpawnPoint").gameObject;
+					}
+					if (component.noFillObjects != null && (int)component.noFillObjects.Length > 0)
+					{
+						for (int j = 0; j < (int)component.noFillObjects.Length; j++)
+						{
+							gameObjects.Add(component.noFillObjects[j]);
+						}
+					}
+					if (gameObject != null)
+					{
+						gameObjects.Add(gameObject);
+					}
+					if (gameObject1 != null)
+					{
+						gameObjects.Add(gameObject1);
+					}
+					if (component.LeftArmorHand != null)
+					{
+						gameObjects.Add(component.LeftArmorHand.gameObject);
+					}
+					if (component.RightArmorHand != null)
+					{
+						gameObjects.Add(component.RightArmorHand.gameObject);
+					}
+					if (component.grenatePoint != null)
+					{
+						gameObjects.Add(component.grenatePoint.gameObject);
+					}
+					if (component.animationObject != null && component.animationObject.GetComponent<InnerWeaponPars>() != null && component.animationObject.GetComponent<InnerWeaponPars>().particlePoint != null)
+					{
+						gameObjects.Add(component.animationObject.GetComponent<InnerWeaponPars>().particlePoint);
+					}
+					List<GameObject> listWeaponAnimEffects = component.GetListWeaponAnimEffects();
+					if (listWeaponAnimEffects != null)
+					{
+						gameObjects.AddRange(listWeaponAnimEffects);
+					}
+				}
+				break;
+			}
+		}
+		if (!(_obj != null) || !(_obj.GetComponent<SkinName>() != null))
+		{
+			UnityEngine.Debug.Log("Condition failed: “_obj != null && _obj.GetComponent<SkinName>() != null”");
+		}
+		else
+		{
+			SkinName skinName = _obj.GetComponent<SkinName>();
+			gameObjects.Add(skinName.capesPoint);
+			gameObjects.Add(skinName.hatsPoint);
+			gameObjects.Add(skinName.maskPoint);
+			gameObjects.Add(skinName.bootsPoint);
+			gameObjects.Add(skinName.armorPoint);
+			gameObjects.Add(skinName.onGroundEffectsPoint.gameObject);
+			if (skinName.playerMoveC != null)
+			{
+				gameObjects.Add(skinName.playerMoveC.flagPoint);
+				gameObjects.Add(skinName.playerMoveC.invisibleParticle);
+				gameObjects.Add(skinName.playerMoveC.jetPackPoint);
+				gameObjects.Add(skinName.playerMoveC.jetPackPointMech);
+				gameObjects.Add(skinName.playerMoveC.wingsPoint);
+				gameObjects.Add(skinName.playerMoveC.wingsPointBear);
+				gameObjects.Add(skinName.playerMoveC.turretPoint);
+				gameObjects.Add(skinName.playerMoveC.mechPoint);
+				gameObjects.Add(skinName.playerMoveC.mechBearPoint);
+				gameObjects.Add(skinName.playerMoveC.mechExplossion);
+				gameObjects.Add(skinName.playerMoveC.bearExplosion);
+				if (Defs.isDaterRegim && skinName.playerMoveC.myCurrentWeaponSounds != null)
+				{
+					gameObjects.Add(skinName.playerMoveC.myCurrentWeaponSounds.BearWeaponObject);
+				}
+				gameObjects.Add(skinName.playerMoveC.particleBonusesPoint);
+				List<GameObject> gameObjects1 = gameObjects;
+				skinName.playerMoveC.arrowToPortalPoint.Do<GameObject>(new Action<GameObject>(gameObjects1.Add));
+			}
+		}
+		return gameObjects.ToArray();
+	}
+
+	public void GoToShopFromPause()
+	{
+		this.SetInApp();
+		this.inAppOpenedFromPause = true;
+	}
+
+	public void GrenadeFire()
+	{
+		if (!this.isGrenadePress)
+		{
+			return;
+		}
+		float single = Time.realtimeSinceStartup - this.timeGrenadePress;
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
+		{
+			TrainingController.isNextStep = TrainingState.TapToThrowGrenade;
+		}
+		Defs.isGrenateFireEnable = false;
+		if (single - 0.4f <= 0f)
+		{
+			base.Invoke("GrenadeStartFire", 0.4f - single);
+		}
+		else
+		{
+			this.GrenadeStartFire();
+		}
+	}
+
+	public void GrenadePress()
+	{
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
+		{
+			this.showGrenadeHint = false;
+			HintController.instance.HideHintByName("use_grenade");
+		}
+		if (this.indexWeapon == 1001)
+		{
+			return;
+		}
+		this.GrenadePressInvoke();
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void GrenadePressInvoke()
+	{
+		this.isGrenadePress = true;
+		this.currentWeaponBeforeGrenade = WeaponManager.sharedManager.CurrentWeaponIndex;
+		this.ChangeWeapon(1000, false);
+		this.timeGrenadePress = Time.realtimeSinceStartup;
+		if (this.inGameGUI != null && this.inGameGUI.blockedCollider != null)
+		{
+			this.inGameGUI.blockedCollider.SetActive(true);
+		}
+		if (this.inGameGUI != null && this.inGameGUI.blockedCollider2 != null)
+		{
+			this.inGameGUI.blockedCollider2.SetActive(true);
+		}
+		if (this.inGameGUI != null && this.inGameGUI.blockedColliderDater != null)
+		{
+			this.inGameGUI.blockedColliderDater.SetActive(true);
+		}
+		if (this.inGameGUI != null)
+		{
+			for (int i = 0; i < (int)this.inGameGUI.upButtonsInShopPanel.Length; i++)
+			{
+				this.inGameGUI.upButtonsInShopPanel[i].GetComponent<ButtonHandler>().isEnable = false;
+			}
+			for (int j = 0; j < (int)this.inGameGUI.upButtonsInShopPanelSwipeRegim.Length; j++)
+			{
+				this.inGameGUI.upButtonsInShopPanelSwipeRegim[j].GetComponent<ButtonHandler>().isEnable = false;
+			}
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void GrenadeStartFire()
+	{
+		if (!this.isMulti)
+		{
+			this.fireFlash(false, 0);
+		}
+		else if (this.isInet)
+		{
+			this.photonView.RPC("fireFlash", PhotonTargets.All, new object[] { false, 0 });
+		}
+		else
+		{
+			base.GetComponent<NetworkView>().RPC("fireFlash", RPCMode.All, new object[] { false, 0 });
+		}
+		Player_move_c grenadeCount = this;
+		grenadeCount.GrenadeCount = grenadeCount.GrenadeCount - 1;
+		base.Invoke("RunGrenade", 0.2667f);
+		base.Invoke("SetGrenateFireEnabled", 1f);
+	}
+
+	private void HandleEscape()
+	{
+		if (this.trainigController != null)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.Log("Ignoring [Escape] in training scene.");
+			}
+			return;
+		}
+		if (this.isMulti && !this.isMine)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.LogFormat("Ignoring [Escape]; isMulti: {0}, isMine: {1}", new object[] { this.isMulti, this.isMine });
+			}
+			return;
+		}
+		if (!Cursor.visible)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.Log("Handling [Escape]. Cursor locked.");
+			}
+			this._escapePressed = true;
+			Cursor.lockState = CursorLockMode.None;
+			Cursor.visible = true;
+			return;
+		}
+		if (this.showRanks)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.LogFormat("Ignoring [Escape]; showRanks: {0}", new object[] { this.showRanks });
+			}
+			return;
+		}
+		if (RespawnWindow.Instance != null && RespawnWindow.Instance.isShown)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.Log("Handling [Escape] in Respawn Window.");
+			}
+			RespawnWindow.Instance.OnBtnGoBattleClick();
+			return;
+		}
+		GameObject gameObject = GameObject.FindGameObjectWithTag("ChatViewer");
+		if (gameObject != null)
+		{
+			if (!gameObject.GetComponent<ChatViewrController>().buySmileBannerPrefab.activeSelf)
+			{
+				if (Defs.IsDeveloperBuild)
+				{
+					UnityEngine.Debug.Log("Handling [Escape]. Closing chat");
+				}
+				gameObject.GetComponent<ChatViewrController>().CloseChat(false);
+			}
+			return;
+		}
+		if (!this.isInappWinOpen && Cursor.lockState != CursorLockMode.Locked)
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.LogFormat("Handling [Escape]; isInappWinOpen: {0}, lockState: '{1}'", new object[] { this.isInappWinOpen, Cursor.lockState });
+			}
+			this._escapePressed = true;
+		}
+	}
+
+	private void HandlePurchaseSuccessful(PurchaseResponse response)
+	{
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("Amazon PurchaseResponse (Player_move_c): ", response.Status));
+			return;
+		}
+		UnityEngine.Debug.Log(string.Concat("Amazon PurchaseResponse (Player_move_c): ", response.PurchaseReceipt.ToJson()));
+		this.PurchaseSuccessful(response.PurchaseReceipt.Sku);
+	}
+
+	private void HandleShowArmorChanged()
+	{
+		this.mySkinName.SetArmor(null);
+		this.mySkinName.SetHat(null);
+	}
+
+	public bool HasFreezerFireSubscr()
+	{
+		return this.FreezerFired != null;
+	}
+
+	public void HideChangeWeaponTrainingHint()
+	{
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showChangeWeaponHint)
+		{
+			this.showChangeWeaponHint = false;
+			HintController.instance.HideHintByName("change_weapon");
+		}
+	}
+
+	public void hideGUI()
+	{
+		this.showGUI = false;
+	}
+
+	public void hit(float dam, Vector3 posEnemy, bool damageColliderHit = false)
+	{
+		if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None)
+		{
+			dam *= this._protectionShieldValue;
+			if (this.isMechActive)
+			{
+				this.MinusMechHealth(dam);
+			}
+			else if (this.curArmor < dam)
+			{
+				Player_move_c curHealth = this;
+				curHealth.CurHealth = curHealth.CurHealth - (dam - this.curArmor);
+				this.curArmor = 0f;
+				CurrentCampaignGame.withoutHits = false;
+			}
+			else
+			{
+				Player_move_c playerMoveC = this;
+				playerMoveC.curArmor = playerMoveC.curArmor - dam;
+			}
+		}
+		if (!damageColliderHit)
+		{
+			this.ShowDamageDirection(posEnemy);
+		}
+		if (!this.damageShown)
+		{
+			base.StartCoroutine(this.FlashWhenHit());
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator HitRoundMelee(WeaponSounds weapon)
+	{
+		Player_move_c.u003cHitRoundMeleeu003ec__IteratorE7 variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void HoleRPC(bool _isBloodParticle, Vector3 _pos, Quaternion _rot)
+	{
+		if (Device.isPixelGunLow)
+		{
+			return;
+		}
+		if (!_isBloodParticle)
+		{
+			HoleScript currentHole = HoleBulletStackController.sharedController.GetCurrentHole(false);
+			if (currentHole != null)
+			{
+				currentHole.StartShowHole(_pos, _rot, false);
+			}
+			WallBloodParticle currentParticle = WallParticleStackController.sharedController.GetCurrentParticle(false);
+			if (currentParticle != null)
+			{
+				currentParticle.StartShowParticle(_pos, _rot, false);
+			}
+		}
+		else
+		{
+			WallBloodParticle wallBloodParticle = BloodParticleStackController.sharedController.GetCurrentParticle(false);
+			if (wallBloodParticle != null)
+			{
+				wallBloodParticle.StartShowParticle(_pos, _rot, false);
+			}
+		}
+	}
+
+	public void IdleAnimation()
+	{
+		if (!this._singleOrMultiMine() && (!Defs.isDaterRegim || !this.isBearActive))
+		{
+			return;
+		}
+		if ((this.isBearActive || this.isMechActive) && !this.mechGunAnimation.IsPlaying("Shoot"))
+		{
+			this.mechGunAnimation.CrossFade("Idle");
+		}
+		if (this.___weaponManager && this.___weaponManager.currentWeaponSounds && this.___weaponManager.currentWeaponSounds.animationObject != null)
+		{
+			this.___weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().CrossFade("Idle");
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void imDeath(string _name)
+	{
+		if (this._weaponManager == null)
+		{
+			return;
+		}
+		if (this._weaponManager.myPlayer == null)
+		{
+			return;
+		}
+		this._weaponManager.myPlayerMoveC.AddSystemMessage(_name, 1, Color.white);
+	}
+
+	public void ImKill(NetworkViewID idKiller, int _typeKill)
+	{
+		Player_move_c playerMoveC = this;
+		playerMoveC.countKills = playerMoveC.countKills + 1;
+		GlobalGameController.CountKills = this.countKills;
+		this.CheckRookieKillerAchievement();
+		this.addMultyKill();
+		if (this.isCompany)
+		{
+			if (this.myCommand == 1)
+			{
+				Player_move_c playerMoveC1 = this;
+				playerMoveC1.countKillsCommandBlue = playerMoveC1.countKillsCommandBlue + 1;
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, new object[] { 1 });
+				}
+				else
+				{
+					this.photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, new object[] { 1 });
+				}
+			}
+			if (this.myCommand == 2)
+			{
+				Player_move_c playerMoveC2 = this;
+				playerMoveC2.countKillsCommandRed = playerMoveC2.countKillsCommandRed + 1;
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, new object[] { 2 });
+				}
+				else
+				{
+					this.photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, new object[] { 2 });
+				}
+			}
+		}
+		this._weaponManager.myNetworkStartTable.CountKills = this.countKills;
+		this._weaponManager.myNetworkStartTable.SynhCountKills(null);
+	}
+
+	public void ImKill(int idKiller, int _typeKill)
+	{
+		if (WeaponManager.sharedManager != null)
+		{
+			WeaponSounds weaponSound = WeaponManager.sharedManager.currentWeaponSounds;
+			if (weaponSound != null)
+			{
+				Initializer initializer = UnityEngine.Object.FindObjectOfType<Initializer>();
+				if (initializer != null)
+				{
+					initializer.IncrementKillCountForWeapon((_typeKill != 6 ? weaponSound.shopName : "GRENADE"));
+				}
+				else
+				{
+					UnityEngine.Debug.LogWarning("initializer == null");
+				}
+			}
+			else
+			{
+				UnityEngine.Debug.LogWarning("ws == null");
+			}
+		}
+		else
+		{
+			UnityEngine.Debug.LogWarning("WeaponManager.sharedManager == null");
+		}
+		Player_move_c playerMoveC = this;
+		playerMoveC.countKills = playerMoveC.countKills + 1;
+		GlobalGameController.CountKills = this.countKills;
+		this.CheckRookieKillerAchievement();
+		this.addMultyKill();
+		if (this.isCompany)
+		{
+			if (this.myCommand == 1)
+			{
+				Player_move_c playerMoveC1 = this;
+				playerMoveC1.countKillsCommandBlue = playerMoveC1.countKillsCommandBlue + 1;
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, new object[] { 1 });
+				}
+				else
+				{
+					this.photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, new object[] { 1 });
+				}
+			}
+			if (this.myCommand == 2)
+			{
+				Player_move_c playerMoveC2 = this;
+				playerMoveC2.countKillsCommandRed = playerMoveC2.countKillsCommandRed + 1;
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, new object[] { 2 });
+				}
+				else
+				{
+					this.photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, new object[] { 2 });
+				}
+			}
+		}
+		this._weaponManager.myNetworkStartTable.CountKills = this.countKills;
+		this._weaponManager.myNetworkStartTable.SynhCountKills(null);
+		if (this.isHunger && Initializer.players.Count == 1)
+		{
+			if (Defs.isHunger)
+			{
+				int num = Storager.getInt(Defs.RatingHunger, false) + 1;
+				Storager.setInt(Defs.RatingHunger, num, false);
+			}
+			this.photonView.RPC("pobedaPhoton", PhotonTargets.All, new object[] { idKiller, this.myCommand });
+			int num1 = Storager.getInt("Rating", false) + 1;
+			Storager.setInt("Rating", num1, false);
+			if (FriendsController.sharedController != null)
+			{
+				FriendsController.sharedController.TryIncrementWinCountTimestamp();
+			}
+			this._weaponManager.myNetworkStartTable.isIwin = true;
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void ImKilled(Vector3 pos, Quaternion rot)
+	{
+		this.ImKilled(pos, rot, 0);
+	}
+
+	[PunRPC]
+	[RPC]
+	private void ImKilled(Vector3 pos, Quaternion rot, int _typeDead = 0)
+	{
+		if (Device.isPixelGunLow)
+		{
+			_typeDead = 0;
+		}
+		if (!this.isStartAngel || Defs.isCOOP)
+		{
+			this.isStartAngel = true;
+			if (Defs.inComingMessagesCounter < 15)
+			{
+				PlayerDeadController currentParticle = PlayerDeadStackController.sharedController.GetCurrentParticle(false);
+				if (currentParticle != null)
+				{
+					currentParticle.StartShow(pos, rot, _typeDead, false, this._skin);
+				}
+				if (Defs.isSoundFX)
+				{
+					base.gameObject.GetComponent<AudioSource>().PlayOneShot(this.deadPlayerSound);
+				}
+			}
+		}
+		if (!this.isMine && this.getLocalHurt)
+		{
+			WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killAssist, 1f);
+			this.getLocalHurt = false;
+		}
+	}
+
+	public void ImSuicide()
+	{
+		this.isSuicided = true;
+		this.respawnedForGUI = true;
+		if (Defs.isFlag && this.isCaptureFlag)
+		{
+			this.enemyFlag.GoBaza();
+			this.isCaptureFlag = false;
+			this.SendSystemMessegeFromFlagReturned(this.enemyFlag.isBlue);
+		}
+		if (this.countKills > 0)
+		{
+			GlobalGameController.CountKills = this.countKills;
+		}
+		this._weaponManager.myNetworkStartTable.CountKills = this.countKills;
+		this._weaponManager.myNetworkStartTable.SynhCountKills(null);
+		this.sendImDeath(this.mySkinName.NickName);
+	}
+
+	public void IndicateDamage()
+	{
+		this.isDeadFrame = true;
+		base.Invoke("setisDeadFrameFalse", 1f);
 	}
 
 	private void InitiailizeIcnreaseArmorEffectFlags()
 	{
-		BonusEffectForArmorWorksInThisMatch = EffectsController.IcnreaseEquippedArmorPercentage > 1f;
-		ArmorBonusGiven = EffectsController.ArmorBonus > 0f;
+		this.BonusEffectForArmorWorksInThisMatch = EffectsController.IcnreaseEquippedArmorPercentage > 1f;
+		this.ArmorBonusGiven = EffectsController.ArmorBonus > 0f;
 	}
 
-	private IEnumerator Start()
+	private void InitPurchaseActions()
 	{
-		string thisMethod = string.Format(CultureInfo.InvariantCulture, "{0}.Start()", GetType().Name);
-		IEnumerator startSteps = StartSteps();
-		int i = 0;
-		while (true)
+		this._actionsForPurchasedItems.Add("bigammopack", new Action<string>(this.ProvideAmmo));
+		this._actionsForPurchasedItems.Add("Fullhealth", new Action<string>(this.ProvideHealth));
+		this._actionsForPurchasedItems.Add(StoreKitEventListener.elixirID, new Action<string>((string inShopId) => Defs.NumberOfElixirs++));
+		this._actionsForPurchasedItems.Add(StoreKitEventListener.armor, new Action<string>((string inShopId) => {
+		}));
+		this._actionsForPurchasedItems.Add(StoreKitEventListener.armor2, new Action<string>((string inShopId) => {
+		}));
+		this._actionsForPurchasedItems.Add(StoreKitEventListener.armor3, new Action<string>((string inShopId) => {
+		}));
+		string[] strArrays = PotionsController.potions;
+		for (int i = 0; i < (int)strArrays.Length; i++)
 		{
-			string callee = string.Format(CultureInfo.InvariantCulture, "Step {0}", i);
-			ScopeLogger scopeLogger = new ScopeLogger(thisMethod, callee, Defs.IsDeveloperBuild && !Application.isEditor);
-			try
-			{
-				if (!startSteps.MoveNext())
-				{
-					break;
-				}
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
-			yield return startSteps.Current;
-			i++;
+			string str = strArrays[i];
+			this._actionsForPurchasedItems.Add(str, new Action<string>(this.providePotion));
+		}
+		string[] canBuyWeaponTags = ItemDb.GetCanBuyWeaponTags(true);
+		for (int j = 0; j < (int)canBuyWeaponTags.Length; j++)
+		{
+			string shopIdByTag = ItemDb.GetShopIdByTag(canBuyWeaponTags[j]);
+			this._actionsForPurchasedItems.Add(shopIdByTag, new Action<string>(this.AddWeaponToInv));
 		}
 	}
 
-	private IEnumerator StartSteps()
+	[DebuggerHidden]
+	private IEnumerator KillCam()
 	{
-		string thisMethod = string.Format(CultureInfo.InvariantCulture, "{0}.StartSteps()", GetType().Name);
-		_bodyMaterial = playerBodyRenderer.material;
-		playerBodyRenderer.sharedMaterial = _bodyMaterial;
-		_mechMaterial = new Material(mechBodyRenderer.material);
-		mechBodyRenderer.sharedMaterial = _mechMaterial;
-		mechHandRenderer.sharedMaterial = _mechMaterial;
-		_bearMaterial = new Material(mechBearBodyRenderer.material);
-		mechBearBodyRenderer.sharedMaterial = _bearMaterial;
-		mechBearHandRenderer.sharedMaterial = _bearMaterial;
-		SetMaterialForArms();
-		try
+		Player_move_c.u003cKillCamu003ec__IteratorE2 variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void Killed(NetworkViewID idKiller, int _typeKill, int _typeWeapon, string weaponName)
+	{
+		PlayerEventScoreController.ScoreEvent scoreEvent;
+		if (this._weaponManager == null)
 		{
-			tierForKilledRate = ExpController.OurTierForAnyPlace() + 1;
-			weKillForKillRate.Clear();
-			weWereKilledForKillRate.Clear();
+			return;
 		}
-		catch (Exception ex)
+		if (this._weaponManager.myPlayer == null)
 		{
-			Exception e = ex;
-			Debug.LogError("Exception in cleaning kill rate stats Player_move_c.Start(): " + e);
-			if (weKillForKillRate != null)
+			return;
+		}
+		string empty = string.Empty;
+		string nickName = string.Empty;
+		nickName = this.mySkinName.NickName;
+		foreach (Player_move_c player in Initializer.players)
+		{
+			if (!player.mySkinName.GetComponent<NetworkView>().viewID.Equals(idKiller))
 			{
-				weKillForKillRate.Clear();
+				continue;
 			}
-			if (weWereKilledForKillRate != null)
+			empty = player.mySkinName.NickName;
+			if (this.isMine && Defs.isJetpackEnabled && !this.mySkinName.character.isGrounded)
 			{
-				weWereKilledForKillRate.Clear();
+				player.AddScoreDuckHunt();
 			}
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			isImmortality = false;
-			timerImmortality = 0f;
-		}
-		isDaterRegim = Defs.isDaterRegim;
-		_killerInfo.Reset();
-		isNeedTakePremiumAccountRewards = PremiumAccountController.Instance.isAccountActive;
-		InitiailizeIcnreaseArmorEffectFlags();
-		Initializer.players.Add(this);
-		Initializer.playersObj.Add(myPlayerTransform.gameObject);
-		if (!Defs.isMulti)
-		{
-			WeaponManager.sharedManager.myPlayerMoveC = this;
-			WeaponManager.sharedManager.myPlayer = myPlayerTransform.gameObject;
-		}
-		AmmoBox.fontSize = Mathf.RoundToInt(18f * (float)Screen.width / 1024f);
-		ScoreBox.fontSize = Mathf.RoundToInt((float)Screen.height * 0.035f);
-		if (Defs.isFlag)
-		{
-			flag1 = Initializer.flag1;
-			flag2 = Initializer.flag2;
-		}
-		timerRegenerationLiveZel = maxTimerRegenerationLiveZel;
-		timerRegenerationLiveCape = maxTimerRegenerationLiveCape;
-		timerRegenerationArmor = maxTimerRegenerationArmor;
-		photonView = PhotonView.Get(this);
-		if (isMulti)
-		{
-			if (!isInet)
+			if (this._weaponManager && player == this._weaponManager.myPlayerMoveC)
 			{
-				isMine = GetComponent<NetworkView>().isMine;
-			}
-			else if (photonView == null)
-			{
-				Debug.Log("Player_move_c.Start():    photonView == null");
-			}
-			else
-			{
-				isMine = photonView.isMine;
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			if (_backSubscription != null)
-			{
-				_backSubscription.Dispose();
-			}
-			_backSubscription = BackSystem.Instance.Register(HandleEscape, "Player Move C");
-		}
-		if ((bool)photonView && photonView.isMine)
-		{
-			PhotonObjectCacher.AddObject(base.gameObject);
-		}
-		if (!isMulti || isMine)
-		{
-			if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None)
-			{
-				if (!Defs.isDaterRegim && Storager.getInt("GrenadeID", false) <= 0)
+				ProfileController.OnGameTotalKills();
+				PlayerScoreController playerScoreController = player.myScoreController;
+				if (_typeKill == 6)
 				{
-					Storager.setInt("GrenadeID", 1, false);
+					scoreEvent = PlayerEventScoreController.ScoreEvent.deadGrenade;
 				}
-				if (Defs.isDaterRegim && Storager.getInt("LikeID", false) <= 0)
+				else if (_typeKill == 9)
 				{
-					Storager.setInt("LikeID", 1, false);
+					scoreEvent = PlayerEventScoreController.ScoreEvent.deadTurret;
 				}
-			}
-			EffectsController.SlowdownCoeff = 1f;
-			ScopeLogger workingLogger = new ScopeLogger(thisMethod, "Resources.Load('InGameGui')", Defs.IsDeveloperBuild && !Application.isEditor);
-			UnityEngine.Object inGameGuiPrefab = Resources.Load("InGameGUI");
-			workingLogger.Dispose();
-			workingLogger = new ScopeLogger(thisMethod, "Instantiate(inGameGuiPrefab)", Defs.IsDeveloperBuild && !Application.isEditor);
-			GameObject inGameGuiInstance = (GameObject)UnityEngine.Object.Instantiate(inGameGuiPrefab, Vector3.up * 10000f, Quaternion.identity);
-			workingLogger.Dispose();
-			inGameGUI = inGameGuiInstance.GetComponent<InGameGUI>();
-			SetGrenateFireEnabled();
-			Defs.isJetpackEnabled = false;
-			Defs.isTurretWeapon = false;
-			oldKilledPlayerCharactersCount = (Storager.hasKey("KilledPlayerCharactersCount") ? Storager.getInt("KilledPlayerCharactersCount", false) : 0);
-		}
-		if (!isMulti)
-		{
-			_skin = SkinsController.currentSkinForPers;
-			_skin.filterMode = FilterMode.Point;
-			ShopNGUIController.sharedShop.onEquipSkinAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__20C;
-		}
-		if (!Defs.isMulti)
-		{
-			GameObject trainigControllerGo = GameObject.FindGameObjectWithTag("TrainingController");
-			if (trainigControllerGo != null)
-			{
-				trainigController = trainigControllerGo.GetComponent<TrainingController>();
-			}
-		}
-		expController = ExperienceController.sharedController;
-		if (isMulti && isInet)
-		{
-			GameObject[] tables = GameObject.FindGameObjectsWithTag("NetworkTable");
-			for (int j = 0; j < tables.Length; j++)
-			{
-				if (tables[j].GetComponent<PhotonView>().owner == base.transform.GetComponent<PhotonView>().owner)
+				else if (_typeKill != 2)
 				{
-					myTable = tables[j];
-					setMyTamble(myTable);
-					break;
-				}
-			}
-		}
-		if (isMulti)
-		{
-			if (isInet)
-			{
-				myPlayerID = myPlayerTransform.GetComponent<PhotonView>().viewID;
-			}
-			else
-			{
-				myPlayerIDLocal = myPlayerTransform.GetComponent<NetworkView>().viewID;
-			}
-		}
-		if (isMulti && !isMine)
-		{
-			base.transform.localPosition = new Vector3(0f, 0.4f, 0f);
-		}
-		if (!isMulti)
-		{
-			CurrentCampaignGame.ResetConditionParameters();
-			CurrentCampaignGame._levelStartedAtTime = Time.time;
-			ZombieCreator.BossKilled += CheckTimeCondition;
-		}
-		if (isMulti && isCompany && isMine)
-		{
-			countKillsCommandBlue = GlobalGameController.countKillsBlue;
-			countKillsCommandRed = GlobalGameController.countKillsRed;
-		}
-		if (isMulti && isCOOP)
-		{
-			zombiManager = ZombiManager.sharedManager;
-		}
-		if (isMulti && isMine)
-		{
-			networkStartTableNGUIController = NetworkStartTableNGUIController.sharedController;
-		}
-		if (!isMulti || isMine)
-		{
-			InitPurchaseActions();
-			ActivityIndicator.IsActiveIndicator = false;
-		}
-		if (!Defs.isMulti || isMine)
-		{
-			_inAppGameObject = GameObject.FindGameObjectWithTag("InAppGameObject");
-			_listener = _inAppGameObject.GetComponent<StoreKitEventListener>();
-		}
-		if (!isMulti)
-		{
-			fpsPlayerBody.SetActive(false);
-		}
-		HOTween.Init(true, true, true);
-		HOTween.EnableOverwriteManager();
-		if (isMulti)
-		{
-			showGUI = isMine;
-		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.AddPurchaseResponseListener(HandlePurchaseSuccessful);
-		}
-		else
-		{
-			GoogleIABManager.purchaseSucceededEvent += purchaseSuccessful;
-		}
-		if (!isMulti || isMine)
-		{
-			_player = myPlayerTransform.gameObject;
-		}
-		else
-		{
-			_player = null;
-		}
-		_weaponManager = WeaponManager.sharedManager;
-		if (Defs.isMulti && ((!Defs.isInet && GetComponent<NetworkView>().isMine) || (Defs.isInet && photonView.isMine && PlayerPrefs.GetInt("StartAfterDisconnect") == 0)))
-		{
-			foreach (Weapon _w in _weaponManager.allAvailablePlayerWeapons)
-			{
-				_w.currentAmmoInClip = _w.weaponPrefab.GetComponent<WeaponSounds>().ammoInClip;
-				_w.currentAmmoInBackpack = _w.weaponPrefab.GetComponent<WeaponSounds>().InitialAmmoWithEffectsApplied;
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			GameObject tmpDamage = Resources.Load("Damage") as GameObject;
-			damage = UnityEngine.Object.Instantiate(tmpDamage);
-			Color rgba = damage.GetComponent<GUITexture>().color;
-			rgba.a = 0f;
-			damage.GetComponent<GUITexture>().color = rgba;
-		}
-		if (!isMulti || isMine)
-		{
-			_pauser = GameObject.FindGameObjectWithTag("GameController").GetComponent<Pauser>();
-			if (_pauser == null)
-			{
-				Debug.LogWarning("Start(): _pauser is null.");
-			}
-		}
-		if (_singleOrMultiMine())
-		{
-			numberOfGrenadesOnStart.Value = ((!Defs.isHunger) ? ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0) ? Storager.getInt((!Defs.isDaterRegim) ? "GrenadeID" : "LikeID", false) : 0) : 0);
-			numberOfGrenades.Value = numberOfGrenadesOnStart.Value;
-			if (!isMulti)
-			{
-				indexWeapon = _weaponManager.CurrentWeaponIndex;
-				ChangeWeaponReal(_weaponManager.CurrentWeaponIndex, false);
-			}
-			else
-			{
-				ChangeWeaponReal(_weaponManager.CurrentIndexOfLastUsedWeaponInPlayerWeapons(), false);
-			}
-			_weaponManager.myGun = base.gameObject;
-			if (_weaponManager.currentWeaponSounds != null)
-			{
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Stop();
-			}
-		}
-		if (isMulti && isMine)
-		{
-			string _nameFilter = FilterBadWorld.FilterString(ProfileController.GetPlayerNameOrDefault());
-			if (isInet)
-			{
-				photonView.RPC("SetNickName", PhotonTargets.AllBuffered, _nameFilter);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("SetNickName", RPCMode.AllBuffered, _nameFilter);
-			}
-		}
-		CurrentBaseArmor = EffectsController.ArmorBonus;
-		CurHealth = MaxHealth;
-		if (!isMulti || isMine)
-		{
-			Wear.RenewCurArmor(TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			string armorEquipped = Storager.getString(Defs.ArmorEquppedSN, false);
-			if (_actionsForPurchasedItems.ContainsKey(armorEquipped))
-			{
-				_actionsForPurchasedItems[armorEquipped](armorEquipped);
-				Storager.setString(Defs.ArmorEquppedSN, Defs.ArmorNoneEqupped, false);
-			}
-			if (Storager.getInt(Defs.AmmoBoughtSN, false) == 1)
-			{
-				if (_actionsForPurchasedItems.ContainsKey("bigammopack"))
-				{
-					_actionsForPurchasedItems["bigammopack"]("bigammopack");
-				}
-				Storager.setInt(Defs.AmmoBoughtSN, 0, false);
-			}
-		}
-		if (_singleOrMultiMine())
-		{
-			StartCoroutine(GetHardwareKeysInput());
-			SetLayerRecursively(mechGunAnimation.gameObject, 9);
-			if (false)
-			{
-				UnityEngine.Object videoRecordingPrefab = Resources.Load("VideoRecordingPanel");
-				GameObject videoRecordingPanel = UnityEngine.Object.Instantiate(videoRecordingPrefab, Vector3.zero, Quaternion.identity) as GameObject;
-				if (videoRecordingPrefab == null)
-				{
-					Debug.LogError("videoRecordingPrefab == null");
-				}
-				if (videoRecordingPanel != null)
-				{
-					videoRecordingPanel.transform.parent = inGameGUI.interfacePanel.transform;
-					videoRecordingPanel.AddComponent<VideoRecordingController>();
+					scoreEvent = (_typeKill != 3 ? PlayerEventScoreController.ScoreEvent.dead : PlayerEventScoreController.ScoreEvent.deadExplosion);
 				}
 				else
 				{
-					Debug.LogError("videoRecordingPanel != null");
+					scoreEvent = PlayerEventScoreController.ScoreEvent.deadHeadShot;
+				}
+				playerScoreController.AddScoreOnEvent(scoreEvent, 1f);
+				if (Defs.isJetpackEnabled && !this._weaponManager.myPlayerMoveC.mySkinName.character.isGrounded && _typeKill != 6 && _typeKill != 8)
+				{
+					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deathFromAbove, 1f);
+				}
+				if (player.isRocketJump && _typeKill != 6 && _typeKill != 8)
+				{
+					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.rocketJumpKill, 1f);
+				}
+				if (this.multiKill > 1)
+				{
+					if (!NetworkStartTable.LocalOrPasswordRoom())
+					{
+						QuestMediator.NotifyBreakSeries();
+					}
+					if (this.multiKill == 2)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill2, 1f);
+					}
+					else if (this.multiKill == 3)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill3, 1f);
+					}
+					else if (this.multiKill == 4)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill4, 1f);
+					}
+					else if (this.multiKill == 5)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill5, 1f);
+					}
+					else if (this.multiKill < 10)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill6, 1f);
+					}
+					else if (this.multiKill < 20)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill10, 1f);
+					}
+					else if (this.multiKill >= 50)
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill50, 1f);
+					}
+					else
+					{
+						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill20, 1f);
+					}
+				}
+				if (this.isInvisible)
+				{
+					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.invisibleKill, 1f);
+				}
+				if (this.isPlacemarker)
+				{
+					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.revenge, 1f);
+				}
+				if (_typeKill != 6 && _typeKill != 8 && _typeKill != 10)
+				{
+					GameObject gameObject = Resources.Load(string.Concat("Weapons/", weaponName)) as GameObject;
+					if (gameObject != null && gameObject.GetComponent<WeaponSounds>() != null)
+					{
+						this.AddCountSerials(gameObject.GetComponent<WeaponSounds>().categoryNabor - 1, player);
+					}
+				}
+				player.ImKill(idKiller, _typeKill);
+				if (this.Equals(this._weaponManager.myPlayerMoveC.placemarkerMoveC))
+				{
+					this._weaponManager.myPlayerMoveC.placemarkerMoveC = null;
+					this.isPlacemarker = false;
+				}
+				if (this.getLocalHurt)
+				{
+					this.getLocalHurt = false;
 				}
 			}
-			inGameGUI.health = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__20D;
-			inGameGUI.armor = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__20E;
-			inGameGUI.killsToMaxKills = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__20F;
-			inGameGUI.timeLeft = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__210;
-			AddButtonHandlers();
-			ShopNGUIController.sharedShop.SetInGame(TrainingController.TrainingCompleted);
-			ShopNGUIController.sharedShop.buyAction = PurchaseSuccessful;
-			ShopNGUIController.sharedShop.equipAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__211;
-			ShopNGUIController.sharedShop.activatePotionAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__212;
-			ShopNGUIController.sharedShop.resumeAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__213;
-			ShopNGUIController.sharedShop.wearEquipAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__214;
-			ShopNGUIController.sharedShop.wearUnequipAction = ((_003CStartSteps_003Ec__IteratorDA)(object)this)._003C_003Em__215;
-			ShopNGUIController.ShowArmorChanged += HandleShowArmorChanged;
+			if (this.isMine)
+			{
+				player.isPlacemarker = true;
+				this.placemarkerMoveC = player;
+			}
+			this.UpdateKillerInfo(player, _typeKill);
+			break;
 		}
-		if (PlayerPrefs.GetInt("StartAfterDisconnect") == 1 && Defs.isMulti && Defs.isInet && photonView.isMine)
+		this.ImKilled(this.myPlayerTransform.position, this.myPlayerTransform.rotation, _typeWeapon);
+		if (this._weaponManager && this._weaponManager.myPlayer != null)
 		{
-			countKills = GlobalGameController.CountKills;
-			myScoreController.currentScore = Mathf.Max(0, GlobalGameController.Score);
-			if (countKills < 0)
-			{
-				countKills = 0;
-			}
-			if (GlobalGameController.healthMyPlayer > 0f || Defs.isHunger)
-			{
-				CurHealth = GlobalGameController.healthMyPlayer;
-				myPlayerTransform.position = GlobalGameController.posMyPlayer;
-				myPlayerTransform.rotation = GlobalGameController.rotMyPlayer;
-				curArmor = GlobalGameController.armorMyPlayer;
-			}
-			RatingSystem.instance.BackupLastRatingTake();
-			PlayerPrefs.SetInt("StartAfterDisconnect", 0);
-		}
-		yield return null;
-		if (_singleOrMultiMine())
-		{
-			PotionsController.sharedController.ReactivatePotions(this, new Dictionary<string, object>());
-			string curHat = Storager.getString(Defs.HatEquppedSN, false);
-			if (!curHat.Equals(Defs.HatNoneEqupped) && Wear.hatsMethods.ContainsKey(curHat))
-			{
-				Wear.hatsMethods[curHat].Key(this, new Dictionary<string, object>());
-			}
-			string curCape = Storager.getString(Defs.CapeEquppedSN, false);
-			if (!curCape.Equals(Defs.CapeNoneEqupped) && Wear.capesMethods.ContainsKey(curCape))
-			{
-				Wear.capesMethods[curCape].Key(this, new Dictionary<string, object>());
-			}
-			string curBoots = Storager.getString(Defs.BootsEquppedSN, false);
-			if (!curBoots.Equals(Defs.BootsNoneEqupped) && Wear.bootsMethods.ContainsKey(curBoots))
-			{
-				Wear.bootsMethods[curBoots].Key(this, new Dictionary<string, object>());
-			}
-			string curArmor_ = Storager.getString(Defs.ArmorNewEquppedSN, false);
-			if (!curArmor_.Equals(Defs.ArmorNewNoneEqupped) && Wear.armorMethods.ContainsKey(curArmor_))
-			{
-				Wear.armorMethods[curArmor_].Key(this, new Dictionary<string, object>());
-			}
-			if (JoystickController.leftJoystick != null)
-			{
-				JoystickController.leftJoystick.SetJoystickActive(true);
-			}
-			if (JoystickController.rightJoystick != null)
-			{
-				JoystickController.rightJoystick.MakeActive();
-			}
-			if (JoystickController.leftTouchPad != null)
-			{
-				JoystickController.leftTouchPad.SetJoystickActive(true);
-			}
-		}
-		if (isMulti && myTable != null)
-		{
-			_skin = myNetworkStartTable.mySkin;
-			if (_skin != null)
-			{
-				SetTextureForBodyPlayer(_skin);
-			}
-		}
-		if (isMine && !TrainingController.TrainingCompleted)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Play_Deathmatch);
-		}
-		for (int i = 0; i < Initializer.players.Count; i++)
-		{
-			Initializer.players[i].SetNicklabelVisible();
+			this._weaponManager.myPlayerMoveC.AddSystemMessage(empty, _typeKill, nickName, Color.white, weaponName);
 		}
 	}
 
-	private void ActualizeNumberOfGrenades()
+	[PunRPC]
+	[RPC]
+	public void KilledPhoton(int idKiller, int _typekill)
 	{
-		if (!Defs.isHunger && !SceneLoader.ActiveSceneName.Equals(Defs.TrainingSceneName) && numberOfGrenades.Value != numberOfGrenadesOnStart.Value)
+		this.KilledPhoton(idKiller, _typekill, string.Empty);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void KilledPhoton(int idKiller, int _typekill, string weaponName)
+	{
+		this.KilledPhoton(idKiller, _typekill, weaponName, 0);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void KilledPhoton(int idKiller, int _typekill, string weaponName, int _typeWeapon)
+	{
+		PlayerEventScoreController.ScoreEvent scoreEvent;
+		if (this._weaponManager == null)
 		{
-			Storager.setInt((!Defs.isDaterRegim) ? "GrenadeID" : "LikeID", numberOfGrenades.Value, false);
-			numberOfGrenadesOnStart.Value = numberOfGrenades.Value;
+			return;
 		}
+		if (this._weaponManager.myPlayer == null)
+		{
+			return;
+		}
+		string empty = string.Empty;
+		string nickName = this.mySkinName.NickName;
+		int num = 0;
+		while (num < Initializer.players.Count)
+		{
+			if (!(Initializer.players[num].mySkinName.photonView != null) || Initializer.players[num].mySkinName.photonView.viewID != idKiller)
+			{
+				num++;
+			}
+			else
+			{
+				SkinName item = Initializer.players[num].mySkinName;
+				Player_move_c playerMoveC = Initializer.players[num];
+				empty = item.NickName;
+				if (this.isMine && Defs.isJetpackEnabled && !this.mySkinName.character.isGrounded)
+				{
+					playerMoveC.AddScoreDuckHunt();
+				}
+				if (this._weaponManager != null && Initializer.players[num] == this._weaponManager.myPlayerMoveC)
+				{
+					ProfileController.OnGameTotalKills();
+					if (!FriendsController.useBuffSystem)
+					{
+						KillRateCheck.instance.IncrementKills();
+					}
+					else
+					{
+						BuffSystem.instance.KillInteraction();
+					}
+					WeaponManager.sharedManager.myNetworkStartTable.IncrementKills();
+					if (this.isRaiderMyPoint)
+					{
+						WeaponManager.sharedManager.myPlayerMoveC.SendHouseKeeperEvent();
+						this.isRaiderMyPoint = false;
+					}
+					if (Defs.isJetpackEnabled && !this._weaponManager.myPlayerMoveC.mySkinName.character.isGrounded && _typekill != 6 && _typekill != 8)
+					{
+						playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deathFromAbove, 1f);
+					}
+					if (playerMoveC.isRocketJump && _typekill != 6 && _typekill != 8)
+					{
+						playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.rocketJumpKill, 1f);
+					}
+					if (_typekill != 6 && _typekill != 8 && _typekill != 10)
+					{
+						GameObject gameObject = Resources.Load(string.Concat("Weapons/", weaponName)) as GameObject;
+						if (gameObject != null && gameObject.GetComponent<WeaponSounds>() != null)
+						{
+							this.AddCountSerials(gameObject.GetComponent<WeaponSounds>().categoryNabor - 1, playerMoveC);
+						}
+					}
+					if (this.multiKill > 1)
+					{
+						if (!NetworkStartTable.LocalOrPasswordRoom())
+						{
+							QuestMediator.NotifyBreakSeries();
+						}
+						if (this.multiKill == 2)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill2, 1f);
+						}
+						else if (this.multiKill == 3)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill3, 1f);
+						}
+						else if (this.multiKill == 4)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill4, 1f);
+						}
+						else if (this.multiKill == 5)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill5, 1f);
+						}
+						else if (this.multiKill < 10)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill6, 1f);
+						}
+						else if (this.multiKill < 20)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill10, 1f);
+						}
+						else if (this.multiKill >= 50)
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill50, 1f);
+						}
+						else
+						{
+							playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill20, 1f);
+						}
+					}
+					if (!Defs.isFlag)
+					{
+						playerMoveC.ImKill(idKiller, _typekill);
+					}
+					ShopNGUIController.CategoryNames categoryName = ShopNGUIController.CategoryNames.BackupCategory | ShopNGUIController.CategoryNames.MeleeCategory | ShopNGUIController.CategoryNames.SpecilCategory | ShopNGUIController.CategoryNames.SniperCategory | ShopNGUIController.CategoryNames.PremiumCategory | ShopNGUIController.CategoryNames.HatsCategory | ShopNGUIController.CategoryNames.ArmorCategory | ShopNGUIController.CategoryNames.SkinsCategory | ShopNGUIController.CategoryNames.CapesCategory | ShopNGUIController.CategoryNames.BootsCategory | ShopNGUIController.CategoryNames.GearCategory | ShopNGUIController.CategoryNames.MaskCategory;
+					ItemRecord byPrefabName = ItemDb.GetByPrefabName(weaponName);
+					if (byPrefabName != null)
+					{
+						categoryName = (ShopNGUIController.CategoryNames)PromoActionsGUIController.CatForTg(byPrefabName.Tag);
+					}
+					Player_move_c.TypeKills typeKill = (Player_move_c.TypeKills)_typekill;
+					if (!NetworkStartTable.LocalOrPasswordRoom())
+					{
+						QuestMediator.NotifyKillOtherPlayer(ConnectSceneNGUIController.regim, categoryName, typeKill == Player_move_c.TypeKills.headshot, typeKill == Player_move_c.TypeKills.grenade, this.isPlacemarker);
+					}
+					PlayerScoreController playerScoreController = playerMoveC.myScoreController;
+					if (_typekill == 6)
+					{
+						scoreEvent = PlayerEventScoreController.ScoreEvent.deadGrenade;
+					}
+					else if (_typekill == 9)
+					{
+						scoreEvent = PlayerEventScoreController.ScoreEvent.deadTurret;
+					}
+					else if (_typekill != 2)
+					{
+						scoreEvent = (_typekill != 3 ? PlayerEventScoreController.ScoreEvent.dead : PlayerEventScoreController.ScoreEvent.deadExplosion);
+					}
+					else
+					{
+						scoreEvent = PlayerEventScoreController.ScoreEvent.deadHeadShot;
+					}
+					playerScoreController.AddScoreOnEvent(scoreEvent, 1f);
+					if (this.isInvisible)
+					{
+						playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.invisibleKill, 1f);
+					}
+					if (this.isPlacemarker)
+					{
+						playerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.revenge, 1f);
+					}
+					if (this.Equals(this._weaponManager.myPlayerMoveC.placemarkerMoveC))
+					{
+						this._weaponManager.myPlayerMoveC.placemarkerMoveC = null;
+						this.isPlacemarker = false;
+					}
+					if (this.getLocalHurt)
+					{
+						this.getLocalHurt = false;
+					}
+				}
+				if (this.isMine)
+				{
+					playerMoveC.isPlacemarker = true;
+					this.placemarkerMoveC = playerMoveC;
+				}
+				this.UpdateKillerInfo(Initializer.players[num], _typekill);
+				break;
+			}
+		}
+		this.ImKilled(this.myPlayerTransform.position, this.myPlayerTransform.rotation, _typeWeapon);
+		if (this._weaponManager && this._weaponManager.myPlayerMoveC != null)
+		{
+			this._weaponManager.myPlayerMoveC.AddSystemMessage(empty, _typekill, nickName, Color.white, weaponName);
+		}
+	}
+
+	public void KillSelf()
+	{
+		if (this.isMulti && !this.isMine || this.isKilled || this.CurHealth <= 0f)
+		{
+			return;
+		}
+		this.curArmor = 0f;
+		this.CurHealth = 0f;
+		if (!Defs.isMulti)
+		{
+			this.StartFlash(this.mySkinName.gameObject);
+		}
+		else
+		{
+			this.ImSuicide();
+			if (!Defs.isCOOP)
+			{
+				this.SendImKilled();
+			}
+		}
+	}
+
+	private void Like(Player_move_c whoMoveC, Player_move_c whomMoveC)
+	{
+		if (whomMoveC.Equals(WeaponManager.sharedManager.myPlayerMoveC))
+		{
+			Player_move_c playerMoveC = this;
+			playerMoveC.countKills = playerMoveC.countKills + 1;
+			GlobalGameController.CountKills = this.countKills;
+			WeaponManager.sharedManager.myNetworkStartTable.CountKills = this.countKills;
+			WeaponManager.sharedManager.myNetworkStartTable.SynhCountKills(null);
+			ProfileController.OnGetLike();
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void LikeRPC(int idWho, int idWhom)
+	{
+		Player_move_c playerMoveC = null;
+		Player_move_c playerMoveC1 = null;
+		for (int i = 0; i < Initializer.players.Count; i++)
+		{
+			Player_move_c item = Initializer.players[i];
+			if (idWho == item.photonView.ownerId)
+			{
+				playerMoveC = item;
+			}
+			if (idWhom == item.photonView.ownerId)
+			{
+				playerMoveC1 = item;
+			}
+		}
+		if (playerMoveC != null && playerMoveC1 != null)
+		{
+			this.Like(playerMoveC, playerMoveC1);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void LikeRPCLocal(NetworkViewID idWho, NetworkViewID idWhom)
+	{
+		Player_move_c playerMoveC = null;
+		Player_move_c playerMoveC1 = null;
+		for (int i = 0; i < Initializer.players.Count; i++)
+		{
+			Player_move_c item = Initializer.players[i];
+			if (idWho.Equals(item.GetComponent<NetworkView>().viewID))
+			{
+				playerMoveC = item;
+			}
+			if (idWhom.Equals(item.GetComponent<NetworkView>().viewID))
+			{
+				playerMoveC1 = item;
+			}
+		}
+		if (playerMoveC != null && playerMoveC1 != null)
+		{
+			this.Like(playerMoveC, playerMoveC1);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator MeleeShot(WeaponSounds weapon)
+	{
+		Player_move_c.u003cMeleeShotu003ec__IteratorE5 variable = null;
+		return variable;
+	}
+
+	public void MinusLive(int idKiller, float minus, Player_move_c.TypeKills _typeKills, int _typeWeapon = 0, string weaponName = "", int idTurret = 0)
+	{
+		if (Defs.isDaterRegim || this.isImmortality)
+		{
+			return;
+		}
+		ProfileController.OnGameHit();
+		if (_typeKills != Player_move_c.TypeKills.turret && InGameGUI.sharedInGameGUI != null)
+		{
+			InGameGUI.sharedInGameGUI.ShowImpact();
+		}
+		minus *= this._protectionShieldValue;
+		if (!FriendsController.useBuffSystem || !BuffSystem.instance.haveBuffForWeapon(weaponName))
+		{
+			minus *= WeaponManager.sharedManager.myPlayerMoveC.damageBuff;
+		}
+		else
+		{
+			minus *= BuffSystem.instance.weaponBuffValue;
+			UnityEngine.Debug.Log("Buffed shot!");
+		}
+		minus /= this.protectionBuff;
+		if (this.isMechActive)
+		{
+			if (this.MinusMechHealth(minus))
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deadMech, 1f);
+				minus = 1000f;
+				if (_typeKills != Player_move_c.TypeKills.grenade && _typeKills != Player_move_c.TypeKills.mech && _typeKills != Player_move_c.TypeKills.turret)
+				{
+					try
+					{
+						WeaponManager.sharedManager.myPlayerMoveC.AddWeKillStatisctics((weaponName ?? string.Empty).Replace("(Clone)", string.Empty));
+					}
+					catch (Exception exception)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exception we were killed AddWeKillStatisctics: ", exception));
+					}
+				}
+			}
+		}
+		else if (this.synhHealth > 0f)
+		{
+			this.getLocalHurt = true;
+			this.synhHealth -= minus;
+			if (this.synhHealth < 0f)
+			{
+				this.synhHealth = 0f;
+			}
+			if (this.armorSynch <= minus)
+			{
+				this.armorSynch = 0f;
+			}
+			else
+			{
+				this.armorSynch -= minus;
+			}
+			if (this.synhHealth <= 0f)
+			{
+				if (_typeKills != Player_move_c.TypeKills.grenade && _typeKills != Player_move_c.TypeKills.mech && _typeKills != Player_move_c.TypeKills.turret)
+				{
+					try
+					{
+						WeaponManager.sharedManager.myPlayerMoveC.AddWeKillStatisctics((weaponName ?? string.Empty).Replace("(Clone)", string.Empty));
+					}
+					catch (Exception exception1)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exception we were killed AddWeKillStatisctics: ", exception1));
+					}
+				}
+				minus = 10000f;
+				if (this.isCaptureFlag)
+				{
+					WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deadWithFlag, 1f);
+					if (!NetworkStartTable.LocalOrPasswordRoom())
+					{
+						QuestMediator.NotifyKillOtherPlayerWithFlag();
+					}
+				}
+				if (Defs.isCapturePoints && WeaponManager.sharedManager.myPlayerMoveC != null)
+				{
+					int num = 0;
+					while (num < (int)CapturePointController.sharedController.basePointControllers.Length)
+					{
+						if ((int)CapturePointController.sharedController.basePointControllers[num].captureConmmand != WeaponManager.sharedManager.myPlayerMoveC.myCommand || !CapturePointController.sharedController.basePointControllers[num].capturePlayers.Contains(this))
+						{
+							num++;
+						}
+						else
+						{
+							this.isRaiderMyPoint = true;
+							break;
+						}
+					}
+				}
+				if (this.getLocalHurt)
+				{
+					this.getLocalHurt = false;
+				}
+				this.ImKilled(this.myPlayerTransform.position, this.myPlayerTransform.rotation, _typeWeapon);
+				this.myPersonNetwork.StartAngel();
+				if (Defs.isFlag && this.isCaptureFlag)
+				{
+					FlagController flagController = null;
+					if (this.flag1.targetTrasform == this.flagPoint.transform)
+					{
+						flagController = this.flag1;
+					}
+					if (this.flag2.targetTrasform == this.flagPoint.transform)
+					{
+						flagController = this.flag2;
+					}
+					if (flagController != null)
+					{
+						flagController.SetNOCaptureRPC(this.myPlayerTransform.position, this.myPlayerTransform.rotation);
+					}
+				}
+			}
+		}
+		this.photonView.RPC("MinusLiveRPCPhoton", PhotonTargets.Others, new object[] { idKiller, minus, (int)_typeKills, _typeWeapon, idTurret, weaponName });
+		this.MinusLiveRPCEffects((int)_typeKills);
+	}
+
+	public void MinusLive(NetworkViewID idKiller, float minus, Player_move_c.TypeKills _typeKills, int _typeWeapon, string nameWeapon = "", NetworkViewID idTurret = default(NetworkViewID))
+	{
+		if (Defs.isDaterRegim)
+		{
+			return;
+		}
+		if (InGameGUI.sharedInGameGUI != null)
+		{
+			InGameGUI.sharedInGameGUI.ShowImpact();
+		}
+		ProfileController.OnGameHit();
+		this.getLocalHurt = true;
+		base.GetComponent<NetworkView>().RPC("MinusLiveRPC", RPCMode.All, new object[] { idKiller, minus, (int)_typeKills, _typeWeapon, idTurret, nameWeapon });
+	}
+
+	public void minusLiveFromZombi(float _minusLive, Vector3 posZombi)
+	{
+		this.photonView.RPC("minusLiveFromZombiRPC", PhotonTargets.All, new object[] { _minusLive, posZombi });
+	}
+
+	[PunRPC]
+	[RPC]
+	public void minusLiveFromZombiRPC(float live, Vector3 posZombi)
+	{
+		if (this.photonView.isMine && !this.isKilled && !this.isImmortality)
+		{
+			live *= this._protectionShieldValue;
+			if (!this.isMechActive)
+			{
+				float single = live - this.curArmor;
+				if (single >= 0f)
+				{
+					this.curArmor = 0f;
+				}
+				else
+				{
+					Player_move_c playerMoveC = this;
+					playerMoveC.curArmor = playerMoveC.curArmor - live;
+					single = 0f;
+				}
+				Player_move_c curHealth = this;
+				curHealth.CurHealth = curHealth.CurHealth - single;
+			}
+			else
+			{
+				this.MinusMechHealth(live);
+			}
+			this.ShowDamageDirection(posZombi);
+		}
+		base.StartCoroutine(this.Flash(this.myPlayerTransform.gameObject));
+	}
+
+	[PunRPC]
+	[RPC]
+	public void MinusLiveRPC(NetworkViewID idKiller, float minus, int _typeKills, int _typeWeapon, NetworkViewID idTurret, string weaponName)
+	{
+		this.MinusLiveRPCEffects(_typeKills);
+		if (this.isMine && !this.isKilled && !this.isImmortality)
+		{
+			float single = 0f;
+			if (!this.isMechActive)
+			{
+				single = minus - this.curArmor;
+				if (single >= 0f)
+				{
+					this.curArmor = 0f;
+				}
+				else
+				{
+					Player_move_c playerMoveC = this;
+					playerMoveC.curArmor = playerMoveC.curArmor - minus;
+					single = 0f;
+				}
+			}
+			else
+			{
+				this.MinusMechHealth(minus);
+			}
+			if (this.CurHealth > 0f)
+			{
+				Player_move_c curHealth = this;
+				curHealth.CurHealth = curHealth.CurHealth - single;
+				if (this.CurHealth <= 0f)
+				{
+					if (this.myKillAssistsLocal.Contains(idKiller))
+					{
+						this.myKillAssistsLocal.Remove(idKiller);
+					}
+					if (this.placemarkerMoveC != null)
+					{
+						this.placemarkerMoveC.isPlacemarker = false;
+					}
+					base.GetComponent<NetworkView>().RPC("Killed", RPCMode.All, new object[] { idKiller, _typeKills, _typeWeapon, weaponName });
+				}
+				else if (!this.myKillAssistsLocal.Contains(idKiller))
+				{
+					this.myKillAssistsLocal.Add(idKiller);
+				}
+				this.SendSynhHealth(false, null);
+				Vector3 vector3 = Vector3.zero;
+				if (_typeKills == 8)
+				{
+					GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Turret");
+					int num = 0;
+					while (num < (int)gameObjectArray.Length)
+					{
+						GameObject gameObject = gameObjectArray[num];
+						if (!(gameObject.GetComponent<NetworkView>() != null) || !gameObject.GetComponent<NetworkView>().viewID.Equals(idTurret))
+						{
+							num++;
+						}
+						else
+						{
+							this.ShowDamageDirection(gameObject.transform.position);
+							break;
+						}
+					}
+				}
+				else
+				{
+					foreach (Player_move_c player in Initializer.players)
+					{
+						if (!(player.GetComponent<NetworkView>() != null) || !player.GetComponent<NetworkView>().viewID.Equals(idKiller))
+						{
+							continue;
+						}
+						this.ShowDamageDirection(player.transform.position);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private void MinusLiveRPCEffects(int _typeKills)
+	{
+		AudioClip audioClip;
+		if (!Device.isPixelGunLow && !this.isDaterRegim && !this.isMine)
+		{
+			if (_typeKills != 2)
+			{
+				HitParticle currentParticle = HitStackController.sharedController.GetCurrentParticle(false);
+				if (currentParticle != null)
+				{
+					currentParticle.StartShowParticle(this.myPlayerTransform.position, this.myPlayerTransform.rotation, false);
+				}
+			}
+			else
+			{
+				HitParticle hitParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
+				if (hitParticle != null)
+				{
+					hitParticle.StartShowParticle(this.myPlayerTransform.position, this.myPlayerTransform.rotation, false);
+				}
+			}
+		}
+		if (Defs.isSoundFX)
+		{
+			AudioSource component = base.gameObject.GetComponent<AudioSource>();
+			if (this.curArmor > 0f || this.isMechActive)
+			{
+				audioClip = this.damageArmorPlayerSound;
+			}
+			else
+			{
+				audioClip = (_typeKills != 2 ? this.damagePlayerSound : this.headShotSound);
+			}
+			component.PlayOneShot(audioClip);
+		}
+		base.StartCoroutine(this.Flash(this.myPlayerTransform.gameObject));
+	}
+
+	[PunRPC]
+	[RPC]
+	public void MinusLiveRPCPhoton(int idKiller, float minus, int _typeKills, int _typeWeapon, int idTurret, string weaponName)
+	{
+		this.MinusLiveRPCEffects(_typeKills);
+		if (!this.isMine)
+		{
+			this.synhHealth -= minus;
+			if (this.synhHealth < 0f)
+			{
+				this.synhHealth = 0f;
+			}
+			if (this.armorSynch <= minus)
+			{
+				this.armorSynch = 0f;
+			}
+			else
+			{
+				this.armorSynch -= minus;
+			}
+		}
+		if (this.isMine && !this.isKilled && !this.isImmortality)
+		{
+			float single = 0f;
+			if (!this.isMechActive)
+			{
+				single = minus - this.curArmor;
+				if (single >= 0f)
+				{
+					this.curArmor = 0f;
+				}
+				else
+				{
+					Player_move_c playerMoveC = this;
+					playerMoveC.curArmor = playerMoveC.curArmor - minus;
+					single = 0f;
+				}
+			}
+			else
+			{
+				this.MinusMechHealth(minus);
+			}
+			if (this.CurHealth > 0f)
+			{
+				Player_move_c curHealth = this;
+				curHealth.CurHealth = curHealth.CurHealth - single;
+				if (this.CurHealth <= 0f)
+				{
+					try
+					{
+						if (!WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon)
+						{
+							WeaponManager.sharedManager.myPlayerMoveC.AddWeWereKilledStatisctics((WeaponManager.sharedManager.currentWeaponSounds.name ?? string.Empty).Replace("(Clone)", string.Empty));
+						}
+					}
+					catch (Exception exception)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exception we were killed AddWeWereKilledStatisctics: ", exception));
+					}
+					if (this.myKillAssists.Contains(idKiller))
+					{
+						this.myKillAssists.Remove(idKiller);
+					}
+					if (this.placemarkerMoveC != null)
+					{
+						this.placemarkerMoveC.isPlacemarker = false;
+					}
+					this.photonView.RPC("KilledPhoton", PhotonTargets.All, new object[] { idKiller, _typeKills, weaponName, _typeWeapon });
+				}
+				else if (!this.myKillAssists.Contains(idKiller))
+				{
+					this.myKillAssists.Add(idKiller);
+				}
+				this.SynhHealthRPC(this.CurHealth + this.curArmor, this.curArmor, false);
+			}
+			if (_typeKills == 8)
+			{
+				GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Turret");
+				Vector3 vector3 = Vector3.zero;
+				int num = 0;
+				while (num < (int)gameObjectArray.Length)
+				{
+					PhotonView component = gameObjectArray[num].GetComponent<PhotonView>();
+					if (!(component != null) || component.viewID != idTurret)
+					{
+						num++;
+					}
+					else
+					{
+						this.ShowDamageDirection(gameObjectArray[num].transform.position);
+						break;
+					}
+				}
+			}
+			else
+			{
+				Vector3 item = Vector3.zero;
+				int num1 = 0;
+				while (num1 < Initializer.players.Count)
+				{
+					PhotonView photonView = Initializer.players[num1].mySkinName.photonView;
+					if (!(photonView != null) || photonView.viewID != idKiller)
+					{
+						num1++;
+					}
+					else
+					{
+						item = Initializer.players[num1].myPlayerTransform.position;
+						this.ShowDamageDirection(item);
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void MinusLiveRPCWithTurretPhoton(int idKiller, float minus, int _typeKills, int idTurret)
+	{
+		this.MinusLiveRPCPhoton(idKiller, minus, _typeKills, 0, idTurret, null);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void MinusLiveRPCWithTurretPhoton(int idKiller, float minus, int _typeKills, int idTurret, string weaponName)
+	{
+		this.MinusLiveRPCPhoton(idKiller, minus, _typeKills, 0, idTurret, null);
+	}
+
+	public bool MinusMechHealth(float _minus)
+	{
+		this.liveMech -= _minus;
+		if (this.liveMech > 0f)
+		{
+			return false;
+		}
+		this.DeactivateMech();
+		return true;
+	}
+
+	public bool NeedAmmo()
+	{
+		if (this._weaponManager == null)
+		{
+			return false;
+		}
+		int currentWeaponIndex = this._weaponManager.CurrentWeaponIndex;
+		Weapon item = (Weapon)this._weaponManager.playerWeapons[currentWeaponIndex];
+		return item.currentAmmoInBackpack < this._weaponManager.currentWeaponSounds.MaxAmmoWithEffectApplied;
 	}
 
 	public void OnApplicationPause(bool pause)
 	{
-		if (!_singleOrMultiMine())
+		if (!this._singleOrMultiMine())
 		{
 			return;
 		}
 		if (pause)
 		{
-			ActualizeNumberOfGrenades();
-			if (Application.platform == RuntimePlatform.IPhonePlayer && liveTime > 90f)
+			this.ActualizeNumberOfGrenades();
+			if (Application.platform == RuntimePlatform.IPhonePlayer && this.liveTime > 90f)
 			{
-				pausedRating = true;
-				myNetworkStartTable.CalculateMatchRating(true);
+				this.pausedRating = true;
+				this.myNetworkStartTable.CalculateMatchRating(true);
 			}
 		}
-		else if (Application.platform == RuntimePlatform.IPhonePlayer && pausedRating)
+		else if (Application.platform == RuntimePlatform.IPhonePlayer && this.pausedRating)
 		{
-			pausedRating = false;
+			this.pausedRating = false;
 			RatingSystem.instance.BackupLastRatingTake();
 		}
 	}
 
-	private void HandleShowArmorChanged()
-	{
-		mySkinName.SetArmor();
-		mySkinName.SetHat();
-	}
-
-	public void UpdateSkin()
-	{
-		if (!isMulti)
-		{
-			_skin = SkinsController.currentSkinForPers;
-			_skin.filterMode = FilterMode.Point;
-			SetTextureForBodyPlayer(_skin);
-		}
-	}
-
-	public void SetIDMyTable(string _id)
-	{
-		myTableId = _id;
-		Invoke("SetIDMyTableInvoke", 0.1f);
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void SetIDMyTableInvoke()
-	{
-		GetComponent<NetworkView>().RPC("SetIDMyTableRPC", RPCMode.AllBuffered, myTableId);
-	}
-
-	[PunRPC]
-	[RPC]
-	private void SetIDMyTableRPC(string _id)
-	{
-		myTableId = _id;
-		GameObject[] array = GameObject.FindGameObjectsWithTag("NetworkTable");
-		GameObject[] array2 = array;
-		foreach (GameObject gameObject in array2)
-		{
-			if (gameObject.GetComponent<NetworkView>().viewID.ToString().Equals(_id))
-			{
-				myTable = gameObject;
-				setMyTamble(myTable);
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	public void SetNickName(string _nickName)
-	{
-		photonView = PhotonView.Get(this);
-		mySkinName.NickName = _nickName;
-		if (!isMine)
-		{
-			nickLabel.gameObject.SetActive(true);
-			nickLabel.text = _nickName;
-		}
-	}
-
-	public bool _singleOrMultiMine()
-	{
-		return !isMulti || isMine;
-	}
-
 	private void OnDestroy()
 	{
-		if (isMine && Defs.isMulti && Defs.isInet && FriendsController.useBuffSystem)
+		if (this.isMine && Defs.isMulti && Defs.isInet && FriendsController.useBuffSystem)
 		{
 			BuffSystem.instance.PlayerLeaved();
 		}
-		_bodyMaterial = null;
-		_mechMaterial = null;
-		_bearMaterial = null;
+		this._bodyMaterial = null;
+		this._mechMaterial = null;
+		this._bearMaterial = null;
 		Initializer.players.Remove(this);
-		Initializer.playersObj.Remove(myPlayerTransform.gameObject);
+		Initializer.playersObj.Remove(this.myPlayerTransform.gameObject);
 		if (Defs.isMulti && Defs.isInet)
 		{
-			BonusController.sharedController.lowLevelPlayers.Remove(photonView.ownerId);
+			BonusController.sharedController.lowLevelPlayers.Remove(this.photonView.ownerId);
 		}
 		if (Initializer.bluePlayers.Contains(this))
 		{
@@ -3130,7 +4915,7 @@ public sealed class Player_move_c : MonoBehaviour
 		}
 		if (Defs.isCapturePoints && CapturePointController.sharedController != null)
 		{
-			for (int i = 0; i < CapturePointController.sharedController.basePointControllers.Length; i++)
+			for (int i = 0; i < (int)CapturePointController.sharedController.basePointControllers.Length; i++)
 			{
 				if (CapturePointController.sharedController.basePointControllers[i].capturePlayers.Contains(this))
 				{
@@ -3138,50 +4923,50 @@ public sealed class Player_move_c : MonoBehaviour
 				}
 			}
 		}
-		if (_weaponPopularityCacheIsDirty)
+		if (this._weaponPopularityCacheIsDirty)
 		{
 			Statistics.Instance.SaveWeaponPopularity();
-			_weaponPopularityCacheIsDirty = false;
+			this._weaponPopularityCacheIsDirty = false;
 		}
-		if (!isMulti)
+		if (!this.isMulti)
 		{
 			ShopNGUIController.sharedShop.onEquipSkinAction = null;
 		}
-		if (_singleOrMultiMine())
+		if (this._singleOrMultiMine())
 		{
-			ActualizeNumberOfGrenades();
-			SaveKillRate();
-			if (networkStartTableNGUIController != null)
+			this.ActualizeNumberOfGrenades();
+			this.SaveKillRate();
+			if (this.networkStartTableNGUIController != null)
 			{
-				networkStartTableNGUIController.ranksInterface.SetActive(false);
+				this.networkStartTableNGUIController.ranksInterface.SetActive(false);
 			}
 			if (ShopNGUIController.sharedShop != null)
 			{
 				ShopNGUIController.sharedShop.resumeAction = null;
 			}
-			if ((bool)inGameGUI && (bool)inGameGUI.gameObject)
+			if (this.inGameGUI && this.inGameGUI.gameObject)
 			{
-				if (!isHunger && !Defs.isRegimVidosDebug)
+				if (this.isHunger || Defs.isRegimVidosDebug)
 				{
-					UnityEngine.Object.Destroy(inGameGUI.gameObject);
+					this.inGameGUI.topAnchor.SetActive(false);
+					this.inGameGUI.leftAnchor.SetActive(false);
+					this.inGameGUI.rightAnchor.SetActive(false);
+					this.inGameGUI.joystickContainer.SetActive(false);
+					this.inGameGUI.bottomAnchor.SetActive(false);
+					this.inGameGUI.fastShopPanel.SetActive(false);
+					this.inGameGUI.swipeWeaponPanel.gameObject.SetActive(false);
+					this.inGameGUI.turretPanel.SetActive(false);
+					for (int j = 0; j < 3; j++)
+					{
+						if (this.inGameGUI.messageAddScore[j].gameObject.activeSelf)
+						{
+							this.inGameGUI.messageAddScore[j].gameObject.SetActive(false);
+						}
+					}
 				}
 				else
 				{
-					inGameGUI.topAnchor.SetActive(false);
-					inGameGUI.leftAnchor.SetActive(false);
-					inGameGUI.rightAnchor.SetActive(false);
-					inGameGUI.joystickContainer.SetActive(false);
-					inGameGUI.bottomAnchor.SetActive(false);
-					inGameGUI.fastShopPanel.SetActive(false);
-					inGameGUI.swipeWeaponPanel.gameObject.SetActive(false);
-					inGameGUI.turretPanel.SetActive(false);
-					for (int j = 0; j < 3; j++)
-					{
-						if (inGameGUI.messageAddScore[j].gameObject.activeSelf)
-						{
-							inGameGUI.messageAddScore[j].gameObject.SetActive(false);
-						}
-					}
+					UnityEngine.Object.Destroy(this.inGameGUI.gameObject);
 				}
 			}
 			if (ChatViewrController.sharedController != null)
@@ -3194,893 +4979,296 @@ public sealed class Player_move_c : MonoBehaviour
 			}
 			coinsPlashka.hidePlashka();
 		}
-		if (isMulti && isMine && CameraSceneController.sharedController != null)
+		if (this.isMulti && this.isMine && CameraSceneController.sharedController != null)
 		{
-			CameraSceneController.sharedController.SetTargetKillCam();
+			CameraSceneController.sharedController.SetTargetKillCam(null);
 		}
-		if (!isMulti || isMine)
+		if (!this.isMulti || this.isMine)
 		{
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+			if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 			{
-				AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(HandlePurchaseSuccessful);
+				GoogleIABManager.purchaseSucceededEvent -= new Action<GooglePurchase>(this.purchaseSuccessful);
 			}
 			else
 			{
-				GoogleIABManager.purchaseSucceededEvent -= purchaseSuccessful;
+				AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(new PurchaseResponseDelegate(this.HandlePurchaseSuccessful));
 			}
-			if (Defs.isTurretWeapon && currentTurret != null)
+			if (Defs.isTurretWeapon && this.currentTurret != null)
 			{
-				if (Defs.isMulti)
+				if (!Defs.isMulti)
 				{
-					if (Defs.isInet)
-					{
-						PhotonNetwork.Destroy(currentTurret);
-					}
-					else
-					{
-						Network.RemoveRPCs(currentTurret.GetComponent<NetworkView>().viewID);
-						Network.Destroy(currentTurret);
-					}
+					UnityEngine.Object.Destroy(this.currentTurret);
+				}
+				else if (!Defs.isInet)
+				{
+					Network.RemoveRPCs(this.currentTurret.GetComponent<NetworkView>().viewID);
+					Network.Destroy(this.currentTurret);
 				}
 				else
 				{
-					UnityEngine.Object.Destroy(currentTurret);
+					PhotonNetwork.Destroy(this.currentTurret);
 				}
 			}
 		}
-		if (_singleOrMultiMine() || (_weaponManager != null && _weaponManager.myPlayer == myPlayerTransform.gameObject))
+		if (this._singleOrMultiMine() || this._weaponManager != null && this._weaponManager.myPlayer == this.myPlayerTransform.gameObject)
 		{
-			if (_pauser != null && (bool)_pauser && _pauser.paused)
+			if (this._pauser != null && this._pauser && this._pauser.paused)
 			{
-				_pauser.paused = !_pauser.paused;
+				this._pauser.paused = !this._pauser.paused;
 				Time.timeScale = 1f;
-				AddButtonHandlers();
+				this.AddButtonHandlers();
 			}
 			GameObject gameObject = GameObject.FindGameObjectWithTag("DamageFrame");
 			if (gameObject != null)
 			{
 				UnityEngine.Object.Destroy(gameObject);
 			}
-			RemoveButtonHandelrs();
+			this.RemoveButtonHandelrs();
 			ShopNGUIController.sharedShop.buyAction = null;
 			ShopNGUIController.sharedShop.equipAction = null;
 			ShopNGUIController.sharedShop.activatePotionAction = null;
 			ShopNGUIController.sharedShop.resumeAction = null;
 			ShopNGUIController.sharedShop.wearEquipAction = null;
 			ShopNGUIController.sharedShop.wearUnequipAction = null;
-			ZombieCreator.BossKilled -= CheckTimeCondition;
-			ShopNGUIController.ShowArmorChanged -= HandleShowArmorChanged;
+			ZombieCreator.BossKilled -= new Action(this.CheckTimeCondition);
+			ShopNGUIController.ShowArmorChanged -= new Action(this.HandleShowArmorChanged);
 		}
-		if (isMulti && isMine)
+		if (this.isMulti && this.isMine)
 		{
 			ProfileController.ResaveStatisticToKeychain();
 		}
 		PhotonObjectCacher.RemoveObject(base.gameObject);
 		if (Defs.isMulti && Defs.isCOOP)
 		{
-			int @int = Storager.getInt(Defs.COOPScore, false);
-			int num = ((myNetworkStartTable.score != -1) ? myNetworkStartTable.score : myNetworkStartTable.scoreOld);
-			if (num > @int)
+			int num = Storager.getInt(Defs.COOPScore, false);
+			int num1 = (this.myNetworkStartTable.score != -1 ? this.myNetworkStartTable.score : this.myNetworkStartTable.scoreOld);
+			if (num1 > num)
 			{
-				Storager.setInt(Defs.COOPScore, num, false);
+				Storager.setInt(Defs.COOPScore, num1, false);
 			}
 		}
 	}
 
-	public bool HasFreezerFireSubscr()
+	private void OnDisable()
 	{
-		return this.FreezerFired != null;
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
 	}
 
-	private void _SetGunFlashActive(bool state)
+	public void OnPhotonPlayerConnected(PhotonPlayer player)
 	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		if (weaponSounds.isDoubleShot && !_weaponManager.currentWeaponSounds.isMelee)
+		if (this.photonView && this.photonView.isMine)
 		{
-			weaponSounds.gunFlashDouble[numShootInDoubleShot - 1].GetChild(0).gameObject.SetActive(state);
-			if (state)
+			this.photonView.RPC("CountKillsCommandSynch", player, new object[] { this.countKillsCommandBlue, this.countKillsCommandRed });
+			this.photonView.RPC("SetInvisibleRPC", player, new object[] { (!Defs.isDaterRegim ? this.isInvisible : this.isBigHead) });
+			this.photonView.RPC("SetWeaponRPC", player, new object[] { ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.name, ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().alternativeName });
+			this.SendSynhHealth(true, player);
+			if (Defs.isJetpackEnabled)
 			{
-				return;
+				this.photonView.RPC("SetJetpackEnabledRPC", player, new object[] { Defs.isJetpackEnabled });
 			}
-		}
-		if (GunFlash != null && !_weaponManager.currentWeaponSounds.isMelee && (!isZooming || (isZooming && !state)))
-		{
-			WeaponManager.SetGunFlashActive(GunFlash.gameObject, state);
-		}
-	}
-
-	public void setInString(string nick)
-	{
-		if (!(_weaponManager == null) && !(_weaponManager.myPlayer == null))
-		{
-			_weaponManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_0995")));
-		}
-	}
-
-	public void setOutString(string nick)
-	{
-		if (!(_weaponManager == null) && !(_weaponManager.myPlayer == null))
-		{
-			_weaponManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_0996")));
-		}
-	}
-
-	public void AddSystemMessage(string _nick1, string _message2, string _nick2, string _message = null)
-	{
-		AddSystemMessage(_nick1, _message2, _nick2, Color.white, _message);
-	}
-
-	public void AddSystemMessage(string _nick1, string _message2, string _nick2, Color color, string _message = null)
-	{
-		killedSpisok[2] = killedSpisok[1];
-		killedSpisok[1] = killedSpisok[0];
-		killedSpisok[0] = new SystemMessage(_nick1, _message2, _nick2, _message, color);
-		timerShow[2] = timerShow[1];
-		timerShow[1] = timerShow[0];
-		timerShow[0] = 3f;
-	}
-
-	public void AddSystemMessage(string nick1, int _typeKills, Color color)
-	{
-		AddSystemMessage(nick1, iconShotName[_typeKills], string.Empty, color);
-	}
-
-	public void AddSystemMessage(string nick1, int _typeKills)
-	{
-		AddSystemMessage(nick1, iconShotName[_typeKills], string.Empty);
-	}
-
-	public void AddSystemMessage(string nick1, int _typeKills, string nick2, Color color, string iconWeapon = null)
-	{
-		AddSystemMessage(nick1, iconShotName[_typeKills], nick2, color, iconWeapon);
-	}
-
-	public void AddSystemMessage(string nick1, int _typeKills, string nick2, string iconWeapon = null)
-	{
-		AddSystemMessage(nick1, iconShotName[_typeKills], nick2, iconWeapon);
-	}
-
-	public void AddSystemMessage(string _message)
-	{
-		AddSystemMessage(_message, string.Empty, string.Empty);
-	}
-
-	public void AddSystemMessage(string _message, Color color)
-	{
-		AddSystemMessage(_message, string.Empty, string.Empty, color);
-	}
-
-	[PunRPC]
-	[RPC]
-	public void SendSystemMessegeFromFlagDroppedRPC(bool isBlueFlag, string nick)
-	{
-		if (WeaponManager.sharedManager.myPlayer != null)
-		{
-			if ((isBlueFlag && WeaponManager.sharedManager.myPlayerMoveC.myCommand == 1) || (!isBlueFlag && WeaponManager.sharedManager.myPlayerMoveC.myCommand == 2))
+			if (this.isMechActive || this.isBearActive)
 			{
-				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1798")));
+				this.photonView.RPC("ActivateMechRPC", player, new object[] { this.mechUpgrade });
 			}
-			else
+			this.photonView.RPC("SynhIsZoming", player, new object[] { this.isZooming });
+			if (FriendsController.useBuffSystem || KillRateCheck.instance.buffEnabled)
 			{
-				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1799")));
+				this.photonView.RPC("SendBuffParameters", player, new object[] { this.damageBuff, this.protectionBuff });
 			}
 		}
 	}
 
-	public void SendSystemMessegeFromFlagReturned(bool isBlueFlag)
+	private void OnPlayerConnected(NetworkPlayer player)
 	{
-		photonView.RPC("SendSystemMessegeFromFlagReturnedRPC", PhotonTargets.All, isBlueFlag);
-	}
-
-	[PunRPC]
-	[RPC]
-	public void SendSystemMessegeFromFlagReturnedRPC(bool isBlueFlag)
-	{
-		if (WeaponManager.sharedManager.myPlayer != null)
+		if (this.isMine)
 		{
-			if ((isBlueFlag && WeaponManager.sharedManager.myPlayerMoveC.myCommand == 1) || (!isBlueFlag && WeaponManager.sharedManager.myPlayerMoveC.myCommand == 2))
+			this._networkView.RPC("SetInvisibleRPC", player, new object[] { (!Defs.isDaterRegim ? this.isInvisible : this.isBigHead) });
+			this._networkView.RPC("CountKillsCommandSynch", player, new object[] { this.countKillsCommandBlue, this.countKillsCommandRed });
+			this._networkView.RPC("SetWeaponRPC", player, new object[] { ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.name, ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().alternativeName });
+			this.SendSynhHealth(true, null);
+			if (Defs.isJetpackEnabled)
 			{
-				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1800"));
+				this._networkView.RPC("SetJetpackEnabledRPC", player, new object[] { Defs.isJetpackEnabled });
 			}
-			else
+			if (this.isMechActive || this.isBearActive)
 			{
-				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1801"));
+				this._networkView.RPC("ActivateMechRPC", player, new object[] { this.mechUpgrade });
 			}
+			this._networkView.RPC("SynhIsZoming", player, new object[] { this.isZooming });
 		}
 	}
 
-	[PunRPC]
-	[RPC]
-	public void SendSystemMessegeFromFlagCaptureRPC(bool isBlueFlag, string nick)
+	public static void PerformActionRecurs(GameObject obj, Action<Transform> act)
 	{
-		if (!(WeaponManager.sharedManager.myPlayer != null))
+		if (act == null || null == obj)
 		{
 			return;
 		}
-		bool flag = WeaponManager.sharedManager.myPlayerMoveC.myCommand == 1;
-		if (flag == isBlueFlag)
+		act(obj.transform);
+		int num = obj.transform.childCount;
+		Transform transforms = obj.transform;
+		for (int i = 0; i < num; i++)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1001")));
-			if (Defs.isSoundFX)
+			Transform child = transforms.GetChild(i);
+			if (null != child)
 			{
-				GetComponent<AudioSource>().PlayOneShot(flagLostClip);
+				Player_move_c.PerformActionRecurs(child.gameObject, act);
 			}
+		}
+	}
+
+	public void PlayPortalSound()
+	{
+		if (!Defs.isMulti)
+		{
+			this.PlayPortalSoundRPC();
+		}
+		else if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("PlayPortalSoundRPC", RPCMode.All, new object[0]);
 		}
 		else
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1002"));
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(flagGetClip);
-			}
+			this.photonView.RPC("PlayPortalSoundRPC", PhotonTargets.All, new object[0]);
 		}
 	}
 
-	[RPC]
 	[PunRPC]
-	public void SendSystemMessegeFromFlagAddScoreRPC(bool isCommandBlue, string nick)
+	[RPC]
+	public void PlayPortalSoundRPC()
 	{
-		if (WeaponManager.sharedManager.myPlayer != null)
+		if (Defs.isSoundFX && this.portalSound != null)
 		{
-			if (Defs.isSoundFX)
+			base.GetComponent<AudioSource>().PlayOneShot(this.portalSound);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void plusCountKillsCommand(int _command)
+	{
+		UnityEngine.Debug.Log(string.Concat("plusCountKillsCommand: ", _command));
+		if (_command == 1)
+		{
+			if (!this._weaponManager || !this._weaponManager.myPlayer)
 			{
-				GetComponent<AudioSource>().PlayOneShot((isCommandBlue != (_weaponManager.myPlayerMoveC.myCommand == 1)) ? flagScoreEnemyClip : flagScoreMyCommandClip);
-			}
-			isCaptureFlag = false;
-			WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(nick, 5);
-		}
-	}
-
-	public void SendHouseKeeperEvent()
-	{
-		countHouseKeeperEvent++;
-		if (countHouseKeeperEvent == 1)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.houseKeeperPoint);
-		}
-		if (countHouseKeeperEvent == 3)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.defenderPoint);
-		}
-		if (countHouseKeeperEvent == 5)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.guardianPoint);
-		}
-		if (countHouseKeeperEvent == 10)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.oneManArmyPoint);
-		}
-	}
-
-	private void ResetHouseKeeperEvent()
-	{
-		countHouseKeeperEvent = 0;
-	}
-
-	public void ShowBonuseParticle(TypeBonuses _type)
-	{
-		if (Defs.isMulti)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("ShowBonuseParticleRPC", PhotonTargets.Others, (int)_type);
+				GlobalGameController.countKillsBlue++;
 			}
 			else
 			{
-				GetComponent<NetworkView>().RPC("ShowBonuseParticleRPC", RPCMode.Others, (int)_type);
+				Player_move_c playerMoveC = this._weaponManager.myPlayerMoveC;
+				playerMoveC.countKillsCommandBlue = playerMoveC.countKillsCommandBlue + 1;
+			}
+		}
+		if (_command == 2)
+		{
+			if (!this._weaponManager || !this._weaponManager.myPlayer)
+			{
+				GlobalGameController.countKillsRed++;
+			}
+			else
+			{
+				Player_move_c playerMoveC1 = this._weaponManager.myPlayerMoveC;
+				playerMoveC1.countKillsCommandRed = playerMoveC1.countKillsCommandRed + 1;
 			}
 		}
 	}
 
 	[PunRPC]
 	[RPC]
-	public void ShowBonuseParticleRPC(int _type)
+	public void pobeda(NetworkViewID idKiller)
 	{
-		if (bonusesParticles.Length >= _type)
+		foreach (Player_move_c player in Initializer.players)
 		{
-			bonusesParticles[_type].ShowParticle();
-		}
-	}
-
-	public void SetTextureForBodyPlayer(Texture needTx)
-	{
-		SetMaterialForArms();
-		if (_bodyMaterial != null)
-		{
-			_bodyMaterial.mainTexture = needTx;
-		}
-	}
-
-	public void SetTextureForActiveMesh(Texture needTx)
-	{
-		SetMaterialForArms();
-		if (mainDamageMaterial != null)
-		{
-			mainDamageMaterial.mainTexture = needTx;
-		}
-	}
-
-	private void SetMaterialForArms()
-	{
-		if (myCurrentWeaponSounds != null && !isBearActive)
-		{
-			myCurrentWeaponSounds._innerPars.SetMaterialForArms(_bodyMaterial);
-		}
-	}
-
-	public static void SetTextureRecursivelyFrom(GameObject obj, Texture txt, GameObject[] stopObjs)
-	{
-		Transform transform = obj.transform;
-		int childCount = obj.transform.childCount;
-		for (int i = 0; i < childCount; i++)
-		{
-			Transform child = transform.GetChild(i);
-			bool flag = false;
-			foreach (GameObject o in stopObjs)
-			{
-				if (child.gameObject.Equals(o))
-				{
-					flag = true;
-					break;
-				}
-			}
-			if (flag)
+			if (!idKiller.Equals(player.mySkinName.GetComponent<NetworkView>().viewID))
 			{
 				continue;
 			}
-			if ((bool)child.gameObject.GetComponent<Renderer>() && (bool)child.gameObject.GetComponent<Renderer>().material)
-			{
-				child.gameObject.GetComponent<Renderer>().material.mainTexture = txt;
-			}
-			flag = false;
-			foreach (GameObject o2 in stopObjs)
-			{
-				if (child.gameObject.Equals(o2))
-				{
-					flag = true;
-					break;
-				}
-			}
-			if (!flag)
-			{
-				SetTextureRecursivelyFrom(child.gameObject, txt, stopObjs);
-			}
+			this.nickPobeditel = player.mySkinName.NickName;
+		}
+		if (this._weaponManager && this._weaponManager.myTable)
+		{
+			this._weaponManager.myNetworkStartTable.win(this.nickPobeditel, 0, 0, 0);
 		}
 	}
 
-	private IEnumerator Flash(GameObject _obj)
+	[PunRPC]
+	[RPC]
+	public void pobedaPhoton(int idKiller, int _command)
 	{
-		if (!isDaterRegim)
+		foreach (Player_move_c player in Initializer.players)
 		{
-			SetTextureForBodyPlayer(hitTexture);
-			if (mainDamageMaterial != null)
-			{
-				mainDamageMaterial.SetColor("_ColorRili", new Color(1f, 0f, 0f, 1f));
-			}
-			yield return new WaitForSeconds(0.125f);
-			SetTextureForBodyPlayer(_skin);
-			if (mainDamageMaterial != null)
-			{
-				mainDamageMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-			}
-		}
-	}
-
-	public static GameObject[] GetStopObjFromPlayer(GameObject _obj)
-	{
-		List<GameObject> list = new List<GameObject>();
-		Transform transform = _obj.transform;
-		for (int i = 0; i < transform.childCount; i++)
-		{
-			Transform child = transform.GetChild(i);
-			if (!child.gameObject.name.Equals("GameObject") || child.transform.childCount <= 0)
+			if (idKiller != player.mySkinName.photonView.viewID)
 			{
 				continue;
 			}
-			for (int j = 0; j < child.transform.childCount; j++)
-			{
-				GameObject gameObject = null;
-				GameObject gameObject2 = null;
-				WeaponSounds component = child.transform.GetChild(j).gameObject.GetComponent<WeaponSounds>();
-				gameObject = component.bonusPrefab;
-				if (!component.isMelee)
-				{
-					gameObject2 = child.transform.GetChild(j).Find("BulletSpawnPoint").gameObject;
-				}
-				if (component.noFillObjects != null && component.noFillObjects.Length > 0)
-				{
-					for (int k = 0; k < component.noFillObjects.Length; k++)
-					{
-						list.Add(component.noFillObjects[k]);
-					}
-				}
-				if (gameObject != null)
-				{
-					list.Add(gameObject);
-				}
-				if (gameObject2 != null)
-				{
-					list.Add(gameObject2);
-				}
-				if (component.LeftArmorHand != null)
-				{
-					list.Add(component.LeftArmorHand.gameObject);
-				}
-				if (component.RightArmorHand != null)
-				{
-					list.Add(component.RightArmorHand.gameObject);
-				}
-				if (component.grenatePoint != null)
-				{
-					list.Add(component.grenatePoint.gameObject);
-				}
-				if (component.animationObject != null && component.animationObject.GetComponent<InnerWeaponPars>() != null && component.animationObject.GetComponent<InnerWeaponPars>().particlePoint != null)
-				{
-					list.Add(component.animationObject.GetComponent<InnerWeaponPars>().particlePoint);
-				}
-				List<GameObject> listWeaponAnimEffects = component.GetListWeaponAnimEffects();
-				if (listWeaponAnimEffects != null)
-				{
-					list.AddRange(listWeaponAnimEffects);
-				}
-			}
-			break;
+			this.nickPobeditel = player.mySkinName.NickName;
 		}
-		if (_obj != null && _obj.GetComponent<SkinName>() != null)
+		if (!(this._weaponManager != null) || !(this._weaponManager.myTable != null))
 		{
-			SkinName component2 = _obj.GetComponent<SkinName>();
-			list.Add(component2.capesPoint);
-			list.Add(component2.hatsPoint);
-			list.Add(component2.maskPoint);
-			list.Add(component2.bootsPoint);
-			list.Add(component2.armorPoint);
-			list.Add(component2.onGroundEffectsPoint.gameObject);
-			if (component2.playerMoveC != null)
-			{
-				list.Add(component2.playerMoveC.flagPoint);
-				list.Add(component2.playerMoveC.invisibleParticle);
-				list.Add(component2.playerMoveC.jetPackPoint);
-				list.Add(component2.playerMoveC.jetPackPointMech);
-				list.Add(component2.playerMoveC.wingsPoint);
-				list.Add(component2.playerMoveC.wingsPointBear);
-				list.Add(component2.playerMoveC.turretPoint);
-				list.Add(component2.playerMoveC.mechPoint);
-				list.Add(component2.playerMoveC.mechBearPoint);
-				list.Add(component2.playerMoveC.mechExplossion);
-				list.Add(component2.playerMoveC.bearExplosion);
-				if (Defs.isDaterRegim && component2.playerMoveC.myCurrentWeaponSounds != null)
-				{
-					list.Add(component2.playerMoveC.myCurrentWeaponSounds.BearWeaponObject);
-				}
-				list.Add(component2.playerMoveC.particleBonusesPoint);
-				component2.playerMoveC.arrowToPortalPoint.Do(list.Add);
-			}
+			UnityEngine.Debug.Log("_weaponManager.myTable==null");
 		}
 		else
 		{
-			Debug.Log("Condition failed: “_obj != null && _obj.GetComponent<SkinName>() != null”");
-		}
-		return list.ToArray();
-	}
-
-	private IEnumerator RunOnGroundEffectCoroutine(string name, float tm)
-	{
-		yield return new WaitForSeconds(tm);
-		RunOnGroundEffect(name);
-	}
-
-	private void FixedUpdate()
-	{
-		if (rocketToLaunch != null)
-		{
-			Rocket component = rocketToLaunch.GetComponent<Rocket>();
-			rocketToLaunch.GetComponent<Rigidbody>().AddForce(component.currentRocketSettings.startForce * rocketToLaunch.transform.forward);
-			rocketToLaunch = null;
-		}
-		if (!isMulti || isMine)
-		{
-			ShopNGUIController.sharedShop.SetInGame(true);
-			if (((JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed) && Defs.isJetpackEnabled) != isJumpPresedOld && (Defs.isJetpackEnabled || isJumpPresedOld))
-			{
-				SetJetpackParticleEnabled((JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed) && Defs.isJetpackEnabled);
-				isJumpPresedOld = (JoystickController.rightJoystick.jumpPressed || JoystickController.leftTouchPad.isJumpPressed) && Defs.isJetpackEnabled;
-			}
-		}
-		if (isMulti && isMine && !(Camera.main == null))
-		{
+			this._weaponManager.myNetworkStartTable.win(this.nickPobeditel, _command, 0, 0);
 		}
 	}
 
-	public static int TierOfCurrentRoom()
+	private void ProvideAmmo(string inShopId)
 	{
-		if (PhotonNetwork.room != null && PhotonNetwork.room.customProperties.ContainsKey("tier"))
+		this._listener.ProvideContent();
+		this._weaponManager.SetMaxAmmoFrAllWeapons();
+		if (JoystickController.rightJoystick == null)
 		{
-			return (int)PhotonNetwork.room.customProperties["tier"];
+			UnityEngine.Debug.Log("JoystickController.rightJoystick = null");
 		}
-		return ExpController.Instance.OurTier;
-	}
-
-	private int TierOrRoomTier(int tier)
-	{
-		if (!roomTierInitialized)
+		else
 		{
-			roomTierInitialized = true;
-			roomTier = TierOfCurrentRoom();
-		}
-		return Math.Min(tier, roomTier);
-	}
-
-	private IEnumerator Fade(float start, float end, float length, GameObject currentObject)
-	{
-		if (currentObject == null)
-		{
-			Debug.LogWarningFormat("{0}: currentObject == null", GetType().Name);
-			yield break;
-		}
-		GUITexture texture = currentObject.GetComponent<GUITexture>();
-		for (float i = 0f; i < 1f; i += Time.deltaTime / length)
-		{
-			if (texture == null)
+			if (this.inGameGUI != null)
 			{
-				Debug.LogWarningFormat("{0}: texture == null", GetType().Name);
-				break;
+				this.inGameGUI.BlinkNoAmmo(0);
 			}
-			Color rgba = texture.color;
-			rgba.a = Mathf.Lerp(start, end, i);
-			texture.color = rgba;
-			yield return 0;
-			if (texture == null)
-			{
-				Debug.LogWarningFormat("{0}: texture == null", GetType().Name);
-				break;
-			}
-			Color rgba_ = texture.color;
-			rgba_.a = end;
-			texture.color = rgba_;
+			JoystickController.rightJoystick.HasAmmo();
 		}
 	}
 
-	private IEnumerator SetCanReceiveSwipes()
+	private void ProvideHealth(string inShopId)
 	{
-		yield return new WaitForSeconds(0.1f);
-		canReceiveSwipes = true;
+		this.CurHealth = this.MaxHealth;
+		CurrentCampaignGame.withoutHits = true;
 	}
 
-	[Obfuscation(Exclude = true)]
-	private void setisDeadFrameFalse()
+	private void providePotion(string inShopId)
 	{
-		isDeadFrame = false;
 	}
 
-	private void UpdateImmortalityAlpColor(float _alpha)
+	private void purchaseSuccessful(GooglePurchase purchase)
 	{
-		if (Mathf.Abs(_alpha - oldAlphaImmortality) < 0.001f)
+		try
 		{
-			return;
-		}
-		oldAlphaImmortality = _alpha;
-		if (myCurrentWeaponSounds != null)
-		{
-			playerBodyRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, _alpha));
-			Shader shader = Shader.Find("Mobile/Diffuse-Color");
-			if (shader != null && myCurrentWeaponSounds.bonusPrefab != null && myCurrentWeaponSounds.bonusPrefab.transform.parent != null)
+			if (purchase == null)
 			{
-				myCurrentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader = shader;
-				myCurrentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, _alpha));
+				throw new ArgumentNullException("purchase");
 			}
+			this.PurchaseSuccessful(purchase.productId);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(exception);
 		}
 	}
 
-	private void Update()
+	public void PurchaseSuccessful(string id)
 	{
-		liveTime += Time.deltaTime;
-		if (_timerDelayInShootingBurst > 0f)
+		if (this._actionsForPurchasedItems.ContainsKey(id))
 		{
-			_timerDelayInShootingBurst -= Time.deltaTime;
+			this._actionsForPurchasedItems[id](id);
 		}
-		UpdateHealth();
-		UpdateNickLabelColor();
-		if (timerUpdatePointAutoAi > 0f)
-		{
-			timerUpdatePointAutoAi -= Time.deltaTime;
-		}
-		if ((!isMulti || isMine) && _timeOfSlowdown > 0f)
-		{
-			_timeOfSlowdown -= Time.deltaTime;
-			if (_timeOfSlowdown <= 0f)
-			{
-				EffectsController.SlowdownCoeff = 1f;
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			Defs.isZooming = isZooming;
-		}
-		if (!isKilled && timerImmortality > 0f)
-		{
-			timerImmortality -= Time.deltaTime;
-			if (timerImmortality <= 0f)
-			{
-				isImmortality = false;
-			}
-		}
-		if (!isInvisible)
-		{
-			if (isImmortality)
-			{
-				float num = 1f;
-				timerImmortalityForAlpha += Time.deltaTime;
-				float num2 = 2f * (timerImmortalityForAlpha - Mathf.Floor(timerImmortalityForAlpha / num) * num) / num;
-				if (num2 > 1f)
-				{
-					num2 = 2f - num2;
-				}
-				UpdateImmortalityAlpColor(0.5f + num2 * 0.4f);
-			}
-			else
-			{
-				UpdateImmortalityAlpColor(1f);
-			}
-		}
-		if (isMulti && isMine)
-		{
-			if ((isCompany || Defs.isFlag) && myCommand == 0 && myTable != null)
-			{
-				myCommand = myNetworkStartTable.myCommand;
-			}
-			if (Defs.isFlag && myBaza == null && myCommand != 0)
-			{
-				if (myCommand == 1)
-				{
-					myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand1");
-				}
-				else
-				{
-					myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand2");
-				}
-			}
-			if (Defs.isFlag && (myFlag == null || enemyFlag == null) && myCommand != 0)
-			{
-				myFlag = ((myCommand != 1) ? flag2 : flag1);
-				enemyFlag = ((myCommand != 1) ? flag1 : flag2);
-			}
-			if (Defs.isFlag && myFlag != null && enemyFlag != null)
-			{
-				if (!myFlag.isCapture && !myFlag.isBaza && Vector3.SqrMagnitude(myPlayerTransform.position - myFlag.transform.position) < 2.25f)
-				{
-					photonView.RPC("SendSystemMessegeFromFlagReturnedRPC", PhotonTargets.All, myFlag.isBlue);
-					myFlag.GoBaza();
-				}
-				if (!enemyFlag.isCapture && !isKilled && enemyFlag.GetComponent<FlagController>().flagModel.activeSelf && Vector3.SqrMagnitude(myPlayerTransform.position - enemyFlag.transform.position) < 2.25f)
-				{
-					enemyFlag.SetCapture(photonView.ownerId);
-					isCaptureFlag = true;
-					photonView.RPC("SendSystemMessegeFromFlagCaptureRPC", PhotonTargets.All, enemyFlag.isBlue, mySkinName.NickName);
-				}
-			}
-			if (isCaptureFlag && Vector3.SqrMagnitude(myPlayerTransform.position - myBaza.transform.position) < 2.25f)
-			{
-				if (myFlag.isBaza)
-				{
-					if (Defs.isSoundFX)
-					{
-						GetComponent<AudioSource>().PlayOneShot(flagScoreMyCommandClip);
-					}
-					if (myTable != null)
-					{
-						myNetworkStartTable.AddScore();
-					}
-					countMultyFlag++;
-					if (!NetworkStartTable.LocalOrPasswordRoom())
-					{
-						QuestMediator.NotifyCapture(ConnectSceneNGUIController.RegimGame.FlagCapture);
-					}
-					myScoreController.AddScoreOnEvent((countMultyFlag == 3) ? PlayerEventScoreController.ScoreEvent.flagTouchDownTriple : ((countMultyFlag != 2) ? PlayerEventScoreController.ScoreEvent.flagTouchDown : PlayerEventScoreController.ScoreEvent.flagTouchDouble));
-					isCaptureFlag = false;
-					photonView.RPC("SendSystemMessegeFromFlagAddScoreRPC", PhotonTargets.Others, !enemyFlag.isBlue, mySkinName.NickName);
-					AddSystemMessage(LocalizationStore.Get("Key_1003"));
-					enemyFlag.GoBaza();
-				}
-				else if (!inGameGUI.message_returnFlag.activeSelf)
-				{
-					inGameGUI.message_returnFlag.SetActive(true);
-				}
-			}
-			else if (inGameGUI.message_returnFlag.activeSelf)
-			{
-				inGameGUI.message_returnFlag.SetActive(false);
-			}
-			if (Defs.isFlag && inGameGUI != null)
-			{
-				if (isCaptureFlag)
-				{
-					if (!inGameGUI.flagRedCaptureTexture.activeSelf)
-					{
-						inGameGUI.flagRedCaptureTexture.SetActive(true);
-					}
-				}
-				else if (inGameGUI.flagRedCaptureTexture.activeSelf)
-				{
-					inGameGUI.flagRedCaptureTexture.SetActive(false);
-				}
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			if (((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).currentAmmoInClip == 0 && !_changingWeapon && ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).currentAmmoInBackpack > 0 && !_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Shoot") && !isReloading)
-			{
-				ReloadPressed();
-			}
-			if (!isHunger || hungerGameController.isGo)
-			{
-				PotionsController.sharedController.Step(Time.deltaTime, this);
-			}
-		}
-		if (isHunger && isMine)
-		{
-			timeHingerGame += Time.deltaTime;
-			bool flag = InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.pausePanel.activeSelf;
-			if (Initializer.players.Count == 1 && hungerGameController.isGo && timeHingerGame > 10f && !isZachetWin && !flag)
-			{
-				isZachetWin = true;
-				int val = Storager.getInt(Defs.RatingHunger, false) + 1;
-				Storager.setInt(Defs.RatingHunger, val, false);
-				val = Storager.getInt("Rating", false) + 1;
-				Storager.setInt("Rating", val, false);
-				if (FriendsController.sharedController != null)
-				{
-					FriendsController.sharedController.TryIncrementWinCountTimestamp();
-				}
-				myNetworkStartTable.WinInHunger();
-			}
-		}
-		if (!isMulti)
-		{
-			inGameTime += Time.deltaTime;
-		}
-		if ((isCompany || Defs.isFlag) && myCommand == 0 && myTable != null)
-		{
-			myCommand = myNetworkStartTable.myCommand;
-		}
-		if (isMulti && isMine && _weaponManager.myPlayer != null)
-		{
-			GlobalGameController.posMyPlayer = _weaponManager.myPlayer.transform.position;
-			GlobalGameController.rotMyPlayer = _weaponManager.myPlayer.transform.rotation;
-			GlobalGameController.healthMyPlayer = CurHealth;
-			GlobalGameController.armorMyPlayer = curArmor;
-		}
-		if (!isMulti || isMine)
-		{
-			if (timerShow[0] > 0f)
-			{
-				timerShow[0] -= Time.deltaTime;
-			}
-			if (timerShow[1] > 0f)
-			{
-				timerShow[1] -= Time.deltaTime;
-			}
-			if (timerShow[2] > 0f)
-			{
-				timerShow[2] -= Time.deltaTime;
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			Func<bool> func = _003CUpdate_003Em__1FF;
-			if (!func() && canReceiveSwipes && isInappWinOpen)
-			{
-			}
-		}
-		if (GunFlashLifetime > 0f)
-		{
-			GunFlashLifetime -= Time.deltaTime;
-			if (GunFlashLifetime <= 0f)
-			{
-				GunFlashLifetime = 0f;
-				_SetGunFlashActive(false);
-			}
-		}
-		else if (GunFlashLifetime == -1f && JoystickController.IsButtonFireUp())
-		{
-			GunFlashLifetime = 0f;
-			_SetGunFlashActive(false);
-		}
-		if (Defs.isDaterRegim && isPlayerFlying)
-		{
-			if (!isMine)
-			{
-				if (!wingsAnimation.isPlaying)
-				{
-					wingsAnimation.Play();
-				}
-				if (!wingsBearAnimation.isPlaying)
-				{
-					wingsBearAnimation.Play();
-				}
-			}
-			if (Defs.isSoundFX && !wingsSound.isPlaying)
-			{
-				wingsSound.Play();
-			}
-		}
-		if (!isMulti || isMine)
-		{
-			ShootUpdate();
-		}
-	}
-
-	private void HandleEscape()
-	{
-		if (trainigController != null)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Ignoring [Escape] in training scene.");
-			}
-			return;
-		}
-		if (isMulti && !isMine)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogFormat("Ignoring [Escape]; isMulti: {0}, isMine: {1}", isMulti, isMine);
-			}
-			return;
-		}
-		if (!Cursor.visible)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Handling [Escape]. Cursor locked.");
-			}
-			_escapePressed = true;
-			Cursor.lockState = CursorLockMode.None;
-			Cursor.visible = true;
-			return;
-		}
-		if (showRanks)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogFormat("Ignoring [Escape]; showRanks: {0}", showRanks);
-			}
-			return;
-		}
-		if (RespawnWindow.Instance != null && RespawnWindow.Instance.isShown)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Handling [Escape] in Respawn Window.");
-			}
-			RespawnWindow.Instance.OnBtnGoBattleClick();
-			return;
-		}
-		GameObject gameObject = GameObject.FindGameObjectWithTag("ChatViewer");
-		if (gameObject == null)
-		{
-			if (!isInappWinOpen && Cursor.lockState != CursorLockMode.Locked)
-			{
-				if (Defs.IsDeveloperBuild)
-				{
-					Debug.LogFormat("Handling [Escape]; isInappWinOpen: {0}, lockState: '{1}'", isInappWinOpen, Cursor.lockState);
-				}
-				_escapePressed = true;
-			}
-		}
-		else if (!gameObject.GetComponent<ChatViewrController>().buySmileBannerPrefab.activeSelf)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Handling [Escape]. Closing chat");
-			}
-			gameObject.GetComponent<ChatViewrController>().CloseChat();
-		}
-	}
-
-	public void GoToShopFromPause()
-	{
-		SetInApp();
-		inAppOpenedFromPause = true;
+		this._timeWhenPurchShown = Time.realtimeSinceStartup;
 	}
 
 	public void QuitGame()
@@ -4093,20 +5281,27 @@ public sealed class Player_move_c : MonoBehaviour
 			LevelCompleteLoader.sceneName = Defs.MainMenuScene;
 			Application.LoadLevel("LevelToCompleteProm");
 		}
-		else if (isMulti)
+		else if (this.isMulti)
 		{
 			if (EveryplayWrapper.Instance.CurrentState == EveryplayWrapper.State.Paused || EveryplayWrapper.Instance.CurrentState == EveryplayWrapper.State.Recording)
 			{
 				EveryplayWrapper.Instance.Stop();
 			}
-			if (!isInet)
+			if (this.isInet)
+			{
+				coinsShop.hideCoinsShop();
+				coinsPlashka.hidePlashka();
+				Defs.typeDisconnectGame = Defs.DisconectGameType.Exit;
+				PhotonNetwork.LeaveRoom();
+			}
+			else
 			{
 				if (PlayerPrefs.GetString("TypeGame").Equals("server"))
 				{
 					Network.Disconnect(200);
 					GameObject.FindGameObjectWithTag("NetworkTable").GetComponent<LANBroadcastService>().StopBroadCasting();
 				}
-				else if (Network.connections.Length == 1)
+				else if ((int)Network.connections.Length == 1)
 				{
 					Network.CloseConnection(Network.connections[0], true);
 				}
@@ -4115,15 +5310,19 @@ public sealed class Player_move_c : MonoBehaviour
 				coinsPlashka.hidePlashka();
 				ConnectSceneNGUIController.Local();
 			}
-			else
-			{
-				coinsShop.hideCoinsShop();
-				coinsPlashka.hidePlashka();
-				Defs.typeDisconnectGame = Defs.DisconectGameType.Exit;
-				PhotonNetwork.LeaveRoom();
-			}
 		}
-		else if (Defs.IsSurvival)
+		else if (!Defs.IsSurvival)
+		{
+			LevelCompleteLoader.action = null;
+			LevelCompleteLoader.sceneName = "ChooseLevel";
+			bool flag = !this.isMulti;
+			if (!flag)
+			{
+				FlurryPluginWrapper.LogEvent("Back to Main Menu");
+			}
+			Application.LoadLevel((!flag ? Defs.MainMenuScene : "LevelToCompleteProm"));
+		}
+		else
 		{
 			if (GlobalGameController.Score > PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0))
 			{
@@ -4131,2527 +5330,300 @@ public sealed class Player_move_c : MonoBehaviour
 				PlayerPrefs.SetInt(Defs.SurvivalScoreSett, GlobalGameController.Score);
 				PlayerPrefs.Save();
 				FriendsController.sharedController.survivalScore = GlobalGameController.Score;
-				FriendsController.sharedController.SendOurData();
+				FriendsController.sharedController.SendOurData(false);
 			}
 			if (Storager.getInt("SendFirstResaltArena", false) != 1)
 			{
 				Storager.setInt("SendFirstResaltArena", 1, false);
 				AnalyticsStuff.LogArenaFirst(true, false);
 			}
-			Debug.Log("Player_move_c.QuitGame(): Trying to report survival score: " + GlobalGameController.Score);
+			UnityEngine.Debug.Log(string.Concat("Player_move_c.QuitGame(): Trying to report survival score: ", GlobalGameController.Score));
 			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
 			{
-				AGSLeaderboardsClient.SubmitScore("best_survival_scores", GlobalGameController.Score);
+				AGSLeaderboardsClient.SubmitScore("best_survival_scores", (long)GlobalGameController.Score, 0);
 			}
 			else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite && Social.localUser.authenticated)
 			{
-				long score = GlobalGameController.Score;
-				if (_003C_003Ef__am_0024cache147 == null)
-				{
-					_003C_003Ef__am_0024cache147 = _003CQuitGame_003Em__200;
-				}
-				Social.ReportScore(score, "CgkIr8rGkPIJEAIQCg", _003C_003Ef__am_0024cache147);
+				Social.ReportScore((long)GlobalGameController.Score, "CgkIr8rGkPIJEAIQCg", (bool success) => UnityEngine.Debug.Log(string.Concat("Player_move_c.QuitGame(): ", (!success ? "Failed to report score." : "Reported score successfully."))));
 			}
 			PlayerPrefs.SetInt("IsGameOver", 1);
 			LevelCompleteLoader.action = null;
 			LevelCompleteLoader.sceneName = "LevelComplete";
 			Application.LoadLevel("LevelToCompleteProm");
 		}
+	}
+
+	private void RailgunShot(WeaponSounds weapon)
+	{
+		bool flag;
+		Vector3 gunFlash;
+		float single;
+		weapon.fire();
+		this._FireFlash(true, 0);
+		float single1 = weapon.tekKoof * Defs.Coef;
+		Ray ray = Camera.main.ScreenPointToRay(new Vector3(((float)Screen.width - weapon.startZone.x * single1) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.x * single1)), ((float)Screen.height - weapon.startZone.y * single1) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.y * single1)), 0f));
+		if (!weapon.freezer)
+		{
+			bool flag1 = false;
+			int num = 0;
+			do
+			{
+				Player_move_c.RayHitsInfo hitsFromRay = this.GetHitsFromRay(ray, (weapon.countReflectionRay != 1 ? false : true));
+				RaycastHit[] raycastHitArray = hitsFromRay.hits;
+				for (int i = 0; i < (int)raycastHitArray.Length; i++)
+				{
+					this._DoHit(raycastHitArray[i], false);
+				}
+				if (num != 0)
+				{
+					flag = false;
+				}
+				else
+				{
+					flag = (weapon.countReflectionRay == 1 ? true : !hitsFromRay.obstacleFound);
+				}
+				bool flag2 = flag;
+				Vector3 vector3 = (num != 0 ? ray.origin : this.GunFlash.gameObject.transform.parent.position);
+				if (!flag2)
+				{
+					gunFlash = (num != 0 ? ray.direction : hitsFromRay.rayReflect.origin - this.GunFlash.gameObject.transform.parent.position);
+				}
+				else
+				{
+					gunFlash = this.GunFlash.gameObject.transform.parent.parent.forward;
+				}
+				Vector3 vector31 = gunFlash;
+				if (flag2)
+				{
+					single = 150f;
+				}
+				else if (num != 0)
+				{
+					single = hitsFromRay.lenRay;
+				}
+				else
+				{
+					Vector3 gunFlash1 = hitsFromRay.rayReflect.origin - this.GunFlash.gameObject.transform.parent.position;
+					single = gunFlash1.magnitude;
+				}
+				float single2 = single;
+				base.StartCoroutine(this.ShowRayWithDelay(vector3, vector31, weapon.railName, single2, (float)num * 0.05f));
+				if (hitsFromRay.obstacleFound)
+				{
+					ray = hitsFromRay.rayReflect;
+					flag1 = true;
+				}
+				num++;
+			}
+			while (flag1 && num < weapon.countReflectionRay);
+		}
 		else
 		{
-			LevelCompleteLoader.action = null;
-			LevelCompleteLoader.sceneName = "ChooseLevel";
-			bool flag = !isMulti;
-			if (!flag)
+			Player_move_c.RayHitsInfo rayHitsInfo = this.GetHitsFromRay(ray, false);
+			RaycastHit[] raycastHitArray1 = rayHitsInfo.hits;
+			for (int j = 0; j < (int)raycastHitArray1.Length; j++)
 			{
-				FlurryPluginWrapper.LogEvent("Back to Main Menu");
+				this._DoHit(raycastHitArray1[j], true);
 			}
-			Application.LoadLevel((!flag) ? Defs.MainMenuScene : "LevelToCompleteProm");
+			this.AddFreezerRayWithLength(rayHitsInfo.lenRay);
+			if (this.isMulti)
+			{
+				if (!this.isInet)
+				{
+					base.GetComponent<NetworkView>().RPC("AddFreezerRayWithLength", RPCMode.Others, new object[] { rayHitsInfo.lenRay });
+				}
+				else
+				{
+					this.photonView.RPC("AddFreezerRayWithLength", PhotonTargets.Others, new object[] { rayHitsInfo.lenRay });
+				}
+			}
 		}
 	}
 
-	public void SetPause(bool showGUI = true)
+	public void RanksPressed()
 	{
-		ShotUnPressed(true);
+		if (this.mySkinName.playerMoveC.isKilled)
+		{
+			return;
+		}
+		this.ShotUnPressed(true);
 		JoystickController.rightJoystick.jumpPressed = false;
 		JoystickController.leftTouchPad.isJumpPressed = false;
 		JoystickController.rightJoystick.Reset();
-		if (_pauser == null)
-		{
-			Debug.LogWarning("SetPause(): _pauser is null.");
-			return;
-		}
-		_pauser.paused = !_pauser.paused;
-		if (myCurrentWeaponSounds != null)
-		{
-			myCurrentWeaponSounds.animationObject.SetActive(!_pauser.paused);
-		}
-		if (_pauser.paused)
-		{
-			isActiveTurretPanelInPause = InGameGUI.sharedInGameGUI.turretPanel.activeSelf;
-			InGameGUI.sharedInGameGUI.turretPanel.SetActive(false);
-		}
-		else
-		{
-			InGameGUI.sharedInGameGUI.turretPanel.SetActive(isActiveTurretPanelInPause);
-		}
-		if (showGUI && inGameGUI != null && inGameGUI.pausePanel != null)
-		{
-			inGameGUI.pausePanel.SetActive(_pauser.paused);
-			inGameGUI.fastShopPanel.SetActive(!_pauser.paused);
-			if (ExperienceController.sharedController != null && ExpController.Instance != null)
-			{
-				ExperienceController.sharedController.isShowRanks = _pauser.paused;
-				ExpController.Instance.InterfaceEnabled = _pauser.paused;
-			}
-		}
-		if (_pauser.paused)
-		{
-			if (!isMulti)
-			{
-				Time.timeScale = 0f;
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-				{
-					TrainingController.isPause = true;
-				}
-			}
-		}
-		else
-		{
-			Time.timeScale = 1f;
-			TrainingController.isPause = false;
-		}
-		if (_pauser.paused)
-		{
-			RemoveButtonHandelrs();
-		}
-		else
-		{
-			AddButtonHandlers();
-		}
+		this.RemoveButtonHandelrs();
+		this.showRanks = true;
+		this.networkStartTableNGUIController.winnerPanelCom1.SetActive(false);
+		this.networkStartTableNGUIController.winnerPanelCom2.SetActive(false);
+		this.networkStartTableNGUIController.ShowRanksTable();
+		this.inGameGUI.gameObject.SetActive(false);
 	}
 
-	public void WinFromTimer()
+	private void Reload()
 	{
-		if (!base.enabled)
+		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && this.inGameGUI != null)
 		{
-			return;
-		}
-		base.enabled = false;
-		InGameGUI.sharedInGameGUI.gameObject.SetActive(false);
-		if (Defs.isCompany)
-		{
-			int commandWin = 0;
-			if (countKillsCommandBlue > countKillsCommandRed)
+			if (WeaponManager.sharedManager.currentWeaponSounds.ammoInClip > 1 || !WeaponManager.sharedManager.currentWeaponSounds.isShotMelee)
 			{
-				commandWin = 1;
-			}
-			if (countKillsCommandRed > countKillsCommandBlue)
-			{
-				commandWin = 2;
-			}
-			if (WeaponManager.sharedManager.myTable != null)
-			{
-				WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty, commandWin, countKillsCommandBlue, countKillsCommandRed);
-			}
-		}
-		else if (Defs.isCOOP)
-		{
-			ZombiManager.sharedManager.EndMatch();
-		}
-		else if (WeaponManager.sharedManager.myTable != null)
-		{
-			WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty);
-		}
-	}
-
-	private void SetInApp()
-	{
-		isInappWinOpen = !isInappWinOpen;
-		if (isInappWinOpen)
-		{
-			if (StoreKitEventListener.restoreInProcess)
-			{
-				ActivityIndicator.IsActiveIndicator = true;
-			}
-			if (!isMulti)
-			{
-				Time.timeScale = 0f;
-			}
-			return;
-		}
-		if (InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.activeSelf)
-		{
-			InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(false);
-			InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None);
-		}
-		if (InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.activeSelf)
-		{
-			InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(false);
-			InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(true);
-		}
-		ActivityIndicator.IsActiveIndicator = false;
-		if (_pauser == null)
-		{
-			Debug.LogWarning("SetInApp(): _pauser is null.");
-		}
-		else if (!_pauser.paused)
-		{
-			Time.timeScale = 1f;
-		}
-	}
-
-	private void providePotion(string inShopId)
-	{
-	}
-
-	private void ProvideAmmo(string inShopId)
-	{
-		_listener.ProvideContent();
-		_weaponManager.SetMaxAmmoFrAllWeapons();
-		if (JoystickController.rightJoystick != null)
-		{
-			if (inGameGUI != null)
-			{
-				inGameGUI.BlinkNoAmmo(0);
-			}
-			JoystickController.rightJoystick.HasAmmo();
-		}
-		else
-		{
-			Debug.Log("JoystickController.rightJoystick = null");
-		}
-	}
-
-	public void PurchaseSuccessful(string id)
-	{
-		if (_actionsForPurchasedItems.ContainsKey(id))
-		{
-			_actionsForPurchasedItems[id](id);
-		}
-		_timeWhenPurchShown = Time.realtimeSinceStartup;
-	}
-
-	private void purchaseSuccessful(GooglePurchase purchase)
-	{
-		try
-		{
-			if (purchase == null)
-			{
-				throw new ArgumentNullException("purchase");
-			}
-			PurchaseSuccessful(purchase.productId);
-		}
-		catch (Exception message)
-		{
-			Debug.LogError(message);
-		}
-	}
-
-	private void HandlePurchaseSuccessful(PurchaseResponse response)
-	{
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning("Amazon PurchaseResponse (Player_move_c): " + response.Status);
-			return;
-		}
-		Debug.Log("Amazon PurchaseResponse (Player_move_c): " + response.PurchaseReceipt.ToJson());
-		PurchaseSuccessful(response.PurchaseReceipt.Sku);
-	}
-
-	private void OnPlayerConnected(NetworkPlayer player)
-	{
-		if (isMine)
-		{
-			_networkView.RPC("SetInvisibleRPC", player, (!Defs.isDaterRegim) ? isInvisible : isBigHead);
-			_networkView.RPC("CountKillsCommandSynch", player, countKillsCommandBlue, countKillsCommandRed);
-			_networkView.RPC("SetWeaponRPC", player, ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.name, ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().alternativeName);
-			SendSynhHealth(true);
-			if (Defs.isJetpackEnabled)
-			{
-				_networkView.RPC("SetJetpackEnabledRPC", player, Defs.isJetpackEnabled);
-			}
-			if (isMechActive || isBearActive)
-			{
-				_networkView.RPC("ActivateMechRPC", player, mechUpgrade);
-			}
-			_networkView.RPC("SynhIsZoming", player, isZooming);
-		}
-	}
-
-	public void OnPhotonPlayerConnected(PhotonPlayer player)
-	{
-		if ((bool)photonView && photonView.isMine)
-		{
-			photonView.RPC("CountKillsCommandSynch", player, countKillsCommandBlue, countKillsCommandRed);
-			photonView.RPC("SetInvisibleRPC", player, (!Defs.isDaterRegim) ? isInvisible : isBigHead);
-			photonView.RPC("SetWeaponRPC", player, ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.name, ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().alternativeName);
-			SendSynhHealth(true, player);
-			if (Defs.isJetpackEnabled)
-			{
-				photonView.RPC("SetJetpackEnabledRPC", player, Defs.isJetpackEnabled);
-			}
-			if (isMechActive || isBearActive)
-			{
-				photonView.RPC("ActivateMechRPC", player, mechUpgrade);
-			}
-			photonView.RPC("SynhIsZoming", player, isZooming);
-			if (FriendsController.useBuffSystem || KillRateCheck.instance.buffEnabled)
-			{
-				photonView.RPC("SendBuffParameters", player, damageBuff, protectionBuff);
-			}
-		}
-	}
-
-	public void ShowChat()
-	{
-		if (!isKilled)
-		{
-			ShotUnPressed(true);
-			if (JoystickController.rightJoystick != null)
-			{
-				JoystickController.rightJoystick.jumpPressed = false;
-				JoystickController.leftTouchPad.isJumpPressed = false;
-				JoystickController.rightJoystick.Reset();
-			}
-			RemoveButtonHandelrs();
-			showChat = true;
-			if (inGameGUI.gameObject != null)
-			{
-				inGameGUI.gameObject.SetActive(false);
-			}
-			_weaponManager.currentWeaponSounds.gameObject.SetActive(false);
-			mechPoint.SetActive(false);
-			GameObject gameObject = UnityEngine.Object.Instantiate(chatViewer);
-		}
-	}
-
-	public void SetInvisible(bool _isInvisible)
-	{
-		if (isMulti)
-		{
-			if (!isInet)
-			{
-				GetComponent<NetworkView>().RPC("SetInvisibleRPC", RPCMode.All, _isInvisible);
-			}
-			else if (photonView != null)
-			{
-				photonView.RPC("SetInvisibleRPC", PhotonTargets.All, _isInvisible);
-			}
-		}
-		else
-		{
-			SetInvisibleRPC(_isInvisible);
-		}
-	}
-
-	public void SetNicklabelVisible()
-	{
-		if (!isMine)
-		{
-			nickLabel.gameObject.SetActive(!isInvisible || ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture) && WeaponManager.sharedManager.myPlayerMoveC != null && myCommand == WeaponManager.sharedManager.myPlayerMoveC.myCommand));
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void SetInvisibleRPC(bool _isInvisible)
-	{
-		if (!Defs.isDaterRegim)
-		{
-			if (isInvisible == _isInvisible)
-			{
-				return;
-			}
-			isInvisible = _isInvisible;
-			if (Defs.isSoundFX && _isInvisible)
-			{
-				GetComponent<AudioSource>().PlayOneShot(invisibleActivSound);
-			}
-			if (!isMulti || isMine)
-			{
-				SetInVisibleShaders(isInvisible);
-				return;
-			}
-			SetNicklabelVisible();
-			if (!isInvisible)
-			{
-				invisibleParticle.SetActive(false);
-				if (isMechActive)
-				{
-					mechPoint.SetActive(true);
-				}
-				else
-				{
-					mySkinName.FPSplayerObject.SetActive(true);
-				}
+				this.inGameGUI.ShowCircularIndicatorOnReload(WeaponManager.sharedManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].length / this._currentReloadAnimationSpeed);
 			}
 			else
 			{
-				invisibleParticle.SetActive(true);
-				mySkinName.FPSplayerObject.SetActive(false);
-				mechPoint.SetActive(false);
+				WeaponManager.sharedManager.ReloadAmmo();
 			}
 		}
-		else
-		{
-			if (isBigHead == _isInvisible)
-			{
-				return;
-			}
-			isBigHead = _isInvisible;
-			if (Defs.isSoundFX && _isInvisible)
-			{
-				GetComponent<AudioSource>().PlayOneShot(invisibleActivSound);
-			}
-			if (!isMulti || isMine)
-			{
-				return;
-			}
-			if (_isInvisible)
-			{
-				MechHeadTransform.localScale = Vector3.one * 2f;
-				PlayerHeadTransform.localScale = Vector3.one * 2f;
-				if (isBearActive)
-				{
-					nickLabel.transform.localPosition = 2.549f * Vector3.up;
-				}
-				else
-				{
-					nickLabel.transform.localPosition = 1.678f * Vector3.up;
-				}
-			}
-			else
-			{
-				MechHeadTransform.localScale = Vector3.one;
-				PlayerHeadTransform.localScale = Vector3.one;
-				if (isBearActive)
-				{
-					nickLabel.transform.localPosition = Vector3.up * 1.54f;
-				}
-				else
-				{
-					nickLabel.transform.localPosition = Vector3.up * 1.08f;
-				}
-			}
-		}
-	}
-
-	private void SetInVisibleShaders(bool _isInvisible)
-	{
-		if (isGrenadePress)
-		{
-			return;
-		}
-		if (_isInvisible)
-		{
-			if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab != null)
-			{
-				oldShadersInInvisible = new Shader[WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().materials.Length + ((WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() != null) ? WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length : 0)];
-				oldColorInInvisible = new Color[oldShadersInInvisible.Length];
-				oldShadersInInvisible[0] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader;
-				WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader = Shader.Find("Mobile/Diffuse-Color");
-				WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-				oldColorInInvisible[0] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.color;
-				if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() != null)
-				{
-					for (int i = 0; i < WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length; i++)
-					{
-						oldShadersInInvisible[i + 1] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].shader;
-						oldColorInInvisible[i + 1] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].color;
-						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].shader = Shader.Find("Mobile/Diffuse-Color");
-						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-					}
-				}
-			}
-			_mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-			mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-			return;
-		}
-		if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab != null)
-		{
-			WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-			if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() != null)
-			{
-				for (int j = 0; j < WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length; j++)
-				{
-					WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].shader = oldShadersInInvisible[j + 1];
-					WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].color = oldColorInInvisible[j + 1];
-				}
-			}
-		}
-		_mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-		mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-	}
-
-	[RPC]
-	[PunRPC]
-	public void ActivateMechRPC(int num)
-	{
-		ActivateMech(num);
+		WeaponManager.sharedManager.Reload();
 	}
 
 	[PunRPC]
 	[RPC]
-	public void ActivateMechRPC()
+	private void ReloadGun()
 	{
-		ActivateMech();
-	}
-
-	[PunRPC]
-	[RPC]
-	public void DeactivateMechRPC()
-	{
-		DeactivateMech();
-	}
-
-	private void SetWeaponVisible(bool visible)
-	{
-		myCurrentWeaponSounds.SetDaterBearHandsAnim(!visible);
-		if (currentGrenade != null)
-		{
-			currentGrenade.transform.parent = myCurrentWeaponSounds.grenatePoint;
-		}
-	}
-
-	public void ActivateBear()
-	{
-		if (isBearActive)
+		if (this.myCurrentWeaponSounds == null)
 		{
 			return;
 		}
-		float num = -1f;
-		if (myCurrentWeaponSounds != null && myCurrentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Reload"))
-		{
-			num = myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time;
-		}
-		mechPoint = mechBearPoint;
-		mechBody = mechBearBody;
-		mechBodyAnimation = mechBearBodyAnimation;
-		mechGunAnimation = mechBearGunAnimation;
-		mechBodyRenderer = mechBearBodyRenderer;
-		mechHandRenderer = mechBearHandRenderer;
-		shootMechClip = shootMechBearClip;
-		mechExplossionSound = mechBearExplosionSound;
-		mySkinName.walkMech = mySkinName.walkMechBear;
-		mechExplossion = bearExplosion;
-		if ((!Defs.isMulti || isMine) && isZooming)
-		{
-			ZoomPress();
-		}
-		deltaAngle = 0f;
-		mechUpgrade = 0;
+		this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
+		this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].speed = this._currentReloadAnimationSpeed;
 		if (Defs.isSoundFX)
 		{
-			GetComponent<AudioSource>().PlayOneShot(mechBearActivSound);
+			base.GetComponent<AudioSource>().PlayOneShot(this.myCurrentWeaponSounds.reload);
 		}
-		isBearActive = true;
-		fpsPlayerBody.SetActive(false);
-		if (myCurrentWeapon != null)
-		{
-			SetWeaponVisible(false);
-		}
-		if (isMine || (!isMine && !isInvisible) || !isMulti)
-		{
-			mechPoint.SetActive(true);
-		}
-		mechPoint.GetComponent<DisableObjectFromTimer>().timer = -1f;
-		if (!isMulti || isMine)
-		{
-			base.transform.localPosition = myCamera.transform.localPosition;
-			mechBody.SetActive(false);
-			mechBearSyncRot.enabled = true;
-			mechPoint.transform.localPosition = Vector3.zero;
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
-			if (myCurrentWeaponSounds.animationObject != null)
-			{
-				if (myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
-				}
-				if (!myCurrentWeaponSounds.isDoubleShot)
-				{
-					if (myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
-					{
-						myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
-					}
-				}
-				else
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
-				}
-			}
-		}
-		else
-		{
-			bodyCollayder.height = 2.07f;
-			bodyCollayder.center = new Vector3(0f, 0.19f, 0f);
-			headCollayder.center = new Vector3(0f, 0.54f, 0f);
-			if (isBigHead)
-			{
-				nickLabel.transform.localPosition = 2.549f * Vector3.up;
-			}
-			else
-			{
-				nickLabel.transform.localPosition = Vector3.up * 1.54f;
-			}
-		}
-		liveMech = liveMechByTier[0];
-		_mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-		if (isMulti && isMine)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("ActivateMechRPC", PhotonTargets.Others, 0);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("ActivateMechRPC", RPCMode.Others, 0);
-			}
-		}
-		if (num != -1f)
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time = num;
-		}
-		mySkinName.SetAnim(mySkinName.currentAnim, EffectsController.WeAreStealth);
 	}
 
-	public void DeactivateBear()
+	[Obfuscation(Exclude=true)]
+	public void ReloadPressed()
 	{
-		if (!isBearActive)
+		if (this.myCurrentWeaponSounds.isCharging && this.chargeValue > 0f)
 		{
 			return;
 		}
-		isBearActive = false;
-		float num = -1f;
-		if (myCurrentWeaponSounds != null && myCurrentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Reload"))
-		{
-			num = myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time;
-		}
-		if (myCurrentWeapon != null)
-		{
-			SetWeaponVisible(true);
-		}
-		myCamera.transform.localPosition = new Vector3(0f, 0.7f, 0f);
-		if (Defs.isSoundFX)
-		{
-			mechExplossionSound.Play();
-		}
-		if (isMulti && !isMine)
-		{
-			if (!isInvisible)
-			{
-				fpsPlayerBody.SetActive(true);
-			}
-			bodyCollayder.height = 1.51f;
-			bodyCollayder.center = Vector3.zero;
-			headCollayder.center = Vector3.zero;
-			mechExplossion.SetActive(true);
-			mechExplossion.GetComponent<DisableObjectFromTimer>().timer = 1f;
-			mechBodyAnimation.Play("Dead");
-			mechGunAnimation.Play("Dead");
-			mechPoint.GetComponent<DisableObjectFromTimer>().timer = 0.46f;
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>().cullingType = AnimationCullingType.AlwaysAnimate;
-			if (myCurrentWeaponSounds.animationObject != null)
-			{
-				if (myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Reload") != null)
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].layer = 1;
-				}
-				if (!myCurrentWeaponSounds.isDoubleShot)
-				{
-					if (myCurrentWeaponSounds.animationObject.GetComponent<Animation>().GetClip("Shoot") != null)
-					{
-						myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].layer = 1;
-					}
-				}
-				else
-				{
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot1"].layer = 1;
-					myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot2"].layer = 1;
-				}
-			}
-			if (isBigHead)
-			{
-				nickLabel.transform.localPosition = Vector3.up * 1.54f;
-			}
-			else
-			{
-				nickLabel.transform.localPosition = Vector3.up * 1.08f;
-			}
-		}
-		else
-		{
-			mechPoint.SetActive(false);
-			gunCamera.fieldOfView = 75f;
-			base.transform.localPosition = myCamera.transform.localPosition;
-			gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
-		}
-		if (!isMulti || isMine)
-		{
-			PotionsController.sharedController.DeActivePotion(GearManager.Mech, this);
-		}
-		if (isMulti && isMine)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("DeactivateMechRPC", PhotonTargets.Others);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("DeactivateMechRPC", RPCMode.Others);
-			}
-		}
-		if (num != -1f)
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].time = Mathf.Min(num, myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].length);
-		}
-		mySkinName.SetAnim(mySkinName.currentAnim, EffectsController.WeAreStealth);
-	}
-
-	public void ActivateMech(int num = 0)
-	{
-		if (isMechActive)
+		if (this.isGrenadePress || this.isReloading)
 		{
 			return;
 		}
-		if (Defs.isDaterRegim)
+		if (this._weaponManager.currentWeaponSounds.isMelee && !this._weaponManager.currentWeaponSounds.isShotMelee)
 		{
-			ActivateBear();
 			return;
 		}
-		if ((!Defs.isMulti || isMine) && isZooming)
+		if (this.isZooming)
 		{
-			ZoomPress();
+			this.ZoomPress();
 		}
-		deltaAngle = 0f;
-		mechUpgrade = num;
-		if (Defs.isSoundFX)
+		if (this._weaponManager.CurrentWeaponIndex < 0 || this._weaponManager.CurrentWeaponIndex >= this._weaponManager.playerWeapons.Count)
 		{
-			GetComponent<AudioSource>().PlayOneShot(mechActivSound);
+			return;
 		}
-		ShotUnPressed(true);
-		isMechActive = true;
-		fpsPlayerBody.SetActive(false);
-		if (myCurrentWeapon != null)
+		if (((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).currentAmmoInBackpack > 0 && ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).currentAmmoInClip != this._weaponManager.currentWeaponSounds.ammoInClip)
 		{
-			myCurrentWeapon.SetActive(false);
-		}
-		if (isMine || (!isMine && !isInvisible) || !isMulti)
-		{
-			mechPoint.SetActive(true);
-		}
-		mechPoint.GetComponent<DisableObjectFromTimer>().timer = -1f;
-		myCamera.transform.localPosition = new Vector3(0.12f, 0.7f, -0.3f);
-		if (!isMulti || isMine)
-		{
-			num = GearManager.CurrentNumberOfUphradesForGear(GearManager.Mech);
-			mechBody.SetActive(false);
-			mechBearSyncRot.enabled = true;
-			mechPoint.transform.localPosition = new Vector3(0f, -0.3f, 0f);
-			gunCamera.fieldOfView = 45f;
-			gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
-			if (inGameGUI != null)
-			{
-				inGameGUI.fireButtonSprite.spriteName = "controls_fire";
-				inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
-			}
-		}
-		else
-		{
-			bodyCollayder.height = 2.07f;
-			bodyCollayder.center = new Vector3(0f, 0.19f, 0f);
-			headCollayder.center = new Vector3(0f, 0.54f, 0f);
-			nickLabel.transform.localPosition = Vector3.up * 1.72f;
-		}
-		liveMech = liveMechByTier[num];
-		if (!Defs.isDaterRegim)
-		{
-			_mechMaterial = new Material(mechBodyMaterials[num]);
-			mechBodyRenderer.sharedMaterial = _mechMaterial;
-			mechHandRenderer.sharedMaterial = _mechMaterial;
-			mechGunRenderer.material = mechGunMaterials[num];
-		}
-		if (!Defs.isDaterRegim && isInvisible && (!isMulti || isMine))
-		{
-			_mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-			mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
-		}
-		else
-		{
-			_mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
-		}
-		if (isMulti && isMine)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("ActivateMechRPC", PhotonTargets.Others, num);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("ActivateMechRPC", RPCMode.Others, num);
-			}
-		}
-		if (!Defs.isDaterRegim)
-		{
-			for (int i = 0; i < mechWeaponSounds.gunFlashDouble.Length; i++)
-			{
-				mechWeaponSounds.gunFlashDouble[i].GetChild(0).gameObject.SetActive(false);
-			}
-		}
-		if ((!isMulti || isMine) && inGameGUI != null)
-		{
-			inGameGUI.SetCrosshair(mechWeaponSounds);
-		}
-		mySkinName.SetAnim(mySkinName.currentAnim, EffectsController.WeAreStealth);
-		UpdateEffectsForCurrentWeapon(mySkinName.currentCape, mySkinName.currentMask, mySkinName.currentHat);
-	}
-
-	public void DeactivateMech()
-	{
-		if (Defs.isDaterRegim)
-		{
-			DeactivateBear();
-		}
-		else
-		{
-			if (!isMechActive)
+			this.Reload();
+			if (this._weaponManager.currentWeaponSounds.isShotMelee)
 			{
 				return;
 			}
-			isMechActive = false;
-			if (myCurrentWeapon != null)
+			if (this.isMulti)
 			{
-				myCurrentWeapon.SetActive(true);
-			}
-			myCamera.transform.localPosition = new Vector3(0f, 0.7f, 0f);
-			if (Defs.isSoundFX)
-			{
-				mechExplossionSound.Play();
-			}
-			if (isMulti && !isMine)
-			{
-				if (!isInvisible)
+				if (this.isInet)
 				{
-					fpsPlayerBody.SetActive(true);
-				}
-				bodyCollayder.height = 1.51f;
-				bodyCollayder.center = Vector3.zero;
-				headCollayder.center = Vector3.zero;
-				mechExplossion.SetActive(true);
-				mechExplossion.GetComponent<DisableObjectFromTimer>().timer = 1f;
-				mechBodyAnimation.Play("Dead");
-				mechGunAnimation.Play("Dead");
-				mechPoint.GetComponent<DisableObjectFromTimer>().timer = 0.46f;
-				nickLabel.transform.localPosition = Vector3.up * 1.08f;
-			}
-			else
-			{
-				mechPoint.SetActive(false);
-				gunCamera.fieldOfView = 75f;
-				if (myCurrentWeaponSounds.isDoubleShot)
-				{
-					gunCamera.transform.localPosition = Vector3.zero;
+					this.photonView.RPC("ReloadGun", PhotonTargets.Others, new object[0]);
 				}
 				else
 				{
-					gunCamera.transform.localPosition = new Vector3(-0.1f, 0f, 0f);
+					base.GetComponent<NetworkView>().RPC("ReloadGun", RPCMode.Others, new object[0]);
 				}
-				if (inGameGUI != null)
-				{
-					if (_weaponManager.currentWeaponSounds.isMelee && !_weaponManager.currentWeaponSounds.isShotMelee)
-					{
-						inGameGUI.fireButtonSprite.spriteName = "controls_strike";
-						inGameGUI.fireButtonSprite2.spriteName = "controls_strike";
-					}
-					else
-					{
-						inGameGUI.fireButtonSprite.spriteName = "controls_fire";
-						inGameGUI.fireButtonSprite2.spriteName = "controls_fire";
-					}
-				}
-			}
-			if (!isMulti || isMine)
-			{
-				PotionsController.sharedController.DeActivePotion(GearManager.Mech, this);
-			}
-			if (isMulti && isMine)
-			{
-				if (Defs.isInet)
-				{
-					photonView.RPC("DeactivateMechRPC", PhotonTargets.Others);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("DeactivateMechRPC", RPCMode.Others);
-				}
-			}
-			if ((!isMulti || isMine) && inGameGUI != null)
-			{
-				inGameGUI.SetCrosshair(_weaponManager.currentWeaponSounds);
-			}
-			mySkinName.SetAnim(mySkinName.currentAnim, EffectsController.WeAreStealth);
-			UpdateEffectsForCurrentWeapon(mySkinName.currentCape, mySkinName.currentMask, mySkinName.currentHat);
-		}
-	}
-
-	public void UpdateEffectsForCurrentWeapon(string currentCape, string currentMask, string currentHat)
-	{
-		if (!(myCurrentWeaponSounds == null))
-		{
-			if (!isMine)
-			{
-				_chanceToIgnoreHeadshot = EffectsController.GetChanceToIgnoreHeadshot(myCurrentWeaponSounds.categoryNabor, currentCape, currentMask, currentHat);
-			}
-			_currentReloadAnimationSpeed = EffectsController.GetReloadAnimationSpeed(myCurrentWeaponSounds.categoryNabor, currentCape, currentMask, currentHat);
-			_protectionShieldValue = 1f;
-			bool flag = !isMechActive && myCurrentWeaponSounds.specialEffect == WeaponSounds.SpecialEffects.PlayerShield;
-			if (flag != isShieldActivated)
-			{
-				isShieldActivated = flag;
-				StopCoroutine(ToggleShield());
-				StartCoroutine(ToggleShield());
-			}
-		}
-	}
-
-	private IEnumerator ToggleShield()
-	{
-		MeshRenderer renderer = shieldObject.GetComponent<MeshRenderer>();
-		Material shieldMat = (renderer.sharedMaterial = UnityEngine.Object.Instantiate(renderer.material));
-		_protectionShieldValue = 1f;
-		bool useProtectionShield = !isMechActive && myCurrentWeaponSounds.specialEffect == WeaponSounds.SpecialEffects.PlayerShield;
-		if (useProtectionShield)
-		{
-			shieldObject.SetActive(true);
-			shieldMat.SetFloat("_Multiplier", 0f);
-			yield return new WaitForSeconds(1f);
-			float fadeOut3 = 0f;
-			while (fadeOut3 < 1f)
-			{
-				fadeOut3 += Time.deltaTime * 14f;
-				shieldMat.SetFloat("_Multiplier", Mathf.Lerp(0f, 0.4f, Mathf.Min(fadeOut3, 1f)));
-				yield return null;
-			}
-			fadeOut3 = 0f;
-			while (fadeOut3 < 1f)
-			{
-				fadeOut3 += Time.deltaTime * 8f;
-				shieldMat.SetFloat("_Multiplier", Mathf.Lerp(0.4f, 0.2f, Mathf.Min(fadeOut3, 1f)));
-				yield return null;
-			}
-		}
-		else
-		{
-			float fadeOut = 0f;
-			while (fadeOut < 1f)
-			{
-				fadeOut += Time.deltaTime * 14f;
-				shieldMat.SetFloat("_Multiplier", Mathf.Lerp(0.3f, 0f, Mathf.Min(fadeOut, 1f)));
-				yield return null;
-			}
-		}
-		_protectionShieldValue = ((!useProtectionShield) ? 1f : myCurrentWeaponSounds.protectionEffectValue);
-		shieldObject.SetActive(useProtectionShield);
-		Debug.Log("<color=#77DD77>Set protection: " + _protectionShieldValue + "</color>");
-	}
-
-	public void BlockPlayerInEnd()
-	{
-		mySkinName.BlockFirstPersonController();
-		myCurrentWeaponSounds.animationObject.GetComponent<Animation>().enabled = false;
-		if (GunFlash != null)
-		{
-			GunFlash.gameObject.SetActive(false);
-		}
-		mySkinName.character.enabled = false;
-		base.enabled = false;
-	}
-
-	[ContextMenu("Active mech")]
-	public void TestActiveMech()
-	{
-		ActivateMech();
-	}
-
-	public bool MinusMechHealth(float _minus)
-	{
-		liveMech -= _minus;
-		if (liveMech <= 0f)
-		{
-			DeactivateMech();
-			return true;
-		}
-		return false;
-	}
-
-	public void ImSuicide()
-	{
-		isSuicided = true;
-		respawnedForGUI = true;
-		if (Defs.isFlag && isCaptureFlag)
-		{
-			enemyFlag.GoBaza();
-			isCaptureFlag = false;
-			SendSystemMessegeFromFlagReturned(enemyFlag.isBlue);
-		}
-		if (countKills > 0)
-		{
-			GlobalGameController.CountKills = countKills;
-		}
-		_weaponManager.myNetworkStartTable.CountKills = countKills;
-		_weaponManager.myNetworkStartTable.SynhCountKills();
-		sendImDeath(mySkinName.NickName);
-	}
-
-	private void UpdateHealth()
-	{
-		if (isMulti && isMine && CurHealth + curArmor - synhHealth > 0.1f)
-		{
-			SendSynhHealth(true);
-		}
-		if (!isMulti || isMine)
-		{
-			if (!isRegenerationLiveCape)
-			{
-				timerRegenerationLiveCape = maxTimerRegenerationLiveCape;
-			}
-			if (isRegenerationLiveCape)
-			{
-				if (timerRegenerationLiveCape > 0f)
-				{
-					timerRegenerationLiveCape -= Time.deltaTime;
-				}
-				else
-				{
-					timerRegenerationLiveCape = maxTimerRegenerationLiveCape;
-					if (CurHealth < MaxHealth)
-					{
-						CurHealth += 1f;
-					}
-				}
-			}
-			if (!EffectsController.IsRegeneratingArmor)
-			{
-				timeSettedAfterRegenerationSwitchedOn = false;
-			}
-			if (EffectsController.IsRegeneratingArmor)
-			{
-				if (!timeSettedAfterRegenerationSwitchedOn)
-				{
-					timeSettedAfterRegenerationSwitchedOn = true;
-					timerRegenerationArmor = maxTimerRegenerationArmor;
-				}
-				if (timerRegenerationArmor > 0f)
-				{
-					timerRegenerationArmor -= Time.deltaTime;
-				}
-				else
-				{
-					timerRegenerationArmor = maxTimerRegenerationArmor;
-					if (curArmor < MaxArmor && Storager.getString(Defs.ArmorNewEquppedSN, false) != Defs.ArmorNewNoneEqupped)
-					{
-						AddArmor(1f);
-					}
-				}
-			}
-			if (!isRegenerationLiveZel)
-			{
-				timerRegenerationLiveZel = maxTimerRegenerationLiveZel;
-			}
-			if (isRegenerationLiveZel)
-			{
-				if (timerRegenerationLiveZel > 0f)
-				{
-					timerRegenerationLiveZel -= Time.deltaTime;
-				}
-				else
-				{
-					timerRegenerationLiveZel = maxTimerRegenerationLiveZel;
-					if (CurHealth < MaxHealth)
-					{
-						CurHealth += 1f;
-					}
-				}
-			}
-			if (timerShowUp > 0f)
-			{
-				timerShowUp -= Time.deltaTime;
-			}
-			if (timerShowDown > 0f)
-			{
-				timerShowDown -= Time.deltaTime;
-			}
-			if (timerShowLeft > 0f)
-			{
-				timerShowLeft -= Time.deltaTime;
-			}
-			if (timerShowRight > 0f)
-			{
-				timerShowRight -= Time.deltaTime;
-			}
-		}
-		if ((isMulti && !isMine) || !(CurHealth <= 0f) || isKilled || showRanks || showChat || ShopNGUIController.GuiActive || BankController.Instance.uiRoot.gameObject.activeInHierarchy || (!(_pauser == null) && (!(_pauser != null) || _pauser.paused)))
-		{
-			return;
-		}
-		countMultyFlag = 0;
-		ResetMySpotEvent();
-		ResetHouseKeeperEvent();
-		if (myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Stop();
-		}
-		if (Mathf.Abs(Time.time - timeBuyHealth) < 1.5f)
-		{
-			int @int = Storager.getInt("Coins", false);
-			Storager.setInt("Coins", @int + Defs.healthInGamePanelPrice, false);
-			CoinsMessage.FireCoinsAddedEvent();
-			timeBuyHealth = -10000f;
-		}
-		if (Defs.isCOOP)
-		{
-			SendImKilled();
-			SendSynhHealth(false);
-		}
-		inGameGUI.ResetDamageTaken();
-		if (Defs.isTurretWeapon)
-		{
-			CancelTurret();
-			InGameGUI.sharedInGameGUI.HideTurretInterface();
-			Defs.isTurretWeapon = false;
-		}
-		if (isGrenadePress)
-		{
-			ReturnWeaponAfterGrenade();
-			isGrenadePress = false;
-		}
-		if (isZooming)
-		{
-			ZoomPress();
-		}
-		if (isMulti)
-		{
-			if ((!isMulti || isMine) && _player != null && (bool)_player)
-			{
-				ImpactReceiverTrampoline component = _player.GetComponent<ImpactReceiverTrampoline>();
-				if (component != null)
-				{
-					UnityEngine.Object.Destroy(component);
-				}
-			}
-			if (Defs.isFlag && isCaptureFlag)
-			{
-				isCaptureFlag = false;
-				photonView.RPC("SendSystemMessegeFromFlagDroppedRPC", PhotonTargets.All, enemyFlag.isBlue, mySkinName.NickName);
-				enemyFlag.SetNOCapture(flagPoint.transform.position, flagPoint.transform.rotation);
-			}
-			resetMultyKill();
-			isKilled = true;
-			if (Defs.isCOOP && !isSuicided)
-			{
-				killedInMatch = true;
-			}
-			if (Defs.isMulti && isMine && !Defs.isHunger && !isSuicided && UnityEngine.Random.Range(0, 100) < 50)
-			{
-				BonusController.sharedController.AddBonusAfterKillPlayer(new Vector3(myPlayerTransform.position.x, myPlayerTransform.position.y - 1f, myPlayerTransform.position.z));
-			}
-			isSuicided = false;
-			if (isHunger && ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.name.Replace("(Clone)", string.Empty) != WeaponManager.KnifeWN)
-			{
-				BonusController.sharedController.AddWeaponAfterKillPlayer(((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).weaponPrefab.name, myPlayerTransform.position);
 			}
 			if (Defs.isSoundFX)
 			{
-				base.gameObject.GetComponent<AudioSource>().PlayOneShot(deadPlayerSound);
+				base.GetComponent<AudioSource>().PlayOneShot(this._weaponManager.currentWeaponSounds.reload);
 			}
-			if (isCOOP)
+			if (JoystickController.rightJoystick == null)
 			{
-				_weaponManager.myNetworkStartTable.score -= 1000;
-				if (_weaponManager.myNetworkStartTable.score < 0)
-				{
-					_weaponManager.myNetworkStartTable.score = 0;
-				}
-				GlobalGameController.Score = _weaponManager.myNetworkStartTable.score;
-				_weaponManager.myNetworkStartTable.SynhScore();
-			}
-			isDeadFrame = true;
-			AutoFade.fadeKilled(0.5f, (!isNeedShowRespawnWindow || Defs.inRespawnWindow) ? 1.5f : 0.5f, 0.5f, Color.white);
-			Invoke("setisDeadFrameFalse", 1f);
-			StartCoroutine(FlashWhenDead());
-			if (JoystickController.leftJoystick != null)
-			{
-				JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
-				JoystickController.leftJoystick.SetJoystickActive(false);
-			}
-			if (JoystickController.leftTouchPad != null)
-			{
-				JoystickController.leftTouchPad.SetJoystickActive(false);
-			}
-			if (JoystickController.rightJoystick != null)
-			{
-				JoystickController.rightJoystick.gameObject.SetActive(false);
-				JoystickController.rightJoystick.MakeInactive();
-			}
-			if (Defs.inRespawnWindow)
-			{
-				Defs.inRespawnWindow = false;
-				RespawnPlayer();
+				UnityEngine.Debug.Log("JoystickController.rightJoystick = null");
 			}
 			else
 			{
-				Vector3 localPosition = myPlayerTransform.localPosition;
-				TweenParms p_parms = new TweenParms().Prop("localPosition", new Vector3(localPosition.x, 100f, localPosition.z)).Ease(EaseType.EaseInCubic).OnComplete(_003CUpdateHealth_003Em__201);
-				HOTween.To(myPlayerTransform, (!isNeedShowRespawnWindow) ? 2f : 0.75f, p_parms);
-			}
-			return;
-		}
-		if (Defs.IsSurvival)
-		{
-			if (GlobalGameController.Score > PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0))
-			{
-				GlobalGameController.HasSurvivalRecord = true;
-				PlayerPrefs.SetInt(Defs.SurvivalScoreSett, GlobalGameController.Score);
-				PlayerPrefs.Save();
-				FriendsController.sharedController.survivalScore = GlobalGameController.Score;
-				FriendsController.sharedController.SendOurData();
-			}
-			if (ZombieCreator.sharedCreator != null)
-			{
-				if (Storager.getInt("SendFirstResaltArena", false) != 1)
+				JoystickController.rightJoystick.HasAmmo();
+				if (this.inGameGUI != null)
 				{
-					Storager.setInt("SendFirstResaltArena", 1, false);
-					AnalyticsStuff.LogArenaFirst(false, ZombieCreator.sharedCreator.currentWave > 0);
+					this.inGameGUI.BlinkNoAmmo(0);
 				}
-				AnalyticsStuff.LogArenaWavesPassed(ZombieCreator.sharedCreator.currentWave);
-			}
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-			{
-				AGSLeaderboardsClient.SubmitScore("best_survival_scores", GlobalGameController.Score);
-			}
-			else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite && Social.localUser.authenticated)
-			{
-				long score = GlobalGameController.Score;
-				if (_003C_003Ef__am_0024cache148 == null)
-				{
-					_003C_003Ef__am_0024cache148 = _003CUpdateHealth_003Em__202;
-				}
-				Social.ReportScore(score, "CgkIr8rGkPIJEAIQCg", _003C_003Ef__am_0024cache148);
-			}
-		}
-		else if (GlobalGameController.Score > PlayerPrefs.GetInt(Defs.BestScoreSett, 0))
-		{
-			PlayerPrefs.SetInt(Defs.BestScoreSett, GlobalGameController.Score);
-			PlayerPrefs.Save();
-		}
-		PlayerPrefs.SetInt("IsGameOver", 1);
-		LevelCompleteLoader.action = null;
-		LevelCompleteLoader.sceneName = "LevelComplete";
-		Singleton<SceneLoader>.Instance.LoadScene("LevelToCompleteProm");
-	}
-
-	private bool DamagePlayerAndCheckDeath(float damage)
-	{
-		if (isMechActive)
-		{
-			MinusMechHealth(damage);
-		}
-		else
-		{
-			if (curArmor >= damage)
-			{
-				curArmor -= damage;
-			}
-			else
-			{
-				CurHealth -= damage - curArmor;
-				curArmor = 0f;
-				CurrentCampaignGame.withoutHits = false;
-			}
-			if (CurHealth <= 0f)
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void SendDamageFromEnv(float damage, Vector3 pos)
-	{
-		if (!isInet)
-		{
-			GetComponent<NetworkView>().RPC("GetDamageFromEnvRPC", RPCMode.All, damage, pos);
-		}
-		else
-		{
-			photonView.RPC("GetDamageFromEnvRPC", PhotonTargets.All, damage, pos);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void GetDamageFromEnvRPC(float damage, Vector3 pos)
-	{
-		StartCoroutine(Flash(myPlayerTransform.gameObject));
-		if (!isMine || isKilled || isImmortality)
-		{
-			return;
-		}
-		if (pos != Vector3.zero)
-		{
-			ShowDamageDirection(pos);
-		}
-		if (Defs.isSoundFX)
-		{
-			NGUITools.PlaySound((!(curArmor > 0f) && !isMechActive) ? damagePlayerSound : damageArmorPlayerSound);
-		}
-		if (DamagePlayerAndCheckDeath(damage) && Defs.isMulti)
-		{
-			ImSuicide();
-			if (!Defs.isCOOP)
-			{
-				SendImKilled();
 			}
 		}
 	}
 
-	public void GetDamageFromEnv(float damage, Vector3 pos)
+	public void RemoveButtonHandelrs()
 	{
-		if (isKilled || isImmortality)
+		PauseTapReceiver.PauseClicked -= new Action(this.SwitchPause);
+		ShopTapReceiver.ShopClicked -= new Action(this.ShopPressed);
+		RanksTapReceiver.RanksClicked -= new Action(this.RanksPressed);
+		TopPanelsTapReceiver.OnClicked -= new Action(this.RanksPressed);
+		ChatTapReceiver.ChatClicked -= new Action(this.ShowChat);
+		if (JoystickController.leftJoystick != null)
 		{
-			return;
+			JoystickController.leftJoystick.SetJoystickActive(false);
 		}
-		if (pos != Vector3.zero)
+		if (JoystickController.leftTouchPad != null)
 		{
-			ShowDamageDirection(pos);
-		}
-		if (Defs.isSoundFX)
-		{
-			NGUITools.PlaySound((!(curArmor > 0f) && !isMechActive) ? damagePlayerSound : damageArmorPlayerSound);
-		}
-		if (DamagePlayerAndCheckDeath(damage) && Defs.isMulti)
-		{
-			ImSuicide();
-			if (!Defs.isCOOP)
-			{
-				SendImKilled();
-			}
-		}
-		if (Defs.isMulti)
-		{
-			SendStartFlashMine();
-		}
-		else
-		{
-			StartFlashRPC();
+			JoystickController.leftTouchPad.SetJoystickActive(false);
 		}
 	}
 
-	public void KillSelf()
+	private void ResetHouseKeeperEvent()
 	{
-		if ((isMulti && !isMine) || isKilled || CurHealth <= 0f)
+		this.countHouseKeeperEvent = 0;
+	}
+
+	public void resetMultyKill()
+	{
+		this.multiKill = 0;
+		for (int i = 0; i < (int)this.counterSerials.Length; i++)
 		{
-			return;
-		}
-		curArmor = 0f;
-		CurHealth = 0f;
-		if (Defs.isMulti)
-		{
-			ImSuicide();
-			if (!Defs.isCOOP)
-			{
-				SendImKilled();
-			}
-		}
-		else
-		{
-			StartFlash(mySkinName.gameObject);
+			this.counterSerials[i] = 0;
 		}
 	}
 
-	[PunRPC]
-	[RPC]
-	public void minusLiveFromZombiRPC(float live, Vector3 posZombi)
+	private void ResetMySpotEvent()
 	{
-		if (photonView.isMine && !isKilled && !isImmortality)
-		{
-			live *= _protectionShieldValue;
-			if (isMechActive)
-			{
-				MinusMechHealth(live);
-			}
-			else
-			{
-				float num = live - curArmor;
-				if (num < 0f)
-				{
-					curArmor -= live;
-					num = 0f;
-				}
-				else
-				{
-					curArmor = 0f;
-				}
-				CurHealth -= num;
-			}
-			ShowDamageDirection(posZombi);
-		}
-		StartCoroutine(Flash(myPlayerTransform.gameObject));
+		this.countMySpotEvent = 0;
 	}
 
-	[PunRPC]
-	[RPC]
-	public void MinusLiveRPC(NetworkViewID idKiller, float minus, int _typeKills, int _typeWeapon, NetworkViewID idTurret, string weaponName)
+	public void ResetShootingBurst()
 	{
-		MinusLiveRPCEffects(_typeKills);
-		if (!isMine || isKilled || isImmortality)
-		{
-			return;
-		}
-		float num = 0f;
-		if (isMechActive)
-		{
-			MinusMechHealth(minus);
-		}
-		else
-		{
-			num = minus - curArmor;
-			if (num < 0f)
-			{
-				curArmor -= minus;
-				num = 0f;
-			}
-			else
-			{
-				curArmor = 0f;
-			}
-		}
-		if (!(CurHealth > 0f))
-		{
-			return;
-		}
-		CurHealth -= num;
-		if (CurHealth <= 0f)
-		{
-			if (myKillAssistsLocal.Contains(idKiller))
-			{
-				myKillAssistsLocal.Remove(idKiller);
-			}
-			if (placemarkerMoveC != null)
-			{
-				placemarkerMoveC.isPlacemarker = false;
-			}
-			GetComponent<NetworkView>().RPC("Killed", RPCMode.All, idKiller, _typeKills, _typeWeapon, weaponName);
-		}
-		else if (!myKillAssistsLocal.Contains(idKiller))
-		{
-			myKillAssistsLocal.Add(idKiller);
-		}
-		SendSynhHealth(false);
-		Vector3 zero = Vector3.zero;
-		if (_typeKills != 8)
-		{
-			foreach (Player_move_c player in Initializer.players)
-			{
-				if (player.GetComponent<NetworkView>() != null && player.GetComponent<NetworkView>().viewID.Equals(idKiller))
-				{
-					zero = player.transform.position;
-					ShowDamageDirection(zero);
-					break;
-				}
-			}
-			return;
-		}
-		GameObject[] array = GameObject.FindGameObjectsWithTag("Turret");
-		GameObject[] array2 = array;
-		foreach (GameObject gameObject in array2)
-		{
-			if (gameObject.GetComponent<NetworkView>() != null && gameObject.GetComponent<NetworkView>().viewID.Equals(idTurret))
-			{
-				zero = gameObject.transform.position;
-				ShowDamageDirection(zero);
-				break;
-			}
-		}
-	}
-
-	public void MinusLive(int idKiller, float minus, TypeKills _typeKills, int _typeWeapon = 0, string weaponName = "", int idTurret = 0)
-	{
-		if (Defs.isDaterRegim || isImmortality)
-		{
-			return;
-		}
-		ProfileController.OnGameHit();
-		if (_typeKills != TypeKills.turret && InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.ShowImpact();
-		}
-		minus *= _protectionShieldValue;
-		if (!FriendsController.useBuffSystem || !BuffSystem.instance.haveBuffForWeapon(weaponName))
-		{
-			minus *= WeaponManager.sharedManager.myPlayerMoveC.damageBuff;
-		}
-		else
-		{
-			minus *= BuffSystem.instance.weaponBuffValue;
-			Debug.Log("Buffed shot!");
-		}
-		minus /= protectionBuff;
-		if (isMechActive)
-		{
-			if (MinusMechHealth(minus))
-			{
-				WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deadMech);
-				minus = 1000f;
-				if (_typeKills != TypeKills.grenade && _typeKills != TypeKills.mech && _typeKills != TypeKills.turret)
-				{
-					try
-					{
-						WeaponManager.sharedManager.myPlayerMoveC.AddWeKillStatisctics((weaponName ?? string.Empty).Replace("(Clone)", string.Empty));
-					}
-					catch (Exception ex)
-					{
-						Debug.LogError("Exception we were killed AddWeKillStatisctics: " + ex);
-					}
-				}
-			}
-		}
-		else if (synhHealth > 0f)
-		{
-			getLocalHurt = true;
-			synhHealth -= minus;
-			if (synhHealth < 0f)
-			{
-				synhHealth = 0f;
-			}
-			if (armorSynch > minus)
-			{
-				armorSynch -= minus;
-			}
-			else
-			{
-				armorSynch = 0f;
-			}
-			if (synhHealth <= 0f)
-			{
-				if (_typeKills != TypeKills.grenade && _typeKills != TypeKills.mech && _typeKills != TypeKills.turret)
-				{
-					try
-					{
-						WeaponManager.sharedManager.myPlayerMoveC.AddWeKillStatisctics((weaponName ?? string.Empty).Replace("(Clone)", string.Empty));
-					}
-					catch (Exception ex2)
-					{
-						Debug.LogError("Exception we were killed AddWeKillStatisctics: " + ex2);
-					}
-				}
-				minus = 10000f;
-				if (isCaptureFlag)
-				{
-					WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deadWithFlag);
-					if (!NetworkStartTable.LocalOrPasswordRoom())
-					{
-						QuestMediator.NotifyKillOtherPlayerWithFlag();
-					}
-				}
-				if (Defs.isCapturePoints && WeaponManager.sharedManager.myPlayerMoveC != null)
-				{
-					for (int i = 0; i < CapturePointController.sharedController.basePointControllers.Length; i++)
-					{
-						if (CapturePointController.sharedController.basePointControllers[i].captureConmmand == (BasePointController.TypeCapture)WeaponManager.sharedManager.myPlayerMoveC.myCommand && CapturePointController.sharedController.basePointControllers[i].capturePlayers.Contains(this))
-						{
-							isRaiderMyPoint = true;
-							break;
-						}
-					}
-				}
-				if (getLocalHurt)
-				{
-					getLocalHurt = false;
-				}
-				ImKilled(myPlayerTransform.position, myPlayerTransform.rotation, _typeWeapon);
-				myPersonNetwork.StartAngel();
-				if (Defs.isFlag && isCaptureFlag)
-				{
-					FlagController flagController = null;
-					if (flag1.targetTrasform == flagPoint.transform)
-					{
-						flagController = flag1;
-					}
-					if (flag2.targetTrasform == flagPoint.transform)
-					{
-						flagController = flag2;
-					}
-					if (flagController != null)
-					{
-						flagController.SetNOCaptureRPC(myPlayerTransform.position, myPlayerTransform.rotation);
-					}
-				}
-			}
-		}
-		photonView.RPC("MinusLiveRPCPhoton", PhotonTargets.Others, idKiller, minus, (int)_typeKills, _typeWeapon, idTurret, weaponName);
-		MinusLiveRPCEffects((int)_typeKills);
-	}
-
-	public void MinusLive(NetworkViewID idKiller, float minus, TypeKills _typeKills, int _typeWeapon, string nameWeapon = "", NetworkViewID idTurret = default(NetworkViewID))
-	{
-		if (!Defs.isDaterRegim)
-		{
-			if (InGameGUI.sharedInGameGUI != null)
-			{
-				InGameGUI.sharedInGameGUI.ShowImpact();
-			}
-			ProfileController.OnGameHit();
-			getLocalHurt = true;
-			GetComponent<NetworkView>().RPC("MinusLiveRPC", RPCMode.All, idKiller, minus, (int)_typeKills, _typeWeapon, idTurret, nameWeapon);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void MinusLiveRPCWithTurretPhoton(int idKiller, float minus, int _typeKills, int idTurret)
-	{
-		MinusLiveRPCPhoton(idKiller, minus, _typeKills, 0, idTurret, null);
-	}
-
-	[PunRPC]
-	[RPC]
-	public void MinusLiveRPCWithTurretPhoton(int idKiller, float minus, int _typeKills, int idTurret, string weaponName)
-	{
-		MinusLiveRPCPhoton(idKiller, minus, _typeKills, 0, idTurret, null);
-	}
-
-	private void MinusLiveRPCEffects(int _typeKills)
-	{
-		if (!Device.isPixelGunLow && !isDaterRegim && !isMine)
-		{
-			if (_typeKills == 2)
-			{
-				HitParticle currentParticle = HeadShotStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle != null)
-				{
-					currentParticle.StartShowParticle(myPlayerTransform.position, myPlayerTransform.rotation, false);
-				}
-			}
-			else
-			{
-				HitParticle currentParticle2 = HitStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle2 != null)
-				{
-					currentParticle2.StartShowParticle(myPlayerTransform.position, myPlayerTransform.rotation, false);
-				}
-			}
-		}
-		if (Defs.isSoundFX)
-		{
-			base.gameObject.GetComponent<AudioSource>().PlayOneShot((curArmor > 0f || isMechActive) ? damageArmorPlayerSound : ((_typeKills != 2) ? damagePlayerSound : headShotSound));
-		}
-		StartCoroutine(Flash(myPlayerTransform.gameObject));
-	}
-
-	[RPC]
-	[PunRPC]
-	public void MinusLiveRPCPhoton(int idKiller, float minus, int _typeKills, int _typeWeapon, int idTurret, string weaponName)
-	{
-		MinusLiveRPCEffects(_typeKills);
-		if (!isMine)
-		{
-			synhHealth -= minus;
-			if (synhHealth < 0f)
-			{
-				synhHealth = 0f;
-			}
-			if (armorSynch > minus)
-			{
-				armorSynch -= minus;
-			}
-			else
-			{
-				armorSynch = 0f;
-			}
-		}
-		if (!isMine || isKilled || isImmortality)
-		{
-			return;
-		}
-		float num = 0f;
-		if (isMechActive)
-		{
-			MinusMechHealth(minus);
-		}
-		else
-		{
-			num = minus - curArmor;
-			if (num < 0f)
-			{
-				curArmor -= minus;
-				num = 0f;
-			}
-			else
-			{
-				curArmor = 0f;
-			}
-		}
-		if (CurHealth > 0f)
-		{
-			CurHealth -= num;
-			if (CurHealth <= 0f)
-			{
-				try
-				{
-					if (!WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon)
-					{
-						WeaponManager.sharedManager.myPlayerMoveC.AddWeWereKilledStatisctics((WeaponManager.sharedManager.currentWeaponSounds.name ?? string.Empty).Replace("(Clone)", string.Empty));
-					}
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("Exception we were killed AddWeWereKilledStatisctics: " + ex);
-				}
-				if (myKillAssists.Contains(idKiller))
-				{
-					myKillAssists.Remove(idKiller);
-				}
-				if (placemarkerMoveC != null)
-				{
-					placemarkerMoveC.isPlacemarker = false;
-				}
-				this.photonView.RPC("KilledPhoton", PhotonTargets.All, idKiller, _typeKills, weaponName, _typeWeapon);
-			}
-			else if (!myKillAssists.Contains(idKiller))
-			{
-				myKillAssists.Add(idKiller);
-			}
-			SynhHealthRPC(CurHealth + curArmor, curArmor, false);
-		}
-		if (_typeKills != 8)
-		{
-			Vector3 zero = Vector3.zero;
-			for (int i = 0; i < Initializer.players.Count; i++)
-			{
-				PhotonView photonView = Initializer.players[i].mySkinName.photonView;
-				if (photonView != null && photonView.viewID == idKiller)
-				{
-					zero = Initializer.players[i].myPlayerTransform.position;
-					ShowDamageDirection(zero);
-					break;
-				}
-			}
-			return;
-		}
-		GameObject[] array = GameObject.FindGameObjectsWithTag("Turret");
-		Vector3 zero2 = Vector3.zero;
-		for (int j = 0; j < array.Length; j++)
-		{
-			PhotonView component = array[j].GetComponent<PhotonView>();
-			if (component != null && component.viewID == idTurret)
-			{
-				zero2 = array[j].transform.position;
-				ShowDamageDirection(zero2);
-				break;
-			}
-		}
-	}
-
-	public void SendSynhHealth(bool isUp, PhotonPlayer player = null)
-	{
-		if (Defs.isInet)
-		{
-			if (player == null)
-			{
-				photonView.RPC("SynhHealthRPC", PhotonTargets.All, CurHealth + curArmor, curArmor, isUp);
-			}
-			else
-			{
-				photonView.RPC("SynhHealthRPC", player, CurHealth + curArmor, curArmor, isUp);
-			}
-		}
-		else
-		{
-			GetComponent<NetworkView>().RPC("SynhHealthRPC", RPCMode.All, CurHealth + curArmor, curArmor, isUp);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void SynhHealth(float _synhHealth, bool isUp)
-	{
-		SynhHealthRPC(_synhHealth, (!(_synhHealth > 9f)) ? 0f : (_synhHealth - 9f), isUp);
-	}
-
-	[RPC]
-	[PunRPC]
-	private void SynhHealthRPC(float _synhHealth, float _synchArmor, bool isUp)
-	{
-		if (isMine)
-		{
-			synhHealth = _synhHealth;
-		}
-		else if (!isUp)
-		{
-			if (_synhHealth < synhHealth)
-			{
-				synhHealth = _synhHealth;
-			}
-			if (_synchArmor < armorSynch)
-			{
-				armorSynch = _synchArmor;
-			}
-		}
-		else
-		{
-			synhHealth = _synhHealth;
-			armorSynch = _synchArmor;
-			isRaiderMyPoint = false;
-		}
-		if (synhHealth > 0f)
-		{
-			isStartAngel = false;
-			myPersonNetwork.isStartAngel = false;
-		}
-	}
-
-	private void ShowDamageDirection(Vector3 posDamage)
-	{
-		if (!isDaterRegim)
-		{
-			bool flag = false;
-			bool flag2 = false;
-			bool flag3 = false;
-			bool flag4 = false;
-			Vector3 vector = posDamage - myPlayerTransform.position;
-			float num = Mathf.Atan(vector.z / vector.x);
-			num = num * 180f / (float)Math.PI;
-			if (vector.x > 0f)
-			{
-				num = 90f - num;
-			}
-			if (vector.x < 0f)
-			{
-				num = 270f - num;
-			}
-			float y = myPlayerTransform.rotation.eulerAngles.y;
-			float num2 = num - y;
-			if (num2 > 180f)
-			{
-				num2 -= 360f;
-			}
-			if (num2 < -180f)
-			{
-				num2 += 360f;
-			}
-			if (inGameGUI != null)
-			{
-				inGameGUI.AddDamageTaken(num);
-			}
-			if (num2 > -45f && num2 <= 45f)
-			{
-				flag3 = true;
-			}
-			if (num2 < -45f && num2 >= -135f)
-			{
-				flag = true;
-			}
-			if (num2 > 45f && num2 <= 135f)
-			{
-				flag2 = true;
-			}
-			if (num2 < -135f || num2 >= 135f)
-			{
-				flag4 = true;
-			}
-			if (flag3)
-			{
-				timerShowUp = maxTimeSetTimerShow;
-			}
-			if (flag4)
-			{
-				timerShowDown = maxTimeSetTimerShow;
-			}
-			if (flag)
-			{
-				timerShowLeft = maxTimeSetTimerShow;
-			}
-			if (flag2)
-			{
-				timerShowRight = maxTimeSetTimerShow;
-			}
-		}
-	}
-
-	private void UpdateKillerInfo(Player_move_c killerPlayerMoveC, int killType)
-	{
-		_killerInfo.isGrenade = killType == 6;
-		_killerInfo.isMech = killType == 10;
-		_killerInfo.isTurret = killType == 8;
-		SkinName skinName = killerPlayerMoveC.mySkinName;
-		_killerInfo.nickname = skinName.NickName;
-		if (killerPlayerMoveC.myTable != null)
-		{
-			NetworkStartTable component = killerPlayerMoveC.myTable.GetComponent<NetworkStartTable>();
-			int myRanks = component.myRanks;
-			if (myRanks > 0 && myRanks < expController.marks.Length)
-			{
-				_killerInfo.rankTex = ExperienceController.sharedController.marks[myRanks];
-				_killerInfo.rank = myRanks;
-			}
-			if (component.myClanTexture != null)
-			{
-				_killerInfo.clanLogoTex = component.myClanTexture;
-			}
-			_killerInfo.clanName = component.myClanName;
-		}
-		_killerInfo.weapon = killerPlayerMoveC.currentWeapon;
-		_killerInfo.skinTex = killerPlayerMoveC._skin;
-		_killerInfo.hat = skinName.currentHat;
-		_killerInfo.mask = skinName.currentMask;
-		_killerInfo.armor = skinName.currentArmor;
-		_killerInfo.cape = skinName.currentCape;
-		_killerInfo.capeTex = skinName.currentCapeTex;
-		_killerInfo.boots = skinName.currentBoots;
-		_killerInfo.mechUpgrade = killerPlayerMoveC.mechUpgrade;
-		_killerInfo.turretUpgrade = killerPlayerMoveC.turretUpgrade;
-		_killerInfo.killerTransform = killerPlayerMoveC.myPlayerTransform;
-		_killerInfo.healthValue = Mathf.CeilToInt(_killerInfo.isMech ? killerPlayerMoveC.liveMech : ((!(killerPlayerMoveC.synhHealth - killerPlayerMoveC.armorSynch > 0f)) ? 0f : (killerPlayerMoveC.synhHealth - killerPlayerMoveC.armorSynch)));
-		_killerInfo.armorValue = Mathf.CeilToInt(killerPlayerMoveC.armorSynch);
-	}
-
-	[RPC]
-	[PunRPC]
-	public void Killed(NetworkViewID idKiller, int _typeKill, int _typeWeapon, string weaponName)
-	{
-		if (_weaponManager == null || _weaponManager.myPlayer == null)
-		{
-			return;
-		}
-		string nick = string.Empty;
-		string empty = string.Empty;
-		empty = mySkinName.NickName;
-		foreach (Player_move_c player in Initializer.players)
-		{
-			if (!player.mySkinName.GetComponent<NetworkView>().viewID.Equals(idKiller))
-			{
-				continue;
-			}
-			SkinName skinName = player.mySkinName;
-			nick = skinName.NickName;
-			if (isMine && Defs.isJetpackEnabled && !mySkinName.character.isGrounded)
-			{
-				player.AddScoreDuckHunt();
-			}
-			if ((bool)_weaponManager && player == _weaponManager.myPlayerMoveC)
-			{
-				ProfileController.OnGameTotalKills();
-				PlayerScoreController playerScoreController = player.myScoreController;
-				int @event;
-				switch (_typeKill)
-				{
-				case 6:
-					@event = 60;
-					break;
-				case 9:
-					@event = 8;
-					break;
-				case 2:
-					@event = 10;
-					break;
-				case 3:
-					@event = 61;
-					break;
-				default:
-					@event = 9;
-					break;
-				}
-				playerScoreController.AddScoreOnEvent((PlayerEventScoreController.ScoreEvent)@event);
-				if (Defs.isJetpackEnabled && !_weaponManager.myPlayerMoveC.mySkinName.character.isGrounded && _typeKill != 6 && _typeKill != 8)
-				{
-					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deathFromAbove);
-				}
-				if (player.isRocketJump && _typeKill != 6 && _typeKill != 8)
-				{
-					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.rocketJumpKill);
-				}
-				if (multiKill > 1)
-				{
-					if (!NetworkStartTable.LocalOrPasswordRoom())
-					{
-						QuestMediator.NotifyBreakSeries();
-					}
-					if (multiKill == 2)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill2);
-					}
-					else if (multiKill == 3)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill3);
-					}
-					else if (multiKill == 4)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill4);
-					}
-					else if (multiKill == 5)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill5);
-					}
-					else if (multiKill < 10)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill6);
-					}
-					else if (multiKill < 20)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill10);
-					}
-					else if (multiKill < 50)
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill20);
-					}
-					else
-					{
-						player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill50);
-					}
-				}
-				if (isInvisible)
-				{
-					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.invisibleKill);
-				}
-				if (isPlacemarker)
-				{
-					player.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.revenge);
-				}
-				if (_typeKill != 6 && _typeKill != 8 && _typeKill != 10)
-				{
-					GameObject gameObject = Resources.Load("Weapons/" + weaponName) as GameObject;
-					if (gameObject != null && gameObject.GetComponent<WeaponSounds>() != null)
-					{
-						AddCountSerials(gameObject.GetComponent<WeaponSounds>().categoryNabor - 1, player);
-					}
-				}
-				player.ImKill(idKiller, _typeKill);
-				if (Equals(_weaponManager.myPlayerMoveC.placemarkerMoveC))
-				{
-					_weaponManager.myPlayerMoveC.placemarkerMoveC = null;
-					isPlacemarker = false;
-				}
-				if (getLocalHurt)
-				{
-					getLocalHurt = false;
-				}
-			}
-			if (isMine)
-			{
-				player.isPlacemarker = true;
-				placemarkerMoveC = player;
-			}
-			UpdateKillerInfo(player, _typeKill);
-			break;
-		}
-		ImKilled(myPlayerTransform.position, myPlayerTransform.rotation, _typeWeapon);
-		if ((bool)_weaponManager && _weaponManager.myPlayer != null)
-		{
-			_weaponManager.myPlayerMoveC.AddSystemMessage(nick, _typeKill, empty, Color.white, weaponName);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void KilledPhoton(int idKiller, int _typekill)
-	{
-		KilledPhoton(idKiller, _typekill, string.Empty);
-	}
-
-	[RPC]
-	[PunRPC]
-	public void KilledPhoton(int idKiller, int _typekill, string weaponName)
-	{
-		KilledPhoton(idKiller, _typekill, weaponName, 0);
-	}
-
-	[PunRPC]
-	[RPC]
-	public void imDeath(string _name)
-	{
-		if (!(_weaponManager == null) && !(_weaponManager.myPlayer == null))
-		{
-			_weaponManager.myPlayerMoveC.AddSystemMessage(_name, 1, Color.white);
-		}
-	}
-
-	public void sendImDeath(string _name)
-	{
-		if (!isInet)
-		{
-			GetComponent<NetworkView>().RPC("imDeath", RPCMode.All, _name);
-		}
-		else
-		{
-			photonView.RPC("imDeath", PhotonTargets.All, _name);
-		}
-		_killerInfo.isSuicide = true;
-	}
-
-	[PunRPC]
-	[RPC]
-	public void KilledPhoton(int idKiller, int _typekill, string weaponName, int _typeWeapon)
-	{
-		if (_weaponManager == null || _weaponManager.myPlayer == null)
-		{
-			return;
-		}
-		string nick = string.Empty;
-		string nickName = mySkinName.NickName;
-		for (int i = 0; i < Initializer.players.Count; i++)
-		{
-			if (!(Initializer.players[i].mySkinName.photonView != null) || Initializer.players[i].mySkinName.photonView.viewID != idKiller)
-			{
-				continue;
-			}
-			SkinName skinName = Initializer.players[i].mySkinName;
-			Player_move_c player_move_c = Initializer.players[i];
-			nick = skinName.NickName;
-			if (isMine && Defs.isJetpackEnabled && !mySkinName.character.isGrounded)
-			{
-				player_move_c.AddScoreDuckHunt();
-			}
-			if (_weaponManager != null && Initializer.players[i] == _weaponManager.myPlayerMoveC)
-			{
-				ProfileController.OnGameTotalKills();
-				if (FriendsController.useBuffSystem)
-				{
-					BuffSystem.instance.KillInteraction();
-				}
-				else
-				{
-					KillRateCheck.instance.IncrementKills();
-				}
-				WeaponManager.sharedManager.myNetworkStartTable.IncrementKills();
-				if (isRaiderMyPoint)
-				{
-					WeaponManager.sharedManager.myPlayerMoveC.SendHouseKeeperEvent();
-					isRaiderMyPoint = false;
-				}
-				if (Defs.isJetpackEnabled && !_weaponManager.myPlayerMoveC.mySkinName.character.isGrounded && _typekill != 6 && _typekill != 8)
-				{
-					player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.deathFromAbove);
-				}
-				if (player_move_c.isRocketJump && _typekill != 6 && _typekill != 8)
-				{
-					player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.rocketJumpKill);
-				}
-				if (_typekill != 6 && _typekill != 8 && _typekill != 10)
-				{
-					GameObject gameObject = Resources.Load("Weapons/" + weaponName) as GameObject;
-					if (gameObject != null && gameObject.GetComponent<WeaponSounds>() != null)
-					{
-						AddCountSerials(gameObject.GetComponent<WeaponSounds>().categoryNabor - 1, player_move_c);
-					}
-				}
-				if (multiKill > 1)
-				{
-					if (!NetworkStartTable.LocalOrPasswordRoom())
-					{
-						QuestMediator.NotifyBreakSeries();
-					}
-					if (multiKill == 2)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill2);
-					}
-					else if (multiKill == 3)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill3);
-					}
-					else if (multiKill == 4)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill4);
-					}
-					else if (multiKill == 5)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill5);
-					}
-					else if (multiKill < 10)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill6);
-					}
-					else if (multiKill < 20)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill10);
-					}
-					else if (multiKill < 50)
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill20);
-					}
-					else
-					{
-						player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killMultyKill50);
-					}
-				}
-				if (!Defs.isFlag)
-				{
-					player_move_c.ImKill(idKiller, _typekill);
-				}
-				ShopNGUIController.CategoryNames weaponSlot = (ShopNGUIController.CategoryNames)(-1);
-				ItemRecord byPrefabName = ItemDb.GetByPrefabName(weaponName);
-				if (byPrefabName != null)
-				{
-					int num = PromoActionsGUIController.CatForTg(byPrefabName.Tag);
-					weaponSlot = (ShopNGUIController.CategoryNames)num;
-				}
-				if (!NetworkStartTable.LocalOrPasswordRoom())
-				{
-					QuestMediator.NotifyKillOtherPlayer(ConnectSceneNGUIController.regim, weaponSlot, _typekill == 2, _typekill == 6, isPlacemarker);
-				}
-				PlayerScoreController playerScoreController = player_move_c.myScoreController;
-				int @event;
-				switch (_typekill)
-				{
-				case 6:
-					@event = 60;
-					break;
-				case 9:
-					@event = 8;
-					break;
-				case 2:
-					@event = 10;
-					break;
-				case 3:
-					@event = 61;
-					break;
-				default:
-					@event = 9;
-					break;
-				}
-				playerScoreController.AddScoreOnEvent((PlayerEventScoreController.ScoreEvent)@event);
-				if (isInvisible)
-				{
-					player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.invisibleKill);
-				}
-				if (isPlacemarker)
-				{
-					player_move_c.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.revenge);
-				}
-				if (Equals(_weaponManager.myPlayerMoveC.placemarkerMoveC))
-				{
-					_weaponManager.myPlayerMoveC.placemarkerMoveC = null;
-					isPlacemarker = false;
-				}
-				if (getLocalHurt)
-				{
-					getLocalHurt = false;
-				}
-			}
-			if (isMine)
-			{
-				player_move_c.isPlacemarker = true;
-				placemarkerMoveC = player_move_c;
-			}
-			UpdateKillerInfo(Initializer.players[i], _typekill);
-			break;
-		}
-		ImKilled(myPlayerTransform.position, myPlayerTransform.rotation, _typeWeapon);
-		if ((bool)_weaponManager && _weaponManager.myPlayerMoveC != null)
-		{
-			_weaponManager.myPlayerMoveC.AddSystemMessage(nick, _typekill, nickName, Color.white, weaponName);
-		}
-	}
-
-	private void AddCountSerials(int categoryNabor, Player_move_c killerPlayerMoveC)
-	{
-		killerPlayerMoveC.counterSerials[categoryNabor]++;
-		switch (killerPlayerMoveC.counterSerials[categoryNabor])
-		{
-		case 1:
-			if (categoryNabor == 2)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee);
-			}
-			break;
-		case 2:
-			if (categoryNabor == 2)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee2);
-			}
-			break;
-		case 3:
-			if (categoryNabor == 0)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary1);
-			}
-			if (categoryNabor == 1)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup1);
-			}
-			if (categoryNabor == 2)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee3);
-			}
-			if (categoryNabor == 3)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special1);
-			}
-			if (categoryNabor == 4)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper1);
-			}
-			if (categoryNabor == 5)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium1);
-			}
-			break;
-		case 5:
-			if (categoryNabor == 0)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary2);
-			}
-			if (categoryNabor == 1)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup2);
-			}
-			if (categoryNabor == 2)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee5);
-			}
-			if (categoryNabor == 3)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special2);
-			}
-			if (categoryNabor == 4)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper2);
-			}
-			if (categoryNabor == 5)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium2);
-			}
-			break;
-		case 7:
-			if (categoryNabor == 0)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.primary3);
-			}
-			if (categoryNabor == 1)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.backup3);
-			}
-			if (categoryNabor == 2)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.melee7);
-			}
-			if (categoryNabor == 3)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.special3);
-			}
-			if (categoryNabor == 4)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.sniper3);
-			}
-			if (categoryNabor == 5)
-			{
-				killerPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.premium3);
-			}
-			break;
-		case 4:
-		case 6:
-			break;
-		}
-	}
-
-	public void hit(float dam, Vector3 posEnemy, bool damageColliderHit = false)
-	{
-		if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None)
-		{
-			dam *= _protectionShieldValue;
-			if (isMechActive)
-			{
-				MinusMechHealth(dam);
-			}
-			else if (curArmor >= dam)
-			{
-				curArmor -= dam;
-			}
-			else
-			{
-				CurHealth -= dam - curArmor;
-				curArmor = 0f;
-				CurrentCampaignGame.withoutHits = false;
-			}
-		}
-		if (!damageColliderHit)
-		{
-			ShowDamageDirection(posEnemy);
-		}
-		if (!damageShown)
-		{
-			StartCoroutine(FlashWhenHit());
-		}
-	}
-
-	public void SendImKilled()
-	{
-		if (Defs.isInet)
-		{
-			photonView.RPC("ImKilled", PhotonTargets.All, myPlayerTransform.position, myPlayerTransform.rotation, 0);
-			SendSynhHealth(false);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void ImKilled(Vector3 pos, Quaternion rot)
-	{
-		ImKilled(pos, rot, 0);
-	}
-
-	[PunRPC]
-	[RPC]
-	private void ImKilled(Vector3 pos, Quaternion rot, int _typeDead = 0)
-	{
-		if (Device.isPixelGunLow)
-		{
-			_typeDead = 0;
-		}
-		if (!isStartAngel || Defs.isCOOP)
-		{
-			isStartAngel = true;
-			if (Defs.inComingMessagesCounter < 15)
-			{
-				PlayerDeadController currentParticle = PlayerDeadStackController.sharedController.GetCurrentParticle(false);
-				if (currentParticle != null)
-				{
-					currentParticle.StartShow(pos, rot, _typeDead, false, _skin);
-				}
-				if (Defs.isSoundFX)
-				{
-					base.gameObject.GetComponent<AudioSource>().PlayOneShot(deadPlayerSound);
-				}
-			}
-		}
-		if (!isMine && getLocalHurt)
-		{
-			WeaponManager.sharedManager.myPlayerMoveC.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.killAssist);
-			getLocalHurt = false;
-		}
-	}
-
-	private IEnumerator FlashWhenHit()
-	{
-		damageShown = true;
-		Color rgba = damage.GetComponent<GUITexture>().color;
-		rgba.a = 0f;
-		damage.GetComponent<GUITexture>().color = rgba;
-		float danageTime = 0.15f;
-		yield return StartCoroutine(Fade(0f, 1f, danageTime, damage));
-		yield return new WaitForSeconds(0.01f);
-		yield return StartCoroutine(Fade(1f, 0f, danageTime, damage));
-		damageShown = false;
-	}
-
-	private IEnumerator FlashWhenDead()
-	{
-		damageShown = true;
-		Color rgba = damage.GetComponent<GUITexture>().color;
-		rgba.a = 0f;
-		damage.GetComponent<GUITexture>().color = rgba;
-		float danageTime = 0.15f;
-		yield return StartCoroutine(Fade(0f, 1f, danageTime, damage));
-		while (isDeadFrame)
-		{
-			yield return null;
-		}
-		yield return StartCoroutine(Fade(1f, 0f, danageTime / 3f, damage));
-		damageShown = false;
-	}
-
-	private IEnumerator KillCam()
-	{
-		ProfileController.OnGameDeath();
-		if (FriendsController.useBuffSystem)
-		{
-			BuffSystem.instance.DeathInteraction();
-		}
-		else
-		{
-			KillRateCheck.instance.IncrementDeath();
-		}
-		myNetworkStartTable.IncrementDeath();
-		killedInMatch = true;
-		CameraSceneController.sharedController.killCamController.lastDistance = 1f;
-		CameraSceneController.sharedController.SetTargetKillCam(_killerInfo.killerTransform);
-		InGameGUI.sharedInGameGUI.respawnWindow.Show(_killerInfo);
-		InGameGUI.sharedInGameGUI.respawnWindow.characterDrag.SetActive(false);
-		InGameGUI.sharedInGameGUI.respawnWindow.cameraDrag.SetActive(true);
-		float _timerKillCam = 0f;
-		Defs.inRespawnWindow = true;
-		SkinName skinNameComponent = _killerInfo.killerTransform.GetComponent<SkinName>();
-		while (Defs.inRespawnWindow && _killerInfo.killerTransform != null && _killerInfo.killerTransform.position.y > -5000f && !skinNameComponent.playerMoveC.isKilled)
-		{
-			yield return null;
-			_timerKillCam += Time.deltaTime;
-		}
-		InGameGUI.sharedInGameGUI.respawnWindow.characterDrag.SetActive(true);
-		InGameGUI.sharedInGameGUI.respawnWindow.cameraDrag.SetActive(false);
-		if (Defs.inRespawnWindow)
-		{
-			RespawnWindow.Instance.ShowCharacter(killerInfo);
-		}
-		CameraSceneController.sharedController.SetTargetKillCam();
-	}
-
-	private void SetMapCameraActive(bool active)
-	{
-		InGameGUI.sharedInGameGUI.SetInterfaceVisible(!active);
-		Camera component = Initializer.Instance.tc.GetComponent<Camera>();
-		Camera camera = myCamera;
-		component.gameObject.SetActive(active);
-		camera.gameObject.SetActive(!active);
-		Camera camera2 = (NickLabelController.currentCamera = ((!active) ? camera : component));
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void SetNoKilled()
-	{
-		isKilled = false;
-		resetMultyKill();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void ChangePositionAfterRespawn()
-	{
-		myPlayerTransform.position += Vector3.forward * 0.01f;
+		this._countShootInBurst = 0;
+		this._timerDelayInShootingBurst = -1f;
 	}
 
 	public void RespawnPlayer()
 	{
+		string str;
 		Defs.inRespawnWindow = false;
-		respawnedForGUI = true;
-		SetMapCameraActive(false);
-		_killerInfo.Reset();
-		Func<bool> func = _003CRespawnPlayer_003Em__203;
+		this.respawnedForGUI = true;
+		this.SetMapCameraActive(false);
+		this._killerInfo.Reset();
+		Func<bool> func = () => (this._pauser == null ? false : this._pauser.paused);
 		if (base.transform.parent == null)
 		{
-			Debug.Log("transform.parent == null");
+			UnityEngine.Debug.Log("transform.parent == null");
 			return;
 		}
-		myPlayerTransform.localScale = new Vector3(1f, 1f, 1f);
-		myTransform.rotation = Quaternion.Euler(new Vector3(0f, 90f, 0f));
-		if (isHunger || Defs.isRegimVidosDebug)
+		this.myPlayerTransform.localScale = new Vector3(1f, 1f, 1f);
+		this.myTransform.rotation = Quaternion.Euler(new Vector3(0f, 90f, 0f));
+		if (this.isHunger || Defs.isRegimVidosDebug)
 		{
-			myTable.GetComponent<NetworkStartTable>().ImDeadInHungerGames();
-			PhotonNetwork.Destroy(myPlayerTransform.gameObject);
+			this.myTable.GetComponent<NetworkStartTable>().ImDeadInHungerGames();
+			PhotonNetwork.Destroy(this.myPlayerTransform.gameObject);
 			return;
 		}
-		InitiailizeIcnreaseArmorEffectFlags();
-		isDeadFrame = false;
-		isImmortality = true;
-		timerImmortality = maxTimerImmortality;
-		SetNoKilled();
-		if (_weaponManager.myPlayer == null)
+		this.InitiailizeIcnreaseArmorEffectFlags();
+		this.isDeadFrame = false;
+		this.isImmortality = true;
+		this.timerImmortality = this.maxTimerImmortality;
+		this.SetNoKilled();
+		if (this._weaponManager.myPlayer == null)
 		{
-			Debug.Log("_weaponManager.myPlayer == null");
+			UnityEngine.Debug.Log("_weaponManager.myPlayer == null");
 			return;
 		}
-		_weaponManager.myPlayerMoveC.mySkinName.camPlayer.transform.parent = _weaponManager.myPlayer.transform;
+		this._weaponManager.myPlayerMoveC.mySkinName.camPlayer.transform.parent = this._weaponManager.myPlayer.transform;
 		if (!func())
 		{
 			if (JoystickController.leftJoystick != null)
@@ -6676,2087 +5648,248 @@ public sealed class Player_move_c : MonoBehaviour
 		{
 			JoystickController.leftTouchPad.SetJoystickActive(true);
 		}
-		if (JoystickController.rightJoystick != null)
+		if (JoystickController.rightJoystick == null)
 		{
-			if (inGameGUI != null)
-			{
-				inGameGUI.BlinkNoAmmo(0);
-			}
-			JoystickController.rightJoystick.HasAmmo();
+			UnityEngine.Debug.Log("JoystickController.rightJoystick = null");
 		}
 		else
 		{
-			Debug.Log("JoystickController.rightJoystick = null");
+			if (this.inGameGUI != null)
+			{
+				this.inGameGUI.BlinkNoAmmo(0);
+			}
+			JoystickController.rightJoystick.HasAmmo();
 		}
-		CurHealth = MaxHealth;
-		Wear.RenewCurArmor(TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-		CurrentBaseArmor = EffectsController.ArmorBonus;
-		zoneCreatePlayer = GameObject.FindGameObjectsWithTag(isCOOP ? "MultyPlayerCreateZoneCOOP" : (isCompany ? ("MultyPlayerCreateZoneCommand" + myCommand) : (Defs.isFlag ? ("MultyPlayerCreateZoneFlagCommand" + myCommand) : ((!Defs.isCapturePoints) ? "MultyPlayerCreateZone" : ("MultyPlayerCreateZonePointZone" + myCommand)))));
-		GameObject gameObject = zoneCreatePlayer[UnityEngine.Random.Range(0, zoneCreatePlayer.Length - 1)];
+		this.CurHealth = this.MaxHealth;
+		Wear.RenewCurArmor(this.TierOrRoomTier((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier)));
+		this.CurrentBaseArmor = EffectsController.ArmorBonus;
+		if (this.isCOOP)
+		{
+			str = "MultyPlayerCreateZoneCOOP";
+		}
+		else if (this.isCompany)
+		{
+			str = string.Concat("MultyPlayerCreateZoneCommand", this.myCommand);
+		}
+		else if (!Defs.isFlag)
+		{
+			str = (!Defs.isCapturePoints ? "MultyPlayerCreateZone" : string.Concat("MultyPlayerCreateZonePointZone", this.myCommand));
+		}
+		else
+		{
+			str = string.Concat("MultyPlayerCreateZoneFlagCommand", this.myCommand);
+		}
+		this.zoneCreatePlayer = GameObject.FindGameObjectsWithTag(str);
+		GameObject gameObject = this.zoneCreatePlayer[UnityEngine.Random.Range(0, (int)this.zoneCreatePlayer.Length - 1)];
 		BoxCollider component = gameObject.GetComponent<BoxCollider>();
-		Vector2 vector = new Vector2(component.size.x * gameObject.transform.localScale.x, component.size.z * gameObject.transform.localScale.z);
-		Rect rect = new Rect(gameObject.transform.position.x - vector.x / 2f, gameObject.transform.position.z - vector.y / 2f, vector.x, vector.y);
-		Vector3 position = new Vector3(rect.x + UnityEngine.Random.Range(0f, rect.width), gameObject.transform.position.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
-		Quaternion rotation = gameObject.transform.rotation;
-		myPlayerTransform.position = position;
-		myPlayerTransform.rotation = rotation;
+		float single = component.size.x * gameObject.transform.localScale.x;
+		float single1 = component.size.z;
+		Vector3 vector3 = gameObject.transform.localScale;
+		Vector2 vector2 = new Vector2(single, single1 * vector3.z);
+		Vector3 vector31 = gameObject.transform.position;
+		float single2 = vector31.x - vector2.x / 2f;
+		Vector3 vector32 = gameObject.transform.position;
+		Rect rect = new Rect(single2, vector32.z - vector2.y / 2f, vector2.x, vector2.y);
+		float single3 = rect.x + UnityEngine.Random.Range(0f, rect.width);
+		Vector3 vector33 = gameObject.transform.position;
+		Vector3 vector34 = new Vector3(single3, vector33.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
+		Quaternion quaternion = gameObject.transform.rotation;
+		this.myPlayerTransform.position = vector34;
+		this.myPlayerTransform.rotation = quaternion;
 		if (Storager.getInt("GrenadeID", false) <= 0)
 		{
 			Storager.setInt("GrenadeID", 1, false);
 		}
-		if (myCurrentWeaponSounds != null && myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
+		if (this.myCurrentWeaponSounds != null && this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
 		{
-			myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
+			this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
 		}
-		Vector3 eulerAngles = myCamera.transform.rotation.eulerAngles;
-		myCamera.transform.rotation = Quaternion.Euler(0f, eulerAngles.y, eulerAngles.z);
-		Invoke("ChangePositionAfterRespawn", 0.01f);
-		foreach (Weapon allAvailablePlayerWeapon in _weaponManager.allAvailablePlayerWeapons)
+		Vector3 vector35 = this.myCamera.transform.rotation.eulerAngles;
+		this.myCamera.transform.rotation = Quaternion.Euler(0f, vector35.y, vector35.z);
+		base.Invoke("ChangePositionAfterRespawn", 0.01f);
+		IEnumerator enumerator = this._weaponManager.allAvailablePlayerWeapons.GetEnumerator();
+		try
 		{
-			allAvailablePlayerWeapon.currentAmmoInClip = allAvailablePlayerWeapon.weaponPrefab.GetComponent<WeaponSounds>().ammoInClip;
-			allAvailablePlayerWeapon.currentAmmoInBackpack = allAvailablePlayerWeapon.weaponPrefab.GetComponent<WeaponSounds>().InitialAmmoWithEffectsApplied;
+			while (enumerator.MoveNext())
+			{
+				Weapon current = (Weapon)enumerator.Current;
+				current.currentAmmoInClip = current.weaponPrefab.GetComponent<WeaponSounds>().ammoInClip;
+				current.currentAmmoInBackpack = current.weaponPrefab.GetComponent<WeaponSounds>().InitialAmmoWithEffectsApplied;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
 		}
 		if (WeaponManager.sharedManager != null)
 		{
 			for (int i = 0; i < WeaponManager.sharedManager.playerWeapons.Count; i++)
 			{
-				WeaponSounds component2 = (WeaponManager.sharedManager.playerWeapons[i] as Weapon).weaponPrefab.GetComponent<WeaponSounds>();
-				if (component2 != null && (!component2.isMelee || component2.isShotMelee))
+				WeaponSounds weaponSound = (WeaponManager.sharedManager.playerWeapons[i] as Weapon).weaponPrefab.GetComponent<WeaponSounds>();
+				if (weaponSound != null && (!weaponSound.isMelee || weaponSound.isShotMelee))
 				{
 					WeaponManager.sharedManager.ReloadWeaponFromSet(i);
 				}
 			}
 		}
 		EffectsController.SlowdownCoeff = 1f;
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showGrenadeHint && ++respawnCountForTraining == 2)
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showGrenadeHint)
 		{
-			HintController.instance.ShowHintByName("use_grenade", 5f);
-			respawnCountForTraining = 0;
+			Player_move_c playerMoveC = this;
+			int num = playerMoveC.respawnCountForTraining + 1;
+			int num1 = num;
+			playerMoveC.respawnCountForTraining = num;
+			if (num1 == 2)
+			{
+				HintController.instance.ShowHintByName("use_grenade", 5f);
+				this.respawnCountForTraining = 0;
+			}
 		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showChangeWeaponHint)
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showChangeWeaponHint)
 		{
 			HintController.instance.ShowHintByName("change_weapon", 5f);
 		}
 	}
 
-	public void HideChangeWeaponTrainingHint()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showChangeWeaponHint)
-		{
-			showChangeWeaponHint = false;
-			HintController.instance.HideHintByName("change_weapon");
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void CountKillsCommandSynch(int _blue, int _red)
-	{
-		GlobalGameController.countKillsBlue = _blue;
-		GlobalGameController.countKillsRed = _red;
-	}
-
-	[PunRPC]
-	[RPC]
-	private void plusCountKillsCommand(int _command)
-	{
-		Debug.Log("plusCountKillsCommand: " + _command);
-		if (_command == 1)
-		{
-			if ((bool)_weaponManager && (bool)_weaponManager.myPlayer)
-			{
-				_weaponManager.myPlayerMoveC.countKillsCommandBlue++;
-			}
-			else
-			{
-				GlobalGameController.countKillsBlue++;
-			}
-		}
-		if (_command == 2)
-		{
-			if ((bool)_weaponManager && (bool)_weaponManager.myPlayer)
-			{
-				_weaponManager.myPlayerMoveC.countKillsCommandRed++;
-			}
-			else
-			{
-				GlobalGameController.countKillsRed++;
-			}
-		}
-	}
-
-	public void addMultyKill()
-	{
-		multiKill++;
-		if (multiKill <= 1)
-		{
-			return;
-		}
-		PlayerEventScoreController.ScoreEvent scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill6;
-		if (multiKill > 1 && !NetworkStartTable.LocalOrPasswordRoom())
-		{
-			QuestMediator.NotifyMakeSeries();
-		}
-		switch (multiKill)
-		{
-		case 2:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill2;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 3:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill3;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 4:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill4;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 5:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill5;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 6:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill6;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 10:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill10;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 20:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill20;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		case 50:
-			scoreEvent = PlayerEventScoreController.ScoreEvent.multyKill50;
-			myScoreController.AddScoreOnEvent(scoreEvent);
-			break;
-		}
-		if (Defs.isMulti)
-		{
-			if (Defs.isInet)
-			{
-				photonView.RPC("ShowMultyKillRPC", PhotonTargets.Others, multiKill);
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("ShowMultyKillRPC", RPCMode.Others, multiKill);
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	public void ShowMultyKillRPC(int countMulty)
-	{
-		multiKill = countMulty;
-	}
-
-	public void resetMultyKill()
-	{
-		multiKill = 0;
-		for (int i = 0; i < counterSerials.Length; i++)
-		{
-			counterSerials[i] = 0;
-		}
-	}
-
-	public void ImKill(NetworkViewID idKiller, int _typeKill)
-	{
-		countKills++;
-		GlobalGameController.CountKills = countKills;
-		CheckRookieKillerAchievement();
-		addMultyKill();
-		if (isCompany)
-		{
-			if (myCommand == 1)
-			{
-				countKillsCommandBlue++;
-				if (isInet)
-				{
-					photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, 1);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, 1);
-				}
-			}
-			if (myCommand == 2)
-			{
-				countKillsCommandRed++;
-				if (isInet)
-				{
-					photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, 2);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, 2);
-				}
-			}
-		}
-		_weaponManager.myNetworkStartTable.CountKills = countKills;
-		_weaponManager.myNetworkStartTable.SynhCountKills();
-	}
-
-	public void ImKill(int idKiller, int _typeKill)
-	{
-		if (WeaponManager.sharedManager == null)
-		{
-			Debug.LogWarning("WeaponManager.sharedManager == null");
-		}
-		else
-		{
-			WeaponSounds currentWeaponSounds = WeaponManager.sharedManager.currentWeaponSounds;
-			if (currentWeaponSounds == null)
-			{
-				Debug.LogWarning("ws == null");
-			}
-			else
-			{
-				Initializer initializer = UnityEngine.Object.FindObjectOfType<Initializer>();
-				if (initializer == null)
-				{
-					Debug.LogWarning("initializer == null");
-				}
-				else
-				{
-					string weapon = ((_typeKill != 6) ? currentWeaponSounds.shopName : "GRENADE");
-					initializer.IncrementKillCountForWeapon(weapon);
-				}
-			}
-		}
-		countKills++;
-		GlobalGameController.CountKills = countKills;
-		CheckRookieKillerAchievement();
-		addMultyKill();
-		if (isCompany)
-		{
-			if (myCommand == 1)
-			{
-				countKillsCommandBlue++;
-				if (isInet)
-				{
-					photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, 1);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, 1);
-				}
-			}
-			if (myCommand == 2)
-			{
-				countKillsCommandRed++;
-				if (isInet)
-				{
-					photonView.RPC("plusCountKillsCommand", PhotonTargets.Others, 2);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("plusCountKillsCommand", RPCMode.Others, 2);
-				}
-			}
-		}
-		_weaponManager.myNetworkStartTable.CountKills = countKills;
-		_weaponManager.myNetworkStartTable.SynhCountKills();
-		if (isHunger && Initializer.players.Count == 1)
-		{
-			if (Defs.isHunger)
-			{
-				int val = Storager.getInt(Defs.RatingHunger, false) + 1;
-				Storager.setInt(Defs.RatingHunger, val, false);
-			}
-			photonView.RPC("pobedaPhoton", PhotonTargets.All, idKiller, myCommand);
-			int val2 = Storager.getInt("Rating", false) + 1;
-			Storager.setInt("Rating", val2, false);
-			if (FriendsController.sharedController != null)
-			{
-				FriendsController.sharedController.TryIncrementWinCountTimestamp();
-			}
-			_weaponManager.myNetworkStartTable.isIwin = true;
-		}
-	}
-
-	private void CheckRookieKillerAchievement()
-	{
-		int num = oldKilledPlayerCharactersCount + 1;
-		if (num <= 15)
-		{
-			Storager.setInt("KilledPlayerCharactersCount", num, false);
-		}
-		oldKilledPlayerCharactersCount = num;
-		if (!Social.localUser.authenticated || Storager.hasKey("RookieKillerAchievmentCompleted") || num < 15)
-		{
-			return;
-		}
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-		{
-			GpgFacade instance = GpgFacade.Instance;
-			if (_003C_003Ef__am_0024cache149 == null)
-			{
-				_003C_003Ef__am_0024cache149 = _003CCheckRookieKillerAchievement_003Em__204;
-			}
-			instance.IncrementAchievement("CgkIr8rGkPIJEAIQBw", 1, _003C_003Ef__am_0024cache149);
-		}
-		Storager.setInt("RookieKillerAchievmentCompleted", 1, false);
-	}
-
-	public void AddScoreDuckHunt()
-	{
-		if (Defs.isInet)
-		{
-			photonView.RPC("AddScoreDuckHuntRPC", PhotonTargets.All);
-		}
-		else
-		{
-			GetComponent<NetworkView>().RPC("AddScoreDuckHuntRPC", RPCMode.All);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void AddScoreDuckHuntRPC()
-	{
-		if (isMine)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.duckHunt);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void pobeda(NetworkViewID idKiller)
-	{
-		foreach (Player_move_c player in Initializer.players)
-		{
-			if (idKiller.Equals(player.mySkinName.GetComponent<NetworkView>().viewID))
-			{
-				nickPobeditel = player.mySkinName.NickName;
-			}
-		}
-		if ((bool)_weaponManager && (bool)_weaponManager.myTable)
-		{
-			_weaponManager.myNetworkStartTable.win(nickPobeditel);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void pobedaPhoton(int idKiller, int _command)
-	{
-		foreach (Player_move_c player in Initializer.players)
-		{
-			if (idKiller == player.mySkinName.photonView.viewID)
-			{
-				nickPobeditel = player.mySkinName.NickName;
-			}
-		}
-		if (_weaponManager != null && _weaponManager.myTable != null)
-		{
-			_weaponManager.myNetworkStartTable.win(nickPobeditel, _command);
-		}
-		else
-		{
-			Debug.Log("_weaponManager.myTable==null");
-		}
-	}
-
-	public void SendMySpotEvent()
-	{
-		countMySpotEvent++;
-		if (countMySpotEvent == 1)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.mySpotPoint);
-		}
-		if (countMySpotEvent == 2)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.unstoppablePoint);
-		}
-		if (countMySpotEvent >= 3)
-		{
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.monopolyPoint);
-		}
-	}
-
-	private void ResetMySpotEvent()
-	{
-		countMySpotEvent = 0;
-	}
-
-	private void ProvideHealth(string inShopId)
-	{
-		CurHealth = MaxHealth;
-		CurrentCampaignGame.withoutHits = true;
-	}
-
-	public Vector3 GetPointAutoAim(Vector3 _posTo)
-	{
-		if (timerUpdatePointAutoAi < 0f)
-		{
-			rayAutoAim = myCamera.ScreenPointToRay(new Vector3((float)Screen.width * 0.5f, (float)Screen.height * 0.5f, 0f));
-			RaycastHit hitInfo;
-			if (Physics.Raycast(rayAutoAim, out hitInfo, 300f, Tools.AllWithoutDamageCollidersMaskAndWithoutRocket))
-			{
-				if (hitInfo.collider.gameObject.name.Equals("Rocket(Clone)"))
-				{
-					Debug.Log("Rocket(Clone)");
-				}
-				pointAutoAim = hitInfo.point;
-			}
-			else
-			{
-				pointAutoAim = Vector3.down * 10000f;
-			}
-			timerUpdatePointAutoAi = 0.2f;
-		}
-		if (pointAutoAim.y < -1000f)
-		{
-			return rayAutoAim.GetPoint(Vector3.Magnitude(myCamera.transform.position - _posTo));
-		}
-		return pointAutoAim;
-	}
-
-	private void ShootUpdate()
-	{
-		bool flag = isShooting;
-		isShooting = JoystickController.rightJoystick.isShooting || JoystickController.rightJoystick.isShootingPressure || JoystickController.leftTouchPad.isShooting;
-		bool flag2 = !isShooting && flag;
-		bool flag3 = TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled;
-		if (isShooting)
-		{
-			if (flag3 && (!isHunger || hungerGameController.isGo) && !myCurrentWeaponSounds.isGrenadeWeapon)
-			{
-				ShotPressed();
-			}
-			return;
-		}
-		if (flag2)
-		{
-			ShotUnPressed();
-		}
-		ResetShootingBurst();
-	}
-
-	public void ShotUnPressed(bool weaponChanged = false)
-	{
-		if (_weaponManager.currentWeaponSounds.isLoopShoot && isShootingLoop)
-		{
-			StopLoopShot();
-		}
-		if (_weaponManager.currentWeaponSounds.isCharging)
-		{
-			UnchargeGun(weaponChanged);
-		}
-	}
-
-	private void UnchargeGun(bool weaponChanged)
-	{
-		if (isMechActive)
-		{
-			return;
-		}
-		GetComponent<AudioSource>().Stop();
-		inGameGUI.ChargeValue.gameObject.SetActive(false);
-		if (!(chargeValue > 0f))
-		{
-			return;
-		}
-		Weapon weapon = (Weapon)_weaponManager.playerWeapons[lastChargeWeaponIndex];
-		if (!weaponChanged)
-		{
-			_Shot();
-			if (!_weaponManager.currentWeaponSounds.isShotMelee)
-			{
-				_SetGunFlashActive(true);
-				GunFlashLifetime = _weaponManager.currentWeaponSounds.gameObject.GetComponent<FlashFire>().timeFireAction;
-			}
-		}
-		else
-		{
-			weapon.currentAmmoInClip = ammoInClipBeforeCharge;
-		}
-		Debug.Log("Charge release: " + chargeValue);
-		chargeValue = 0f;
-	}
-
-	public void StartLoopShot()
-	{
-		if (isMulti && isMine)
-		{
-			if (isInet)
-			{
-				photonView.RPC("StartShootLoopRPC", PhotonTargets.Others, true);
-			}
-			else
-			{
-				_networkView.RPC("StartShootLoopRPC", RPCMode.Others, true);
-			}
-		}
-		isShootingLoop = true;
-		Animation component = myCurrentWeaponSounds.animationObject.GetComponent<Animation>();
-		float lengthAnimShootDown = 0f;
-		if (component.GetClip("Shoot_start") != null)
-		{
-			if (component.IsPlaying("Shoot_end"))
-			{
-				lengthAnimShootDown = component["Shoot_end"].length - component["Shoot_end"].time;
-			}
-			else
-			{
-				component.Stop();
-				lengthAnimShootDown = component["Shoot_start"].length;
-				component.Play("Shoot_start");
-			}
-		}
-		else
-		{
-			component.Stop();
-		}
-		ctsShootLoop.Cancel();
-		ctsShootLoop = new CancellationTokenSource();
-		StartCoroutine(ShootLoop(ctsShootLoop.Token, lengthAnimShootDown));
-	}
-
-	private void StopLoopShot()
-	{
-		if (isMulti && isMine)
-		{
-			if (isInet)
-			{
-				photonView.RPC("StartShootLoopRPC", PhotonTargets.Others, false);
-			}
-			else
-			{
-				_networkView.RPC("StartShootLoopRPC", RPCMode.Others, false);
-			}
-		}
-		isShootingLoop = false;
-		ctsShootLoop.Cancel();
-		Animation component = myCurrentWeaponSounds.animationObject.GetComponent<Animation>();
-		if (component.IsPlaying("Shoot"))
-		{
-			component.Stop();
-		}
-		else if (component.IsPlaying("Shoot_start"))
-		{
-			float num = component["Shoot_start"].length - component["Shoot_start"].time;
-			component.Stop();
-			component["Shoot_end"].time = component["Shoot_start"].length - component["Shoot_start"].time;
-		}
-		if (component["Shoot_end"] != null)
-		{
-			component.Play("Shoot_end");
-		}
-		if (Defs.isSoundFX)
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().clip = myCurrentWeaponSounds.idle;
-			myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
-		}
-	}
-
-	private IEnumerator ShootLoop(CancellationToken token, float _lengthAnimShootDown)
-	{
-		yield return new WaitForSeconds(_lengthAnimShootDown);
-		Animation currentWeaponAnimation = myCurrentWeaponSounds.animationObject.GetComponent<Animation>();
-		float lengthAnimShoot = currentWeaponAnimation["Shoot"].length;
-		if (!token.IsCancellationRequested)
-		{
-			currentWeaponAnimation.Play("Shoot");
-			if (Defs.isSoundFX)
-			{
-				myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().clip = myCurrentWeaponSounds.shoot;
-				myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
-			}
-		}
-		if (!Defs.isMulti || isMine)
-		{
-			while (!token.IsCancellationRequested)
-			{
-				shootS();
-				yield return new WaitForSeconds(lengthAnimShoot);
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void StartShootLoopRPC(bool isStart)
-	{
-		if (isStart && !isShootingLoop)
-		{
-			StartLoopShot();
-		}
-		if (!isStart && isShootingLoop)
-		{
-			StopLoopShot();
-		}
-	}
-
-	public void ResetShootingBurst()
-	{
-		_countShootInBurst = 0;
-		_timerDelayInShootingBurst = -1f;
-	}
-
-	public void ShotPressed()
-	{
-		if (deltaAngle > 10f)
-		{
-			return;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToShoot)
-		{
-			TrainingController.isNextStep = TrainingState.TapToShoot;
-		}
-		if ((isMulti && isInet && (bool)photonView && !photonView.isMine) || _weaponManager == null || _weaponManager.currentWeaponSounds == null || _weaponManager.currentWeaponSounds.animationObject == null || _weaponManager.currentWeaponSounds.name.Contains("WeaponGrenade") || Defs.isTurretWeapon)
-		{
-			return;
-		}
-		if (!isMechActive && _weaponManager.currentWeaponSounds.isLoopShoot)
-		{
-			if (!isShootingLoop)
-			{
-				StartLoopShot();
-			}
-			return;
-		}
-		Animation animation = ((!isMechActive) ? _weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>() : mechGunAnimation);
-		if (animation.IsPlaying("Shoot1") || animation.IsPlaying("Shoot2") || animation.IsPlaying("Shoot") || animation.IsPlaying("Shoot1") || animation.IsPlaying("Shoot2") || animation.IsPlaying("Reload") || animation.IsPlaying("Empty") || _timerDelayInShootingBurst > 0f)
-		{
-			return;
-		}
-		Weapon weapon = (Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex];
-		if (!isMechActive && _weaponManager.currentWeaponSounds.isCharging)
-		{
-			if (weapon.currentAmmoInClip > 0 && chargeValue < 1f)
-			{
-				if (chargeValue == 0f)
-				{
-					ammoInClipBeforeCharge = weapon.currentAmmoInClip;
-					lastChargeWeaponIndex = _weaponManager.CurrentWeaponIndex;
-				}
-				if (nextChargeConsumeTime < Time.time)
-				{
-					nextChargeConsumeTime = Time.time + _weaponManager.currentWeaponSounds.chargeTime / (float)_weaponManager.currentWeaponSounds.chargeMax;
-					chargeValue = Math.Min(1f, chargeValue + 1f / (float)_weaponManager.currentWeaponSounds.chargeMax);
-					animation["Charge"].speed = chargeValue;
-					weapon.currentAmmoInClip--;
-					if (inGameGUI != null)
-					{
-						inGameGUI.ChargeValue.gameObject.SetActive(true);
-						inGameGUI.ChargeValue.fillAmount = chargeValue;
-						inGameGUI.ChargeValue.color = new Color(1f, 1f - chargeValue, 0f);
-					}
-				}
-			}
-			else if (chargeValue == 0f)
-			{
-				ShowNoAmmo();
-			}
-			if (chargeValue > 0f)
-			{
-				if (!animation.IsPlaying("Charge") && animation.GetClip("Charge") != null)
-				{
-					animation.Stop();
-					animation.Play("Charge");
-				}
-				if (Defs.isSoundFX && _weaponManager.currentWeaponSounds.charge != null && (!GetComponent<AudioSource>().isPlaying || GetComponent<AudioSource>().clip != _weaponManager.currentWeaponSounds.charge))
-				{
-					GetComponent<AudioSource>().clip = _weaponManager.currentWeaponSounds.charge;
-					GetComponent<AudioSource>().Play();
-				}
-			}
-			return;
-		}
-		animation.Stop();
-		if (_weaponManager.currentWeaponSounds.isBurstShooting)
-		{
-			_countShootInBurst++;
-			if (_countShootInBurst >= _weaponManager.currentWeaponSounds.countShootInBurst)
-			{
-				_timerDelayInShootingBurst = _weaponManager.currentWeaponSounds.delayInBurstShooting;
-				_countShootInBurst = 0;
-			}
-		}
-		if (_weaponManager.currentWeaponSounds.isMelee && !_weaponManager.currentWeaponSounds.isShotMelee && !isMechActive)
-		{
-			_Shot();
-		}
-		else if (weapon.currentAmmoInClip > 0 || isMechActive)
-		{
-			if (!isMechActive)
-			{
-				weapon.currentAmmoInClip--;
-				if (weapon.currentAmmoInClip == 0)
-				{
-					if (weapon.currentAmmoInBackpack > 0)
-					{
-						if (_weaponManager.currentWeaponSounds.isShotMelee)
-						{
-							Reload();
-						}
-					}
-					else
-					{
-						TouchPadController rightJoystick = JoystickController.rightJoystick;
-						if ((bool)rightJoystick)
-						{
-							rightJoystick.NoAmmo();
-						}
-						if (inGameGUI != null)
-						{
-							inGameGUI.BlinkNoAmmo(3);
-							inGameGUI.PlayLowResourceBeep(3);
-						}
-					}
-				}
-			}
-			_Shot();
-			if (!_weaponManager.currentWeaponSounds.isShotMelee || isMechActive)
-			{
-				_SetGunFlashActive(true);
-				if (isMechActive)
-				{
-					GunFlashLifetime = 0.15f;
-				}
-				else
-				{
-					GunFlashLifetime = _weaponManager.currentWeaponSounds.gameObject.GetComponent<FlashFire>().timeFireAction;
-				}
-			}
-		}
-		else
-		{
-			ShowNoAmmo();
-		}
-	}
-
-	private void ShowNoAmmo()
-	{
-		Weapon weapon = (Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex];
-		if (inGameGUI != null)
-		{
-			inGameGUI.BlinkNoAmmo(1);
-			if (weapon.currentAmmoInBackpack == 0)
-			{
-				inGameGUI.PlayLowResourceBeepIfNotPlaying(1);
-			}
-		}
-		if (!_weaponManager.currentWeaponSounds.isMelee)
-		{
-			if (!isMechActive && weapon.currentAmmoInBackpack <= 0 && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && showChangeWeaponHint)
-			{
-				HintController.instance.ShowHintByName("change_weapon", 2f);
-			}
-			_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play("Empty");
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(_weaponManager.currentWeaponSounds.empty);
-			}
-		}
-	}
-
-	private void _Shot()
-	{
-		if (!TrainingController.TrainingCompleted)
-		{
-			TrainingController.timeShowFire = 1000f;
-			HintController.instance.HideHintByName("press_fire");
-		}
-		if (isGrenadePress || showChat)
-		{
-			return;
-		}
-		if (Defs.isMulti)
-		{
-			ProfileController.OnGameShoot();
-		}
-		float num = 0f;
-		if (isMechActive)
-		{
-			int numShootInDouble = GetNumShootInDouble();
-			mechGunAnimation.Play("Shoot" + numShootInDouble);
-			num = mechGunAnimation["Shoot" + numShootInDouble].length;
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(shootMechClip);
-			}
-		}
-		else
-		{
-			if (!_weaponManager.currentWeaponSounds.isDoubleShot)
-			{
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play("Shoot");
-				num = _weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot"].length;
-			}
-			else
-			{
-				int numShootInDouble2 = GetNumShootInDouble();
-				_weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play("Shoot" + numShootInDouble2);
-				num = _weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Shoot" + numShootInDouble2].length;
-			}
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(_weaponManager.currentWeaponSounds.shoot);
-			}
-		}
-		if (inGameGUI != null)
-		{
-			inGameGUI.StartFireCircularIndicators(num);
-		}
-		shootS();
-	}
-
-	public RayHitsInfo GetHitsFromRay(Ray ray, bool getAll = true)
-	{
-		RayHitsInfo result = default(RayHitsInfo);
-		result.obstacleFound = false;
-		result.lenRay = 150f;
-		RaycastHit[] array = Physics.RaycastAll(ray, 150f, _ShootRaycastLayerMask);
-		if (array == null || array.Length == 0)
-		{
-			array = new RaycastHit[0];
-		}
-		if (!getAll)
-		{
-			Array.Sort(array, _003CGetHitsFromRay_003Em__205);
-			bool flag = false;
-			RaycastHit raycastHit = default(RaycastHit);
-			List<RaycastHit> list = new List<RaycastHit>();
-			RaycastHit[] array2 = array;
-			for (int i = 0; i < array2.Length; i++)
-			{
-				RaycastHit raycastHit2 = array2[i];
-				if (isHunger && raycastHit2.collider.gameObject != null && raycastHit2.collider.gameObject.CompareTag("Chest"))
-				{
-					list.Add(raycastHit2);
-					continue;
-				}
-				if (raycastHit2.collider.gameObject.transform.parent != null && raycastHit2.collider.gameObject.transform.parent.CompareTag("Enemy"))
-				{
-					list.Add(raycastHit2);
-					continue;
-				}
-				if (raycastHit2.collider.gameObject.transform.parent != null && raycastHit2.collider.gameObject.transform.parent.CompareTag("Player"))
-				{
-					list.Add(raycastHit2);
-					continue;
-				}
-				if (raycastHit2.collider.gameObject != null && raycastHit2.collider.gameObject.CompareTag("Turret"))
-				{
-					list.Add(raycastHit2);
-					continue;
-				}
-				if (raycastHit2.collider.gameObject != null && raycastHit2.collider.gameObject.CompareTag("DamagedExplosion"))
-				{
-					list.Add(raycastHit2);
-					continue;
-				}
-				flag = true;
-				raycastHit = raycastHit2;
-				result.obstacleFound = true;
-				Vector3 point = raycastHit2.point;
-				Vector3 a = point - ray.origin;
-				result.lenRay = Vector3.Magnitude(a);
-				result.rayReflect = new Ray(point, Vector3.Reflect(ray.direction, raycastHit2.normal));
-				break;
-			}
-			result.hits = list.ToArray();
-		}
-		else
-		{
-			result.hits = array;
-		}
-		return result;
-	}
-
-	private IEnumerator ShowRayWithDelay(Vector3 _origin, Vector3 _direction, string _railName, float _len, float _delay)
-	{
-		yield return new WaitForSeconds(_delay);
-		WeaponManager.AddRay(_origin, _direction, _railName, _len);
-	}
-
-	private List<GameObject> GetAllTargets()
-	{
-		List<GameObject> list = new List<GameObject>();
-		if (isMulti && !isCOOP)
-		{
-			list.AddRange(Initializer.playersObj);
-			list.AddRange(Initializer.turretsObj);
-		}
-		else
-		{
-			list.AddRange(Initializer.enemiesObj);
-		}
-		if (Defs.isHunger)
-		{
-			list.AddRange(Initializer.chestsObj);
-		}
-		list.AddRange(Initializer.damagedObj);
-		return list;
-	}
-
-	private void FlamethrowerShot(WeaponSounds weapon)
-	{
-		_FireFlash();
-		GameObject gameObject = null;
-		RaycastHit hitInfo;
-		if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hitInfo, weapon.range, _ShootRaycastLayerMask) && hitInfo.collider.gameObject != null)
-		{
-			gameObject = ((!hitInfo.transform.parent || (!hitInfo.transform.parent.CompareTag("Enemy") && !hitInfo.transform.parent.CompareTag("Player"))) ? hitInfo.transform.gameObject : hitInfo.transform.parent.gameObject);
-			_HitEnemy(gameObject, false, 0f);
-		}
-		List<GameObject> allTargets = GetAllTargets();
-		float num = weapon.range * weapon.range;
-		for (int i = 0; i < allTargets.Count; i++)
-		{
-			if (!(allTargets[i] == _player) && !(gameObject == allTargets[i]))
-			{
-				Vector3 to = allTargets[i].transform.position - _player.transform.position;
-				if (to.sqrMagnitude < num && Vector3.Angle(base.gameObject.transform.forward, to) < weapon.meleeAngle)
-				{
-					_HitEnemy(allTargets[i], false, 0f);
-				}
-			}
-		}
-	}
-
-	private IEnumerator MeleeShot(WeaponSounds weapon)
-	{
-		_FireFlash(false, weapon.isDoubleShot ? numShootInDoubleShot : 0);
-		yield return new WaitForSeconds(TimeOfMeleeAttack(weapon));
-		if (weapon == null)
-		{
-			yield break;
-		}
-		GameObject raycastedObj = null;
-		GameObject closestTargetObj = null;
-		float closestTarget = float.MaxValue;
-		bool isHeadshot = false;
-		RaycastHit _hit;
-		if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out _hit, weapon.range, _ShootRaycastLayerMask) && _hit.collider.gameObject != null)
-		{
-			if ((bool)_hit.transform.parent)
-			{
-				raycastedObj = _hit.transform.gameObject;
-				if (_hit.transform.parent.CompareTag("Enemy"))
-				{
-					raycastedObj = _hit.transform.parent.gameObject;
-					isHeadshot = _hit.collider.GetType() == typeof(SphereCollider);
-				}
-				if (_hit.transform.parent.CompareTag("Player"))
-				{
-					raycastedObj = _hit.transform.parent.gameObject;
-					isHeadshot = _hit.transform.name == "HeadCollider";
-				}
-			}
-			else
-			{
-				raycastedObj = _hit.transform.gameObject;
-				isHeadshot = _hit.transform.name == "HeadCollider";
-			}
-			closestTargetObj = raycastedObj;
-			closestTarget = 0f;
-		}
-		List<GameObject> targets = GetAllTargets();
-		float weaponRangeSqr = weapon.range * weapon.range;
-		for (int i = 0; i < targets.Count; i++)
-		{
-			if (!(targets[i] == _player) && !(raycastedObj == targets[i]))
-			{
-				Vector3 enemyDelta = targets[i].transform.position - _player.transform.position;
-				float targetDistance = enemyDelta.sqrMagnitude;
-				if (targetDistance < closestTarget && targetDistance < weaponRangeSqr && Vector3.Angle(base.gameObject.transform.forward, enemyDelta) < weapon.meleeAngle)
-				{
-					closestTarget = targetDistance;
-					closestTargetObj = targets[i];
-				}
-			}
-		}
-		if (closestTargetObj != null)
-		{
-			_HitEnemy(closestTargetObj, isHeadshot, 0f);
-		}
-	}
-
-	private void RailgunShot(WeaponSounds weapon)
-	{
-		weapon.fire();
-		_FireFlash();
-		float num = weapon.tekKoof * Defs.Coef;
-		Ray ray = Camera.main.ScreenPointToRay(new Vector3(((float)Screen.width - weapon.startZone.x * num) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.x * num)), ((float)Screen.height - weapon.startZone.y * num) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.y * num)), 0f));
-		if (weapon.freezer)
-		{
-			RayHitsInfo hitsFromRay = GetHitsFromRay(ray, false);
-			RaycastHit[] hits = hitsFromRay.hits;
-			foreach (RaycastHit raycastHit in hits)
-			{
-				_DoHit(raycastHit, true);
-			}
-			AddFreezerRayWithLength(hitsFromRay.lenRay);
-			if (isMulti)
-			{
-				if (isInet)
-				{
-					photonView.RPC("AddFreezerRayWithLength", PhotonTargets.Others, hitsFromRay.lenRay);
-				}
-				else
-				{
-					GetComponent<NetworkView>().RPC("AddFreezerRayWithLength", RPCMode.Others, hitsFromRay.lenRay);
-				}
-			}
-			return;
-		}
-		bool flag = false;
-		int num2 = 0;
-		do
-		{
-			RayHitsInfo hitsFromRay2 = GetHitsFromRay(ray, weapon.countReflectionRay == 1);
-			RaycastHit[] hits2 = hitsFromRay2.hits;
-			foreach (RaycastHit raycastHit2 in hits2)
-			{
-				_DoHit(raycastHit2);
-			}
-			bool flag2 = num2 == 0 && (weapon.countReflectionRay == 1 || !hitsFromRay2.obstacleFound);
-			Vector3 origin = ((num2 != 0) ? ray.origin : GunFlash.gameObject.transform.parent.position);
-			Vector3 direction = (flag2 ? GunFlash.gameObject.transform.parent.parent.forward : ((num2 != 0) ? ray.direction : (hitsFromRay2.rayReflect.origin - GunFlash.gameObject.transform.parent.position)));
-			float len = (flag2 ? 150f : ((num2 != 0) ? hitsFromRay2.lenRay : (hitsFromRay2.rayReflect.origin - GunFlash.gameObject.transform.parent.position).magnitude));
-			StartCoroutine(ShowRayWithDelay(origin, direction, weapon.railName, len, (float)num2 * 0.05f));
-			if (hitsFromRay2.obstacleFound)
-			{
-				ray = hitsFromRay2.rayReflect;
-				flag = true;
-			}
-			num2++;
-		}
-		while (flag && num2 < weapon.countReflectionRay);
-	}
-
-	private void BulletShot(WeaponSounds weapon)
-	{
-		int num = ((!weapon.isShotGun) ? 1 : weapon.countShots);
-		float maxDistance = ((!weapon.isShotGun) ? 100f : 30f);
-		Vector3[] array = null;
-		Quaternion[] array2 = null;
-		bool[] array3 = null;
-		int num2 = Mathf.Min(7, num);
-		bool flag = false;
-		bool flag2 = false;
-		Vector3 vector = Vector3.zero;
-		Quaternion quaternion = Quaternion.identity;
-		if (weapon.bulletExplode)
-		{
-			maxDistance = 250f;
-		}
-		for (int i = 0; i < num; i++)
-		{
-			float num3 = weapon.tekKoof * Defs.Coef;
-			Ray ray = Camera.main.ScreenPointToRay(new Vector3(((float)Screen.width - weapon.startZone.x * num3) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.x * num3)), ((float)Screen.height - weapon.startZone.y * num3) * 0.5f + (float)UnityEngine.Random.Range(0, Mathf.RoundToInt(weapon.startZone.y * num3)), 0f));
-			Transform transform = ((!weapon.isDoubleShot) ? GunFlash : weapon.gunFlashDouble[numShootInDoubleShot - 1]);
-			if (transform != null && !Defs.isDaterRegim)
-			{
-				GameObject currentBullet = BulletStackController.sharedController.GetCurrentBullet((int)weapon.typeTracer);
-				if (currentBullet != null)
-				{
-					currentBullet.transform.rotation = myTransform.rotation;
-					Bullet component = currentBullet.GetComponent<Bullet>();
-					component.endPos = ray.GetPoint(200f);
-					component.startPos = ((!weapon.isDoubleShot) ? GunFlash.position : weapon.gunFlashDouble[numShootInDoubleShot - 1].position);
-					component.StartBullet();
-				}
-				weapon.fire();
-			}
-			RaycastHit hitInfo;
-			if (!Physics.Raycast(ray, out hitInfo, maxDistance, _ShootRaycastLayerMask))
-			{
-				continue;
-			}
-			if (!weapon.bulletExplode)
-			{
-				if (!hitInfo.collider.gameObject.transform.CompareTag("DamagedExplosion"))
-				{
-					vector = hitInfo.point + hitInfo.normal * 0.001f;
-					quaternion = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
-					flag2 = true;
-					flag = ((!(hitInfo.collider.gameObject.transform.parent != null) || hitInfo.collider.gameObject.transform.parent.CompareTag("Enemy") || hitInfo.collider.gameObject.transform.parent.CompareTag("Player")) ? true : false);
-					HoleRPC(flag, vector, quaternion);
-					if (isMulti)
-					{
-						if (!isInet)
-						{
-							_networkView.RPC("HoleRPC", RPCMode.Others, flag, vector, quaternion);
-						}
-						else if (num2 > 1 && i < num2)
-						{
-							if (array == null)
-							{
-								array = new Vector3[num2];
-								array2 = new Quaternion[num2];
-								array3 = new bool[num2];
-							}
-							array[i] = vector;
-							array2[i] = quaternion;
-							array3[i] = flag;
-						}
-					}
-				}
-				_DoHit(hitInfo);
-			}
-			else
-			{
-				Rocket rocket = CreateRocket(hitInfo.point, Quaternion.identity, koofDamageWeaponFromPotoins, isMulti, isInet, TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-				rocket.dontExecStart = true;
-				rocket.SendSetRocketActiveRPC();
-				rocket.KillRocket(hitInfo.collider);
-			}
-		}
-		if (!flag2 || !isInet)
-		{
-			_FireFlash(true, weapon.isDoubleShot ? numShootInDoubleShot : 0);
-		}
-		else if (num2 > 1)
-		{
-			_FireFlashWithManyHoles(array3, array, array2, true, weapon.isDoubleShot ? numShootInDoubleShot : 0);
-		}
-		else
-		{
-			_FireFlashWithHole(flag, vector, quaternion, true, weapon.isDoubleShot ? numShootInDoubleShot : 0);
-		}
-	}
-
-	public void shootS()
-	{
-		if (isGrenadePress)
-		{
-			return;
-		}
-		if (isMechActive)
-		{
-			BulletShot(mechWeaponSounds);
-			return;
-		}
-		WeaponSounds currentWeaponSounds = _weaponManager.currentWeaponSounds;
-		if (currentWeaponSounds.bazooka)
-		{
-			StartCoroutine(BazookaShoot());
-		}
-		else if (currentWeaponSounds.railgun || currentWeaponSounds.freezer)
-		{
-			RailgunShot(currentWeaponSounds);
-		}
-		else if (currentWeaponSounds.flamethrower)
-		{
-			FlamethrowerShot(currentWeaponSounds);
-		}
-		else if (currentWeaponSounds.isRoundMelee)
-		{
-			StartCoroutine(HitRoundMelee(currentWeaponSounds));
-		}
-		else if (currentWeaponSounds.isMelee)
-		{
-			StartCoroutine(MeleeShot(currentWeaponSounds));
-		}
-		else
-		{
-			BulletShot(currentWeaponSounds);
-		}
-	}
-
-	public void GrenadePress()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
-		{
-			showGrenadeHint = false;
-			HintController.instance.HideHintByName("use_grenade");
-		}
-		if (indexWeapon != 1001)
-		{
-			GrenadePressInvoke();
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void GrenadePressInvoke()
-	{
-		isGrenadePress = true;
-		currentWeaponBeforeGrenade = WeaponManager.sharedManager.CurrentWeaponIndex;
-		ChangeWeapon(1000, false);
-		timeGrenadePress = Time.realtimeSinceStartup;
-		if (inGameGUI != null && inGameGUI.blockedCollider != null)
-		{
-			inGameGUI.blockedCollider.SetActive(true);
-		}
-		if (inGameGUI != null && inGameGUI.blockedCollider2 != null)
-		{
-			inGameGUI.blockedCollider2.SetActive(true);
-		}
-		if (inGameGUI != null && inGameGUI.blockedColliderDater != null)
-		{
-			inGameGUI.blockedColliderDater.SetActive(true);
-		}
-		if (inGameGUI != null)
-		{
-			for (int i = 0; i < inGameGUI.upButtonsInShopPanel.Length; i++)
-			{
-				inGameGUI.upButtonsInShopPanel[i].GetComponent<ButtonHandler>().isEnable = false;
-			}
-			for (int j = 0; j < inGameGUI.upButtonsInShopPanelSwipeRegim.Length; j++)
-			{
-				inGameGUI.upButtonsInShopPanelSwipeRegim[j].GetComponent<ButtonHandler>().isEnable = false;
-			}
-		}
-	}
-
-	public void GrenadeFire()
-	{
-		if (isGrenadePress)
-		{
-			float num = Time.realtimeSinceStartup - timeGrenadePress;
-			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
-			{
-				TrainingController.isNextStep = TrainingState.TapToThrowGrenade;
-			}
-			Defs.isGrenateFireEnable = false;
-			if (num - 0.4f > 0f)
-			{
-				GrenadeStartFire();
-			}
-			else
-			{
-				Invoke("GrenadeStartFire", 0.4f - num);
-			}
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void GrenadeStartFire()
-	{
-		if (isMulti)
-		{
-			if (!isInet)
-			{
-				GetComponent<NetworkView>().RPC("fireFlash", RPCMode.All, false, 0);
-			}
-			else
-			{
-				photonView.RPC("fireFlash", PhotonTargets.All, false, 0);
-			}
-		}
-		else
-		{
-			fireFlash(false, 0);
-		}
-		GrenadeCount--;
-		Invoke("RunGrenade", 0.2667f);
-		Invoke("SetGrenateFireEnabled", 1f);
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void SetGrenateFireEnabled()
-	{
-		Defs.isGrenateFireEnable = true;
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void RunGrenade()
-	{
-		if ((bool)currentGrenade)
-		{
-			currentGrenade.GetComponent<Rigidbody>().isKinematic = false;
-			currentGrenade.GetComponent<Rigidbody>().AddForce(Quaternion.Euler(0f, -5f, 0f) * (150f * myTransform.forward));
-			currentGrenade.GetComponent<Rigidbody>().useGravity = true;
-			currentGrenade.GetComponent<Rocket>().StartRocket();
-		}
-		Invoke("ReturnWeaponAfterGrenade", 0.5f);
-		isGrenadePress = false;
-	}
-
-	[Obfuscation(Exclude = true)]
+	[Obfuscation(Exclude=true)]
 	private void ReturnWeaponAfterGrenade()
 	{
-		ChangeWeapon(currentWeaponBeforeGrenade, false);
-		if (inGameGUI != null && inGameGUI.blockedCollider != null)
+		this.ChangeWeapon(this.currentWeaponBeforeGrenade, false);
+		if (this.inGameGUI != null && this.inGameGUI.blockedCollider != null)
 		{
-			inGameGUI.blockedCollider.SetActive(false);
+			this.inGameGUI.blockedCollider.SetActive(false);
 		}
-		if (inGameGUI != null && inGameGUI.blockedCollider2 != null)
+		if (this.inGameGUI != null && this.inGameGUI.blockedCollider2 != null)
 		{
-			inGameGUI.blockedCollider2.SetActive(false);
+			this.inGameGUI.blockedCollider2.SetActive(false);
 		}
-		if (inGameGUI != null && inGameGUI.blockedColliderDater != null)
+		if (this.inGameGUI != null && this.inGameGUI.blockedColliderDater != null)
 		{
-			inGameGUI.blockedColliderDater.SetActive(false);
+			this.inGameGUI.blockedColliderDater.SetActive(false);
 		}
-		if (inGameGUI != null)
+		if (this.inGameGUI != null)
 		{
-			for (int i = 0; i < inGameGUI.upButtonsInShopPanel.Length; i++)
+			for (int i = 0; i < (int)this.inGameGUI.upButtonsInShopPanel.Length; i++)
 			{
-				inGameGUI.upButtonsInShopPanel[i].GetComponent<ButtonHandler>().isEnable = true;
+				this.inGameGUI.upButtonsInShopPanel[i].GetComponent<ButtonHandler>().isEnable = true;
 			}
-			for (int j = 0; j < inGameGUI.upButtonsInShopPanelSwipeRegim.Length; j++)
+			for (int j = 0; j < (int)this.inGameGUI.upButtonsInShopPanelSwipeRegim.Length; j++)
 			{
-				inGameGUI.upButtonsInShopPanelSwipeRegim[j].GetComponent<ButtonHandler>().isEnable = true;
+				this.inGameGUI.upButtonsInShopPanelSwipeRegim[j].GetComponent<ButtonHandler>().isEnable = true;
 			}
 		}
 	}
 
-	public static Rocket CreateRocket(Vector3 pos, Quaternion rot, float customDamageAdd, bool isMulti, bool isInet, int tierOrRoomTier)
+	[Obfuscation(Exclude=true)]
+	private void RunGrenade()
 	{
-		GameObject gameObject = null;
-		gameObject = RocketStack.sharedController.GetRocket();
-		gameObject.transform.position = pos;
-		gameObject.transform.rotation = rot;
-		Rocket component = gameObject.GetComponent<Rocket>();
-		component.rocketNum = WeaponManager.sharedManager.currentWeaponSounds.rocketNum;
-		component.weaponPrefabName = WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Replace("(Clone)", string.Empty);
-		component.weaponName = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionName;
-		component.damage = (float)WeaponManager.sharedManager.currentWeaponSounds.damage * (1f + customDamageAdd + EffectsController.DamageModifsByCats(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1));
-		component.radiusDamage = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionRadius;
-		component.radiusDamageSelf = WeaponManager.sharedManager.currentWeaponSounds.bazookaExplosionRadiusSelf;
-		component.radiusImpulse = WeaponManager.sharedManager.currentWeaponSounds.bazookaImpulseRadius * (1f + EffectsController.ExplosionImpulseRadiusIncreaseCoef);
-		component.damageRange = WeaponManager.sharedManager.currentWeaponSounds.damageRange * (1f + customDamageAdd + EffectsController.DamageModifsByCats(WeaponManager.sharedManager.currentWeaponSounds.categoryNabor - 1));
-		component.isSlowdown = WeaponManager.sharedManager.currentWeaponSounds.isSlowdown;
-		component.slowdownCoeff = WeaponManager.sharedManager.currentWeaponSounds.slowdownCoeff;
-		component.slowdownTime = WeaponManager.sharedManager.currentWeaponSounds.slowdownTime;
-		component.impulseForce = WeaponManager.sharedManager.currentWeaponSounds.impulseForce;
-		component.impulseForceSelf = WeaponManager.sharedManager.currentWeaponSounds.impulseForceSelf;
-		float num = (component.multiplayerDamage = ((ExpController.Instance != null && ExpController.Instance.OurTier < WeaponManager.sharedManager.currentWeaponSounds.DamageByTier.Length) ? WeaponManager.sharedManager.currentWeaponSounds.DamageByTier[tierOrRoomTier] : ((WeaponManager.sharedManager.currentWeaponSounds.DamageByTier.Length <= 0) ? 0f : WeaponManager.sharedManager.currentWeaponSounds.DamageByTier[0])));
-		gameObject.GetComponent<Rigidbody>().useGravity = WeaponManager.sharedManager.currentWeaponSounds.grenadeLauncher;
-		return component;
-	}
-
-	private IEnumerator BazookaShoot()
-	{
-		for (int i = 0; i < _weaponManager.currentWeaponSounds.countInSeriaBazooka; i++)
+		if (this.currentGrenade)
 		{
-			_weaponManager.currentWeaponSounds.fire();
-			_FireFlash();
-			float rangeFromUs = 0.2f;
-			Rocket rocketScript = CreateRocket((!(_weaponManager.currentWeaponSounds.gunFlash != null)) ? (myTransform.position + myTransform.forward * rangeFromUs) : _weaponManager.currentWeaponSounds.gunFlash.position, myTransform.rotation, koofDamageWeaponFromPotoins, isMulti, isInet, TierOrRoomTier((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier));
-			rocketScript.SendSetRocketActiveRPC();
-			rocketToLaunch = rocketScript.gameObject;
-			if (i != _weaponManager.currentWeaponSounds.countInSeriaBazooka - 1)
-			{
-				yield return new WaitForSeconds(_weaponManager.currentWeaponSounds.stepTimeInSeriaBazooka);
-			}
+			this.currentGrenade.GetComponent<Rigidbody>().isKinematic = false;
+			this.currentGrenade.GetComponent<Rigidbody>().AddForce(Quaternion.Euler(0f, -5f, 0f) * 150f * this.myTransform.forward);
+			this.currentGrenade.GetComponent<Rigidbody>().useGravity = true;
+			this.currentGrenade.GetComponent<Rocket>().StartRocket();
 		}
+		base.Invoke("ReturnWeaponAfterGrenade", 0.5f);
+		this.isGrenadePress = false;
 	}
 
 	private void RunOnGroundEffect(string name)
 	{
-		if (name == null || mySkinName == null)
+		if (name == null || this.mySkinName == null)
 		{
 			return;
 		}
-		GameObject objectFromName = RayAndExplosionsStackController.sharedController.GetObjectFromName("OnGroundWeaponEffects/" + name + "_OnGroundEffect");
-		if (!(objectFromName == null))
-		{
-			if (_003C_003Ef__am_0024cache14A == null)
-			{
-				_003C_003Ef__am_0024cache14A = _003CRunOnGroundEffect_003Em__206;
-			}
-			PerformActionRecurs(objectFromName, _003C_003Ef__am_0024cache14A);
-			objectFromName.transform.parent = mySkinName.onGroundEffectsPoint;
-			objectFromName.transform.localPosition = Vector3.zero;
-			objectFromName.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-			if (_003C_003Ef__am_0024cache14B == null)
-			{
-				_003C_003Ef__am_0024cache14B = _003CRunOnGroundEffect_003Em__207;
-			}
-			PerformActionRecurs(objectFromName, _003C_003Ef__am_0024cache14B);
-			ParticleSystem component = objectFromName.GetComponent<ParticleSystem>();
-			if (component != null)
-			{
-				component.Play();
-			}
-		}
-	}
-
-	private IEnumerator HitRoundMelee(WeaponSounds weapon)
-	{
-		_FireFlash(false, weapon.isDoubleShot ? numShootInDoubleShot : 0);
-		yield return new WaitForSeconds(TimeOfMeleeAttack(weapon));
-		if (weapon == null)
-		{
-			yield break;
-		}
-		RunOnGroundEffect(weapon.gameObject.name.Replace("(Clone)", string.Empty));
-		List<GameObject> targets = GetAllTargets();
-		float weaponRangeSqr = weapon.radiusRoundMelee * weapon.radiusRoundMelee;
-		for (int i = 0; i < targets.Count; i++)
-		{
-			if (!(targets[i] == _player))
-			{
-				float targetDistance = (targets[i].transform.position - _player.transform.position).sqrMagnitude;
-				if (targetDistance < weaponRangeSqr)
-				{
-					_HitEnemy(targets[i], false, targetDistance);
-				}
-			}
-		}
-	}
-
-	private float GetDamageValueForTargetsInRadius(float distanceToTagetSqr, float radiusDamageSqr)
-	{
-		float num = (float)_weaponManager.currentWeaponSounds.damage + WeaponManager.sharedManager.currentWeaponSounds.damageRange.x;
-		float num2 = (float)_weaponManager.currentWeaponSounds.damage + WeaponManager.sharedManager.currentWeaponSounds.damageRange.y;
-		return (num + (num2 = num) * (1f - distanceToTagetSqr / radiusDamageSqr)) * (1f + koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(_weaponManager.currentWeaponSounds.categoryNabor - 1));
-	}
-
-	private float GetDamageForBotsAndExplosionObjects(bool isTakeDamageMech = false)
-	{
-		WeaponSounds weaponSounds = ((!isTakeDamageMech) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		return ((float)(-weaponSounds.damage) + UnityEngine.Random.Range(weaponSounds.damageRange.x, weaponSounds.damageRange.y)) * (1f + koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1));
-	}
-
-	private void _DoHit(RaycastHit _hit, bool slowdown = false)
-	{
-		bool flag = false;
-		if ((bool)_hit.transform.parent)
-		{
-			if (_hit.transform.parent.CompareTag("Enemy"))
-			{
-				flag = _hit.collider.name == "HeadCollider" || _hit.collider is SphereCollider;
-				_HitEnemy(_hit.transform.parent.gameObject, flag, 0f);
-				return;
-			}
-			if (_hit.transform.parent.CompareTag("Player"))
-			{
-				flag = _hit.collider.name == "HeadCollider";
-				_HitEnemy(_hit.transform.parent.gameObject, flag, 0f);
-				return;
-			}
-		}
-		flag = _hit.collider.name == "HeadCollider";
-		_HitEnemy(_hit.transform.gameObject, flag, 0f);
-	}
-
-	private static float TimeOfMeleeAttack(WeaponSounds ws)
-	{
-		return ws.animationObject.GetComponent<Animation>()[(!ws.isDoubleShot) ? "Shoot" : "Shoot1"].length * ws.meleeAttackTimeModifier;
-	}
-
-	private void _FireFlash(bool isFlash = true, int numFlash = 0)
-	{
-		if (!myCurrentWeaponSounds.isLoopShoot && isMulti)
-		{
-			if (isInet)
-			{
-				photonView.RPC("fireFlash", PhotonTargets.Others, isFlash, numFlash);
-			}
-			else
-			{
-				_networkView.RPC("fireFlash", RPCMode.Others, isFlash, numFlash);
-			}
-		}
-	}
-
-	private void _FireFlashWithHole(bool _isBloodParticle, Vector3 _pos, Quaternion _rot, bool isFlash = true, int numFlash = 0)
-	{
-		if (isMulti && isInet)
-		{
-			photonView.RPC("fireFlashWithHole", PhotonTargets.Others, _isBloodParticle, _pos, _rot, isFlash, numFlash);
-		}
-	}
-
-	private void _FireFlashWithManyHoles(bool[] _isBloodParticle, Vector3[] _pos, Quaternion[] _rot, bool isFlash = true, int numFlash = 0)
-	{
-		if (isMulti && isInet)
-		{
-			photonView.RPC("fireFlashWithManyHoles", PhotonTargets.Others, _isBloodParticle, _pos, _rot, isFlash, numFlash);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void fireFlashWithManyHoles(bool[] _isBloodParticle, Vector3[] _pos, Quaternion[] _rot, bool isFlash, int numFlash)
-	{
-		fireFlash(isFlash, numFlash);
-		if (_isBloodParticle != null)
-		{
-			for (int i = 0; i < _isBloodParticle.Length; i++)
-			{
-				HoleRPC(_isBloodParticle[i], _pos[i], _rot[i]);
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void fireFlashWithHole(bool _isBloodParticle, Vector3 _pos, Quaternion _rot, bool isFlash, int numFlash)
-	{
-		fireFlash(isFlash, numFlash);
-		HoleRPC(_isBloodParticle, _pos, _rot);
-	}
-
-	[RPC]
-	[PunRPC]
-	private void fireFlash(bool isFlash, int numFlash)
-	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? myCurrentWeaponSounds : mechWeaponSounds);
-		if (weaponSounds == null)
+		GameObject objectFromName = RayAndExplosionsStackController.sharedController.GetObjectFromName(string.Concat("OnGroundWeaponEffects/", name, "_OnGroundEffect"));
+		if (objectFromName == null)
 		{
 			return;
 		}
-		if (isFlash)
+		Player_move_c.PerformActionRecurs(objectFromName, (Transform t) => t.gameObject.SetActive(false));
+		objectFromName.transform.parent = this.mySkinName.onGroundEffectsPoint;
+		objectFromName.transform.localPosition = Vector3.zero;
+		objectFromName.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+		Player_move_c.PerformActionRecurs(objectFromName, (Transform t) => t.gameObject.SetActive(true));
+		ParticleSystem component = objectFromName.GetComponent<ParticleSystem>();
+		if (component != null)
 		{
-			if (numFlash == 0)
-			{
-				FlashFire component = weaponSounds.GetComponent<FlashFire>();
-				if (component != null)
-				{
-					component.fire(this);
-				}
-			}
-			else if (weaponSounds.gunFlashDouble.Length > numFlash - 1)
-			{
-				weaponSounds.gunFlashDouble[numFlash - 1].GetComponent<FlashFire>().fire(this);
-			}
-		}
-		if (weaponSounds.isRoundMelee)
-		{
-			float tm = TimeOfMeleeAttack(weaponSounds);
-			StartCoroutine(RunOnGroundEffectCoroutine(weaponSounds.gameObject.name.Replace("(Clone)", string.Empty), tm));
-		}
-		string animation = (weaponSounds.isDoubleShot ? ("Shoot" + numFlash) : "Shoot");
-		if (isMechActive)
-		{
-			mechGunAnimation.Play(animation);
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(shootMechClip);
-			}
-		}
-		else
-		{
-			weaponSounds.animationObject.GetComponent<Animation>().Play(animation);
-		}
-		if (Defs.isSoundFX && !isMechActive)
-		{
-			GetComponent<AudioSource>().Stop();
-			GetComponent<AudioSource>().PlayOneShot(weaponSounds.shoot);
+			component.Play();
 		}
 	}
 
-	[PunRPC]
-	[RPC]
-	public void HoleRPC(bool _isBloodParticle, Vector3 _pos, Quaternion _rot)
+	[DebuggerHidden]
+	private IEnumerator RunOnGroundEffectCoroutine(string name, float tm)
 	{
-		if (Device.isPixelGunLow)
-		{
-			return;
-		}
-		if (_isBloodParticle)
-		{
-			WallBloodParticle currentParticle = BloodParticleStackController.sharedController.GetCurrentParticle(false);
-			if (currentParticle != null)
-			{
-				currentParticle.StartShowParticle(_pos, _rot, false);
-			}
-			return;
-		}
-		HoleScript currentHole = HoleBulletStackController.sharedController.GetCurrentHole(false);
-		if (currentHole != null)
-		{
-			currentHole.StartShowHole(_pos, _rot, false);
-		}
-		WallBloodParticle currentParticle2 = WallParticleStackController.sharedController.GetCurrentParticle(false);
-		if (currentParticle2 != null)
-		{
-			currentParticle2.StartShowParticle(_pos, _rot, false);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void SlowdownRPC(float coef, float time)
-	{
-		if (isMine || !isMulti)
-		{
-			EffectsController.SlowdownCoeff = coef;
-			_timeOfSlowdown = time;
-		}
-	}
-
-	private void _HitChest(GameObject go)
-	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		go.GetComponent<ChestController>().MinusLive(((float)weaponSounds.damage + UnityEngine.Random.Range(weaponSounds.damageRange.x, weaponSounds.damageRange.y)) * (1f + koofDamageWeaponFromPotoins + EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1)));
-	}
-
-	private void _HitZombie(GameObject zmb, bool isHeadShot, float sqrDistance)
-	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		float num = 0f;
-		if (weaponSounds.isRoundMelee)
-		{
-			num = GetDamageValueForTargetsInRadius(sqrDistance, weaponSounds.radiusRoundMelee * weaponSounds.radiusRoundMelee);
-			Debug.Log(num);
-		}
-		else
-		{
-			num = ((float)weaponSounds.damage + UnityEngine.Random.Range(weaponSounds.damageRange.x, weaponSounds.damageRange.y)) * (1f + koofDamageWeaponFromPotoins + ((!isMechActive) ? EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1) : 0f));
-		}
-		if (weaponSounds.isCharging)
-		{
-			num *= chargeValue;
-		}
-		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(zmb.transform.parent);
-		if (!isMulti)
-		{
-			if (botScriptForObject != null)
-			{
-				botScriptForObject.GetDamage(0f - num, myPlayerTransform, myCurrentWeaponSounds.name, true, isHeadShot);
-				return;
-			}
-			TrainingEnemy componentInParent = zmb.GetComponentInParent<TrainingEnemy>();
-			if (componentInParent != null)
-			{
-				componentInParent.ApplyDamage(num, isHeadShot);
-			}
-		}
-		else if (isCOOP && !botScriptForObject.IsDeath)
-		{
-			botScriptForObject.GetDamageForMultiplayer(0f - num, null, myCurrentWeaponSounds.name, isHeadShot);
-			_weaponManager.myNetworkStartTable.score = GlobalGameController.Score;
-			_weaponManager.myNetworkStartTable.SynhScore();
-		}
-	}
-
-	private IEnumerator _HitEnemyWithDelay(GameObject hitEnemy, float time, bool headshot = false)
-	{
-		yield return new WaitForSeconds(time);
-		_HitEnemy(hitEnemy, headshot, 0f);
-	}
-
-	private void _HitEnemy(GameObject hitEnemy, bool headshot = false, float sqrDistance = 0f)
-	{
-		switch (hitEnemy.tag)
-		{
-		case "Enemy":
-			_HitZombie(hitEnemy.transform.GetChild(0).gameObject, headshot, sqrDistance);
-			break;
-		case "Player":
-			_HitPlayer(hitEnemy, headshot, sqrDistance);
-			break;
-		case "Chest":
-			_HitChest(hitEnemy);
-			break;
-		case "Turret":
-			_HitTurret(hitEnemy, sqrDistance);
-			break;
-		case "DamagedExplosion":
-		{
-			float num = GetDamageForBotsAndExplosionObjects();
-			WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-			if (weaponSounds.isCharging)
-			{
-				num *= chargeValue;
-			}
-			DamagedExplosionObject.TryApplyDamageToObject(hitEnemy, num);
-			break;
-		}
-		}
-	}
-
-	private float GetMultyDamage()
-	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		if (isMechActive)
-		{
-			return weaponSounds.DamageByTier[TierOrRoomTier(GearManager.CurrentNumberOfUphradesForGear(GearManager.Mech))];
-		}
-		return (ExpController.Instance != null && ExpController.Instance.OurTier < _weaponManager.currentWeaponSounds.DamageByTier.Length) ? _weaponManager.currentWeaponSounds.DamageByTier[TierOrRoomTier(ExpController.Instance.OurTier)] : ((_weaponManager.currentWeaponSounds.DamageByTier.Length <= 0) ? 0f : _weaponManager.currentWeaponSounds.DamageByTier[0]);
-	}
-
-	private void _HitTurret(GameObject _turret, float sqrDistance)
-	{
-		if (Defs.isCOOP)
-		{
-			return;
-		}
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		TurretController component = _turret.GetComponent<TurretController>();
-		if (component.isEnemyTurret)
-		{
-			float num = 0f;
-			if (weaponSounds.isRoundMelee)
-			{
-				float num2 = ((ExpController.Instance != null && ExpController.Instance.OurTier < weaponSounds.DamageByTier.Length) ? weaponSounds.DamageByTier[TierOrRoomTier(ExpController.Instance.OurTier)] : ((weaponSounds.DamageByTier.Length <= 0) ? 0f : weaponSounds.DamageByTier[0]));
-				float num3 = num2 * 0.7f;
-				float num4 = num2;
-				num = (num3 + (num4 - num3) * (1f - sqrDistance / (weaponSounds.radiusRoundMelee * weaponSounds.radiusRoundMelee))) * (1f + koofDamageWeaponFromPotoins + ((!isMechActive) ? EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1) : 0f));
-			}
-			else
-			{
-				num = GetMultyDamage() * (1f + koofDamageWeaponFromPotoins);
-			}
-			if (weaponSounds.isCharging)
-			{
-				num *= chargeValue;
-			}
-			myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.damageTurret, num);
-			if (Defs.isInet)
-			{
-				component.MinusLive(num, myPlayerTransform.GetComponent<PhotonView>().viewID);
-			}
-			else
-			{
-				component.MinusLive(num, 0, myPlayerTransform.GetComponent<NetworkView>().viewID);
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void ReloadGun()
-	{
-		if (!(myCurrentWeaponSounds == null))
-		{
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>().Play("Reload");
-			myCurrentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].speed = _currentReloadAnimationSpeed;
-			if (Defs.isSoundFX)
-			{
-				GetComponent<AudioSource>().PlayOneShot(myCurrentWeaponSounds.reload);
-			}
-		}
-	}
-
-	private void Reload()
-	{
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && inGameGUI != null)
-		{
-			if (WeaponManager.sharedManager.currentWeaponSounds.ammoInClip > 1 || !WeaponManager.sharedManager.currentWeaponSounds.isShotMelee)
-			{
-				inGameGUI.ShowCircularIndicatorOnReload(WeaponManager.sharedManager.currentWeaponSounds.animationObject.GetComponent<Animation>()["Reload"].length / _currentReloadAnimationSpeed);
-			}
-			else
-			{
-				WeaponManager.sharedManager.ReloadAmmo();
-			}
-		}
-		WeaponManager.sharedManager.Reload();
-	}
-
-	[Obfuscation(Exclude = true)]
-	public void ReloadPressed()
-	{
-		if ((myCurrentWeaponSounds.isCharging && chargeValue > 0f) || isGrenadePress || isReloading || (_weaponManager.currentWeaponSounds.isMelee && !_weaponManager.currentWeaponSounds.isShotMelee))
-		{
-			return;
-		}
-		if (isZooming)
-		{
-			ZoomPress();
-		}
-		if (_weaponManager.CurrentWeaponIndex < 0 || _weaponManager.CurrentWeaponIndex >= _weaponManager.playerWeapons.Count || ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).currentAmmoInBackpack <= 0 || ((Weapon)_weaponManager.playerWeapons[_weaponManager.CurrentWeaponIndex]).currentAmmoInClip == _weaponManager.currentWeaponSounds.ammoInClip)
-		{
-			return;
-		}
-		Reload();
-		if (_weaponManager.currentWeaponSounds.isShotMelee)
-		{
-			return;
-		}
-		if (isMulti)
-		{
-			if (!isInet)
-			{
-				GetComponent<NetworkView>().RPC("ReloadGun", RPCMode.Others);
-			}
-			else
-			{
-				photonView.RPC("ReloadGun", PhotonTargets.Others);
-			}
-		}
-		if (Defs.isSoundFX)
-		{
-			GetComponent<AudioSource>().PlayOneShot(_weaponManager.currentWeaponSounds.reload);
-		}
-		if (JoystickController.rightJoystick != null)
-		{
-			JoystickController.rightJoystick.HasAmmo();
-			if (inGameGUI != null)
-			{
-				inGameGUI.BlinkNoAmmo(0);
-			}
-		}
-		else
-		{
-			Debug.Log("JoystickController.rightJoystick = null");
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void AddFreezerRayWithLength(float len)
-	{
-		Transform gunFlash = GunFlash;
-		if (gunFlash == null && myTransform.childCount > 0)
-		{
-			Transform child = myTransform.GetChild(0);
-			FlashFire component = child.GetComponent<FlashFire>();
-			if (component != null && component.gunFlashObj != null)
-			{
-				gunFlash = component.gunFlashObj.transform;
-			}
-		}
-		if (!(gunFlash != null))
-		{
-			return;
-		}
-		if (this.FreezerFired != null)
-		{
-			this.FreezerFired(len);
-			return;
-		}
-		GameObject gameObject = WeaponManager.AddRay(gunFlash.gameObject.transform.parent.position, gunFlash.gameObject.transform.parent.parent.forward, gunFlash.gameObject.transform.parent.parent.GetComponent<WeaponSounds>().railName, len);
-		if (gameObject != null)
-		{
-			FreezerRay component2 = gameObject.GetComponent<FreezerRay>();
-			if (component2 != null)
-			{
-				component2.SetParentMoveC(this);
-			}
-		}
+		Player_move_c.u003cRunOnGroundEffectCoroutineu003ec__IteratorDC variable = null;
+		return variable;
 	}
 
 	public void RunTurret()
 	{
 		if (Defs.isTurretWeapon)
 		{
-			string key = ((!Defs.isDaterRegim) ? GearManager.Turret : GearManager.MusicBox);
-			Storager.setInt(key, Storager.getInt(key, false) - 1, false);
-			PotionsController.sharedController.ActivatePotion(GearManager.Turret, this, new Dictionary<string, object>());
-			currentTurret.transform.parent = null;
-			currentTurret.GetComponent<TurretController>().StartTurret();
-			ChangeWeapon(currentWeaponBeforeTurret, false);
-			currentWeaponBeforeTurret = -1;
+			string str = (!Defs.isDaterRegim ? GearManager.Turret : GearManager.MusicBox);
+			Storager.setInt(str, Storager.getInt(str, false) - 1, false);
+			PotionsController.sharedController.ActivatePotion(GearManager.Turret, this, new Dictionary<string, object>(), false);
+			this.currentTurret.transform.parent = null;
+			this.currentTurret.GetComponent<TurretController>().StartTurret();
+			this.ChangeWeapon(this.currentWeaponBeforeTurret, false);
+			this.currentWeaponBeforeTurret = -1;
 		}
 	}
 
-	public void CancelTurret()
+	private void SaveKillRate()
 	{
-		ChangeWeapon(currentWeaponBeforeTurret, false);
-		currentWeaponBeforeTurret = -1;
-		if (Defs.isMulti)
+		try
 		{
-			if (Defs.isInet)
+			if (this.isMulti && !Defs.isHunger && !Defs.isCOOP && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None) && !Defs.IsSurvival)
 			{
-				PhotonNetwork.Destroy(currentTurret);
-				return;
-			}
-			Network.RemoveRPCs(currentTurret.GetComponent<NetworkView>().viewID);
-			Network.Destroy(currentTurret);
-		}
-		else
-		{
-			UnityEngine.Object.Destroy(currentTurret);
-		}
-	}
-
-	public void SendLike(Player_move_c whomMoveC)
-	{
-		if (whomMoveC != null)
-		{
-			whomMoveC.SendDaterChat(mySkinName.NickName, "Key_1803", whomMoveC.mySkinName.NickName);
-		}
-		if (Defs.isInet)
-		{
-			photonView.RPC("LikeRPC", PhotonTargets.All, photonView.ownerId, whomMoveC.photonView.ownerId);
-		}
-		else
-		{
-			GetComponent<NetworkView>().RPC("LikeRPCLocal", RPCMode.All, GetComponent<NetworkView>().viewID, whomMoveC.GetComponent<NetworkView>().viewID);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void LikeRPC(int idWho, int idWhom)
-	{
-		Player_move_c player_move_c = null;
-		Player_move_c player_move_c2 = null;
-		for (int i = 0; i < Initializer.players.Count; i++)
-		{
-			Player_move_c player_move_c3 = Initializer.players[i];
-			if (idWho == player_move_c3.photonView.ownerId)
-			{
-				player_move_c = player_move_c3;
-			}
-			if (idWhom == player_move_c3.photonView.ownerId)
-			{
-				player_move_c2 = player_move_c3;
+				Action<Dictionary<string, int>, Dictionary<string, Dictionary<int, int>>> action = (Dictionary<string, int> battleDict, Dictionary<string, Dictionary<int, int>> dictToDisk) => {
+					foreach (KeyValuePair<string, int> keyValuePair in battleDict)
+					{
+						if (!dictToDisk.ContainsKey(keyValuePair.Key))
+						{
+							dictToDisk.Add(keyValuePair.Key, new Dictionary<int, int>()
+							{
+								{ this.tierForKilledRate, keyValuePair.Value }
+							});
+						}
+						else
+						{
+							Dictionary<int, int> item = dictToDisk[keyValuePair.Key];
+							if (!item.ContainsKey(this.tierForKilledRate))
+							{
+								item.Add(this.tierForKilledRate, keyValuePair.Value);
+							}
+							else
+							{
+								Dictionary<int, int> nums = item;
+								Dictionary<int, int> nums1 = nums;
+								int num = this.tierForKilledRate;
+								nums[num] = nums1[num] + keyValuePair.Value;
+							}
+						}
+					}
+				};
+				action(this.weKillForKillRate, KillRateStatisticsManager.WeKillOld);
+				action(this.weWereKilledForKillRate, KillRateStatisticsManager.WeWereKilledOld);
+				Dictionary<string, object> strs = new Dictionary<string, object>()
+				{
+					{ "version", GlobalGameController.AppVersion },
+					{ "wekill", KillRateStatisticsManager.WeKillOld },
+					{ "wewerekilled", KillRateStatisticsManager.WeWereKilledOld }
+				};
+				Storager.setString("KillRateKeyStatistics", Json.Serialize(strs), false);
 			}
 		}
-		if (player_move_c != null && player_move_c2 != null)
+		catch (Exception exception)
 		{
-			Like(player_move_c, player_move_c2);
+			UnityEngine.Debug.LogError(string.Concat("Exception in save kill rate statistics: ", exception));
 		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void LikeRPCLocal(NetworkViewID idWho, NetworkViewID idWhom)
-	{
-		Player_move_c player_move_c = null;
-		Player_move_c player_move_c2 = null;
-		for (int i = 0; i < Initializer.players.Count; i++)
-		{
-			Player_move_c player_move_c3 = Initializer.players[i];
-			if (idWho.Equals(player_move_c3.GetComponent<NetworkView>().viewID))
-			{
-				player_move_c = player_move_c3;
-			}
-			if (idWhom.Equals(player_move_c3.GetComponent<NetworkView>().viewID))
-			{
-				player_move_c2 = player_move_c3;
-			}
-		}
-		if (player_move_c != null && player_move_c2 != null)
-		{
-			Like(player_move_c, player_move_c2);
-		}
-	}
-
-	private void Like(Player_move_c whoMoveC, Player_move_c whomMoveC)
-	{
-		if (whomMoveC.Equals(WeaponManager.sharedManager.myPlayerMoveC))
-		{
-			countKills++;
-			GlobalGameController.CountKills = countKills;
-			WeaponManager.sharedManager.myNetworkStartTable.CountKills = countKills;
-			WeaponManager.sharedManager.myNetworkStartTable.SynhCountKills();
-			ProfileController.OnGetLike();
-		}
-	}
-
-	private int GetNumShootInDouble()
-	{
-		numShootInDoubleShot++;
-		if (numShootInDoubleShot == 3)
-		{
-			numShootInDoubleShot = 1;
-		}
-		return numShootInDoubleShot;
-	}
-
-	[RPC]
-	[PunRPC]
-	private void SyncTurretUpgrade(int turretUpgrade)
-	{
-		this.turretUpgrade = turretUpgrade;
-	}
-
-	private void _HitPlayer(GameObject plr, bool isHeadShot, float sqrDistance)
-	{
-		WeaponSounds weaponSounds = ((!isMechActive) ? _weaponManager.currentWeaponSounds : mechWeaponSounds);
-		Player_move_c playerMoveC = plr.GetComponent<SkinName>().playerMoveC;
-		float num = 1f;
-		if (isHeadShot)
-		{
-			float num2 = UnityEngine.Random.Range(0f, 1f);
-			isHeadShot = num2 >= playerMoveC._chanceToIgnoreHeadshot;
-		}
-		if (isHeadShot)
-		{
-			num = 2f;
-			if (!isMechActive)
-			{
-				num += EffectsController.AddingForHeadshot(weaponSounds.categoryNabor - 1);
-			}
-		}
-		if ((!isMulti || isCOOP || isCompany || Defs.isFlag || Defs.isCapturePoints) && ((!isCompany && !Defs.isFlag && !Defs.isCapturePoints) || myCommand == playerMoveC.myCommand))
-		{
-			return;
-		}
-		if (Defs.isDaterRegim && weaponSounds.isDaterWeapon)
-		{
-			playerMoveC.SendDaterChat(mySkinName.NickName, weaponSounds.daterMessage, playerMoveC.mySkinName.NickName);
-			return;
-		}
-		TypeKills typeKills = (isMechActive ? TypeKills.mech : (isHeadShot ? TypeKills.headshot : (isZooming ? TypeKills.zoomingshot : TypeKills.none)));
-		float num3 = 0f;
-		if (weaponSounds.isRoundMelee)
-		{
-			float num4 = ((ExpController.Instance != null && ExpController.Instance.OurTier < weaponSounds.DamageByTier.Length) ? weaponSounds.DamageByTier[TierOrRoomTier(ExpController.Instance.OurTier)] : ((weaponSounds.DamageByTier.Length <= 0) ? 0f : weaponSounds.DamageByTier[0]));
-			float num5 = num4 * 0.7f;
-			float num6 = num4;
-			num3 = (num5 + (num6 - num5) * (1f - sqrDistance / (weaponSounds.radiusRoundMelee * weaponSounds.radiusRoundMelee))) * (1f + koofDamageWeaponFromPotoins + ((!isMechActive) ? EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1) : 0f));
-		}
-		else
-		{
-			num3 = GetMultyDamage() * num * (1f + koofDamageWeaponFromPotoins + ((!isMechActive) ? EffectsController.DamageModifsByCats(weaponSounds.categoryNabor - 1) : 0f));
-		}
-		if (weaponSounds.isCharging)
-		{
-			num3 *= chargeValue;
-		}
-		myScoreController.AddScoreOnEvent(playerMoveC.isMechActive ? ((!isHeadShot) ? PlayerEventScoreController.ScoreEvent.damageMechBody : PlayerEventScoreController.ScoreEvent.damageMechHead) : (isHeadShot ? PlayerEventScoreController.ScoreEvent.damageHead : PlayerEventScoreController.ScoreEvent.damageBody), num3);
-		if (!isInet)
-		{
-			playerMoveC.MinusLive(myPlayerIDLocal, num3, typeKills, (int)weaponSounds.typeDead, (!isMechActive) ? weaponSounds.gameObject.name.Replace("(Clone)", string.Empty) : "Chat_Mech");
-		}
-		else
-		{
-			playerMoveC.MinusLive(myPlayerID, num3, typeKills, (int)weaponSounds.typeDead, (!isMechActive) ? weaponSounds.gameObject.name.Replace("(Clone)", string.Empty) : "Chat_Mech");
-		}
-	}
-
-	private void InitPurchaseActions()
-	{
-		_actionsForPurchasedItems.Add("bigammopack", ProvideAmmo);
-		_actionsForPurchasedItems.Add("Fullhealth", ProvideHealth);
-		Dictionary<string, Action<string>> actionsForPurchasedItems = _actionsForPurchasedItems;
-		string elixirID = StoreKitEventListener.elixirID;
-		if (_003C_003Ef__am_0024cache14D == null)
-		{
-			_003C_003Ef__am_0024cache14D = _003CInitPurchaseActions_003Em__208;
-		}
-		actionsForPurchasedItems.Add(elixirID, _003C_003Ef__am_0024cache14D);
-		Dictionary<string, Action<string>> actionsForPurchasedItems2 = _actionsForPurchasedItems;
-		string armor = StoreKitEventListener.armor;
-		if (_003C_003Ef__am_0024cache14E == null)
-		{
-			_003C_003Ef__am_0024cache14E = _003CInitPurchaseActions_003Em__209;
-		}
-		actionsForPurchasedItems2.Add(armor, _003C_003Ef__am_0024cache14E);
-		Dictionary<string, Action<string>> actionsForPurchasedItems3 = _actionsForPurchasedItems;
-		string armor2 = StoreKitEventListener.armor2;
-		if (_003C_003Ef__am_0024cache14F == null)
-		{
-			_003C_003Ef__am_0024cache14F = _003CInitPurchaseActions_003Em__20A;
-		}
-		actionsForPurchasedItems3.Add(armor2, _003C_003Ef__am_0024cache14F);
-		Dictionary<string, Action<string>> actionsForPurchasedItems4 = _actionsForPurchasedItems;
-		string armor3 = StoreKitEventListener.armor3;
-		if (_003C_003Ef__am_0024cache150 == null)
-		{
-			_003C_003Ef__am_0024cache150 = _003CInitPurchaseActions_003Em__20B;
-		}
-		actionsForPurchasedItems4.Add(armor3, _003C_003Ef__am_0024cache150);
-		string[] potions = PotionsController.potions;
-		foreach (string key in potions)
-		{
-			_actionsForPurchasedItems.Add(key, providePotion);
-		}
-		string[] canBuyWeaponTags = ItemDb.GetCanBuyWeaponTags(true);
-		for (int j = 0; j < canBuyWeaponTags.Length; j++)
-		{
-			string shopIdByTag = ItemDb.GetShopIdByTag(canBuyWeaponTags[j]);
-			_actionsForPurchasedItems.Add(shopIdByTag, AddWeaponToInv);
-		}
-	}
-
-	private void AddWeaponToInv(string shopId)
-	{
-		string tagByShopId = ItemDb.GetTagByShopId(shopId);
-		ItemRecord byTag = ItemDb.GetByTag(tagByShopId);
-		if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None) && byTag != null && !byTag.TemporaryGun)
-		{
-			SaveWeaponInPrefs(tagByShopId);
-		}
-		GameObject prefabByTag = _weaponManager.GetPrefabByTag(tagByShopId);
-		AddWeapon(prefabByTag);
 	}
 
 	public static void SaveWeaponInPrefs(string weaponTag, int timeForRentIndex = 0)
@@ -8764,8 +5897,8 @@ public sealed class Player_move_c : MonoBehaviour
 		string storageIdByTag = ItemDb.GetStorageIdByTag(weaponTag);
 		if (storageIdByTag == null)
 		{
-			int tm = TempItemsController.RentTimeForIndex(timeForRentIndex);
-			TempItemsController.sharedController.AddTemporaryItem(weaponTag, tm);
+			int num = TempItemsController.RentTimeForIndex(timeForRentIndex);
+			TempItemsController.sharedController.AddTemporaryItem(weaponTag, num);
 			return;
 		}
 		Storager.setInt(storageIdByTag, 1, true);
@@ -8775,118 +5908,2561 @@ public sealed class Player_move_c : MonoBehaviour
 		}
 	}
 
-	[CompilerGenerated]
-	private void _003CSaveKillRate_003Em__1FD(Dictionary<string, int> battleDict, Dictionary<string, Dictionary<int, int>> dictToDisk)
+	[PunRPC]
+	private void SendBuffParameters(float damage, float protection)
 	{
-		foreach (KeyValuePair<string, int> item in battleDict)
+		if (!this.isMine)
 		{
-			if (dictToDisk.ContainsKey(item.Key))
+			this.SetBuffParameters(damage, protection);
+		}
+	}
+
+	public void SendChat(string text, bool clanMode, string iconName)
+	{
+		if (text.Equals("-=ATTACK!=-"))
+		{
+			text = LocalizationStore.Get("Key_1086");
+		}
+		else if (text.Equals("-=HELP!=-"))
+		{
+			text = LocalizationStore.Get("Key_1087");
+		}
+		else if (text.Equals("-=OK!=-"))
+		{
+			text = LocalizationStore.Get("Key_1088");
+		}
+		else if (!text.Equals("-=NO!=-"))
+		{
+			text = FilterBadWorld.FilterString(text);
+		}
+		else
+		{
+			text = LocalizationStore.Get("Key_1089");
+		}
+		if (!string.IsNullOrEmpty(text) || !string.IsNullOrEmpty(iconName))
+		{
+			if (this.isInet)
 			{
-				Dictionary<int, int> dictionary = dictToDisk[item.Key];
-				if (dictionary.ContainsKey(tierForKilledRate))
+				this.photonView.RPC("SendChatMessageWithIcon", PhotonTargets.All, new object[] { string.Concat("< ", this._weaponManager.myNetworkStartTable.NamePlayer, " > ", text), clanMode, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName, iconName });
+			}
+			else
+			{
+				this._networkView.RPC("SendChatMessageWithIcon", RPCMode.All, new object[] { string.Concat("< ", this._weaponManager.myNetworkStartTable.NamePlayer, " > ", text), clanMode, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName, iconName });
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SendChatMessage(string text, bool _clanMode, string _clanLogo, string _ClanID, string _clanName)
+	{
+		this.SendChatMessageWithIcon(text, _clanMode, _clanLogo, _ClanID, _clanName, string.Empty);
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SendChatMessageWithIcon(string text, bool _clanMode, string _clanLogo, string _ClanID, string _clanName, string _iconName)
+	{
+		if (_clanMode && !_ClanID.Equals(FriendsController.sharedController.ClanID))
+		{
+			return;
+		}
+		if (this._weaponManager == null)
+		{
+			return;
+		}
+		if (this._weaponManager.myPlayerMoveC == null)
+		{
+			return;
+		}
+		if (this.isInet)
+		{
+			this._weaponManager.myPlayerMoveC.AddMessage(text, Time.time, this.mySkinName.photonView.viewID, this.myPlayerTransform.GetComponent<NetworkView>().viewID, this.myCommand, _clanLogo, _iconName);
+		}
+		else
+		{
+			this._weaponManager.myPlayerMoveC.AddMessage(text, Time.time, -1, this.myPlayerTransform.GetComponent<NetworkView>().viewID, 0, _clanLogo, _iconName);
+		}
+	}
+
+	public void SendDamageFromEnv(float damage, Vector3 pos)
+	{
+		if (this.isInet)
+		{
+			this.photonView.RPC("GetDamageFromEnvRPC", PhotonTargets.All, new object[] { damage, pos });
+		}
+		else
+		{
+			base.GetComponent<NetworkView>().RPC("GetDamageFromEnvRPC", RPCMode.All, new object[] { damage, pos });
+		}
+	}
+
+	public void SendDaterChat(string nick1, string text, string nick2)
+	{
+		if (text != string.Empty)
+		{
+			if (this.isInet)
+			{
+				this.photonView.RPC("SendDaterChatRPC", PhotonTargets.All, new object[] { nick1, text, nick2, false, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName });
+			}
+			else
+			{
+				this._networkView.RPC("SendDaterChatRPC", RPCMode.All, new object[] { nick1, text, nick2, false, FriendsController.sharedController.clanLogo, FriendsController.sharedController.ClanID, FriendsController.sharedController.clanName });
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SendDaterChatRPC(string nick1, string text, string nick2, bool _clanMode, string _clanLogo, string _ClanID, string _clanName)
+	{
+		text = string.Concat(new string[] { "< ", nick1, "[-] > ", LocalizationStore.Get(text), " < ", nick2, "[-] >" });
+		this.SendChatMessage(text, _clanMode, _clanLogo, _ClanID, _clanName);
+	}
+
+	public void SendHouseKeeperEvent()
+	{
+		this.countHouseKeeperEvent++;
+		if (this.countHouseKeeperEvent == 1)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.houseKeeperPoint, 1f);
+		}
+		if (this.countHouseKeeperEvent == 3)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.defenderPoint, 1f);
+		}
+		if (this.countHouseKeeperEvent == 5)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.guardianPoint, 1f);
+		}
+		if (this.countHouseKeeperEvent == 10)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.oneManArmyPoint, 1f);
+		}
+	}
+
+	public void sendImDeath(string _name)
+	{
+		if (this.isInet)
+		{
+			this.photonView.RPC("imDeath", PhotonTargets.All, new object[] { _name });
+		}
+		else
+		{
+			base.GetComponent<NetworkView>().RPC("imDeath", RPCMode.All, new object[] { _name });
+		}
+		this._killerInfo.isSuicide = true;
+	}
+
+	public void SendImKilled()
+	{
+		if (Defs.isInet)
+		{
+			this.photonView.RPC("ImKilled", PhotonTargets.All, new object[] { this.myPlayerTransform.position, this.myPlayerTransform.rotation, 0 });
+			this.SendSynhHealth(false, null);
+		}
+	}
+
+	public void SendLike(Player_move_c whomMoveC)
+	{
+		if (whomMoveC != null)
+		{
+			whomMoveC.SendDaterChat(this.mySkinName.NickName, "Key_1803", whomMoveC.mySkinName.NickName);
+		}
+		if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("LikeRPCLocal", RPCMode.All, new object[] { base.GetComponent<NetworkView>().viewID, whomMoveC.GetComponent<NetworkView>().viewID });
+		}
+		else
+		{
+			this.photonView.RPC("LikeRPC", PhotonTargets.All, new object[] { this.photonView.ownerId, whomMoveC.photonView.ownerId });
+		}
+	}
+
+	public void SendMySpotEvent()
+	{
+		this.countMySpotEvent++;
+		if (this.countMySpotEvent == 1)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.mySpotPoint, 1f);
+		}
+		if (this.countMySpotEvent == 2)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.unstoppablePoint, 1f);
+		}
+		if (this.countMySpotEvent >= 3)
+		{
+			this.myScoreController.AddScoreOnEvent(PlayerEventScoreController.ScoreEvent.monopolyPoint, 1f);
+		}
+	}
+
+	public void SendStartFlashMine()
+	{
+		if (this.isInet)
+		{
+			this.photonView.RPC("StartFlashRPC", PhotonTargets.All, new object[0]);
+		}
+		else
+		{
+			this._networkView.RPC("StartFlashRPC", RPCMode.All, new object[0]);
+		}
+	}
+
+	public void SendSynhHealth(bool isUp, PhotonPlayer player = null)
+	{
+		if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("SynhHealthRPC", RPCMode.All, new object[] { this.CurHealth + this.curArmor, this.curArmor, isUp });
+		}
+		else if (player != null)
+		{
+			this.photonView.RPC("SynhHealthRPC", player, new object[] { this.CurHealth + this.curArmor, this.curArmor, isUp });
+		}
+		else
+		{
+			this.photonView.RPC("SynhHealthRPC", PhotonTargets.All, new object[] { this.CurHealth + this.curArmor, this.curArmor, isUp });
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SendSystemMessegeFromFlagAddScoreRPC(bool isCommandBlue, string nick)
+	{
+		if (WeaponManager.sharedManager.myPlayer != null)
+		{
+			if (Defs.isSoundFX)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot((isCommandBlue != (this._weaponManager.myPlayerMoveC.myCommand == 1) ? this.flagScoreEnemyClip : this.flagScoreMyCommandClip));
+			}
+			this.isCaptureFlag = false;
+			WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(nick, 5);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SendSystemMessegeFromFlagCaptureRPC(bool isBlueFlag, string nick)
+	{
+		if (WeaponManager.sharedManager.myPlayer != null)
+		{
+			if (WeaponManager.sharedManager.myPlayerMoveC.myCommand == 1 != isBlueFlag)
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1002"));
+				if (Defs.isSoundFX)
 				{
-					Dictionary<int, int> dictionary2;
-					Dictionary<int, int> dictionary3 = (dictionary2 = dictionary);
-					int key;
-					int key2 = (key = tierForKilledRate);
-					key = dictionary2[key];
-					dictionary3[key2] = key + item.Value;
-				}
-				else
-				{
-					dictionary.Add(tierForKilledRate, item.Value);
+					base.GetComponent<AudioSource>().PlayOneShot(this.flagGetClip);
 				}
 			}
 			else
 			{
-				dictToDisk.Add(item.Key, new Dictionary<int, int> { { tierForKilledRate, item.Value } });
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1001")));
+				if (Defs.isSoundFX)
+				{
+					base.GetComponent<AudioSource>().PlayOneShot(this.flagLostClip);
+				}
 			}
 		}
 	}
 
-	[CompilerGenerated]
-	private bool _003CUpdate_003Em__1FF()
+	[PunRPC]
+	[RPC]
+	public void SendSystemMessegeFromFlagDroppedRPC(bool isBlueFlag, string nick)
 	{
-		return _pauser != null && _pauser.paused;
-	}
-
-	[CompilerGenerated]
-	private static void _003CQuitGame_003Em__200(bool success)
-	{
-		Debug.Log("Player_move_c.QuitGame(): " + ((!success) ? "Failed to report score." : "Reported score successfully."));
-	}
-
-	[CompilerGenerated]
-	private void _003CUpdateHealth_003Em__201()
-	{
-		myPlayerTransform.localPosition = new Vector3(0f, -1000f, 0f);
-		if (isNeedShowRespawnWindow && !Defs.inRespawnWindow)
+		if (WeaponManager.sharedManager.myPlayer != null)
 		{
-			SetMapCameraActive(true);
-			StartCoroutine(KillCam());
+			if ((!isBlueFlag || WeaponManager.sharedManager.myPlayerMoveC.myCommand != 1) && (isBlueFlag || WeaponManager.sharedManager.myPlayerMoveC.myCommand != 2))
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1799")));
+			}
+			else
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_1798")));
+			}
+		}
+	}
+
+	public void SendSystemMessegeFromFlagReturned(bool isBlueFlag)
+	{
+		this.photonView.RPC("SendSystemMessegeFromFlagReturnedRPC", PhotonTargets.All, new object[] { isBlueFlag });
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SendSystemMessegeFromFlagReturnedRPC(bool isBlueFlag)
+	{
+		if (WeaponManager.sharedManager.myPlayer != null)
+		{
+			if ((!isBlueFlag || WeaponManager.sharedManager.myPlayerMoveC.myCommand != 1) && (isBlueFlag || WeaponManager.sharedManager.myPlayerMoveC.myCommand != 2))
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1801"));
+			}
+			else
+			{
+				WeaponManager.sharedManager.myPlayerMoveC.AddSystemMessage(LocalizationStore.Get("Key_1800"));
+			}
+		}
+	}
+
+	private void SetBuffParameters(float damage, float protection)
+	{
+		this.damageBuff = Mathf.Clamp(damage, 0.01f, 10f);
+		this.protectionBuff = Mathf.Clamp(protection, 0.01f, 10f);
+		UnityEngine.Debug.Log(string.Format("<color=green>{0}Damage: {1}, Protection: {2}</color>", (!this.isMine ? string.Concat("(", this.mySkinName.NickName, ") ") : "(you) "), this.damageBuff, this.protectionBuff));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetCanReceiveSwipes()
+	{
+		Player_move_c.u003cSetCanReceiveSwipesu003ec__IteratorDE variable = null;
+		return variable;
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void SetGrenateFireEnabled()
+	{
+		Defs.isGrenateFireEnable = true;
+	}
+
+	public void SetIDMyTable(string _id)
+	{
+		this.myTableId = _id;
+		base.Invoke("SetIDMyTableInvoke", 0.1f);
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void SetIDMyTableInvoke()
+	{
+		base.GetComponent<NetworkView>().RPC("SetIDMyTableRPC", RPCMode.AllBuffered, new object[] { this.myTableId });
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SetIDMyTableRPC(string _id)
+	{
+		this.myTableId = _id;
+		GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("NetworkTable");
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
+		{
+			GameObject gameObject = gameObjectArray[i];
+			if (gameObject.GetComponent<NetworkView>().viewID.ToString().Equals(_id))
+			{
+				this.myTable = gameObject;
+				this.setMyTamble(this.myTable);
+			}
+		}
+	}
+
+	private void SetInApp()
+	{
+		this.isInappWinOpen = !this.isInappWinOpen;
+		if (!this.isInappWinOpen)
+		{
+			if (InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.activeSelf)
+			{
+				InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(false);
+				InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive((TrainingController.TrainingCompleted ? true : TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None));
+			}
+			if (InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.activeSelf)
+			{
+				InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(false);
+				InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(true);
+			}
+			ActivityIndicator.IsActiveIndicator = false;
+			if (this._pauser == null)
+			{
+				UnityEngine.Debug.LogWarning("SetInApp(): _pauser is null.");
+			}
+			else if (!this._pauser.paused)
+			{
+				Time.timeScale = 1f;
+			}
 		}
 		else
 		{
-			Defs.inRespawnWindow = false;
-			RespawnPlayer();
+			if (StoreKitEventListener.restoreInProcess)
+			{
+				ActivityIndicator.IsActiveIndicator = true;
+			}
+			if (!this.isMulti)
+			{
+				Time.timeScale = 0f;
+			}
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CUpdateHealth_003Em__202(bool success)
+	public void setInString(string nick)
 	{
-		Debug.Log("Player_move_c.Update(): " + ((!success) ? "Failed to report score." : "Reported score successfully."));
+		if (this._weaponManager == null)
+		{
+			return;
+		}
+		if (this._weaponManager.myPlayer == null)
+		{
+			return;
+		}
+		this._weaponManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_0995")));
 	}
 
-	[CompilerGenerated]
-	private bool _003CRespawnPlayer_003Em__203()
+	public void SetInvisible(bool _isInvisible)
 	{
-		return _pauser != null && _pauser.paused;
+		if (!this.isMulti)
+		{
+			this.SetInvisibleRPC(_isInvisible);
+		}
+		else if (!this.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("SetInvisibleRPC", RPCMode.All, new object[] { _isInvisible });
+		}
+		else if (this.photonView != null)
+		{
+			this.photonView.RPC("SetInvisibleRPC", PhotonTargets.All, new object[] { _isInvisible });
+		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CCheckRookieKillerAchievement_003Em__204(bool success)
+	[PunRPC]
+	[RPC]
+	private void SetInvisibleRPC(bool _isInvisible)
 	{
-		Debug.Log("Achievement Rookie Killer incremented: " + success);
+		if (Defs.isDaterRegim)
+		{
+			if (this.isBigHead == _isInvisible)
+			{
+				return;
+			}
+			this.isBigHead = _isInvisible;
+			if (Defs.isSoundFX && _isInvisible)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this.invisibleActivSound);
+			}
+			if (this.isMulti && !this.isMine)
+			{
+				if (!_isInvisible)
+				{
+					this.MechHeadTransform.localScale = Vector3.one;
+					this.PlayerHeadTransform.localScale = Vector3.one;
+					if (!this.isBearActive)
+					{
+						this.nickLabel.transform.localPosition = Vector3.up * 1.08f;
+					}
+					else
+					{
+						this.nickLabel.transform.localPosition = Vector3.up * 1.54f;
+					}
+				}
+				else
+				{
+					this.MechHeadTransform.localScale = Vector3.one * 2f;
+					this.PlayerHeadTransform.localScale = Vector3.one * 2f;
+					if (!this.isBearActive)
+					{
+						this.nickLabel.transform.localPosition = 1.678f * Vector3.up;
+					}
+					else
+					{
+						this.nickLabel.transform.localPosition = 2.549f * Vector3.up;
+					}
+				}
+			}
+		}
+		else
+		{
+			if (this.isInvisible == _isInvisible)
+			{
+				return;
+			}
+			this.isInvisible = _isInvisible;
+			if (Defs.isSoundFX && _isInvisible)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this.invisibleActivSound);
+			}
+			if (!this.isMulti || this.isMine)
+			{
+				this.SetInVisibleShaders(this.isInvisible);
+			}
+			else
+			{
+				this.SetNicklabelVisible();
+				if (this.isInvisible)
+				{
+					this.invisibleParticle.SetActive(true);
+					this.mySkinName.FPSplayerObject.SetActive(false);
+					this.mechPoint.SetActive(false);
+				}
+				else
+				{
+					this.invisibleParticle.SetActive(false);
+					if (!this.isMechActive)
+					{
+						this.mySkinName.FPSplayerObject.SetActive(true);
+					}
+					else
+					{
+						this.mechPoint.SetActive(true);
+					}
+				}
+			}
+		}
 	}
 
-	[CompilerGenerated]
-	private int _003CGetHitsFromRay_003Em__205(RaycastHit hit1, RaycastHit hit2)
+	private void SetInVisibleShaders(bool _isInvisible)
 	{
-		float num = (hit1.point - GunFlash.position).sqrMagnitude - (hit2.point - GunFlash.position).sqrMagnitude;
-		return (num > 0f) ? 1 : ((num != 0f) ? (-1) : 0);
+		if (this.isGrenadePress)
+		{
+			return;
+		}
+		if (!_isInvisible)
+		{
+			if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab != null)
+			{
+				WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
+				if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() != null)
+				{
+					for (int i = 0; i < (int)WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length; i++)
+					{
+						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].shader = this.oldShadersInInvisible[i + 1];
+						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[i].color = this.oldColorInInvisible[i + 1];
+					}
+				}
+			}
+			this._mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
+			this.mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 1f));
+		}
+		else
+		{
+			if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab != null)
+			{
+				this.oldShadersInInvisible = new Shader[(int)WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().materials.Length + (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() == null ? 0 : (int)WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length)];
+				this.oldColorInInvisible = new Color[(int)this.oldShadersInInvisible.Length];
+				this.oldShadersInInvisible[0] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader;
+				WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader = Shader.Find("Mobile/Diffuse-Color");
+				WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+				this.oldColorInInvisible[0] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.color;
+				if (WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>() != null)
+				{
+					for (int j = 0; j < (int)WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials.Length; j++)
+					{
+						this.oldShadersInInvisible[j + 1] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].shader;
+						this.oldColorInInvisible[j + 1] = WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].color;
+						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].shader = Shader.Find("Mobile/Diffuse-Color");
+						WeaponManager.sharedManager.currentWeaponSounds.bonusPrefab.GetComponent<Renderer>().materials[j].SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+					}
+				}
+			}
+			this._mechMaterial.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+			this.mechGunRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, 0.5f));
+		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CRunOnGroundEffect_003Em__206(Transform t)
+	[PunRPC]
+	[RPC]
+	private void setIp(string _ip)
 	{
-		t.gameObject.SetActive(false);
+		this.myIp = _ip;
 	}
 
-	[CompilerGenerated]
-	private static void _003CRunOnGroundEffect_003Em__207(Transform t)
+	[Obfuscation(Exclude=true)]
+	private void setisDeadFrameFalse()
 	{
-		t.gameObject.SetActive(true);
+		this.isDeadFrame = false;
 	}
 
-	[CompilerGenerated]
-	private static void _003CInitPurchaseActions_003Em__208(string inShopId)
+	public void SetJetpackEnabled(bool _isEnabled)
 	{
-		Defs.NumberOfElixirs++;
+		Defs.isJetpackEnabled = _isEnabled;
+		if (Defs.isSoundFX && _isEnabled)
+		{
+			AudioSource component = base.GetComponent<AudioSource>();
+			if (component != null)
+			{
+				component.PlayOneShot(this.jetpackActivSound);
+			}
+		}
+		if (Defs.isMulti)
+		{
+			if (Defs.isInet)
+			{
+				if (this.photonView != null)
+				{
+					this.photonView.RPC("SetJetpackEnabledRPC", PhotonTargets.Others, new object[] { _isEnabled });
+				}
+			}
+			else if (this._networkView != null)
+			{
+				this._networkView.RPC("SetJetpackEnabledRPC", RPCMode.Others, new object[] { _isEnabled });
+			}
+		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CInitPurchaseActions_003Em__209(string inShopId)
+	[PunRPC]
+	[RPC]
+	public void SetJetpackEnabledRPC(bool _isEnabled)
 	{
+		if (Defs.isSoundFX && _isEnabled)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this.jetpackActivSound);
+		}
+		if (!Defs.isDaterRegim)
+		{
+			this.jetPackPoint.SetActive(_isEnabled);
+			this.jetPackPointMech.SetActive(_isEnabled);
+		}
+		else
+		{
+			this.wingsPoint.SetActive(_isEnabled);
+			this.wingsPointBear.SetActive(_isEnabled);
+		}
+		if (!_isEnabled)
+		{
+			for (int i = 0; i < (int)this.jetPackParticle.Length; i++)
+			{
+				this.jetPackParticle[i].enableEmission = _isEnabled;
+			}
+		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CInitPurchaseActions_003Em__20A(string inShopId)
+	public void SetJetpackParticleEnabled(bool _isEnabled)
 	{
+		if (_isEnabled)
+		{
+			if (Defs.isDaterRegim)
+			{
+				this.isPlayerFlying = true;
+			}
+			if (ButtonClickSound.Instance != null && Defs.isSoundFX && !Defs.isDaterRegim)
+			{
+				this.jetPackSound.SetActive(true);
+			}
+		}
+		else if (!Defs.isDaterRegim)
+		{
+			this.jetPackSound.SetActive(false);
+		}
+		else
+		{
+			this.isPlayerFlying = false;
+		}
+		if (Defs.isMulti)
+		{
+			if (!Defs.isInet)
+			{
+				this._networkView.RPC("SetJetpackParticleEnabledRPC", RPCMode.Others, new object[] { _isEnabled });
+			}
+			else
+			{
+				this.photonView.RPC("SetJetpackParticleEnabledRPC", PhotonTargets.Others, new object[] { _isEnabled });
+			}
+		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CInitPurchaseActions_003Em__20B(string inShopId)
+	[PunRPC]
+	[RPC]
+	public void SetJetpackParticleEnabledRPC(bool _isEnabled)
 	{
+		if (_isEnabled)
+		{
+			if (Defs.isDaterRegim)
+			{
+				this.isPlayerFlying = true;
+			}
+			if (ButtonClickSound.Instance != null && Defs.isSoundFX && !Defs.isDaterRegim)
+			{
+				this.jetPackSound.SetActive(true);
+			}
+		}
+		else if (!Defs.isDaterRegim)
+		{
+			this.jetPackSound.SetActive(false);
+		}
+		else
+		{
+			this.isPlayerFlying = false;
+		}
+		for (int i = 0; i < (int)this.jetPackParticle.Length; i++)
+		{
+			this.jetPackParticle[i].enableEmission = _isEnabled;
+		}
+	}
+
+	public static void SetLayerRecursively(GameObject obj, int newLayer)
+	{
+		if (null == obj)
+		{
+			return;
+		}
+		obj.layer = newLayer;
+		int num = obj.transform.childCount;
+		Transform transforms = obj.transform;
+		for (int i = 0; i < num; i++)
+		{
+			Transform child = transforms.GetChild(i);
+			if (null != child)
+			{
+				Player_move_c.SetLayerRecursively(child.gameObject, newLayer);
+			}
+		}
+	}
+
+	private void SetMapCameraActive(bool active)
+	{
+		InGameGUI.sharedInGameGUI.SetInterfaceVisible(!active);
+		Camera component = Initializer.Instance.tc.GetComponent<Camera>();
+		Camera camera = this.myCamera;
+		component.gameObject.SetActive(active);
+		camera.gameObject.SetActive(!active);
+		NickLabelController.currentCamera = (!active ? camera : component);
+	}
+
+	private void SetMaterialForArms()
+	{
+		if (this.myCurrentWeaponSounds != null)
+		{
+			if (!this.isBearActive)
+			{
+				this.myCurrentWeaponSounds._innerPars.SetMaterialForArms(this._bodyMaterial);
+			}
+		}
+	}
+
+	public void setMyTamble(GameObject _myTable)
+	{
+		if (this.myTable == null || _myTable == null)
+		{
+			return;
+		}
+		NetworkStartTable component = this.myTable.GetComponent<NetworkStartTable>();
+		if (component == null)
+		{
+			return;
+		}
+		component.myPlayerMoveC = this;
+		this.myTable = _myTable;
+		this.myNetworkStartTable = this.myTable.GetComponent<NetworkStartTable>();
+		if (this.myNetworkStartTable == null)
+		{
+			return;
+		}
+		this.CurHealth = this.MaxHealth;
+		this.myCommand = this.myNetworkStartTable.myCommand;
+		if (Initializer.redPlayers.Contains(this) && this.myCommand == 1)
+		{
+			Initializer.redPlayers.Remove(this);
+		}
+		if (Initializer.bluePlayers.Contains(this) && this.myCommand == 2)
+		{
+			Initializer.bluePlayers.Remove(this);
+		}
+		if (this.myCommand == 1 && !Initializer.bluePlayers.Contains(this))
+		{
+			Initializer.bluePlayers.Add(this);
+		}
+		if (this.myCommand == 2 && !Initializer.redPlayers.Contains(this))
+		{
+			Initializer.redPlayers.Add(this);
+		}
+		this._skin = this.myNetworkStartTable.mySkin;
+		this.SetTextureForBodyPlayer(this._skin);
+		if (this.isMine)
+		{
+			if (FriendsController.useBuffSystem)
+			{
+				BuffSystem.instance.CheckForPlayerBuff();
+			}
+			else if (!KillRateCheck.instance.buffEnabled)
+			{
+				this.SetupBuffParameters(1f, 1f);
+			}
+			else
+			{
+				this.SetupBuffParameters(KillRateCheck.instance.damageBuff, KillRateCheck.instance.healthBuff);
+			}
+		}
+		if (Defs.isMulti && Defs.isInet && this.myNetworkStartTable.myRanks < 4)
+		{
+			BonusController.sharedController.lowLevelPlayers.Add(this.photonView.ownerId);
+		}
+	}
+
+	public void SetNicklabelVisible()
+	{
+		bool flag;
+		if (this.isMine)
+		{
+			return;
+		}
+		GameObject gameObject = this.nickLabel.gameObject;
+		if (!this.isInvisible)
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = ((ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture) && WeaponManager.sharedManager.myPlayerMoveC != null ? this.myCommand == WeaponManager.sharedManager.myPlayerMoveC.myCommand : false);
+		}
+		gameObject.SetActive(flag);
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SetNickName(string _nickName)
+	{
+		this.photonView = PhotonView.Get(this);
+		this.mySkinName.NickName = _nickName;
+		if (!this.isMine)
+		{
+			this.nickLabel.gameObject.SetActive(true);
+			this.nickLabel.text = _nickName;
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void SetNoKilled()
+	{
+		this.isKilled = false;
+		this.resetMultyKill();
+	}
+
+	public void setOutString(string nick)
+	{
+		if (this._weaponManager == null)
+		{
+			return;
+		}
+		if (this._weaponManager.myPlayer == null)
+		{
+			return;
+		}
+		this._weaponManager.myPlayerMoveC.AddSystemMessage(string.Format("{0} {1}", nick, LocalizationStore.Get("Key_0996")));
+	}
+
+	public void SetPause(bool showGUI = true)
+	{
+		this.ShotUnPressed(true);
+		JoystickController.rightJoystick.jumpPressed = false;
+		JoystickController.leftTouchPad.isJumpPressed = false;
+		JoystickController.rightJoystick.Reset();
+		if (this._pauser == null)
+		{
+			UnityEngine.Debug.LogWarning("SetPause(): _pauser is null.");
+			return;
+		}
+		this._pauser.paused = !this._pauser.paused;
+		if (this.myCurrentWeaponSounds != null)
+		{
+			this.myCurrentWeaponSounds.animationObject.SetActive(!this._pauser.paused);
+		}
+		if (!this._pauser.paused)
+		{
+			InGameGUI.sharedInGameGUI.turretPanel.SetActive(this.isActiveTurretPanelInPause);
+		}
+		else
+		{
+			this.isActiveTurretPanelInPause = InGameGUI.sharedInGameGUI.turretPanel.activeSelf;
+			InGameGUI.sharedInGameGUI.turretPanel.SetActive(false);
+		}
+		if (showGUI && this.inGameGUI != null && this.inGameGUI.pausePanel != null)
+		{
+			this.inGameGUI.pausePanel.SetActive(this._pauser.paused);
+			this.inGameGUI.fastShopPanel.SetActive(!this._pauser.paused);
+			if (ExperienceController.sharedController != null && ExpController.Instance != null)
+			{
+				ExperienceController.sharedController.isShowRanks = this._pauser.paused;
+				ExpController.Instance.InterfaceEnabled = this._pauser.paused;
+			}
+		}
+		if (!this._pauser.paused)
+		{
+			Time.timeScale = 1f;
+			TrainingController.isPause = false;
+		}
+		else if (!this.isMulti)
+		{
+			Time.timeScale = 0f;
+			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+			{
+				TrainingController.isPause = true;
+			}
+		}
+		if (!this._pauser.paused)
+		{
+			this.AddButtonHandlers();
+		}
+		else
+		{
+			this.RemoveButtonHandelrs();
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void SetStealthModifier()
+	{
+		!(this._player != null);
+	}
+
+	public void SetTextureForActiveMesh(Texture needTx)
+	{
+		this.SetMaterialForArms();
+		if (this.mainDamageMaterial != null)
+		{
+			this.mainDamageMaterial.mainTexture = needTx;
+		}
+	}
+
+	public void SetTextureForBodyPlayer(Texture needTx)
+	{
+		this.SetMaterialForArms();
+		if (this._bodyMaterial != null)
+		{
+			this._bodyMaterial.mainTexture = needTx;
+		}
+	}
+
+	public static void SetTextureRecursivelyFrom(GameObject obj, Texture txt, GameObject[] stopObjs)
+	{
+		Transform transforms = obj.transform;
+		int num = obj.transform.childCount;
+		for (int i = 0; i < num; i++)
+		{
+			Transform child = transforms.GetChild(i);
+			bool flag = false;
+			int num1 = 0;
+			while (num1 < (int)stopObjs.Length)
+			{
+				GameObject gameObject = stopObjs[num1];
+				if (!child.gameObject.Equals(gameObject))
+				{
+					num1++;
+				}
+				else
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				if (child.gameObject.GetComponent<Renderer>() && child.gameObject.GetComponent<Renderer>().material)
+				{
+					child.gameObject.GetComponent<Renderer>().material.mainTexture = txt;
+				}
+				flag = false;
+				int num2 = 0;
+				while (num2 < (int)stopObjs.Length)
+				{
+					GameObject gameObject1 = stopObjs[num2];
+					if (!child.gameObject.Equals(gameObject1))
+					{
+						num2++;
+					}
+					else
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
+				{
+					Player_move_c.SetTextureRecursivelyFrom(child.gameObject, txt, stopObjs);
+				}
+			}
+		}
+	}
+
+	public void SetupBuffParameters(float damage, float protection)
+	{
+		bool flag = (this.damageBuff != damage ? true : this.protectionBuff != protection);
+		this.SetBuffParameters(damage, protection);
+		if (flag && Defs.isMulti && Defs.isInet)
+		{
+			this.photonView.RPC("SendBuffParameters", PhotonTargets.Others, new object[] { this.damageBuff, this.protectionBuff });
+		}
+	}
+
+	[DebuggerHidden]
+	[PunRPC]
+	[RPC]
+	private IEnumerator SetWeaponRPC(string _nameWeapon, string _alternativeNameWeapon)
+	{
+		Player_move_c.u003cSetWeaponRPCu003ec__IteratorD7 variable = null;
+		return variable;
+	}
+
+	private void SetWeaponVisible(bool visible)
+	{
+		this.myCurrentWeaponSounds.SetDaterBearHandsAnim(!visible);
+		if (this.currentGrenade != null)
+		{
+			this.currentGrenade.transform.parent = this.myCurrentWeaponSounds.grenatePoint;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ShootLoop(CancellationToken token, float _lengthAnimShootDown)
+	{
+		Player_move_c.u003cShootLoopu003ec__IteratorE3 variable = null;
+		return variable;
+	}
+
+	public void shootS()
+	{
+		if (this.isGrenadePress)
+		{
+			return;
+		}
+		if (this.isMechActive)
+		{
+			this.BulletShot(this.mechWeaponSounds);
+			return;
+		}
+		WeaponSounds weaponSound = this._weaponManager.currentWeaponSounds;
+		if (weaponSound.bazooka)
+		{
+			base.StartCoroutine(this.BazookaShoot());
+			return;
+		}
+		if (weaponSound.railgun || weaponSound.freezer)
+		{
+			this.RailgunShot(weaponSound);
+			return;
+		}
+		if (weaponSound.flamethrower)
+		{
+			this.FlamethrowerShot(weaponSound);
+			return;
+		}
+		if (weaponSound.isRoundMelee)
+		{
+			base.StartCoroutine(this.HitRoundMelee(weaponSound));
+			return;
+		}
+		if (!weaponSound.isMelee)
+		{
+			this.BulletShot(weaponSound);
+			return;
+		}
+		base.StartCoroutine(this.MeleeShot(weaponSound));
+	}
+
+	private void ShootUpdate()
+	{
+		bool flag = this.isShooting;
+		this.isShooting = (JoystickController.rightJoystick.isShooting || JoystickController.rightJoystick.isShootingPressure ? true : JoystickController.leftTouchPad.isShooting);
+		bool flag1 = (this.isShooting ? false : flag);
+		bool flag2 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None ? true : TrainingController.FireButtonEnabled);
+		if (!this.isShooting)
+		{
+			if (flag1)
+			{
+				this.ShotUnPressed(false);
+			}
+			this.ResetShootingBurst();
+		}
+		else if (flag2 && (!this.isHunger || this.hungerGameController.isGo) && !this.myCurrentWeaponSounds.isGrenadeWeapon)
+		{
+			this.ShotPressed();
+		}
+	}
+
+	private void ShopPressed()
+	{
+		this.ShotUnPressed(true);
+		JoystickController.rightJoystick.jumpPressed = false;
+		JoystickController.leftTouchPad.isJumpPressed = false;
+		JoystickController.rightJoystick.Reset();
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			if (!TrainingController.stepTrainingList.ContainsKey("InterTheShop"))
+			{
+				TrainingController.isNextStep = TrainingState.TapToShoot;
+			}
+			else
+			{
+				TrainingController.isNextStep = TrainingState.EnterTheShop;
+				if (Player_move_c.StopBlinkShop != null)
+				{
+					Player_move_c.StopBlinkShop();
+				}
+			}
+		}
+		if (this.CurHealth > 0f)
+		{
+			this.SetInApp();
+			this.SetPause(false);
+			if (Defs.isSoundFX)
+			{
+				NGUITools.PlaySound(this.clickShop);
+			}
+		}
+	}
+
+	public void ShotPressed()
+	{
+		if (this.deltaAngle > 10f)
+		{
+			return;
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToShoot)
+		{
+			TrainingController.isNextStep = TrainingState.TapToShoot;
+		}
+		if (this.isMulti && this.isInet && this.photonView && !this.photonView.isMine || this._weaponManager == null || this._weaponManager.currentWeaponSounds == null || this._weaponManager.currentWeaponSounds.animationObject == null)
+		{
+			return;
+		}
+		if (this._weaponManager.currentWeaponSounds.name.Contains("WeaponGrenade"))
+		{
+			return;
+		}
+		if (Defs.isTurretWeapon)
+		{
+			return;
+		}
+		if (!this.isMechActive && this._weaponManager.currentWeaponSounds.isLoopShoot)
+		{
+			if (!this.isShootingLoop)
+			{
+				this.StartLoopShot();
+			}
+			return;
+		}
+		Animation animations = (!this.isMechActive ? this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>() : this.mechGunAnimation);
+		if (animations.IsPlaying("Shoot1"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Shoot2"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Shoot"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Shoot1"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Shoot2"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Reload"))
+		{
+			return;
+		}
+		if (animations.IsPlaying("Empty"))
+		{
+			return;
+		}
+		if (this._timerDelayInShootingBurst > 0f)
+		{
+			return;
+		}
+		Weapon item = (Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex];
+		if (this.isMechActive || !this._weaponManager.currentWeaponSounds.isCharging)
+		{
+			animations.Stop();
+			if (this._weaponManager.currentWeaponSounds.isBurstShooting)
+			{
+				this._countShootInBurst++;
+				if (this._countShootInBurst >= this._weaponManager.currentWeaponSounds.countShootInBurst)
+				{
+					this._timerDelayInShootingBurst = this._weaponManager.currentWeaponSounds.delayInBurstShooting;
+					this._countShootInBurst = 0;
+				}
+			}
+			if (this._weaponManager.currentWeaponSounds.isMelee && !this._weaponManager.currentWeaponSounds.isShotMelee && !this.isMechActive)
+			{
+				this._Shot();
+				return;
+			}
+			if (item.currentAmmoInClip > 0 || this.isMechActive)
+			{
+				if (!this.isMechActive)
+				{
+					Weapon weapon = item;
+					weapon.currentAmmoInClip = weapon.currentAmmoInClip - 1;
+					if (item.currentAmmoInClip == 0)
+					{
+						if (item.currentAmmoInBackpack <= 0)
+						{
+							TouchPadController touchPadController = JoystickController.rightJoystick;
+							if (touchPadController)
+							{
+								touchPadController.NoAmmo();
+							}
+							if (this.inGameGUI != null)
+							{
+								this.inGameGUI.BlinkNoAmmo(3);
+								this.inGameGUI.PlayLowResourceBeep(3);
+							}
+						}
+						else if (this._weaponManager.currentWeaponSounds.isShotMelee)
+						{
+							this.Reload();
+						}
+					}
+				}
+				this._Shot();
+				if (!this._weaponManager.currentWeaponSounds.isShotMelee || this.isMechActive)
+				{
+					this._SetGunFlashActive(true);
+					if (!this.isMechActive)
+					{
+						this.GunFlashLifetime = this._weaponManager.currentWeaponSounds.gameObject.GetComponent<FlashFire>().timeFireAction;
+					}
+					else
+					{
+						this.GunFlashLifetime = 0.15f;
+					}
+				}
+			}
+			else
+			{
+				this.ShowNoAmmo();
+			}
+			return;
+		}
+		if (item.currentAmmoInClip > 0 && this.chargeValue < 1f)
+		{
+			if (this.chargeValue == 0f)
+			{
+				this.ammoInClipBeforeCharge = item.currentAmmoInClip;
+				this.lastChargeWeaponIndex = this._weaponManager.CurrentWeaponIndex;
+			}
+			if (this.nextChargeConsumeTime < Time.time)
+			{
+				this.nextChargeConsumeTime = Time.time + this._weaponManager.currentWeaponSounds.chargeTime / (float)this._weaponManager.currentWeaponSounds.chargeMax;
+				this.chargeValue = Math.Min(1f, this.chargeValue + 1f / (float)this._weaponManager.currentWeaponSounds.chargeMax);
+				animations["Charge"].speed = this.chargeValue;
+				Weapon weapon1 = item;
+				weapon1.currentAmmoInClip = weapon1.currentAmmoInClip - 1;
+				if (this.inGameGUI != null)
+				{
+					this.inGameGUI.ChargeValue.gameObject.SetActive(true);
+					this.inGameGUI.ChargeValue.fillAmount = this.chargeValue;
+					this.inGameGUI.ChargeValue.color = new Color(1f, 1f - this.chargeValue, 0f);
+				}
+			}
+		}
+		else if (this.chargeValue == 0f)
+		{
+			this.ShowNoAmmo();
+		}
+		if (this.chargeValue > 0f)
+		{
+			if (!animations.IsPlaying("Charge") && animations.GetClip("Charge") != null)
+			{
+				animations.Stop();
+				animations.Play("Charge");
+			}
+			if (Defs.isSoundFX && this._weaponManager.currentWeaponSounds.charge != null && (!base.GetComponent<AudioSource>().isPlaying || base.GetComponent<AudioSource>().clip != this._weaponManager.currentWeaponSounds.charge))
+			{
+				base.GetComponent<AudioSource>().clip = this._weaponManager.currentWeaponSounds.charge;
+				base.GetComponent<AudioSource>().Play();
+			}
+		}
+	}
+
+	public void ShotUnPressed(bool weaponChanged = false)
+	{
+		if (this._weaponManager.currentWeaponSounds.isLoopShoot && this.isShootingLoop)
+		{
+			this.StopLoopShot();
+		}
+		if (this._weaponManager.currentWeaponSounds.isCharging)
+		{
+			this.UnchargeGun(weaponChanged);
+		}
+	}
+
+	public void ShowBonuseParticle(Player_move_c.TypeBonuses _type)
+	{
+		if (!Defs.isMulti)
+		{
+			return;
+		}
+		if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("ShowBonuseParticleRPC", RPCMode.Others, new object[] { (int)_type });
+		}
+		else
+		{
+			this.photonView.RPC("ShowBonuseParticleRPC", PhotonTargets.Others, new object[] { (int)_type });
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void ShowBonuseParticleRPC(int _type)
+	{
+		if ((int)this.bonusesParticles.Length >= _type)
+		{
+			this.bonusesParticles[_type].ShowParticle();
+		}
+	}
+
+	public void ShowChat()
+	{
+		if (this.isKilled)
+		{
+			return;
+		}
+		this.ShotUnPressed(true);
+		if (JoystickController.rightJoystick != null)
+		{
+			JoystickController.rightJoystick.jumpPressed = false;
+			JoystickController.leftTouchPad.isJumpPressed = false;
+			JoystickController.rightJoystick.Reset();
+		}
+		this.RemoveButtonHandelrs();
+		this.showChat = true;
+		if (this.inGameGUI.gameObject != null)
+		{
+			this.inGameGUI.gameObject.SetActive(false);
+		}
+		this._weaponManager.currentWeaponSounds.gameObject.SetActive(false);
+		this.mechPoint.SetActive(false);
+		UnityEngine.Object.Instantiate<GameObject>(this.chatViewer);
+	}
+
+	private void ShowDamageDirection(Vector3 posDamage)
+	{
+		if (this.isDaterRegim)
+		{
+			return;
+		}
+		bool flag = false;
+		bool flag1 = false;
+		bool flag2 = false;
+		bool flag3 = false;
+		Vector3 vector3 = posDamage - this.myPlayerTransform.position;
+		float single = Mathf.Atan(vector3.z / vector3.x);
+		single = single * 180f / 3.1415927f;
+		if (vector3.x > 0f)
+		{
+			single = 90f - single;
+		}
+		if (vector3.x < 0f)
+		{
+			single = 270f - single;
+		}
+		float single1 = single - this.myPlayerTransform.rotation.eulerAngles.y;
+		if (single1 > 180f)
+		{
+			single1 -= 360f;
+		}
+		if (single1 < -180f)
+		{
+			single1 += 360f;
+		}
+		if (this.inGameGUI != null)
+		{
+			this.inGameGUI.AddDamageTaken(single);
+		}
+		if (single1 > -45f && single1 <= 45f)
+		{
+			flag2 = true;
+		}
+		if (single1 < -45f && single1 >= -135f)
+		{
+			flag = true;
+		}
+		if (single1 > 45f && single1 <= 135f)
+		{
+			flag1 = true;
+		}
+		if (single1 < -135f || single1 >= 135f)
+		{
+			flag3 = true;
+		}
+		if (flag2)
+		{
+			this.timerShowUp = this.maxTimeSetTimerShow;
+		}
+		if (flag3)
+		{
+			this.timerShowDown = this.maxTimeSetTimerShow;
+		}
+		if (flag)
+		{
+			this.timerShowLeft = this.maxTimeSetTimerShow;
+		}
+		if (flag1)
+		{
+			this.timerShowRight = this.maxTimeSetTimerShow;
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void ShowMultyKillRPC(int countMulty)
+	{
+		this.multiKill = countMulty;
+	}
+
+	private void ShowNoAmmo()
+	{
+		Weapon item = (Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex];
+		if (this.inGameGUI != null)
+		{
+			this.inGameGUI.BlinkNoAmmo(1);
+			if (item.currentAmmoInBackpack == 0)
+			{
+				this.inGameGUI.PlayLowResourceBeepIfNotPlaying(1);
+			}
+		}
+		if (this._weaponManager.currentWeaponSounds.isMelee)
+		{
+			return;
+		}
+		if (!this.isMechActive && item.currentAmmoInBackpack <= 0 && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showChangeWeaponHint)
+		{
+			HintController.instance.ShowHintByName("change_weapon", 2f);
+		}
+		this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().Play("Empty");
+		if (Defs.isSoundFX)
+		{
+			base.GetComponent<AudioSource>().PlayOneShot(this._weaponManager.currentWeaponSounds.empty);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ShowRayWithDelay(Vector3 _origin, Vector3 _direction, string _railName, float _len, float _delay)
+	{
+		Player_move_c.u003cShowRayWithDelayu003ec__IteratorE4 variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SlowdownRPC(float coef, float time)
+	{
+		if (this.isMine || !this.isMulti)
+		{
+			EffectsController.SlowdownCoeff = coef;
+			this._timeOfSlowdown = time;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		Player_move_c.u003cStartu003ec__IteratorD9 variable = null;
+		return variable;
+	}
+
+	public void StartFlash(GameObject _obj)
+	{
+		base.StartCoroutine(this.Flash(_obj));
+	}
+
+	[PunRPC]
+	[RPC]
+	public void StartFlashRPC()
+	{
+		base.StartCoroutine(this.Flash(this.myPlayerTransform.gameObject));
+	}
+
+	public void StartLoopShot()
+	{
+		if (this.isMulti && this.isMine)
+		{
+			if (!this.isInet)
+			{
+				this._networkView.RPC("StartShootLoopRPC", RPCMode.Others, new object[] { true });
+			}
+			else
+			{
+				this.photonView.RPC("StartShootLoopRPC", PhotonTargets.Others, new object[] { true });
+			}
+		}
+		this.isShootingLoop = true;
+		Animation component = this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>();
+		float item = 0f;
+		if (component.GetClip("Shoot_start") == null)
+		{
+			component.Stop();
+		}
+		else if (!component.IsPlaying("Shoot_end"))
+		{
+			component.Stop();
+			item = component["Shoot_start"].length;
+			component.Play("Shoot_start");
+		}
+		else
+		{
+			item = component["Shoot_end"].length - component["Shoot_end"].time;
+		}
+		this.ctsShootLoop.Cancel();
+		this.ctsShootLoop = new CancellationTokenSource();
+		base.StartCoroutine(this.ShootLoop(this.ctsShootLoop.Token, item));
+	}
+
+	[PunRPC]
+	[RPC]
+	private void StartShootLoopRPC(bool isStart)
+	{
+		if (isStart && !this.isShootingLoop)
+		{
+			this.StartLoopShot();
+		}
+		if (!isStart && this.isShootingLoop)
+		{
+			this.StopLoopShot();
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator StartSteps()
+	{
+		Player_move_c.u003cStartStepsu003ec__IteratorDA variable = null;
+		return variable;
+	}
+
+	private void StopLoopShot()
+	{
+		if (this.isMulti && this.isMine)
+		{
+			if (!this.isInet)
+			{
+				this._networkView.RPC("StartShootLoopRPC", RPCMode.Others, new object[] { false });
+			}
+			else
+			{
+				this.photonView.RPC("StartShootLoopRPC", PhotonTargets.Others, new object[] { false });
+			}
+		}
+		this.isShootingLoop = false;
+		this.ctsShootLoop.Cancel();
+		Animation component = this.myCurrentWeaponSounds.animationObject.GetComponent<Animation>();
+		if (component.IsPlaying("Shoot"))
+		{
+			component.Stop();
+		}
+		else if (component.IsPlaying("Shoot_start"))
+		{
+			float item = component["Shoot_start"].length - component["Shoot_start"].time;
+			component.Stop();
+			component["Shoot_end"].time = component["Shoot_start"].length - component["Shoot_start"].time;
+		}
+		if (component["Shoot_end"] != null)
+		{
+			component.Play("Shoot_end");
+		}
+		if (Defs.isSoundFX)
+		{
+			this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().clip = this.myCurrentWeaponSounds.idle;
+			this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Play();
+		}
+	}
+
+	private void SwitchPause()
+	{
+		if (this.CurHealth > 0f)
+		{
+			this.SetPause(true);
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SyncTurretUpgrade(int turretUpgrade)
+	{
+		this.turretUpgrade = turretUpgrade;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SynhHealth(float _synhHealth, bool isUp)
+	{
+		this.SynhHealthRPC(_synhHealth, (_synhHealth <= 9f ? 0f : _synhHealth - 9f), isUp);
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SynhHealthRPC(float _synhHealth, float _synchArmor, bool isUp)
+	{
+		if (this.isMine)
+		{
+			this.synhHealth = _synhHealth;
+		}
+		else if (isUp)
+		{
+			this.synhHealth = _synhHealth;
+			this.armorSynch = _synchArmor;
+			this.isRaiderMyPoint = false;
+		}
+		else
+		{
+			if (_synhHealth < this.synhHealth)
+			{
+				this.synhHealth = _synhHealth;
+			}
+			if (_synchArmor < this.armorSynch)
+			{
+				this.armorSynch = _synchArmor;
+			}
+		}
+		if (this.synhHealth > 0f)
+		{
+			this.isStartAngel = false;
+			this.myPersonNetwork.isStartAngel = false;
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SynhIsZoming(bool _isZoomming)
+	{
+		this.isZooming = _isZoomming;
+	}
+
+	[ContextMenu("Active mech")]
+	public void TestActiveMech()
+	{
+		this.ActivateMech(0);
+	}
+
+	public static int TierOfCurrentRoom()
+	{
+		if (PhotonNetwork.room == null || !PhotonNetwork.room.customProperties.ContainsKey("tier"))
+		{
+			return ExpController.Instance.OurTier;
+		}
+		return (int)PhotonNetwork.room.customProperties["tier"];
+	}
+
+	private int TierOrRoomTier(int tier)
+	{
+		if (!this.roomTierInitialized)
+		{
+			this.roomTierInitialized = true;
+			this.roomTier = Player_move_c.TierOfCurrentRoom();
+		}
+		return Math.Min(tier, this.roomTier);
+	}
+
+	private static float TimeOfMeleeAttack(WeaponSounds ws)
+	{
+		return ws.animationObject.GetComponent<Animation>()[(!ws.isDoubleShot ? "Shoot" : "Shoot1")].length * ws.meleeAttackTimeModifier;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ToggleShield()
+	{
+		Player_move_c.u003cToggleShieldu003ec__IteratorDF variable = null;
+		return variable;
+	}
+
+	private void TrainingShowZoomHint()
+	{
+		if (this.myCurrentWeaponSounds.isZooming && !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted && this.showZoomHint)
+		{
+			HintController.instance.ShowHintByName("use_zoom", 0f);
+		}
+	}
+
+	private void UnchargeGun(bool weaponChanged)
+	{
+		if (this.isMechActive)
+		{
+			return;
+		}
+		base.GetComponent<AudioSource>().Stop();
+		this.inGameGUI.ChargeValue.gameObject.SetActive(false);
+		if (this.chargeValue > 0f)
+		{
+			Weapon item = (Weapon)this._weaponManager.playerWeapons[this.lastChargeWeaponIndex];
+			if (weaponChanged)
+			{
+				item.currentAmmoInClip = this.ammoInClipBeforeCharge;
+			}
+			else
+			{
+				this._Shot();
+				if (!this._weaponManager.currentWeaponSounds.isShotMelee)
+				{
+					this._SetGunFlashActive(true);
+					this.GunFlashLifetime = this._weaponManager.currentWeaponSounds.gameObject.GetComponent<FlashFire>().timeFireAction;
+				}
+			}
+			UnityEngine.Debug.Log(string.Concat("Charge release: ", this.chargeValue));
+			this.chargeValue = 0f;
+		}
+	}
+
+	private void Update()
+	{
+		PlayerEventScoreController.ScoreEvent scoreEvent;
+		this.liveTime += Time.deltaTime;
+		if (this._timerDelayInShootingBurst > 0f)
+		{
+			this._timerDelayInShootingBurst -= Time.deltaTime;
+		}
+		this.UpdateHealth();
+		this.UpdateNickLabelColor();
+		if (this.timerUpdatePointAutoAi > 0f)
+		{
+			this.timerUpdatePointAutoAi -= Time.deltaTime;
+		}
+		if ((!this.isMulti || this.isMine) && this._timeOfSlowdown > 0f)
+		{
+			this._timeOfSlowdown -= Time.deltaTime;
+			if (this._timeOfSlowdown <= 0f)
+			{
+				EffectsController.SlowdownCoeff = 1f;
+			}
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			Defs.isZooming = this.isZooming;
+		}
+		if (!this.isKilled && this.timerImmortality > 0f)
+		{
+			this.timerImmortality -= Time.deltaTime;
+			if (this.timerImmortality <= 0f)
+			{
+				this.isImmortality = false;
+			}
+		}
+		if (!this.isInvisible)
+		{
+			if (!this.isImmortality)
+			{
+				this.UpdateImmortalityAlpColor(1f);
+			}
+			else
+			{
+				float single = 1f;
+				this.timerImmortalityForAlpha += Time.deltaTime;
+				float single1 = 2f * (this.timerImmortalityForAlpha - Mathf.Floor(this.timerImmortalityForAlpha / single) * single) / single;
+				if (single1 > 1f)
+				{
+					single1 = 2f - single1;
+				}
+				this.UpdateImmortalityAlpColor(0.5f + single1 * 0.4f);
+			}
+		}
+		if (this.isMulti && this.isMine)
+		{
+			if ((this.isCompany || Defs.isFlag) && this.myCommand == 0 && this.myTable != null)
+			{
+				this.myCommand = this.myNetworkStartTable.myCommand;
+			}
+			if (Defs.isFlag && this.myBaza == null && this.myCommand != 0)
+			{
+				if (this.myCommand != 1)
+				{
+					this.myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand2");
+				}
+				else
+				{
+					this.myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand1");
+				}
+			}
+			if (Defs.isFlag && (this.myFlag == null || this.enemyFlag == null) && this.myCommand != 0)
+			{
+				this.myFlag = (this.myCommand != 1 ? this.flag2 : this.flag1);
+				this.enemyFlag = (this.myCommand != 1 ? this.flag1 : this.flag2);
+			}
+			if (Defs.isFlag && this.myFlag != null && this.enemyFlag != null)
+			{
+				if (!this.myFlag.isCapture && !this.myFlag.isBaza && Vector3.SqrMagnitude(this.myPlayerTransform.position - this.myFlag.transform.position) < 2.25f)
+				{
+					this.photonView.RPC("SendSystemMessegeFromFlagReturnedRPC", PhotonTargets.All, new object[] { this.myFlag.isBlue });
+					this.myFlag.GoBaza();
+				}
+				if (!this.enemyFlag.isCapture && !this.isKilled && this.enemyFlag.GetComponent<FlagController>().flagModel.activeSelf && Vector3.SqrMagnitude(this.myPlayerTransform.position - this.enemyFlag.transform.position) < 2.25f)
+				{
+					this.enemyFlag.SetCapture(this.photonView.ownerId);
+					this.isCaptureFlag = true;
+					this.photonView.RPC("SendSystemMessegeFromFlagCaptureRPC", PhotonTargets.All, new object[] { this.enemyFlag.isBlue, this.mySkinName.NickName });
+				}
+			}
+			if (!this.isCaptureFlag || Vector3.SqrMagnitude(this.myPlayerTransform.position - this.myBaza.transform.position) >= 2.25f)
+			{
+				if (this.inGameGUI.message_returnFlag.activeSelf)
+				{
+					this.inGameGUI.message_returnFlag.SetActive(false);
+				}
+			}
+			else if (this.myFlag.isBaza)
+			{
+				if (Defs.isSoundFX)
+				{
+					base.GetComponent<AudioSource>().PlayOneShot(this.flagScoreMyCommandClip);
+				}
+				if (this.myTable != null)
+				{
+					this.myNetworkStartTable.AddScore();
+				}
+				this.countMultyFlag++;
+				if (!NetworkStartTable.LocalOrPasswordRoom())
+				{
+					QuestMediator.NotifyCapture(ConnectSceneNGUIController.RegimGame.FlagCapture);
+				}
+				PlayerScoreController playerScoreController = this.myScoreController;
+				if (this.countMultyFlag != 3)
+				{
+					scoreEvent = (this.countMultyFlag != 2 ? PlayerEventScoreController.ScoreEvent.flagTouchDown : PlayerEventScoreController.ScoreEvent.flagTouchDouble);
+				}
+				else
+				{
+					scoreEvent = PlayerEventScoreController.ScoreEvent.flagTouchDownTriple;
+				}
+				playerScoreController.AddScoreOnEvent(scoreEvent, 1f);
+				this.isCaptureFlag = false;
+				this.photonView.RPC("SendSystemMessegeFromFlagAddScoreRPC", PhotonTargets.Others, new object[] { !this.enemyFlag.isBlue, this.mySkinName.NickName });
+				this.AddSystemMessage(LocalizationStore.Get("Key_1003"));
+				this.enemyFlag.GoBaza();
+			}
+			else if (!this.inGameGUI.message_returnFlag.activeSelf)
+			{
+				this.inGameGUI.message_returnFlag.SetActive(true);
+			}
+			if (Defs.isFlag && this.inGameGUI != null)
+			{
+				if (this.isCaptureFlag)
+				{
+					if (!this.inGameGUI.flagRedCaptureTexture.activeSelf)
+					{
+						this.inGameGUI.flagRedCaptureTexture.SetActive(true);
+					}
+				}
+				else if (this.inGameGUI.flagRedCaptureTexture.activeSelf)
+				{
+					this.inGameGUI.flagRedCaptureTexture.SetActive(false);
+				}
+			}
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			if (((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).currentAmmoInClip == 0 && !this._changingWeapon && ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).currentAmmoInBackpack > 0 && !this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().IsPlaying("Shoot") && !this.isReloading)
+			{
+				this.ReloadPressed();
+			}
+			if (!this.isHunger || this.hungerGameController.isGo)
+			{
+				PotionsController.sharedController.Step(Time.deltaTime, this);
+			}
+		}
+		if (this.isHunger && this.isMine)
+		{
+			this.timeHingerGame += Time.deltaTime;
+			bool flag = (InGameGUI.sharedInGameGUI == null ? false : InGameGUI.sharedInGameGUI.pausePanel.activeSelf);
+			if (Initializer.players.Count == 1 && this.hungerGameController.isGo && this.timeHingerGame > 10f && !this.isZachetWin && !flag)
+			{
+				this.isZachetWin = true;
+				int num = Storager.getInt(Defs.RatingHunger, false) + 1;
+				Storager.setInt(Defs.RatingHunger, num, false);
+				num = Storager.getInt("Rating", false) + 1;
+				Storager.setInt("Rating", num, false);
+				if (FriendsController.sharedController != null)
+				{
+					FriendsController.sharedController.TryIncrementWinCountTimestamp();
+				}
+				this.myNetworkStartTable.WinInHunger();
+			}
+		}
+		if (!this.isMulti)
+		{
+			this.inGameTime += Time.deltaTime;
+		}
+		if ((this.isCompany || Defs.isFlag) && this.myCommand == 0 && this.myTable != null)
+		{
+			this.myCommand = this.myNetworkStartTable.myCommand;
+		}
+		if (this.isMulti && this.isMine && this._weaponManager.myPlayer != null)
+		{
+			GlobalGameController.posMyPlayer = this._weaponManager.myPlayer.transform.position;
+			GlobalGameController.rotMyPlayer = this._weaponManager.myPlayer.transform.rotation;
+			GlobalGameController.healthMyPlayer = this.CurHealth;
+			GlobalGameController.armorMyPlayer = this.curArmor;
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			if (this.timerShow[0] > 0f)
+			{
+				this.timerShow[0] -= Time.deltaTime;
+			}
+			if (this.timerShow[1] > 0f)
+			{
+				this.timerShow[1] -= Time.deltaTime;
+			}
+			if (this.timerShow[2] > 0f)
+			{
+				this.timerShow[2] -= Time.deltaTime;
+			}
+		}
+		if ((!this.isMulti || this.isMine) && !new Func<bool>(() => (this._pauser == null ? false : this._pauser.paused))() && this.canReceiveSwipes)
+		{
+			this.isInappWinOpen;
+		}
+		if (this.GunFlashLifetime > 0f)
+		{
+			this.GunFlashLifetime -= Time.deltaTime;
+			if (this.GunFlashLifetime <= 0f)
+			{
+				this.GunFlashLifetime = 0f;
+				this._SetGunFlashActive(false);
+			}
+		}
+		else if (this.GunFlashLifetime == -1f && JoystickController.IsButtonFireUp())
+		{
+			this.GunFlashLifetime = 0f;
+			this._SetGunFlashActive(false);
+		}
+		if (Defs.isDaterRegim && this.isPlayerFlying)
+		{
+			if (!this.isMine)
+			{
+				if (!this.wingsAnimation.isPlaying)
+				{
+					this.wingsAnimation.Play();
+				}
+				if (!this.wingsBearAnimation.isPlaying)
+				{
+					this.wingsBearAnimation.Play();
+				}
+			}
+			if (Defs.isSoundFX && !this.wingsSound.isPlaying)
+			{
+				this.wingsSound.Play();
+			}
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			this.ShootUpdate();
+		}
+	}
+
+	public void UpdateEffectsForCurrentWeapon(string currentCape, string currentMask, string currentHat)
+	{
+		if (this.myCurrentWeaponSounds == null)
+		{
+			return;
+		}
+		if (!this.isMine)
+		{
+			this._chanceToIgnoreHeadshot = EffectsController.GetChanceToIgnoreHeadshot(this.myCurrentWeaponSounds.categoryNabor, currentCape, currentMask, currentHat);
+		}
+		this._currentReloadAnimationSpeed = EffectsController.GetReloadAnimationSpeed(this.myCurrentWeaponSounds.categoryNabor, currentCape, currentMask, currentHat);
+		this._protectionShieldValue = 1f;
+		bool flag = (this.isMechActive ? false : this.myCurrentWeaponSounds.specialEffect == WeaponSounds.SpecialEffects.PlayerShield);
+		if (flag != this.isShieldActivated)
+		{
+			this.isShieldActivated = flag;
+			base.StopCoroutine(this.ToggleShield());
+			base.StartCoroutine(this.ToggleShield());
+		}
+	}
+
+	private void UpdateHealth()
+	{
+		if (this.isMulti && this.isMine && this.CurHealth + this.curArmor - this.synhHealth > 0.1f)
+		{
+			this.SendSynhHealth(true, null);
+		}
+		if (!this.isMulti || this.isMine)
+		{
+			if (!this.isRegenerationLiveCape)
+			{
+				this.timerRegenerationLiveCape = this.maxTimerRegenerationLiveCape;
+			}
+			if (this.isRegenerationLiveCape)
+			{
+				if (this.timerRegenerationLiveCape <= 0f)
+				{
+					this.timerRegenerationLiveCape = this.maxTimerRegenerationLiveCape;
+					if (this.CurHealth < this.MaxHealth)
+					{
+						Player_move_c curHealth = this;
+						curHealth.CurHealth = curHealth.CurHealth + 1f;
+					}
+				}
+				else
+				{
+					this.timerRegenerationLiveCape -= Time.deltaTime;
+				}
+			}
+			if (!EffectsController.IsRegeneratingArmor)
+			{
+				this.timeSettedAfterRegenerationSwitchedOn = false;
+			}
+			if (EffectsController.IsRegeneratingArmor)
+			{
+				if (!this.timeSettedAfterRegenerationSwitchedOn)
+				{
+					this.timeSettedAfterRegenerationSwitchedOn = true;
+					this.timerRegenerationArmor = this.maxTimerRegenerationArmor;
+				}
+				if (this.timerRegenerationArmor <= 0f)
+				{
+					this.timerRegenerationArmor = this.maxTimerRegenerationArmor;
+					if (this.curArmor < this.MaxArmor && Storager.getString(Defs.ArmorNewEquppedSN, false) != Defs.ArmorNewNoneEqupped)
+					{
+						this.AddArmor(1f);
+					}
+				}
+				else
+				{
+					this.timerRegenerationArmor -= Time.deltaTime;
+				}
+			}
+			if (!this.isRegenerationLiveZel)
+			{
+				this.timerRegenerationLiveZel = this.maxTimerRegenerationLiveZel;
+			}
+			if (this.isRegenerationLiveZel)
+			{
+				if (this.timerRegenerationLiveZel <= 0f)
+				{
+					this.timerRegenerationLiveZel = this.maxTimerRegenerationLiveZel;
+					if (this.CurHealth < this.MaxHealth)
+					{
+						Player_move_c playerMoveC = this;
+						playerMoveC.CurHealth = playerMoveC.CurHealth + 1f;
+					}
+				}
+				else
+				{
+					this.timerRegenerationLiveZel -= Time.deltaTime;
+				}
+			}
+			if (this.timerShowUp > 0f)
+			{
+				this.timerShowUp -= Time.deltaTime;
+			}
+			if (this.timerShowDown > 0f)
+			{
+				this.timerShowDown -= Time.deltaTime;
+			}
+			if (this.timerShowLeft > 0f)
+			{
+				this.timerShowLeft -= Time.deltaTime;
+			}
+			if (this.timerShowRight > 0f)
+			{
+				this.timerShowRight -= Time.deltaTime;
+			}
+		}
+		if ((!this.isMulti || this.isMine) && this.CurHealth <= 0f && !this.isKilled && !this.showRanks && !this.showChat && !ShopNGUIController.GuiActive && !BankController.Instance.uiRoot.gameObject.activeInHierarchy && (this._pauser == null || this._pauser != null && !this._pauser.paused))
+		{
+			this.countMultyFlag = 0;
+			this.ResetMySpotEvent();
+			this.ResetHouseKeeperEvent();
+			if (this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>() != null)
+			{
+				this.myCurrentWeaponSounds.animationObject.GetComponent<AudioSource>().Stop();
+			}
+			if (Mathf.Abs(Time.time - this.timeBuyHealth) < 1.5f)
+			{
+				int num = Storager.getInt("Coins", false);
+				Storager.setInt("Coins", num + Defs.healthInGamePanelPrice, false);
+				CoinsMessage.FireCoinsAddedEvent(false, 2);
+				this.timeBuyHealth = -10000f;
+			}
+			if (Defs.isCOOP)
+			{
+				this.SendImKilled();
+				this.SendSynhHealth(false, null);
+			}
+			this.inGameGUI.ResetDamageTaken();
+			if (Defs.isTurretWeapon)
+			{
+				this.CancelTurret();
+				InGameGUI.sharedInGameGUI.HideTurretInterface();
+				Defs.isTurretWeapon = false;
+			}
+			if (this.isGrenadePress)
+			{
+				this.ReturnWeaponAfterGrenade();
+				this.isGrenadePress = false;
+			}
+			if (this.isZooming)
+			{
+				this.ZoomPress();
+			}
+			if (!this.isMulti)
+			{
+				if (Defs.IsSurvival)
+				{
+					if (GlobalGameController.Score > PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0))
+					{
+						GlobalGameController.HasSurvivalRecord = true;
+						PlayerPrefs.SetInt(Defs.SurvivalScoreSett, GlobalGameController.Score);
+						PlayerPrefs.Save();
+						FriendsController.sharedController.survivalScore = GlobalGameController.Score;
+						FriendsController.sharedController.SendOurData(false);
+					}
+					if (ZombieCreator.sharedCreator != null)
+					{
+						if (Storager.getInt("SendFirstResaltArena", false) != 1)
+						{
+							Storager.setInt("SendFirstResaltArena", 1, false);
+							AnalyticsStuff.LogArenaFirst(false, (ZombieCreator.sharedCreator.currentWave <= 0 ? false : true));
+						}
+						AnalyticsStuff.LogArenaWavesPassed(ZombieCreator.sharedCreator.currentWave);
+					}
+					if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+					{
+						AGSLeaderboardsClient.SubmitScore("best_survival_scores", (long)GlobalGameController.Score, 0);
+					}
+					else if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite && Social.localUser.authenticated)
+					{
+						Social.ReportScore((long)GlobalGameController.Score, "CgkIr8rGkPIJEAIQCg", (bool success) => UnityEngine.Debug.Log(string.Concat("Player_move_c.Update(): ", (!success ? "Failed to report score." : "Reported score successfully."))));
+					}
+				}
+				else if (GlobalGameController.Score > PlayerPrefs.GetInt(Defs.BestScoreSett, 0))
+				{
+					PlayerPrefs.SetInt(Defs.BestScoreSett, GlobalGameController.Score);
+					PlayerPrefs.Save();
+				}
+				PlayerPrefs.SetInt("IsGameOver", 1);
+				LevelCompleteLoader.action = null;
+				LevelCompleteLoader.sceneName = "LevelComplete";
+				Singleton<SceneLoader>.Instance.LoadScene("LevelToCompleteProm", LoadSceneMode.Single);
+			}
+			else
+			{
+				if ((!this.isMulti || this.isMine) && this._player != null && this._player)
+				{
+					ImpactReceiverTrampoline component = this._player.GetComponent<ImpactReceiverTrampoline>();
+					if (component != null)
+					{
+						UnityEngine.Object.Destroy(component);
+					}
+				}
+				if (Defs.isFlag && this.isCaptureFlag)
+				{
+					this.isCaptureFlag = false;
+					this.photonView.RPC("SendSystemMessegeFromFlagDroppedRPC", PhotonTargets.All, new object[] { this.enemyFlag.isBlue, this.mySkinName.NickName });
+					this.enemyFlag.SetNOCapture(this.flagPoint.transform.position, this.flagPoint.transform.rotation);
+				}
+				this.resetMultyKill();
+				this.isKilled = true;
+				if (Defs.isCOOP && !this.isSuicided)
+				{
+					this.killedInMatch = true;
+				}
+				if (Defs.isMulti && this.isMine && !Defs.isHunger && !this.isSuicided && UnityEngine.Random.Range(0, 100) < 50)
+				{
+					BonusController bonusController = BonusController.sharedController;
+					float single = this.myPlayerTransform.position.x;
+					Vector3 vector3 = this.myPlayerTransform.position;
+					Vector3 vector31 = this.myPlayerTransform.position;
+					bonusController.AddBonusAfterKillPlayer(new Vector3(single, vector3.y - 1f, vector31.z));
+				}
+				this.isSuicided = false;
+				if (this.isHunger && ((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.name.Replace("(Clone)", string.Empty) != WeaponManager.KnifeWN)
+				{
+					BonusController.sharedController.AddWeaponAfterKillPlayer(((Weapon)this._weaponManager.playerWeapons[this._weaponManager.CurrentWeaponIndex]).weaponPrefab.name, this.myPlayerTransform.position);
+				}
+				if (Defs.isSoundFX)
+				{
+					base.gameObject.GetComponent<AudioSource>().PlayOneShot(this.deadPlayerSound);
+				}
+				if (this.isCOOP)
+				{
+					NetworkStartTable networkStartTable = this._weaponManager.myNetworkStartTable;
+					networkStartTable.score = networkStartTable.score - 1000;
+					if (this._weaponManager.myNetworkStartTable.score < 0)
+					{
+						this._weaponManager.myNetworkStartTable.score = 0;
+					}
+					GlobalGameController.Score = this._weaponManager.myNetworkStartTable.score;
+					this._weaponManager.myNetworkStartTable.SynhScore();
+				}
+				this.isDeadFrame = true;
+				AutoFade.fadeKilled(0.5f, (!this.isNeedShowRespawnWindow || Defs.inRespawnWindow ? 1.5f : 0.5f), 0.5f, Color.white);
+				base.Invoke("setisDeadFrameFalse", 1f);
+				base.StartCoroutine(this.FlashWhenDead());
+				if (JoystickController.leftJoystick != null)
+				{
+					JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
+					JoystickController.leftJoystick.SetJoystickActive(false);
+				}
+				if (JoystickController.leftTouchPad != null)
+				{
+					JoystickController.leftTouchPad.SetJoystickActive(false);
+				}
+				if (JoystickController.rightJoystick != null)
+				{
+					JoystickController.rightJoystick.gameObject.SetActive(false);
+					JoystickController.rightJoystick.MakeInactive();
+				}
+				if (!Defs.inRespawnWindow)
+				{
+					Vector3 vector32 = this.myPlayerTransform.localPosition;
+					TweenParms tweenParm = (new TweenParms()).Prop("localPosition", new Vector3(vector32.x, 100f, vector32.z)).Ease(EaseType.EaseInCubic).OnComplete(() => {
+						this.myPlayerTransform.localPosition = new Vector3(0f, -1000f, 0f);
+						if (!this.isNeedShowRespawnWindow || Defs.inRespawnWindow)
+						{
+							Defs.inRespawnWindow = false;
+							this.RespawnPlayer();
+						}
+						else
+						{
+							this.SetMapCameraActive(true);
+							base.StartCoroutine(this.KillCam());
+						}
+					});
+					HOTween.To(this.myPlayerTransform, (!this.isNeedShowRespawnWindow ? 2f : 0.75f), tweenParm);
+				}
+				else
+				{
+					Defs.inRespawnWindow = false;
+					this.RespawnPlayer();
+				}
+			}
+		}
+	}
+
+	private void UpdateImmortalityAlpColor(float _alpha)
+	{
+		if (Mathf.Abs(_alpha - this.oldAlphaImmortality) < 0.001f)
+		{
+			return;
+		}
+		this.oldAlphaImmortality = _alpha;
+		if (this.myCurrentWeaponSounds != null)
+		{
+			this.playerBodyRenderer.material.SetColor("_ColorRili", new Color(1f, 1f, 1f, _alpha));
+			Shader shader = Shader.Find("Mobile/Diffuse-Color");
+			if (shader != null && this.myCurrentWeaponSounds.bonusPrefab != null && this.myCurrentWeaponSounds.bonusPrefab.transform.parent != null)
+			{
+				this.myCurrentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.shader = shader;
+				this.myCurrentWeaponSounds.bonusPrefab.transform.parent.GetComponent<Renderer>().material.SetColor("_ColorRili", new Color(1f, 1f, 1f, _alpha));
+			}
+		}
+	}
+
+	private void UpdateKillerInfo(Player_move_c killerPlayerMoveC, int killType)
+	{
+		float single;
+		this._killerInfo.isGrenade = killType == 6;
+		this._killerInfo.isMech = killType == 10;
+		this._killerInfo.isTurret = killType == 8;
+		SkinName skinName = killerPlayerMoveC.mySkinName;
+		this._killerInfo.nickname = skinName.NickName;
+		if (killerPlayerMoveC.myTable != null)
+		{
+			NetworkStartTable component = killerPlayerMoveC.myTable.GetComponent<NetworkStartTable>();
+			int num = component.myRanks;
+			if (num > 0 && num < (int)this.expController.marks.Length)
+			{
+				this._killerInfo.rankTex = ExperienceController.sharedController.marks[num];
+				this._killerInfo.rank = num;
+			}
+			if (component.myClanTexture != null)
+			{
+				this._killerInfo.clanLogoTex = component.myClanTexture;
+			}
+			this._killerInfo.clanName = component.myClanName;
+		}
+		this._killerInfo.weapon = killerPlayerMoveC.currentWeapon;
+		this._killerInfo.skinTex = killerPlayerMoveC._skin;
+		this._killerInfo.hat = skinName.currentHat;
+		this._killerInfo.mask = skinName.currentMask;
+		this._killerInfo.armor = skinName.currentArmor;
+		this._killerInfo.cape = skinName.currentCape;
+		this._killerInfo.capeTex = skinName.currentCapeTex;
+		this._killerInfo.boots = skinName.currentBoots;
+		this._killerInfo.mechUpgrade = killerPlayerMoveC.mechUpgrade;
+		this._killerInfo.turretUpgrade = killerPlayerMoveC.turretUpgrade;
+		this._killerInfo.killerTransform = killerPlayerMoveC.myPlayerTransform;
+		KillerInfo killerInfo = this._killerInfo;
+		if (!this._killerInfo.isMech)
+		{
+			single = (killerPlayerMoveC.synhHealth - killerPlayerMoveC.armorSynch <= 0f ? 0f : killerPlayerMoveC.synhHealth - killerPlayerMoveC.armorSynch);
+		}
+		else
+		{
+			single = killerPlayerMoveC.liveMech;
+		}
+		killerInfo.healthValue = Mathf.CeilToInt(single);
+		this._killerInfo.armorValue = Mathf.CeilToInt(killerPlayerMoveC.armorSynch);
+	}
+
+	private void UpdateNickLabelColor()
+	{
+		if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.CapturePoints && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TeamFight && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.FlagCapture)
+		{
+			if (Defs.isDaterRegim)
+			{
+				if (this._nickColorInd != 0)
+				{
+					this.nickLabel.color = Color.white;
+					this._nickColorInd = 0;
+				}
+			}
+			else if (Defs.isCOOP)
+			{
+				if (this._nickColorInd != 1)
+				{
+					this.nickLabel.color = Color.blue;
+					this._nickColorInd = 1;
+				}
+			}
+			else if (this._nickColorInd != 2)
+			{
+				this.nickLabel.color = Color.red;
+				this._nickColorInd = 2;
+			}
+		}
+		else if (WeaponManager.sharedManager.myNetworkStartTable == null || WeaponManager.sharedManager.myNetworkStartTable.myCommand == 0)
+		{
+			if (this._nickColorInd != 0)
+			{
+				this.nickLabel.color = Color.white;
+				this._nickColorInd = 0;
+			}
+		}
+		else if (WeaponManager.sharedManager.myNetworkStartTable.myCommand == this.myCommand)
+		{
+			if (this._nickColorInd != 1)
+			{
+				this.nickLabel.color = Color.blue;
+				this._nickColorInd = 1;
+			}
+		}
+		else if (this._nickColorInd != 2)
+		{
+			this.nickLabel.color = Color.red;
+			this._nickColorInd = 2;
+		}
+	}
+
+	public void UpdateSkin()
+	{
+		if (!this.isMulti)
+		{
+			this._skin = SkinsController.currentSkinForPers;
+			this._skin.filterMode = FilterMode.Point;
+			this.SetTextureForBodyPlayer(this._skin);
+		}
+	}
+
+	public void WalkAnimation()
+	{
+		if (!this._singleOrMultiMine() && (!Defs.isDaterRegim || !this.isBearActive))
+		{
+			return;
+		}
+		if ((this.isBearActive || this.isMechActive) && !this.mechGunAnimation.IsPlaying("Shoot"))
+		{
+			this.mechGunAnimation.CrossFade("Walk");
+		}
+		if (this._weaponManager && this._weaponManager.currentWeaponSounds && this._weaponManager.currentWeaponSounds.animationObject != null)
+		{
+			this._weaponManager.currentWeaponSounds.animationObject.GetComponent<Animation>().CrossFade("Walk");
+		}
+	}
+
+	public void WinFromTimer()
+	{
+		if (!base.enabled)
+		{
+			return;
+		}
+		base.enabled = false;
+		InGameGUI.sharedInGameGUI.gameObject.SetActive(false);
+		if (Defs.isCompany)
+		{
+			int num = 0;
+			if (this.countKillsCommandBlue > this.countKillsCommandRed)
+			{
+				num = 1;
+			}
+			if (this.countKillsCommandRed > this.countKillsCommandBlue)
+			{
+				num = 2;
+			}
+			if (WeaponManager.sharedManager.myTable != null)
+			{
+				WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty, num, this.countKillsCommandBlue, this.countKillsCommandRed);
+			}
+		}
+		else if (Defs.isCOOP)
+		{
+			ZombiManager.sharedManager.EndMatch();
+		}
+		else if (WeaponManager.sharedManager.myTable != null)
+		{
+			WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty, 0, 0, 0);
+		}
+	}
+
+	public void ZoomPress()
+	{
+		if (WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon)
+		{
+			return;
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
+		{
+			this.showZoomHint = false;
+			HintController.instance.HideHintByName("use_zoom");
+		}
+		this.isZooming = !this.isZooming;
+		if (!this.isZooming)
+		{
+			if (Defs.isSoundFX && this._weaponManager.currentWeaponSounds.zoomOut != null)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this._weaponManager.currentWeaponSounds.zoomOut);
+			}
+			this.myCamera.fieldOfView = this.stdFov;
+			this.gunCamera.fieldOfView = 75f;
+			this.gunCamera.gameObject.SetActive(true);
+			if (this.inGameGUI != null)
+			{
+				this.inGameGUI.ResetScope();
+			}
+		}
+		else
+		{
+			if (Defs.isSoundFX && this._weaponManager.currentWeaponSounds.zoomIn != null)
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this._weaponManager.currentWeaponSounds.zoomIn);
+			}
+			this.myCamera.fieldOfView = this._weaponManager.currentWeaponSounds.fieldOfViewZomm;
+			this.gunCamera.gameObject.SetActive(false);
+			this.inGameGUI.SetScopeForWeapon(this._weaponManager.currentWeaponSounds.scopeNum.ToString());
+			Transform vector3 = this.myTransform;
+			float single = this.myTransform.localPosition.x;
+			float single1 = this.myTransform.localPosition.y;
+			Vector3 vector31 = this.myTransform.localPosition;
+			vector3.localPosition = new Vector3(single, single1, vector31.z);
+		}
+		if (this.isMulti && this.isInet)
+		{
+			this.photonView.RPC("SynhIsZoming", PhotonTargets.All, new object[] { this.isZooming });
+		}
+	}
+
+	public event Action<float> FreezerFired
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.FreezerFired += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.FreezerFired -= value;
+		}
+	}
+
+	public event Player_move_c.OnMessagesUpdate messageDelegate
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.messageDelegate += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.messageDelegate -= value;
+		}
+	}
+
+	public static event Action StopBlinkShop;
+
+	public event EventHandler<EventArgs> WeaponChanged
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.WeaponChanged += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.WeaponChanged -= value;
+		}
+	}
+
+	public struct MessageChat
+	{
+		public string text;
+
+		public float time;
+
+		public int ID;
+
+		public int command;
+
+		public bool isClanMessage;
+
+		public Texture clanLogo;
+
+		public string clanID;
+
+		public string clanName;
+
+		public NetworkViewID IDLocal;
+
+		public string iconName;
+	}
+
+	public delegate void OnMessagesUpdate();
+
+	public struct RayHitsInfo
+	{
+		public RaycastHit[] hits;
+
+		public bool obstacleFound;
+
+		public float lenRay;
+
+		public Ray rayReflect;
+	}
+
+	public struct SystemMessage
+	{
+		public string nick1;
+
+		public string message2;
+
+		public string nick2;
+
+		public string message;
+
+		public Color textColor;
+
+		public SystemMessage(string nick1, string message2, string nick2, string message, Color textColor)
+		{
+			this.nick1 = nick1;
+			this.message2 = message2;
+			this.nick2 = nick2;
+			this.message = message;
+			this.textColor = textColor;
+		}
+	}
+
+	public enum TypeBonuses
+	{
+		Ammo,
+		Health,
+		Armor,
+		Grenade
+	}
+
+	public enum TypeKills
+	{
+		none,
+		himself,
+		headshot,
+		explosion,
+		zoomingshot,
+		flag,
+		grenade,
+		grenade_hell,
+		turret,
+		killTurret,
+		mech,
+		like
 	}
 }

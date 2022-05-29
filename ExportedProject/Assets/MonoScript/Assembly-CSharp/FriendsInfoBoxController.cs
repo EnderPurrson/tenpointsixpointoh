@@ -1,15 +1,9 @@
+using I2.Loc;
+using System;
 using UnityEngine;
 
 public class FriendsInfoBoxController : MonoBehaviour
 {
-	private enum BoxType
-	{
-		infoWindow = 0,
-		processDataWindow = 1,
-		blockClick = 2,
-		None = 3
-	}
-
 	public UIWidget background;
 
 	[Header("Processing data box")]
@@ -22,63 +16,76 @@ public class FriendsInfoBoxController : MonoBehaviour
 
 	public UILabel infoBoxLabel;
 
-	private BoxType _currentTypeBox = BoxType.None;
+	private FriendsInfoBoxController.BoxType _currentTypeBox = FriendsInfoBoxController.BoxType.None;
 
-	private void Start()
+	public FriendsInfoBoxController()
 	{
-		processingDataBoxLabel.text = LocalizationStore.Key_0348;
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
 	}
 
 	private void HandleLocalizationChanged()
 	{
-		processingDataBoxLabel.text = LocalizationStore.Key_0348;
-	}
-
-	public void ShowInfoBox(string text)
-	{
-		_currentTypeBox = BoxType.infoWindow;
-		base.gameObject.SetActive(true);
-		processindDataBoxContainer.gameObject.SetActive(false);
-		infoBoxLabel.text = text;
-		infoBoxContainer.gameObject.SetActive(true);
-		background.gameObject.SetActive(true);
-	}
-
-	public void ShowProcessingDataBox()
-	{
-		_currentTypeBox = BoxType.processDataWindow;
-		base.gameObject.SetActive(true);
-		processindDataBoxContainer.gameObject.SetActive(true);
-		infoBoxContainer.gameObject.SetActive(false);
-		background.gameObject.SetActive(false);
+		this.processingDataBoxLabel.text = LocalizationStore.Key_0348;
 	}
 
 	public void Hide()
 	{
-		_currentTypeBox = BoxType.None;
+		this._currentTypeBox = FriendsInfoBoxController.BoxType.None;
 		base.gameObject.SetActive(false);
 	}
 
 	public void OnClickExitButton()
 	{
-		if (_currentTypeBox != BoxType.processDataWindow && _currentTypeBox != BoxType.blockClick)
+		if (this._currentTypeBox == FriendsInfoBoxController.BoxType.processDataWindow || this._currentTypeBox == FriendsInfoBoxController.BoxType.blockClick)
 		{
-			Hide();
+			return;
 		}
+		this.Hide();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 
 	public void SetBlockClickState()
 	{
-		_currentTypeBox = BoxType.blockClick;
+		this._currentTypeBox = FriendsInfoBoxController.BoxType.blockClick;
 		base.gameObject.SetActive(true);
-		processindDataBoxContainer.gameObject.SetActive(false);
-		infoBoxContainer.gameObject.SetActive(false);
-		background.gameObject.SetActive(false);
+		this.processindDataBoxContainer.gameObject.SetActive(false);
+		this.infoBoxContainer.gameObject.SetActive(false);
+		this.background.gameObject.SetActive(false);
+	}
+
+	public void ShowInfoBox(string text)
+	{
+		this._currentTypeBox = FriendsInfoBoxController.BoxType.infoWindow;
+		base.gameObject.SetActive(true);
+		this.processindDataBoxContainer.gameObject.SetActive(false);
+		this.infoBoxLabel.text = text;
+		this.infoBoxContainer.gameObject.SetActive(true);
+		this.background.gameObject.SetActive(true);
+	}
+
+	public void ShowProcessingDataBox()
+	{
+		this._currentTypeBox = FriendsInfoBoxController.BoxType.processDataWindow;
+		base.gameObject.SetActive(true);
+		this.processindDataBoxContainer.gameObject.SetActive(true);
+		this.infoBoxContainer.gameObject.SetActive(false);
+		this.background.gameObject.SetActive(false);
+	}
+
+	private void Start()
+	{
+		this.processingDataBoxLabel.text = LocalizationStore.Key_0348;
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	private enum BoxType
+	{
+		infoWindow,
+		processDataWindow,
+		blockClick,
+		None
 	}
 }

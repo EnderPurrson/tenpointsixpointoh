@@ -18,81 +18,91 @@ namespace I2.Loc
 		{
 			get
 			{
-				if (mInstance == null)
+				if (ResourceManager.mInstance == null)
 				{
-					mInstance = (ResourceManager)UnityEngine.Object.FindObjectOfType(typeof(ResourceManager));
+					ResourceManager.mInstance = (ResourceManager)UnityEngine.Object.FindObjectOfType(typeof(ResourceManager));
 				}
-				if (mInstance == null)
+				if (ResourceManager.mInstance == null)
 				{
-					GameObject gameObject = new GameObject("I2ResourceManager", typeof(ResourceManager));
-					gameObject.hideFlags |= HideFlags.HideAndDontSave;
-					mInstance = gameObject.GetComponent<ResourceManager>();
+					GameObject gameObject = new GameObject("I2ResourceManager", new Type[] { typeof(ResourceManager) })
+					{
+						hideFlags = gameObject.hideFlags | HideFlags.HideAndDontSave
+					};
+					ResourceManager.mInstance = gameObject.GetComponent<ResourceManager>();
 				}
 				if (Application.isPlaying)
 				{
-					UnityEngine.Object.DontDestroyOnLoad(mInstance.gameObject);
+					UnityEngine.Object.DontDestroyOnLoad(ResourceManager.mInstance.gameObject);
 				}
-				return mInstance;
+				return ResourceManager.mInstance;
 			}
 		}
 
-		public T GetAsset<T>(string Name) where T : UnityEngine.Object
+		public ResourceManager()
 		{
-			T val = FindAsset(Name) as T;
-			if ((UnityEngine.Object)val != (UnityEngine.Object)default(UnityEngine.Object))
-			{
-				return val;
-			}
-			return LoadFromResources<T>(Name);
+		}
+
+		public void CleanResourceCache()
+		{
+			this.mResourcesCache.Clear();
+			base.CancelInvoke();
+			this.mCleaningScheduled = false;
 		}
 
 		private UnityEngine.Object FindAsset(string Name)
 		{
-			if (Assets != null)
+			if (this.Assets != null)
 			{
-				int i = 0;
-				for (int num = Assets.Length; i < num; i++)
+				int num = 0;
+				int length = (int)this.Assets.Length;
+				while (num < length)
 				{
-					if (Assets[i] != null && Assets[i].name == Name)
+					if (this.Assets[num] != null && this.Assets[num].name == Name)
 					{
-						return Assets[i];
+						return this.Assets[num];
 					}
+					num++;
 				}
 			}
 			return null;
 		}
 
+		public T GetAsset<T>(string Name)
+		where T : UnityEngine.Object
+		{
+			T t = (T)(this.FindAsset(Name) as T);
+			if (t != null)
+			{
+				return t;
+			}
+			return this.LoadFromResources<T>(Name);
+		}
+
 		public bool HasAsset(UnityEngine.Object Obj)
 		{
-			if (Assets == null)
+			if (this.Assets == null)
 			{
 				return false;
 			}
-			return Array.IndexOf(Assets, Obj) >= 0;
+			return Array.IndexOf<UnityEngine.Object>(this.Assets, Obj) >= 0;
 		}
 
-		public T LoadFromResources<T>(string Path) where T : UnityEngine.Object
+		public T LoadFromResources<T>(string Path)
+		where T : UnityEngine.Object
 		{
-			UnityEngine.Object value;
-			if (mResourcesCache.TryGetValue(Path, out value) && value != null)
+			UnityEngine.Object obj;
+			if (this.mResourcesCache.TryGetValue(Path, out obj) && obj != null)
 			{
-				return value as T;
+				return (T)(obj as T);
 			}
-			T val = Resources.Load<T>(Path);
-			mResourcesCache[Path] = val;
-			if (!mCleaningScheduled)
+			T t = Resources.Load<T>(Path);
+			this.mResourcesCache[Path] = t;
+			if (!this.mCleaningScheduled)
 			{
-				Invoke("CleanResourceCache", 0.1f);
-				mCleaningScheduled = true;
+				base.Invoke("CleanResourceCache", 0.1f);
+				this.mCleaningScheduled = true;
 			}
-			return val;
-		}
-
-		public void CleanResourceCache()
-		{
-			mResourcesCache.Clear();
-			CancelInvoke();
-			mCleaningScheduled = false;
+			return t;
 		}
 	}
 }

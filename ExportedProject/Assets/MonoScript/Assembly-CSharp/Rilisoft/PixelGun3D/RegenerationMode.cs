@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft.PixelGun3D
@@ -7,20 +11,19 @@ namespace Rilisoft.PixelGun3D
 	{
 		private Player_move_c _playerController;
 
-		private void Start()
+		public RegenerationMode()
 		{
 		}
 
+		[DebuggerHidden]
 		private IEnumerator IncrementHealth()
 		{
-			while (true)
-			{
-				yield return new WaitForSeconds(1f);
-				if (_playerController != null && _playerController.CurHealth < _playerController.MaxHealth)
-				{
-					_playerController.CurHealth += 1f;
-				}
-			}
+			RegenerationMode.u003cIncrementHealthu003ec__Iterator1BC variable = null;
+			return variable;
+		}
+
+		private void Start()
+		{
 		}
 	}
 }

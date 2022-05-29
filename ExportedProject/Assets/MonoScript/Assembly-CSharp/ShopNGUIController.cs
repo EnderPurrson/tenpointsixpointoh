@@ -1,1197 +1,18 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Holoville.HOTween;
 using Holoville.HOTween.Core;
 using Holoville.HOTween.Plugins;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ShopNGUIController : MonoBehaviour
 {
-	public enum TrainingState
-	{
-		NotInSniperCategory = 0,
-		OnSniperRifle = 1,
-		InSniperCategoryNotOnSniperRifle = 2,
-		NotInArmorCategory = 3,
-		OnArmor = 4,
-		InArmorCategoryNotOnArmor = 5,
-		BackBlinking = 6
-	}
-
-	public enum CategoryNames
-	{
-		PrimaryCategory = 0,
-		BackupCategory = 1,
-		MeleeCategory = 2,
-		SpecilCategory = 3,
-		SniperCategory = 4,
-		PremiumCategory = 5,
-		HatsCategory = 6,
-		ArmorCategory = 7,
-		SkinsCategory = 8,
-		CapesCategory = 9,
-		BootsCategory = 10,
-		GearCategory = 11,
-		MaskCategory = 12
-	}
-
-	public delegate void Action7<T1, T2, T3, T4, T5, T6, T7>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7);
-
-	[CompilerGenerated]
-	private sealed class _003CTryToBuy_003Ec__AnonStorey31C
-	{
-		internal EventHandler handleBackFromBank;
-
-		internal GameObject mainPanel;
-
-		internal Action onReturnFromBank;
-
-		internal Action onExitCoinsShopAction;
-
-		internal EventHandler act;
-
-		internal ItemPrice price;
-
-		internal Func<bool> successAdditionalCond;
-
-		internal Action onSuccess;
-
-		internal Action onFailure;
-
-		internal Action onEnterCoinsShopAction;
-
-		internal void _003C_003Em__4C5(object sender, EventArgs e)
-		{
-			BankController.Instance.BackRequested -= handleBackFromBank;
-			BankController.Instance.InterfaceEnabled = false;
-			coinsShop.thisScript.notEnoughCurrency = null;
-			if (mainPanel != null)
-			{
-				mainPanel.SetActive(true);
-			}
-			if (onReturnFromBank != null)
-			{
-				onReturnFromBank();
-			}
-			if (onExitCoinsShopAction != null)
-			{
-				onExitCoinsShopAction();
-			}
-		}
-
-		internal void _003C_003Em__4C6(object sender, EventArgs e)
-		{
-			BankController.Instance.BackRequested -= act;
-			mainPanel.SetActive(true);
-			coinsShop.thisScript.notEnoughCurrency = null;
-			coinsShop.thisScript.onReturnAction = null;
-			int @int = Storager.getInt(price.Currency, false);
-			int num = @int;
-			num -= price.Price;
-			bool flag = num >= 0;
-			bool num2;
-			if (successAdditionalCond != null)
-			{
-				if (successAdditionalCond())
-				{
-					goto IL_0088;
-				}
-				num2 = flag;
-			}
-			else
-			{
-				num2 = flag;
-			}
-			if (!num2)
-			{
-				if (onFailure != null)
-				{
-					onFailure();
-				}
-				coinsShop.thisScript.notEnoughCurrency = price.Currency;
-				Debug.Log("Trying to display bank interface...");
-				BankController.Instance.BackRequested += handleBackFromBank;
-				BankController.Instance.InterfaceEnabled = true;
-				mainPanel.SetActive(false);
-				if (onEnterCoinsShopAction != null)
-				{
-					onEnterCoinsShopAction();
-				}
-				return;
-			}
-			goto IL_0088;
-			IL_0088:
-			Storager.setInt(price.Currency, num, false);
-			SpendBoughtCurrency(price.Currency, price.Price);
-			if (Application.platform != RuntimePlatform.IPhonePlayer)
-			{
-				PlayerPrefs.Save();
-			}
-			if (FriendsController.useBuffSystem)
-			{
-				BuffSystem.instance.OnSomethingPurchased();
-			}
-			if (onSuccess != null)
-			{
-				onSuccess();
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CFilterUpgrades_003Ec__AnonStorey31D
-	{
-		internal GameObject prefab;
-
-		internal bool _003C_003Em__4C7(List<string> l)
-		{
-			return l.Contains(prefab.name);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateIcon_003Ec__AnonStorey31F
-	{
-		internal ToggleButton tb;
-
-		internal List<GameObject> toDestroy;
-
-		internal CategoryNames c;
-
-		internal bool animateModel;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		private static TweenDelegate.TweenCallback _003C_003Ef__am_0024cache5;
-
-		internal void _003C_003Em__4CA(Transform ch)
-		{
-			if (!(ch.gameObject == tb.gameObject) && !(ch.gameObject == tb.onButton.gameObject) && !(ch.gameObject == tb.offButton.gameObject) && !ch.gameObject.name.Equals("Label") && !ch.gameObject.name.Equals("ShopIcon"))
-			{
-				if (ch.gameObject.name.Equals("Sprite"))
-				{
-					ch.gameObject.SetActive(false);
-				}
-				else
-				{
-					toDestroy.Add(ch.gameObject);
-				}
-			}
-		}
-
-		internal void _003C_003Em__4CB(GameObject manipulateObject, Vector3 positionShop, Vector3 rotationShop, string readableName, float sc, int _unusedTier, int _unusedLeague)
-		{
-			manipulateObject.transform.parent = tb.transform;
-			if (c == CategoryNames.SkinsCategory)
-			{
-				Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.currentSkinForPers, new GameObject[0]);
-			}
-			float num = 0.5f;
-			Transform transform = manipulateObject.transform;
-			transform.localPosition = tb.onButton.transform.localPosition + positionShop * num;
-			transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, 0f);
-			transform.Rotate(rotationShop, Space.World);
-			transform.localScale = new Vector3(sc * num, sc * num, sc * num);
-			if (c == CategoryNames.CapesCategory && _003C_003Ef__this._currentCape.Equals("cape_Custom") && SkinsController.capeUserTexture != null)
-			{
-				Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.capeUserTexture, new GameObject[0]);
-			}
-			_003C_003Ef__this.SetIconModelsPositions(transform, c);
-			if (animateModel)
-			{
-				Vector3 localScale = transform.localScale;
-				transform.localScale *= 1.25f;
-				TweenParms tweenParms = new TweenParms().Prop("localScale", localScale).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear);
-				if (_003C_003Ef__am_0024cache5 == null)
-				{
-					_003C_003Ef__am_0024cache5 = _003C_003Em__51E;
-				}
-				HOTween.To(transform, 0.25f, tweenParms.OnComplete(_003C_003Ef__am_0024cache5));
-			}
-		}
-
-		private static void _003C_003Em__51E()
-		{
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CUpdateIcon_003Ec__AnonStorey320
-	{
-		internal Texture texture;
-
-		private static TweenDelegate.TweenCallback _003C_003Ef__am_0024cache1;
-
-		internal void _003C_003Em__4CE(Transform ch)
-		{
-			if (ch.gameObject.name.Equals("Sprite"))
-			{
-				ch.gameObject.SetActive(false);
-			}
-			else
-			{
-				if (!ch.gameObject.name.Equals("ShopIcon"))
-				{
-					return;
-				}
-				UITexture component = ch.GetComponent<UITexture>();
-				if (component.mainTexture == null || !component.mainTexture.name.Equals(texture.name) || HOTween.IsTweening(ch))
-				{
-					HOTween.Kill(ch);
-					ch.localScale = new Vector3(1.25f, 1.25f, 1.25f);
-					TweenParms tweenParms = new TweenParms().Prop("localScale", new Vector3(1f, 1f, 1f)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear);
-					if (_003C_003Ef__am_0024cache1 == null)
-					{
-						_003C_003Ef__am_0024cache1 = _003C_003Em__51F;
-					}
-					HOTween.To(ch, 0.25f, tweenParms.OnComplete(_003C_003Ef__am_0024cache1));
-				}
-				component.mainTexture = texture;
-			}
-		}
-
-		private static void _003C_003Em__51F()
-		{
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CShowTryGunIfPossible_003Ec__AnonStorey321
-	{
-		internal string tg;
-
-		internal bool _003C_003Em__4D0(UnityEngine.Object w)
-		{
-			return ItemDb.GetByPrefabName(w.name).Tag == tg;
-		}
-
-		internal bool _003C_003Em__4D1(string t)
-		{
-			return t == tg;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CShowTryGunIfPossible_003Ec__AnonStorey322
-	{
-		internal int maximumCoinBank;
-
-		internal bool _003C_003Em__4D7(ItemRecord rec)
-		{
-			return PriceIfGunWillBeTryGun(rec.Tag) > maximumCoinBank;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CShowTryGunIfPossible_003Ec__AnonStorey323
-	{
-		internal int maximumGemBank;
-
-		internal bool _003C_003Em__4D9(ItemRecord rec)
-		{
-			return PriceIfGunWillBeTryGun(rec.Tag) > maximumGemBank;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey325
-	{
-		internal CategoryNames cat;
-
-		internal bool _003C_003Em__4DC(WeaponSounds ws)
-		{
-			return ws.categoryNabor - 1 == (int)cat && ws.tier == ExpController.OurTierForAnyPlace();
-		}
-
-		internal bool _003C_003Em__4DF(WeaponSounds ws)
-		{
-			return WeaponManager.tryGunsTable[cat][ExpController.OurTierForAnyPlace()].Contains(ItemDb.GetByTag(ItemDb.GetByPrefabName(ws.name).Tag).PrefabName);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleProfileButton_003Ec__AnonStorey326
-	{
-		internal GameObject mainMenu;
-
-		internal GameObject inGameGui;
-
-		internal GameObject networkTable;
-
-		internal void _003C_003Em__4E4()
-		{
-			GuiActive = true;
-			if ((bool)mainMenu)
-			{
-				mainMenu.SetActive(true);
-			}
-			if ((bool)inGameGui)
-			{
-				inGameGui.SetActive(true);
-			}
-			if ((bool)networkTable)
-			{
-				networkTable.SetActive(true);
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CReloadCarousel_003Ec__AnonStorey328
-	{
-		internal string idToChoose;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal bool _003C_003Em__4E8(GameObject go)
-		{
-			return go.nameNoClone() == idToChoose;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CReloadCarousel_003Ec__AnonStorey327
-	{
-		internal ItemRecord itemRecord;
-
-		internal bool _003C_003Em__4E7(GameObject go)
-		{
-			return go.nameNoClone() == itemRecord.PrefabName;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CReloadCarousel_003Ec__AnonStorey329
-	{
-		private sealed class _003CReloadCarousel_003Ec__AnonStorey32A
-		{
-			internal CategoryNames category;
-
-			internal _003CReloadCarousel_003Ec__AnonStorey329 _003C_003Ef__ref_0024809;
-
-			internal void _003C_003Em__520(GameObject manipulateObject, Vector3 positionShop, Vector3 rotationShop, string readableName, float scaleCoefShop, int tier, int league)
-			{
-				if (_003C_003Ef__ref_0024809.sce == null)
-				{
-					UnityEngine.Object.Destroy(manipulateObject);
-					return;
-				}
-				if (category != CategoryNames.SkinsCategory)
-				{
-					_003C_003Ef__ref_0024809.sce.readableName = readableName ?? string.Empty;
-				}
-				manipulateObject.transform.parent = _003C_003Ef__ref_0024809.sce.transform;
-				_003C_003Ef__ref_0024809.sce.baseScale = new Vector3(scaleCoefShop, scaleCoefShop, scaleCoefShop);
-				_003C_003Ef__ref_0024809.sce.model = manipulateObject.transform;
-				_003C_003Ef__ref_0024809.sce.ourPosition = positionShop;
-				_003C_003Ef__ref_0024809.sce.SetPos((!_003C_003Ef__ref_0024809._003C_003Ef__this.EnableConfigurePos) ? 0f : 1f, 0f);
-				_003C_003Ef__ref_0024809.sce.model.Rotate(rotationShop, Space.World);
-				if (category == CategoryNames.SkinsCategory)
-				{
-					Player_move_c.SetTextureRecursivelyFrom(manipulateObject, (!_003C_003Ef__ref_0024809.itenID.Equals("CustomSkinID")) ? SkinsController.skinsForPers[_003C_003Ef__ref_0024809.itenID] : (Resources.Load("Skin_Start") as Texture), new GameObject[0]);
-				}
-				if (_003C_003Ef__ref_0024809.itenID.Equals("cape_Custom") && SkinsController.capeUserTexture != null)
-				{
-					Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.capeUserTexture, new GameObject[0]);
-				}
-				if (ExpController.Instance != null && ExpController.Instance.OurTier < tier && tier < 100 && ((IsWeaponCategory(category) && _003C_003Ef__ref_0024809.sce.itemID.Equals(WeaponManager.FirstUnboughtOrForOurTier(_003C_003Ef__ref_0024809.sce.itemID)) && !_003C_003Ef__ref_0024809.isBought) || (IsWearCategory(category) && _003C_003Ef__ref_0024809.sce.itemID.Equals(WeaponManager.FirstUnboughtTag(_003C_003Ef__ref_0024809.sce.itemID)) && _003C_003Ef__ref_0024809.sce.itemID != "cape_Custom" && _003C_003Ef__ref_0024809.sce.itemID != "boots_tabi")) && _003C_003Ef__ref_0024809.sce.locked != null)
-				{
-					_003C_003Ef__ref_0024809.sce.locked.SetActive(true);
-				}
-				if ((IsWeaponCategory(category) && !_003C_003Ef__ref_0024809.sce.itemID.Equals(WeaponManager.FirstUnboughtOrForOurTier(_003C_003Ef__ref_0024809.sce.itemID)) && tier < 100) || (IsWearCategory(category) && !_003C_003Ef__ref_0024809.sce.itemID.Equals(WeaponManager.FirstUnboughtTag(_003C_003Ef__ref_0024809.sce.itemID))))
-				{
-					if (_003C_003Ef__ref_0024809.sce.arrow != null)
-					{
-						_003C_003Ef__ref_0024809.sce.arrow.gameObject.SetActive(true);
-					}
-					if (category == CategoryNames.HatsCategory)
-					{
-						_003C_003Ef__ref_0024809.sce.arrnoInitialPos = new Vector3(85f, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.y, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.z);
-					}
-					if (category == CategoryNames.ArmorCategory)
-					{
-						_003C_003Ef__ref_0024809.sce.arrnoInitialPos = new Vector3(105f, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.y, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.z);
-					}
-					if (category == CategoryNames.CapesCategory)
-					{
-						_003C_003Ef__ref_0024809.sce.arrnoInitialPos = new Vector3(75f, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.y, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.z);
-					}
-					if (category == CategoryNames.BootsCategory)
-					{
-						_003C_003Ef__ref_0024809.sce.arrnoInitialPos = new Vector3(81f, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.y, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.z);
-					}
-					if (category == CategoryNames.MaskCategory)
-					{
-						_003C_003Ef__ref_0024809.sce.arrnoInitialPos = new Vector3(75f, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.y, _003C_003Ef__ref_0024809.sce.arrnoInitialPos.z);
-					}
-				}
-			}
-		}
-
-		internal GameObject pref;
-
-		internal ShopCarouselElement sce;
-
-		internal string itenID;
-
-		internal bool isBought;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__4E9(GameObject loadedOBject, CategoryNames category)
-		{
-			_003CReloadCarousel_003Ec__AnonStorey32A _003CReloadCarousel_003Ec__AnonStorey32A = new _003CReloadCarousel_003Ec__AnonStorey32A();
-			_003CReloadCarousel_003Ec__AnonStorey32A._003C_003Ef__ref_0024809 = this;
-			_003CReloadCarousel_003Ec__AnonStorey32A.category = category;
-			AddModel(loadedOBject, _003CReloadCarousel_003Ec__AnonStorey32A._003C_003Em__520, _003CReloadCarousel_003Ec__AnonStorey32A.category, false, (!IsWeaponCategory(_003CReloadCarousel_003Ec__AnonStorey32A.category)) ? null : pref.GetComponent<WeaponSounds>());
-		}
-
-		internal bool _003C_003Em__4EB(GameObject go)
-		{
-			return go.nameNoClone() == itenID;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CReloadCarousel_003Ec__AnonStorey32B
-	{
-		internal ItemRecord itemRecord;
-
-		internal bool _003C_003Em__4EA(GameObject go)
-		{
-			return go.name.Replace("(Clone)", string.Empty) == itemRecord.PrefabName;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CAddModel_003Ec__AnonStorey32C
-	{
-		internal ItemRecord firstRec;
-
-		internal bool _003C_003Em__4EC(WeaponSounds weapon)
-		{
-			return weapon.name == firstRec.PrefabName;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D
-	{
-		internal string id;
-
-		internal bool _003C_003Em__4EE(List<string> l)
-		{
-			return l.Contains(id);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CCategoryChosen_003Ec__AnonStorey32E
-	{
-		internal string fu;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal int _003C_003Em__4F0(string item)
-		{
-			return Wear.LeagueForWear(item, _003C_003Ef__this.currentCategory);
-		}
-
-		internal bool _003C_003Em__4F1(ShopPositionParams go)
-		{
-			return go.name.Equals(fu);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F
-	{
-		internal bool showArmor;
-
-		internal void _003C_003Em__4F2(Transform t)
-		{
-			Renderer component = t.GetComponent<Renderer>();
-			if (component != null)
-			{
-				component.material.shader = Shader.Find((!showArmor) ? "Mobile/Transparent-Shop" : "Mobile/Diffuse");
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CAwake_003Ec__AnonStorey330
-	{
-		private sealed class _003CAwake_003Ec__AnonStorey331
-		{
-			internal EventHandler handleBackFromBank;
-
-			internal void _003C_003Em__521(object sender_, EventArgs e_)
-			{
-				if (BankController.Instance.InterfaceEnabledCoroutineLocked)
-				{
-					Debug.LogWarning("InterfaceEnabledCoroutineLocked");
-					return;
-				}
-				BankController.Instance.BackRequested -= handleBackFromBank;
-				BankController.Instance.InterfaceEnabled = false;
-				GuiActive = true;
-			}
-		}
-
-		private sealed class _003CAwake_003Ec__AnonStorey334
-		{
-			internal int priceAmount;
-
-			internal string priceCurrency;
-
-			internal _003CAwake_003Ec__AnonStorey330 _003C_003Ef__ref_0024816;
-
-			internal void _003C_003Em__522()
-			{
-				if (Defs.isSoundFX)
-				{
-					_003C_003Ef__ref_0024816._003C_003Ef__this.enable.GetComponent<UIPlaySound>().Play();
-				}
-				if (ShopNGUIController.GunBought != null)
-				{
-					ShopNGUIController.GunBought();
-				}
-				FlurryPluginWrapper.LogPurchaseByModes(CategoryNames.SkinsCategory, Defs.SkinsMakerInProfileBought, 1, false);
-				FlurryPluginWrapper.LogPurchasesPoints(false);
-				FlurryPluginWrapper.LogPurchaseByPoints(CategoryNames.SkinsCategory, Defs.SkinsMakerInProfileBought, 1);
-				_003C_003Ef__ref_0024816._003C_003Ef__this.LogShopPurchasesTotalAndPayingNonPaying(Defs.SkinsMakerInProfileBought);
-				string text = FlurryEvents.shopCategoryToLogSalesNamesMapping[CategoryNames.SkinsCategory];
-				AnalyticsStuff.LogSales(Defs.SkinsMakerInProfileBought, text);
-				AnalyticsFacade.InAppPurchase(Defs.SkinsMakerInProfileBought, text, 1, priceAmount, priceCurrency);
-				Storager.setInt(Defs.SkinsMakerInProfileBought, 1, true);
-				SynchronizeAndroidPurchases("Custom skin");
-				FlurryPluginWrapper.LogEvent("Enable_Custom Skin");
-				_003C_003Ef__ref_0024816._003C_003Ef__this.wholePrice.gameObject.SetActive(false);
-				if (!_003C_003Ef__ref_0024816._003C_003Ef__this.inGame)
-				{
-					_003C_003Ef__ref_0024816._003C_003Ef__this.goToSM();
-				}
-			}
-
-			internal void _003C_003Em__524()
-			{
-				_003C_003Ef__ref_0024816._003C_003Ef__this.PlayWeaponAnimation();
-			}
-
-			internal void _003C_003Em__526()
-			{
-				_003C_003Ef__ref_0024816._003C_003Ef__this.SetOtherCamerasEnabled(false);
-			}
-		}
-
-		private sealed class _003CAwake_003Ec__AnonStorey335
-		{
-			internal string skinWhereDelteWasPressed;
-
-			internal _003CAwake_003Ec__AnonStorey330 _003C_003Ef__ref_0024816;
-
-			internal void _003C_003Em__527()
-			{
-				ButtonClickSound.Instance.PlayClick();
-				string currentSkinNameForPers = SkinsController.currentSkinNameForPers;
-				if (skinWhereDelteWasPressed != null)
-				{
-					SkinsController.DeleteUserSkin(skinWhereDelteWasPressed);
-					if (skinWhereDelteWasPressed.Equals(currentSkinNameForPers))
-					{
-						_003C_003Ef__ref_0024816._003C_003Ef__this.SetSkinAsCurrent("0");
-						_003C_003Ef__ref_0024816._003C_003Ef__this.UpdateIcon(CategoryNames.SkinsCategory);
-					}
-				}
-				_003C_003Ef__ref_0024816._003C_003Ef__this.ReloadCarousel(SkinsController.currentSkinNameForPers ?? "0");
-			}
-		}
-
-		internal Action toggleShowArmor;
-
-		internal Action toggleShowHat;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		private static Action _003C_003Ef__am_0024cache3;
-
-		private static Action _003C_003Ef__am_0024cache4;
-
-		internal void _003C_003Em__4F3(object sender, MultipleToggleEventArgs e)
-		{
-			if (e == null)
-			{
-				return;
-			}
-			if (Defs.isSoundFX && _003C_003Ef__this.category.buttons != null && _003C_003Ef__this.category.buttons.Length > e.Num)
-			{
-				_003C_003Ef__this.category.buttons[e.Num].offButton.GetComponent<UIPlaySound>().Play();
-			}
-			try
-			{
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-				{
-					if (e.Num == 4 && _003C_003Ef__this.trainingState == TrainingState.NotInSniperCategory)
-					{
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Sniper);
-						_003C_003Ef__this.setOnSniperRifle();
-					}
-					else if (e.Num != 4 && (_003C_003Ef__this.trainingState == TrainingState.OnSniperRifle || _003C_003Ef__this.trainingState == TrainingState.InSniperCategoryNotOnSniperRifle))
-					{
-						_003C_003Ef__this.setNotInSniperCategory();
-					}
-					else if (e.Num == 7 && _003C_003Ef__this.trainingState == TrainingState.NotInArmorCategory)
-					{
-						_003C_003Ef__this.setOnArmor();
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Armor);
-					}
-					else if (e.Num != 7 && (_003C_003Ef__this.trainingState == TrainingState.OnArmor || _003C_003Ef__this.trainingState == TrainingState.InArmorCategoryNotOnArmor))
-					{
-						_003C_003Ef__this.setNotInArmorCategory();
-					}
-				}
-				if (_003C_003Ef__this.InTrainingAfterNoviceArmorRemoved)
-				{
-					if (e.Num == 7 && _003C_003Ef__this.trainingStateRemoveNoviceArmor == TrainingState.NotInArmorCategory)
-					{
-						_003C_003Ef__this.setOnArmorRemovedNoviceArmor();
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Armor);
-					}
-					else if (e.Num != 7 && (_003C_003Ef__this.trainingStateRemoveNoviceArmor == TrainingState.OnArmor || _003C_003Ef__this.trainingStateRemoveNoviceArmor == TrainingState.InArmorCategoryNotOnArmor))
-					{
-						_003C_003Ef__this.setNotInArmorCategoryRemovedNoviceArmor();
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exceptio in training in category.Clicked: " + ex);
-			}
-			_003C_003Ef__this.CategoryChosen((CategoryNames)e.Num);
-		}
-
-		internal void _003C_003Em__4F4(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.BuyOrUpgradeWeapon();
-		}
-
-		internal void _003C_003Em__4F5(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.BuyOrUpgradeWeapon();
-		}
-
-		internal void _003C_003Em__4F6(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.BuyOrUpgradeWeapon(true);
-		}
-
-		internal void _003C_003Em__4F7(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.BuyOrUpgradeWeapon(true);
-		}
-
-		internal void _003C_003Em__4F8()
-		{
-			ShowArmor = !ShowArmor;
-			SetPersArmorVisible(_003C_003Ef__this.armorPoint);
-			PlayerPrefs.SetInt("ShowArmorKeySetting", ShowArmor ? 1 : 0);
-		}
-
-		internal void _003C_003Em__4F9()
-		{
-			ShowHat = !ShowHat;
-			SetPersHatVisible(_003C_003Ef__this.hatPoint);
-			PlayerPrefs.SetInt("ShowHatKeySetting", ShowHat ? 1 : 0);
-		}
-
-		internal void _003C_003Em__4FA(object sender, ToggleButtonEventArgs e)
-		{
-			toggleShowArmor();
-			_003C_003Ef__this.showArmorButtonTempArmor.SetCheckedWithoutEvent(!ShowArmor);
-		}
-
-		internal void _003C_003Em__4FB(object sender, ToggleButtonEventArgs e)
-		{
-			toggleShowHat();
-			_003C_003Ef__this.showHatButtonTempHat.SetCheckedWithoutEvent(!ShowHat);
-		}
-
-		internal void _003C_003Em__4FC(object sender, ToggleButtonEventArgs e)
-		{
-			toggleShowArmor();
-			_003C_003Ef__this.showArmorButton.SetCheckedWithoutEvent(!ShowArmor);
-		}
-
-		internal void _003C_003Em__4FD(object sender, ToggleButtonEventArgs e)
-		{
-			toggleShowHat();
-			_003C_003Ef__this.showHatButton.SetCheckedWithoutEvent(!ShowHat);
-		}
-
-		internal void _003C_003Em__4FE(object sender, EventArgs e)
-		{
-			if (!(Time.realtimeSinceStartup - _003C_003Ef__this.timeOfEnteringShopForProtectFromPressingCoinsButton < 0.5f) && BankController.Instance != null)
-			{
-				_003CAwake_003Ec__AnonStorey331 _003CAwake_003Ec__AnonStorey = new _003CAwake_003Ec__AnonStorey331();
-				if (BankController.Instance.InterfaceEnabledCoroutineLocked)
-				{
-					Debug.LogWarning("InterfaceEnabledCoroutineLocked");
-					return;
-				}
-				_003CAwake_003Ec__AnonStorey.handleBackFromBank = null;
-				_003CAwake_003Ec__AnonStorey.handleBackFromBank = _003CAwake_003Ec__AnonStorey._003C_003Em__521;
-				BankController.Instance.BackRequested += _003CAwake_003Ec__AnonStorey.handleBackFromBank;
-				BankController.Instance.InterfaceEnabled = true;
-				GuiActive = false;
-			}
-		}
-
-		internal void _003C_003Em__4FF(object sender, EventArgs e)
-		{
-			_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.BackAfterDelay());
-		}
-
-		internal void _003C_003Em__501(object sender, EventArgs e)
-		{
-			if (Defs.isSoundFX)
-			{
-				_003C_003Ef__this.unequip.GetComponent<UIPlaySound>().Play();
-			}
-			if (_003C_003Ef__this.WearCategory)
-			{
-				CategoryNames currentCategory = _003C_003Ef__this.currentCategory;
-				UnequipCurrentWearInCategory(currentCategory, _003C_003Ef__this.inGame);
-			}
-			_003C_003Ef__this.UpdateButtons();
-		}
-
-		internal void _003C_003Em__502(object sender, EventArgs e)
-		{
-			if (_003C_003Ef__this.viewedId != null && _003C_003Ef__this.viewedId.Equals("CustomSkinID"))
-			{
-				_003CAwake_003Ec__AnonStorey334 _003CAwake_003Ec__AnonStorey = new _003CAwake_003Ec__AnonStorey334();
-				_003CAwake_003Ec__AnonStorey._003C_003Ef__ref_0024816 = this;
-				ItemPrice itemPrice = currentPrice(_003C_003Ef__this.viewedId, _003C_003Ef__this.currentCategory);
-				_003CAwake_003Ec__AnonStorey.priceAmount = itemPrice.Price;
-				_003CAwake_003Ec__AnonStorey.priceCurrency = itemPrice.Currency;
-				GameObject mainPanel = _003C_003Ef__this.mainPanel;
-				Action onSuccess = _003CAwake_003Ec__AnonStorey._003C_003Em__522;
-				if (_003C_003Ef__am_0024cache3 == null)
-				{
-					_003C_003Ef__am_0024cache3 = _003C_003Em__523;
-				}
-				Action onFailure = _003C_003Ef__am_0024cache3;
-				Action onReturnFromBank = _003CAwake_003Ec__AnonStorey._003C_003Em__524;
-				if (_003C_003Ef__am_0024cache4 == null)
-				{
-					_003C_003Ef__am_0024cache4 = _003C_003Em__525;
-				}
-				TryToBuy(mainPanel, itemPrice, onSuccess, onFailure, null, onReturnFromBank, _003C_003Ef__am_0024cache4, _003CAwake_003Ec__AnonStorey._003C_003Em__526);
-				_003C_003Ef__this.UpdateButtons();
-			}
-			else if (_003C_003Ef__this.viewedId != null && _003C_003Ef__this.viewedId.Equals("cape_Custom"))
-			{
-				_003C_003Ef__this.BuyOrUpgradeWeapon();
-			}
-		}
-
-		internal void _003C_003Em__503(object sender, EventArgs e)
-		{
-			ButtonClickSound.Instance.PlayClick();
-			if (!_003C_003Ef__this.inGame)
-			{
-				_003C_003Ef__this.goToSM();
-			}
-		}
-
-		internal void _003C_003Em__504(object sender, EventArgs e)
-		{
-			ButtonClickSound.Instance.PlayClick();
-			if (!_003C_003Ef__this.inGame)
-			{
-				_003C_003Ef__this.goToSM();
-			}
-		}
-
-		internal void _003C_003Em__505(object sender, EventArgs e)
-		{
-			_003CAwake_003Ec__AnonStorey335 _003CAwake_003Ec__AnonStorey = new _003CAwake_003Ec__AnonStorey335();
-			_003CAwake_003Ec__AnonStorey._003C_003Ef__ref_0024816 = this;
-			_003CAwake_003Ec__AnonStorey.skinWhereDelteWasPressed = _003C_003Ef__this.viewedId;
-			InfoWindowController.ShowDialogBox(LocalizationStore.Get("Key_1693"), _003CAwake_003Ec__AnonStorey._003C_003Em__527);
-		}
-
-		private static void _003C_003Em__523()
-		{
-			FlurryPluginWrapper.LogEvent("Try_Enable_Custom Skin");
-		}
-
-		private static void _003C_003Em__525()
-		{
-			SetBankCamerasEnabled();
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CAwake_003Ec__AnonStorey332
-	{
-		private sealed class _003CAwake_003Ec__AnonStorey333
-		{
-			internal string prefabName;
-
-			internal bool _003C_003Em__528(Weapon weapon)
-			{
-				return weapon.weaponPrefab.nameNoClone() == prefabName;
-			}
-		}
-
-		internal UIButton ee;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__500(object sender, EventArgs e)
-		{
-			if (Defs.isSoundFX)
-			{
-				ee.GetComponent<UIPlaySound>().Play();
-			}
-			if (_003C_003Ef__this.WeaponCategory)
-			{
-				_003CAwake_003Ec__AnonStorey333 _003CAwake_003Ec__AnonStorey = new _003CAwake_003Ec__AnonStorey333();
-				string text = WeaponManager.LastBoughtTag(_003C_003Ef__this.viewedId);
-				if (text == null && WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsAvailableTryGun(_003C_003Ef__this.viewedId))
-				{
-					text = _003C_003Ef__this.viewedId;
-				}
-				if (text == null)
-				{
-					return;
-				}
-				_003CAwake_003Ec__AnonStorey.prefabName = ItemDb.GetByTag(text).PrefabName;
-				Weapon w = WeaponManager.sharedManager.allAvailablePlayerWeapons.OfType<Weapon>().FirstOrDefault(_003CAwake_003Ec__AnonStorey._003C_003Em__528);
-				WeaponManager.sharedManager.EquipWeapon(w, true, true);
-				WeaponManager.sharedManager.SaveWeaponAsLastUsed(WeaponManager.sharedManager.CurrentWeaponIndex);
-				if (_003C_003Ef__this.equipAction != null)
-				{
-					_003C_003Ef__this.equipAction(text);
-				}
-				_003C_003Ef__this.chosenId = text;
-				_003C_003Ef__this.UpdateIcon(_003C_003Ef__this.currentCategory);
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted && _003C_003Ef__this.trainingState == TrainingState.OnSniperRifle && text != null && text == WeaponTags.HunterRifleTag)
-				{
-					if (Storager.getInt("Training.NoviceArmorUsedKey", false) == 1)
-					{
-						_003C_003Ef__this.setBackBlinking();
-					}
-					else
-					{
-						_003C_003Ef__this.setNotInArmorCategory();
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Equip_Sniper);
-					}
-				}
-				if (_003C_003Ef__this.InTrainingAfterNoviceArmorRemoved)
-				{
-					_003C_003Ef__this.HideAllTrainingInterfaceRemovedNoviceArmor();
-					_003C_003Ef__this.InTrainingAfterNoviceArmorRemoved = false;
-					_003C_003Ef__this.HandleActionsUUpdated();
-				}
-			}
-			else if (_003C_003Ef__this.WearCategory)
-			{
-				string text2 = WeaponManager.LastBoughtTag(_003C_003Ef__this.viewedId);
-				if (text2 != null)
-				{
-					_003C_003Ef__this.EquipWear(text2);
-				}
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-				{
-					if (_003C_003Ef__this.trainingState == TrainingState.OnArmor)
-					{
-						_003C_003Ef__this.setBackBlinking();
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Equip_Armor);
-					}
-				}
-				else if (_003C_003Ef__this.InTrainingAfterNoviceArmorRemoved)
-				{
-					_003C_003Ef__this.HideAllTrainingInterfaceRemovedNoviceArmor();
-					_003C_003Ef__this.InTrainingAfterNoviceArmorRemoved = false;
-					_003C_003Ef__this.HandleActionsUUpdated();
-				}
-			}
-			else if (_003C_003Ef__this.currentCategory == CategoryNames.SkinsCategory)
-			{
-				_003C_003Ef__this.SetSkinAsCurrent(_003C_003Ef__this.viewedId);
-				_003C_003Ef__this.UpdateIcon(_003C_003Ef__this.currentCategory, true);
-			}
-			_003C_003Ef__this.UpdateButtons();
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CgoToSM_003Ec__AnonStorey336
-	{
-		internal Action<string> backHandler;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__506(string n)
-		{
-			SkinEditorController.ExitFromSkinEditor -= backHandler;
-			MenuBackgroundMusic.sharedMusic.StopCustomMusicFrom(SkinEditorController.sharedController.gameObject);
-			_003C_003Ef__this.mainPanel.SetActive(true);
-			if (_003C_003Ef__this.currentCategory == CategoryNames.CapesCategory || n != null)
-			{
-				if (_003C_003Ef__this.viewedId != null && _003C_003Ef__this.viewedId.Equals("CustomSkinID"))
-				{
-					_003C_003Ef__this.SetSkinAsCurrent(n);
-				}
-				if (_003C_003Ef__this.currentCategory == CategoryNames.SkinsCategory && _003C_003Ef__this.viewedId != null && _003C_003Ef__this.viewedId.Equals(SkinsController.currentSkinNameForPers))
-				{
-					_003C_003Ef__this.FireOnEquipSkin(n);
-				}
-				if (_003C_003Ef__this.viewedId != null && _003C_003Ef__this.viewedId.Equals("cape_Custom"))
-				{
-					_003C_003Ef__this.EquipWear("cape_Custom");
-				}
-				_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ReloadAfterEditing(n));
-			}
-			else
-			{
-				_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ReloadAfterEditing(n, n == null));
-			}
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC == null)
-			{
-				if (_003C_003Ef__this.currentCategory != CategoryNames.CapesCategory && PlayerPrefs.GetInt(Defs.ShownRewardWindowForSkin, 0) == 0)
-				{
-					_003C_003Ef__this._shouldShowRewardWindowSkin = true;
-				}
-				if (_003C_003Ef__this.currentCategory == CategoryNames.CapesCategory && PlayerPrefs.GetInt(Defs.ShownRewardWindowForCape, 0) == 0)
-				{
-					_003C_003Ef__this._shouldShowRewardWindowCape = true;
-				}
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CBuyOrUpgradeWeapon_003Ec__AnonStorey337
-	{
-		internal bool upgradeNotBuy;
-
-		internal string id;
-
-		internal string tg;
-
-		internal ItemPrice price;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__507()
-		{
-			if (Defs.isSoundFX)
-			{
-				((!upgradeNotBuy) ? _003C_003Ef__this.buy : _003C_003Ef__this.upgrade).GetComponent<UIPlaySound>().Play();
-			}
-			_003C_003Ef__this.ActualBuy(id, tg, price);
-		}
-
-		internal void _003C_003Em__508()
-		{
-			if (_003C_003Ef__this.currentCategory == CategoryNames.CapesCategory && _003C_003Ef__this.viewedId.Equals("cape_Custom"))
-			{
-				FlurryPluginWrapper.LogEvent("Try_Enable_Custom Cape");
-			}
-		}
-
-		internal void _003C_003Em__509()
-		{
-			_003C_003Ef__this.PlayWeaponAnimation();
-		}
-
-		internal void _003C_003Em__50B()
-		{
-			_003C_003Ef__this.SetOtherCamerasEnabled(false);
-			_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ReloadAfterEditing(_003C_003Ef__this.viewedId));
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey338
-	{
-		internal Action<string> customEquipWearAction;
-
-		internal bool equipWear;
-
-		internal CategoryNames c;
-
-		internal bool equipSkin;
-
-		internal void _003C_003Em__50C(string item)
-		{
-			if (customEquipWearAction != null)
-			{
-				customEquipWearAction(item);
-			}
-			else if (equipWear)
-			{
-				SetAsEquippedAndSendToServer(item, c);
-			}
-		}
-
-		internal void _003C_003Em__50D(string item)
-		{
-			if (equipSkin)
-			{
-				SaveSkinAndSendToServer(item);
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CActualBuy_003Ec__AnonStorey339
-	{
-		internal CategoryNames c;
-
-		internal string id;
-
-		internal ShopNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__50F(string item)
-		{
-			_003C_003Ef__this.EquipWear(item);
-		}
-
-		internal void _003C_003Em__510(string item)
-		{
-			if (IsWeaponCategory(c) || IsWearCategory(c))
-			{
-				_003C_003Ef__this.FireBuyAction(item);
-			}
-			_003C_003Ef__this.purchaseSuccessful.SetActive(true);
-			_003C_003Ef__this._timePurchaseSuccessfulShown = Time.realtimeSinceStartup;
-		}
-
-		internal void _003C_003Em__511(string item)
-		{
-			_003C_003Ef__this.SetSkinAsCurrent(item);
-		}
-
-		internal bool _003C_003Em__512(KeyValuePair<string, string> item)
-		{
-			return item.Value == id;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A
-	{
-		internal string comment;
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B
-	{
-		internal Action ResetWeaponManager;
-
-		internal _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A _003C_003Ef__ref_0024826;
-
-		internal void _003C_003Em__517(bool success)
-		{
-			Debug.LogFormat("[Rilisoft] ShopNguiController.PurchasesSynchronizer.Callback({0}) >: {1:F3}", success, Time.realtimeSinceStartup);
-			try
-			{
-				Debug.LogFormat("Google purchases syncronized ({0}): {1}", _003C_003Ef__ref_0024826.comment, success);
-				if (success)
-				{
-					ResetWeaponManager();
-				}
-			}
-			finally
-			{
-				Debug.LogFormat("[Rilisoft] ShopNguiController.PurchasesSynchronizer.Callback({0}) <: {1:F3}", success, Time.realtimeSinceStartup);
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003Csort_003Ec__AnonStorey31B
-	{
-		internal CategoryNames c;
-
-		internal int _003C_003Em__518(ShopPositionParams go1, ShopPositionParams go2)
-		{
-			List<string> list = null;
-			List<string> list2 = null;
-			foreach (List<string> item in Wear.wear[c])
-			{
-				if (item.Contains(go1.name))
-				{
-					list = item;
-				}
-				if (item.Contains(go2.name))
-				{
-					list2 = item;
-				}
-			}
-			if (list == null || list2 == null)
-			{
-				return 0;
-			}
-			if (list == list2)
-			{
-				return list.IndexOf(go1.name) - list.IndexOf(go2.name);
-			}
-			return Wear.wear[c].IndexOf(list) - Wear.wear[c].IndexOf(list2);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CFillModelsList_003Ec__AnonStorey31E
-	{
-		internal CategoryNames cn;
-
-		internal int _003C_003Em__519(GameObject lh, GameObject rh)
-		{
-			List<string> list = null;
-			List<string> list2 = null;
-			foreach (List<string> item in Wear.wear[cn])
-			{
-				if (item.Contains(lh.name))
-				{
-					list = item;
-				}
-				if (item.Contains(rh.name))
-				{
-					list2 = item;
-				}
-			}
-			if (list == null || list2 == null)
-			{
-				return 0;
-			}
-			if (list == list2)
-			{
-				return list.IndexOf(lh.name) - list.IndexOf(rh.name);
-			}
-			return Wear.wear[cn].IndexOf(list) - Wear.wear[cn].IndexOf(list2);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey324
-	{
-		internal CategoryNames cat;
-
-		internal bool _003C_003Em__51B(WeaponSounds ws)
-		{
-			return ws.categoryNabor - 1 == (int)cat && ws.tier == ExpController.OurTierForAnyPlace();
-		}
-	}
-
 	public const string BoughtCurrencsySettingBase = "BoughtCurrency";
 
 	public const string TrainingShopStageStepKey = "ShopNGUIController.TrainingShopStageStepKey";
@@ -1216,11 +37,11 @@ public class ShopNGUIController : MonoBehaviour
 
 	private UISprite toBlink;
 
-	private Dictionary<TrainingState, Action> _setTrainingStateMethods;
+	private Dictionary<ShopNGUIController.TrainingState, Action> _setTrainingStateMethods;
 
-	private TrainingState _trainingState;
+	private ShopNGUIController.TrainingState _trainingState;
 
-	private TrainingState _trainingStateRemovedNoviceArmor;
+	private ShopNGUIController.TrainingState _trainingStateRemovedNoviceArmor;
 
 	public static ShopNGUIController sharedShop;
 
@@ -1360,7 +181,7 @@ public class ShopNGUIController : MonoBehaviour
 
 	private string offerID;
 
-	public CategoryNames offerCategory;
+	public ShopNGUIController.CategoryNames offerCategory;
 
 	public float scaleCoef = 0.5f;
 
@@ -1400,9 +221,9 @@ public class ShopNGUIController : MonoBehaviour
 
 	public Action wearResumeAction;
 
-	public Action<CategoryNames, string> wearUnequipAction;
+	public Action<ShopNGUIController.CategoryNames, string> wearUnequipAction;
 
-	public Action<CategoryNames, string, string> wearEquipAction;
+	public Action<ShopNGUIController.CategoryNames, string, string> wearEquipAction;
 
 	public Action<string> buyAction;
 
@@ -1468,7 +289,7 @@ public class ShopNGUIController : MonoBehaviour
 
 	public UILabel salePerc;
 
-	public CategoryNames currentCategory;
+	public ShopNGUIController.CategoryNames currentCategory;
 
 	public bool inGame = true;
 
@@ -1488,51 +309,49 @@ public class ShopNGUIController : MonoBehaviour
 
 	private List<ShopPositionParams> armor = new List<ShopPositionParams>();
 
-	private Action<List<ShopPositionParams>, CategoryNames> sort;
+	private Action<List<ShopPositionParams>, ShopNGUIController.CategoryNames> sort = new Action<List<ShopPositionParams>, ShopNGUIController.CategoryNames>((List<ShopPositionParams> prefabs, ShopNGUIController.CategoryNames c) => prefabs.Sort((ShopPositionParams go1, ShopPositionParams go2) => {
+		List<string> strs = null;
+		List<string> strs1 = null;
+		foreach (List<string> item in Wear.wear[c])
+		{
+			if (item.Contains(go1.name))
+			{
+				strs = item;
+			}
+			if (!item.Contains(go2.name))
+			{
+				continue;
+			}
+			strs1 = item;
+		}
+		if (strs == null || strs1 == null)
+		{
+			return 0;
+		}
+		if (strs == strs1)
+		{
+			return strs.IndexOf(go1.name) - strs.IndexOf(go2.name);
+		}
+		return Wear.wear[c].IndexOf(strs) - Wear.wear[c].IndexOf(strs1);
+	}));
 
 	private GameObject pixlMan;
 
 	private int numberOfLoadingModels;
 
-	public static readonly Dictionary<string, string> weaponCategoryLocKeys = new Dictionary<string, string>
-	{
-		{
-			CategoryNames.PrimaryCategory.ToString(),
-			"Key_0352"
-		},
-		{
-			CategoryNames.BackupCategory.ToString(),
-			"Key_0442"
-		},
-		{
-			CategoryNames.MeleeCategory.ToString(),
-			"Key_0441"
-		},
-		{
-			CategoryNames.SpecilCategory.ToString(),
-			"Key_0440"
-		},
-		{
-			CategoryNames.SniperCategory.ToString(),
-			"Key_1669"
-		},
-		{
-			CategoryNames.PremiumCategory.ToString(),
-			"Key_0093"
-		}
-	};
+	public readonly static Dictionary<string, string> weaponCategoryLocKeys;
 
 	private Transform highlightedCarouselObject;
 
-	public int itemIndex;
+	public int itemIndex = -1;
 
 	private GameObject _lastSelectedItem;
 
 	private GameObject[] _onPersArmorRefs;
 
-	private static bool _ShowArmor = true;
+	private static bool _ShowArmor;
 
-	private static bool _ShowHat = true;
+	private static bool _ShowHat;
 
 	private float timeToUpdateTempGunTime;
 
@@ -1544,7 +363,7 @@ public class ShopNGUIController : MonoBehaviour
 
 	private Material[] _refsOnLowPolyArmorMaterials;
 
-	public static string[] gearOrder = PotionsController.potions;
+	public static string[] gearOrder;
 
 	private string _currentCape;
 
@@ -1558,7 +377,7 @@ public class ShopNGUIController : MonoBehaviour
 
 	private float lastTime;
 
-	public static float IdleTimeoutPers = 5f;
+	public static float IdleTimeoutPers;
 
 	private float idleTimerLastTime;
 
@@ -1580,181 +399,243 @@ public class ShopNGUIController : MonoBehaviour
 
 	private string _promoActionsIdClicked;
 
-	private string _assignedWeaponTag;
+	private string _assignedWeaponTag = string.Empty;
 
 	private bool InTrainingAfterNoviceArmorRemoved;
 
-	[CompilerGenerated]
-	private static Action<List<ShopPositionParams>, CategoryNames> _003C_003Ef__am_0024cacheB4;
+	private string _CurrentEquippedSN
+	{
+		get
+		{
+			return ShopNGUIController.SnForWearCategory(this.currentCategory);
+		}
+	}
 
-	[CompilerGenerated]
-	private static Func<CategoryNames, Comparison<GameObject>> _003C_003Ef__am_0024cacheB5;
+	public string _CurrentEquippedWear
+	{
+		get
+		{
+			return this.WearForCat(this.currentCategory);
+		}
+	}
 
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cacheB6;
+	private string _CurrentNoneEquipped
+	{
+		get
+		{
+			return ShopNGUIController.NoneEquippedForWearCategory(this.currentCategory);
+		}
+	}
 
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cacheB7;
+	public static bool GuiActive
+	{
+		get
+		{
+			return (ShopNGUIController.sharedShop == null ? false : ShopNGUIController.sharedShop.ActiveObject.activeInHierarchy);
+		}
+		set
+		{
+			string hunterRifleTag;
+			ShopNGUIController.CategoryNames categoryName;
+			if (value)
+			{
+				if (ShopNGUIController.sharedShop._backSubscription != null)
+				{
+					ShopNGUIController.sharedShop._backSubscription.Dispose();
+				}
+				ShopNGUIController.sharedShop._backSubscription = BackSystem.Instance.Register(new Action(ShopNGUIController.sharedShop.HandleEscape), "Shop");
+			}
+			else if (ShopNGUIController.sharedShop._backSubscription != null)
+			{
+				ShopNGUIController.sharedShop._backSubscription.Dispose();
+				ShopNGUIController.sharedShop._backSubscription = null;
+				Storager.RefreshWeaponDigestIfDirty();
+			}
+			if (value)
+			{
+				Transform vector3 = ShopNGUIController.sharedShop.category.buttons[11].transform;
+				float single = vector3.localPosition.y;
+				Vector3 vector31 = vector3.localPosition;
+				vector3.localPosition = new Vector3(-10000f, single, vector31.z);
+			}
+			if (ZombieCreator.sharedCreator != null)
+			{
+				ZombieCreator.sharedCreator.SuppressDrawingWaveMessage();
+			}
+			if (Tools.RuntimePlatform != RuntimePlatform.MetroPlayerX64)
+			{
+				QualitySettings.antiAliasing = (!value || Device.isWeakDevice ? 0 : 4);
+			}
+			else
+			{
+				QualitySettings.antiAliasing = 0;
+			}
+			FreeAwardShowHandler.CheckShowChest(value);
+			if (ShopNGUIController.sharedShop != null)
+			{
+				ShopNGUIController.sharedShop.SetOtherCamerasEnabled(!value);
+				if (!value)
+				{
+					Color? nullable = ShopNGUIController.sharedShop._storedAmbientLight;
+					RenderSettings.ambientLight = (!nullable.HasValue ? RenderSettings.ambientLight : nullable.Value);
+					bool? nullable1 = ShopNGUIController.sharedShop._storedFogEnabled;
+					RenderSettings.fog = (!nullable1.HasValue ? RenderSettings.fog : nullable1.Value);
+					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
+					{
+						ShopNGUIController.sharedShop.HideAllTrainingInterface();
+						string str = ShopNGUIController.TempGunOrHighestDPSGun(ShopNGUIController.CategoryNames.PrimaryCategory, out categoryName);
+						str = WeaponManager.FirstUnboughtTag(str);
+						ShopNGUIController.sharedShop.CategoryChosen(categoryName, str, true);
+					}
+					else if (ShopNGUIController.sharedShop.InTrainingAfterNoviceArmorRemoved)
+					{
+						ShopNGUIController.sharedShop.HideAllTrainingInterfaceRemovedNoviceArmor();
+					}
+					ShopNGUIController.sharedShop.carouselCenter.onFinished -= new SpringPanel.OnFinished(ShopNGUIController.sharedShop.HandleCarouselCentering);
+					PromoActionsManager.ActionsUUpdated -= new Action(ShopNGUIController.sharedShop.HandleActionsUUpdated);
+					ShopNGUIController.sharedShop.SetWeapon(null);
+					ShopNGUIController.sharedShop.ActiveObject.SetActive(false);
+					ShopNGUIController.sharedShop.carouselCenter.enabled = false;
+					WeaponManager.ClearCachedInnerPrefabs();
+				}
+				else
+				{
+					ShopNGUIController.sharedShop.armorLock.SetActive(Defs.isHunger);
+					ShopNGUIController.sharedShop.stub.SetActive(true);
+					try
+					{
+						ShopNGUIController.sharedShop._storedAmbientLight = new Color?(RenderSettings.ambientLight);
+						ShopNGUIController.sharedShop._storedFogEnabled = new bool?(RenderSettings.fog);
+						RenderSettings.ambientLight = Defs.AmbientLightColorForShop();
+						RenderSettings.fog = false;
+						ShopNGUIController.sharedShop.timeOfEnteringShopForProtectFromPressingCoinsButton = Time.realtimeSinceStartup;
+						ShopNGUIController.sharedShop.LoadCurrentWearToVars();
+						ShopNGUIController.sharedShop.UpdateIcons();
+						ShopNGUIController.CategoryNames categoryName1 = ShopNGUIController.CategoryNames.PrimaryCategory;
+						if (ShopNGUIController.sharedShop.offerID == null)
+						{
+							ShopNGUIController.CategoryNames categoryName2 = ShopNGUIController.CategoryNames.PrimaryCategory;
+							if (WeaponManager.sharedManager != null && WeaponManager.sharedManager._currentFilterMap == 1)
+							{
+								categoryName1 = ShopNGUIController.CategoryNames.MeleeCategory;
+								categoryName2 = ShopNGUIController.CategoryNames.MeleeCategory;
+							}
+							else if (WeaponManager.sharedManager != null && WeaponManager.sharedManager._currentFilterMap == 2)
+							{
+								categoryName1 = ShopNGUIController.CategoryNames.SniperCategory;
+								categoryName2 = ShopNGUIController.CategoryNames.SniperCategory;
+							}
+							hunterRifleTag = ShopNGUIController._CurrentWeaponSetIDs()[(int)categoryName2] ?? ShopNGUIController.TempGunOrHighestDPSGun(categoryName2, out categoryName1);
+						}
+						else
+						{
+							hunterRifleTag = ShopNGUIController.sharedShop.offerID;
+							categoryName1 = ShopNGUIController.sharedShop.offerCategory;
+							ShopNGUIController.sharedShop.offerID = null;
+						}
+						if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+						{
+							ShopNGUIController.sharedShop.HideAllTrainingInterface();
+							if (!ShopNGUIController.sharedShop.InTrainingAfterNoviceArmorRemoved)
+							{
+								ShopNGUIController.sharedShop.HideAllTrainingInterfaceRemovedNoviceArmor();
+							}
+						}
+						else
+						{
+							AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Open_Shop, true);
+							ShopNGUIController.sharedShop.trainingColliders.SetActive(true);
+							if (ShopNGUIController.sharedShop.trainingState >= ShopNGUIController.TrainingState.OnArmor)
+							{
+								categoryName1 = ShopNGUIController.CategoryNames.ArmorCategory;
+								hunterRifleTag = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+							}
+							else if (ShopNGUIController.sharedShop.trainingState >= ShopNGUIController.TrainingState.OnSniperRifle)
+							{
+								categoryName1 = ShopNGUIController.CategoryNames.SniperCategory;
+								hunterRifleTag = WeaponTags.HunterRifleTag;
+							}
+						}
+						string str1 = WeaponManager.LastBoughtTag(hunterRifleTag);
+						if (str1 != null)
+						{
+							hunterRifleTag = str1;
+						}
+						else if (ShopNGUIController.IsWearCategory(categoryName1))
+						{
+							foreach (List<List<string>> lists in Wear.wear.Values)
+							{
+								foreach (List<string> strs in lists)
+								{
+									if (!strs.Contains(hunterRifleTag))
+									{
+										continue;
+									}
+									hunterRifleTag = strs[0];
+									break;
+								}
+							}
+						}
+						ShopNGUIController.sharedShop.CategoryChosen(categoryName1, hunterRifleTag, true);
+						ShopNGUIController.SetIconChosen(categoryName1);
+						ShopNGUIController.sharedShop.MakeACtiveAfterDelay(hunterRifleTag, categoryName1);
+					}
+					catch (Exception exception)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.GuiActive: ", exception));
+					}
+					ShopNGUIController.sharedShop.StartCoroutine(ShopNGUIController.sharedShop.DisableStub());
+				}
+			}
+		}
+	}
 
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cacheB8;
+	private string IDForCurrentGear
+	{
+		get
+		{
+			if (this.viewedId == null)
+			{
+				return null;
+			}
+			return GearManager.HolderQuantityForID(this.viewedId);
+		}
+	}
 
-	[CompilerGenerated]
-	private static Func<KeyValuePair<CategoryNames, List<List<string>>>, IEnumerable<string>> _003C_003Ef__am_0024cacheB9;
+	public bool IsFromPromoActions
+	{
+		get
+		{
+			return this._isFromPromoActions;
+		}
+	}
 
-	[CompilerGenerated]
-	private static Func<string, ItemRecord> _003C_003Ef__am_0024cacheBA;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cacheBB;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cacheBC;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cacheBD;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cacheBE;
-
-	[CompilerGenerated]
-	private static Func<CategoryNames, int> _003C_003Ef__am_0024cacheBF;
-
-	[CompilerGenerated]
-	private static Func<UnityEngine.Object, WeaponSounds> _003C_003Ef__am_0024cacheC0;
-
-	[CompilerGenerated]
-	private static Func<WeaponSounds, bool> _003C_003Ef__am_0024cacheC1;
-
-	[CompilerGenerated]
-	private static Func<WeaponSounds, bool> _003C_003Ef__am_0024cacheC2;
-
-	[CompilerGenerated]
-	private static Func<WeaponSounds, bool> _003C_003Ef__am_0024cacheC3;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheC4;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheC5;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheC6;
-
-	[CompilerGenerated]
-	private static Comparison<string> _003C_003Ef__am_0024cacheC7;
-
-	[CompilerGenerated]
-	private static Predicate<string> _003C_003Ef__am_0024cacheC8;
-
-	[CompilerGenerated]
-	private static Comparison<GameObject> _003C_003Ef__am_0024cacheC9;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheCA;
-
-	[CompilerGenerated]
-	private static Action<string> _003C_003Ef__am_0024cacheCB;
-
-	[CompilerGenerated]
-	private static Func<KeyValuePair<string, string>, string> _003C_003Ef__am_0024cacheCC;
-
-	[CompilerGenerated]
-	private static Predicate<GameObject> _003C_003Ef__am_0024cacheCD;
-
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cacheCE;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheCF;
-
-	[CompilerGenerated]
-	private static Func<UnityEngine.Object, WeaponSounds> _003C_003Ef__am_0024cacheD0;
-
-	[CompilerGenerated]
-	private static Func<WeaponSounds, bool> _003C_003Ef__am_0024cacheD1;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheD2;
+	private string NextUpgradeIDForCurrentGear
+	{
+		get
+		{
+			if (this.viewedId == null)
+			{
+				return null;
+			}
+			return GearManager.UpgradeIDForGear(GearManager.HolderQuantityForID(this.viewedId), GearManager.CurrentNumberOfUphradesForGear(this.viewedId) + 1);
+		}
+	}
 
 	public static bool NoviceArmorAvailable
 	{
 		get
 		{
-			return Storager.getInt("Training.NoviceArmorUsedKey", false) == 1 && (!TrainingController.TrainingCompleted || Storager.getInt("Training.ShouldRemoveNoviceArmorInShopKey", false) == 1);
-		}
-	}
-
-	private TrainingState trainingStateRemoveNoviceArmor
-	{
-		get
-		{
-			return _trainingStateRemovedNoviceArmor;
-		}
-		set
-		{
-			try
+			bool flag;
+			if (Storager.getInt("Training.NoviceArmorUsedKey", false) != 1)
 			{
-				if (_trainingStateRemovedNoviceArmor != value)
-				{
-					_trainingStateRemovedNoviceArmor = value;
-				}
-				for (int i = 0; i < trainingTipsRemovedNoviceArmor.Count; i++)
-				{
-					GameObject obj = trainingTipsRemovedNoviceArmor[i];
-					string text = trainingTipsRemovedNoviceArmor[i].name;
-					int trainingStateRemovedNoviceArmor = (int)_trainingStateRemovedNoviceArmor;
-					obj.SetActive(text == trainingStateRemovedNoviceArmor.ToString());
-				}
+				flag = false;
 			}
-			catch (Exception ex)
+			else
 			{
-				Debug.LogError("Exception in trainingStateRemoveNoviceArmor setter: " + ex);
+				flag = (!TrainingController.TrainingCompleted ? true : Storager.getInt("Training.ShouldRemoveNoviceArmorInShopKey", false) == 1);
 			}
-		}
-	}
-
-	private TrainingState trainingState
-	{
-		get
-		{
-			if (!_trainStateInitialized)
-			{
-				_trainingState = (TrainingState)Storager.getInt("ShopNGUIController.TrainingShopStageStepKey", false);
-				_trainStateInitialized = true;
-			}
-			return _trainingState;
-		}
-		set
-		{
-			try
-			{
-				if (_trainingState != value)
-				{
-					_trainingState = value;
-					if (_trainingState == TrainingState.NotInArmorCategory || _trainingState == TrainingState.BackBlinking)
-					{
-						Storager.setInt("ShopNGUIController.TrainingShopStageStepKey", (int)_trainingState, false);
-					}
-				}
-				_trainStateInitialized = true;
-				for (int i = 0; i < trainingTips.Count; i++)
-				{
-					trainingTips[i].SetActive(i == (int)_trainingState);
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception in trainingState setter: " + ex);
-			}
-		}
-	}
-
-	public bool WeaponCategory
-	{
-		get
-		{
-			return IsWeaponCategory(currentCategory);
+			return flag;
 		}
 	}
 
@@ -1762,17 +643,17 @@ public class ShopNGUIController : MonoBehaviour
 	{
 		get
 		{
-			return _ShowArmor;
+			return ShopNGUIController._ShowArmor;
 		}
 		private set
 		{
-			if (_ShowArmor != value)
+			if (ShopNGUIController._ShowArmor != value)
 			{
-				_ShowArmor = value;
-				Action showArmorChanged = ShopNGUIController.ShowArmorChanged;
-				if (showArmorChanged != null)
+				ShopNGUIController._ShowArmor = value;
+				Action action = ShopNGUIController.ShowArmorChanged;
+				if (action != null)
 				{
-					showArmorChanged();
+					action();
 				}
 			}
 		}
@@ -1782,19 +663,89 @@ public class ShopNGUIController : MonoBehaviour
 	{
 		get
 		{
-			return _ShowHat;
+			return ShopNGUIController._ShowHat;
 		}
 		private set
 		{
-			if (_ShowHat != value)
+			if (ShopNGUIController._ShowHat != value)
 			{
-				_ShowHat = value;
-				Action showArmorChanged = ShopNGUIController.ShowArmorChanged;
-				if (showArmorChanged != null)
+				ShopNGUIController._ShowHat = value;
+				Action action = ShopNGUIController.ShowArmorChanged;
+				if (action != null)
 				{
-					showArmorChanged();
+					action();
 				}
 			}
+		}
+	}
+
+	private ShopNGUIController.TrainingState trainingState
+	{
+		get
+		{
+			if (!this._trainStateInitialized)
+			{
+				this._trainingState = (ShopNGUIController.TrainingState)Storager.getInt("ShopNGUIController.TrainingShopStageStepKey", false);
+				this._trainStateInitialized = true;
+			}
+			return this._trainingState;
+		}
+		set
+		{
+			try
+			{
+				if (this._trainingState != value)
+				{
+					this._trainingState = value;
+					if (this._trainingState == ShopNGUIController.TrainingState.NotInArmorCategory || this._trainingState == ShopNGUIController.TrainingState.BackBlinking)
+					{
+						Storager.setInt("ShopNGUIController.TrainingShopStageStepKey", (int)this._trainingState, false);
+					}
+				}
+				this._trainStateInitialized = true;
+				for (int i = 0; i < this.trainingTips.Count; i++)
+				{
+					this.trainingTips[i].SetActive(i == (int)this._trainingState);
+				}
+			}
+			catch (Exception exception)
+			{
+				UnityEngine.Debug.LogError(string.Concat("Exception in trainingState setter: ", exception));
+			}
+		}
+	}
+
+	private ShopNGUIController.TrainingState trainingStateRemoveNoviceArmor
+	{
+		get
+		{
+			return this._trainingStateRemovedNoviceArmor;
+		}
+		set
+		{
+			try
+			{
+				if (this._trainingStateRemovedNoviceArmor != value)
+				{
+					this._trainingStateRemovedNoviceArmor = value;
+				}
+				for (int i = 0; i < this.trainingTipsRemovedNoviceArmor.Count; i++)
+				{
+					this.trainingTipsRemovedNoviceArmor[i].SetActive(this.trainingTipsRemovedNoviceArmor[i].name == this._trainingStateRemovedNoviceArmor.ToString());
+				}
+			}
+			catch (Exception exception)
+			{
+				UnityEngine.Debug.LogError(string.Concat("Exception in trainingStateRemoveNoviceArmor setter: ", exception));
+			}
+		}
+	}
+
+	public bool WeaponCategory
+	{
+		get
+		{
+			return ShopNGUIController.IsWeaponCategory(this.currentCategory);
 		}
 	}
 
@@ -1802,271 +753,311 @@ public class ShopNGUIController : MonoBehaviour
 	{
 		get
 		{
-			return IsWearCategory(currentCategory);
+			return ShopNGUIController.IsWearCategory(this.currentCategory);
 		}
 	}
 
-	private string NextUpgradeIDForCurrentGear
+	static ShopNGUIController()
 	{
-		get
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			if (viewedId == null)
-			{
-				return null;
-			}
-			return GearManager.UpgradeIDForGear(GearManager.HolderQuantityForID(viewedId), GearManager.CurrentNumberOfUphradesForGear(viewedId) + 1);
-		}
+			{ ShopNGUIController.CategoryNames.PrimaryCategory.ToString(), "Key_0352" },
+			{ ShopNGUIController.CategoryNames.BackupCategory.ToString(), "Key_0442" },
+			{ ShopNGUIController.CategoryNames.MeleeCategory.ToString(), "Key_0441" },
+			{ ShopNGUIController.CategoryNames.SpecilCategory.ToString(), "Key_0440" },
+			{ ShopNGUIController.CategoryNames.SniperCategory.ToString(), "Key_1669" },
+			{ ShopNGUIController.CategoryNames.PremiumCategory.ToString(), "Key_0093" }
+		};
+		ShopNGUIController.weaponCategoryLocKeys = strs;
+		ShopNGUIController._ShowArmor = true;
+		ShopNGUIController._ShowHat = true;
+		ShopNGUIController.gearOrder = PotionsController.potions;
+		ShopNGUIController.IdleTimeoutPers = 5f;
 	}
-
-	private string IDForCurrentGear
-	{
-		get
-		{
-			if (viewedId == null)
-			{
-				return null;
-			}
-			return GearManager.HolderQuantityForID(viewedId);
-		}
-	}
-
-	private string _CurrentEquippedSN
-	{
-		get
-		{
-			return SnForWearCategory(currentCategory);
-		}
-	}
-
-	private string _CurrentNoneEquipped
-	{
-		get
-		{
-			return NoneEquippedForWearCategory(currentCategory);
-		}
-	}
-
-	public string _CurrentEquippedWear
-	{
-		get
-		{
-			return WearForCat(currentCategory);
-		}
-	}
-
-	public bool IsFromPromoActions
-	{
-		get
-		{
-			return _isFromPromoActions;
-		}
-	}
-
-	public static bool GuiActive
-	{
-		get
-		{
-			return sharedShop != null && sharedShop.ActiveObject.activeInHierarchy;
-		}
-		set
-		{
-			if (value)
-			{
-				if (sharedShop._backSubscription != null)
-				{
-					sharedShop._backSubscription.Dispose();
-				}
-				sharedShop._backSubscription = BackSystem.Instance.Register(sharedShop.HandleEscape, "Shop");
-			}
-			else if (sharedShop._backSubscription != null)
-			{
-				sharedShop._backSubscription.Dispose();
-				sharedShop._backSubscription = null;
-				Storager.RefreshWeaponDigestIfDirty();
-			}
-			if (value)
-			{
-				Transform transform = sharedShop.category.buttons[11].transform;
-				transform.localPosition = new Vector3(-10000f, transform.localPosition.y, transform.localPosition.z);
-			}
-			if (ZombieCreator.sharedCreator != null)
-			{
-				ZombieCreator.sharedCreator.SuppressDrawingWaveMessage();
-			}
-			if (Tools.RuntimePlatform == RuntimePlatform.MetroPlayerX64)
-			{
-				QualitySettings.antiAliasing = 0;
-			}
-			else
-			{
-				QualitySettings.antiAliasing = ((value && !Device.isWeakDevice) ? 4 : 0);
-			}
-			FreeAwardShowHandler.CheckShowChest(value);
-			if (!(sharedShop != null))
-			{
-				return;
-			}
-			sharedShop.SetOtherCamerasEnabled(!value);
-			if (value)
-			{
-				sharedShop.armorLock.SetActive(Defs.isHunger);
-				sharedShop.stub.SetActive(true);
-				try
-				{
-					sharedShop._storedAmbientLight = RenderSettings.ambientLight;
-					sharedShop._storedFogEnabled = RenderSettings.fog;
-					RenderSettings.ambientLight = Defs.AmbientLightColorForShop();
-					RenderSettings.fog = false;
-					sharedShop.timeOfEnteringShopForProtectFromPressingCoinsButton = Time.realtimeSinceStartup;
-					sharedShop.LoadCurrentWearToVars();
-					sharedShop.UpdateIcons();
-					CategoryNames cn = CategoryNames.PrimaryCategory;
-					string text;
-					if (sharedShop.offerID != null)
-					{
-						text = sharedShop.offerID;
-						cn = sharedShop.offerCategory;
-						sharedShop.offerID = null;
-					}
-					else
-					{
-						CategoryNames categoryNames = CategoryNames.PrimaryCategory;
-						if (WeaponManager.sharedManager != null && WeaponManager.sharedManager._currentFilterMap == 1)
-						{
-							cn = CategoryNames.MeleeCategory;
-							categoryNames = CategoryNames.MeleeCategory;
-						}
-						else if (WeaponManager.sharedManager != null && WeaponManager.sharedManager._currentFilterMap == 2)
-						{
-							cn = CategoryNames.SniperCategory;
-							categoryNames = CategoryNames.SniperCategory;
-						}
-						text = _CurrentWeaponSetIDs()[(int)categoryNames] ?? TempGunOrHighestDPSGun(categoryNames, out cn);
-					}
-					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-					{
-						AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Open_Shop);
-						sharedShop.trainingColliders.SetActive(true);
-						if (sharedShop.trainingState >= TrainingState.OnArmor)
-						{
-							cn = CategoryNames.ArmorCategory;
-							text = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-						}
-						else if (sharedShop.trainingState >= TrainingState.OnSniperRifle)
-						{
-							cn = CategoryNames.SniperCategory;
-							text = WeaponTags.HunterRifleTag;
-						}
-					}
-					else
-					{
-						sharedShop.HideAllTrainingInterface();
-						if (!sharedShop.InTrainingAfterNoviceArmorRemoved)
-						{
-							sharedShop.HideAllTrainingInterfaceRemovedNoviceArmor();
-						}
-					}
-					string text2 = WeaponManager.LastBoughtTag(text);
-					if (text2 == null)
-					{
-						if (IsWearCategory(cn))
-						{
-							foreach (List<List<string>> value2 in Wear.wear.Values)
-							{
-								foreach (List<string> item in value2)
-								{
-									if (item.Contains(text))
-									{
-										text = item[0];
-										break;
-									}
-								}
-							}
-						}
-					}
-					else
-					{
-						text = text2;
-					}
-					sharedShop.CategoryChosen(cn, text, true);
-					SetIconChosen(cn);
-					sharedShop.MakeACtiveAfterDelay(text, cn);
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("Exception in ShopNGUIController.GuiActive: " + ex);
-				}
-				sharedShop.StartCoroutine(sharedShop.DisableStub());
-			}
-			else
-			{
-				Color? storedAmbientLight = sharedShop._storedAmbientLight;
-				RenderSettings.ambientLight = ((!storedAmbientLight.HasValue) ? RenderSettings.ambientLight : storedAmbientLight.Value);
-				bool? storedFogEnabled = sharedShop._storedFogEnabled;
-				RenderSettings.fog = ((!storedFogEnabled.HasValue) ? RenderSettings.fog : storedFogEnabled.Value);
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
-				{
-					sharedShop.HideAllTrainingInterface();
-					CategoryNames cn2;
-					string tg = TempGunOrHighestDPSGun(CategoryNames.PrimaryCategory, out cn2);
-					tg = WeaponManager.FirstUnboughtTag(tg);
-					sharedShop.CategoryChosen(cn2, tg, true);
-				}
-				else if (sharedShop.InTrainingAfterNoviceArmorRemoved)
-				{
-					sharedShop.HideAllTrainingInterfaceRemovedNoviceArmor();
-				}
-				MyCenterOnChild myCenterOnChild = sharedShop.carouselCenter;
-				myCenterOnChild.onFinished = (SpringPanel.OnFinished)Delegate.Remove(myCenterOnChild.onFinished, new SpringPanel.OnFinished(sharedShop.HandleCarouselCentering));
-				PromoActionsManager.ActionsUUpdated -= sharedShop.HandleActionsUUpdated;
-				sharedShop.SetWeapon(null);
-				sharedShop.ActiveObject.SetActive(false);
-				sharedShop.carouselCenter.enabled = false;
-				WeaponManager.ClearCachedInnerPrefabs();
-			}
-		}
-	}
-
-	public static event Action GunOrArmorBought;
-
-	public static event Action<string> TryGunBought;
-
-	public static event Action ShowArmorChanged;
-
-	public static event Action GunBought;
 
 	public ShopNGUIController()
 	{
-		if (_003C_003Ef__am_0024cacheB4 == null)
-		{
-			_003C_003Ef__am_0024cacheB4 = _003Csort_003Em__4C4;
-		}
-		sort = _003C_003Ef__am_0024cacheB4;
-		itemIndex = -1;
-		_assignedWeaponTag = string.Empty;
-		base._002Ector();
 	}
 
-	public static void GoToShop(CategoryNames cat, string id)
+	public static int _CurrentNumberOfUpgrades(string itemId, out bool maxUpgrade, ShopNGUIController.CategoryNames c, bool countTryGunsAsUpgrade = true)
 	{
-		sharedShop.SetOfferID(id);
-		sharedShop.offerCategory = cat;
-		if (GuiActive)
+		List<string> strs = new List<string>();
+		int count = 0;
+		if (ShopNGUIController.IsWeaponCategory(c))
 		{
-			sharedShop.CategoryChosen(cat, id);
-			SetIconChosen(cat);
-		}
-		else if (SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene))
-		{
-			if (MainMenuController.sharedController != null)
+			strs = WeaponUpgrades.ChainForTag(itemId) ?? new List<string>()
 			{
-				MainMenuController.sharedController.HandleShopClicked(null, EventArgs.Empty);
+				itemId
+			};
+			count = strs.Count;
+			if (WeaponManager.tagToStoreIDMapping.ContainsKey(itemId))
+			{
+				int num = strs.Count - 1;
+				while (num >= 0)
+				{
+					string item = itemId;
+					bool flag = ItemDb.IsTemporaryGun(itemId);
+					if (!flag)
+					{
+						item = WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[strs[num]]];
+					}
+					bool flag1 = ShopNGUIController.HasBoughtGood(item, flag);
+					if (!flag1 && countTryGunsAsUpgrade && WeaponManager.sharedManager != null)
+					{
+						flag1 = WeaponManager.sharedManager.IsAvailableTryGun(strs[num]);
+					}
+					if (flag1)
+					{
+						break;
+					}
+					else
+					{
+						count--;
+						num--;
+					}
+				}
 			}
 		}
-		else
+		else if (ShopNGUIController.IsWearCategory(c))
 		{
-			sharedShop.resumeAction = null;
-			GuiActive = true;
+			count = (!ShopNGUIController.HasBoughtGood(itemId, TempItemsController.PriceCoefs.ContainsKey(itemId)) ? 0 : 1);
+		}
+		if (itemId.Equals(StoreKitEventListener.elixirID) && Defs.NumberOfElixirs > 0)
+		{
+			count++;
+		}
+		maxUpgrade = count == (strs.Count <= 0 ? 1 : strs.Count);
+		return count;
+	}
+
+	private static int _CurrentNumberOfWearUpgrades(string id, out bool maxUpgrade, ShopNGUIController.CategoryNames c)
+	{
+		if (id == "Armor_Novice")
+		{
+			maxUpgrade = ShopNGUIController.NoviceArmorAvailable;
+			return (!ShopNGUIController.NoviceArmorAvailable ? 0 : 1);
+		}
+		List<string> strs = Wear.wear[c].FirstOrDefault<List<string>>((List<string> l) => l.Contains(id));
+		if (strs == null)
+		{
+			maxUpgrade = false;
+			return 0;
+		}
+		for (int i = 0; i < strs.Count; i++)
+		{
+			if (Storager.getInt(strs[i], true) == 0)
+			{
+				maxUpgrade = false;
+				return i;
+			}
+		}
+		maxUpgrade = true;
+		return strs.Count;
+	}
+
+	private static string[] _CurrentWeaponSetIDs()
+	{
+		string[] tag = new string[6];
+		WeaponManager weaponManager = WeaponManager.sharedManager;
+		int num = 0;
+		for (int i = 0; i < (int)tag.Length; i++)
+		{
+			if (num < weaponManager.playerWeapons.Count)
+			{
+				Weapon item = weaponManager.playerWeapons[num] as Weapon;
+				if (item.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1 != i)
+				{
+					tag[i] = null;
+				}
+				else
+				{
+					num++;
+					tag[i] = ItemDb.GetByPrefabName(item.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag;
+				}
+			}
+			else
+			{
+				tag[i] = null;
+			}
+		}
+		return tag;
+	}
+
+	private static string _TagForId(string id)
+	{
+		string item;
+		string str = id;
+		List<List<string>>.Enumerator enumerator = WeaponUpgrades.upgrades.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				List<string> current = enumerator.Current;
+				if (!current.Contains(str))
+				{
+					continue;
+				}
+				item = current[0];
+				return item;
+			}
+			return str;
+		}
+		finally
+		{
+			((IDisposable)(object)enumerator).Dispose();
+		}
+		return item;
+	}
+
+	private void ActualBuy(string id, string tg, ItemPrice itemPrice)
+	{
+		bool flag;
+		Dictionary<string, string> strs;
+		if (this.currentCategory == ShopNGUIController.CategoryNames.ArmorCategory || ShopNGUIController.IsWeaponCategory(this.currentCategory))
+		{
+			ShopNGUIController.FireWeaponOrArmorBought();
+		}
+		ShopNGUIController.CategoryNames categoryName = this.currentCategory;
+		int num = ShopNGUIController.AddedNumberOfGearWhenBuyingPack(id);
+		ShopNGUIController.ProvdeShopItemWithRightId(categoryName, id, tg, null, (string item) => this.EquipWear(item), (string item) => {
+			if (ShopNGUIController.IsWeaponCategory(categoryName) || ShopNGUIController.IsWearCategory(categoryName))
+			{
+				this.FireBuyAction(item);
+			}
+			this.purchaseSuccessful.SetActive(true);
+			this._timePurchaseSuccessfulShown = Time.realtimeSinceStartup;
+		}, (string item) => this.SetSkinAsCurrent(item), false, 1, false, 0, true);
+		if (WeaponManager.tagToStoreIDMapping.ContainsValue(id))
+		{
+			IEnumerable<string> value = 
+				from item in WeaponManager.tagToStoreIDMapping
+				where item.Value == id
+				select item into kv
+				select kv.Key;
+			ShopNGUIController.SynchronizeAndroidPurchases(string.Concat("Weapon: ", value.FirstOrDefault<string>()));
+			ItemPrice priceByShopId = ItemDb.GetPriceByShopId(id);
+			int? nullable = null;
+			if (priceByShopId != null)
+			{
+				nullable = new int?(priceByShopId.Price);
+			}
+			if (nullable.HasValue && nullable.Value >= PlayerPrefs.GetInt(Defs.MostExpensiveWeapon, 0))
+			{
+				PlayerPrefs.SetInt(Defs.MostExpensiveWeapon, nullable.Value);
+				PlayerPrefs.SetString(Defs.MenuPersWeaponTag, (value.Count<string>() <= 0 ? string.Empty : value.ElementAt<string>(0)));
+				PlayerPrefs.Save();
+			}
+		}
+		string str = id;
+		try
+		{
+			if (WeaponManager.tagToStoreIDMapping.ContainsKey(id))
+			{
+				str = WeaponManager.tagToStoreIDMapping[id];
+			}
+			if (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory && str != null && SkinsController.shopKeyFromNameSkin.ContainsKey(str))
+			{
+				str = SkinsController.shopKeyFromNameSkin[str];
+			}
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in setting shopId: ", exception));
+		}
+		try
+		{
+			string str1 = WeaponManager.LastBoughtTag(this.viewedId) ?? WeaponManager.FirstUnboughtTag(this.viewedId);
+			string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(str1, str, this.currentCategory, null);
+			try
+			{
+				if (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory)
+				{
+					itemNameNonLocalized = LocalizationStore.GetByDefault(SkinsController.skinsLocalizeKey[int.Parse(id)]);
+				}
+			}
+			catch (Exception exception1)
+			{
+				UnityEngine.Debug.LogError(string.Concat("Shop: ActualBuy: get readable skin name: ", exception1));
+			}
+			FlurryPluginWrapper.LogPurchaseByModes(this.currentCategory, (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory ? itemNameNonLocalized : GearManager.HolderQuantityForID(str)), (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory ? 1 : num), false);
+			if (this.currentCategory == ShopNGUIController.CategoryNames.GearCategory)
+			{
+				FlurryPluginWrapper.LogGearPurchases(GearManager.HolderQuantityForID(str), num, false);
+				if (Application.loadedLevelName == Defs.MainMenuScene)
+				{
+					FlurryPluginWrapper.LogPurchaseByPoints(this.currentCategory, GearManager.HolderQuantityForID(str), num);
+				}
+			}
+			else
+			{
+				FlurryPluginWrapper.LogPurchasesPoints(ShopNGUIController.IsWeaponCategory(this.currentCategory));
+				FlurryPluginWrapper.LogPurchaseByPoints(this.currentCategory, itemNameNonLocalized, 1);
+			}
+			try
+			{
+				bool flag1 = false;
+				if (ShopNGUIController.IsWeaponCategory(this.currentCategory))
+				{
+					WeaponSounds weaponInfo = ItemDb.GetWeaponInfo(str1);
+					flag1 = (weaponInfo == null ? false : weaponInfo.IsAvalibleFromFilter(3));
+				}
+				string str2 = (!FlurryEvents.shopCategoryToLogSalesNamesMapping.ContainsKey(this.currentCategory) ? this.currentCategory.ToString() : FlurryEvents.shopCategoryToLogSalesNamesMapping[this.currentCategory]);
+				AnalyticsStuff.LogSales(itemNameNonLocalized, str2, flag1);
+				AnalyticsFacade.InAppPurchase(itemNameNonLocalized, str2, 1, itemPrice.Price, itemPrice.Currency);
+				if (this._isFromPromoActions && this._promoActionsIdClicked != null && str1 != null && this._promoActionsIdClicked == str1)
+				{
+					AnalyticsStuff.LogSpecialOffersPanel("Efficiency", "Buy", str2 ?? "Unknown", itemNameNonLocalized);
+				}
+				this._isFromPromoActions = false;
+			}
+			catch (Exception exception2)
+			{
+				UnityEngine.Debug.LogError(string.Concat("Exception in LogSales block in Shop: ", exception2));
+			}
+			int num1 = ShopNGUIController.DiscountFor(WeaponManager.LastBoughtTag(this.viewedId) ?? WeaponManager.FirstUnboughtTag(this.viewedId), out flag);
+			if (num1 > 0)
+			{
+				string itemNameNonLocalized1 = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(this.viewedId) ?? WeaponManager.FirstUnboughtTag(this.viewedId), str, this.currentCategory, "Unknown");
+				strs = new Dictionary<string, string>()
+				{
+					{ num1.ToString(), itemNameNonLocalized1 }
+				};
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Offers Sale", strs, true);
+			}
+			if (this.currentCategory == ShopNGUIController.CategoryNames.GearCategory && itemNameNonLocalized != null && !itemNameNonLocalized.Contains(GearManager.UpgradeSuffix) && GearManager.AllGear.Contains(itemNameNonLocalized))
+			{
+				itemNameNonLocalized = GearManager.AnalyticsIDForOneItemOfGear(itemNameNonLocalized, false);
+			}
+			this.LogShopPurchasesTotalAndPayingNonPaying(itemNameNonLocalized);
+			if (ExperienceController.sharedController != null)
+			{
+				int num2 = ExperienceController.sharedController.currentLevel;
+				int num3 = (num2 - 1) / 9;
+				string str3 = string.Format("[{0}, {1})", num3 * 9 + 1, (num3 + 1) * 9 + 1);
+				string str4 = string.Format("Shop Purchases On Level {0} ({1}){2}", str3, FlurryPluginWrapper.GetPayingSuffix().Trim(), string.Empty);
+				strs = new Dictionary<string, string>()
+				{
+					{ string.Concat("Level ", num2), itemNameNonLocalized }
+				};
+				FlurryPluginWrapper.LogEventAndDublicateToConsole(str4, strs, true);
+			}
+			this.LogPurchaseAfterPaymentAnalyticsEvent(itemNameNonLocalized);
+		}
+		catch (Exception exception3)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in Shop Logging: ", exception3));
+		}
+		this.chosenId = WeaponManager.LastBoughtTag(this.viewedId);
+		this.viewedId = (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory ? this.chosenId : GearManager.NameForUpgrade(GearManager.HolderQuantityForID(this.viewedId), GearManager.CurrentNumberOfUphradesForGear(GearManager.HolderQuantityForID(this.viewedId))));
+		this.UpdateIcon(this.currentCategory, true);
+		this.ReloadCarousel(null);
+		this.ChooseCarouselItem(this.viewedId, false, true);
+		Resources.UnloadUnusedAssets();
+		if (!this.inGame && this.currentCategory == ShopNGUIController.CategoryNames.CapesCategory && this.viewedId.Equals("cape_Custom"))
+		{
+			FlurryPluginWrapper.LogEvent("Enable_Custom Cape");
+			this.wholePrice.gameObject.SetActive(false);
+			this.goToSM();
 		}
 	}
 
@@ -2074,302 +1065,1461 @@ public class ShopNGUIController : MonoBehaviour
 	{
 		if (currency == null)
 		{
-			Debug.LogWarning("AddBoughtCurrency: currency == null");
+			UnityEngine.Debug.LogWarning("AddBoughtCurrency: currency == null");
 			return;
 		}
-		if (Debug.isDebugBuild)
+		if (UnityEngine.Debug.isDebugBuild)
 		{
-			Debug.Log(string.Format("<color=#ff00ffff>AddBoughtCurrency {0} {1}</color>", currency, count));
+			UnityEngine.Debug.Log(string.Format("<color=#ff00ffff>AddBoughtCurrency {0} {1}</color>", currency, count));
 		}
-		Storager.setInt("BoughtCurrency" + currency, Storager.getInt("BoughtCurrency" + currency, false) + count, false);
+		Storager.setInt(string.Concat("BoughtCurrency", currency), Storager.getInt(string.Concat("BoughtCurrency", currency), false) + count, false);
 	}
 
-	public static void SpendBoughtCurrency(string currency, int count)
+	private static int AddedNumberOfGearWhenBuyingPack(string id)
 	{
-		if (currency == null)
+		int num = GearManager.ItemsInPackForGear(GearManager.HolderQuantityForID(id));
+		if (Storager.getInt(id, false) + num > GearManager.MaxCountForGear(id))
 		{
-			Debug.LogWarning("SpendBoughtCurrency: currency == null");
+			num = GearManager.MaxCountForGear(id) - Storager.getInt(id, false);
 		}
-		else if (Debug.isDebugBuild)
-		{
-			Debug.Log(string.Format("<color=#ff00ffff>SpendBoughtCurrency {0} {1}</color>", currency, count));
-		}
+		return num;
 	}
 
-	public static void TryToBuy(GameObject mainPanel, ItemPrice price, Action onSuccess, Action onFailure = null, Func<bool> successAdditionalCond = null, Action onReturnFromBank = null, Action onEnterCoinsShopAction = null, Action onExitCoinsShopAction = null)
+	public static void AddModel(GameObject pref, ShopNGUIController.Action7<GameObject, Vector3, Vector3, string, float, int, int> act, ShopNGUIController.CategoryNames c, bool isButtonInGameGui = false, WeaponSounds wsForPos = null)
 	{
-		_003CTryToBuy_003Ec__AnonStorey31C _003CTryToBuy_003Ec__AnonStorey31C = new _003CTryToBuy_003Ec__AnonStorey31C();
-		_003CTryToBuy_003Ec__AnonStorey31C.mainPanel = mainPanel;
-		_003CTryToBuy_003Ec__AnonStorey31C.onReturnFromBank = onReturnFromBank;
-		_003CTryToBuy_003Ec__AnonStorey31C.onExitCoinsShopAction = onExitCoinsShopAction;
-		_003CTryToBuy_003Ec__AnonStorey31C.price = price;
-		_003CTryToBuy_003Ec__AnonStorey31C.successAdditionalCond = successAdditionalCond;
-		_003CTryToBuy_003Ec__AnonStorey31C.onSuccess = onSuccess;
-		_003CTryToBuy_003Ec__AnonStorey31C.onFailure = onFailure;
-		_003CTryToBuy_003Ec__AnonStorey31C.onEnterCoinsShopAction = onEnterCoinsShopAction;
-		Debug.Log("Trying to buy from ShopNGUIController...");
-		if (BankController.Instance == null)
+		float single = 150f;
+		Vector3 vector3 = Vector3.zero;
+		Vector3 vector31 = Vector3.zero;
+		GameObject child = null;
+		int num = 0;
+		int league = 0;
+		string str = null;
+		if (!ShopNGUIController.IsWeaponCategory(c))
 		{
-			Debug.LogWarning("BankController.Instance == null");
-			return;
-		}
-		if (_003CTryToBuy_003Ec__AnonStorey31C.price == null)
-		{
-			Debug.LogWarning("price == null");
-			return;
-		}
-		_003CTryToBuy_003Ec__AnonStorey31C.handleBackFromBank = null;
-		_003CTryToBuy_003Ec__AnonStorey31C.handleBackFromBank = _003CTryToBuy_003Ec__AnonStorey31C._003C_003Em__4C5;
-		_003CTryToBuy_003Ec__AnonStorey31C.act = null;
-		_003CTryToBuy_003Ec__AnonStorey31C.act = _003CTryToBuy_003Ec__AnonStorey31C._003C_003Em__4C6;
-		_003CTryToBuy_003Ec__AnonStorey31C.act(BankController.Instance, EventArgs.Empty);
-	}
-
-	private void FilterUpgrades(List<GameObject> modelsList, GameObject prefab, CategoryNames category, string visualDefName)
-	{
-		_003CFilterUpgrades_003Ec__AnonStorey31D _003CFilterUpgrades_003Ec__AnonStorey31D = new _003CFilterUpgrades_003Ec__AnonStorey31D();
-		_003CFilterUpgrades_003Ec__AnonStorey31D.prefab = prefab;
-		if (_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name.Replace("(Clone)", string.Empty) == "Armor_Novice")
-		{
-			return;
-		}
-		if (_003CFilterUpgrades_003Ec__AnonStorey31D.prefab != null && TempItemsController.PriceCoefs.ContainsKey(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name) && TempItemsController.sharedController != null)
-		{
-			if (TempItemsController.sharedController.ContainsItem(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name))
+			switch (c)
 			{
-				modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
-			}
-			return;
-		}
-		List<List<string>> list = null;
-		try
-		{
-			list = Wear.wear[category];
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError(string.Concat("Exception in FilterUpgrades ll = Wear.wear [category]: ", ex, " category = ", category.ToString()));
-		}
-		if (list == null)
-		{
-			Debug.LogError("FilterUpgrades: ll == null   category = " + category);
-			return;
-		}
-		List<string> list2 = list.FirstOrDefault(_003CFilterUpgrades_003Ec__AnonStorey31D._003C_003Em__4C7).ToList();
-		if (list2 == null)
-		{
-			return;
-		}
-		string text = ((!string.IsNullOrEmpty(visualDefName)) ? Storager.getString(visualDefName, false) : string.Empty);
-		int num = list2.IndexOf(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name);
-		if (Storager.getInt(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name, true) > 0)
-		{
-			if (num == list2.Count - 1)
-			{
-				modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
-			}
-			else if (num >= 0 && num < list2.Count - 1 && Storager.getInt(list2[num + 1], true) == 0)
-			{
-				modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
-			}
-			return;
-		}
-		if (num == 0 && Wear.LeagueForWear(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name, category) <= (int)RatingSystem.instance.currentLeague)
-		{
-			modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
-		}
-		if (num <= 0)
-		{
-			return;
-		}
-		if (Storager.getInt(list2[num - 1], true) > 0)
-		{
-			if (!string.IsNullOrEmpty(text))
-			{
-				if (list2.IndexOf(text) <= num)
+				case ShopNGUIController.CategoryNames.HatsCategory:
+				case ShopNGUIController.CategoryNames.ArmorCategory:
+				case ShopNGUIController.CategoryNames.CapesCategory:
+				case ShopNGUIController.CategoryNames.BootsCategory:
+				case ShopNGUIController.CategoryNames.GearCategory:
+				case ShopNGUIController.CategoryNames.MaskCategory:
 				{
-					modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
+					child = pref.transform.GetChild(0).gameObject;
+					ShopPositionParams infoForNonWeaponItem = ItemDb.GetInfoForNonWeaponItem(pref.nameNoClone(), c);
+					vector31 = infoForNonWeaponItem.rotationShop;
+					single = infoForNonWeaponItem.scaleShop;
+					vector3 = infoForNonWeaponItem.positionShop;
+					str = infoForNonWeaponItem.shopName;
+					num = infoForNonWeaponItem.tier;
+					league = infoForNonWeaponItem.League;
+					break;
+				}
+				case ShopNGUIController.CategoryNames.SkinsCategory:
+				{
+					child = UnityEngine.Object.Instantiate<GameObject>(pref);
+					ShopPositionParams component = pref.GetComponent<ShopPositionParams>();
+					vector31 = component.rotationShop;
+					single = component.scaleShop;
+					vector3 = component.positionShop;
+					num = component.tier;
+					break;
+				}
+			}
+		}
+		else
+		{
+			WeaponSounds weaponSound = wsForPos;
+			single = weaponSound.scaleShop;
+			vector3 = weaponSound.positionShop;
+			vector31 = weaponSound.rotationShop;
+			child = pref.GetComponent<InnerWeaponPars>().bonusPrefab;
+			try
+			{
+				ItemRecord byPrefabName = ItemDb.GetByPrefabName(weaponSound.name.Replace("(Clone)", string.Empty));
+				string str1 = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
+				ItemRecord byTag = ItemDb.GetByTag(str1);
+				str = WeaponManager.AllWrapperPrefabs().First<WeaponSounds>((WeaponSounds weapon) => weapon.name == byTag.PrefabName).shopName;
+			}
+			catch (Exception exception)
+			{
+				UnityEngine.Debug.LogError(string.Concat("Error in getting shop name of first upgrade: ", exception));
+				str = weaponSound.shopName;
+			}
+			num = weaponSound.tier;
+		}
+		Vector3 vector32 = Vector3.zero;
+		GameObject gameObject = null;
+		if (c == ShopNGUIController.CategoryNames.SkinsCategory)
+		{
+			gameObject = child;
+			vector32 = new Vector3(0f, -1f, 0f);
+		}
+		else if (child != null)
+		{
+			Material[] materialArray = null;
+			Mesh mesh = null;
+			SkinnedMeshRenderer skinnedMeshRenderer = child.GetComponent<SkinnedMeshRenderer>();
+			if (skinnedMeshRenderer == null)
+			{
+				SkinnedMeshRenderer[] componentsInChildren = child.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+				if (componentsInChildren != null && (int)componentsInChildren.Length > 0)
+				{
+					skinnedMeshRenderer = componentsInChildren[0];
+				}
+			}
+			if (skinnedMeshRenderer == null)
+			{
+				MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+				MeshRenderer meshRenderer = child.GetComponent<MeshRenderer>();
+				if (meshFilter != null)
+				{
+					mesh = meshFilter.sharedMesh;
+				}
+				if (meshRenderer != null)
+				{
+					materialArray = meshRenderer.sharedMaterials;
 				}
 			}
 			else
 			{
-				modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
+				materialArray = skinnedMeshRenderer.sharedMaterials;
+				mesh = skinnedMeshRenderer.sharedMesh;
+			}
+			if (materialArray != null && mesh != null)
+			{
+				gameObject = new GameObject();
+				gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+				MeshRenderer meshRenderer1 = gameObject.AddComponent<MeshRenderer>();
+				meshRenderer1.materials = materialArray;
+				vector32 = -meshRenderer1.bounds.center;
 			}
 		}
-		else if (!string.IsNullOrEmpty(text) && _003CFilterUpgrades_003Ec__AnonStorey31D.prefab.name.Equals(text))
+		try
 		{
-			modelsList.Add(_003CFilterUpgrades_003Ec__AnonStorey31D.prefab);
+			ShopNGUIController.DisableLightProbesRecursively(gameObject);
+		}
+		catch (Exception exception1)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception DisableLightProbesRecursively: ", exception1));
+		}
+		GameObject gameObject1 = new GameObject()
+		{
+			name = gameObject.name
+		};
+		gameObject.transform.localPosition = vector32;
+		gameObject.transform.parent = gameObject1.transform;
+		Player_move_c.SetLayerRecursively(gameObject1, LayerMask.NameToLayer("NGUIShop"));
+		if (act != null)
+		{
+			act(gameObject1, vector3, vector31, str, single, num, league);
 		}
 	}
 
-	public static bool ShowLockedFacebookSkin()
+	private void AdjustCategoryButtonsForFilterMap()
 	{
-		if (!FacebookController.FacebookSupported)
+		List<int> nums;
+		List<int> nums1 = new List<int>();
+		if (SceneLoader.ActiveSceneName.Equals("Sniper"))
 		{
-			return false;
-		}
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null && SkinsController.shopKeyFromNameSkin.ContainsKey("61"))
-		{
-			string value = SkinsController.shopKeyFromNameSkin["61"];
-			if (Array.IndexOf(StoreKitEventListener.skinIDs, value) >= 0)
+			nums = new List<int>()
 			{
-				foreach (KeyValuePair<string, string> value2 in InAppData.inAppData.Values)
-				{
-					if (value2.Key != null && value2.Key.Equals(value) && Storager.getInt(value2.Value, true) == 0)
-					{
-						return false;
-					}
-				}
-			}
+				0,
+				3,
+				5
+			};
+			nums1 = nums;
 		}
-		return true;
+		else if (SceneLoader.ActiveSceneName.Equals("Knife"))
+		{
+			nums = new List<int>()
+			{
+				0,
+				1,
+				3,
+				5,
+				4
+			};
+			nums1 = nums;
+		}
+		else if (Defs.isHunger)
+		{
+			nums = new List<int>()
+			{
+				7
+			};
+			nums1 = nums;
+		}
+		for (int i = 0; i < (int)this.category.buttons.Length; i++)
+		{
+			this.category.buttons[i].onButton.GetComponent<BoxCollider>().enabled = (nums1.Contains(i) ? false : this.category.buttons[i].onButton.GetComponent<BoxCollider>().enabled);
+			this.category.buttons[i].offButton.GetComponent<BoxCollider>().enabled = !nums1.Contains(i);
+		}
 	}
 
-	public List<GameObject> FillModelsList(CategoryNames c)
+	private void Awake()
 	{
-		if (_003C_003Ef__am_0024cacheB5 == null)
+		Action action2 = null;
+		Action action3 = null;
+		this.showHatButton.gameObject.SetActive(false);
+		ShopNGUIController._ShowArmor = PlayerPrefs.GetInt("ShowArmorKeySetting", 1) == 1;
+		ShopNGUIController._ShowHat = PlayerPrefs.GetInt("ShowHatKeySetting", 1) == 1;
+		HOTween.Init(true, true, true);
+		HOTween.EnableOverwriteManager(true);
+		this.timeToUpdateTempGunTime = Time.realtimeSinceStartup;
+		if (this.category != null)
 		{
-			_003C_003Ef__am_0024cacheB5 = _003CFillModelsList_003Em__4C8;
+			this.category.Clicked += new EventHandler<MultipleToggleEventArgs>((object sender, MultipleToggleEventArgs e) => {
+				if (e != null)
+				{
+					if (Defs.isSoundFX && this.category.buttons != null && (int)this.category.buttons.Length > e.Num)
+					{
+						this.category.buttons[e.Num].offButton.GetComponent<UIPlaySound>().Play();
+					}
+					try
+					{
+						if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+						{
+							if (e.Num == 4 && this.trainingState == ShopNGUIController.TrainingState.NotInSniperCategory)
+							{
+								AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Sniper, true);
+								this.setOnSniperRifle();
+							}
+							else if (e.Num != 4 && (this.trainingState == ShopNGUIController.TrainingState.OnSniperRifle || this.trainingState == ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle))
+							{
+								this.setNotInSniperCategory();
+							}
+							else if (e.Num == 7 && this.trainingState == ShopNGUIController.TrainingState.NotInArmorCategory)
+							{
+								this.setOnArmor();
+								AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Armor, true);
+							}
+							else if (e.Num != 7 && (this.trainingState == ShopNGUIController.TrainingState.OnArmor || this.trainingState == ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor))
+							{
+								this.setNotInArmorCategory();
+							}
+						}
+						if (this.InTrainingAfterNoviceArmorRemoved)
+						{
+							if (e.Num == 7 && this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.NotInArmorCategory)
+							{
+								this.setOnArmorRemovedNoviceArmor();
+								AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Category_Armor, true);
+							}
+							else if (e.Num != 7 && (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.OnArmor || this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor))
+							{
+								this.setNotInArmorCategoryRemovedNoviceArmor();
+							}
+						}
+					}
+					catch (Exception exception)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exceptio in training in category.Clicked: ", exception));
+					}
+					this.CategoryChosen((ShopNGUIController.CategoryNames)e.Num, null, false);
+				}
+			});
 		}
-		Func<CategoryNames, Comparison<GameObject>> func = _003C_003Ef__am_0024cacheB5;
-		List<GameObject> list = new List<GameObject>();
-		if (IsWeaponCategory(c))
+		if (this.buy != null)
 		{
-			list = WeaponManager.sharedManager.FilteredShopLists[(int)c];
+			this.buy.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.BuyOrUpgradeWeapon(false));
 		}
-		else
+		if (this.buyGear != null)
 		{
-			switch (c)
+			this.buyGear.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.BuyOrUpgradeWeapon(false));
+		}
+		if (this.upgrade != null)
+		{
+			this.upgrade.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.BuyOrUpgradeWeapon(true));
+		}
+		if (this.upgradeGear != null)
+		{
+			this.upgradeGear.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.BuyOrUpgradeWeapon(true));
+		}
+		this.showArmorButton.IsChecked = !ShopNGUIController.ShowArmor;
+		this.showHatButton.IsChecked = !ShopNGUIController.ShowHat;
+		this.showArmorButtonTempArmor.IsChecked = !ShopNGUIController.ShowArmor;
+		this.showHatButtonTempHat.IsChecked = !ShopNGUIController.ShowHat;
+		Action showArmor = () => {
+			ShopNGUIController.ShowArmor = !ShopNGUIController.ShowArmor;
+			ShopNGUIController.SetPersArmorVisible(this.armorPoint);
+			PlayerPrefs.SetInt("ShowArmorKeySetting", (!ShopNGUIController.ShowArmor ? 0 : 1));
+		};
+		Action showHat = () => {
+			ShopNGUIController.ShowHat = !ShopNGUIController.ShowHat;
+			ShopNGUIController.SetPersHatVisible(this.hatPoint);
+			PlayerPrefs.SetInt("ShowHatKeySetting", (!ShopNGUIController.ShowHat ? 0 : 1));
+		};
+		this.showArmorButton.Clicked += new EventHandler<ToggleButtonEventArgs>((object sender, ToggleButtonEventArgs e) => {
+			showArmor();
+			this.showArmorButtonTempArmor.SetCheckedWithoutEvent(!ShopNGUIController.ShowArmor);
+		});
+		this.showHatButton.Clicked += new EventHandler<ToggleButtonEventArgs>((object sender, ToggleButtonEventArgs e) => {
+			showHat();
+			this.showHatButtonTempHat.SetCheckedWithoutEvent(!ShopNGUIController.ShowHat);
+		});
+		this.showArmorButtonTempArmor.Clicked += new EventHandler<ToggleButtonEventArgs>((object sender, ToggleButtonEventArgs e) => {
+			showArmor();
+			this.showArmorButton.SetCheckedWithoutEvent(!ShopNGUIController.ShowArmor);
+		});
+		this.showHatButtonTempHat.Clicked += new EventHandler<ToggleButtonEventArgs>((object sender, ToggleButtonEventArgs e) => {
+			showHat();
+			this.showHatButton.SetCheckedWithoutEvent(!ShopNGUIController.ShowHat);
+		});
+		ShopNGUIController.sharedShop = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		this.ActiveObject.SetActive(false);
+		if (this.coinShopButton != null)
+		{
+			this.coinShopButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+				if (Time.realtimeSinceStartup - this.timeOfEnteringShopForProtectFromPressingCoinsButton < 0.5f)
+				{
+					return;
+				}
+				if (BankController.Instance != null)
+				{
+					if (BankController.Instance.InterfaceEnabledCoroutineLocked)
+					{
+						UnityEngine.Debug.LogWarning("InterfaceEnabledCoroutineLocked");
+						return;
+					}
+					EventHandler interfaceEnabledCoroutineLocked = null;
+					interfaceEnabledCoroutineLocked = (object sender_, EventArgs e_) => {
+						if (BankController.Instance.InterfaceEnabledCoroutineLocked)
+						{
+							UnityEngine.Debug.LogWarning("InterfaceEnabledCoroutineLocked");
+							return;
+						}
+						BankController.Instance.BackRequested -= interfaceEnabledCoroutineLocked;
+						BankController.Instance.InterfaceEnabled = false;
+						ShopNGUIController.GuiActive = true;
+					};
+					BankController.Instance.BackRequested += interfaceEnabledCoroutineLocked;
+					BankController.Instance.InterfaceEnabled = true;
+					ShopNGUIController.GuiActive = false;
+				}
+			});
+		}
+		if (this.backButton != null)
+		{
+			this.backButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => base.StartCoroutine(this.BackAfterDelay()));
+		}
+		UIButton[] uIButtonArray = this.equips;
+		for (int i = 0; i < (int)uIButtonArray.Length; i++)
+		{
+			UIButton uIButton = uIButtonArray[i];
+			uIButton.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+				if (Defs.isSoundFX)
+				{
+					uIButton.GetComponent<UIPlaySound>().Play();
+				}
+				if (this.WeaponCategory)
+				{
+					string u003cu003ef_this = WeaponManager.LastBoughtTag(this.viewedId);
+					if (u003cu003ef_this == null && WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId))
+					{
+						u003cu003ef_this = this.viewedId;
+					}
+					if (u003cu003ef_this == null)
+					{
+						return;
+					}
+					string prefabName = ItemDb.GetByTag(u003cu003ef_this).PrefabName;
+					Weapon weapon1 = WeaponManager.sharedManager.allAvailablePlayerWeapons.OfType<Weapon>().FirstOrDefault<Weapon>((Weapon weapon) => weapon.weaponPrefab.nameNoClone() == prefabName);
+					WeaponManager.sharedManager.EquipWeapon(weapon1, true, true);
+					WeaponManager.sharedManager.SaveWeaponAsLastUsed(WeaponManager.sharedManager.CurrentWeaponIndex);
+					if (this.equipAction != null)
+					{
+						this.equipAction(u003cu003ef_this);
+					}
+					this.chosenId = u003cu003ef_this;
+					this.UpdateIcon(this.currentCategory, false);
+					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted && this.trainingState == ShopNGUIController.TrainingState.OnSniperRifle && u003cu003ef_this != null && u003cu003ef_this == WeaponTags.HunterRifleTag)
+					{
+						if (Storager.getInt("Training.NoviceArmorUsedKey", false) != 1)
+						{
+							this.setNotInArmorCategory();
+							AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Equip_Sniper, true);
+						}
+						else
+						{
+							this.setBackBlinking();
+						}
+					}
+					if (this.InTrainingAfterNoviceArmorRemoved)
+					{
+						this.HideAllTrainingInterfaceRemovedNoviceArmor();
+						this.InTrainingAfterNoviceArmorRemoved = false;
+						this.HandleActionsUUpdated();
+					}
+				}
+				else if (this.WearCategory)
+				{
+					string str = WeaponManager.LastBoughtTag(this.viewedId);
+					if (str != null)
+					{
+						this.EquipWear(str);
+					}
+					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+					{
+						if (this.trainingState == ShopNGUIController.TrainingState.OnArmor)
+						{
+							this.setBackBlinking();
+							AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Equip_Armor, true);
+						}
+					}
+					else if (this.InTrainingAfterNoviceArmorRemoved)
+					{
+						this.HideAllTrainingInterfaceRemovedNoviceArmor();
+						this.InTrainingAfterNoviceArmorRemoved = false;
+						this.HandleActionsUUpdated();
+					}
+				}
+				else if (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory)
+				{
+					this.SetSkinAsCurrent(this.viewedId);
+					this.UpdateIcon(this.currentCategory, true);
+				}
+				this.UpdateButtons();
+			});
+		}
+		this.unequip.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			if (Defs.isSoundFX)
 			{
-			case CategoryNames.HatsCategory:
-				foreach (ShopPositionParams hat in hats)
-				{
-					FilterUpgrades(list, hat.gameObject, CategoryNames.HatsCategory, Defs.VisualHatArmor);
-				}
-				list.Sort(func(CategoryNames.HatsCategory));
-				break;
-			case CategoryNames.ArmorCategory:
-				if (Storager.getInt("Training.NoviceArmorUsedKey", false) == 1 && !TrainingController.TrainingCompleted)
-				{
-					GameObject gameObject = Resources.Load<GameObject>("Armor_Info/Armor_Novice");
-					if (gameObject != null)
-					{
-						list.Add(gameObject);
-					}
-					else
-					{
-						Debug.LogError("No novice armor when Storager.getInt(Defs.NoviceArmorUsedKey,false) == 1 && !TrainingController.TrainingCompleted");
-					}
-				}
-				else
-				{
-					foreach (ShopPositionParams item in armor)
-					{
-						FilterUpgrades(list, item.gameObject, CategoryNames.ArmorCategory, Defs.VisualArmor);
-					}
-				}
-				list.Sort(func(CategoryNames.ArmorCategory));
-				break;
-			case CategoryNames.SkinsCategory:
-				foreach (string key in SkinsController.skinsForPers.Keys)
-				{
-					list.Add(pixlMan);
-				}
-				if (ShowLockedFacebookSkin())
-				{
-					list.Add(pixlMan);
-				}
-				break;
-			case CategoryNames.CapesCategory:
-				foreach (ShopPositionParams cape in capes)
-				{
-					FilterUpgrades(list, cape.gameObject, CategoryNames.CapesCategory, string.Empty);
-				}
-				list.Sort(func(CategoryNames.CapesCategory));
-				break;
-			case CategoryNames.BootsCategory:
-				foreach (ShopPositionParams boot in boots)
-				{
-					FilterUpgrades(list, boot.gameObject, CategoryNames.BootsCategory, string.Empty);
-				}
-				list.Sort(func(CategoryNames.BootsCategory));
-				break;
-			case CategoryNames.MaskCategory:
-				foreach (ShopPositionParams mask in masks)
-				{
-					FilterUpgrades(list, mask.gameObject, CategoryNames.MaskCategory, string.Empty);
-				}
-				list.Sort(func(CategoryNames.MaskCategory));
-				break;
+				this.unequip.GetComponent<UIPlaySound>().Play();
 			}
+			if (this.WearCategory)
+			{
+				ShopNGUIController.UnequipCurrentWearInCategory(this.currentCategory, this.inGame);
+			}
+			this.UpdateButtons();
+		});
+		this.enable.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			if (this.viewedId == null || !this.viewedId.Equals("CustomSkinID"))
+			{
+				if (this.viewedId != null && this.viewedId.Equals("cape_Custom"))
+				{
+					this.BuyOrUpgradeWeapon(false);
+				}
+				return;
+			}
+			ItemPrice itemPrice = ShopNGUIController.currentPrice(this.viewedId, this.currentCategory, false, true);
+			int price = itemPrice.Price;
+			string currency = itemPrice.Currency;
+			GameObject u003cu003ef_this = this.mainPanel;
+			ItemPrice itemPrice1 = itemPrice;
+			Action action = () => {
+				if (Defs.isSoundFX)
+				{
+					this.enable.GetComponent<UIPlaySound>().Play();
+				}
+				if (ShopNGUIController.GunBought != null)
+				{
+					ShopNGUIController.GunBought();
+				}
+				FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.SkinsCategory, Defs.SkinsMakerInProfileBought, 1, false);
+				FlurryPluginWrapper.LogPurchasesPoints(false);
+				FlurryPluginWrapper.LogPurchaseByPoints(ShopNGUIController.CategoryNames.SkinsCategory, Defs.SkinsMakerInProfileBought, 1);
+				this.LogShopPurchasesTotalAndPayingNonPaying(Defs.SkinsMakerInProfileBought);
+				string item = FlurryEvents.shopCategoryToLogSalesNamesMapping[ShopNGUIController.CategoryNames.SkinsCategory];
+				AnalyticsStuff.LogSales(Defs.SkinsMakerInProfileBought, item, false);
+				AnalyticsFacade.InAppPurchase(Defs.SkinsMakerInProfileBought, item, 1, price, currency);
+				Storager.setInt(Defs.SkinsMakerInProfileBought, 1, true);
+				ShopNGUIController.SynchronizeAndroidPurchases("Custom skin");
+				FlurryPluginWrapper.LogEvent("Enable_Custom Skin");
+				this.wholePrice.gameObject.SetActive(false);
+				if (!this.inGame)
+				{
+					this.goToSM();
+				}
+			};
+			if (action2 == null)
+			{
+				action2 = () => FlurryPluginWrapper.LogEvent("Try_Enable_Custom Skin");
+			}
+			Action u003cu003ef_amu0024cache3 = action2;
+			Action action1 = () => this.PlayWeaponAnimation();
+			if (action3 == null)
+			{
+				action3 = () => ShopNGUIController.SetBankCamerasEnabled();
+			}
+			ShopNGUIController.TryToBuy(u003cu003ef_this, itemPrice1, action, u003cu003ef_amu0024cache3, null, action1, action3, () => this.SetOtherCamerasEnabled(false));
+			this.UpdateButtons();
+		});
+		this.create.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			ButtonClickSound.Instance.PlayClick();
+			if (!this.inGame)
+			{
+				this.goToSM();
+			}
+		});
+		this.edit.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			ButtonClickSound.Instance.PlayClick();
+			if (!this.inGame)
+			{
+				this.goToSM();
+			}
+		});
+		this.delete.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			string u003cu003ef_this = this.viewedId;
+			InfoWindowController.ShowDialogBox(LocalizationStore.Get("Key_1693"), () => {
+				ButtonClickSound.Instance.PlayClick();
+				string str = SkinsController.currentSkinNameForPers;
+				if (u003cu003ef_this != null)
+				{
+					SkinsController.DeleteUserSkin(u003cu003ef_this);
+					if (u003cu003ef_this.Equals(str))
+					{
+						this.SetSkinAsCurrent("0");
+						this.UpdateIcon(ShopNGUIController.CategoryNames.SkinsCategory, false);
+					}
+				}
+				this.ReloadCarousel(SkinsController.currentSkinNameForPers ?? "0");
+			}, null);
+		});
+		this.hats.AddRange(Resources.LoadAll<ShopPositionParams>("Hats_Info"));
+		this.sort(this.hats, 6);
+		this.armor.AddRange(Resources.LoadAll<ShopPositionParams>("Armor_Info"));
+		this.sort(this.armor, 7);
+		this.capes.AddRange(Resources.LoadAll<ShopPositionParams>("Capes_Info"));
+		this.sort(this.capes, 9);
+		this.masks.AddRange(Resources.LoadAll<ShopPositionParams>("Masks_Info"));
+		this.sort(this.masks, 12);
+		this.boots.AddRange(Resources.LoadAll<ShopPositionParams>("Shop_Boots_Info"));
+		this.sort(this.boots, 10);
+		this.pixlMan = Resources.Load<GameObject>("PixlManForSkins");
+		if (!Device.IsLoweMemoryDevice)
+		{
+			this._onPersArmorRefs = Resources.LoadAll<GameObject>("Armor_Shop");
+		}
+		if (Device.isPixelGunLow)
+		{
+			this._refOnLowPolyArmor = Resources.Load<GameObject>("Armor_Low");
+			this._refsOnLowPolyArmorMaterials = Resources.LoadAll<Material>("LowPolyArmorMaterials");
+		}
+	}
+
+	[DebuggerHidden]
+	public IEnumerator BackAfterDelay()
+	{
+		ShopNGUIController.u003cBackAfterDelayu003ec__Iterator1AA variable = null;
+		return variable;
+	}
+
+	private static List<Camera> BankRelatedCameras()
+	{
+		List<Camera> list = BankController.Instance.GetComponentsInChildren<Camera>(true).ToList<Camera>();
+		if (FreeAwardController.Instance != null && FreeAwardController.Instance.renderCamera != null)
+		{
+			list.Add(FreeAwardController.Instance.renderCamera);
 		}
 		return list;
 	}
 
-	private static string ItemIDForPrefab(string name, CategoryNames c)
+	[DebuggerHidden]
+	private IEnumerator Blink(string[] images)
 	{
-		switch (c)
-		{
-		case CategoryNames.ArmorCategory:
-		{
-			string string2 = Storager.getString(Defs.VisualArmor, false);
-			if (!string.IsNullOrEmpty(string2) && Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(name) >= 0 && Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(name) < Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(string2))
-			{
-				return string2;
-			}
-			break;
-		}
-		case CategoryNames.HatsCategory:
-		{
-			string @string = Storager.getString(Defs.VisualHatArmor, false);
-			if (!string.IsNullOrEmpty(@string) && Wear.wear[CategoryNames.HatsCategory][0].IndexOf(name) >= 0 && Wear.wear[CategoryNames.HatsCategory][0].IndexOf(name) < Wear.wear[CategoryNames.HatsCategory][0].IndexOf(@string))
-			{
-				return @string;
-			}
-			break;
-		}
-		}
-		return name;
+		ShopNGUIController.u003cBlinku003ec__Iterator1A7 variable = null;
+		return variable;
 	}
 
-	private static string ItemIDForPrefabReverse(string name, CategoryNames c)
+	private void BuyOrUpgradeWeapon(bool upgradeNotBuy = false)
 	{
-		switch (c)
+		string str;
+		if (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory)
 		{
-		case CategoryNames.ArmorCategory:
+			str = this.viewedId;
+		}
+		else
 		{
-			string string2 = Storager.getString(Defs.VisualArmor, false);
-			if (string.IsNullOrEmpty(string2) || !string2.Equals(name) || Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(name) < 0)
+			str = (!upgradeNotBuy ? this.IDForCurrentGear : this.NextUpgradeIDForCurrentGear);
+		}
+		string item = str;
+		string str1 = item;
+		if (WeaponManager.tagToStoreIDMapping.ContainsKey(str1))
+		{
+			item = WeaponManager.tagToStoreIDMapping[WeaponManager.FirstUnboughtOrForOurTier(str1)];
+		}
+		if (this.WearCategory)
+		{
+			item = WeaponManager.FirstUnboughtTag(item);
+			str1 = item;
+		}
+		if (item == null)
+		{
+			return;
+		}
+		ItemPrice itemPrice = ShopNGUIController.currentPrice(this.viewedId, this.currentCategory, upgradeNotBuy, true);
+		ShopNGUIController.TryToBuy(this.mainPanel, itemPrice, () => {
+			if (Defs.isSoundFX)
 			{
-				break;
+				((!upgradeNotBuy ? this.buy : this.upgrade)).GetComponent<UIPlaySound>().Play();
 			}
-			for (int j = 1; j < Wear.wear[CategoryNames.ArmorCategory][0].Count; j++)
+			this.ActualBuy(item, str1, itemPrice);
+		}, () => {
+			if (this.currentCategory == ShopNGUIController.CategoryNames.CapesCategory && this.viewedId.Equals("cape_Custom"))
 			{
-				if (Storager.getInt(Wear.wear[CategoryNames.ArmorCategory][0][j], true) == 0)
+				FlurryPluginWrapper.LogEvent("Try_Enable_Custom Cape");
+			}
+		}, null, () => this.PlayWeaponAnimation(), () => ShopNGUIController.SetBankCamerasEnabled(), () => {
+			this.SetOtherCamerasEnabled(false);
+			base.StartCoroutine(this.ReloadAfterEditing(this.viewedId, true));
+		});
+	}
+
+	public void CategoryChosen(ShopNGUIController.CategoryNames i, string idToSet = null, bool initial = false)
+	{
+		ShopNGUIController.CategoryNames categoryName;
+		WeaponManager.ClearCachedInnerPrefabs();
+		if (!initial)
+		{
+			switch (this.currentCategory)
+			{
+				case ShopNGUIController.CategoryNames.HatsCategory:
+				case ShopNGUIController.CategoryNames.ArmorCategory:
+				case ShopNGUIController.CategoryNames.CapesCategory:
+				case ShopNGUIController.CategoryNames.BootsCategory:
+				case ShopNGUIController.CategoryNames.MaskCategory:
 				{
-					return Wear.wear[CategoryNames.ArmorCategory][0][j];
+					this.viewedId = this._CurrentEquippedWear;
+					break;
+				}
+				case ShopNGUIController.CategoryNames.SkinsCategory:
+				{
+					if (SkinsController.currentSkinNameForPers != null)
+					{
+						this.viewedId = SkinsController.currentSkinNameForPers;
+					}
+					else if (SkinsController.skinsForPers != null && SkinsController.skinsForPers.Keys.Count > 0)
+					{
+						Dictionary<string, Texture2D>.KeyCollection.Enumerator enumerator = SkinsController.skinsForPers.Keys.GetEnumerator();
+						try
+						{
+							if (enumerator.MoveNext())
+							{
+								this.viewedId = enumerator.Current;
+							}
+						}
+						finally
+						{
+							((IDisposable)(object)enumerator).Dispose();
+						}
+					}
+					break;
+				}
+				case ShopNGUIController.CategoryNames.GearCategory:
+				{
+					break;
+				}
+				default:
+				{
+					goto case ShopNGUIController.CategoryNames.GearCategory;
 				}
 			}
-			break;
-		}
-		case CategoryNames.HatsCategory:
-		{
-			string @string = Storager.getString(Defs.VisualHatArmor, false);
-			if (string.IsNullOrEmpty(@string) || !@string.Equals(name) || Wear.wear[CategoryNames.HatsCategory][0].IndexOf(name) < 0)
+			if (this.WearCategory || this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory)
 			{
-				break;
+				this.UpdatePersWithNewItem();
 			}
-			for (int i = 1; i < Wear.wear[CategoryNames.HatsCategory][0].Count; i++)
+		}
+		this.currentCategory = i;
+		!(this.highlightedCarouselObject != null);
+		this.highlightedCarouselObject = null;
+		if (!this.WeaponCategory)
+		{
+			switch (this.currentCategory)
 			{
-				if (Storager.getInt(Wear.wear[CategoryNames.HatsCategory][0][i], true) == 0)
+				case ShopNGUIController.CategoryNames.HatsCategory:
 				{
-					return Wear.wear[CategoryNames.HatsCategory][0][i];
+					string str = null;
+					try
+					{
+						Dictionary<Wear.LeagueItemState, List<string>> leagueItemStates = Wear.LeagueItems();
+						str = (
+							from item in leagueItemStates[Wear.LeagueItemState.Open].Union<string>(leagueItemStates[Wear.LeagueItemState.Purchased])
+							orderby Wear.LeagueForWear(item, this.currentCategory)
+							select item).FirstOrDefault<string>();
+					}
+					catch (Exception exception)
+					{
+						UnityEngine.Debug.LogError(string.Concat("CategoryChoosen: exception in getting firstLeagueItem: ", exception));
+					}
+					string str1 = str ?? WeaponManager.FirstUnboughtTag("hat_Headphones");
+					int num = this.hats.FindIndex((ShopPositionParams go) => go.name.Equals(str1));
+					this.viewedId = (this._CurrentEquippedWear == null || this._CurrentNoneEquipped == null || this._CurrentEquippedWear.Equals(this._CurrentNoneEquipped) || WeaponManager.LastBoughtTag(this._CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(this._CurrentEquippedWear).Equals(this._CurrentEquippedWear) ? this.hats[(num <= -1 ? this.hats.Count - 1 : num)].name : this._CurrentEquippedWear);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.ArmorCategory:
+				{
+					this.viewedId = (this._CurrentEquippedWear == null || this._CurrentNoneEquipped == null || this._CurrentEquippedWear.Equals(this._CurrentNoneEquipped) || WeaponManager.LastBoughtTag(this._CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(this._CurrentEquippedWear).Equals(this._CurrentEquippedWear) ? WeaponManager.FirstUnboughtTag(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0][0]) : this._CurrentEquippedWear);
+					this.scrollViewPanel.transform.localPosition = Vector3.zero;
+					this.scrollViewPanel.clipOffset = new Vector2(0f, 0f);
+					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+					{
+						this.viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+						idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+					}
+					if (this.InTrainingAfterNoviceArmorRemoved)
+					{
+						this.viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+						idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+					}
+					break;
+				}
+				case ShopNGUIController.CategoryNames.SkinsCategory:
+				{
+					if (SkinsController.currentSkinNameForPers != null)
+					{
+						this.viewedId = SkinsController.currentSkinNameForPers;
+					}
+					else if (SkinsController.skinsForPers != null && SkinsController.skinsForPers.Keys.Count > 0)
+					{
+						Dictionary<string, Texture2D>.KeyCollection.Enumerator enumerator1 = SkinsController.skinsForPers.Keys.GetEnumerator();
+						try
+						{
+							if (enumerator1.MoveNext())
+							{
+								this.viewedId = enumerator1.Current;
+							}
+						}
+						finally
+						{
+							((IDisposable)(object)enumerator1).Dispose();
+						}
+					}
+					break;
+				}
+				case ShopNGUIController.CategoryNames.CapesCategory:
+				{
+					this.viewedId = (this._CurrentEquippedWear == null || this._CurrentNoneEquipped == null || this._CurrentEquippedWear.Equals(this._CurrentNoneEquipped) || WeaponManager.LastBoughtTag(this._CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(this._CurrentEquippedWear).Equals(this._CurrentEquippedWear) ? WeaponManager.LastBoughtTag(this.capes[1].name) ?? this.capes[1].name : this._CurrentEquippedWear);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.BootsCategory:
+				{
+					this.viewedId = (this._CurrentEquippedWear == null || this._CurrentNoneEquipped == null || this._CurrentEquippedWear.Equals(this._CurrentNoneEquipped) || WeaponManager.LastBoughtTag(this._CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(this._CurrentEquippedWear).Equals(this._CurrentEquippedWear) ? WeaponManager.LastBoughtTag(this.boots[0].name) ?? this.boots[0].name : this._CurrentEquippedWear);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.GearCategory:
+				{
+					int num1 = GearManager.CurrentNumberOfUphradesForGear(GearManager.InvisibilityPotion);
+					this.viewedId = GearManager.NameForUpgrade(GearManager.InvisibilityPotion, (num1 >= GearManager.NumOfGearUpgrades ? num1 : num1));
+					break;
+				}
+				case ShopNGUIController.CategoryNames.MaskCategory:
+				{
+					this.viewedId = (this._CurrentEquippedWear == null || this._CurrentNoneEquipped == null || this._CurrentEquippedWear.Equals(this._CurrentNoneEquipped) || WeaponManager.LastBoughtTag(this._CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(this._CurrentEquippedWear).Equals(this._CurrentEquippedWear) ? WeaponManager.LastBoughtTag(this.masks[0].name) ?? this.masks[0].name : this._CurrentEquippedWear);
+					break;
 				}
 			}
-			break;
 		}
+		else
+		{
+			this.chosenId = ShopNGUIController._CurrentWeaponSetIDs()[(int)i];
+			this.viewedId = idToSet;
+			if (this.viewedId != null && this.chosenId != null && this.viewedId.Equals(this.chosenId) && WeaponManager.sharedManager != null && WeaponManager.sharedManager.FilteredShopLists.Count > (int)i && !WeaponManager.sharedManager.FilteredShopLists[(Int32)i].Find((GameObject go) => go.name.Equals(this.viewedId)))
+			{
+				this.viewedId = null;
+			}
+			this.viewedId = this.chosenId;
+			if (this.viewedId == null)
+			{
+				string str2 = ShopNGUIController.TempGunOrHighestDPSGun(i, out categoryName);
+				if (i != categoryName)
+				{
+					this.viewedId = ShopNGUIController.TemppOrHighestDPSGunInCategory((int)i);
+				}
+				else
+				{
+					this.viewedId = str2;
+				}
+			}
+			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+			{
+				if (this.trainingState > ShopNGUIController.TrainingState.OnArmor && this.currentCategory == ShopNGUIController.CategoryNames.ArmorCategory)
+				{
+					this.viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+					idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+				}
+				else if (this.currentCategory == ShopNGUIController.CategoryNames.SniperCategory)
+				{
+					this.viewedId = WeaponTags.HunterRifleTag;
+					idToSet = WeaponTags.HunterRifleTag;
+				}
+			}
+			if (this.InTrainingAfterNoviceArmorRemoved && this.currentCategory == ShopNGUIController.CategoryNames.ArmorCategory)
+			{
+				this.viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+				idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
+			}
 		}
-		return name;
+		this.armorWearProperties.SetActive(this.currentCategory == ShopNGUIController.CategoryNames.ArmorCategory);
+		this.nonArmorWearProperties.SetActive((!ShopNGUIController.IsWearCategory(this.currentCategory) ? false : this.currentCategory != ShopNGUIController.CategoryNames.ArmorCategory));
+		this.gearProperties.SetActive(this.currentCategory == ShopNGUIController.CategoryNames.GearCategory);
+		this.skinProperties.SetActive(this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory);
+		this.border.SetActive(this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory);
+		this.ReloadCarousel(idToSet);
+		this.SetCamera();
+		if (!ShopNGUIController.IsWeaponCategory(i) && this.weapon == null)
+		{
+			this.SetWeapon(ShopNGUIController._CurrentWeaponSetIDs()[0] ?? WeaponManager._initialWeaponName);
+		}
+		if (this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory)
+		{
+			this.shopCarouselCollider.center = new Vector3(0f, 0f, 0f);
+			BoxCollider vector3 = this.shopCarouselCollider;
+			float single = this.shopCarouselCollider.size.x;
+			Vector3 vector31 = this.shopCarouselCollider.size;
+			vector3.size = new Vector3(single, 252f, vector31.z);
+		}
+		else
+		{
+			this.shopCarouselCollider.center = new Vector3(0f, -40f, 0f);
+			BoxCollider boxCollider = this.shopCarouselCollider;
+			float single1 = this.shopCarouselCollider.size.x;
+			Vector3 vector32 = this.shopCarouselCollider.size;
+			boxCollider.size = new Vector3(single1, 363f, vector32.z);
+		}
+	}
+
+	private void CheckCenterItemChanging()
+	{
+		if (!this.scrollViewPanel.cachedGameObject.activeInHierarchy)
+		{
+			return;
+		}
+		Transform transforms = this.scrollViewPanel.cachedTransform;
+		this.itemIndex = -1;
+		int num = (int)this.wrapContent.cellWidth;
+		int num1 = this.wrapContent.transform.childCount;
+		if (transforms.localPosition.x > 0f)
+		{
+			this.itemIndex = 0;
+		}
+		else if (transforms.localPosition.x >= (float)(-1 * num * num1))
+		{
+			float single = transforms.localPosition.x;
+			Vector3 vector3 = transforms.localPosition;
+			this.itemIndex = -1 * Mathf.RoundToInt((single - (float)(Mathf.CeilToInt(vector3.x / (float)num / (float)num1) * num * num1)) / (float)num);
+		}
+		else
+		{
+			this.itemIndex = num1 - 1;
+		}
+		this.itemIndex = Mathf.Clamp(this.itemIndex, 0, num1 - 1);
+		if (this.itemIndex >= 0 && this.itemIndex < this.wrapContent.transform.childCount)
+		{
+			GameObject child = this.wrapContent.transform.GetChild(this.itemIndex).gameObject;
+			if (!this.EnableConfigurePos)
+			{
+				this.HandleCarouselCentering(child);
+			}
+		}
+	}
+
+	public void ChooseCarouselItem(string itemID, bool moveCarousel = false, bool setManuallyToChosen = false)
+	{
+		if (itemID == null)
+		{
+			if (this.WeaponCategory)
+			{
+				this.UpdatePersWithNewItem();
+			}
+			return;
+		}
+		ShopCarouselElement[] componentsInChildren = this.wrapContent.GetComponentsInChildren<ShopCarouselElement>(true) ?? new ShopCarouselElement[0];
+		ShopCarouselElement[] shopCarouselElementArray = componentsInChildren;
+		int num = 0;
+		while (num < (int)shopCarouselElementArray.Length)
+		{
+			ShopCarouselElement shopCarouselElement = shopCarouselElementArray[num];
+			if (!shopCarouselElement.itemID.Equals(itemID))
+			{
+				num++;
+			}
+			else
+			{
+				if (moveCarousel || setManuallyToChosen)
+				{
+					SpringPanel component = this.scrollViewPanel.GetComponent<SpringPanel>();
+					if (component != null)
+					{
+						UnityEngine.Object.Destroy(component);
+					}
+					if (this.scrollViewPanel.gameObject.activeInHierarchy)
+					{
+						UIScrollView uIScrollView = this.scrollViewPanel.GetComponent<UIScrollView>();
+						Vector3 vector3 = shopCarouselElement.transform.localPosition;
+						float single = -vector3.x - this.scrollViewPanel.transform.localPosition.x;
+						float single1 = this.scrollViewPanel.transform.localPosition.y;
+						Vector3 vector31 = this.scrollViewPanel.transform.localPosition;
+						uIScrollView.MoveRelative(new Vector3(single, single1, vector31.z));
+					}
+					this.wrapContent.Reposition();
+				}
+				this.viewedId = itemID;
+				this.UpdatePersWithNewItem();
+				this.UpdateButtons();
+				this.UpdateItemParameters();
+				this.caption.text = shopCarouselElement.readableName ?? string.Empty;
+				this.caption.applyGradient = TempItemsController.PriceCoefs.ContainsKey(itemID);
+				try
+				{
+					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+					{
+						if (this.trainingState == ShopNGUIController.TrainingState.OnSniperRifle && this.viewedId != null && this.viewedId != WeaponTags.HunterRifleTag)
+						{
+							this.setInSniperCategoryNotOnSniperRifle();
+						}
+						else if (this.trainingState != ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle || this.viewedId == null || !(this.viewedId == WeaponTags.HunterRifleTag))
+						{
+							if (this.trainingState == ShopNGUIController.TrainingState.OnArmor && this.viewedId != null)
+							{
+								if (this.viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
+								{
+									goto Label1;
+								}
+								this.setInArmorCategoryNotOnArmor();
+								goto Label0;
+							}
+						Label1:
+							if (this.trainingState == ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor && this.viewedId != null)
+							{
+								if (this.viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
+								{
+									this.setOnArmor();
+								}
+							}
+						}
+						else
+						{
+							this.setOnSniperRifle();
+						}
+					}
+				Label0:
+					if (this.InTrainingAfterNoviceArmorRemoved)
+					{
+						if (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.OnArmor && this.viewedId != null)
+						{
+							if (this.viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
+							{
+								goto Label3;
+							}
+							this.setInArmorCategoryNotOnArmorRemovedNoviceArmor();
+							goto Label2;
+						}
+					Label3:
+						if (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor && this.viewedId != null)
+						{
+							if (this.viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
+							{
+								this.setOnArmorRemovedNoviceArmor();
+							}
+						}
+					}
+				Label2:
+				}
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogError(string.Concat("Exception in training in ChooseCarouselItem: ", exception));
+				}
+				break;
+			}
+		}
+	}
+
+	public static ItemPrice currentPrice(string itemId, ShopNGUIController.CategoryNames currentCategory, bool upgradeNotBuy = false, bool useDiscounts = true)
+	{
+		bool flag;
+		ItemPrice itemPrice;
+		try
+		{
+			if (itemId != null)
+			{
+				string item = itemId;
+				if (itemId != null && WeaponManager.tagToStoreIDMapping.ContainsKey(itemId))
+				{
+					item = WeaponManager.tagToStoreIDMapping[WeaponManager.FirstUnboughtOrForOurTier(itemId)];
+				}
+				if (currentCategory == ShopNGUIController.CategoryNames.SkinsCategory && SkinsController.shopKeyFromNameSkin.ContainsKey(item))
+				{
+					item = SkinsController.shopKeyFromNameSkin[item];
+				}
+				if (currentCategory == ShopNGUIController.CategoryNames.GearCategory)
+				{
+					item = (!upgradeNotBuy ? GearManager.OneItemIDForGear(GearManager.HolderQuantityForID(item), GearManager.CurrentNumberOfUphradesForGear(item)) : GearManager.UpgradeIDForGear(GearManager.HolderQuantityForID(item), GearManager.CurrentNumberOfUphradesForGear(item) + 1));
+				}
+				if (ShopNGUIController.IsWearCategory(currentCategory))
+				{
+					item = WeaponManager.FirstUnboughtTag(item);
+				}
+				string str = (ShopNGUIController.IsWeaponCategory(currentCategory) || ShopNGUIController.IsWearCategory(currentCategory) ? WeaponManager.FirstUnboughtOrForOurTier(itemId) : itemId);
+				ItemPrice priceByShopId = ItemDb.GetPriceByShopId(item) ?? new ItemPrice(10, "Coins");
+				int price = priceByShopId.Price;
+				if (useDiscounts)
+				{
+					int num = ShopNGUIController.DiscountFor(str, out flag);
+					if (num > 0)
+					{
+						float single = (float)num;
+						price = Math.Max((int)((float)price * 0.01f), Mathf.RoundToInt((float)price * (1f - single / 100f)));
+						if (flag)
+						{
+							price = (price % 5 >= 3 ? price + (5 - price % 5) : price - price % 5);
+						}
+					}
+				}
+				if (currentCategory == ShopNGUIController.CategoryNames.GearCategory && !upgradeNotBuy)
+				{
+					price *= GearManager.ItemsInPackForGear(GearManager.HolderQuantityForID(item));
+				}
+				itemPrice = new ItemPrice(price, priceByShopId.Currency);
+			}
+			else
+			{
+				itemPrice = new ItemPrice(0, "Coins");
+			}
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in currentPrice: ", exception));
+			itemPrice = new ItemPrice(0, "Coins");
+		}
+		return itemPrice;
+	}
+
+	private void DisableGunflashes(GameObject root)
+	{
+		if (root == null)
+		{
+			return;
+		}
+		if (root.name.Equals("GunFlash"))
+		{
+			root.SetActive(false);
+		}
+		IEnumerator enumerator = root.transform.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				Transform current = (Transform)enumerator.Current;
+				if (null != current)
+				{
+					this.DisableGunflashes(current.gameObject);
+				}
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+	}
+
+	public static void DisableLightProbesRecursively(GameObject w)
+	{
+		Player_move_c.PerformActionRecurs(w, (Transform t) => {
+			MeshRenderer component = t.GetComponent<MeshRenderer>();
+			SkinnedMeshRenderer skinnedMeshRenderer = t.GetComponent<SkinnedMeshRenderer>();
+			if (component != null)
+			{
+				component.useLightProbes = false;
+			}
+			if (skinnedMeshRenderer != null)
+			{
+				skinnedMeshRenderer.useLightProbes = false;
+			}
+		});
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DisableStub()
+	{
+		ShopNGUIController.u003cDisableStubu003ec__Iterator1AC variable = null;
+		return variable;
+	}
+
+	public static int DiscountFor(string itemTag, out bool onlyServerDiscount)
+	{
+		int num;
+		try
+		{
+			if (itemTag != null)
+			{
+				bool flag = false;
+				bool flag1 = false;
+				float single = 100f;
+				if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(itemTag))
+				{
+					single -= (float)WeaponManager.sharedManager.DiscountForTryGun(itemTag);
+					single = Math.Max(1f, single);
+					single = Math.Min(100f, single);
+					flag1 = true;
+				}
+				single /= 100f;
+				float value = 100f;
+				if (!flag1 && PromoActionsManager.sharedManager.discounts.ContainsKey(itemTag) && PromoActionsManager.sharedManager.discounts[itemTag].Count > 0)
+				{
+					SaltedInt item = PromoActionsManager.sharedManager.discounts[itemTag][0];
+					value -= (float)item.Value;
+					value = Math.Max(10f, value);
+					value = Math.Min(100f, value);
+					flag = true;
+				}
+				value /= 100f;
+				onlyServerDiscount = (flag1 ? false : flag);
+				if (flag1 || flag)
+				{
+					float single1 = Mathf.Clamp(single * value, 0.01f, 1f);
+					int num1 = Mathf.RoundToInt((1f - single1) * 100f);
+					if (onlyServerDiscount && num1 % 5 != 0)
+					{
+						num1 = 5 * (num1 / 5 + 1);
+					}
+					num1 = Math.Min(num1, 99);
+					num = num1;
+				}
+				else
+				{
+					num = 0;
+				}
+			}
+			else
+			{
+				UnityEngine.Debug.LogError("DiscountFor: itemTag == null");
+				onlyServerDiscount = false;
+				num = 0;
+			}
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in DiscountFor: ", exception));
+			onlyServerDiscount = false;
+			num = 0;
+		}
+		return num;
+	}
+
+	public void EquipWear(string tg)
+	{
+		ShopNGUIController.EquipWearInCategory(tg, this.currentCategory, this.inGame);
+	}
+
+	private static void EquipWearInCategory(string tg, ShopNGUIController.CategoryNames cat, bool inGameLocal)
+	{
+		bool flag = !Defs.isMulti;
+		string str = Storager.getString(ShopNGUIController.SnForWearCategory(cat), false);
+		Player_move_c component = null;
+		if (inGameLocal)
+		{
+			if (flag)
+			{
+				if (!SceneLoader.ActiveSceneName.Equals("LevelComplete") && !SceneLoader.ActiveSceneName.Equals("ChooseLevel"))
+				{
+					component = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
+				}
+			}
+			else if (WeaponManager.sharedManager.myPlayer != null)
+			{
+				component = WeaponManager.sharedManager.myPlayerMoveC;
+			}
+		}
+		ShopNGUIController.SetAsEquippedAndSendToServer(tg, cat);
+		ShopNGUIController.sharedShop.SetWearForCategory(cat, tg);
+		if (ShopNGUIController.sharedShop.wearEquipAction != null)
+		{
+			ShopNGUIController.sharedShop.wearEquipAction(cat, str ?? ShopNGUIController.NoneEquippedForWearCategory(cat), ShopNGUIController.sharedShop.WearForCat(cat));
+		}
+		if (cat == ShopNGUIController.CategoryNames.BootsCategory && inGameLocal && component != null)
+		{
+			if (!str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.bootsMethods.ContainsKey(str))
+			{
+				Wear.bootsMethods[str].Value(component, new Dictionary<string, object>());
+			}
+			if (Wear.bootsMethods.ContainsKey(tg))
+			{
+				Wear.bootsMethods[tg].Key(component, new Dictionary<string, object>());
+			}
+		}
+		if (cat == ShopNGUIController.CategoryNames.CapesCategory && inGameLocal && component != null)
+		{
+			if (!str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.capesMethods.ContainsKey(str))
+			{
+				Wear.capesMethods[str].Value(component, new Dictionary<string, object>());
+			}
+			if (Wear.capesMethods.ContainsKey(tg))
+			{
+				Wear.capesMethods[tg].Key(component, new Dictionary<string, object>());
+			}
+		}
+		if (cat == ShopNGUIController.CategoryNames.HatsCategory && inGameLocal && component != null)
+		{
+			if (!str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.hatsMethods.ContainsKey(str))
+			{
+				Wear.hatsMethods[str].Value(component, new Dictionary<string, object>());
+			}
+			if (Wear.hatsMethods.ContainsKey(tg))
+			{
+				Wear.hatsMethods[tg].Key(component, new Dictionary<string, object>());
+			}
+		}
+		if (cat == ShopNGUIController.CategoryNames.ArmorCategory && inGameLocal && component != null)
+		{
+			if (!str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.armorMethods.ContainsKey(str))
+			{
+				Wear.armorMethods[str].Value(component, new Dictionary<string, object>());
+			}
+			if (Wear.armorMethods.ContainsKey(tg))
+			{
+				Wear.armorMethods[tg].Key(component, new Dictionary<string, object>());
+			}
+		}
+		if (ShopNGUIController.GuiActive)
+		{
+			ShopNGUIController.sharedShop.UpdateButtons();
+			ShopNGUIController.sharedShop.UpdateIcon(cat, true);
+		}
+	}
+
+	public static void EquipWearInCategoryIfNotEquiped(string tg, ShopNGUIController.CategoryNames cat, bool inGameLocal)
+	{
+		if (!Storager.hasKey(ShopNGUIController.SnForWearCategory(cat)))
+		{
+			Storager.setString(ShopNGUIController.SnForWearCategory(cat), ShopNGUIController.NoneEquippedForWearCategory(cat), false);
+		}
+		if (!Storager.getString(ShopNGUIController.SnForWearCategory(cat), false).Equals(tg))
+		{
+			ShopNGUIController.EquipWearInCategory(tg, cat, inGameLocal);
+		}
+	}
+
+	public List<GameObject> FillModelsList(ShopNGUIController.CategoryNames c)
+	{
+		Func<ShopNGUIController.CategoryNames, Comparison<GameObject>> func = (ShopNGUIController.CategoryNames cn) => (GameObject lh, GameObject rh) => {
+			List<string> strs = null;
+			List<string> strs1 = null;
+			foreach (List<string> item in Wear.wear[cn])
+			{
+				if (item.Contains(lh.name))
+				{
+					strs = item;
+				}
+				if (!item.Contains(rh.name))
+				{
+					continue;
+				}
+				strs1 = item;
+			}
+			if (strs == null || strs1 == null)
+			{
+				return 0;
+			}
+			if (strs == strs1)
+			{
+				return strs.IndexOf(lh.name) - strs.IndexOf(rh.name);
+			}
+			return Wear.wear[cn].IndexOf(strs) - Wear.wear[cn].IndexOf(strs1);
+		};
+		List<GameObject> gameObjects = new List<GameObject>();
+		if (ShopNGUIController.IsWeaponCategory(c))
+		{
+			gameObjects = WeaponManager.sharedManager.FilteredShopLists[(Int32)c];
+		}
+		else if (c == ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			foreach (ShopPositionParams hat in this.hats)
+			{
+				this.FilterUpgrades(gameObjects, hat.gameObject, ShopNGUIController.CategoryNames.HatsCategory, Defs.VisualHatArmor);
+			}
+			gameObjects.Sort(func(6));
+		}
+		else if (c == ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			if (Storager.getInt("Training.NoviceArmorUsedKey", false) != 1 || TrainingController.TrainingCompleted)
+			{
+				foreach (ShopPositionParams shopPositionParam in this.armor)
+				{
+					this.FilterUpgrades(gameObjects, shopPositionParam.gameObject, ShopNGUIController.CategoryNames.ArmorCategory, Defs.VisualArmor);
+				}
+			}
+			else
+			{
+				GameObject gameObject = Resources.Load<GameObject>("Armor_Info/Armor_Novice");
+				if (gameObject == null)
+				{
+					UnityEngine.Debug.LogError("No novice armor when Storager.getInt(Defs.NoviceArmorUsedKey,false) == 1 && !TrainingController.TrainingCompleted");
+				}
+				else
+				{
+					gameObjects.Add(gameObject);
+				}
+			}
+			gameObjects.Sort(func(7));
+		}
+		else if (c == ShopNGUIController.CategoryNames.SkinsCategory)
+		{
+			foreach (string key in SkinsController.skinsForPers.Keys)
+			{
+				gameObjects.Add(this.pixlMan);
+			}
+			if (ShopNGUIController.ShowLockedFacebookSkin())
+			{
+				gameObjects.Add(this.pixlMan);
+			}
+		}
+		else if (c == ShopNGUIController.CategoryNames.CapesCategory)
+		{
+			foreach (ShopPositionParams cape in this.capes)
+			{
+				this.FilterUpgrades(gameObjects, cape.gameObject, ShopNGUIController.CategoryNames.CapesCategory, string.Empty);
+			}
+			gameObjects.Sort(func(9));
+		}
+		else if (c == ShopNGUIController.CategoryNames.BootsCategory)
+		{
+			foreach (ShopPositionParams boot in this.boots)
+			{
+				this.FilterUpgrades(gameObjects, boot.gameObject, ShopNGUIController.CategoryNames.BootsCategory, string.Empty);
+			}
+			gameObjects.Sort(func(10));
+		}
+		else if (c != ShopNGUIController.CategoryNames.MaskCategory)
+		{
+			c != ShopNGUIController.CategoryNames.GearCategory;
+		}
+		else
+		{
+			foreach (ShopPositionParams mask in this.masks)
+			{
+				this.FilterUpgrades(gameObjects, mask.gameObject, ShopNGUIController.CategoryNames.MaskCategory, string.Empty);
+			}
+			gameObjects.Sort(func(12));
+		}
+		return gameObjects;
+	}
+
+	private void FilterUpgrades(List<GameObject> modelsList, GameObject prefab, ShopNGUIController.CategoryNames category, string visualDefName)
+	{
+		if (prefab.name.Replace("(Clone)", string.Empty) == "Armor_Novice")
+		{
+			return;
+		}
+		if (prefab != null && TempItemsController.PriceCoefs.ContainsKey(prefab.name) && TempItemsController.sharedController != null)
+		{
+			if (TempItemsController.sharedController.ContainsItem(prefab.name))
+			{
+				modelsList.Add(prefab);
+			}
+			return;
+		}
+		List<List<string>> item = null;
+		try
+		{
+			item = Wear.wear[category];
+		}
+		catch (Exception exception1)
+		{
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError(string.Concat(new object[] { "Exception in FilterUpgrades ll = Wear.wear [category]: ", exception, " category = ", category.ToString() }));
+		}
+		if (item == null)
+		{
+			UnityEngine.Debug.LogError(string.Concat("FilterUpgrades: ll == null   category = ", category.ToString()));
+			return;
+		}
+		List<string> list = item.FirstOrDefault<List<string>>((List<string> l) => l.Contains(prefab.name)).ToList<string>();
+		if (list == null)
+		{
+			return;
+		}
+		string str = (!string.IsNullOrEmpty(visualDefName) ? Storager.getString(visualDefName, false) : string.Empty);
+		int num = list.IndexOf(prefab.name);
+		if (Storager.getInt(prefab.name, true) <= 0)
+		{
+			if (num == 0 && Wear.LeagueForWear(prefab.name, category) <= (int)RatingSystem.instance.currentLeague)
+			{
+				modelsList.Add(prefab);
+			}
+			if (num > 0)
+			{
+				if (Storager.getInt(list[num - 1], true) <= 0)
+				{
+					if (!string.IsNullOrEmpty(str) && prefab.name.Equals(str))
+					{
+						modelsList.Add(prefab);
+					}
+				}
+				else if (string.IsNullOrEmpty(str))
+				{
+					modelsList.Add(prefab);
+				}
+				else if (list.IndexOf(str) <= num)
+				{
+					modelsList.Add(prefab);
+				}
+			}
+		}
+		else if (num == list.Count - 1)
+		{
+			modelsList.Add(prefab);
+		}
+		else if (num >= 0 && num < list.Count - 1 && Storager.getInt(list[num + 1], true) == 0)
+		{
+			modelsList.Add(prefab);
+		}
+	}
+
+	public void FireBuyAction(string item)
+	{
+		if (this.buyAction != null)
+		{
+			this.buyAction(item);
+		}
+	}
+
+	private void FireOnEquipSkin(string id)
+	{
+		if (this.onEquipSkinAction != null)
+		{
+			this.onEquipSkinAction(id);
+		}
+	}
+
+	public static void FireWeaponOrArmorBought()
+	{
+		Action action = ShopNGUIController.GunOrArmorBought;
+		if (action != null)
+		{
+			action();
+		}
+	}
+
+	private void ForceResetTrainingState()
+	{
+		try
+		{
+			if (this._setTrainingStateMethods == null)
+			{
+				Dictionary<ShopNGUIController.TrainingState, Action> trainingStates = new Dictionary<ShopNGUIController.TrainingState, Action>()
+				{
+					{ ShopNGUIController.TrainingState.NotInSniperCategory, new Action(this.setNotInSniperCategory) },
+					{ ShopNGUIController.TrainingState.OnSniperRifle, new Action(this.setOnSniperRifle) },
+					{ ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle, new Action(this.setInSniperCategoryNotOnSniperRifle) },
+					{ ShopNGUIController.TrainingState.NotInArmorCategory, new Action(this.setNotInArmorCategory) },
+					{ ShopNGUIController.TrainingState.OnArmor, new Action(this.setOnArmor) },
+					{ ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor, new Action(this.setInArmorCategoryNotOnArmor) },
+					{ ShopNGUIController.TrainingState.BackBlinking, new Action(this.setBackBlinking) }
+				};
+				this._setTrainingStateMethods = trainingStates;
+			}
+			this._setTrainingStateMethods[this.trainingState]();
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ForceResetTrainingState: ", exception));
+		}
 	}
 
 	private static string GetWeaponStatText(int currentValue, int nextValue)
@@ -2385,951 +2535,249 @@ public class ShopNGUIController : MonoBehaviour
 		return string.Format("{0}[FACC2E]{1}[-]", currentValue, nextValue - currentValue);
 	}
 
-	public void SetCamera()
-	{
-		Transform mainMenu_Pers = MainMenu_Pers;
-		HOTween.Kill(mainMenu_Pers);
-		Vector3 vector = new Vector3(0f, 0f, 0f);
-		Vector3 vector2 = new Vector3(0f, 0f, 0f);
-		Vector3 vector3 = new Vector3(1f, 1f, 1f);
-		switch (currentCategory)
-		{
-		case CategoryNames.CapesCategory:
-			vector = new Vector3(0f, 0f, 0f);
-			vector2 = new Vector3(0f, -130.76f, 0f);
-			break;
-		case CategoryNames.HatsCategory:
-			vector = new Vector3(1.06f, -0.54f, 2.19f);
-			vector2 = new Vector3(0f, -9.5f, 0f);
-			break;
-		case CategoryNames.MaskCategory:
-			vector = new Vector3(1.06f, -0.54f, 2.19f);
-			vector2 = new Vector3(0f, -9.5f, 0f);
-			break;
-		default:
-			vector = new Vector3(0f, 0f, 0f);
-			vector2 = new Vector3(0f, 0f, 0f);
-			break;
-		}
-		float p_duration = 0.5f;
-		idleTimerLastTime = Time.realtimeSinceStartup;
-		HOTween.To(mainMenu_Pers, p_duration, new TweenParms().Prop("localPosition", vector).Prop("localRotation", new PlugQuaternion(vector2)).UpdateType(UpdateType.TimeScaleIndependentUpdate)
-			.Ease(EaseType.Linear)
-			.OnComplete(_003CSetCamera_003Em__4C9));
-	}
-
-	private void LogPurchaseAfterPaymentAnalyticsEvent(string itemName)
-	{
-		if (!FlurryEvents.PaymentTime.HasValue)
-		{
-			return;
-		}
-		float? paymentTime = FlurryEvents.PaymentTime;
-		float? num = ((!paymentTime.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime.Value));
-		Dictionary<string, string> dictionary;
-		if (num.HasValue && num.Value < 30f)
-		{
-			dictionary = new Dictionary<string, string>();
-			dictionary.Add("0-30", itemName);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", parameters);
-		}
-		else
-		{
-			float? paymentTime2 = FlurryEvents.PaymentTime;
-			float? num2 = ((!paymentTime2.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime2.Value));
-			if (num2.HasValue && num2.Value < 60f)
-			{
-				dictionary = new Dictionary<string, string>();
-				dictionary.Add("30-60", itemName);
-				Dictionary<string, string> parameters2 = dictionary;
-				FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", parameters2);
-			}
-			else
-			{
-				float? paymentTime3 = FlurryEvents.PaymentTime;
-				float? num3 = ((!paymentTime3.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime3.Value));
-				if (num3.HasValue && num3.Value < 90f)
-				{
-					dictionary = new Dictionary<string, string>();
-					dictionary.Add("60-90", itemName);
-					Dictionary<string, string> parameters3 = dictionary;
-					FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", parameters3);
-				}
-				else
-				{
-					dictionary = new Dictionary<string, string>();
-					dictionary.Add("90+", itemName);
-					Dictionary<string, string> parameters4 = dictionary;
-					FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", parameters4);
-				}
-			}
-		}
-		float? paymentTime4 = FlurryEvents.PaymentTime;
-		float? num4 = ((!paymentTime4.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime4.Value));
-		if (num4.HasValue && num4.Value < 30f)
-		{
-			dictionary = new Dictionary<string, string>();
-			dictionary.Add("0-30", itemName);
-			Dictionary<string, string> parameters5 = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", parameters5);
-		}
-		float? paymentTime5 = FlurryEvents.PaymentTime;
-		float? num5 = ((!paymentTime5.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime5.Value));
-		if (num5.HasValue && num5.Value < 60f)
-		{
-			dictionary = new Dictionary<string, string>();
-			dictionary.Add("0-60", itemName);
-			Dictionary<string, string> parameters6 = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", parameters6);
-		}
-		float? paymentTime6 = FlurryEvents.PaymentTime;
-		float? num6 = ((!paymentTime6.HasValue) ? null : new float?(Time.realtimeSinceStartup - paymentTime6.Value));
-		if (num6.HasValue && num6.Value < 90f)
-		{
-			dictionary = new Dictionary<string, string>();
-			dictionary.Add("0-90", itemName);
-			Dictionary<string, string> parameters7 = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", parameters7);
-		}
-		dictionary = new Dictionary<string, string>();
-		dictionary.Add("All", itemName);
-		Dictionary<string, string> parameters8 = dictionary;
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", parameters8);
-	}
-
-	public void PlayWeaponAnimation()
-	{
-		if (profile != null && weapon != null)
-		{
-			Animation component = weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>();
-			if (Time.timeScale != 0f)
-			{
-				if (component.GetClip("Profile") == null)
-				{
-					component.AddClip(profile, "Profile");
-				}
-				component.Play("Profile");
-			}
-			else
-			{
-				animationCoroutineRunner.StopAllCoroutines();
-				if (component.GetClip("Profile") == null)
-				{
-					component.AddClip(profile, "Profile");
-				}
-				if (animationCoroutineRunner.gameObject.activeInHierarchy)
-				{
-					animationCoroutineRunner.StartPlay(component, "Profile", false, null);
-				}
-				else
-				{
-					Debug.LogWarning("Coroutine couldn't be started because the the game object 'AnimationCoroutineRunner' is inactive!");
-				}
-			}
-		}
-		MainMenu_Pers.GetComponent<Animation>().Stop();
-		MainMenu_Pers.GetComponent<Animation>().Play("Idle");
-	}
-
-	public static Texture TextureForCat(int cc)
-	{
-		string text = (IsWeaponCategory((CategoryNames)cc) ? _CurrentWeaponSetIDs()[cc] : ((!IsWearCategory((CategoryNames)cc)) ? "potion" : sharedShop.WearForCat((CategoryNames)cc)));
-		if (text == null)
-		{
-			return null;
-		}
-		text = ItemIDForPrefab(text, (CategoryNames)cc);
-		int num = 1;
-		if (IsWeaponCategory((CategoryNames)cc))
-		{
-			ItemRecord byTag = ItemDb.GetByTag(text);
-			if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
-			{
-				bool maxUpgrade;
-				num = _CurrentNumberOfUpgrades(text, out maxUpgrade, (CategoryNames)cc);
-			}
-		}
-		string text2 = ((!IsWeaponCategory((CategoryNames)cc)) ? text : (_TagForId(text) ?? string.Empty)) + "_icon" + num;
-		string text3 = text2 + "_big";
-		Texture texture = Resources.Load<Texture>("OfferIcons/" + text3);
-		if (texture == null)
-		{
-			texture = Resources.Load<Texture>("ShopIcons/" + text2);
-		}
-		return texture;
-	}
-
-	public void SetIconModelsPositions(Transform t, CategoryNames c)
-	{
-		switch (c)
-		{
-		case CategoryNames.ArmorCategory:
-		{
-			t.transform.localPosition = new Vector3(0f, 0f, 0f);
-			t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 0f, 0f));
-			float num5 = 1f;
-			t.transform.localScale = new Vector3(num5, num5, num5);
-			break;
-		}
-		case CategoryNames.BootsCategory:
-		{
-			t.transform.localPosition = new Vector3(-0.4f, -0.1f, 0f);
-			t.transform.localRotation = Quaternion.Euler(new Vector3(13f, 149f, 0f));
-			float num4 = 75f;
-			t.transform.localScale = new Vector3(num4, num4, num4);
-			break;
-		}
-		case CategoryNames.CapesCategory:
-		{
-			t.transform.localPosition = new Vector3(-0.720093f, -0.00859833f, 0f);
-			t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 30f, -15f));
-			float num3 = 50f;
-			t.transform.localScale = new Vector3(num3, num3, num3);
-			break;
-		}
-		case CategoryNames.SkinsCategory:
-			SkinsController.SetTransformParamtersForSkinModel(t);
-			break;
-		case CategoryNames.GearCategory:
-		{
-			t.transform.localPosition = new Vector3(4.648193f, 2.444565f, 0f);
-			t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 30f, -30f));
-			float num2 = 319.3023f;
-			t.transform.localScale = new Vector3(num2, num2, num2);
-			break;
-		}
-		case CategoryNames.HatsCategory:
-		{
-			t.transform.localPosition = new Vector3(-0.62f, -0.04f, 0f);
-			t.transform.localRotation = Quaternion.Euler(new Vector3(-75f, -165f, -90f));
-			float num = 82.5f;
-			t.transform.localScale = new Vector3(num, num, num);
-			break;
-		}
-		}
-	}
-
-	private void DisableGunflashes(GameObject root)
-	{
-		if (root == null)
-		{
-			return;
-		}
-		if (root.name.Equals("GunFlash"))
-		{
-			root.SetActive(false);
-		}
-		foreach (Transform item in root.transform)
-		{
-			if (!(null == item))
-			{
-				DisableGunflashes(item.gameObject);
-			}
-		}
-	}
-
-	public void UpdateIcons()
-	{
-		for (int i = 0; i < category.buttons.Length; i++)
-		{
-			UpdateIcon((CategoryNames)i);
-		}
-	}
-
-	public void UpdateIcon(CategoryNames c, bool animateModel = false)
-	{
-		_003CUpdateIcon_003Ec__AnonStorey31F _003CUpdateIcon_003Ec__AnonStorey31F = new _003CUpdateIcon_003Ec__AnonStorey31F();
-		_003CUpdateIcon_003Ec__AnonStorey31F.c = c;
-		_003CUpdateIcon_003Ec__AnonStorey31F.animateModel = animateModel;
-		_003CUpdateIcon_003Ec__AnonStorey31F._003C_003Ef__this = this;
-		_003CUpdateIcon_003Ec__AnonStorey31F.tb = category.buttons[(int)_003CUpdateIcon_003Ec__AnonStorey31F.c];
-		_003CUpdateIcon_003Ec__AnonStorey31F.toDestroy = new List<GameObject>();
-		Player_move_c.PerformActionRecurs(_003CUpdateIcon_003Ec__AnonStorey31F.tb.gameObject, _003CUpdateIcon_003Ec__AnonStorey31F._003C_003Em__4CA);
-		foreach (GameObject item in _003CUpdateIcon_003Ec__AnonStorey31F.toDestroy)
-		{
-			UnityEngine.Object.Destroy(item);
-		}
-		if (_003CUpdateIcon_003Ec__AnonStorey31F.c == CategoryNames.SkinsCategory || (_003CUpdateIcon_003Ec__AnonStorey31F.c == CategoryNames.CapesCategory && _currentCape.Equals("cape_Custom")))
-		{
-			List<GameObject> list = FillModelsList(_003CUpdateIcon_003Ec__AnonStorey31F.c);
-			GameObject gameObject = ((_003CUpdateIcon_003Ec__AnonStorey31F.c != CategoryNames.SkinsCategory) ? ItemDb.GetWearFromResources("cape_Custom", CategoryNames.CapesCategory) : list[0]);
-			if (gameObject != null)
-			{
-				AddModel(gameObject, _003CUpdateIcon_003Ec__AnonStorey31F._003C_003Em__4CB, _003CUpdateIcon_003Ec__AnonStorey31F.c);
-			}
-			else
-			{
-				GameObject obj = _003CUpdateIcon_003Ec__AnonStorey31F.tb.gameObject;
-				if (_003C_003Ef__am_0024cacheB6 == null)
-				{
-					_003C_003Ef__am_0024cacheB6 = _003CUpdateIcon_003Em__4CC;
-				}
-				Player_move_c.PerformActionRecurs(obj, _003C_003Ef__am_0024cacheB6);
-			}
-			GameObject obj2 = _003CUpdateIcon_003Ec__AnonStorey31F.tb.gameObject;
-			if (_003C_003Ef__am_0024cacheB7 == null)
-			{
-				_003C_003Ef__am_0024cacheB7 = _003CUpdateIcon_003Em__4CD;
-			}
-			Player_move_c.PerformActionRecurs(obj2, _003C_003Ef__am_0024cacheB7);
-			return;
-		}
-		_003CUpdateIcon_003Ec__AnonStorey320 _003CUpdateIcon_003Ec__AnonStorey = new _003CUpdateIcon_003Ec__AnonStorey320();
-		_003CUpdateIcon_003Ec__AnonStorey.texture = TextureForCat((int)_003CUpdateIcon_003Ec__AnonStorey31F.c);
-		if (_003CUpdateIcon_003Ec__AnonStorey.texture != null)
-		{
-			Player_move_c.PerformActionRecurs(_003CUpdateIcon_003Ec__AnonStorey31F.tb.gameObject, _003CUpdateIcon_003Ec__AnonStorey._003C_003Em__4CE);
-			return;
-		}
-		GameObject obj3 = _003CUpdateIcon_003Ec__AnonStorey31F.tb.gameObject;
-		if (_003C_003Ef__am_0024cacheB8 == null)
-		{
-			_003C_003Ef__am_0024cacheB8 = _003CUpdateIcon_003Em__4CF;
-		}
-		Player_move_c.PerformActionRecurs(obj3, _003C_003Ef__am_0024cacheB8);
-	}
-
-	private static string _TagForId(string id)
-	{
-		foreach (List<string> upgrade in WeaponUpgrades.upgrades)
-		{
-			if (upgrade.Contains(id))
-			{
-				return upgrade[0];
-			}
-		}
-		return id;
-	}
-
-	public void EquipWear(string tg)
-	{
-		EquipWearInCategory(tg, currentCategory, inGame);
-	}
-
-	public static void EquipWearInCategoryIfNotEquiped(string tg, CategoryNames cat, bool inGameLocal)
-	{
-		if (!Storager.hasKey(SnForWearCategory(cat)))
-		{
-			Storager.setString(SnForWearCategory(cat), NoneEquippedForWearCategory(cat), false);
-		}
-		if (!Storager.getString(SnForWearCategory(cat), false).Equals(tg))
-		{
-			EquipWearInCategory(tg, cat, inGameLocal);
-		}
-	}
-
-	private static void EquipWearInCategory(string tg, CategoryNames cat, bool inGameLocal)
-	{
-		bool flag = !Defs.isMulti;
-		string @string = Storager.getString(SnForWearCategory(cat), false);
-		Player_move_c player_move_c = null;
-		if (inGameLocal)
-		{
-			if (flag)
-			{
-				if (!SceneLoader.ActiveSceneName.Equals("LevelComplete") && !SceneLoader.ActiveSceneName.Equals("ChooseLevel"))
-				{
-					player_move_c = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
-				}
-			}
-			else if (WeaponManager.sharedManager.myPlayer != null)
-			{
-				player_move_c = WeaponManager.sharedManager.myPlayerMoveC;
-			}
-		}
-		SetAsEquippedAndSendToServer(tg, cat);
-		sharedShop.SetWearForCategory(cat, tg);
-		if (sharedShop.wearEquipAction != null)
-		{
-			sharedShop.wearEquipAction(cat, @string ?? NoneEquippedForWearCategory(cat), sharedShop.WearForCat(cat));
-		}
-		if (cat == CategoryNames.BootsCategory && inGameLocal && player_move_c != null)
-		{
-			if (!@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.bootsMethods.ContainsKey(@string))
-			{
-				Wear.bootsMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-			}
-			if (Wear.bootsMethods.ContainsKey(tg))
-			{
-				Wear.bootsMethods[tg].Key(player_move_c, new Dictionary<string, object>());
-			}
-		}
-		if (cat == CategoryNames.CapesCategory && inGameLocal && player_move_c != null)
-		{
-			if (!@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.capesMethods.ContainsKey(@string))
-			{
-				Wear.capesMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-			}
-			if (Wear.capesMethods.ContainsKey(tg))
-			{
-				Wear.capesMethods[tg].Key(player_move_c, new Dictionary<string, object>());
-			}
-		}
-		if (cat == CategoryNames.HatsCategory && inGameLocal && player_move_c != null)
-		{
-			if (!@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.hatsMethods.ContainsKey(@string))
-			{
-				Wear.hatsMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-			}
-			if (Wear.hatsMethods.ContainsKey(tg))
-			{
-				Wear.hatsMethods[tg].Key(player_move_c, new Dictionary<string, object>());
-			}
-		}
-		if (cat == CategoryNames.ArmorCategory && inGameLocal && player_move_c != null)
-		{
-			if (!@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.armorMethods.ContainsKey(@string))
-			{
-				Wear.armorMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-			}
-			if (Wear.armorMethods.ContainsKey(tg))
-			{
-				Wear.armorMethods[tg].Key(player_move_c, new Dictionary<string, object>());
-			}
-		}
-		if (GuiActive)
-		{
-			sharedShop.UpdateButtons();
-			sharedShop.UpdateIcon(cat, true);
-		}
-	}
-
-	public static void UnequipCurrentWearInCategory(CategoryNames cat, bool inGameLocal)
-	{
-		bool flag = !Defs.isMulti;
-		string @string = Storager.getString(SnForWearCategory(cat), false);
-		Player_move_c player_move_c = null;
-		if (inGameLocal)
-		{
-			if (flag)
-			{
-				if (!SceneLoader.ActiveSceneName.Equals("LevelComplete") && !SceneLoader.ActiveSceneName.Equals("ChooseLevel"))
-				{
-					player_move_c = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
-				}
-			}
-			else if (WeaponManager.sharedManager.myPlayer != null)
-			{
-				player_move_c = WeaponManager.sharedManager.myPlayerMoveC;
-			}
-		}
-		Storager.setString(SnForWearCategory(cat), NoneEquippedForWearCategory(cat), false);
-		FriendsController.sharedController.SendAccessories();
-		sharedShop.SetWearForCategory(cat, NoneEquippedForWearCategory(cat));
-		if (sharedShop.wearEquipAction != null)
-		{
-			sharedShop.wearEquipAction(cat, @string ?? NoneEquippedForWearCategory(cat), NoneEquippedForWearCategory(cat));
-		}
-		if (cat == CategoryNames.BootsCategory && inGameLocal && player_move_c != null && !@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.bootsMethods.ContainsKey(@string))
-		{
-			Wear.bootsMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-		}
-		if (cat == CategoryNames.CapesCategory && inGameLocal && player_move_c != null && !@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.capesMethods.ContainsKey(@string))
-		{
-			Wear.capesMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-		}
-		if (cat == CategoryNames.HatsCategory && inGameLocal && player_move_c != null && !@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.hatsMethods.ContainsKey(@string))
-		{
-			Wear.hatsMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-		}
-		if (cat == CategoryNames.ArmorCategory && inGameLocal && player_move_c != null && !@string.Equals(NoneEquippedForWearCategory(cat)) && Wear.armorMethods.ContainsKey(@string))
-		{
-			Wear.armorMethods[@string].Value(player_move_c, new Dictionary<string, object>());
-		}
-		if (sharedShop.wearUnequipAction != null)
-		{
-			sharedShop.wearUnequipAction(cat, @string ?? NoneEquippedForWearCategory(cat));
-		}
-		if (GuiActive)
-		{
-			sharedShop.UpdateIcon(cat);
-		}
-	}
-
-	public static void ShowTryGunIfPossible(bool placeForGiveNewTryGun, Transform point, string layer, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitoinsShopAdditional = null, Action<string> customEquipWearAction = null)
-	{
-		if (!Defs.isHunger && !placeForGiveNewTryGun && WeaponManager.sharedManager != null && WeaponManager.sharedManager.ExpiredTryGuns.Count > 0 && TrainingController.TrainingCompleted)
-		{
-			_003CShowTryGunIfPossible_003Ec__AnonStorey321 _003CShowTryGunIfPossible_003Ec__AnonStorey = new _003CShowTryGunIfPossible_003Ec__AnonStorey321();
-			{
-				foreach (string expiredTryGun in WeaponManager.sharedManager.ExpiredTryGuns)
-				{
-					_003CShowTryGunIfPossible_003Ec__AnonStorey.tg = expiredTryGun;
-					try
-					{
-						if (WeaponManager.sharedManager.weaponsInGame.FirstOrDefault(_003CShowTryGunIfPossible_003Ec__AnonStorey._003C_003Em__4D0) != null)
-						{
-							WeaponManager.sharedManager.ExpiredTryGuns.RemoveAll(_003CShowTryGunIfPossible_003Ec__AnonStorey._003C_003Em__4D1);
-							if (WeaponManager.LastBoughtTag(_003CShowTryGunIfPossible_003Ec__AnonStorey.tg) == null)
-							{
-								ShowAddTryGun(_003CShowTryGunIfPossible_003Ec__AnonStorey.tg, point, layer, onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction, true);
-								break;
-							}
-						}
-					}
-					catch (Exception ex)
-					{
-						Debug.LogError("Exception in foreach (var tg in WeaponManager.sharedManager.ExpiredTryGuns): " + ex);
-					}
-				}
-				return;
-			}
-		}
-		if (Defs.isHunger || Defs.isDaterRegim || WeaponManager.sharedManager._currentFilterMap != 0 || !((!FriendsController.useBuffSystem) ? KillRateCheck.instance.giveWeapon : BuffSystem.instance.giveTryGun) || !TrainingController.TrainingCompleted)
-		{
-			return;
-		}
-		try
-		{
-			_003CShowTryGunIfPossible_003Ec__AnonStorey322 _003CShowTryGunIfPossible_003Ec__AnonStorey2 = new _003CShowTryGunIfPossible_003Ec__AnonStorey322();
-			_003CShowTryGunIfPossible_003Ec__AnonStorey2.maximumCoinBank = UpperCoinsBankBound();
-			Dictionary<CategoryNames, List<List<string>>> tryGunsTable = WeaponManager.tryGunsTable;
-			if (_003C_003Ef__am_0024cacheB9 == null)
-			{
-				_003C_003Ef__am_0024cacheB9 = _003CShowTryGunIfPossible_003Em__4D2;
-			}
-			IEnumerable<string> source = tryGunsTable.SelectMany(_003C_003Ef__am_0024cacheB9);
-			if (_003C_003Ef__am_0024cacheBA == null)
-			{
-				_003C_003Ef__am_0024cacheBA = _003CShowTryGunIfPossible_003Em__4D3;
-			}
-			IEnumerable<ItemRecord> source2 = source.Select(_003C_003Ef__am_0024cacheBA);
-			if (_003C_003Ef__am_0024cacheBB == null)
-			{
-				_003C_003Ef__am_0024cacheBB = _003CShowTryGunIfPossible_003Em__4D4;
-			}
-			IEnumerable<ItemRecord> source3 = source2.Where(_003C_003Ef__am_0024cacheBB);
-			if (_003C_003Ef__am_0024cacheBC == null)
-			{
-				_003C_003Ef__am_0024cacheBC = _003CShowTryGunIfPossible_003Em__4D5;
-			}
-			List<ItemRecord> source4 = source3.Where(_003C_003Ef__am_0024cacheBC).ToList();
-			if (_003C_003Ef__am_0024cacheBD == null)
-			{
-				_003C_003Ef__am_0024cacheBD = _003CShowTryGunIfPossible_003Em__4D6;
-			}
-			List<ItemRecord> source5 = source4.Where(_003C_003Ef__am_0024cacheBD).Where(_003CShowTryGunIfPossible_003Ec__AnonStorey2._003C_003Em__4D7).Randomize()
-				.ToList();
-			string text = null;
-			if (source5.Any())
-			{
-				text = source5.First().Tag;
-			}
-			else
-			{
-				_003CShowTryGunIfPossible_003Ec__AnonStorey323 _003CShowTryGunIfPossible_003Ec__AnonStorey3 = new _003CShowTryGunIfPossible_003Ec__AnonStorey323();
-				_003CShowTryGunIfPossible_003Ec__AnonStorey3.maximumGemBank = UpperGemsBankBound();
-				if (_003C_003Ef__am_0024cacheBE == null)
-				{
-					_003C_003Ef__am_0024cacheBE = _003CShowTryGunIfPossible_003Em__4D8;
-				}
-				List<ItemRecord> source6 = source4.Where(_003C_003Ef__am_0024cacheBE).Where(_003CShowTryGunIfPossible_003Ec__AnonStorey3._003C_003Em__4D9).Randomize()
-					.ToList();
-				text = ((!source6.Any()) ? TryGunForCategoryWithMaxUnbought() : source6.First().Tag);
-			}
-			if (text != null)
-			{
-				ShowAddTryGun(text, point, layer, onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction);
-			}
-		}
-		catch (Exception ex2)
-		{
-			Debug.LogError("Exception in giving: " + ex2);
-		}
-	}
-
-	private static int UpperCoinsBankBound()
-	{
-		int value = ((!(ExperienceController.sharedController != null)) ? 1 : ExperienceController.sharedController.currentLevel);
-		value = Mathf.Clamp(value, 0, ExperienceController.addCoinsFromLevels.Length - 1);
-		return Storager.getInt("Coins", false) + 30 + ExperienceController.addCoinsFromLevels[value];
-	}
-
-	private static int UpperGemsBankBound()
-	{
-		int value = ((!(ExperienceController.sharedController != null)) ? 1 : ExperienceController.sharedController.currentLevel);
-		value = Mathf.Clamp(value, 0, ExperienceController.addGemsFromLevels.Length - 1);
-		return Storager.getInt("GemsCurrency", false) + ExperienceController.addGemsFromLevels[value];
-	}
-
-	private static string TryGunForCategoryWithMaxUnbought()
-	{
-		List<CategoryNames> list = new List<CategoryNames>();
-		list.Add(CategoryNames.PrimaryCategory);
-		list.Add(CategoryNames.BackupCategory);
-		list.Add(CategoryNames.MeleeCategory);
-		list.Add(CategoryNames.SpecilCategory);
-		list.Add(CategoryNames.SniperCategory);
-		list.Add(CategoryNames.PremiumCategory);
-		IEnumerable<CategoryNames> source = list.Randomize();
-		if (_003C_003Ef__am_0024cacheBF == null)
-		{
-			_003C_003Ef__am_0024cacheBF = _003CTryGunForCategoryWithMaxUnbought_003Em__4DA;
-		}
-		List<CategoryNames> list2 = source.OrderBy(_003C_003Ef__am_0024cacheBF).ToList();
-		string result = null;
-		for (int i = 0; i < list2.Count; i++)
-		{
-			_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey325 _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey = new _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey325();
-			_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey.cat = list2[i];
-			UnityEngine.Object[] weaponsInGame = WeaponManager.sharedManager.weaponsInGame;
-			if (_003C_003Ef__am_0024cacheC0 == null)
-			{
-				_003C_003Ef__am_0024cacheC0 = _003CTryGunForCategoryWithMaxUnbought_003Em__4DB;
-			}
-			IEnumerable<WeaponSounds> source2 = weaponsInGame.Select(_003C_003Ef__am_0024cacheC0).Where(_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey._003C_003Em__4DC);
-			if (_003C_003Ef__am_0024cacheC1 == null)
-			{
-				_003C_003Ef__am_0024cacheC1 = _003CTryGunForCategoryWithMaxUnbought_003Em__4DD;
-			}
-			IEnumerable<WeaponSounds> source3 = source2.Where(_003C_003Ef__am_0024cacheC1);
-			if (_003C_003Ef__am_0024cacheC2 == null)
-			{
-				_003C_003Ef__am_0024cacheC2 = _003CTryGunForCategoryWithMaxUnbought_003Em__4DE;
-			}
-			IEnumerable<WeaponSounds> source4 = source3.Where(_003C_003Ef__am_0024cacheC2).Where(_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey._003C_003Em__4DF);
-			if (_003C_003Ef__am_0024cacheC3 == null)
-			{
-				_003C_003Ef__am_0024cacheC3 = _003CTryGunForCategoryWithMaxUnbought_003Em__4E0;
-			}
-			List<WeaponSounds> source5 = source4.Where(_003C_003Ef__am_0024cacheC3).Randomize().ToList();
-			if (source5.Count() != 0)
-			{
-				result = ItemDb.GetByPrefabName(source5.First().name).Tag;
-				break;
-			}
-		}
-		return result;
-	}
-
-	public static void ShowTempItemExpiredIfPossible(Transform point, string layer, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitoinsShopAdditional = null, Action<string> customEquipWearAction = null)
-	{
-		List<string> list = new List<string>();
-		foreach (string expiredItem in TempItemsController.sharedController.ExpiredItems)
-		{
-			if (TempItemsController.sharedController.CanShowExpiredBannerForTag(expiredItem))
-			{
-				ShowRentScreen(expiredItem, point, layer, LocalizationStore.Get("Key_1156"), LocalizationStore.Get("Key_1157"), onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction);
-				list.Add(expiredItem);
-				break;
-			}
-		}
-		foreach (string item in list)
-		{
-			TempItemsController.sharedController.ExpiredItems.Remove(item);
-		}
-	}
-
-	public static bool ShowPremimAccountExpiredIfPossible(Transform point, string layer, string header = "", bool showOnlyIfExpired = true)
-	{
-		if (showOnlyIfExpired && (!PremiumAccountController.AccountHasExpired || !Defs2.CanShowPremiumAccountExpiredWindow))
-		{
-			return false;
-		}
-		if (point != null)
-		{
-			GameObject gameObject = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("PremiumAccount"));
-			gameObject.transform.parent = point;
-			Player_move_c.SetLayerRecursively(gameObject, LayerMask.NameToLayer(layer ?? "Default"));
-			gameObject.transform.localPosition = new Vector3(0f, 0f, -130f);
-			gameObject.transform.localRotation = Quaternion.identity;
-			gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-			PremiumAccountScreenController component = gameObject.GetComponent<PremiumAccountScreenController>();
-			component.Header = header;
-			PremiumAccountController.AccountHasExpired = false;
-			return true;
-		}
-		return false;
-	}
-
 	public static void GiveArmorArmy1OrNoviceArmor()
 	{
-		ProvideShopItemOnStarterPackBoguht(CategoryNames.ArmorCategory, (Storager.getInt("Training.NoviceArmorUsedKey", false) != 1) ? "Armor_Army_1" : "Armor_Novice", 1, false, 0, null, null, true, Storager.getInt("Training.NoviceArmorUsedKey", false) == 1, false);
+		ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.ArmorCategory, (Storager.getInt("Training.NoviceArmorUsedKey", false) != 1 ? "Armor_Army_1" : "Armor_Novice"), 1, false, 0, null, null, true, Storager.getInt("Training.NoviceArmorUsedKey", false) == 1, false);
 	}
 
-	private void setInArmorCategoryNotOnArmorRemovedNoviceArmor()
+	public static void GoToShop(ShopNGUIController.CategoryNames cat, string id)
 	{
-		try
+		ShopNGUIController.sharedShop.SetOfferID(id);
+		ShopNGUIController.sharedShop.offerCategory = cat;
+		if (ShopNGUIController.GuiActive)
 		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = trainingStateRemoveNoviceArmor;
-			if (trainingState == TrainingState.OnArmor)
-			{
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-			}
-			trainingStateRemoveNoviceArmor = TrainingState.InArmorCategoryNotOnArmor;
+			ShopNGUIController.sharedShop.CategoryChosen(cat, id, false);
+			ShopNGUIController.SetIconChosen(cat);
 		}
-		catch (Exception ex)
+		else if (!SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene))
 		{
-			Debug.LogError("Exception in ShopNGUIController.setInArmorCategoryNotOnArmorRemovedNoviceArmor: " + ex);
+			ShopNGUIController.sharedShop.resumeAction = null;
+			ShopNGUIController.GuiActive = true;
 		}
-	}
-
-	private void setNotInArmorCategoryRemovedNoviceArmor()
-	{
-		try
+		else if (MainMenuController.sharedController != null)
 		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = trainingStateRemoveNoviceArmor;
-			if (trainingState == TrainingState.OnArmor)
-			{
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-			}
-			trainingStateRemoveNoviceArmor = TrainingState.NotInArmorCategory;
-			toBlink = category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "green_btn", "trans_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setNotInArmorCategoryRemovedNoviceArmor: " + ex);
+			MainMenuController.sharedController.HandleShopClicked(null, EventArgs.Empty);
 		}
 	}
 
-	private void setOnArmorRemovedNoviceArmor()
+	public void goToSM()
 	{
-		try
+		string str;
+		if (UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("SkinEditorController")).GetComponent<SkinEditorController>() != null)
 		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = trainingStateRemoveNoviceArmor;
-			if (trainingState == TrainingState.NotInArmorCategory)
-			{
-				category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-				category.buttons[7].offButton.normalSprite = "trans_btn";
-			}
-			trainingStateRemoveNoviceArmor = TrainingState.OnArmor;
-			toBlink = equips[1].tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "or_btn", "green_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setOnArmorRemovedNoviceArmor: " + ex);
-		}
-	}
-
-	private void setNotInSniperCategory()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = this.trainingState;
-			if (trainingState == TrainingState.OnSniperRifle)
-			{
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-			}
-			this.trainingState = TrainingState.NotInSniperCategory;
-			toBlink = category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "green_btn", "trans_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setNotInSniperCategory: " + ex);
-		}
-	}
-
-	private void setOnSniperRifle()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			if (trainingState == TrainingState.NotInSniperCategory)
-			{
-				category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-				category.buttons[4].offButton.normalSprite = "trans_btn";
-			}
-			trainingState = TrainingState.OnSniperRifle;
-			toBlink = equips[1].tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "or_btn", "green_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setOnSniperRifle: " + ex);
-		}
-	}
-
-	private void setInSniperCategoryNotOnSniperRifle()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = this.trainingState;
-			if (trainingState == TrainingState.OnSniperRifle)
-			{
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-			}
-			this.trainingState = TrainingState.InSniperCategoryNotOnSniperRifle;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setInSniperCategoryNotOnSniperRifle: " + ex);
-		}
-	}
-
-	private void setNotInArmorCategory()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			switch (trainingState)
-			{
-			case TrainingState.OnSniperRifle:
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-				break;
-			case TrainingState.OnArmor:
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-				break;
-			}
-			trainingState = TrainingState.NotInArmorCategory;
-			toBlink = category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "green_btn", "trans_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setNotInArmorCategory: " + ex);
-		}
-	}
-
-	private void setOnArmor()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = this.trainingState;
-			if (trainingState == TrainingState.NotInArmorCategory)
-			{
-				category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-				category.buttons[7].offButton.normalSprite = "trans_btn";
-			}
-			this.trainingState = TrainingState.OnArmor;
-			toBlink = equips[1].tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "or_btn", "green_btn" });
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setOnArmor: " + ex);
-		}
-	}
-
-	private void setInArmorCategoryNotOnArmor()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			TrainingState trainingState = this.trainingState;
-			if (trainingState == TrainingState.OnArmor)
-			{
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-			}
-			this.trainingState = TrainingState.InArmorCategoryNotOnArmor;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setInArmorCategoryNotOnArmor: " + ex);
-		}
-	}
-
-	private void setBackBlinking()
-	{
-		try
-		{
-			StopCoroutine("Blink");
-			switch (trainingState)
-			{
-			case TrainingState.OnArmor:
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-				break;
-			case TrainingState.OnSniperRifle:
-				equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-				equips[1].normalSprite = "or_btn";
-				break;
-			}
-			trainingState = TrainingState.BackBlinking;
-			toBlink = backButton.tweenTarget.GetComponent<UISprite>();
-			StartCoroutine("Blink", new string[2] { "yell_btn", "green_btn" });
-			trainingColliders.SetActive(false);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShopNGUIController.setBackBlinking: " + ex);
-		}
-	}
-
-	private void ForceResetTrainingState()
-	{
-		try
-		{
-			if (_setTrainingStateMethods == null)
-			{
-				_setTrainingStateMethods = new Dictionary<TrainingState, Action>
+			Action<string> action = null;
+			action = (string n) => {
+				SkinEditorController.ExitFromSkinEditor -= this.backHandler;
+				MenuBackgroundMusic.sharedMusic.StopCustomMusicFrom(SkinEditorController.sharedController.gameObject);
+				this.u003cu003ef__this.mainPanel.SetActive(true);
+				if (this.u003cu003ef__this.currentCategory == ShopNGUIController.CategoryNames.CapesCategory || n != null)
 				{
+					if (this.u003cu003ef__this.viewedId != null && this.u003cu003ef__this.viewedId.Equals("CustomSkinID"))
 					{
-						TrainingState.NotInSniperCategory,
-						setNotInSniperCategory
-					},
-					{
-						TrainingState.OnSniperRifle,
-						setOnSniperRifle
-					},
-					{
-						TrainingState.InSniperCategoryNotOnSniperRifle,
-						setInSniperCategoryNotOnSniperRifle
-					},
-					{
-						TrainingState.NotInArmorCategory,
-						setNotInArmorCategory
-					},
-					{
-						TrainingState.OnArmor,
-						setOnArmor
-					},
-					{
-						TrainingState.InArmorCategoryNotOnArmor,
-						setInArmorCategoryNotOnArmor
-					},
-					{
-						TrainingState.BackBlinking,
-						setBackBlinking
+						this.u003cu003ef__this.SetSkinAsCurrent(n);
 					}
-				};
+					if (this.u003cu003ef__this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory && this.u003cu003ef__this.viewedId != null && this.u003cu003ef__this.viewedId.Equals(SkinsController.currentSkinNameForPers))
+					{
+						this.u003cu003ef__this.FireOnEquipSkin(n);
+					}
+					if (this.u003cu003ef__this.viewedId != null && this.u003cu003ef__this.viewedId.Equals("cape_Custom"))
+					{
+						this.u003cu003ef__this.EquipWear("cape_Custom");
+					}
+					this.u003cu003ef__this.StartCoroutine(this.u003cu003ef__this.ReloadAfterEditing(n, true));
+				}
+				else
+				{
+					this.u003cu003ef__this.StartCoroutine(this.u003cu003ef__this.ReloadAfterEditing(n, n == null));
+				}
+				if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC == null)
+				{
+					if (this.u003cu003ef__this.currentCategory != ShopNGUIController.CategoryNames.CapesCategory && PlayerPrefs.GetInt(Defs.ShownRewardWindowForSkin, 0) == 0)
+					{
+						this.u003cu003ef__this._shouldShowRewardWindowSkin = true;
+					}
+					if (this.u003cu003ef__this.currentCategory == ShopNGUIController.CategoryNames.CapesCategory && PlayerPrefs.GetInt(Defs.ShownRewardWindowForCape, 0) == 0)
+					{
+						this.u003cu003ef__this._shouldShowRewardWindowCape = true;
+					}
+				}
+			};
+			SkinEditorController.ExitFromSkinEditor += action;
+			if (!this.viewedId.Equals("CustomSkinID"))
+			{
+				str = this.viewedId;
 			}
-			_setTrainingStateMethods[trainingState]();
+			else
+			{
+				str = null;
+			}
+			SkinEditorController.currentSkinName = str;
+			SkinEditorController.modeEditor = (this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory ? SkinEditorController.ModeEditor.Cape : SkinEditorController.ModeEditor.SkinPers);
+			this.mainPanel.SetActive(false);
 		}
-		catch (Exception ex)
+	}
+
+	private void HandleActionsUUpdated()
+	{
+		this.UpdateButtons();
+		this.UpdateItemParameters();
+	}
+
+	private void HandleCarouselCentering()
+	{
+		this.HandleCarouselCentering(this.carouselCenter.centeredObject);
+	}
+
+	private void HandleCarouselCentering(GameObject centeredObj)
+	{
+		if (centeredObj != null && centeredObj != this._lastSelectedItem)
 		{
-			Debug.LogError("Exception in ForceResetTrainingState: " + ex);
+			this._lastSelectedItem = centeredObj;
+			!(this.highlightedCarouselObject != null);
+			this.highlightedCarouselObject = centeredObj.transform;
+			!(this.highlightedCarouselObject != null);
+			this.ChooseCarouselItem(centeredObj.GetComponent<ShopCarouselElement>().itemID, false, false);
 		}
+		if (this.EnableConfigurePos && centeredObj != null)
+		{
+			centeredObj.GetComponent<ShopCarouselElement>().SetPos(1f, 0f);
+		}
+	}
+
+	private void HandleEscape()
+	{
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (ProfileController.Instance != null && ProfileController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted)
+		{
+			if (Application.isEditor)
+			{
+				UnityEngine.Debug.Log("Ignoring [Escape] since Tutorial is not completed.");
+			}
+			return;
+		}
+		if (this.InTrainingAfterNoviceArmorRemoved)
+		{
+			if (Application.isEditor)
+			{
+				UnityEngine.Debug.Log("Ignoring [Escape] since Tutorial after removing Novice Armor is not completed.");
+			}
+			return;
+		}
+		if (ShopNGUIController.GuiActive)
+		{
+			this._escapeRequested = true;
+			return;
+		}
+		if (Application.isEditor)
+		{
+			UnityEngine.Debug.Log(string.Concat(base.GetType().Name, ".LateUpdate():    Ignoring Escape because Shop GUI is not active."));
+		}
+	}
+
+	public void HandleFacebookButton()
+	{
+		this._isFromPromoActions = false;
+		MainMenuController.DoMemoryConsumingTaskInEmptyScene(() => FacebookController.Login(() => {
+			if (ShopNGUIController.GuiActive)
+			{
+				ShopNGUIController.sharedShop.UpdateButtons();
+			}
+		}, null, "Shop", null), () => FacebookController.Login(null, null, "Shop", null));
+	}
+
+	public void HandleProfileButton()
+	{
+		GameObject gameObject = GameObject.Find("MainMenuNGUI");
+		if (gameObject)
+		{
+			gameObject.SetActive(false);
+		}
+		GameObject gameObject1 = GameObject.FindWithTag("InGameGUI");
+		if (gameObject1)
+		{
+			gameObject1.SetActive(false);
+		}
+		GameObject gameObject2 = GameObject.FindWithTag("NetworkStartTableNGUI");
+		if (gameObject2)
+		{
+			gameObject2.SetActive(false);
+		}
+		ShopNGUIController.GuiActive = false;
+		Action action = () => {
+		};
+		ProfileController.Instance.DesiredWeaponTag = this._assignedWeaponTag;
+		ProfileController.Instance.ShowInterface(new Action[] { action, new Action(() => {
+			ShopNGUIController.GuiActive = true;
+			if (gameObject)
+			{
+				gameObject.SetActive(true);
+			}
+			if (gameObject1)
+			{
+				gameObject1.SetActive(true);
+			}
+			if (gameObject2)
+			{
+				gameObject2.SetActive(true);
+			}
+		}) });
+	}
+
+	public void HandlePropertiesInfoButton()
+	{
+		if (!this.WeaponCategory)
+		{
+			return;
+		}
+		if (Defs.isSoundFX)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		this.infoScreen.Show(this.currentCategory == ShopNGUIController.CategoryNames.MeleeCategory);
+	}
+
+	public void HandleRentButton()
+	{
+	}
+
+	private static bool HasBoughtGood(string defName, bool tempGun = false)
+	{
+		return (!tempGun ? Storager.getInt(defName, true) != 0 : TempItemsController.sharedController.ContainsItem(defName));
 	}
 
 	private void HideAllTrainingInterface()
 	{
 		try
 		{
-			foreach (GameObject trainingTip in trainingTips)
+			foreach (GameObject trainingTip in this.trainingTips)
 			{
 				trainingTip.SetActive(false);
 			}
-			trainingColliders.SetActive(false);
-			StopCoroutine("Blink");
-			equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-			equips[1].normalSprite = "or_btn";
-			category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-			category.buttons[4].offButton.normalSprite = "trans_btn";
-			category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-			category.buttons[7].offButton.normalSprite = "trans_btn";
-			backButton.tweenTarget.GetComponent<UISprite>().spriteName = "yell_btn";
-			backButton.normalSprite = "yell_btn";
+			this.trainingColliders.SetActive(false);
+			base.StopCoroutine("Blink");
+			this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+			this.equips[1].normalSprite = "or_btn";
+			this.category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+			this.category.buttons[4].offButton.normalSprite = "trans_btn";
+			this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+			this.category.buttons[7].offButton.normalSprite = "trans_btn";
+			this.backButton.tweenTarget.GetComponent<UISprite>().spriteName = "yell_btn";
+			this.backButton.normalSprite = "yell_btn";
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in HideAllTrainingInterface: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in HideAllTrainingInterface: ", exception));
 		}
 	}
 
@@ -3337,143 +2785,1739 @@ public class ShopNGUIController : MonoBehaviour
 	{
 		try
 		{
-			foreach (GameObject item in trainingTipsRemovedNoviceArmor)
+			foreach (GameObject gameObject in this.trainingTipsRemovedNoviceArmor)
 			{
-				item.SetActive(false);
+				gameObject.SetActive(false);
 			}
-			trainingColliders.SetActive(false);
-			trainingRemoveNoviceArmorCollider.SetActive(false);
-			StopCoroutine("Blink");
-			equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
-			equips[1].normalSprite = "or_btn";
-			category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
-			category.buttons[7].offButton.normalSprite = "trans_btn";
-			backButton.tweenTarget.GetComponent<UISprite>().spriteName = "yell_btn";
-			backButton.normalSprite = "yell_btn";
+			this.trainingColliders.SetActive(false);
+			this.trainingRemoveNoviceArmorCollider.SetActive(false);
+			base.StopCoroutine("Blink");
+			this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+			this.equips[1].normalSprite = "or_btn";
+			this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+			this.category.buttons[7].offButton.normalSprite = "trans_btn";
+			this.backButton.tweenTarget.GetComponent<UISprite>().spriteName = "yell_btn";
+			this.backButton.normalSprite = "yell_btn";
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in HideAllTrainingInterfaceRemovedNoviceArmor: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in HideAllTrainingInterfaceRemovedNoviceArmor: ", exception));
 		}
 	}
 
-	private IEnumerator Blink(string[] images)
+	public void IsInShopFromPromoPanel(bool isFromPromoACtions, string tg)
 	{
-		while (true)
+		this._isFromPromoActions = isFromPromoACtions;
+		this._promoActionsIdClicked = tg;
+	}
+
+	public static bool IsWeaponCategory(ShopNGUIController.CategoryNames c)
+	{
+		return c < ShopNGUIController.CategoryNames.HatsCategory;
+	}
+
+	public static bool IsWearCategory(ShopNGUIController.CategoryNames c)
+	{
+		return Wear.wear.Keys.Contains<ShopNGUIController.CategoryNames>(c);
+	}
+
+	private static string ItemIDForPrefab(string name, ShopNGUIController.CategoryNames c)
+	{
+		if (c == ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			string str = Storager.getString(Defs.VisualArmor, false);
+			if (!string.IsNullOrEmpty(str) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(name) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(name) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str))
+			{
+				return str;
+			}
+		}
+		else if (c == ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			string str1 = Storager.getString(Defs.VisualHatArmor, false);
+			if (!string.IsNullOrEmpty(str1) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(name) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(name) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str1))
+			{
+				return str1;
+			}
+		}
+		return name;
+	}
+
+	private static string ItemIDForPrefabReverse(string name, ShopNGUIController.CategoryNames c)
+	{
+		if (c == ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			string str = Storager.getString(Defs.VisualArmor, false);
+			if (!string.IsNullOrEmpty(str) && str.Equals(name) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(name) >= 0)
+			{
+				for (int i = 1; i < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].Count; i++)
+				{
+					if (Storager.getInt(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0][i], true) == 0)
+					{
+						return Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0][i];
+					}
+				}
+			}
+		}
+		else if (c == ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			string str1 = Storager.getString(Defs.VisualHatArmor, false);
+			if (!string.IsNullOrEmpty(str1) && str1.Equals(name) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(name) >= 0)
+			{
+				for (int j = 1; j < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Count; j++)
+				{
+					if (Storager.getInt(Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0][j], true) == 0)
+					{
+						return Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0][j];
+					}
+				}
+			}
+		}
+		return name;
+	}
+
+	private void LateUpdate()
+	{
+		float viewSize = this.scrollViewPanel.GetViewSize().x / 2f;
+		ShopCarouselElement[] componentsInChildren = this.wrapContent.GetComponentsInChildren<ShopCarouselElement>(false);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			ShopCarouselElement shopCarouselElement = componentsInChildren[i];
+			Transform transforms = shopCarouselElement.transform;
+			float single = this.scrollViewPanel.clipOffset.x;
+			Vector3 vector3 = transforms.localPosition;
+			float single1 = Mathf.Abs(vector3.x - single);
+			float single2 = this.scaleCoef + (1f - this.scaleCoef) * (1f - single1 / viewSize);
+			float single3 = 0.65f;
+			single2 = (single1 > viewSize / 3f ? this.scaleCoef + (single3 - this.scaleCoef) * (1f - (single1 - viewSize / 3f) / (viewSize * 2f / 3f)) : single3 + (1f - single3) * (1f - single1 / (viewSize / 3f)));
+			if (single1 >= viewSize * 0.9f)
+			{
+				single2 = 0f;
+			}
+			float single4 = transforms.localPosition.x - single;
+			float single5 = 0f;
+			float single6 = (float)((single4 > 0f ? -1 : 1));
+			if (single4 != 0f)
+			{
+				if (Mathf.Abs(single4) > this.wrapContent.cellWidth)
+				{
+					single5 = (Mathf.Abs(single4) > 2f * this.wrapContent.cellWidth ? this.secondOffset * (1f - (Mathf.Abs(single4) - 2f * (float)this.wrapContent.cellWidth) / (float)this.wrapContent.cellWidth) : this.firstOFfset + (this.secondOffset - this.firstOFfset) * ((Mathf.Abs(single4) - (float)this.wrapContent.cellWidth) / (float)this.wrapContent.cellWidth));
+				}
+				else
+				{
+					single5 = this.firstOFfset * (Mathf.Abs(single4) / (float)this.wrapContent.cellWidth);
+				}
+			}
+			single5 *= single6;
+			if (!this.EnableConfigurePos || this.scrollViewPanel.GetComponent<UIScrollView>().isDragging || this.scrollViewPanel.GetComponent<UIScrollView>().currentMomentum.x > 0f)
+			{
+				shopCarouselElement.SetPos(single2, single5);
+			}
+			shopCarouselElement.topSeller.gameObject.SetActive((!shopCarouselElement.showTS ? false : Mathf.Abs(single1) <= this.wrapContent.cellWidth / 10f));
+			shopCarouselElement.newnew.gameObject.SetActive((!shopCarouselElement.showNew ? false : Mathf.Abs(single1) <= this.wrapContent.cellWidth / 10f));
+			shopCarouselElement.quantity.gameObject.SetActive((!shopCarouselElement.showQuantity ? false : Mathf.Abs(single1) <= this.wrapContent.cellWidth / 10f));
+		}
+		if (this._escapeRequested)
+		{
+			base.StartCoroutine(this.BackAfterDelay());
+			this._escapeRequested = false;
+		}
+	}
+
+	public void LoadCurrentWearToVars()
+	{
+		this._currentCape = Storager.getString(Defs.CapeEquppedSN, false);
+		this._currentHat = Storager.getString(Defs.HatEquppedSN, false);
+		this._currentBoots = Storager.getString(Defs.BootsEquppedSN, false);
+		this._currentArmor = Storager.getString(Defs.ArmorNewEquppedSN, false);
+		this._currentMask = Storager.getString("MaskEquippedSN", false);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator LoadModelAsync(Action<GameObject, ShopNGUIController.CategoryNames> onLoad, GameObject prototype, ShopNGUIController.CategoryNames category)
+	{
+		ShopNGUIController.u003cLoadModelAsyncu003ec__Iterator1A8 variable = null;
+		return variable;
+	}
+
+	private void LogPurchaseAfterPaymentAnalyticsEvent(string itemName)
+	{
+		Dictionary<string, string> strs;
+		float? nullable;
+		float? nullable1;
+		float? nullable2;
+		float? nullable3;
+		float? nullable4;
+		float? nullable5;
+		if (!FlurryEvents.PaymentTime.HasValue)
+		{
+			return;
+		}
+		float? paymentTime = FlurryEvents.PaymentTime;
+		if (!paymentTime.HasValue)
+		{
+			nullable = null;
+		}
+		else
+		{
+			nullable = new float?(Time.realtimeSinceStartup - paymentTime.Value);
+		}
+		float? nullable6 = nullable;
+		if ((!nullable6.HasValue ? true : nullable6.Value >= 30f))
+		{
+			float? paymentTime1 = FlurryEvents.PaymentTime;
+			if (!paymentTime1.HasValue)
+			{
+				nullable1 = null;
+			}
+			else
+			{
+				nullable1 = new float?(Time.realtimeSinceStartup - paymentTime1.Value);
+			}
+			float? nullable7 = nullable1;
+			if ((!nullable7.HasValue ? true : nullable7.Value >= 60f))
+			{
+				float? paymentTime2 = FlurryEvents.PaymentTime;
+				if (!paymentTime2.HasValue)
+				{
+					nullable2 = null;
+				}
+				else
+				{
+					nullable2 = new float?(Time.realtimeSinceStartup - paymentTime2.Value);
+				}
+				float? nullable8 = nullable2;
+				if ((!nullable8.HasValue ? true : nullable8.Value >= 90f))
+				{
+					strs = new Dictionary<string, string>()
+					{
+						{ "90+", itemName }
+					};
+					FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", strs, true);
+				}
+				else
+				{
+					strs = new Dictionary<string, string>()
+					{
+						{ "60-90", itemName }
+					};
+					FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", strs, true);
+				}
+			}
+			else
+			{
+				strs = new Dictionary<string, string>()
+				{
+					{ "30-60", itemName }
+				};
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", strs, true);
+			}
+		}
+		else
+		{
+			strs = new Dictionary<string, string>()
+			{
+				{ "0-30", itemName }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment", strs, true);
+		}
+		float? paymentTime3 = FlurryEvents.PaymentTime;
+		if (!paymentTime3.HasValue)
+		{
+			nullable3 = null;
+		}
+		else
+		{
+			nullable3 = new float?(Time.realtimeSinceStartup - paymentTime3.Value);
+		}
+		float? nullable9 = nullable3;
+		if ((!nullable9.HasValue ? false : nullable9.Value < 30f))
+		{
+			strs = new Dictionary<string, string>()
+			{
+				{ "0-30", itemName }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", strs, true);
+		}
+		float? paymentTime4 = FlurryEvents.PaymentTime;
+		if (!paymentTime4.HasValue)
+		{
+			nullable4 = null;
+		}
+		else
+		{
+			nullable4 = new float?(Time.realtimeSinceStartup - paymentTime4.Value);
+		}
+		float? nullable10 = nullable4;
+		if ((!nullable10.HasValue ? false : nullable10.Value < 60f))
+		{
+			strs = new Dictionary<string, string>()
+			{
+				{ "0-60", itemName }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", strs, true);
+		}
+		float? paymentTime5 = FlurryEvents.PaymentTime;
+		if (!paymentTime5.HasValue)
+		{
+			nullable5 = null;
+		}
+		else
+		{
+			nullable5 = new float?(Time.realtimeSinceStartup - paymentTime5.Value);
+		}
+		float? nullable11 = nullable5;
+		if ((!nullable11.HasValue ? false : nullable11.Value < 90f))
+		{
+			strs = new Dictionary<string, string>()
+			{
+				{ "0-90", itemName }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", strs, true);
+		}
+		strs = new Dictionary<string, string>()
+		{
+			{ "All", itemName }
+		};
+		FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchase After Payment Cumulative", strs, true);
+	}
+
+	private void LogShopPurchasesTotalAndPayingNonPaying(string itemName)
+	{
+		try
+		{
+			string str = this.currentCategory.ToString();
+			string str1 = string.Format("Shop Purchases {0}", "Total");
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "All Categories", str },
+				{ str, itemName },
+				{ "Item", itemName }
+			};
+			Dictionary<string, string> strs1 = strs;
+			if (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory)
+			{
+				strs1.Add("Without Quick Shop", itemName);
+			}
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs1, true);
+			string payingSuffix = FlurryPluginWrapper.GetPayingSuffix();
+			string str2 = string.Format("Shop Purchases {0}", string.Concat("Total", payingSuffix));
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str2, strs1, true);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("LogShopPurchasesTotalAndPayingNonPaying exception: ", exception));
+		}
+	}
+
+	public void MakeACtiveAfterDelay(string idToSet, ShopNGUIController.CategoryNames cn)
+	{
+		Light[] lightArray = UnityEngine.Object.FindObjectsOfType<Light>() ?? new Light[0];
+		for (int i = 0; i < (int)lightArray.Length; i++)
+		{
+			Light light = lightArray[i];
+			if (!this.mylights.Contains(light))
+			{
+				Light layer = light;
+				layer.cullingMask = layer.cullingMask & ~(1 << (LayerMask.NameToLayer("NGUIShop") & 31 & 31));
+			}
+		}
+		ShopNGUIController.sharedShop.ActiveObject.SetActive(true);
+		this.wrapContent.Reposition();
+		if (ExperienceController.sharedController != null && ExpController.Instance != null)
+		{
+			ExperienceController.sharedController.isShowRanks = true;
+			ExpController.Instance.InterfaceEnabled = true;
+		}
+		this.UpdatePersHat(this._currentHat);
+		this.UpdatePersCape(this._currentCape);
+		this.UpdatePersArmor(this._currentArmor);
+		this.UpdatePersBoots(this._currentBoots);
+		this.UpdatePersMask(this._currentMask);
+		this.UpdatePersSkin(SkinsController.currentSkinNameForPers);
+		this.carouselCenter.onFinished += new SpringPanel.OnFinished(this.HandleCarouselCentering);
+		PromoActionsManager.ActionsUUpdated += new Action(this.HandleActionsUUpdated);
+		this.PlayWeaponAnimation();
+		this.idleTimerLastTime = Time.realtimeSinceStartup;
+		if (idToSet != null)
+		{
+			ShopNGUIController.sharedShop.ChooseCarouselItem(idToSet, false, true);
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
+		{
+			this.ForceResetTrainingState();
+		}
+		ShopNGUIController.sharedShop.carouselCenter.enabled = true;
+		this.AdjustCategoryButtonsForFilterMap();
+	}
+
+	[DebuggerHidden]
+	public IEnumerator MyWaitForSeconds(float tm)
+	{
+		ShopNGUIController.u003cMyWaitForSecondsu003ec__Iterator1AD variable = null;
+		return variable;
+	}
+
+	public static string NoneEquippedForWearCategory(ShopNGUIController.CategoryNames c)
+	{
+		string capeNoneEqupped;
+		if (c == ShopNGUIController.CategoryNames.CapesCategory)
+		{
+			capeNoneEqupped = Defs.CapeNoneEqupped;
+		}
+		else if (c == ShopNGUIController.CategoryNames.BootsCategory)
+		{
+			capeNoneEqupped = Defs.BootsNoneEqupped;
+		}
+		else if (c != ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			capeNoneEqupped = (c != ShopNGUIController.CategoryNames.MaskCategory ? Defs.HatNoneEqupped : "MaskNoneEquipped");
+		}
+		else
+		{
+			capeNoneEqupped = Defs.ArmorNewNoneEqupped;
+		}
+		return capeNoneEqupped;
+	}
+
+	private void OnDestroy()
+	{
+		if (this.profile != null)
+		{
+			Resources.UnloadAsset(this.profile);
+			this.profile = null;
+		}
+	}
+
+	private void OnLevelWasLoaded(int level)
+	{
+		if (ShopNGUIController.GuiActive)
+		{
+			this._storedAmbientLight = new Color?(RenderSettings.ambientLight);
+			this._storedFogEnabled = new bool?(RenderSettings.fog);
+			RenderSettings.ambientLight = Defs.AmbientLightColorForShop();
+			RenderSettings.fog = false;
+		}
+	}
+
+	public void PlayWeaponAnimation()
+	{
+		if (this.profile != null && this.weapon != null)
+		{
+			Animation component = this.weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>();
+			if (Time.timeScale == 0f)
+			{
+				this.animationCoroutineRunner.StopAllCoroutines();
+				if (component.GetClip("Profile") == null)
+				{
+					component.AddClip(this.profile, "Profile");
+				}
+				if (!this.animationCoroutineRunner.gameObject.activeInHierarchy)
+				{
+					UnityEngine.Debug.LogWarning("Coroutine couldn't be started because the the game object 'AnimationCoroutineRunner' is inactive!");
+				}
+				else
+				{
+					this.animationCoroutineRunner.StartPlay(component, "Profile", false, null);
+				}
+			}
+			else
+			{
+				if (component.GetClip("Profile") == null)
+				{
+					component.AddClip(this.profile, "Profile");
+				}
+				component.Play("Profile");
+			}
+		}
+		this.MainMenu_Pers.GetComponent<Animation>().Stop();
+		this.MainMenu_Pers.GetComponent<Animation>().Play("Idle");
+	}
+
+	public static int PriceIfGunWillBeTryGun(string tg)
+	{
+		return Mathf.RoundToInt((float)ShopNGUIController.currentPrice(tg, (ShopNGUIController.CategoryNames)ItemDb.GetItemCategory(tg), false, false).Price * ((float)WeaponManager.BaseTryGunDiscount() / 100f));
+	}
+
+	private static void ProvdeShopItemWithRightId(ShopNGUIController.CategoryNames c, string id, string tg, Action UNUSED_DO_NOT_SET_onTrainingAction, Action<string> onEquipWearAction, Action<string> contextSpecificAction, Action<string> onSkinBoughtAction, bool giveOneItemOfGear = false, int gearCount = 1, bool buyArmorAndHatsUpToTg = false, int timeForRentIndex = 0, bool doAndroidCloudSync = true)
+	{
+		if (ShopNGUIController.GunBought != null)
+		{
+			ShopNGUIController.GunBought();
+		}
+		if (ShopNGUIController.IsWearCategory(c))
+		{
+			if (buyArmorAndHatsUpToTg && Wear.wear.ContainsKey(c))
+			{
+				List<List<string>> item = Wear.wear[c];
+				List<string> strs = null;
+				foreach (List<string> strs1 in item)
+				{
+					if (!strs1.Contains(tg))
+					{
+						continue;
+					}
+					strs = strs1;
+					break;
+				}
+				if (strs != null)
+				{
+					int num = 0;
+					while (num < strs.Count)
+					{
+						Storager.setInt(strs[num], 1, true);
+						if (!strs[num].Equals(tg))
+						{
+							num++;
+						}
+						else
+						{
+							break;
+						}
+					}
+				}
+			}
+			else if (!TempItemsController.PriceCoefs.ContainsKey(tg))
+			{
+				Storager.setInt(tg, 1, true);
+			}
+			else
+			{
+				int num1 = TempItemsController.RentTimeForIndex(timeForRentIndex);
+				TempItemsController.sharedController.AddTemporaryItem(tg, num1);
+			}
+			if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && doAndroidCloudSync)
+			{
+				ShopNGUIController.SynchronizeAndroidPurchases(string.Concat("Wear: ", tg));
+			}
+			if (onEquipWearAction != null)
+			{
+				onEquipWearAction(tg);
+			}
+		}
+		if (ShopNGUIController.IsWeaponCategory(c) && !WeaponManager.FirstUnboughtTag(tg).Equals(tg))
+		{
+			List<string> strs2 = WeaponUpgrades.ChainForTag(tg);
+			if (strs2 != null)
+			{
+				int num2 = strs2.IndexOf(tg) - 1;
+				if (num2 >= 0)
+				{
+					for (int i = 0; i <= num2; i++)
+					{
+						try
+						{
+							Storager.setInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[strs2[i]]], 1, true);
+						}
+						catch
+						{
+							UnityEngine.Debug.LogError("Error filling chain in indexOfWeaponBeforeCurrentTg");
+						}
+					}
+				}
+			}
+		}
+		WeaponManager.sharedManager.AddMinerWeapon(id, timeForRentIndex);
+		if (WeaponManager.sharedManager != null)
 		{
 			try
 			{
-				toBlink.spriteName = ((!toBlink.spriteName.Equals(images[0])) ? images[0] : images[1]);
+				bool flag = WeaponManager.sharedManager.IsAvailableTryGun(WeaponManager.LastBoughtTag(tg));
+				bool flag1 = WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(WeaponManager.LastBoughtTag(tg));
+				WeaponManager.RemoveGunFromAllTryGunRelated(tg);
+				if (flag1)
+				{
+					string empty = string.Empty;
+					string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(tg), empty, c, null);
+					AnalyticsStuff.LogWEaponsSpecialOffers_Conversion(false, itemNameNonLocalized);
+				}
+				if (flag1 || flag)
+				{
+					Action<string> action = ShopNGUIController.TryGunBought;
+					if (action != null)
+					{
+						action(WeaponManager.LastBoughtTag(tg));
+					}
+					if (!FriendsController.useBuffSystem)
+					{
+						KillRateCheck.OnTryGunBuyed();
+					}
+					else
+					{
+						BuffSystem.instance.OnTryGunBuyed(ItemDb.GetByTag(tg).PrefabName);
+					}
+				}
 			}
-			catch (Exception ex)
+			catch (Exception exception)
 			{
-				Exception e = ex;
-				Debug.LogError("Exception in ShopNGUIController.Blink: " + e);
+				UnityEngine.Debug.LogError(string.Concat("Exception in removeing TryGun structures: ", exception));
 			}
-			yield return StartCoroutine(MyWaitForSeconds(0.5f));
+		}
+		if (c == ShopNGUIController.CategoryNames.GearCategory)
+		{
+			if (!id.Contains(GearManager.UpgradeSuffix))
+			{
+				int num3 = ShopNGUIController.AddedNumberOfGearWhenBuyingPack(id);
+				Storager.setInt(id, Storager.getInt(id, false) + (!giveOneItemOfGear ? num3 : gearCount), false);
+			}
+			else
+			{
+				string str = GearManager.NameForUpgrade(GearManager.HolderQuantityForID(id), GearManager.CurrentNumberOfUphradesForGear(GearManager.HolderQuantityForID(id)) + 1);
+				Storager.setInt(str, 1, false);
+			}
+		}
+		if (contextSpecificAction != null)
+		{
+			contextSpecificAction(id);
+		}
+		if (c == ShopNGUIController.CategoryNames.SkinsCategory)
+		{
+			if (id != null && SkinsController.shopKeyFromNameSkin.ContainsKey(id))
+			{
+				string item1 = SkinsController.shopKeyFromNameSkin[id];
+				if (Array.IndexOf<string>(StoreKitEventListener.skinIDs, item1) >= 0)
+				{
+					foreach (KeyValuePair<string, string> value in InAppData.inAppData.Values)
+					{
+						if (value.Key == null || !value.Key.Equals(item1))
+						{
+							continue;
+						}
+						Storager.setInt(value.Value, 1, true);
+						if (doAndroidCloudSync)
+						{
+							ShopNGUIController.SynchronizeAndroidPurchases(string.Concat("Skin: ", item1));
+						}
+						break;
+					}
+				}
+			}
+			if (onSkinBoughtAction != null)
+			{
+				onSkinBoughtAction(id);
+			}
 		}
 	}
 
-	public static void FireWeaponOrArmorBought()
+	public static void ProvideAllTypeShopItem(ShopNGUIController.CategoryNames category, string sourceTag, int gearCount, int timeForRent)
 	{
-		Action gunOrArmorBought = ShopNGUIController.GunOrArmorBought;
-		if (gunOrArmorBought != null)
+		int num2 = 0;
+		if (timeForRent != -1)
 		{
-			gunOrArmorBought();
+			num2 = TempItemsController.RentIndexFromDays(timeForRent / 24);
+		}
+		ShopNGUIController.ProvideShopItemOnStarterPackBoguht(category, sourceTag, gearCount, false, num2, null, (string tg) => {
+			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.weaponsInGame != null)
+			{
+				if (!ShopNGUIController.GuiActive || !(ShopNGUIController.sharedShop != null))
+				{
+					int num = PromoActionsGUIController.CatForTg(tg);
+					if (num != -1)
+					{
+						ShopNGUIController.SetAsEquippedAndSendToServer(tg, (ShopNGUIController.CategoryNames)num);
+					}
+				}
+				else
+				{
+					int num1 = PromoActionsGUIController.CatForTg(tg);
+					if (num1 != -1)
+					{
+						ShopNGUIController.EquipWearInCategoryIfNotEquiped(tg, (ShopNGUIController.CategoryNames)num1, (WeaponManager.sharedManager == null ? false : WeaponManager.sharedManager.myPlayerMoveC != null));
+					}
+				}
+			}
+		}, true, true, true);
+		TempItemsController.sharedController.ExpiredItems.Remove(sourceTag);
+	}
+
+	public static void ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames c, string sourceTg, int gearCount = 1, bool buyArmorUpToSourceTg = false, int timeForRentIndex = 0, Action<string> contextSpecificAction = null, Action<string> customEquipWearAction = null, bool equipSkin = true, bool equipWear = true, bool doAndroidCloudSync = true)
+	{
+		string str = (c != ShopNGUIController.CategoryNames.GearCategory ? sourceTg : GearManager.HolderQuantityForID(sourceTg));
+		string str1 = str;
+		if (WeaponManager.tagToStoreIDMapping.ContainsKey(str1))
+		{
+			str = WeaponManager.tagToStoreIDMapping[str1];
+		}
+		if (str == null)
+		{
+			return;
+		}
+		ShopNGUIController.ProvdeShopItemWithRightId(c, str, str1, null, (string item) => {
+			if (customEquipWearAction != null)
+			{
+				customEquipWearAction(item);
+			}
+			else if (equipWear)
+			{
+				ShopNGUIController.SetAsEquippedAndSendToServer(item, c);
+			}
+		}, contextSpecificAction, (string item) => {
+			if (equipSkin)
+			{
+				ShopNGUIController.SaveSkinAndSendToServer(item);
+			}
+		}, true, gearCount, buyArmorUpToSourceTg, timeForRentIndex, doAndroidCloudSync);
+	}
+
+	[DebuggerHidden]
+	public IEnumerator ReloadAfterEditing(string n, bool shouldReload = true)
+	{
+		ShopNGUIController.u003cReloadAfterEditingu003ec__Iterator1A9 variable = null;
+		return variable;
+	}
+
+	internal void ReloadCarousel(string idToChoose = null)
+	{
+		string tag;
+		GameObject gameObject;
+		string str2;
+		string str3 = idToChoose;
+		ShopCarouselElement[] componentsInChildren = this.wrapContent.GetComponentsInChildren<ShopCarouselElement>(true);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			ShopCarouselElement shopCarouselElement = componentsInChildren[i];
+			UnityEngine.Object.Destroy(shopCarouselElement.gameObject);
+			shopCarouselElement.transform.parent = null;
+		}
+		this.wrapContent.Reposition();
+		List<GameObject> gameObjects = this.FillModelsList(this.currentCategory);
+		string[] strArrays = null;
+		if (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory)
+		{
+			strArrays = new string[gameObjects.Count];
+			List<string> list = SkinsController.skinsForPers.Keys.ToList<string>();
+			if (!ShopNGUIController.ShowLockedFacebookSkin())
+			{
+				list.Remove("61");
+			}
+			list.Sort((string kvp1, string kvp2) => {
+				int num;
+				try
+				{
+					if (kvp1 == "61" || kvp2 == "61")
+					{
+						string str = 4.ToString();
+						string str1 = (kvp1 != "61" ? kvp1 : kvp2);
+						if (str1 == str)
+						{
+							str1 = 6.ToString();
+						}
+						num = (kvp1 != "61" ? long.Parse(str1).CompareTo(long.Parse(str)) : long.Parse(str).CompareTo(long.Parse(str1)));
+					}
+					else
+					{
+						num = long.Parse(kvp1).CompareTo(long.Parse(kvp2));
+					}
+				}
+				catch
+				{
+					num = 0;
+				}
+				return num;
+			});
+			int num1 = list.FindIndex((string kvp) => {
+				long num;
+				if (!long.TryParse(kvp, out num))
+				{
+					return false;
+				}
+				return num >= (long)1000000;
+			});
+			int count = 0;
+			if (num1 < 0 || num1 >= list.Count)
+			{
+				strArrays[0] = "CustomSkinID";
+				count++;
+				list.CopyTo(strArrays, 1);
+			}
+			else
+			{
+				List<string> strs = new List<string>();
+				strs.AddRange(list.GetRange(num1, list.Count - num1));
+				strs.Reverse();
+				strs.CopyTo(strArrays);
+				count = strs.Count;
+				strArrays[count] = "CustomSkinID";
+				count++;
+				list.CopyTo(0, strArrays, count, num1);
+			}
+		}
+		if (this.EnableConfigurePos)
+		{
+			List<string> strs1 = new List<string>();
+			List<GameObject> gameObjects1 = new List<GameObject>();
+			for (int j = 0; j < gameObjects.Count; j++)
+			{
+				List<string> strs2 = null;
+				foreach (List<string> upgrade in WeaponUpgrades.upgrades)
+				{
+					if (!upgrade.Contains((!this.WeaponCategory ? gameObjects[j].tag : ItemDb.GetByPrefabName(gameObjects[j].name.Replace("(Clone)", string.Empty)).Tag)))
+					{
+						continue;
+					}
+					strs2 = upgrade;
+					break;
+				}
+				if (strs2 != null)
+				{
+					for (int k = 0; k < strs2.Count; k++)
+					{
+						UnityEngine.Object[] objArray = WeaponManager.sharedManager.weaponsInGame;
+						int num2 = 0;
+						while (num2 < (int)objArray.Length)
+						{
+							GameObject gameObject1 = (GameObject)objArray[num2];
+							if (!ItemDb.GetByPrefabName(gameObject1.name).Tag.Equals(strs2[k]))
+							{
+								num2++;
+							}
+							else
+							{
+								gameObjects1.Add(gameObject1);
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					gameObjects1.Add(gameObjects[j]);
+				}
+			}
+			gameObjects = gameObjects1;
+		}
+		if (str3 == null)
+		{
+			str3 = this.viewedId;
+		}
+		int num3 = 10000;
+		if (str3 != null)
+		{
+			if (this.WeaponCategory)
+			{
+				ItemRecord byTag = ItemDb.GetByTag(str3);
+				num3 = (byTag == null ? -1 : gameObjects.FindIndex((GameObject go) => go.nameNoClone() == byTag.PrefabName));
+			}
+			else if (this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory)
+			{
+				num3 = gameObjects.FindIndex((GameObject go) => go.nameNoClone() == str3);
+			}
+		}
+		for (int l = 0; l < gameObjects.Count; l++)
+		{
+			GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("ShopCarouselElement"));
+			vector3.transform.parent = this.wrapContent.transform;
+			vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+			GameObject item = gameObjects[l];
+			vector3.name = l.ToString("D7");
+			if (this.WeaponCategory)
+			{
+				string str4 = vector3.name;
+				int num4 = int.Parse(item.name.Substring("Weapon".Length));
+				vector3.name = string.Concat(str4, "_", num4.ToString("D5"));
+			}
+			ShopCarouselElement component = vector3.GetComponent<ShopCarouselElement>();
+			if (!this.WeaponCategory)
+			{
+				tag = (this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory ? ShopNGUIController.ItemIDForPrefabReverse(item.name, this.currentCategory) : strArrays[l]);
+			}
+			else
+			{
+				tag = ItemDb.GetByPrefabName(item.name.Replace("(Clone)", string.Empty)).Tag;
+			}
+			string str5 = tag;
+			component.itemID = str5;
+			if (this.currentCategory == ShopNGUIController.CategoryNames.GearCategory)
+			{
+				component.showQuantity = true;
+				component.SetQuantity();
+			}
+			bool flag = false;
+			if (this.WeaponCategory && WeaponManager.tagToStoreIDMapping.ContainsKey(component.itemID) && WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[component.itemID]))
+			{
+				flag = Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[component.itemID]], true) > 0;
+			}
+			if (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory)
+			{
+				ShopCarouselElement shopCarouselElement1 = component;
+				if (!str5.Equals("CustomSkinID"))
+				{
+					str2 = (!SkinsController.skinsNamesForPers.ContainsKey(str5) ? string.Empty : SkinsController.skinsNamesForPers[str5]);
+				}
+				else
+				{
+					str2 = LocalizationStore.Get("Key_1090");
+				}
+				shopCarouselElement1.readableName = str2;
+			}
+			if (PromoActionsManager.sharedManager.topSellers.Contains(str5))
+			{
+				component.showTS = true;
+			}
+			if (PromoActionsManager.sharedManager.news.Contains(str5))
+			{
+				component.showNew = true;
+			}
+			Action<GameObject, ShopNGUIController.CategoryNames> action = (GameObject loadedOBject, ShopNGUIController.CategoryNames category) => ShopNGUIController.AddModel(loadedOBject, (GameObject manipulateObject, Vector3 positionShop, Vector3 rotationShop, string readableName, float scaleCoefShop, int tier, int league) => {
+				if (component == null)
+				{
+					UnityEngine.Object.Destroy(manipulateObject);
+					return;
+				}
+				if (category != ShopNGUIController.CategoryNames.SkinsCategory)
+				{
+					component.readableName = readableName ?? string.Empty;
+				}
+				manipulateObject.transform.parent = component.transform;
+				component.baseScale = new Vector3(scaleCoefShop, scaleCoefShop, scaleCoefShop);
+				component.model = manipulateObject.transform;
+				component.ourPosition = positionShop;
+				component.SetPos((!this.EnableConfigurePos ? 0f : 1f), 0f);
+				component.model.Rotate(rotationShop, Space.World);
+				if (category == ShopNGUIController.CategoryNames.SkinsCategory)
+				{
+					Player_move_c.SetTextureRecursivelyFrom(manipulateObject, (!str5.Equals("CustomSkinID") ? SkinsController.skinsForPers[str5] : Resources.Load("Skin_Start") as Texture), new GameObject[0]);
+				}
+				if (str5.Equals("cape_Custom") && SkinsController.capeUserTexture != null)
+				{
+					Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.capeUserTexture, new GameObject[0]);
+				}
+				if (ExpController.Instance != null && ExpController.Instance.OurTier < tier && tier < 100 && (ShopNGUIController.IsWeaponCategory(category) && component.itemID.Equals(WeaponManager.FirstUnboughtOrForOurTier(component.itemID)) && !flag || ShopNGUIController.IsWearCategory(category) && component.itemID.Equals(WeaponManager.FirstUnboughtTag(component.itemID)) && component.itemID != "cape_Custom" && component.itemID != "boots_tabi") && component.locked != null)
+				{
+					component.locked.SetActive(true);
+				}
+				if (ShopNGUIController.IsWeaponCategory(category) && !component.itemID.Equals(WeaponManager.FirstUnboughtOrForOurTier(component.itemID)) && tier < 100 || ShopNGUIController.IsWearCategory(category) && !component.itemID.Equals(WeaponManager.FirstUnboughtTag(component.itemID)))
+				{
+					if (component.arrow != null)
+					{
+						component.arrow.gameObject.SetActive(true);
+					}
+					if (category == ShopNGUIController.CategoryNames.HatsCategory)
+					{
+						component.arrnoInitialPos = new Vector3(85f, component.arrnoInitialPos.y, component.arrnoInitialPos.z);
+					}
+					if (category == ShopNGUIController.CategoryNames.ArmorCategory)
+					{
+						component.arrnoInitialPos = new Vector3(105f, component.arrnoInitialPos.y, component.arrnoInitialPos.z);
+					}
+					if (category == ShopNGUIController.CategoryNames.CapesCategory)
+					{
+						component.arrnoInitialPos = new Vector3(75f, component.arrnoInitialPos.y, component.arrnoInitialPos.z);
+					}
+					if (category == ShopNGUIController.CategoryNames.BootsCategory)
+					{
+						component.arrnoInitialPos = new Vector3(81f, component.arrnoInitialPos.y, component.arrnoInitialPos.z);
+					}
+					if (category == ShopNGUIController.CategoryNames.MaskCategory)
+					{
+						component.arrnoInitialPos = new Vector3(75f, component.arrnoInitialPos.y, component.arrnoInitialPos.z);
+					}
+				}
+			}, category, false, (!ShopNGUIController.IsWeaponCategory(category) ? null : item.GetComponent<WeaponSounds>()));
+			int num5 = -1;
+			if (this.WeaponCategory)
+			{
+				ItemRecord itemRecord = ItemDb.GetByTag(str5);
+				num5 = (itemRecord == null ? -1 : gameObjects.FindIndex((GameObject go) => go.name.Replace("(Clone)", string.Empty) == itemRecord.PrefabName));
+			}
+			else if (this.currentCategory != ShopNGUIController.CategoryNames.SkinsCategory)
+			{
+				num5 = gameObjects.FindIndex((GameObject go) => go.nameNoClone() == str5);
+			}
+			if ((num5 < 0 || num3 < 0 ? false : Mathf.Abs(num3 - num5) <= 2) || this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory || this.EnableConfigurePos)
+			{
+				Action<GameObject, ShopNGUIController.CategoryNames> action1 = action;
+				if (!this.WeaponCategory)
+				{
+					gameObject = (this.currentCategory == ShopNGUIController.CategoryNames.SkinsCategory ? item : ItemDb.GetWearFromResources(item.nameNoClone(), this.currentCategory));
+				}
+				else
+				{
+					gameObject = WeaponManager.InnerPrefabForWeaponSync(item.nameNoClone());
+				}
+				action1(gameObject, this.currentCategory);
+			}
+			else
+			{
+				CoroutineRunner.Instance.StartCoroutine(this.LoadModelAsync(action, item, this.currentCategory));
+			}
+		}
+		this.wrapContent.Reposition();
+		this.ChooseCarouselItem(str3, true, false);
+	}
+
+	public void ReloadCategoryTempItemsRemoved(List<string> expired)
+	{
+		if (this.currentCategory != ShopNGUIController.CategoryNames.HatsCategory && expired.Contains("hat_Adamant_3"))
+		{
+			this.UpdatePersHat(Defs.HatNoneEqupped);
+		}
+		if (this.currentCategory != ShopNGUIController.CategoryNames.ArmorCategory && expired.Contains("Armor_Adamant_3"))
+		{
+			this.UpdatePersArmor(Defs.ArmorNewNoneEqupped);
+		}
+		if (!ShopNGUIController.GuiActive || !TempItemsController.IsCategoryContainsTempItems(this.currentCategory))
+		{
+			return;
+		}
+		this.CategoryChosen(this.currentCategory, (expired.Count <= 0 || !TempItemsController.GunsMappingFromTempToConst.ContainsKey(expired[0]) ? this.viewedId : TempItemsController.GunsMappingFromTempToConst[expired[0]]), false);
+		this.UpdateIcons();
+	}
+
+	private static void SaveSkinAndSendToServer(string id)
+	{
+		SkinsController.SetCurrentSkin(id);
+		byte[] pNG = SkinsController.currentSkinForPers.EncodeToPNG();
+		if (pNG != null)
+		{
+			string base64String = Convert.ToBase64String(pNG);
+			if (base64String != null)
+			{
+				FriendsController.sharedController.skin = base64String;
+				FriendsController.sharedController.SendOurData(true);
+			}
+		}
+	}
+
+	public static void SetAsEquippedAndSendToServer(string tg, ShopNGUIController.CategoryNames c)
+	{
+		Storager.setString(ShopNGUIController.SnForWearCategory(c), tg, false);
+		if (FriendsController.sharedController == null)
+		{
+			UnityEngine.Debug.LogError("FriendsController.sharedController == null");
+			return;
+		}
+		FriendsController.sharedController.SendAccessories();
+	}
+
+	private void setBackBlinking()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			switch (this.trainingState)
+			{
+				case ShopNGUIController.TrainingState.OnSniperRifle:
+				{
+					this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+					this.equips[1].normalSprite = "or_btn";
+					break;
+				}
+				case ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle:
+				case ShopNGUIController.TrainingState.NotInArmorCategory:
+				{
+					break;
+				}
+				case ShopNGUIController.TrainingState.OnArmor:
+				{
+					this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+					this.equips[1].normalSprite = "or_btn";
+					break;
+				}
+				default:
+				{
+					goto case ShopNGUIController.TrainingState.NotInArmorCategory;
+				}
+			}
+			this.trainingState = ShopNGUIController.TrainingState.BackBlinking;
+			this.toBlink = this.backButton.tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "yell_btn", "green_btn" });
+			this.trainingColliders.SetActive(false);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setBackBlinking: ", exception));
+		}
+	}
+
+	private static void SetBankCamerasEnabled()
+	{
+		foreach (Camera rect in ShopNGUIController.BankRelatedCameras())
+		{
+			if (!(ExpController.Instance != null) || !ExpController.Instance.IsRenderedWithCamera(rect))
+			{
+				if (!rect.gameObject.tag.Equals("CamTemp"))
+				{
+					if (!ShopNGUIController.sharedShop.ourCameras.Contains(rect))
+					{
+						rect.rect = new Rect(0f, 0f, 1f, 1f);
+					}
+				}
+			}
+		}
+	}
+
+	public void SetCamera()
+	{
+		Transform mainMenuPers = this.MainMenu_Pers;
+		HOTween.Kill(mainMenuPers);
+		Vector3 vector3 = new Vector3(0f, 0f, 0f);
+		Vector3 vector31 = new Vector3(0f, 0f, 0f);
+		Vector3 vector32 = new Vector3(1f, 1f, 1f);
+		ShopNGUIController.CategoryNames categoryName = this.currentCategory;
+		switch (categoryName)
+		{
+			case ShopNGUIController.CategoryNames.HatsCategory:
+			{
+				vector3 = new Vector3(1.06f, -0.54f, 2.19f);
+				vector31 = new Vector3(0f, -9.5f, 0f);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.CapesCategory:
+			{
+				vector3 = new Vector3(0f, 0f, 0f);
+				vector31 = new Vector3(0f, -130.76f, 0f);
+				break;
+			}
+			default:
+			{
+				if (categoryName == ShopNGUIController.CategoryNames.MaskCategory)
+				{
+					vector3 = new Vector3(1.06f, -0.54f, 2.19f);
+					vector31 = new Vector3(0f, -9.5f, 0f);
+					break;
+				}
+				else
+				{
+					vector3 = new Vector3(0f, 0f, 0f);
+					vector31 = new Vector3(0f, 0f, 0f);
+					break;
+				}
+			}
+		}
+		float single = 0.5f;
+		this.idleTimerLastTime = Time.realtimeSinceStartup;
+		HOTween.To(mainMenuPers, single, (new TweenParms()).Prop("localPosition", vector3).Prop("localRotation", new PlugQuaternion(vector31)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear).OnComplete(() => this.idleTimerLastTime = Time.realtimeSinceStartup));
+	}
+
+	private static void SetIconChosen(ShopNGUIController.CategoryNames cn)
+	{
+		for (int i = 0; i < (int)ShopNGUIController.sharedShop.category.buttons.Length; i++)
+		{
+			ShopNGUIController.sharedShop.category.buttons[i].SetCheckedImage(i == (int)cn);
+			if (i == (int)cn)
+			{
+				ShopNGUIController.sharedShop.category.buttons[i].onButton.GetComponent<BoxCollider>().enabled = false;
+			}
+		}
+	}
+
+	public void SetIconModelsPositions(Transform t, ShopNGUIController.CategoryNames c)
+	{
+		switch (c)
+		{
+			case ShopNGUIController.CategoryNames.HatsCategory:
+			{
+				t.transform.localPosition = new Vector3(-0.62f, -0.04f, 0f);
+				t.transform.localRotation = Quaternion.Euler(new Vector3(-75f, -165f, -90f));
+				float single = 82.5f;
+				t.transform.localScale = new Vector3(single, single, single);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.ArmorCategory:
+			{
+				t.transform.localPosition = new Vector3(0f, 0f, 0f);
+				t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 0f, 0f));
+				float single1 = 1f;
+				t.transform.localScale = new Vector3(single1, single1, single1);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.SkinsCategory:
+			{
+				SkinsController.SetTransformParamtersForSkinModel(t);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.CapesCategory:
+			{
+				t.transform.localPosition = new Vector3(-0.720093f, -0.00859833f, 0f);
+				t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 30f, -15f));
+				float single2 = 50f;
+				t.transform.localScale = new Vector3(single2, single2, single2);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.BootsCategory:
+			{
+				t.transform.localPosition = new Vector3(-0.4f, -0.1f, 0f);
+				t.transform.localRotation = Quaternion.Euler(new Vector3(13f, 149f, 0f));
+				float single3 = 75f;
+				t.transform.localScale = new Vector3(single3, single3, single3);
+				break;
+			}
+			case ShopNGUIController.CategoryNames.GearCategory:
+			{
+				t.transform.localPosition = new Vector3(4.648193f, 2.444565f, 0f);
+				t.transform.localRotation = Quaternion.Euler(new Vector3(0f, 30f, -30f));
+				float single4 = 319.3023f;
+				t.transform.localScale = new Vector3(single4, single4, single4);
+				break;
+			}
+		}
+	}
+
+	private void setInArmorCategoryNotOnArmor()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingState == ShopNGUIController.TrainingState.OnArmor)
+			{
+				this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+				this.equips[1].normalSprite = "or_btn";
+			}
+			this.trainingState = ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor;
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setInArmorCategoryNotOnArmor: ", exception));
+		}
+	}
+
+	private void setInArmorCategoryNotOnArmorRemovedNoviceArmor()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.OnArmor)
+			{
+				this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+				this.equips[1].normalSprite = "or_btn";
+			}
+			this.trainingStateRemoveNoviceArmor = ShopNGUIController.TrainingState.InArmorCategoryNotOnArmor;
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setInArmorCategoryNotOnArmorRemovedNoviceArmor: ", exception));
+		}
+	}
+
+	public void SetInGame(bool e)
+	{
+		this.inGame = e;
+	}
+
+	private void setInSniperCategoryNotOnSniperRifle()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingState == ShopNGUIController.TrainingState.OnSniperRifle)
+			{
+				this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+				this.equips[1].normalSprite = "or_btn";
+			}
+			this.trainingState = ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle;
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setInSniperCategoryNotOnSniperRifle: ", exception));
+		}
+	}
+
+	private void setNotInArmorCategory()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			switch (this.trainingState)
+			{
+				case ShopNGUIController.TrainingState.OnSniperRifle:
+				{
+					this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+					this.equips[1].normalSprite = "or_btn";
+					break;
+				}
+				case ShopNGUIController.TrainingState.InSniperCategoryNotOnSniperRifle:
+				case ShopNGUIController.TrainingState.NotInArmorCategory:
+				{
+					break;
+				}
+				case ShopNGUIController.TrainingState.OnArmor:
+				{
+					this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+					this.equips[1].normalSprite = "or_btn";
+					break;
+				}
+				default:
+				{
+					goto case ShopNGUIController.TrainingState.NotInArmorCategory;
+				}
+			}
+			this.trainingState = ShopNGUIController.TrainingState.NotInArmorCategory;
+			this.toBlink = this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "green_btn", "trans_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setNotInArmorCategory: ", exception));
+		}
+	}
+
+	private void setNotInArmorCategoryRemovedNoviceArmor()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.OnArmor)
+			{
+				this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+				this.equips[1].normalSprite = "or_btn";
+			}
+			this.trainingStateRemoveNoviceArmor = ShopNGUIController.TrainingState.NotInArmorCategory;
+			this.toBlink = this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "green_btn", "trans_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setNotInArmorCategoryRemovedNoviceArmor: ", exception));
+		}
+	}
+
+	private void setNotInSniperCategory()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingState == ShopNGUIController.TrainingState.OnSniperRifle)
+			{
+				this.equips[1].tweenTarget.GetComponent<UISprite>().spriteName = "or_btn";
+				this.equips[1].normalSprite = "or_btn";
+			}
+			this.trainingState = ShopNGUIController.TrainingState.NotInSniperCategory;
+			this.toBlink = this.category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "green_btn", "trans_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setNotInSniperCategory: ", exception));
 		}
 	}
 
 	public void SetOfferID(string oid)
 	{
-		offerID = oid;
+		this.offerID = oid;
 	}
 
-	public void HandleFacebookButton()
+	private void setOnArmor()
 	{
-		_isFromPromoActions = false;
-		if (_003C_003Ef__am_0024cacheC4 == null)
+		try
 		{
-			_003C_003Ef__am_0024cacheC4 = _003CHandleFacebookButton_003Em__4E1;
-		}
-		Action action = _003C_003Ef__am_0024cacheC4;
-		if (_003C_003Ef__am_0024cacheC5 == null)
-		{
-			_003C_003Ef__am_0024cacheC5 = _003CHandleFacebookButton_003Em__4E2;
-		}
-		MainMenuController.DoMemoryConsumingTaskInEmptyScene(action, _003C_003Ef__am_0024cacheC5);
-	}
-
-	public void HandleProfileButton()
-	{
-		_003CHandleProfileButton_003Ec__AnonStorey326 _003CHandleProfileButton_003Ec__AnonStorey = new _003CHandleProfileButton_003Ec__AnonStorey326();
-		_003CHandleProfileButton_003Ec__AnonStorey.mainMenu = GameObject.Find("MainMenuNGUI");
-		if ((bool)_003CHandleProfileButton_003Ec__AnonStorey.mainMenu)
-		{
-			_003CHandleProfileButton_003Ec__AnonStorey.mainMenu.SetActive(false);
-		}
-		_003CHandleProfileButton_003Ec__AnonStorey.inGameGui = GameObject.FindWithTag("InGameGUI");
-		if ((bool)_003CHandleProfileButton_003Ec__AnonStorey.inGameGui)
-		{
-			_003CHandleProfileButton_003Ec__AnonStorey.inGameGui.SetActive(false);
-		}
-		_003CHandleProfileButton_003Ec__AnonStorey.networkTable = GameObject.FindWithTag("NetworkStartTableNGUI");
-		if ((bool)_003CHandleProfileButton_003Ec__AnonStorey.networkTable)
-		{
-			_003CHandleProfileButton_003Ec__AnonStorey.networkTable.SetActive(false);
-		}
-		GuiActive = false;
-		if (_003C_003Ef__am_0024cacheC6 == null)
-		{
-			_003C_003Ef__am_0024cacheC6 = _003CHandleProfileButton_003Em__4E3;
-		}
-		Action action = _003C_003Ef__am_0024cacheC6;
-		ProfileController.Instance.DesiredWeaponTag = _assignedWeaponTag;
-		ProfileController.Instance.ShowInterface(action, _003CHandleProfileButton_003Ec__AnonStorey._003C_003Em__4E4);
-	}
-
-	public static bool IsWeaponCategory(CategoryNames c)
-	{
-		return c < CategoryNames.HatsCategory;
-	}
-
-	public static bool IsWearCategory(CategoryNames c)
-	{
-		return Wear.wear.Keys.Contains(c);
-	}
-
-	private static string[] _CurrentWeaponSetIDs()
-	{
-		string[] array = new string[6];
-		WeaponManager sharedManager = WeaponManager.sharedManager;
-		int num = 0;
-		for (int i = 0; i < array.Length; i++)
-		{
-			if (num >= sharedManager.playerWeapons.Count)
+			base.StopCoroutine("Blink");
+			if (this.trainingState == ShopNGUIController.TrainingState.NotInArmorCategory)
 			{
-				array[i] = null;
-				continue;
+				this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+				this.category.buttons[7].offButton.normalSprite = "trans_btn";
 			}
-			Weapon weapon = sharedManager.playerWeapons[num] as Weapon;
-			if (weapon.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1 == i)
+			this.trainingState = ShopNGUIController.TrainingState.OnArmor;
+			this.toBlink = this.equips[1].tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "or_btn", "green_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setOnArmor: ", exception));
+		}
+	}
+
+	private void setOnArmorRemovedNoviceArmor()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingStateRemoveNoviceArmor == ShopNGUIController.TrainingState.NotInArmorCategory)
 			{
-				num++;
-				array[i] = ItemDb.GetByPrefabName(weapon.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag;
+				this.category.buttons[7].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+				this.category.buttons[7].offButton.normalSprite = "trans_btn";
 			}
-			else
+			this.trainingStateRemoveNoviceArmor = ShopNGUIController.TrainingState.OnArmor;
+			this.toBlink = this.equips[1].tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "or_btn", "green_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setOnArmorRemovedNoviceArmor: ", exception));
+		}
+	}
+
+	private void setOnSniperRifle()
+	{
+		try
+		{
+			base.StopCoroutine("Blink");
+			if (this.trainingState == ShopNGUIController.TrainingState.NotInSniperCategory)
 			{
-				array[i] = null;
+				this.category.buttons[4].offButton.tweenTarget.GetComponent<UISprite>().spriteName = "trans_btn";
+				this.category.buttons[4].offButton.normalSprite = "trans_btn";
+			}
+			this.trainingState = ShopNGUIController.TrainingState.OnSniperRifle;
+			this.toBlink = this.equips[1].tweenTarget.GetComponent<UISprite>();
+			base.StartCoroutine("Blink", new string[] { "or_btn", "green_btn" });
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShopNGUIController.setOnSniperRifle: ", exception));
+		}
+	}
+
+	public void SetOtherCamerasEnabled(bool e)
+	{
+		object obj;
+		object obj1;
+		List<Camera> list = ((IEnumerable<Camera>)(Camera.allCameras ?? new Camera[0])).ToList<Camera>();
+		List<Camera> cameras = ProfileController.Instance.GetComponentsInChildren<Camera>(true).ToList<Camera>();
+		list.AddRange(cameras);
+		list.AddRange(ShopNGUIController.BankRelatedCameras());
+		foreach (Camera camera in list)
+		{
+			if (!(ExpController.Instance != null) || !ExpController.Instance.IsRenderedWithCamera(camera))
+			{
+				if (!camera.gameObject.tag.Equals("CamTemp"))
+				{
+					if (!ShopNGUIController.sharedShop.ourCameras.Contains(camera))
+					{
+						Camera rect = camera;
+						if (!e)
+						{
+							obj = null;
+						}
+						else
+						{
+							obj = 1;
+						}
+						float single = (float)obj;
+						if (!e)
+						{
+							obj1 = null;
+						}
+						else
+						{
+							obj1 = 1;
+						}
+						rect.rect = new Rect(0f, 0f, single, (float)obj1);
+					}
+				}
 			}
 		}
-		return array;
+	}
+
+	public static void SetPersArmorVisible(Transform armorPoint)
+	{
+		ShopNGUIController.SetRenderersVisibleFromPoint(armorPoint, ShopNGUIController.ShowArmor);
+		if (armorPoint.childCount > 0)
+		{
+			Transform child = armorPoint.GetChild(0);
+			ArmorRefs component = child.GetChild(0).GetComponent<ArmorRefs>();
+			if (component != null)
+			{
+				if (component.leftBone != null)
+				{
+					ShopNGUIController.SetRenderersVisibleFromPoint(component.leftBone, ShopNGUIController.ShowArmor);
+				}
+				if (component.rightBone != null)
+				{
+					ShopNGUIController.SetRenderersVisibleFromPoint(component.rightBone, ShopNGUIController.ShowArmor);
+				}
+			}
+		}
+	}
+
+	public static void SetPersHatVisible(Transform hatPoint)
+	{
+	}
+
+	public static void SetRenderersVisibleFromPoint(Transform pt, bool showArmor)
+	{
+		Player_move_c.PerformActionRecurs(pt.gameObject, (Transform t) => {
+			Renderer component = t.GetComponent<Renderer>();
+			if (component != null)
+			{
+				component.material.shader = Shader.Find((!showArmor ? "Mobile/Transparent-Shop" : "Mobile/Diffuse"));
+			}
+		});
+	}
+
+	public void SetSkinAsCurrent(string id)
+	{
+		ShopNGUIController.SaveSkinAndSendToServer(id);
+		this.FireOnEquipSkin(id);
+	}
+
+	public void SetSkinOnPers(Texture skin)
+	{
+		WeaponSounds component;
+		GameObject gameObject;
+		if (this.body.transform.childCount <= 0)
+		{
+			component = null;
+		}
+		else
+		{
+			component = this.body.transform.GetChild(0).GetComponent<WeaponSounds>();
+		}
+		WeaponSounds weaponSound = component;
+		if (weaponSound == null)
+		{
+			gameObject = null;
+		}
+		else
+		{
+			gameObject = weaponSound.bonusPrefab;
+		}
+		GameObject gameObject1 = gameObject;
+		GameObject gameObject2 = null;
+		GameObject gameObject3 = null;
+		if (gameObject1 != null)
+		{
+			Transform leftArmorHand = weaponSound.LeftArmorHand;
+			Transform rightArmorHand = weaponSound.RightArmorHand;
+			if (leftArmorHand != null)
+			{
+				gameObject2 = leftArmorHand.gameObject;
+			}
+			if (rightArmorHand != null)
+			{
+				gameObject3 = rightArmorHand.gameObject;
+			}
+		}
+		List<GameObject> gameObjects = new List<GameObject>()
+		{
+			this.capePoint.gameObject,
+			this.hatPoint.gameObject,
+			this.bootsPoint.gameObject,
+			this.armorPoint.gameObject,
+			this.maskPoint.gameObject
+		};
+		List<GameObject> gameObjects1 = gameObjects;
+		if (weaponSound != null && weaponSound.grenatePoint != null)
+		{
+			gameObjects1.Add(weaponSound.grenatePoint.gameObject);
+		}
+		if (gameObject1 != null)
+		{
+			gameObjects1.Add(gameObject1);
+		}
+		if (gameObject2 != null)
+		{
+			gameObjects1.Add(gameObject2);
+		}
+		if (gameObject3 != null)
+		{
+			gameObjects1.Add(gameObject3);
+		}
+		if (weaponSound != null)
+		{
+			List<GameObject> listWeaponAnimEffects = weaponSound.GetListWeaponAnimEffects();
+			if (listWeaponAnimEffects != null)
+			{
+				gameObjects1.AddRange(listWeaponAnimEffects);
+			}
+		}
+		Player_move_c.SetTextureRecursivelyFrom(this.MainMenu_Pers.gameObject, skin, gameObjects1.ToArray());
+	}
+
+	private void SetUpUpgradesAndTiers(bool bought, ref bool buyActive, ref bool upgradeActive, ref bool saleActive, ref bool needTierActive, ref bool rentActive, ref bool saleRentActive)
+	{
+		bool flag;
+		bool flag1 = TempItemsController.PriceCoefs.ContainsKey(this.viewedId);
+		bool flag2 = false;
+		int num = (this.viewedId == null ? -1 : ShopNGUIController._CurrentNumberOfWearUpgrades(this.viewedId, out flag2, this.currentCategory));
+		bool flag3 = flag2;
+		if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted) && !this.InTrainingAfterNoviceArmorRemoved)
+		{
+			buyActive = (this.viewedId == null || flag3 || num != 0 || this.viewedId.Equals("cape_Custom") ? false : !flag1);
+			upgradeActive = (this.viewedId == null || flag3 || num == 0 ? false : !flag1);
+			rentActive = false;
+		}
+		else
+		{
+			buyActive = false;
+			upgradeActive = false;
+		}
+		if (!flag3)
+		{
+			int num1 = Wear.TierForWear(WeaponManager.FirstUnboughtTag(this.viewedId));
+			needTierActive = (!upgradeActive || !(ExpController.Instance != null) || ExpController.Instance.OurTier >= num1 || flag1 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+			if (needTierActive)
+			{
+				int num2 = (num1 < 0 || num1 >= (int)ExpController.LevelsForTiers.Length ? ExpController.LevelsForTiers[(int)ExpController.LevelsForTiers.Length - 1] : ExpController.LevelsForTiers[num1]);
+				string str = string.Format("{0} {1} {2}", LocalizationStore.Key_0226, num2, LocalizationStore.Get("Key_1022"));
+				this.needTierLabel.text = str;
+			}
+			this.upgrade.isEnabled = (!upgradeActive || !(ExpController.Instance != null) || ExpController.Instance.OurTier >= num1 ? !flag1 : false);
+		}
+		string str1 = WeaponManager.FirstUnboughtTag(this.viewedId);
+		int num3 = ShopNGUIController.DiscountFor(str1, out flag);
+		if (flag3 || flag1 || needTierActive || num3 <= 0 || str1 != null && str1.Equals("cape_Custom") && this.inGame || str1 == "cape_Custom" && Defs.isDaterRegim)
+		{
+			saleActive = false;
+		}
+		else
+		{
+			saleActive = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted ? !this.InTrainingAfterNoviceArmorRemoved : false);
+			this.salePerc.text = string.Concat(num3, "%");
+		}
+		saleRentActive = false;
+	}
+
+	public void SetWeapon(string tg)
+	{
+		this.animationCoroutineRunner.StopAllCoroutines();
+		if (WeaponManager.sharedManager == null)
+		{
+			return;
+		}
+		if (this.armorPoint.childCount > 0)
+		{
+			ArmorRefs component = this.armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
+			if (component != null)
+			{
+				if (component.leftBone != null)
+				{
+					Vector3 vector3 = component.leftBone.position;
+					Quaternion quaternion = component.leftBone.rotation;
+					component.leftBone.parent = this.armorPoint.GetChild(0).GetChild(0);
+					component.leftBone.position = vector3;
+					component.leftBone.rotation = quaternion;
+				}
+				if (component.rightBone != null)
+				{
+					Vector3 vector31 = component.rightBone.position;
+					Quaternion quaternion1 = component.rightBone.rotation;
+					component.rightBone.parent = this.armorPoint.GetChild(0).GetChild(0);
+					component.rightBone.position = vector31;
+					component.rightBone.rotation = quaternion1;
+				}
+			}
+		}
+		List<Transform> transforms = new List<Transform>();
+		IEnumerator enumerator = this.body.transform.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				transforms.Add((Transform)enumerator.Current);
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		foreach (Transform transform in transforms)
+		{
+			transform.parent = null;
+			transform.position = new Vector3(0f, -10000f, 0f);
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+		if (tg == null)
+		{
+			return;
+		}
+		if (this.profile != null)
+		{
+			Resources.UnloadAsset(this.profile);
+			this.profile = null;
+		}
+		ItemRecord byTag = ItemDb.GetByTag(tg);
+		if (byTag == null || string.IsNullOrEmpty(byTag.PrefabName))
+		{
+			UnityEngine.Debug.Log("rec == null || string.IsNullOrEmpty(rec.PrefabName)");
+			return;
+		}
+		GameObject gameObject = Resources.Load<GameObject>(string.Concat("Weapons/", byTag.PrefabName));
+		if (gameObject == null)
+		{
+			UnityEngine.Debug.Log("pref==null");
+			return;
+		}
+		this.profile = Resources.Load<AnimationClip>(string.Concat("ProfileAnimClips/", gameObject.name, "_Profile"));
+		GameObject gameObject1 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(gameObject1);
+		Player_move_c.SetLayerRecursively(gameObject1, LayerMask.NameToLayer("NGUIShop"));
+		gameObject1.transform.parent = this.body.transform;
+		this.weapon = gameObject1;
+		this.weapon.transform.localScale = new Vector3(1f, 1f, 1f);
+		this.weapon.transform.position = this.body.transform.position;
+		this.weapon.transform.localPosition = Vector3.zero;
+		this.weapon.transform.localRotation = Quaternion.identity;
+		WeaponSounds weaponSound = this.weapon.GetComponent<WeaponSounds>();
+		if (this.armorPoint.childCount > 0 && weaponSound != null)
+		{
+			ArmorRefs leftArmorHand = this.armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
+			if (leftArmorHand != null)
+			{
+				if (leftArmorHand.leftBone != null && weaponSound.LeftArmorHand != null)
+				{
+					leftArmorHand.leftBone.parent = weaponSound.LeftArmorHand;
+					leftArmorHand.leftBone.localPosition = Vector3.zero;
+					leftArmorHand.leftBone.localRotation = Quaternion.identity;
+					leftArmorHand.leftBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+				if (leftArmorHand.rightBone != null && weaponSound.RightArmorHand != null)
+				{
+					leftArmorHand.rightBone.parent = weaponSound.RightArmorHand;
+					leftArmorHand.rightBone.localPosition = Vector3.zero;
+					leftArmorHand.rightBone.localRotation = Quaternion.identity;
+					leftArmorHand.rightBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+			}
+		}
+		this.PlayWeaponAnimation();
+		this.DisableGunflashes(this.weapon);
+		if (SkinsController.currentSkinForPers != null)
+		{
+			this.SetSkinOnPers(SkinsController.currentSkinForPers);
+		}
+		this._assignedWeaponTag = tg;
+	}
+
+	private void SetWearForCategory(ShopNGUIController.CategoryNames cat, string wear)
+	{
+		switch (cat)
+		{
+			case ShopNGUIController.CategoryNames.HatsCategory:
+			{
+				this._currentHat = wear;
+				return;
+			}
+			case ShopNGUIController.CategoryNames.ArmorCategory:
+			{
+				this._currentArmor = wear;
+				return;
+			}
+			case ShopNGUIController.CategoryNames.SkinsCategory:
+			case ShopNGUIController.CategoryNames.GearCategory:
+			{
+				return;
+			}
+			case ShopNGUIController.CategoryNames.CapesCategory:
+			{
+				this._currentCape = wear;
+				return;
+			}
+			case ShopNGUIController.CategoryNames.BootsCategory:
+			{
+				this._currentBoots = wear;
+				return;
+			}
+			case ShopNGUIController.CategoryNames.MaskCategory:
+			{
+				this._currentMask = wear;
+				return;
+			}
+			default:
+			{
+				return;
+			}
+		}
 	}
 
 	public static void ShowAddTryGun(string gunTag, Transform point, string lr, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitCoinsShopAdditional = null, Action<string> customEquipWearAction = null, bool expiredTryGun = false)
 	{
 		try
 		{
-			GameObject original = Resources.Load<GameObject>("TryGunScreen");
-			GameObject gameObject = UnityEngine.Object.Instantiate(original);
-			TryGunScreenController component = gameObject.GetComponent<TryGunScreenController>();
+			GameObject gameObject = Resources.Load<GameObject>("TryGunScreen");
+			TryGunScreenController component = UnityEngine.Object.Instantiate<GameObject>(gameObject).GetComponent<TryGunScreenController>();
 			Player_move_c.SetLayerRecursively(component.gameObject, LayerMask.NameToLayer(lr));
 			component.transform.parent = point;
 			component.transform.localPosition = new Vector3(0f, 0f, -130f);
@@ -3489,1447 +4533,1516 @@ public class ShopNGUIController : MonoBehaviour
 			component.customEquipWearAction = customEquipWearAction;
 			component.ExpiredTryGun = expiredTryGun;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in ShowAddTryGun: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShowAddTryGun: ", exception));
 		}
+	}
+
+	public static bool ShowLockedFacebookSkin()
+	{
+		bool flag;
+		if (!FacebookController.FacebookSupported)
+		{
+			return false;
+		}
+		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null && SkinsController.shopKeyFromNameSkin.ContainsKey("61"))
+		{
+			string item = SkinsController.shopKeyFromNameSkin["61"];
+			if (Array.IndexOf<string>(StoreKitEventListener.skinIDs, item) >= 0)
+			{
+				Dictionary<int, KeyValuePair<string, string>>.ValueCollection.Enumerator enumerator = InAppData.inAppData.Values.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						KeyValuePair<string, string> current = enumerator.Current;
+						if (current.Key == null || !current.Key.Equals(item) || Storager.getInt(current.Value, true) != 0)
+						{
+							continue;
+						}
+						flag = false;
+						return flag;
+					}
+					return true;
+				}
+				finally
+				{
+					((IDisposable)(object)enumerator).Dispose();
+				}
+				return flag;
+			}
+		}
+		return true;
+	}
+
+	public static bool ShowPremimAccountExpiredIfPossible(Transform point, string layer, string header = "", bool showOnlyIfExpired = true)
+	{
+		if (showOnlyIfExpired && (!PremiumAccountController.AccountHasExpired || !Defs2.CanShowPremiumAccountExpiredWindow))
+		{
+			return false;
+		}
+		if (point == null)
+		{
+			return false;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("PremiumAccount"));
+		vector3.transform.parent = point;
+		Player_move_c.SetLayerRecursively(vector3, LayerMask.NameToLayer(layer ?? "Default"));
+		vector3.transform.localPosition = new Vector3(0f, 0f, -130f);
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		vector3.GetComponent<PremiumAccountScreenController>().Header = header;
+		PremiumAccountController.AccountHasExpired = false;
+		return true;
 	}
 
 	public static void ShowRentScreen(string itemTag, Transform point, string lr, string hdr, string rentText, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitCoinsShopAdditional = null, Action<string> customEquipWearAction = null)
 	{
 	}
 
-	public void HandleRentButton()
+	public static void ShowTempItemExpiredIfPossible(Transform point, string layer, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitoinsShopAdditional = null, Action<string> customEquipWearAction = null)
 	{
-	}
-
-	public void HandlePropertiesInfoButton()
-	{
-		if (WeaponCategory)
+		List<string> strs = new List<string>();
+		foreach (string expiredItem in TempItemsController.sharedController.ExpiredItems)
 		{
-			if (Defs.isSoundFX)
+			if (!TempItemsController.sharedController.CanShowExpiredBannerForTag(expiredItem))
 			{
-				ButtonClickSound.Instance.PlayClick();
+				continue;
 			}
-			infoScreen.Show(currentCategory == CategoryNames.MeleeCategory);
+			ShopNGUIController.ShowRentScreen(expiredItem, point, layer, LocalizationStore.Get("Key_1156"), LocalizationStore.Get("Key_1157"), onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction);
+			strs.Add(expiredItem);
+			break;
+		}
+		foreach (string str in strs)
+		{
+			TempItemsController.sharedController.ExpiredItems.Remove(str);
 		}
 	}
 
-	internal void ReloadCarousel(string idToChoose = null)
+	public static void ShowTryGunIfPossible(bool placeForGiveNewTryGun, Transform point, string layer, Action<string> onPurchase = null, Action onEnterCoinsShopAdditional = null, Action onExitoinsShopAdditional = null, Action<string> customEquipWearAction = null)
 	{
-		_003CReloadCarousel_003Ec__AnonStorey328 _003CReloadCarousel_003Ec__AnonStorey = new _003CReloadCarousel_003Ec__AnonStorey328();
-		_003CReloadCarousel_003Ec__AnonStorey.idToChoose = idToChoose;
-		_003CReloadCarousel_003Ec__AnonStorey._003C_003Ef__this = this;
-		ShopCarouselElement[] componentsInChildren = wrapContent.GetComponentsInChildren<ShopCarouselElement>(true);
-		ShopCarouselElement[] array = componentsInChildren;
-		foreach (ShopCarouselElement shopCarouselElement in array)
+		if (!Defs.isHunger && !placeForGiveNewTryGun && WeaponManager.sharedManager != null && WeaponManager.sharedManager.ExpiredTryGuns.Count > 0 && TrainingController.TrainingCompleted)
 		{
-			UnityEngine.Object.Destroy(shopCarouselElement.gameObject);
-			shopCarouselElement.transform.parent = null;
-		}
-		wrapContent.Reposition();
-		List<GameObject> list = FillModelsList(currentCategory);
-		string[] array2 = null;
-		if (currentCategory == CategoryNames.SkinsCategory)
-		{
-			array2 = new string[list.Count];
-			List<string> list2 = SkinsController.skinsForPers.Keys.ToList();
-			if (!ShowLockedFacebookSkin())
+			foreach (string expiredTryGun in WeaponManager.sharedManager.ExpiredTryGuns)
 			{
-				list2.Remove("61");
-			}
-			if (_003C_003Ef__am_0024cacheC7 == null)
-			{
-				_003C_003Ef__am_0024cacheC7 = _003CReloadCarousel_003Em__4E5;
-			}
-			list2.Sort(_003C_003Ef__am_0024cacheC7);
-			if (_003C_003Ef__am_0024cacheC8 == null)
-			{
-				_003C_003Ef__am_0024cacheC8 = _003CReloadCarousel_003Em__4E6;
-			}
-			int num = list2.FindIndex(_003C_003Ef__am_0024cacheC8);
-			int num2 = 0;
-			if (num >= 0 && num < list2.Count)
-			{
-				List<string> list3 = new List<string>();
-				list3.AddRange(list2.GetRange(num, list2.Count - num));
-				list3.Reverse();
-				list3.CopyTo(array2);
-				num2 = list3.Count;
-				array2[num2] = "CustomSkinID";
-				num2++;
-				list2.CopyTo(0, array2, num2, num);
-			}
-			else
-			{
-				array2[0] = "CustomSkinID";
-				num2++;
-				list2.CopyTo(array2, 1);
-			}
-		}
-		if (EnableConfigurePos)
-		{
-			List<string> list4 = new List<string>();
-			List<GameObject> list5 = new List<GameObject>();
-			for (int j = 0; j < list.Count; j++)
-			{
-				List<string> list6 = null;
-				foreach (List<string> upgrade in WeaponUpgrades.upgrades)
+				try
 				{
-					if (upgrade.Contains((!WeaponCategory) ? list[j].tag : ItemDb.GetByPrefabName(list[j].name.Replace("(Clone)", string.Empty)).Tag))
+					if (WeaponManager.sharedManager.weaponsInGame.FirstOrDefault<UnityEngine.Object>((UnityEngine.Object w) => ItemDb.GetByPrefabName(w.name).Tag == expiredTryGun) != null)
 					{
-						list6 = upgrade;
-						break;
-					}
-				}
-				if (list6 == null)
-				{
-					list5.Add(list[j]);
-					continue;
-				}
-				for (int k = 0; k < list6.Count; k++)
-				{
-					UnityEngine.Object[] weaponsInGame = WeaponManager.sharedManager.weaponsInGame;
-					for (int l = 0; l < weaponsInGame.Length; l++)
-					{
-						GameObject gameObject = (GameObject)weaponsInGame[l];
-						if (ItemDb.GetByPrefabName(gameObject.name).Tag.Equals(list6[k]))
+						WeaponManager.sharedManager.ExpiredTryGuns.RemoveAll((string t) => t == expiredTryGun);
+						if (WeaponManager.LastBoughtTag(expiredTryGun) == null)
 						{
-							list5.Add(gameObject);
+							ShopNGUIController.ShowAddTryGun(expiredTryGun, point, layer, onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction, true);
 							break;
 						}
 					}
 				}
-			}
-			list = list5;
-		}
-		if (_003CReloadCarousel_003Ec__AnonStorey.idToChoose == null)
-		{
-			_003CReloadCarousel_003Ec__AnonStorey.idToChoose = viewedId;
-		}
-		int num3 = 10000;
-		if (_003CReloadCarousel_003Ec__AnonStorey.idToChoose != null)
-		{
-			if (WeaponCategory)
-			{
-				_003CReloadCarousel_003Ec__AnonStorey327 _003CReloadCarousel_003Ec__AnonStorey2 = new _003CReloadCarousel_003Ec__AnonStorey327();
-				_003CReloadCarousel_003Ec__AnonStorey2.itemRecord = ItemDb.GetByTag(_003CReloadCarousel_003Ec__AnonStorey.idToChoose);
-				num3 = ((_003CReloadCarousel_003Ec__AnonStorey2.itemRecord == null) ? (-1) : list.FindIndex(_003CReloadCarousel_003Ec__AnonStorey2._003C_003Em__4E7));
-			}
-			else if (currentCategory != CategoryNames.SkinsCategory)
-			{
-				num3 = list.FindIndex(_003CReloadCarousel_003Ec__AnonStorey._003C_003Em__4E8);
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogError(string.Concat("Exception in foreach (var tg in WeaponManager.sharedManager.ExpiredTryGuns): ", exception));
+				}
 			}
 		}
-		for (int m = 0; m < list.Count; m++)
+		else if (!Defs.isHunger && !Defs.isDaterRegim && WeaponManager.sharedManager._currentFilterMap == 0)
 		{
-			_003CReloadCarousel_003Ec__AnonStorey329 _003CReloadCarousel_003Ec__AnonStorey3 = new _003CReloadCarousel_003Ec__AnonStorey329();
-			_003CReloadCarousel_003Ec__AnonStorey3._003C_003Ef__this = this;
-			GameObject original = Resources.Load<GameObject>("ShopCarouselElement");
-			GameObject gameObject2 = UnityEngine.Object.Instantiate(original);
-			gameObject2.transform.parent = wrapContent.transform;
-			gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-			_003CReloadCarousel_003Ec__AnonStorey3.pref = list[m];
-			gameObject2.name = m.ToString("D7");
-			if (WeaponCategory)
+			if ((!FriendsController.useBuffSystem ? KillRateCheck.instance.giveWeapon : BuffSystem.instance.giveTryGun) && TrainingController.TrainingCompleted)
 			{
-				gameObject2.name = gameObject2.name + "_" + int.Parse(_003CReloadCarousel_003Ec__AnonStorey3.pref.name.Substring("Weapon".Length)).ToString("D5");
+				try
+				{
+					int num = ShopNGUIController.UpperCoinsBankBound();
+					List<ItemRecord> list = WeaponManager.tryGunsTable.SelectMany<KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>>, string>((KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> kvp) => kvp.Value[ExpController.OurTierForAnyPlace()]).Select<string, ItemRecord>((string prefabName) => ItemDb.GetByPrefabName(prefabName)).Where<ItemRecord>((ItemRecord rec) => (rec.StorageId == null ? false : Storager.getInt(rec.StorageId, true) == 0)).Where<ItemRecord>((ItemRecord rec) => (WeaponManager.sharedManager.IsAvailableTryGun(rec.Tag) ? false : !WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(rec.Tag))).ToList<ItemRecord>();
+					List<ItemRecord> itemRecords = (
+						from rec in list
+						where rec.Price.Currency == "Coins"
+						where ShopNGUIController.PriceIfGunWillBeTryGun(rec.Tag) > num
+						select rec).Randomize<ItemRecord>().ToList<ItemRecord>();
+					string tag = null;
+					if (!itemRecords.Any<ItemRecord>())
+					{
+						int num1 = ShopNGUIController.UpperGemsBankBound();
+						List<ItemRecord> list1 = (
+							from rec in list
+							where rec.Price.Currency == "GemsCurrency"
+							where ShopNGUIController.PriceIfGunWillBeTryGun(rec.Tag) > num1
+							select rec).Randomize<ItemRecord>().ToList<ItemRecord>();
+						tag = (!list1.Any<ItemRecord>() ? ShopNGUIController.TryGunForCategoryWithMaxUnbought() : list1.First<ItemRecord>().Tag);
+					}
+					else
+					{
+						tag = itemRecords.First<ItemRecord>().Tag;
+					}
+					if (tag != null)
+					{
+						ShopNGUIController.ShowAddTryGun(tag, point, layer, onPurchase, onEnterCoinsShopAdditional, onExitoinsShopAdditional, customEquipWearAction, false);
+					}
+				}
+				catch (Exception exception1)
+				{
+					UnityEngine.Debug.LogError(string.Concat("Exception in giving: ", exception1));
+				}
 			}
-			_003CReloadCarousel_003Ec__AnonStorey3.sce = gameObject2.GetComponent<ShopCarouselElement>();
-			_003CReloadCarousel_003Ec__AnonStorey3.itenID = (WeaponCategory ? ItemDb.GetByPrefabName(_003CReloadCarousel_003Ec__AnonStorey3.pref.name.Replace("(Clone)", string.Empty)).Tag : ((currentCategory != CategoryNames.SkinsCategory) ? ItemIDForPrefabReverse(_003CReloadCarousel_003Ec__AnonStorey3.pref.name, currentCategory) : array2[m]));
-			_003CReloadCarousel_003Ec__AnonStorey3.sce.itemID = _003CReloadCarousel_003Ec__AnonStorey3.itenID;
-			if (currentCategory == CategoryNames.GearCategory)
-			{
-				_003CReloadCarousel_003Ec__AnonStorey3.sce.showQuantity = true;
-				_003CReloadCarousel_003Ec__AnonStorey3.sce.SetQuantity();
-			}
-			_003CReloadCarousel_003Ec__AnonStorey3.isBought = false;
-			if (WeaponCategory && WeaponManager.tagToStoreIDMapping.ContainsKey(_003CReloadCarousel_003Ec__AnonStorey3.sce.itemID) && WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[_003CReloadCarousel_003Ec__AnonStorey3.sce.itemID]))
-			{
-				_003CReloadCarousel_003Ec__AnonStorey3.isBought = Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[_003CReloadCarousel_003Ec__AnonStorey3.sce.itemID]], true) > 0;
-			}
-			if (currentCategory == CategoryNames.SkinsCategory)
-			{
-				_003CReloadCarousel_003Ec__AnonStorey3.sce.readableName = (_003CReloadCarousel_003Ec__AnonStorey3.itenID.Equals("CustomSkinID") ? LocalizationStore.Get("Key_1090") : ((!SkinsController.skinsNamesForPers.ContainsKey(_003CReloadCarousel_003Ec__AnonStorey3.itenID)) ? string.Empty : SkinsController.skinsNamesForPers[_003CReloadCarousel_003Ec__AnonStorey3.itenID]));
-			}
-			if (PromoActionsManager.sharedManager.topSellers.Contains(_003CReloadCarousel_003Ec__AnonStorey3.itenID))
-			{
-				_003CReloadCarousel_003Ec__AnonStorey3.sce.showTS = true;
-			}
-			if (PromoActionsManager.sharedManager.news.Contains(_003CReloadCarousel_003Ec__AnonStorey3.itenID))
-			{
-				_003CReloadCarousel_003Ec__AnonStorey3.sce.showNew = true;
-			}
-			Action<GameObject, CategoryNames> action = _003CReloadCarousel_003Ec__AnonStorey3._003C_003Em__4E9;
-			int num4 = -1;
-			if (WeaponCategory)
-			{
-				_003CReloadCarousel_003Ec__AnonStorey32B _003CReloadCarousel_003Ec__AnonStorey32B = new _003CReloadCarousel_003Ec__AnonStorey32B();
-				_003CReloadCarousel_003Ec__AnonStorey32B.itemRecord = ItemDb.GetByTag(_003CReloadCarousel_003Ec__AnonStorey3.itenID);
-				num4 = ((_003CReloadCarousel_003Ec__AnonStorey32B.itemRecord == null) ? (-1) : list.FindIndex(_003CReloadCarousel_003Ec__AnonStorey32B._003C_003Em__4EA));
-			}
-			else if (currentCategory != CategoryNames.SkinsCategory)
-			{
-				num4 = list.FindIndex(_003CReloadCarousel_003Ec__AnonStorey3._003C_003Em__4EB);
-			}
-			if ((num4 < 0 || num3 < 0 || Mathf.Abs(num3 - num4) > 2) && currentCategory != CategoryNames.SkinsCategory && !EnableConfigurePos)
-			{
-				CoroutineRunner.Instance.StartCoroutine(LoadModelAsync(action, _003CReloadCarousel_003Ec__AnonStorey3.pref, currentCategory));
-			}
-			else
-			{
-				action(WeaponCategory ? WeaponManager.InnerPrefabForWeaponSync(_003CReloadCarousel_003Ec__AnonStorey3.pref.nameNoClone()) : ((currentCategory == CategoryNames.SkinsCategory) ? _003CReloadCarousel_003Ec__AnonStorey3.pref : ItemDb.GetWearFromResources(_003CReloadCarousel_003Ec__AnonStorey3.pref.nameNoClone(), currentCategory)), currentCategory);
-			}
-		}
-		wrapContent.Reposition();
-		ChooseCarouselItem(_003CReloadCarousel_003Ec__AnonStorey.idToChoose, true);
-	}
-
-	private IEnumerator LoadModelAsync(Action<GameObject, CategoryNames> onLoad, GameObject prototype, CategoryNames category)
-	{
-		ResourceRequest request = ((!IsWeaponCategory(category)) ? ItemDb.GetWearFromResourcesAsync(prototype.nameNoClone(), category) : WeaponManager.InnerPrefabForWeaponAsync(prototype.nameNoClone()));
-		numberOfLoadingModels++;
-		yield return request;
-		numberOfLoadingModels--;
-		try
-		{
-			GameObject model = request.asset as GameObject;
-			if (currentCategory == category)
-			{
-				WeaponManager.cachedInnerPrefabsForCurrentShopCategory.Add(model);
-				onLoad(model, category);
-			}
-		}
-		catch (Exception e)
-		{
-			Debug.LogError("Exception in LoadModelAsync prototype = " + prototype.name + "  e: " + e);
 		}
 	}
 
-	public static void AddModel(GameObject pref, Action7<GameObject, Vector3, Vector3, string, float, int, int> act, CategoryNames c, bool isButtonInGameGui = false, WeaponSounds wsForPos = null)
+	public void SimulateCategoryChoose(int num)
 	{
-		float arg = 150f;
-		Vector3 arg2 = Vector3.zero;
-		Vector3 arg3 = Vector3.zero;
-		GameObject gameObject = null;
-		int arg4 = 0;
-		int arg5 = 0;
-		string arg6 = null;
-		if (IsWeaponCategory(c))
+		if (num >= 0 && num < (int)this.category.buttons.Length && num != 0)
 		{
-			arg = wsForPos.scaleShop;
-			arg2 = wsForPos.positionShop;
-			arg3 = wsForPos.rotationShop;
-			gameObject = pref.GetComponent<InnerWeaponPars>().bonusPrefab;
-			try
-			{
-				_003CAddModel_003Ec__AnonStorey32C _003CAddModel_003Ec__AnonStorey32C = new _003CAddModel_003Ec__AnonStorey32C();
-				ItemRecord byPrefabName = ItemDb.GetByPrefabName(wsForPos.name.Replace("(Clone)", string.Empty));
-				string text = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
-				_003CAddModel_003Ec__AnonStorey32C.firstRec = ItemDb.GetByTag(text);
-				arg6 = WeaponManager.AllWrapperPrefabs().First(_003CAddModel_003Ec__AnonStorey32C._003C_003Em__4EC).shopName;
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Error in getting shop name of first upgrade: " + ex);
-				arg6 = wsForPos.shopName;
-			}
-			arg4 = wsForPos.tier;
+			this.category.buttons[0].IsChecked = false;
+			this.category.buttons[num].IsChecked = true;
+		}
+	}
+
+	public static string SnForWearCategory(ShopNGUIController.CategoryNames c)
+	{
+		string capeEquppedSN;
+		if (c == ShopNGUIController.CategoryNames.CapesCategory)
+		{
+			capeEquppedSN = Defs.CapeEquppedSN;
+		}
+		else if (c == ShopNGUIController.CategoryNames.BootsCategory)
+		{
+			capeEquppedSN = Defs.BootsEquppedSN;
+		}
+		else if (c != ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			capeEquppedSN = (c != ShopNGUIController.CategoryNames.MaskCategory ? Defs.HatEquppedSN : "MaskEquippedSN");
 		}
 		else
 		{
-			switch (c)
-			{
-			case CategoryNames.SkinsCategory:
-			{
-				gameObject = UnityEngine.Object.Instantiate(pref);
-				ShopPositionParams component = pref.GetComponent<ShopPositionParams>();
-				arg3 = component.rotationShop;
-				arg = component.scaleShop;
-				arg2 = component.positionShop;
-				arg4 = component.tier;
-				break;
-			}
-			case CategoryNames.HatsCategory:
-			case CategoryNames.ArmorCategory:
-			case CategoryNames.CapesCategory:
-			case CategoryNames.BootsCategory:
-			case CategoryNames.GearCategory:
-			case CategoryNames.MaskCategory:
-			{
-				gameObject = pref.transform.GetChild(0).gameObject;
-				ShopPositionParams infoForNonWeaponItem = ItemDb.GetInfoForNonWeaponItem(pref.nameNoClone(), c);
-				arg3 = infoForNonWeaponItem.rotationShop;
-				arg = infoForNonWeaponItem.scaleShop;
-				arg2 = infoForNonWeaponItem.positionShop;
-				arg6 = infoForNonWeaponItem.shopName;
-				arg4 = infoForNonWeaponItem.tier;
-				arg5 = infoForNonWeaponItem.League;
-				break;
-			}
-			}
+			capeEquppedSN = Defs.ArmorNewEquppedSN;
 		}
-		Vector3 localPosition = Vector3.zero;
-		GameObject gameObject2 = null;
-		if (c == CategoryNames.SkinsCategory)
-		{
-			gameObject2 = gameObject;
-			localPosition = new Vector3(0f, -1f, 0f);
-		}
-		else if (gameObject != null)
-		{
-			Material[] array = null;
-			Mesh mesh = null;
-			SkinnedMeshRenderer skinnedMeshRenderer = gameObject.GetComponent<SkinnedMeshRenderer>();
-			if (skinnedMeshRenderer == null)
-			{
-				SkinnedMeshRenderer[] componentsInChildren = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-				if (componentsInChildren != null && componentsInChildren.Length > 0)
-				{
-					skinnedMeshRenderer = componentsInChildren[0];
-				}
-			}
-			if (skinnedMeshRenderer != null)
-			{
-				array = skinnedMeshRenderer.sharedMaterials;
-				mesh = skinnedMeshRenderer.sharedMesh;
-			}
-			else
-			{
-				MeshFilter component2 = gameObject.GetComponent<MeshFilter>();
-				MeshRenderer component3 = gameObject.GetComponent<MeshRenderer>();
-				if (component2 != null)
-				{
-					mesh = component2.sharedMesh;
-				}
-				if (component3 != null)
-				{
-					array = component3.sharedMaterials;
-				}
-			}
-			if (array != null && mesh != null)
-			{
-				gameObject2 = new GameObject();
-				gameObject2.AddComponent<MeshFilter>().sharedMesh = mesh;
-				MeshRenderer meshRenderer = gameObject2.AddComponent<MeshRenderer>();
-				meshRenderer.materials = array;
-				localPosition = -meshRenderer.bounds.center;
-			}
-		}
-		try
-		{
-			DisableLightProbesRecursively(gameObject2);
-		}
-		catch (Exception ex2)
-		{
-			Debug.LogError("Exception DisableLightProbesRecursively: " + ex2);
-		}
-		GameObject gameObject3 = new GameObject();
-		gameObject3.name = gameObject2.name;
-		gameObject2.transform.localPosition = localPosition;
-		gameObject2.transform.parent = gameObject3.transform;
-		Player_move_c.SetLayerRecursively(gameObject3, LayerMask.NameToLayer("NGUIShop"));
-		if (act != null)
-		{
-			act(gameObject3, arg2, arg3, arg6, arg, arg4, arg5);
-		}
+		return capeEquppedSN;
 	}
 
-	public void ChooseCarouselItem(string itemID, bool moveCarousel = false, bool setManuallyToChosen = false)
+	public static void SpendBoughtCurrency(string currency, int count)
 	{
-		if (itemID == null)
+		if (currency == null)
 		{
-			if (WeaponCategory)
-			{
-				UpdatePersWithNewItem();
-			}
+			UnityEngine.Debug.LogWarning("SpendBoughtCurrency: currency == null");
 			return;
 		}
-		ShopCarouselElement[] array = wrapContent.GetComponentsInChildren<ShopCarouselElement>(true);
-		if (array == null)
+		if (UnityEngine.Debug.isDebugBuild)
 		{
-			array = new ShopCarouselElement[0];
+			UnityEngine.Debug.Log(string.Format("<color=#ff00ffff>SpendBoughtCurrency {0} {1}</color>", currency, count));
 		}
-		ShopCarouselElement[] array2 = array;
-		foreach (ShopCarouselElement shopCarouselElement in array2)
+	}
+
+	private void Start()
+	{
+		base.StartCoroutine(this.TryToShowExpiredBanner());
+	}
+
+	internal static void SynchronizeAndroidPurchases(string comment)
+	{
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
 		{
-			if (!shopCarouselElement.itemID.Equals(itemID))
+			UnityEngine.Debug.LogFormat("Trying to synchronize purchases to cloud ({0})", new object[] { comment });
+			Action action = () => {
+				PlayerPrefs.DeleteKey("PendingGooglePlayGamesSync");
+				if (WeaponManager.sharedManager != null)
+				{
+					int currentWeaponIndex = WeaponManager.sharedManager.CurrentWeaponIndex;
+					WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? 0 : Defs.filterMaps[Application.loadedLevelName]));
+					WeaponManager.sharedManager.CurrentWeaponIndex = currentWeaponIndex;
+				}
+				if (ShopNGUIController.GuiActive)
+				{
+					ShopNGUIController.sharedShop.UpdateIcons();
+				}
+			};
+			Defs.RuntimeAndroidEdition androidEdition = Defs.AndroidEdition;
+			if (androidEdition == Defs.RuntimeAndroidEdition.Amazon)
 			{
-				continue;
+				PurchasesSynchronizer.Instance.SynchronizeAmazonPurchases();
+				action();
 			}
-			if (moveCarousel || setManuallyToChosen)
+			else if (androidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
 			{
-				SpringPanel component = scrollViewPanel.GetComponent<SpringPanel>();
-				if (component != null)
-				{
-					UnityEngine.Object.Destroy(component);
-				}
-				if (scrollViewPanel.gameObject.activeInHierarchy)
-				{
-					scrollViewPanel.GetComponent<UIScrollView>().MoveRelative(new Vector3(0f - shopCarouselElement.transform.localPosition.x - scrollViewPanel.transform.localPosition.x, scrollViewPanel.transform.localPosition.y, scrollViewPanel.transform.localPosition.z));
-				}
-				wrapContent.Reposition();
-			}
-			viewedId = itemID;
-			UpdatePersWithNewItem();
-			UpdateButtons();
-			UpdateItemParameters();
-			caption.text = shopCarouselElement.readableName ?? string.Empty;
-			caption.applyGradient = TempItemsController.PriceCoefs.ContainsKey(itemID);
-			try
-			{
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-				{
-					if (trainingState == TrainingState.OnSniperRifle && viewedId != null && viewedId != WeaponTags.HunterRifleTag)
+				PlayerPrefs.SetInt("PendingGooglePlayGamesSync", 1);
+				PurchasesSynchronizer.Instance.AuthenticateAndSynchronize((bool success) => {
+					UnityEngine.Debug.LogFormat("[Rilisoft] ShopNguiController.PurchasesSynchronizer.Callback({0}) >: {1:F3}", new object[] { success, Time.realtimeSinceStartup });
+					try
 					{
-						setInSniperCategoryNotOnSniperRifle();
+						UnityEngine.Debug.LogFormat("Google purchases syncronized ({0}): {1}", new object[] { comment, success });
+						if (success)
+						{
+							action();
+						}
 					}
-					else if (trainingState == TrainingState.InSniperCategoryNotOnSniperRifle && viewedId != null && viewedId == WeaponTags.HunterRifleTag)
+					finally
 					{
-						setOnSniperRifle();
+						UnityEngine.Debug.LogFormat("[Rilisoft] ShopNguiController.PurchasesSynchronizer.Callback({0}) <: {1:F3}", new object[] { success, Time.realtimeSinceStartup });
 					}
-					else if (trainingState == TrainingState.OnArmor && viewedId != null && viewedId != (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
-					{
-						setInArmorCategoryNotOnArmor();
-					}
-					else if (trainingState == TrainingState.InArmorCategoryNotOnArmor && viewedId != null && viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
-					{
-						setOnArmor();
-					}
-				}
-				if (InTrainingAfterNoviceArmorRemoved)
-				{
-					if (trainingStateRemoveNoviceArmor == TrainingState.OnArmor && viewedId != null && viewedId != (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
-					{
-						setInArmorCategoryNotOnArmorRemovedNoviceArmor();
-					}
-					else if (trainingStateRemoveNoviceArmor == TrainingState.InArmorCategoryNotOnArmor && viewedId != null && viewedId == (WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1"))
-					{
-						setOnArmorRemovedNoviceArmor();
-					}
-				}
-				break;
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception in training in ChooseCarouselItem: " + ex);
-				break;
+				}, true);
 			}
 		}
 	}
 
-	private void SetUpUpgradesAndTiers(bool bought, ref bool buyActive, ref bool upgradeActive, ref bool saleActive, ref bool needTierActive, ref bool rentActive, ref bool saleRentActive)
+	public static string TempGunOrHighestDPSGun(ShopNGUIController.CategoryNames c, out ShopNGUIController.CategoryNames cn)
 	{
-		bool flag = TempItemsController.PriceCoefs.ContainsKey(viewedId);
-		bool maxUpgrade = false;
-		int num = ((viewedId == null) ? (-1) : _CurrentNumberOfWearUpgrades(viewedId, out maxUpgrade, currentCategory));
-		bool flag2 = maxUpgrade;
-		if ((!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted) || InTrainingAfterNoviceArmorRemoved)
+		cn = c;
+		int num = (int)c;
+		string str = null;
+		str = ShopNGUIController.TemppOrHighestDPSGunInCategory(num);
+		if (str == null && WeaponManager.sharedManager.playerWeapons.Count > 0)
 		{
-			buyActive = false;
-			upgradeActive = false;
+			int component = (WeaponManager.sharedManager.playerWeapons[0] as Weapon).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1;
+			str = ShopNGUIController.TemppOrHighestDPSGunInCategory(component);
+			cn = (ShopNGUIController.CategoryNames)component;
 		}
-		else
-		{
-			buyActive = viewedId != null && !flag2 && num == 0 && !viewedId.Equals("cape_Custom") && !flag;
-			upgradeActive = viewedId != null && !flag2 && num != 0 && !flag;
-			rentActive = false;
-		}
-		if (!flag2)
-		{
-			int num2 = Wear.TierForWear(WeaponManager.FirstUnboughtTag(viewedId));
-			needTierActive = upgradeActive && ExpController.Instance != null && ExpController.Instance.OurTier < num2 && !flag && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-			if (needTierActive)
-			{
-				int num3 = ((num2 < 0 || num2 >= ExpController.LevelsForTiers.Length) ? ExpController.LevelsForTiers[ExpController.LevelsForTiers.Length - 1] : ExpController.LevelsForTiers[num2]);
-				string text = string.Format("{0} {1} {2}", LocalizationStore.Key_0226, num3, LocalizationStore.Get("Key_1022"));
-				needTierLabel.text = text;
-			}
-			upgrade.isEnabled = (!upgradeActive || !(ExpController.Instance != null) || ExpController.Instance.OurTier >= num2) && !flag;
-		}
-		string text2 = WeaponManager.FirstUnboughtTag(viewedId);
-		bool onlyServerDiscount;
-		int num4 = DiscountFor(text2, out onlyServerDiscount);
-		if (!flag2 && !flag && !needTierActive && num4 > 0 && (text2 == null || !text2.Equals("cape_Custom") || !inGame) && (!(text2 == "cape_Custom") || !Defs.isDaterRegim))
-		{
-			saleActive = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted) && !InTrainingAfterNoviceArmorRemoved;
-			salePerc.text = num4 + "%";
-		}
-		else
-		{
-			saleActive = false;
-		}
-		saleRentActive = false;
+		return str;
 	}
 
-	private void UpdateTryGunDiscountTime()
+	private static string TemppOrHighestDPSGunInCategory(int cInt)
 	{
-		try
+		string tag = null;
+		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.FilteredShopLists != null && WeaponManager.sharedManager.FilteredShopLists.Count > cInt)
 		{
-			tryGunDiscountTime.text = TempItemsController.TempItemTimeRemainsStringRepresentation(WeaponManager.sharedManager.StartTimeForTryGunDiscount(viewedId) + (long)WeaponManager.TryGunPromoDuration() - PromoActionsManager.CurrentUnixTime);
+			List<GameObject> item = WeaponManager.sharedManager.FilteredShopLists[cInt];
+			GameObject gameObject = item.Find((GameObject w) => ItemDb.IsTemporaryGun(ItemDb.GetByPrefabName(w.name.Replace("(Clone)", string.Empty)).Tag));
+			if (gameObject != null)
+			{
+				tag = ItemDb.GetByPrefabName(gameObject.name.Replace("(Clone)", string.Empty)).Tag;
+			}
+			if (tag == null && item.Count > 0)
+			{
+				int count = item.Count - 1;
+				while (count >= 0)
+				{
+					string str = ItemDb.GetByPrefabName(item[count].name.Replace("(Clone)", string.Empty)).Tag;
+					if (ItemDb.IsTemporaryGun(str) || !(ExpController.Instance != null) || item[count].GetComponent<WeaponSounds>().tier > ExpController.Instance.OurTier)
+					{
+						count--;
+					}
+					else
+					{
+						tag = str;
+						break;
+					}
+				}
+			}
 		}
-		catch (Exception ex)
+		return tag;
+	}
+
+	public static Texture TextureForCat(int cc)
+	{
+		bool flag;
+		string str;
+		ShopNGUIController.CategoryNames categoryName = (ShopNGUIController.CategoryNames)cc;
+		if (!ShopNGUIController.IsWeaponCategory(categoryName))
 		{
-			Debug.LogError("Exception in tryGunDiscountPanelActive.text: " + ex);
+			str = (!ShopNGUIController.IsWearCategory(categoryName) ? "potion" : ShopNGUIController.sharedShop.WearForCat(categoryName));
 		}
+		else
+		{
+			str = ShopNGUIController._CurrentWeaponSetIDs()[(int)categoryName];
+		}
+		string str1 = str;
+		if (str1 == null)
+		{
+			return null;
+		}
+		str1 = ShopNGUIController.ItemIDForPrefab(str1, categoryName);
+		int num = 1;
+		if (ShopNGUIController.IsWeaponCategory(categoryName))
+		{
+			ItemRecord byTag = ItemDb.GetByTag(str1);
+			if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
+			{
+				num = ShopNGUIController._CurrentNumberOfUpgrades(str1, out flag, categoryName, true);
+			}
+		}
+		string str2 = string.Concat((!ShopNGUIController.IsWeaponCategory(categoryName) ? str1 : ShopNGUIController._TagForId(str1) ?? string.Empty), "_icon", num);
+		string str3 = string.Concat(str2, "_big");
+		Texture texture = Resources.Load<Texture>(string.Concat("OfferIcons/", str3));
+		if (texture == null)
+		{
+			texture = Resources.Load<Texture>(string.Concat("ShopIcons/", str2));
+		}
+		return texture;
+	}
+
+	private static string TryGunForCategoryWithMaxUnbought()
+	{
+		List<ShopNGUIController.CategoryNames> categoryNames = new List<ShopNGUIController.CategoryNames>()
+		{
+			ShopNGUIController.CategoryNames.PrimaryCategory,
+			ShopNGUIController.CategoryNames.BackupCategory,
+			ShopNGUIController.CategoryNames.MeleeCategory,
+			ShopNGUIController.CategoryNames.SpecilCategory,
+			ShopNGUIController.CategoryNames.SniperCategory,
+			ShopNGUIController.CategoryNames.PremiumCategory
+		};
+		List<ShopNGUIController.CategoryNames> list = (
+			from cat in categoryNames.Randomize<ShopNGUIController.CategoryNames>()
+			orderby (
+				from w in (IEnumerable<UnityEngine.Object>)WeaponManager.sharedManager.weaponsInGame
+				select ((GameObject)w).GetComponent<WeaponSounds>() into ws
+				where (ws.categoryNabor - 1 != (int)cat ? false : ws.tier == ExpController.OurTierForAnyPlace())
+				where (!WeaponManager.tagToStoreIDMapping.ContainsKey(ItemDb.GetByPrefabName(ws.name).Tag) || !WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]) ? false : Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]], true) == 1)
+				select ws).ToList<WeaponSounds>().Count
+			select cat).ToList<ShopNGUIController.CategoryNames>();
+		string tag = null;
+		int num = 0;
+		while (num < list.Count)
+		{
+			ShopNGUIController.CategoryNames item = list[num];
+			List<WeaponSounds> weaponSounds = (
+				from w in (IEnumerable<UnityEngine.Object>)WeaponManager.sharedManager.weaponsInGame
+				select ((GameObject)w).GetComponent<WeaponSounds>() into ws
+				where (ws.categoryNabor - 1 != (int)item ? false : ws.tier == ExpController.OurTierForAnyPlace())
+				select ws).Where<WeaponSounds>((WeaponSounds ws) => {
+				List<string> strs = WeaponUpgrades.ChainForTag(ItemDb.GetByPrefabName(ws.name).Tag);
+				return (strs == null ? true : (strs.Count <= 0 ? false : strs[0] == ItemDb.GetByPrefabName(ws.name).Tag));
+			}).Where<WeaponSounds>((WeaponSounds ws) => (!WeaponManager.tagToStoreIDMapping.ContainsKey(ItemDb.GetByPrefabName(ws.name).Tag) || !WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]) ? false : Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]], true) == 0)).Where<WeaponSounds>((WeaponSounds ws) => WeaponManager.tryGunsTable[item][ExpController.OurTierForAnyPlace()].Contains(ItemDb.GetByTag(ItemDb.GetByPrefabName(ws.name).Tag).PrefabName)).Where<WeaponSounds>((WeaponSounds ws) => (WeaponManager.sharedManager.IsAvailableTryGun(ItemDb.GetByPrefabName(ws.name).Tag) ? false : !WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(ItemDb.GetByPrefabName(ws.name).Tag))).Randomize<WeaponSounds>().ToList<WeaponSounds>();
+			if (weaponSounds.Count<WeaponSounds>() != 0)
+			{
+				tag = ItemDb.GetByPrefabName(weaponSounds.First<WeaponSounds>().name).Tag;
+				break;
+			}
+			else
+			{
+				num++;
+			}
+		}
+		return tag;
+	}
+
+	public static void TryToBuy(GameObject mainPanel, ItemPrice price, Action onSuccess, Action onFailure = null, Func<bool> successAdditionalCond = null, Action onReturnFromBank = null, Action onEnterCoinsShopAction = null, Action onExitCoinsShopAction = null)
+	{
+		UnityEngine.Debug.Log("Trying to buy from ShopNGUIController...");
+		if (BankController.Instance == null)
+		{
+			UnityEngine.Debug.LogWarning("BankController.Instance == null");
+			return;
+		}
+		if (price == null)
+		{
+			UnityEngine.Debug.LogWarning("price == null");
+			return;
+		}
+		EventHandler instance = null;
+		instance = (object sender, EventArgs e) => {
+			BankController.Instance.BackRequested -= instance;
+			BankController.Instance.InterfaceEnabled = false;
+			coinsShop.thisScript.notEnoughCurrency = null;
+			if (mainPanel != null)
+			{
+				mainPanel.SetActive(true);
+			}
+			if (onReturnFromBank != null)
+			{
+				onReturnFromBank();
+			}
+			if (onExitCoinsShopAction != null)
+			{
+				onExitCoinsShopAction();
+			}
+		};
+		EventHandler eventHandler = null;
+		eventHandler = (object sender, EventArgs e) => {
+			BankController.Instance.BackRequested -= eventHandler;
+			mainPanel.SetActive(true);
+			coinsShop.thisScript.notEnoughCurrency = null;
+			coinsShop.thisScript.onReturnAction = null;
+			int num = Storager.getInt(price.Currency, false);
+			num -= price.Price;
+			bool flag = num >= 0;
+			flag = (successAdditionalCond == null ? flag : (successAdditionalCond() ? true : flag));
+			if (!flag)
+			{
+				if (onFailure != null)
+				{
+					onFailure();
+				}
+				coinsShop.thisScript.notEnoughCurrency = price.Currency;
+				UnityEngine.Debug.Log("Trying to display bank interface...");
+				BankController.Instance.BackRequested += instance;
+				BankController.Instance.InterfaceEnabled = true;
+				mainPanel.SetActive(false);
+				if (onEnterCoinsShopAction != null)
+				{
+					onEnterCoinsShopAction();
+				}
+			}
+			else
+			{
+				Storager.setInt(price.Currency, num, false);
+				ShopNGUIController.SpendBoughtCurrency(price.Currency, price.Price);
+				if (Application.platform != RuntimePlatform.IPhonePlayer)
+				{
+					PlayerPrefs.Save();
+				}
+				if (FriendsController.useBuffSystem)
+				{
+					BuffSystem.instance.OnSomethingPurchased();
+				}
+				if (onSuccess != null)
+				{
+					onSuccess();
+				}
+			}
+		};
+		eventHandler(BankController.Instance, EventArgs.Empty);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator TryToShowExpiredBanner()
+	{
+		ShopNGUIController.u003cTryToShowExpiredBanneru003ec__Iterator1AB variable = null;
+		return variable;
+	}
+
+	public static void UnequipCurrentWearInCategory(ShopNGUIController.CategoryNames cat, bool inGameLocal)
+	{
+		bool flag = !Defs.isMulti;
+		string str = Storager.getString(ShopNGUIController.SnForWearCategory(cat), false);
+		Player_move_c component = null;
+		if (inGameLocal)
+		{
+			if (flag)
+			{
+				if (!SceneLoader.ActiveSceneName.Equals("LevelComplete") && !SceneLoader.ActiveSceneName.Equals("ChooseLevel"))
+				{
+					component = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
+				}
+			}
+			else if (WeaponManager.sharedManager.myPlayer != null)
+			{
+				component = WeaponManager.sharedManager.myPlayerMoveC;
+			}
+		}
+		Storager.setString(ShopNGUIController.SnForWearCategory(cat), ShopNGUIController.NoneEquippedForWearCategory(cat), false);
+		FriendsController.sharedController.SendAccessories();
+		ShopNGUIController.sharedShop.SetWearForCategory(cat, ShopNGUIController.NoneEquippedForWearCategory(cat));
+		if (ShopNGUIController.sharedShop.wearEquipAction != null)
+		{
+			ShopNGUIController.sharedShop.wearEquipAction(cat, str ?? ShopNGUIController.NoneEquippedForWearCategory(cat), ShopNGUIController.NoneEquippedForWearCategory(cat));
+		}
+		if (cat == ShopNGUIController.CategoryNames.BootsCategory && inGameLocal && component != null && !str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.bootsMethods.ContainsKey(str))
+		{
+			Wear.bootsMethods[str].Value(component, new Dictionary<string, object>());
+		}
+		if (cat == ShopNGUIController.CategoryNames.CapesCategory && inGameLocal && component != null && !str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.capesMethods.ContainsKey(str))
+		{
+			Wear.capesMethods[str].Value(component, new Dictionary<string, object>());
+		}
+		if (cat == ShopNGUIController.CategoryNames.HatsCategory && inGameLocal && component != null && !str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.hatsMethods.ContainsKey(str))
+		{
+			Wear.hatsMethods[str].Value(component, new Dictionary<string, object>());
+		}
+		if (cat == ShopNGUIController.CategoryNames.ArmorCategory && inGameLocal && component != null && !str.Equals(ShopNGUIController.NoneEquippedForWearCategory(cat)) && Wear.armorMethods.ContainsKey(str))
+		{
+			Wear.armorMethods[str].Value(component, new Dictionary<string, object>());
+		}
+		if (ShopNGUIController.sharedShop.wearUnequipAction != null)
+		{
+			ShopNGUIController.sharedShop.wearUnequipAction(cat, str ?? ShopNGUIController.NoneEquippedForWearCategory(cat));
+		}
+		if (ShopNGUIController.GuiActive)
+		{
+			ShopNGUIController.sharedShop.UpdateIcon(cat, false);
+		}
+	}
+
+	private void Update()
+	{
+		string child;
+		float single;
+		if (!this.ActiveObject.activeInHierarchy)
+		{
+			return;
+		}
+		ExperienceController.sharedController.isShowRanks = (this.rentScreenPoint.childCount != 0 || !(SkinEditorController.sharedController == null) ? false : (BankController.Instance == null ? 0 : (int)BankController.Instance.InterfaceEnabled) == 0);
+		if (Time.realtimeSinceStartup - this.timeToUpdateTempGunTime >= 1f)
+		{
+			this.timeToUpdateTempGunTime = Time.realtimeSinceStartup;
+			if (ShopNGUIController.GuiActive && this.viewedId != null && WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(this.viewedId))
+			{
+				this.UpdateTryGunDiscountTime();
+			}
+		}
+		if (this.hatPoint.transform.childCount <= 1)
+		{
+			child = (this.hatPoint.transform.childCount <= 0 ? "none" : this.hatPoint.transform.GetChild(0).gameObject.tag);
+		}
+		else
+		{
+			child = this.hatPoint.transform.GetChild(1).gameObject.tag;
+		}
+		string str = child;
+		bool flag = (this.currentCategory != ShopNGUIController.CategoryNames.HatsCategory ? false : !Wear.NonArmorHat(str));
+		bool flag1 = (this.currentCategory != ShopNGUIController.CategoryNames.ArmorCategory || this.viewedId == null ? false : !TempItemsController.PriceCoefs.ContainsKey(this.viewedId));
+		if (this.showArmorButton.gameObject.activeSelf != flag1)
+		{
+			this.showArmorButton.gameObject.SetActive(flag1);
+		}
+		bool flag2 = false;
+		if (this.showHatButton.gameObject.activeSelf != flag2)
+		{
+			this.showHatButton.gameObject.SetActive(flag2);
+		}
+		bool flag3 = (this.currentCategory != ShopNGUIController.CategoryNames.ArmorCategory || this.viewedId == null ? false : TempItemsController.PriceCoefs.ContainsKey(this.viewedId));
+		if (this.showArmorButtonTempArmor.gameObject.activeSelf != flag3)
+		{
+			this.showArmorButtonTempArmor.gameObject.SetActive(flag3);
+		}
+		bool flag4 = (!flag || this.viewedId == null ? false : TempItemsController.PriceCoefs.ContainsKey(this.viewedId));
+		if (this.showHatButtonTempHat.gameObject.activeSelf != flag4)
+		{
+			this.showHatButtonTempHat.gameObject.SetActive(flag4);
+		}
+		if (Time.realtimeSinceStartup - this._timePurchaseSuccessfulShown >= 2f)
+		{
+			this.purchaseSuccessful.SetActive(false);
+		}
+		if (Time.realtimeSinceStartup - this._timePurchaseRentSuccessfulShown >= 2f)
+		{
+			this.purchaseSuccessfulRent.SetActive(false);
+		}
+		if (this.mainPanel.activeInHierarchy && !HOTween.IsTweening(this.MainMenu_Pers))
+		{
+			float single1 = -120f;
+			float single2 = single1;
+			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
+			{
+				single = (!Application.isEditor ? 0.5f : 100f);
+			}
+			else
+			{
+				single = 2f;
+			}
+			single1 = single2 * single;
+			Rect rect = new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height);
+			if (Input.touchCount > 0)
+			{
+				Touch touch = Input.GetTouch(0);
+				if (touch.phase == TouchPhase.Moved && rect.Contains(touch.position))
+				{
+					this.idleTimerLastTime = Time.realtimeSinceStartup;
+					Transform mainMenuPers = this.MainMenu_Pers;
+					Vector3 vector3 = Vector3.up;
+					Vector2 vector2 = touch.deltaPosition;
+					mainMenuPers.Rotate(vector3, vector2.x * single1 * 0.5f * (Time.realtimeSinceStartup - this.lastTime));
+				}
+			}
+			if (Application.isEditor)
+			{
+				float axis = Input.GetAxis("Mouse ScrollWheel") * 3f * single1 * (Time.realtimeSinceStartup - this.lastTime);
+				this.MainMenu_Pers.Rotate(Vector3.up, axis);
+				if (axis != 0f)
+				{
+					this.idleTimerLastTime = Time.realtimeSinceStartup;
+				}
+			}
+			this.lastTime = Time.realtimeSinceStartup;
+		}
+		if (this.currentCategory != ShopNGUIController.CategoryNames.CapesCategory && Time.realtimeSinceStartup - this.idleTimerLastTime > ShopNGUIController.IdleTimeoutPers)
+		{
+			this.SetCamera();
+		}
+		ActivityIndicator.IsActiveIndicator = StoreKitEventListener.restoreInProcess;
+		this.CheckCenterItemChanging();
 	}
 
 	public void UpdateButtons()
 	{
-		bool flag = false;
-		bool flag2 = false;
-		bool flag3 = false;
-		bool flag4 = false;
-		bool flag5 = false;
-		bool flag6 = false;
-		bool flag7 = false;
-		bool flag8 = false;
-		bool buyActive = false;
-		bool rentActive = false;
-		bool flag9 = false;
-		bool flag10 = false;
-		wholePrice2Gear.SetActive(false);
-		bool upgradeActive = false;
-		bool[] array = new bool[2];
-		bool saleActive = false;
-		bool flag11 = false;
-		bool needTierActive = false;
-		bool flag12 = viewedId != null && TempItemsController.PriceCoefs.ContainsKey(viewedId);
-		rentProperties.SetActive(viewedId != null && TempItemsController.IsCategoryContainsTempItems(currentCategory) && TempItemsController.PriceCoefs.ContainsKey(viewedId));
-		prolongateRentText.SetActive(viewedId != null && TempItemsController.PriceCoefs.ContainsKey(viewedId) && TempItemsController.sharedController != null && TempItemsController.sharedController.ContainsItem(viewedId));
-		bool saleRentActive = false;
-		upgrade.isEnabled = true;
-		upgradeGear.isEnabled = true;
-		if (WeaponCategory)
+		bool flag;
+		long num;
+		bool flag1;
+		bool flag2;
+		bool flag3;
+		bool flag4;
+		bool flag5;
+		int num1;
+		bool flag6;
+		bool flag7;
+		bool flag8;
+		bool flag9;
+		string str;
+		GameObject upgrade3;
+		bool flag10;
+		bool flag11;
+		bool flag12;
+		bool flag13;
+		bool flag14 = false;
+		bool flag15 = false;
+		bool flag16 = false;
+		bool flag17 = false;
+		bool flag18 = false;
+		bool flag19 = false;
+		bool flag20 = false;
+		bool flag21 = false;
+		bool flag22 = false;
+		bool flag23 = false;
+		bool flag24 = false;
+		bool flag25 = false;
+		this.wholePrice2Gear.SetActive(false);
+		bool flag26 = false;
+		bool[] flagArray = new bool[2];
+		bool flag27 = false;
+		bool flag28 = false;
+		bool flag29 = false;
+		bool flag30 = (this.viewedId == null ? false : TempItemsController.PriceCoefs.ContainsKey(this.viewedId));
+		this.rentProperties.SetActive((this.viewedId == null || !TempItemsController.IsCategoryContainsTempItems(this.currentCategory) ? false : TempItemsController.PriceCoefs.ContainsKey(this.viewedId)));
+		this.prolongateRentText.SetActive((this.viewedId == null || !TempItemsController.PriceCoefs.ContainsKey(this.viewedId) || !(TempItemsController.sharedController != null) ? false : TempItemsController.sharedController.ContainsItem(this.viewedId)));
+		bool flag31 = false;
+		this.upgrade.isEnabled = true;
+		this.upgradeGear.isEnabled = true;
+		if (!this.WeaponCategory)
 		{
-			WeaponSounds weaponSounds = null;
-			WeaponSounds weaponSounds2 = null;
-			string text = null;
-			string text2 = null;
-			if (viewedId != null)
+			if (this.weaponProperties.activeSelf)
 			{
-				text = WeaponManager.FirstUnboughtTag(viewedId) ?? viewedId;
-				string text3 = WeaponManager.FirstTagForOurTier(viewedId);
-				List<string> list = WeaponUpgrades.ChainForTag(viewedId);
-				if (text3 != null && list != null && list.IndexOf(text3) > list.IndexOf(text))
+				this.weaponProperties.SetActive(false);
+			}
+			if (this.meleeProperties.activeSelf)
+			{
+				this.meleeProperties.SetActive(false);
+			}
+			if (this.upgradesAnchor.activeSelf)
+			{
+				this.upgradesAnchor.SetActive(false);
+			}
+			if (this.SpecialParams.activeSelf)
+			{
+				this.SpecialParams.SetActive(false);
+			}
+			switch (this.currentCategory)
+			{
+				case ShopNGUIController.CategoryNames.HatsCategory:
+				case ShopNGUIController.CategoryNames.ArmorCategory:
+				case ShopNGUIController.CategoryNames.CapesCategory:
+				case ShopNGUIController.CategoryNames.BootsCategory:
+				case ShopNGUIController.CategoryNames.MaskCategory:
 				{
-					text = text3;
-				}
-				text2 = WeaponManager.LastBoughtTag(viewedId);
-				foreach (WeaponSounds item in WeaponManager.AllWrapperPrefabs())
-				{
-					if (!ItemDb.GetByPrefabName(item.name).Tag.Equals(text2 ?? viewedId))
+					string str1 = WeaponManager.LastBoughtTag(this.viewedId);
+					bool flag32 = str1 != null;
+					bool flag33 = (!flag32 ? false : this._CurrentEquippedWear.Equals(str1));
+					string str2 = WeaponManager.FirstUnboughtTag(this.viewedId);
+					this.SetUpUpgradesAndTiers(flag32, ref flag22, ref flag26, ref flag27, ref flag29, ref flag23, ref flag31);
+					if (!(this.viewedId != "Armor_Novice") || !flag32 || flag33 || str1 == null || !str1.Equals(this.viewedId) || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted && this.trainingState < ShopNGUIController.TrainingState.OnArmor)
 					{
-						continue;
+						flag3 = false;
 					}
-					weaponSounds = item;
-					foreach (WeaponSounds item2 in WeaponManager.AllWrapperPrefabs())
+					else
 					{
-						if (ItemDb.GetByPrefabName(item2.name).Tag.Equals(text))
+						flag3 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+					}
+					bool flag34 = flag3;
+					flag21 = (!(this.viewedId != "Armor_Novice") || !flag32 || !flag33 || str1 == null || !str1.Equals(this.viewedId) || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+					if (this.viewedId == "Armor_Novice")
+					{
+						flag4 = true;
+					}
+					else
+					{
+						flag4 = (str1 == null || !this._CurrentEquippedWear.Equals(str1) || flag26 ? false : !flag30);
+					}
+					bool flag35 = flag4;
+					if (!flag32 && this.viewedId != null && this.viewedId.Equals("cape_Custom"))
+					{
+						flag16 = (this.inGame || Defs.isDaterRegim || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+					}
+					if (!this.inGame && flag32 && this.viewedId != null && this.viewedId.Equals("cape_Custom"))
+					{
+						flag17 = (Defs.isDaterRegim || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+					}
+					if (flag26 || flag30)
+					{
+						if (!flag34)
 						{
-							weaponSounds2 = item2;
-							break;
+							flag5 = false;
 						}
+						else if (flag30)
+						{
+							flag5 = true;
+						}
+						else
+						{
+							flag5 = (this.viewedId == null || str2 == null ? false : (str1 == null || str1.Equals(str2) ? 0 : (int)str2.Equals(this.viewedId)) == 0);
+						}
+						flag19 = flag5;
+						flag20 = false;
 					}
-					break;
-				}
-			}
-			bool flag13 = false;
-			bool maxUpgrade = false;
-			int num = ((viewedId == null) ? (-1) : _CurrentNumberOfUpgrades(viewedId, out maxUpgrade, currentCategory));
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsAvailableTryGun(viewedId))
-			{
-				num = 0;
-			}
-			flag13 = maxUpgrade && (!(WeaponManager.sharedManager != null) || !WeaponManager.sharedManager.IsAvailableTryGun(viewedId));
-			buyActive = viewedId != null && !flag13 && num == 0 && !flag12 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-			upgradeActive = viewedId != null && !flag13 && num != 0 && weaponSounds2.tier < 100 && !flag12 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-			rentActive = false;
-			if (WeaponManager.sharedManager != null && viewedId != null)
-			{
-				flag = WeaponManager.sharedManager.IsAvailableTryGun(viewedId);
-				if (flag)
-				{
+					else
+					{
+						flag19 = false;
+						flag20 = (!flag34 || this.viewedId == null || str2 == null ? false : (str1 == null || str1.Equals(str2) ? 0 : (int)str2.Equals(this.viewedId)) == 0);
+					}
+					if (!(this.viewedId == "cape_Custom") || !flag32)
+					{
+						bool[] flagArray1 = flagArray;
+						num1 = (!flag26 ? 1 : 0);
+						if (!flag35)
+						{
+							flag6 = false;
+						}
+						else if (flag30)
+						{
+							flag6 = true;
+						}
+						else
+						{
+							flag6 = (this.viewedId == null || str2 == null ? false : (str1 == null || str1.Equals(str2) ? 0 : (int)str2.Equals(this.viewedId)) == 0);
+						}
+						flagArray1[num1] = flag6;
+						flagArray[(!flag26 ? 0 : 1)] = false;
+					}
+					else
+					{
+						flagArray[1] = flag35;
+						flagArray[0] = false;
+					}
 					try
 					{
-						tryGunMatchesCount.text = ((SaltedInt)WeaponManager.sharedManager.TryGuns[viewedId]["NumberOfMatchesKey"]).Value.ToString();
+						if (this.currentCategory != ShopNGUIController.CategoryNames.ArmorCategory)
+						{
+							this.nonArmorWearDEscription.text = LocalizationStore.Get(Wear.descriptionLocalizationKeys[this.viewedId]);
+						}
+						else
+						{
+							UILabel uILabel = this.armorCountLabel;
+							float item = Wear.armorNum[this.viewedId];
+							uILabel.text = item.ToString();
+							this.armorCountLabel.gameObject.SetActive(this.viewedId != "Armor_Novice");
+							this.armorWearDescription.text = LocalizationStore.Get("Key_0354");
+						}
 					}
-					catch (Exception ex)
+					catch (Exception exception)
 					{
-						Debug.LogError("Exception in tryGunMatchesCount.text: " + ex);
+						UnityEngine.Debug.LogError(string.Concat("Exception in setting desciption for wear: ", exception));
 					}
-				}
-				flag2 = WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(viewedId);
-				if (flag2)
-				{
-					UpdateTryGunDiscountTime();
-				}
-			}
-			needTierActive = upgradeActive && weaponSounds2 != null && ExpController.Instance != null && ExpController.Instance.OurTier < weaponSounds2.tier && !flag12 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-			if (weaponSounds2 != null && viewedId == ItemDb.GetByPrefabName(weaponSounds.name).Tag)
-			{
-				needTierActive = false;
-			}
-			if (needTierActive)
-			{
-				int num2 = ((weaponSounds2.tier < 0 || weaponSounds2.tier >= ExpController.LevelsForTiers.Length) ? ExpController.LevelsForTiers[ExpController.LevelsForTiers.Length - 1] : ExpController.LevelsForTiers[weaponSounds2.tier]);
-				string text4 = string.Format("{0} {1} {2}", LocalizationStore.Key_0226, num2, LocalizationStore.Get("Key_1022"));
-				needTierLabel.text = text4;
-			}
-			upgrade.isEnabled = !upgradeActive || !(weaponSounds2 != null) || !(ExpController.Instance != null) || ExpController.Instance.OurTier >= weaponSounds2.tier;
-			string text5 = null;
-			if (viewedId != null)
-			{
-				text5 = WeaponManager.LastBoughtTag(viewedId);
-			}
-			if (text5 == null && viewedId != null && WeaponManager.sharedManager.IsAvailableTryGun(viewedId))
-			{
-				text5 = viewedId;
-			}
-			bool flag14 = text5 != null && viewedId != null && (chosenId == null || !chosenId.Equals(text5)) && viewedId != null && (num > 0 || WeaponManager.sharedManager.IsAvailableTryGun(viewedId)) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-			bool flag15 = !string.IsNullOrEmpty(viewedId) && ((_CurrentWeaponSetIDs()[(int)currentCategory] != null && _CurrentWeaponSetIDs()[(int)currentCategory].Equals(WeaponManager.LastBoughtTag(viewedId) ?? string.Empty)) || (WeaponManager.sharedManager.IsAvailableTryGun(viewedId) && _CurrentWeaponSetIDs()[(int)currentCategory].Equals(viewedId))) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-			if ((upgradeActive || flag12 || WeaponManager.sharedManager.IsAvailableTryGun(viewedId)) && viewedId != null && text != null && (flag12 || !text.Equals(viewedId) || WeaponManager.sharedManager.IsAvailableTryGun(viewedId)) && flag14)
-			{
-				flag6 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-				flag7 = false;
-			}
-			if ((upgradeActive || flag12 || WeaponManager.sharedManager.IsAvailableTryGun(viewedId)) && viewedId != null && text != null && (flag12 || !text.Equals(viewedId) || WeaponManager.sharedManager.IsAvailableTryGun(viewedId)) && flag15)
-			{
-				array[0] = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-				array[1] = false;
-			}
-			if (!upgradeActive && !flag12 && !buyActive && flag14)
-			{
-				flag6 = false;
-				flag7 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-			}
-			if (!upgradeActive && !flag12 && !buyActive && flag15)
-			{
-				array[0] = false;
-				array[1] = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || viewedId == WeaponTags.HunterRifleTag) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-			}
-			bool onlyServerDiscount;
-			int num3 = DiscountFor(text, out onlyServerDiscount);
-			if (!flag13 && !flag12 && weaponSounds != null && weaponSounds.tier < 100 && !needTierActive && num3 > 0)
-			{
-				saleActive = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-				salePerc.text = num3 + "%";
-			}
-			else
-			{
-				saleActive = false;
-			}
-			saleRentActive = false;
-			if (text != null)
-			{
-				int num4 = 1;
-				int num5 = 0;
-				if (num4 == 1 && text2 != null && text.Equals(text2))
-				{
-					num5 = 1;
-				}
-				foreach (List<string> upgrade in WeaponUpgrades.upgrades)
-				{
-					if (!upgrade.Contains(text))
-					{
-						continue;
-					}
-					num4 = upgrade.Count;
-					if (text2 != null)
-					{
-						num5 = upgrade.IndexOf(text2) + 1;
-						break;
-					}
-					string text6 = WeaponManager.FirstTagForOurTier(text);
-					if (text6 != null && upgrade.IndexOf(text6) > 0)
-					{
-						num5 = upgrade.IndexOf(text6);
-					}
+					this.UpdateTempItemTime();
 					break;
 				}
-				bool flag16 = (!weaponSounds.isMelee || weaponSounds.isShotMelee) && viewedId != null;
-				if (weaponProperties.activeSelf != flag16)
+				case ShopNGUIController.CategoryNames.SkinsCategory:
 				{
-					weaponProperties.SetActive(flag16);
-				}
-				bool flag17 = weaponSounds.isMelee && !weaponSounds.isShotMelee && viewedId != null;
-				if (meleeProperties.activeSelf != flag17)
-				{
-					meleeProperties.SetActive(flag17);
-				}
-				if (upgradesAnchor.activeSelf != (viewedId != null && !flag12))
-				{
-					upgradesAnchor.SetActive(viewedId != null && !flag12);
-				}
-				bool flag18 = num4 == 1 && !flag12;
-				if (upgrade_1.activeSelf != flag18)
-				{
-					upgrade_1.SetActive(flag18);
-				}
-				bool flag19 = num4 == 2 && !flag12;
-				if (upgrade_2.activeSelf != flag19)
-				{
-					upgrade_2.SetActive(flag19);
-				}
-				bool flag20 = num4 == 3 && !flag12;
-				if (upgrade_3.activeSelf != flag20)
-				{
-					upgrade_3.SetActive(flag20);
-				}
-				if (num4 > 0)
-				{
-					GameObject obj;
-					switch (num4)
+					flag16 = false;
+					bool flag36 = false;
+					bool flag37 = false;
+					bool num2 = false;
+					bool flag38 = this.viewedId == "61";
+					bool flag39 = false;
+					if (this.viewedId.Equals("CustomSkinID"))
 					{
-					case 3:
-						obj = upgrade_3;
-						break;
-					case 2:
-						obj = upgrade_2;
-						break;
-					default:
-						obj = upgrade_1;
-						break;
-					}
-					GameObject gameObject = obj;
-					GameObject[] array2 = upgradeSprites1;
-					if (num4 == 3)
-					{
-						array2 = upgradeSprites3;
-					}
-					if (num4 == 2)
-					{
-						array2 = upgradeSprites2;
-					}
-					if (array2 == null)
-					{
-						array2 = new GameObject[0];
-					}
-					GameObject[] array3 = array2;
-					if (_003C_003Ef__am_0024cacheC9 == null)
-					{
-						_003C_003Ef__am_0024cacheC9 = _003CUpdateButtons_003Em__4ED;
-					}
-					Array.Sort(array3, _003C_003Ef__am_0024cacheC9);
-					for (int i = 0; i < array2.Length; i++)
-					{
-						array2[i].SetActive((num5 >= i) ? true : false);
-						if (num5 == i)
+						num2 = Storager.getInt(Defs.SkinsMakerInProfileBought, true) > 0;
+						flag16 = (this.inGame || num2 || Defs.isDaterRegim || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						flag17 = false;
+						flag28 = (this.inGame || !num2 || Defs.isDaterRegim || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						int num3 = ShopNGUIController.DiscountFor(this.viewedId, out flag2);
+						if (num2 || flag29 || num3 <= 0 || this.viewedId != null && this.viewedId.Equals("CustomSkinID") && this.inGame || this.inGame || Defs.isDaterRegim)
 						{
-							array2[i].GetComponent<TweenColor>().enabled = true;
-							continue;
+							flag27 = false;
 						}
-						array2[i].GetComponent<TweenColor>().enabled = false;
-						array2[i].GetComponent<UISprite>().color = new Color(1f, 1f, 1f, 1f);
-					}
-				}
-				UpdateTempItemTime();
-				if (weaponSounds2 == null)
-				{
-					weaponSounds2 = weaponSounds;
-				}
-				int[] array4 = null;
-				array4 = ((!weaponSounds.isMelee || weaponSounds.isShotMelee) ? new int[4]
-				{
-					(!flag12) ? weaponSounds.damageShop : ((int)weaponSounds.DPS),
-					weaponSounds.fireRateShop,
-					weaponSounds.CapacityShop,
-					weaponSounds.mobilityShop
-				} : new int[3]
-				{
-					(!flag12) ? weaponSounds.damageShop : ((int)weaponSounds.DPS),
-					weaponSounds.fireRateShop,
-					weaponSounds.mobilityShop
-				});
-				int[] array5 = null;
-				array5 = ((!weaponSounds.isMelee || weaponSounds.isShotMelee) ? new int[4]
-				{
-					(!flag12) ? weaponSounds2.damageShop : ((int)weaponSounds2.DPS),
-					weaponSounds2.fireRateShop,
-					weaponSounds2.CapacityShop,
-					weaponSounds2.mobilityShop
-				} : new int[3]
-				{
-					(!flag12) ? weaponSounds2.damageShop : ((int)weaponSounds2.DPS),
-					weaponSounds2.fireRateShop,
-					weaponSounds2.mobilityShop
-				});
-				bool flag21 = text2 != null && text != null && text2 != text && viewedId != null && text2 == viewedId;
-				int[] array6 = ((!flag21) ? array5 : array4);
-				if (weaponSounds.isMelee && !weaponSounds.isShotMelee)
-				{
-					damageMelee.text = GetWeaponStatText(array4[0], array6[0]);
-					fireRateMElee.text = GetWeaponStatText(array4[1], array6[1]);
-					mobilityMelee.text = GetWeaponStatText(array4[2], array6[2]);
-				}
-				else
-				{
-					damage.text = GetWeaponStatText(array4[0], array6[0]);
-					fireRate.text = GetWeaponStatText(array4[1], array6[1]);
-					capacity.text = GetWeaponStatText(array4[2], array6[2]);
-					mobility.text = GetWeaponStatText(array4[3], array6[3]);
-				}
-				if (!SpecialParams.activeSelf)
-				{
-					SpecialParams.SetActive(true);
-				}
-				float num6 = 0.81500006f;
-				if (weaponSounds2 == null)
-				{
-					weaponSounds2 = weaponSounds;
-				}
-				WeaponSounds weaponSounds3 = ((!flag21) ? weaponSounds2 : weaponSounds);
-				if (weaponSounds3 != null)
-				{
-					if (!FriendsController.SandboxEnabled && weaponSounds3.InShopEffects.Contains(WeaponSounds.Effects.ForSandbox))
-					{
-						weaponSounds3.InShopEffects.Remove(WeaponSounds.Effects.ForSandbox);
-					}
-					float num7 = 90f / (float)weaponSounds3.InShopEffects.Count;
-					for (int j = 0; j < effectsLabels.Count; j++)
-					{
-						if (effectsLabels[j].gameObject.activeSelf != j < weaponSounds3.InShopEffects.Count)
+						else
 						{
-							effectsLabels[j].gameObject.SetActive(j < weaponSounds3.InShopEffects.Count);
+							flag27 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted ? !this.InTrainingAfterNoviceArmorRemoved : false);
+							this.salePerc.text = string.Concat(num3, "%");
 						}
-						if (j >= weaponSounds3.InShopEffects.Count)
+					}
+					else
+					{
+						bool flag40 = false;
+						flag39 = SkinsController.IsSkinBought(this.viewedId, out flag40);
+						flag22 = (!flag40 || flag39 || flag38 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						flag26 = false;
+						flag37 = ((!flag40 || flag39) && !this.viewedId.Equals(SkinsController.currentSkinNameForPers) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) ? !this.InTrainingAfterNoviceArmorRemoved : false);
+						flag21 = false;
+						flag36 = (!flag40 || flag39 ? this.viewedId.Equals(SkinsController.currentSkinNameForPers) : false);
+						flag25 = (!flag38 || flag39 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						bool flag41 = false;
+						flag41 = (!long.TryParse(this.viewedId, out num) ? false : num >= (long)1000000);
+						flag17 = (this.inGame || !flag41 || Defs.isDaterRegim || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						flag18 = (!flag41 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+						int num4 = ShopNGUIController.DiscountFor(this.viewedId, out flag1);
+						if (flag39 || flag38 || flag29 || num4 <= 0)
 						{
-							continue;
+							flag27 = false;
 						}
-						Transform transform = effectsLabels[j].transform;
-						float num8 = 0f;
-						if (weaponSounds3.InShopEffects.Count == 3)
+						else
 						{
-							if (j == 0)
+							flag27 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted ? !this.InTrainingAfterNoviceArmorRemoved : false);
+							this.salePerc.text = string.Concat(num4, "%");
+						}
+					}
+					flag19 = false;
+					flag20 = (!flag37 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+					flagArray[0] = false;
+					flagArray[1] = (!flag36 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+					IEnumerator enumerator = this.skinProperties.transform.GetEnumerator();
+					try
+					{
+						while (enumerator.MoveNext())
+						{
+							Transform current = (Transform)enumerator.Current;
+							if (this.viewedId != null && this.viewedId.Equals("CustomSkinID"))
 							{
-								num8 = 1f;
+								if (num2)
+								{
+									current.gameObject.SetActive(current.gameObject.name.Equals("Custom1_Skin"));
+								}
+								else
+								{
+									current.gameObject.SetActive(current.gameObject.name.Equals("Custom_Skin"));
+								}
 							}
-							if (j == 2)
+							else if (!flag38 || flag39)
 							{
-								num8 = -3f;
+								current.gameObject.SetActive(current.gameObject.name.Equals("Usual_Skin"));
+							}
+							else
+							{
+								current.gameObject.SetActive(current.gameObject.name.Equals("Facebook_Skin"));
 							}
 						}
-						else if (weaponSounds3.InShopEffects.Count == 2)
-						{
-							if (j == 0)
-							{
-								num8 = -6f;
-							}
-							if (j == 1)
-							{
-								num8 = 6f;
-							}
-						}
-						transform.localPosition = new Vector3(transform.localPosition.x, 39f - num7 * ((float)j + 0.5f) + num8, transform.localPosition.z);
-						effectsLabels[j].text = ((weaponSounds3.InShopEffects[j] != WeaponSounds.Effects.Zoom) ? string.Empty : (weaponSounds3.zoomShop + "X ")) + LocalizationStore.Get(WeaponSounds.keysAndSpritesForEffects[weaponSounds3.InShopEffects[j]].Value);
-						effectsSprites[j].spriteName = WeaponSounds.keysAndSpritesForEffects[weaponSounds3.InShopEffects[j]].Key;
 					}
+					finally
+					{
+						IDisposable disposable = enumerator as IDisposable;
+						if (disposable == null)
+						{
+						}
+						disposable.Dispose();
+					}
+					break;
 				}
 			}
 		}
 		else
 		{
-			if (weaponProperties.activeSelf)
+			WeaponSounds weaponSound = null;
+			WeaponSounds weaponSound1 = null;
+			string str3 = null;
+			string str4 = null;
+			if (this.viewedId != null)
 			{
-				weaponProperties.SetActive(false);
-			}
-			if (meleeProperties.activeSelf)
-			{
-				meleeProperties.SetActive(false);
-			}
-			if (upgradesAnchor.activeSelf)
-			{
-				upgradesAnchor.SetActive(false);
-			}
-			if (SpecialParams.activeSelf)
-			{
-				SpecialParams.SetActive(false);
-			}
-			switch (currentCategory)
-			{
-			case CategoryNames.HatsCategory:
-			case CategoryNames.ArmorCategory:
-			case CategoryNames.CapesCategory:
-			case CategoryNames.BootsCategory:
-			case CategoryNames.MaskCategory:
-			{
-				string text7 = WeaponManager.LastBoughtTag(viewedId);
-				bool flag28 = text7 != null;
-				bool flag29 = flag28 && _CurrentEquippedWear.Equals(text7);
-				string text8 = WeaponManager.FirstUnboughtTag(viewedId);
-				SetUpUpgradesAndTiers(flag28, ref buyActive, ref upgradeActive, ref saleActive, ref needTierActive, ref rentActive, ref saleRentActive);
-				bool flag30 = viewedId != "Armor_Novice" && flag28 && !flag29 && text7 != null && text7.Equals(viewedId) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || trainingState >= TrainingState.OnArmor) && (!InTrainingAfterNoviceArmorRemoved || viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
-				flag8 = viewedId != "Armor_Novice" && flag28 && flag29 && text7 != null && text7.Equals(viewedId) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-				bool flag31 = viewedId == "Armor_Novice" || (text7 != null && _CurrentEquippedWear.Equals(text7) && !upgradeActive && !flag12);
-				if (!flag28 && viewedId != null && viewedId.Equals("cape_Custom"))
+				str3 = WeaponManager.FirstUnboughtTag(this.viewedId) ?? this.viewedId;
+				string str5 = WeaponManager.FirstTagForOurTier(this.viewedId);
+				List<string> strs = WeaponUpgrades.ChainForTag(this.viewedId);
+				if (str5 != null && strs != null && strs.IndexOf(str5) > strs.IndexOf(str3))
 				{
-					flag3 = !inGame && !Defs.isDaterRegim && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
+					str3 = str5;
 				}
-				if (!inGame && flag28 && viewedId != null && viewedId.Equals("cape_Custom"))
+				str4 = WeaponManager.LastBoughtTag(this.viewedId);
+				foreach (WeaponSounds weaponSound2 in WeaponManager.AllWrapperPrefabs())
 				{
-					flag4 = !Defs.isDaterRegim && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-				}
-				if (upgradeActive || flag12)
-				{
-					flag6 = flag30 && (flag12 || (viewedId != null && text8 != null && (text7 == null || text7.Equals(text8) || !text8.Equals(viewedId))));
-					flag7 = false;
-				}
-				else
-				{
-					flag6 = false;
-					flag7 = flag30 && viewedId != null && text8 != null && (text7 == null || text7.Equals(text8) || !text8.Equals(viewedId));
-				}
-				if (viewedId == "cape_Custom" && flag28)
-				{
-					array[1] = flag31;
-					array[0] = false;
-				}
-				else
-				{
-					array[(!upgradeActive) ? 1 : 0] = flag31 && (flag12 || (viewedId != null && text8 != null && (text7 == null || text7.Equals(text8) || !text8.Equals(viewedId))));
-					array[upgradeActive ? 1 : 0] = false;
-				}
-				try
-				{
-					if (currentCategory == CategoryNames.ArmorCategory)
+					if (!ItemDb.GetByPrefabName(weaponSound2.name).Tag.Equals(str4 ?? this.viewedId))
 					{
-						armorCountLabel.text = Wear.armorNum[viewedId].ToString();
-						armorCountLabel.gameObject.SetActive(viewedId != "Armor_Novice");
-						armorWearDescription.text = LocalizationStore.Get("Key_0354");
-					}
-					else
-					{
-						nonArmorWearDEscription.text = LocalizationStore.Get(Wear.descriptionLocalizationKeys[viewedId]);
-					}
-				}
-				catch (Exception ex2)
-				{
-					Debug.LogError("Exception in setting desciption for wear: " + ex2);
-				}
-				UpdateTempItemTime();
-				break;
-			}
-			case CategoryNames.SkinsCategory:
-			{
-				flag3 = false;
-				bool flag22 = false;
-				bool flag23 = false;
-				bool flag24 = false;
-				bool flag25 = viewedId == "61";
-				bool flag26 = false;
-				if (!viewedId.Equals("CustomSkinID"))
-				{
-					bool isForMoneySkin = false;
-					flag26 = SkinsController.IsSkinBought(viewedId, out isForMoneySkin);
-					buyActive = isForMoneySkin && !flag26 && !flag25 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					upgradeActive = false;
-					flag23 = (!isForMoneySkin || flag26) && !viewedId.Equals(SkinsController.currentSkinNameForPers) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					flag8 = false;
-					flag22 = (!isForMoneySkin || flag26) && viewedId.Equals(SkinsController.currentSkinNameForPers);
-					flag10 = flag25 && !flag26 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					bool flag27 = false;
-					long result;
-					flag27 = long.TryParse(viewedId, out result) && result >= 1000000;
-					flag4 = !inGame && flag27 && !Defs.isDaterRegim && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					flag5 = flag27 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					bool onlyServerDiscount2;
-					int num9 = DiscountFor(viewedId, out onlyServerDiscount2);
-					if (!flag26 && !flag25 && !needTierActive && num9 > 0)
-					{
-						saleActive = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-						salePerc.text = num9 + "%";
-					}
-					else
-					{
-						saleActive = false;
-					}
-				}
-				else
-				{
-					flag24 = Storager.getInt(Defs.SkinsMakerInProfileBought, true) > 0;
-					flag3 = !inGame && !flag24 && !Defs.isDaterRegim && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					flag4 = false;
-					flag11 = !inGame && flag24 && !Defs.isDaterRegim && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-					bool onlyServerDiscount3;
-					int num10 = DiscountFor(viewedId, out onlyServerDiscount3);
-					if (!flag24 && !needTierActive && num10 > 0 && (viewedId == null || !viewedId.Equals("CustomSkinID") || !inGame) && !inGame && !Defs.isDaterRegim)
-					{
-						saleActive = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-						salePerc.text = num10 + "%";
-					}
-					else
-					{
-						saleActive = false;
-					}
-				}
-				flag6 = false;
-				flag7 = flag23 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-				array[0] = false;
-				array[1] = flag22 && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && !InTrainingAfterNoviceArmorRemoved;
-				foreach (Transform item3 in skinProperties.transform)
-				{
-					if (viewedId != null && viewedId.Equals("CustomSkinID"))
-					{
-						if (!flag24)
-						{
-							item3.gameObject.SetActive(item3.gameObject.name.Equals("Custom_Skin"));
-						}
-						else
-						{
-							item3.gameObject.SetActive(item3.gameObject.name.Equals("Custom1_Skin"));
-						}
-					}
-					else if (flag25 && !flag26)
-					{
-						item3.gameObject.SetActive(item3.gameObject.name.Equals("Facebook_Skin"));
-					}
-					else
-					{
-						item3.gameObject.SetActive(item3.gameObject.name.Equals("Usual_Skin"));
-					}
-				}
-				break;
-			}
-			}
-		}
-		if (tryGunPanel != null && tryGunPanel.activeSelf != flag)
-		{
-			tryGunPanel.SetActive(flag);
-		}
-		if (tryGunDiscountPanel != null && tryGunDiscountPanel.activeSelf != flag2)
-		{
-			tryGunDiscountPanel.SetActive(flag2);
-		}
-		if (edit != null && edit.gameObject.activeSelf != flag4)
-		{
-			edit.gameObject.SetActive(flag4);
-		}
-		if (enable != null && enable.gameObject.activeSelf != flag3)
-		{
-			enable.gameObject.SetActive(flag3);
-		}
-		if (delete.gameObject.activeSelf != flag5)
-		{
-			delete.gameObject.SetActive(flag5);
-		}
-		if (buy.gameObject.activeSelf != buyActive)
-		{
-			buy.gameObject.SetActive(buyActive);
-		}
-		if (rent.gameObject.activeSelf != rentActive)
-		{
-			rent.gameObject.SetActive(rentActive);
-		}
-		if (equips[0].gameObject.activeSelf != flag6)
-		{
-			equips[0].gameObject.SetActive(flag6);
-		}
-		if (equips[1].gameObject.activeSelf != flag7)
-		{
-			equips[1].gameObject.SetActive(flag7);
-		}
-		if (unequip.gameObject.activeSelf != flag8)
-		{
-			unequip.gameObject.SetActive(flag8);
-		}
-		if (buyGear.gameObject.activeSelf != flag9)
-		{
-			buyGear.gameObject.SetActive(flag9);
-		}
-		if (this.upgrade.gameObject.activeSelf != upgradeActive)
-		{
-			this.upgrade.gameObject.SetActive(upgradeActive);
-		}
-		if (facebookLoginLockedSkinButton.gameObject.activeSelf != flag10)
-		{
-			facebookLoginLockedSkinButton.gameObject.SetActive(flag10);
-		}
-		if (equippeds[0].gameObject.activeSelf != array[0])
-		{
-			equippeds[0].gameObject.SetActive(array[0]);
-		}
-		if (equippeds[1].gameObject.activeSelf != array[1])
-		{
-			equippeds[1].gameObject.SetActive(array[1]);
-		}
-		if (sale.gameObject.activeSelf != saleActive)
-		{
-			sale.gameObject.SetActive(saleActive);
-		}
-		if (saleRent.gameObject.activeSelf != saleRentActive)
-		{
-			saleRent.gameObject.SetActive(saleRentActive);
-		}
-		if (create.gameObject.activeSelf != flag11)
-		{
-			create.gameObject.SetActive(flag11);
-		}
-		if (needTier.gameObject.activeSelf != needTierActive)
-		{
-			needTier.gameObject.SetActive(needTierActive);
-		}
-	}
-
-	private void UpdateTempItemTime()
-	{
-		if (TempItemsController.sharedController != null)
-		{
-			bool flag = TempItemsController.PriceCoefs.ContainsKey(viewedId) && !TempItemsController.sharedController.ContainsItem(viewedId);
-			if (notRented.activeInHierarchy != flag)
-			{
-				notRented.SetActive(flag);
-			}
-			string text = TempItemsController.sharedController.TimeRemainingForItemString(viewedId);
-			bool flag2 = TempItemsController.sharedController.ContainsItem(viewedId) && text.Length < 5;
-			if (daysLeftLabel.gameObject.activeInHierarchy != flag2)
-			{
-				daysLeftLabel.gameObject.SetActive(flag2);
-			}
-			if (daysLeftValueLabel.gameObject.activeInHierarchy != flag2)
-			{
-				daysLeftValueLabel.gameObject.SetActive(flag2);
-			}
-			if (flag2)
-			{
-				daysLeftValueLabel.text = text;
-			}
-			bool flag3 = TempItemsController.sharedController.ContainsItem(viewedId) && text.Length >= 5;
-			if (timeLeftLabel.gameObject.activeInHierarchy != flag3)
-			{
-				timeLeftLabel.gameObject.SetActive(flag3);
-			}
-			if (timeLeftValueLabel.gameObject.activeInHierarchy != flag3)
-			{
-				timeLeftValueLabel.gameObject.SetActive(flag3);
-			}
-			if (flag3)
-			{
-				timeLeftValueLabel.text = text;
-			}
-			bool flag4 = flag3 && TempItemsController.sharedController.TimeRemainingForItems(viewedId) <= 3600;
-			if (redBackForTime.activeInHierarchy != flag4)
-			{
-				redBackForTime.SetActive(flag4);
-			}
-		}
-	}
-
-	public static int DiscountFor(string itemTag, out bool onlyServerDiscount)
-	{
-		//Discarded unreachable code: IL_0182, IL_01a5
-		try
-		{
-			if (itemTag == null)
-			{
-				Debug.LogError("DiscountFor: itemTag == null");
-				onlyServerDiscount = false;
-				return 0;
-			}
-			bool flag = false;
-			bool flag2 = false;
-			float num = 100f;
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(itemTag))
-			{
-				long num2 = WeaponManager.sharedManager.DiscountForTryGun(itemTag);
-				num -= (float)num2;
-				num = Math.Max(1f, num);
-				num = Math.Min(100f, num);
-				flag2 = true;
-			}
-			num /= 100f;
-			float num3 = 100f;
-			if (!flag2 && PromoActionsManager.sharedManager.discounts.ContainsKey(itemTag) && PromoActionsManager.sharedManager.discounts[itemTag].Count > 0)
-			{
-				num3 -= (float)PromoActionsManager.sharedManager.discounts[itemTag][0].Value;
-				num3 = Math.Max(10f, num3);
-				num3 = Math.Min(100f, num3);
-				flag = true;
-			}
-			num3 /= 100f;
-			onlyServerDiscount = !flag2 && flag;
-			if (!flag2 && !flag)
-			{
-				return 0;
-			}
-			float value = num * num3;
-			value = Mathf.Clamp(value, 0.01f, 1f);
-			float f = (1f - value) * 100f;
-			int num4 = Mathf.RoundToInt(f);
-			if (onlyServerDiscount && num4 % 5 != 0)
-			{
-				num4 = 5 * (num4 / 5 + 1);
-			}
-			return Math.Min(num4, 99);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in DiscountFor: " + ex);
-			onlyServerDiscount = false;
-			return 0;
-		}
-	}
-
-	public static ItemPrice currentPrice(string itemId, CategoryNames currentCategory, bool upgradeNotBuy = false, bool useDiscounts = true)
-	{
-		//Discarded unreachable code: IL_0186, IL_01b0
-		try
-		{
-			if (itemId == null)
-			{
-				return new ItemPrice(0, "Coins");
-			}
-			string text = itemId;
-			if (itemId != null && WeaponManager.tagToStoreIDMapping.ContainsKey(itemId))
-			{
-				text = WeaponManager.tagToStoreIDMapping[WeaponManager.FirstUnboughtOrForOurTier(itemId)];
-			}
-			if (currentCategory == CategoryNames.SkinsCategory && SkinsController.shopKeyFromNameSkin.ContainsKey(text))
-			{
-				text = SkinsController.shopKeyFromNameSkin[text];
-			}
-			if (currentCategory == CategoryNames.GearCategory)
-			{
-				text = ((!upgradeNotBuy) ? GearManager.OneItemIDForGear(GearManager.HolderQuantityForID(text), GearManager.CurrentNumberOfUphradesForGear(text)) : GearManager.UpgradeIDForGear(GearManager.HolderQuantityForID(text), GearManager.CurrentNumberOfUphradesForGear(text) + 1));
-			}
-			if (IsWearCategory(currentCategory))
-			{
-				text = WeaponManager.FirstUnboughtTag(text);
-			}
-			string itemTag = ((!IsWeaponCategory(currentCategory) && !IsWearCategory(currentCategory)) ? itemId : WeaponManager.FirstUnboughtOrForOurTier(itemId));
-			ItemPrice itemPrice = ItemDb.GetPriceByShopId(text) ?? new ItemPrice(10, "Coins");
-			int num = itemPrice.Price;
-			if (useDiscounts)
-			{
-				bool onlyServerDiscount;
-				int num2 = DiscountFor(itemTag, out onlyServerDiscount);
-				if (num2 > 0)
-				{
-					float num3 = num2;
-					num = Math.Max((int)((float)num * 0.01f), Mathf.RoundToInt((float)num * (1f - num3 / 100f)));
-					if (onlyServerDiscount)
-					{
-						num = ((num % 5 >= 3) ? (num + (5 - num % 5)) : (num - num % 5));
-					}
-				}
-			}
-			if (currentCategory == CategoryNames.GearCategory && !upgradeNotBuy)
-			{
-				num *= GearManager.ItemsInPackForGear(GearManager.HolderQuantityForID(text));
-			}
-			return new ItemPrice(num, itemPrice.Currency);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in currentPrice: " + ex);
-			return new ItemPrice(0, "Coins");
-		}
-	}
-
-	public static int PriceIfGunWillBeTryGun(string tg)
-	{
-		return Mathf.RoundToInt((float)currentPrice(tg, (CategoryNames)ItemDb.GetItemCategory(tg), false, false).Price * ((float)WeaponManager.BaseTryGunDiscount() / 100f));
-	}
-
-	public void UpdateItemParameters()
-	{
-		wholePrice.gameObject.SetActive(buy.gameObject.activeInHierarchy || upgrade.gameObject.activeInHierarchy || enable.gameObject.activeInHierarchy);
-		wholePriceUpgradeGear.gameObject.SetActive(false);
-		wholePrice2Gear.gameObject.SetActive(buyGear.gameObject.activeInHierarchy);
-		bool onlyServerDiscount;
-		bool flag = viewedId != null && DiscountFor(WeaponManager.FirstUnboughtOrForOurTier(viewedId), out onlyServerDiscount) > 0;
-		wholePriceBG.gameObject.SetActive(!flag);
-		wholePriceBG_Discount.gameObject.SetActive(flag);
-		bool flag2 = viewedId != null && DiscountFor(viewedId, out onlyServerDiscount) > 0;
-		wholePriceBG2Gear.gameObject.SetActive(!flag2);
-		wholePriceBG2Gear_Discount.gameObject.SetActive(flag2);
-		wholePriceUpgradeBG2Gear.gameObject.SetActive(!flag2);
-		wholePriceUpgradeBG2Gear_Discount.gameObject.SetActive(flag2);
-		if (viewedId != null)
-		{
-			ItemPrice itemPrice = currentPrice(viewedId, currentCategory, currentCategory == CategoryNames.GearCategory);
-			if (currentCategory == CategoryNames.GearCategory)
-			{
-				priceUpgradeGear.text = itemPrice.Price.ToString();
-				currencyImagePriceUpgradeGear.spriteName = ((!itemPrice.Currency.Equals("Coins")) ? "gem_znachek" : "ingame_coin");
-				currencyImagePriceUpgradeGear.width = ((!itemPrice.Currency.Equals("Coins")) ? 34 : 30);
-				currencyImagePriceUpgradeGear.height = ((!itemPrice.Currency.Equals("Coins")) ? 24 : 30);
-			}
-			else
-			{
-				price.text = itemPrice.Price.ToString();
-				currencyImagePrice.spriteName = ((!itemPrice.Currency.Equals("Coins")) ? "gem_znachek" : "ingame_coin");
-				currencyImagePrice.width = ((!itemPrice.Currency.Equals("Coins")) ? 34 : 30);
-				currencyImagePrice.height = ((!itemPrice.Currency.Equals("Coins")) ? 24 : 30);
-			}
-		}
-	}
-
-	private static int _CurrentNumberOfWearUpgrades(string id, out bool maxUpgrade, CategoryNames c)
-	{
-		_003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D _003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D = new _003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D();
-		_003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D.id = id;
-		if (_003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D.id == "Armor_Novice")
-		{
-			maxUpgrade = NoviceArmorAvailable;
-			return NoviceArmorAvailable ? 1 : 0;
-		}
-		List<string> list = Wear.wear[c].FirstOrDefault(_003C_CurrentNumberOfWearUpgrades_003Ec__AnonStorey32D._003C_003Em__4EE);
-		if (list == null)
-		{
-			maxUpgrade = false;
-			return 0;
-		}
-		for (int i = 0; i < list.Count; i++)
-		{
-			if (Storager.getInt(list[i], true) == 0)
-			{
-				maxUpgrade = false;
-				return i;
-			}
-		}
-		maxUpgrade = true;
-		return list.Count;
-	}
-
-	public static int _CurrentNumberOfUpgrades(string itemId, out bool maxUpgrade, CategoryNames c, bool countTryGunsAsUpgrade = true)
-	{
-		List<string> list = new List<string>();
-		int num = 0;
-		if (IsWeaponCategory(c))
-		{
-			List<string> list2 = WeaponUpgrades.ChainForTag(itemId);
-			if (list2 == null)
-			{
-				List<string> list3 = new List<string>();
-				list3.Add(itemId);
-				list2 = list3;
-			}
-			list = list2;
-			num = list.Count;
-			if (WeaponManager.tagToStoreIDMapping.ContainsKey(itemId))
-			{
-				int num2 = list.Count - 1;
-				while (num2 >= 0)
-				{
-					string defName = itemId;
-					bool flag = ItemDb.IsTemporaryGun(itemId);
-					if (!flag)
-					{
-						defName = WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[list[num2]]];
-					}
-					bool flag2 = HasBoughtGood(defName, flag);
-					if (!flag2 && countTryGunsAsUpgrade && WeaponManager.sharedManager != null)
-					{
-						flag2 = WeaponManager.sharedManager.IsAvailableTryGun(list[num2]);
-					}
-					if (!flag2)
-					{
-						num--;
-						num2--;
 						continue;
+					}
+					weaponSound = weaponSound2;
+					foreach (WeaponSounds weaponSound3 in WeaponManager.AllWrapperPrefabs())
+					{
+						if (!ItemDb.GetByPrefabName(weaponSound3.name).Tag.Equals(str3))
+						{
+							continue;
+						}
+						weaponSound1 = weaponSound3;
+						break;
 					}
 					break;
 				}
 			}
+			bool flag42 = false;
+			bool flag43 = false;
+			int num5 = (this.viewedId == null ? -1 : ShopNGUIController._CurrentNumberOfUpgrades(this.viewedId, out flag43, this.currentCategory, true));
+			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId))
+			{
+				num5 = 0;
+			}
+			flag42 = (!flag43 ? false : (WeaponManager.sharedManager == null ? 0 : (int)WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId)) == 0);
+			flag22 = (this.viewedId == null || flag42 || num5 != 0 || flag30 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+			flag26 = (this.viewedId == null || flag42 || num5 == 0 || weaponSound1.tier >= 100 || flag30 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+			flag23 = false;
+			if (WeaponManager.sharedManager != null && this.viewedId != null)
+			{
+				flag14 = WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId);
+				if (flag14)
+				{
+					try
+					{
+						UILabel uILabel1 = this.tryGunMatchesCount;
+						SaltedInt saltedInt = (SaltedInt)WeaponManager.sharedManager.TryGuns[this.viewedId]["NumberOfMatchesKey"];
+						uILabel1.text = saltedInt.Value.ToString();
+					}
+					catch (Exception exception1)
+					{
+						UnityEngine.Debug.LogError(string.Concat("Exception in tryGunMatchesCount.text: ", exception1));
+					}
+				}
+				flag15 = WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(this.viewedId);
+				if (flag15)
+				{
+					this.UpdateTryGunDiscountTime();
+				}
+			}
+			flag29 = (!flag26 || !(weaponSound1 != null) || !(ExpController.Instance != null) || ExpController.Instance.OurTier >= weaponSound1.tier || flag30 || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted ? false : !this.InTrainingAfterNoviceArmorRemoved);
+			if (weaponSound1 != null && this.viewedId == ItemDb.GetByPrefabName(weaponSound.name).Tag)
+			{
+				flag29 = false;
+			}
+			if (flag29)
+			{
+				int num6 = (weaponSound1.tier < 0 || weaponSound1.tier >= (int)ExpController.LevelsForTiers.Length ? ExpController.LevelsForTiers[(int)ExpController.LevelsForTiers.Length - 1] : ExpController.LevelsForTiers[weaponSound1.tier]);
+				string str6 = string.Format("{0} {1} {2}", LocalizationStore.Key_0226, num6, LocalizationStore.Get("Key_1022"));
+				this.needTierLabel.text = str6;
+			}
+			this.upgrade.isEnabled = (!flag26 || !(weaponSound1 != null) || !(ExpController.Instance != null) ? 0 : (int)(ExpController.Instance.OurTier < weaponSound1.tier)) == 0;
+			string str7 = null;
+			if (this.viewedId != null)
+			{
+				str7 = WeaponManager.LastBoughtTag(this.viewedId);
+			}
+			if (str7 == null && this.viewedId != null && WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId))
+			{
+				str7 = this.viewedId;
+			}
+			if (str7 == null || this.viewedId == null)
+			{
+				flag7 = true;
+			}
+			else
+			{
+				flag7 = (this.chosenId == null ? false : this.chosenId.Equals(str7));
+			}
+			if (flag7 || this.viewedId == null || num5 <= 0 && !WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId) || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted && !(this.viewedId == WeaponTags.HunterRifleTag))
+			{
+				flag8 = false;
+			}
+			else
+			{
+				flag8 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+			}
+			bool flag44 = flag8;
+			if (!string.IsNullOrEmpty(this.viewedId))
+			{
+				if (ShopNGUIController._CurrentWeaponSetIDs()[(int)this.currentCategory] != null)
+				{
+					if (ShopNGUIController._CurrentWeaponSetIDs()[(int)this.currentCategory].Equals(WeaponManager.LastBoughtTag(this.viewedId) ?? string.Empty))
+					{
+						goto Label1;
+					}
+				}
+				if (!WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId) || !ShopNGUIController._CurrentWeaponSetIDs()[(int)this.currentCategory].Equals(this.viewedId))
+				{
+					goto Label2;
+				}
+			Label1:
+				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted && !(this.viewedId == WeaponTags.HunterRifleTag))
+				{
+					goto Label2;
+				}
+				flag9 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+				goto Label0;
+			}
+		Label2:
+			flag9 = false;
+		Label0:
+			bool flag45 = flag9;
+			if ((flag26 || flag30 || WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId)) && this.viewedId != null && str3 != null && (flag30 || !str3.Equals(this.viewedId) || WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId)) && flag44)
+			{
+				if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || this.viewedId == WeaponTags.HunterRifleTag)
+				{
+					flag13 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+				}
+				else
+				{
+					flag13 = false;
+				}
+				flag19 = flag13;
+				flag20 = false;
+			}
+			if ((flag26 || flag30 || WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId)) && this.viewedId != null && str3 != null && (flag30 || !str3.Equals(this.viewedId) || WeaponManager.sharedManager.IsAvailableTryGun(this.viewedId)) && flag45)
+			{
+				bool[] flagArray2 = flagArray;
+				if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || this.viewedId == WeaponTags.HunterRifleTag)
+				{
+					flag12 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+				}
+				else
+				{
+					flag12 = false;
+				}
+				flagArray2[0] = flag12;
+				flagArray[1] = false;
+			}
+			if (!flag26 && !flag30 && !flag22 && flag44)
+			{
+				flag19 = false;
+				if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || this.viewedId == WeaponTags.HunterRifleTag)
+				{
+					flag11 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+				}
+				else
+				{
+					flag11 = false;
+				}
+				flag20 = flag11;
+			}
+			if (!flag26 && !flag30 && !flag22 && flag45)
+			{
+				flagArray[0] = false;
+				bool[] flagArray3 = flagArray;
+				if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted || this.viewedId == WeaponTags.HunterRifleTag)
+				{
+					flag10 = (!this.InTrainingAfterNoviceArmorRemoved ? true : this.viewedId == WeaponManager.LastBoughtTag("Armor_Army_1"));
+				}
+				else
+				{
+					flag10 = false;
+				}
+				flagArray3[1] = flag10;
+			}
+			int num7 = ShopNGUIController.DiscountFor(str3, out flag);
+			if (flag42 || flag30 || !(weaponSound != null) || weaponSound.tier >= 100 || flag29 || num7 <= 0)
+			{
+				flag27 = false;
+			}
+			else
+			{
+				flag27 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted ? !this.InTrainingAfterNoviceArmorRemoved : false);
+				this.salePerc.text = string.Concat(num7, "%");
+			}
+			flag31 = false;
+			if (str3 != null)
+			{
+				int count = 1;
+				int num8 = 0;
+				if (count == 1 && str4 != null && str3.Equals(str4))
+				{
+					num8 = 1;
+				}
+				foreach (List<string> upgrade in WeaponUpgrades.upgrades)
+				{
+					if (!upgrade.Contains(str3))
+					{
+						continue;
+					}
+					count = upgrade.Count;
+					if (str4 == null)
+					{
+						string str8 = WeaponManager.FirstTagForOurTier(str3);
+						if (str8 != null && upgrade.IndexOf(str8) > 0)
+						{
+							num8 = upgrade.IndexOf(str8);
+						}
+					}
+					else
+					{
+						num8 = upgrade.IndexOf(str4) + 1;
+					}
+					break;
+				}
+				bool flag46 = (!weaponSound.isMelee || weaponSound.isShotMelee ? this.viewedId != null : false);
+				if (this.weaponProperties.activeSelf != flag46)
+				{
+					this.weaponProperties.SetActive(flag46);
+				}
+				bool flag47 = (!weaponSound.isMelee || weaponSound.isShotMelee ? false : this.viewedId != null);
+				if (this.meleeProperties.activeSelf != flag47)
+				{
+					this.meleeProperties.SetActive(flag47);
+				}
+				if (this.upgradesAnchor.activeSelf != (this.viewedId == null ? false : !flag30))
+				{
+					this.upgradesAnchor.SetActive((this.viewedId == null ? false : !flag30));
+				}
+				bool flag48 = (count != 1 ? false : !flag30);
+				if (this.upgrade_1.activeSelf != flag48)
+				{
+					this.upgrade_1.SetActive(flag48);
+				}
+				bool flag49 = (count != 2 ? false : !flag30);
+				if (this.upgrade_2.activeSelf != flag49)
+				{
+					this.upgrade_2.SetActive(flag49);
+				}
+				bool flag50 = (count != 3 ? false : !flag30);
+				if (this.upgrade_3.activeSelf != flag50)
+				{
+					this.upgrade_3.SetActive(flag50);
+				}
+				if (count > 0)
+				{
+					if (count != 3)
+					{
+						upgrade3 = (count != 2 ? this.upgrade_1 : this.upgrade_2);
+					}
+					else
+					{
+						upgrade3 = this.upgrade_3;
+					}
+					GameObject[] color = this.upgradeSprites1;
+					if (count == 3)
+					{
+						color = this.upgradeSprites3;
+					}
+					if (count == 2)
+					{
+						color = this.upgradeSprites2;
+					}
+					if (color == null)
+					{
+						color = new GameObject[0];
+					}
+					Array.Sort<GameObject>(color, (GameObject sp1, GameObject sp2) => Defs.CompareAlphaNumerically(sp1.gameObject.name, sp2.gameObject.name));
+					for (int i = 0; i < (int)color.Length; i++)
+					{
+						color[i].SetActive((num8 < i ? false : true));
+						if (num8 != i)
+						{
+							color[i].GetComponent<TweenColor>().enabled = false;
+							color[i].GetComponent<UISprite>().color = new Color(1f, 1f, 1f, 1f);
+						}
+						else
+						{
+							color[i].GetComponent<TweenColor>().enabled = true;
+						}
+					}
+				}
+				this.UpdateTempItemTime();
+				if (weaponSound1 == null)
+				{
+					weaponSound1 = weaponSound;
+				}
+				int[] numArray = null;
+				numArray = (!weaponSound.isMelee || weaponSound.isShotMelee ? new int[] { (!flag30 ? weaponSound.damageShop : (int)weaponSound.DPS), weaponSound.fireRateShop, weaponSound.CapacityShop, weaponSound.mobilityShop } : new int[] { (!flag30 ? weaponSound.damageShop : (int)weaponSound.DPS), weaponSound.fireRateShop, weaponSound.mobilityShop });
+				int[] numArray1 = null;
+				numArray1 = (!weaponSound.isMelee || weaponSound.isShotMelee ? new int[] { (!flag30 ? weaponSound1.damageShop : (int)weaponSound1.DPS), weaponSound1.fireRateShop, weaponSound1.CapacityShop, weaponSound1.mobilityShop } : new int[] { (!flag30 ? weaponSound1.damageShop : (int)weaponSound1.DPS), weaponSound1.fireRateShop, weaponSound1.mobilityShop });
+				bool flag51 = (str4 == null || str3 == null || !(str4 != str3) || this.viewedId == null ? false : str4 == this.viewedId);
+				int[] numArray2 = (!flag51 ? numArray1 : numArray);
+				if (!weaponSound.isMelee || weaponSound.isShotMelee)
+				{
+					this.damage.text = ShopNGUIController.GetWeaponStatText(numArray[0], numArray2[0]);
+					this.fireRate.text = ShopNGUIController.GetWeaponStatText(numArray[1], numArray2[1]);
+					this.capacity.text = ShopNGUIController.GetWeaponStatText(numArray[2], numArray2[2]);
+					this.mobility.text = ShopNGUIController.GetWeaponStatText(numArray[3], numArray2[3]);
+				}
+				else
+				{
+					this.damageMelee.text = ShopNGUIController.GetWeaponStatText(numArray[0], numArray2[0]);
+					this.fireRateMElee.text = ShopNGUIController.GetWeaponStatText(numArray[1], numArray2[1]);
+					this.mobilityMelee.text = ShopNGUIController.GetWeaponStatText(numArray[2], numArray2[2]);
+				}
+				if (!this.SpecialParams.activeSelf)
+				{
+					this.SpecialParams.SetActive(true);
+				}
+				if (weaponSound1 == null)
+				{
+					weaponSound1 = weaponSound;
+				}
+				WeaponSounds weaponSound4 = (!flag51 ? weaponSound1 : weaponSound);
+				if (weaponSound4 != null)
+				{
+					if (!FriendsController.SandboxEnabled && weaponSound4.InShopEffects.Contains(WeaponSounds.Effects.ForSandbox))
+					{
+						weaponSound4.InShopEffects.Remove(WeaponSounds.Effects.ForSandbox);
+					}
+					float single = 90f / (float)weaponSound4.InShopEffects.Count;
+					for (int j = 0; j < this.effectsLabels.Count; j++)
+					{
+						if (this.effectsLabels[j].gameObject.activeSelf != j < weaponSound4.InShopEffects.Count)
+						{
+							this.effectsLabels[j].gameObject.SetActive(j < weaponSound4.InShopEffects.Count);
+						}
+						if (j < weaponSound4.InShopEffects.Count)
+						{
+							Transform vector3 = this.effectsLabels[j].transform;
+							float single1 = 0f;
+							if (weaponSound4.InShopEffects.Count == 3)
+							{
+								if (j == 0)
+								{
+									single1 = 1f;
+								}
+								if (j == 2)
+								{
+									single1 = -3f;
+								}
+							}
+							else if (weaponSound4.InShopEffects.Count == 2)
+							{
+								if (j == 0)
+								{
+									single1 = -6f;
+								}
+								if (j == 1)
+								{
+									single1 = 6f;
+								}
+							}
+							float single2 = vector3.localPosition.x;
+							Vector3 vector31 = vector3.localPosition;
+							vector3.localPosition = new Vector3(single2, 39f - single * ((float)j + 0.5f) + single1, vector31.z);
+							UILabel item1 = this.effectsLabels[j];
+							str = (weaponSound4.InShopEffects[j] != WeaponSounds.Effects.Zoom ? string.Empty : string.Concat(weaponSound4.zoomShop.ToString(), "X "));
+							KeyValuePair<string, string> keyValuePair = WeaponSounds.keysAndSpritesForEffects[weaponSound4.InShopEffects[j]];
+							item1.text = string.Concat(str, LocalizationStore.Get(keyValuePair.Value));
+							UISprite key = this.effectsSprites[j];
+							KeyValuePair<string, string> keyValuePair1 = WeaponSounds.keysAndSpritesForEffects[weaponSound4.InShopEffects[j]];
+							key.spriteName = keyValuePair1.Key;
+						}
+					}
+				}
+			}
 		}
-		else if (IsWearCategory(c))
+		if (this.tryGunPanel != null && this.tryGunPanel.activeSelf != flag14)
 		{
-			num = (HasBoughtGood(itemId, TempItemsController.PriceCoefs.ContainsKey(itemId)) ? 1 : 0);
+			this.tryGunPanel.SetActive(flag14);
 		}
-		if (itemId.Equals(StoreKitEventListener.elixirID) && Defs.NumberOfElixirs > 0)
+		if (this.tryGunDiscountPanel != null && this.tryGunDiscountPanel.activeSelf != flag15)
 		{
-			num++;
+			this.tryGunDiscountPanel.SetActive(flag15);
 		}
-		maxUpgrade = num == ((list.Count <= 0) ? 1 : list.Count);
-		return num;
+		if (this.edit != null && this.edit.gameObject.activeSelf != flag17)
+		{
+			this.edit.gameObject.SetActive(flag17);
+		}
+		if (this.enable != null && this.enable.gameObject.activeSelf != flag16)
+		{
+			this.enable.gameObject.SetActive(flag16);
+		}
+		if (this.delete.gameObject.activeSelf != flag18)
+		{
+			this.delete.gameObject.SetActive(flag18);
+		}
+		if (this.buy.gameObject.activeSelf != flag22)
+		{
+			this.buy.gameObject.SetActive(flag22);
+		}
+		if (this.rent.gameObject.activeSelf != flag23)
+		{
+			this.rent.gameObject.SetActive(flag23);
+		}
+		if (this.equips[0].gameObject.activeSelf != flag19)
+		{
+			this.equips[0].gameObject.SetActive(flag19);
+		}
+		if (this.equips[1].gameObject.activeSelf != flag20)
+		{
+			this.equips[1].gameObject.SetActive(flag20);
+		}
+		if (this.unequip.gameObject.activeSelf != flag21)
+		{
+			this.unequip.gameObject.SetActive(flag21);
+		}
+		if (this.buyGear.gameObject.activeSelf != flag24)
+		{
+			this.buyGear.gameObject.SetActive(flag24);
+		}
+		if (this.upgrade.gameObject.activeSelf != flag26)
+		{
+			this.upgrade.gameObject.SetActive(flag26);
+		}
+		if (this.facebookLoginLockedSkinButton.gameObject.activeSelf != flag25)
+		{
+			this.facebookLoginLockedSkinButton.gameObject.SetActive(flag25);
+		}
+		if (this.equippeds[0].gameObject.activeSelf != flagArray[0])
+		{
+			this.equippeds[0].gameObject.SetActive(flagArray[0]);
+		}
+		if (this.equippeds[1].gameObject.activeSelf != flagArray[1])
+		{
+			this.equippeds[1].gameObject.SetActive(flagArray[1]);
+		}
+		if (this.sale.gameObject.activeSelf != flag27)
+		{
+			this.sale.gameObject.SetActive(flag27);
+		}
+		if (this.saleRent.gameObject.activeSelf != flag31)
+		{
+			this.saleRent.gameObject.SetActive(flag31);
+		}
+		if (this.create.gameObject.activeSelf != flag28)
+		{
+			this.create.gameObject.SetActive(flag28);
+		}
+		if (this.needTier.gameObject.activeSelf != flag29)
+		{
+			this.needTier.gameObject.SetActive(flag29);
+		}
 	}
 
-	private static bool HasBoughtGood(string defName, bool tempGun = false)
+	public void UpdateIcon(ShopNGUIController.CategoryNames c, bool animateModel = false)
 	{
-		bool flag = ((!tempGun) ? (Storager.getInt(defName, true) == 0) : (!TempItemsController.sharedController.ContainsItem(defName)));
-		return !flag;
+		TweenDelegate.TweenCallback tweenCallback = null;
+		TweenDelegate.TweenCallback tweenCallback1 = null;
+		ToggleButton toggleButton = this.category.buttons[(int)c];
+		List<GameObject> gameObjects = new List<GameObject>();
+		Player_move_c.PerformActionRecurs(toggleButton.gameObject, (Transform ch) => {
+			if (ch.gameObject == toggleButton.gameObject || ch.gameObject == toggleButton.onButton.gameObject || ch.gameObject == toggleButton.offButton.gameObject || ch.gameObject.name.Equals("Label") || ch.gameObject.name.Equals("ShopIcon"))
+			{
+				return;
+			}
+			if (ch.gameObject.name.Equals("Sprite"))
+			{
+				ch.gameObject.SetActive(false);
+				return;
+			}
+			gameObjects.Add(ch.gameObject);
+		});
+		foreach (GameObject gameObject in gameObjects)
+		{
+			UnityEngine.Object.Destroy(gameObject);
+		}
+		if (c == ShopNGUIController.CategoryNames.SkinsCategory || c == ShopNGUIController.CategoryNames.CapesCategory && this._currentCape.Equals("cape_Custom"))
+		{
+			List<GameObject> gameObjects1 = this.FillModelsList(c);
+			GameObject gameObject1 = (c != ShopNGUIController.CategoryNames.SkinsCategory ? ItemDb.GetWearFromResources("cape_Custom", ShopNGUIController.CategoryNames.CapesCategory) : gameObjects1[0]);
+			if (gameObject1 == null)
+			{
+				Player_move_c.PerformActionRecurs(toggleButton.gameObject, (Transform ch) => {
+					if (!ch.gameObject.name.Equals("Sprite"))
+					{
+						return;
+					}
+					ch.gameObject.SetActive(true);
+				});
+			}
+			else
+			{
+				ShopNGUIController.AddModel(gameObject1, (GameObject manipulateObject, Vector3 positionShop, Vector3 rotationShop, string readableName, float sc, int _unusedTier, int _unusedLeague) => {
+					manipulateObject.transform.parent = toggleButton.transform;
+					if (c == ShopNGUIController.CategoryNames.SkinsCategory)
+					{
+						Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.currentSkinForPers, new GameObject[0]);
+					}
+					float single = 0.5f;
+					Transform vector3 = manipulateObject.transform;
+					vector3.localPosition = toggleButton.onButton.transform.localPosition + (positionShop * single);
+					vector3.localPosition = new Vector3(vector3.localPosition.x, vector3.localPosition.y, 0f);
+					vector3.Rotate(rotationShop, Space.World);
+					vector3.localScale = new Vector3(sc * single, sc * single, sc * single);
+					if (c == ShopNGUIController.CategoryNames.CapesCategory && this._currentCape.Equals("cape_Custom") && SkinsController.capeUserTexture != null)
+					{
+						Player_move_c.SetTextureRecursivelyFrom(manipulateObject, SkinsController.capeUserTexture, new GameObject[0]);
+					}
+					this.SetIconModelsPositions(vector3, c);
+					if (animateModel)
+					{
+						Vector3 vector31 = vector3.localScale;
+						vector3.localScale = vector3.localScale * 1.25f;
+						Transform transforms = vector3;
+						TweenParms tweenParm = (new TweenParms()).Prop("localScale", vector31).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear);
+						if (tweenCallback == null)
+						{
+							tweenCallback = () => {
+							};
+						}
+						HOTween.To(transforms, 0.25f, tweenParm.OnComplete(tweenCallback));
+					}
+				}, c, false, null);
+			}
+			Player_move_c.PerformActionRecurs(toggleButton.gameObject, (Transform ch) => {
+				if (!ch.gameObject.name.Equals("ShopIcon"))
+				{
+					return;
+				}
+				ch.GetComponent<UITexture>().mainTexture = null;
+			});
+		}
+		else
+		{
+			Texture texture = ShopNGUIController.TextureForCat((int)c);
+			if (texture == null)
+			{
+				Player_move_c.PerformActionRecurs(toggleButton.gameObject, (Transform ch) => {
+					if (ch.gameObject.name.Equals("Sprite"))
+					{
+						ch.gameObject.SetActive(true);
+						return;
+					}
+					if (!ch.gameObject.name.Equals("ShopIcon"))
+					{
+						return;
+					}
+					ch.GetComponent<UITexture>().mainTexture = null;
+				});
+			}
+			else
+			{
+				Player_move_c.PerformActionRecurs(toggleButton.gameObject, (Transform ch) => {
+					if (ch.gameObject.name.Equals("Sprite"))
+					{
+						ch.gameObject.SetActive(false);
+						return;
+					}
+					if (!ch.gameObject.name.Equals("ShopIcon"))
+					{
+						return;
+					}
+					UITexture component = ch.GetComponent<UITexture>();
+					if (component.mainTexture == null || !component.mainTexture.name.Equals(texture.name) || HOTween.IsTweening(ch))
+					{
+						HOTween.Kill(ch);
+						ch.localScale = new Vector3(1.25f, 1.25f, 1.25f);
+						Transform transforms = ch;
+						TweenParms tweenParm = (new TweenParms()).Prop("localScale", new Vector3(1f, 1f, 1f)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear);
+						if (tweenCallback1 == null)
+						{
+							tweenCallback1 = () => {
+							};
+						}
+						HOTween.To(transforms, 0.25f, tweenParm.OnComplete(tweenCallback1));
+					}
+					component.mainTexture = texture;
+				});
+			}
+		}
 	}
 
-	public void UpdatePersWithNewItem()
+	public void UpdateIcons()
 	{
-		if (WeaponCategory)
+		for (int i = 0; i < (int)this.category.buttons.Length; i++)
 		{
-			string text = viewedId;
-			if (text == null && WeaponManager.sharedManager.playerWeapons.Count > 0)
-			{
-				text = ItemDb.GetByPrefabName((WeaponManager.sharedManager.playerWeapons[0] as Weapon).weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag;
-			}
-			SetWeapon(text);
-			return;
-		}
-		switch (currentCategory)
-		{
-		case CategoryNames.HatsCategory:
-			UpdatePersHat(viewedId);
-			break;
-		case CategoryNames.SkinsCategory:
-			if (!viewedId.Equals("CustomSkinID"))
-			{
-				UpdatePersSkin(viewedId);
-			}
-			break;
-		case CategoryNames.CapesCategory:
-			UpdatePersCape(viewedId);
-			break;
-		case CategoryNames.MaskCategory:
-			UpdatePersMask(viewedId);
-			break;
-		case CategoryNames.BootsCategory:
-			UpdatePersBoots(viewedId);
-			break;
-		case CategoryNames.ArmorCategory:
-			UpdatePersArmor(viewedId);
-			break;
-		case CategoryNames.GearCategory:
-			break;
+			this.UpdateIcon((ShopNGUIController.CategoryNames)i, false);
 		}
 	}
 
-	public void UpdatePersHat(string hat)
+	public void UpdateItemParameters()
 	{
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < hatPoint.transform.childCount; i++)
+		bool flag;
+		this.wholePrice.gameObject.SetActive((this.buy.gameObject.activeInHierarchy || this.upgrade.gameObject.activeInHierarchy ? true : this.enable.gameObject.activeInHierarchy));
+		this.wholePriceUpgradeGear.gameObject.SetActive(false);
+		this.wholePrice2Gear.gameObject.SetActive(this.buyGear.gameObject.activeInHierarchy);
+		bool flag1 = (this.viewedId == null ? false : ShopNGUIController.DiscountFor(WeaponManager.FirstUnboughtOrForOurTier(this.viewedId), out flag) > 0);
+		this.wholePriceBG.gameObject.SetActive(!flag1);
+		this.wholePriceBG_Discount.gameObject.SetActive(flag1);
+		bool flag2 = (this.viewedId == null ? false : ShopNGUIController.DiscountFor(this.viewedId, out flag) > 0);
+		this.wholePriceBG2Gear.gameObject.SetActive(!flag2);
+		this.wholePriceBG2Gear_Discount.gameObject.SetActive(flag2);
+		this.wholePriceUpgradeBG2Gear.gameObject.SetActive(!flag2);
+		this.wholePriceUpgradeBG2Gear_Discount.gameObject.SetActive(flag2);
+		if (this.viewedId != null)
 		{
-			list.Add(hatPoint.transform.GetChild(i));
-		}
-		foreach (Transform item in list)
-		{
-			item.parent = null;
-			item.position = new Vector3(0f, -10000f, 0f);
-			UnityEngine.Object.Destroy(item.gameObject);
-		}
-		if (!hat.Equals(Defs.HatNoneEqupped))
-		{
-			string @string = Storager.getString(Defs.VisualHatArmor, false);
-			if (!string.IsNullOrEmpty(@string) && Wear.wear[CategoryNames.HatsCategory][0].IndexOf(hat) >= 0 && Wear.wear[CategoryNames.HatsCategory][0].IndexOf(hat) < Wear.wear[CategoryNames.HatsCategory][0].IndexOf(@string))
+			ItemPrice itemPrice = ShopNGUIController.currentPrice(this.viewedId, this.currentCategory, this.currentCategory == ShopNGUIController.CategoryNames.GearCategory, true);
+			if (this.currentCategory != ShopNGUIController.CategoryNames.GearCategory)
 			{
-				hat = @string;
+				this.price.text = itemPrice.Price.ToString();
+				this.currencyImagePrice.spriteName = (!itemPrice.Currency.Equals("Coins") ? "gem_znachek" : "ingame_coin");
+				this.currencyImagePrice.width = (!itemPrice.Currency.Equals("Coins") ? 34 : 30);
+				this.currencyImagePrice.height = (!itemPrice.Currency.Equals("Coins") ? 24 : 30);
 			}
-			GameObject gameObject = Resources.Load("Hats/" + hat) as GameObject;
-			if (!(gameObject == null))
+			else
 			{
-				GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-				DisableLightProbesRecursively(gameObject2);
-				gameObject2.transform.parent = hatPoint.transform;
-				gameObject2.transform.localPosition = Vector3.zero;
-				gameObject2.transform.localRotation = Quaternion.identity;
-				gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-				Player_move_c.SetLayerRecursively(gameObject2, LayerMask.NameToLayer("NGUIShop"));
-				SetPersHatVisible(hatPoint);
+				this.priceUpgradeGear.text = itemPrice.Price.ToString();
+				this.currencyImagePriceUpgradeGear.spriteName = (!itemPrice.Currency.Equals("Coins") ? "gem_znachek" : "ingame_coin");
+				this.currencyImagePriceUpgradeGear.width = (!itemPrice.Currency.Equals("Coins") ? 34 : 30);
+				this.currencyImagePriceUpgradeGear.height = (!itemPrice.Currency.Equals("Coins") ? 24 : 30);
 			}
 		}
 	}
 
 	public void UpdatePersArmor(string armor)
 	{
-		if (armorPoint.childCount > 0)
+		if (this.armorPoint.childCount > 0)
 		{
-			Transform child = armorPoint.GetChild(0);
+			Transform child = this.armorPoint.GetChild(0);
 			ArmorRefs component = child.GetChild(0).GetComponent<ArmorRefs>();
 			if (component != null)
 			{
@@ -4950,2111 +6063,363 @@ public class ShopNGUIController : MonoBehaviour
 		{
 			return;
 		}
-		string @string = Storager.getString(Defs.VisualArmor, false);
-		if (!string.IsNullOrEmpty(@string) && Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(armor) >= 0 && Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(armor) < Wear.wear[CategoryNames.ArmorCategory][0].IndexOf(@string))
+		string str = Storager.getString(Defs.VisualArmor, false);
+		if (!string.IsNullOrEmpty(str) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str))
 		{
-			armor = @string;
+			armor = str;
 		}
-		if (!(weapon != null))
+		if (this.weapon != null)
 		{
-			return;
-		}
-		GameObject gameObject = Resources.Load("Armor_Shop/" + armor) as GameObject;
-		if (gameObject == null)
-		{
-			return;
-		}
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		DisableLightProbesRecursively(gameObject2);
-		ArmorRefs component2 = gameObject2.transform.GetChild(0).GetComponent<ArmorRefs>();
-		if (component2 != null)
-		{
-			WeaponSounds component3 = weapon.GetComponent<WeaponSounds>();
-			gameObject2.transform.parent = armorPoint.transform;
-			gameObject2.transform.localPosition = Vector3.zero;
-			gameObject2.transform.localRotation = Quaternion.identity;
-			gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-			Player_move_c.SetLayerRecursively(gameObject2, LayerMask.NameToLayer("NGUIShop"));
-			if (component2.leftBone != null && component3.LeftArmorHand != null)
-			{
-				component2.leftBone.parent = component3.LeftArmorHand;
-				component2.leftBone.localPosition = Vector3.zero;
-				component2.leftBone.localRotation = Quaternion.identity;
-				component2.leftBone.localScale = new Vector3(1f, 1f, 1f);
-			}
-			if (component2.rightBone != null && component3.RightArmorHand != null)
-			{
-				component2.rightBone.parent = component3.RightArmorHand;
-				component2.rightBone.localPosition = Vector3.zero;
-				component2.rightBone.localRotation = Quaternion.identity;
-				component2.rightBone.localScale = new Vector3(1f, 1f, 1f);
-			}
-		}
-		SetPersArmorVisible(armorPoint);
-	}
-
-	public void UpdatePersMask(string mask)
-	{
-		for (int i = 0; i < maskPoint.transform.childCount; i++)
-		{
-			UnityEngine.Object.Destroy(maskPoint.transform.GetChild(i).gameObject);
-		}
-		if (!mask.Equals("MaskNoneEquipped"))
-		{
-			GameObject gameObject = Resources.Load("Masks/" + mask) as GameObject;
+			GameObject gameObject = Resources.Load(string.Concat("Armor_Shop/", armor)) as GameObject;
 			if (gameObject == null)
 			{
-				Debug.LogWarning("ShopNGUIController UpdatePersMask: maskPrefab == null  mask = " + (mask ?? "(null)"));
 				return;
 			}
-			GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-			DisableLightProbesRecursively(gameObject2);
-			gameObject2.transform.parent = maskPoint.transform;
-			gameObject2.transform.localPosition = new Vector3(0f, 0f, 0f);
-			gameObject2.transform.localRotation = Quaternion.identity;
-			gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-			Player_move_c.SetLayerRecursively(gameObject2, LayerMask.NameToLayer("NGUIShop"));
+			GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+			ShopNGUIController.DisableLightProbesRecursively(vector3);
+			ArmorRefs leftArmorHand = vector3.transform.GetChild(0).GetComponent<ArmorRefs>();
+			if (leftArmorHand != null)
+			{
+				WeaponSounds weaponSound = this.weapon.GetComponent<WeaponSounds>();
+				vector3.transform.parent = this.armorPoint.transform;
+				vector3.transform.localPosition = Vector3.zero;
+				vector3.transform.localRotation = Quaternion.identity;
+				vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+				Player_move_c.SetLayerRecursively(vector3, LayerMask.NameToLayer("NGUIShop"));
+				if (leftArmorHand.leftBone != null && weaponSound.LeftArmorHand != null)
+				{
+					leftArmorHand.leftBone.parent = weaponSound.LeftArmorHand;
+					leftArmorHand.leftBone.localPosition = Vector3.zero;
+					leftArmorHand.leftBone.localRotation = Quaternion.identity;
+					leftArmorHand.leftBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+				if (leftArmorHand.rightBone != null && weaponSound.RightArmorHand != null)
+				{
+					leftArmorHand.rightBone.parent = weaponSound.RightArmorHand;
+					leftArmorHand.rightBone.localPosition = Vector3.zero;
+					leftArmorHand.rightBone.localRotation = Quaternion.identity;
+					leftArmorHand.rightBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+			}
+			ShopNGUIController.SetPersArmorVisible(this.armorPoint);
+		}
+	}
+
+	public void UpdatePersBoots(string bs)
+	{
+		IEnumerator enumerator = this.bootsPoint.transform.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				Transform current = (Transform)enumerator.Current;
+				if (!current.gameObject.name.Equals(bs))
+				{
+					current.gameObject.SetActive(false);
+				}
+				else
+				{
+					current.gameObject.SetActive(true);
+				}
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
 		}
 	}
 
 	public void UpdatePersCape(string cape)
 	{
-		for (int i = 0; i < capePoint.transform.childCount; i++)
+		for (int i = 0; i < this.capePoint.transform.childCount; i++)
 		{
-			UnityEngine.Object.Destroy(capePoint.transform.GetChild(i).gameObject);
+			UnityEngine.Object.Destroy(this.capePoint.transform.GetChild(i).gameObject);
 		}
-		if (!cape.Equals(Defs.CapeNoneEqupped))
+		if (cape.Equals(Defs.CapeNoneEqupped))
 		{
-			GameObject gameObject = Resources.Load<GameObject>("Capes/" + cape);
-			if (!(gameObject == null))
-			{
-				GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-				DisableLightProbesRecursively(gameObject2);
-				gameObject2.transform.parent = capePoint.transform;
-				gameObject2.transform.localPosition = new Vector3(0f, -0.8f, 0f);
-				gameObject2.transform.localRotation = Quaternion.identity;
-				gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-				Player_move_c.SetLayerRecursively(gameObject2, LayerMask.NameToLayer("NGUIShop"));
-			}
+			return;
 		}
+		GameObject gameObject = Resources.Load<GameObject>(string.Concat("Capes/", cape));
+		if (gameObject == null)
+		{
+			return;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		vector3.transform.parent = this.capePoint.transform;
+		vector3.transform.localPosition = new Vector3(0f, -0.8f, 0f);
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, LayerMask.NameToLayer("NGUIShop"));
+	}
+
+	public void UpdatePersHat(string hat)
+	{
+		List<Transform> transforms = new List<Transform>();
+		for (int i = 0; i < this.hatPoint.transform.childCount; i++)
+		{
+			transforms.Add(this.hatPoint.transform.GetChild(i));
+		}
+		foreach (Transform transform in transforms)
+		{
+			transform.parent = null;
+			transform.position = new Vector3(0f, -10000f, 0f);
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+		if (hat.Equals(Defs.HatNoneEqupped))
+		{
+			return;
+		}
+		string str = Storager.getString(Defs.VisualHatArmor, false);
+		if (!string.IsNullOrEmpty(str) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str))
+		{
+			hat = str;
+		}
+		GameObject gameObject = Resources.Load(string.Concat("Hats/", hat)) as GameObject;
+		if (gameObject == null)
+		{
+			return;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		vector3.transform.parent = this.hatPoint.transform;
+		vector3.transform.localPosition = Vector3.zero;
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, LayerMask.NameToLayer("NGUIShop"));
+		ShopNGUIController.SetPersHatVisible(this.hatPoint);
+	}
+
+	public void UpdatePersMask(string mask)
+	{
+		for (int i = 0; i < this.maskPoint.transform.childCount; i++)
+		{
+			UnityEngine.Object.Destroy(this.maskPoint.transform.GetChild(i).gameObject);
+		}
+		if (mask.Equals("MaskNoneEquipped"))
+		{
+			return;
+		}
+		GameObject gameObject = Resources.Load(string.Concat("Masks/", mask)) as GameObject;
+		if (gameObject == null)
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("ShopNGUIController UpdatePersMask: maskPrefab == null  mask = ", mask ?? "(null)"));
+			return;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		vector3.transform.parent = this.maskPoint.transform;
+		vector3.transform.localPosition = new Vector3(0f, 0f, 0f);
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, LayerMask.NameToLayer("NGUIShop"));
 	}
 
 	public void UpdatePersSkin(string skinId)
 	{
 		if (skinId == null)
 		{
-			Debug.LogError("Skin id should not be null!");
-		}
-		else
-		{
-			SetSkinOnPers(SkinsController.skinsForPers[skinId]);
-		}
-	}
-
-	public void SetSkinOnPers(Texture skin)
-	{
-		WeaponSounds weaponSounds = ((body.transform.childCount <= 0) ? null : body.transform.GetChild(0).GetComponent<WeaponSounds>());
-		GameObject gameObject = ((!(weaponSounds != null)) ? null : weaponSounds.bonusPrefab);
-		GameObject gameObject2 = null;
-		GameObject gameObject3 = null;
-		if (gameObject != null)
-		{
-			Transform leftArmorHand = weaponSounds.LeftArmorHand;
-			Transform rightArmorHand = weaponSounds.RightArmorHand;
-			if (leftArmorHand != null)
-			{
-				gameObject2 = leftArmorHand.gameObject;
-			}
-			if (rightArmorHand != null)
-			{
-				gameObject3 = rightArmorHand.gameObject;
-			}
-		}
-		List<GameObject> list = new List<GameObject>();
-		list.Add(capePoint.gameObject);
-		list.Add(hatPoint.gameObject);
-		list.Add(bootsPoint.gameObject);
-		list.Add(armorPoint.gameObject);
-		list.Add(maskPoint.gameObject);
-		List<GameObject> list2 = list;
-		if (weaponSounds != null && weaponSounds.grenatePoint != null)
-		{
-			list2.Add(weaponSounds.grenatePoint.gameObject);
-		}
-		if (gameObject != null)
-		{
-			list2.Add(gameObject);
-		}
-		if (gameObject2 != null)
-		{
-			list2.Add(gameObject2);
-		}
-		if (gameObject3 != null)
-		{
-			list2.Add(gameObject3);
-		}
-		if (weaponSounds != null)
-		{
-			List<GameObject> listWeaponAnimEffects = weaponSounds.GetListWeaponAnimEffects();
-			if (listWeaponAnimEffects != null)
-			{
-				list2.AddRange(listWeaponAnimEffects);
-			}
-		}
-		Player_move_c.SetTextureRecursivelyFrom(MainMenu_Pers.gameObject, skin, list2.ToArray());
-	}
-
-	public void UpdatePersBoots(string bs)
-	{
-		foreach (Transform item in bootsPoint.transform)
-		{
-			if (item.gameObject.name.Equals(bs))
-			{
-				item.gameObject.SetActive(true);
-			}
-			else
-			{
-				item.gameObject.SetActive(false);
-			}
-		}
-	}
-
-	public void ReloadCategoryTempItemsRemoved(List<string> expired)
-	{
-		if (currentCategory != CategoryNames.HatsCategory && expired.Contains("hat_Adamant_3"))
-		{
-			UpdatePersHat(Defs.HatNoneEqupped);
-		}
-		if (currentCategory != CategoryNames.ArmorCategory && expired.Contains("Armor_Adamant_3"))
-		{
-			UpdatePersArmor(Defs.ArmorNewNoneEqupped);
-		}
-		if (GuiActive && TempItemsController.IsCategoryContainsTempItems(currentCategory))
-		{
-			CategoryChosen(currentCategory, (expired.Count <= 0 || !TempItemsController.GunsMappingFromTempToConst.ContainsKey(expired[0])) ? viewedId : TempItemsController.GunsMappingFromTempToConst[expired[0]]);
-			UpdateIcons();
-		}
-	}
-
-	public void SimulateCategoryChoose(int num)
-	{
-		if (num >= 0 && num < category.buttons.Length && num != 0)
-		{
-			category.buttons[0].IsChecked = false;
-			category.buttons[num].IsChecked = true;
-		}
-	}
-
-	public void CategoryChosen(CategoryNames i, string idToSet = null, bool initial = false)
-	{
-		WeaponManager.ClearCachedInnerPrefabs();
-		if (!initial)
-		{
-			switch (currentCategory)
-			{
-			case CategoryNames.SkinsCategory:
-				if (SkinsController.currentSkinNameForPers != null)
-				{
-					viewedId = SkinsController.currentSkinNameForPers;
-				}
-				else
-				{
-					if (SkinsController.skinsForPers == null || SkinsController.skinsForPers.Keys.Count <= 0)
-					{
-						break;
-					}
-					using (Dictionary<string, Texture2D>.KeyCollection.Enumerator enumerator = SkinsController.skinsForPers.Keys.GetEnumerator())
-					{
-						if (enumerator.MoveNext())
-						{
-							string text = (viewedId = enumerator.Current);
-						}
-					}
-				}
-				break;
-			case CategoryNames.HatsCategory:
-			case CategoryNames.ArmorCategory:
-			case CategoryNames.CapesCategory:
-			case CategoryNames.BootsCategory:
-			case CategoryNames.MaskCategory:
-				viewedId = _CurrentEquippedWear;
-				break;
-			}
-			if (WearCategory || currentCategory == CategoryNames.SkinsCategory)
-			{
-				UpdatePersWithNewItem();
-			}
-		}
-		currentCategory = i;
-		if (highlightedCarouselObject != null)
-		{
-		}
-		highlightedCarouselObject = null;
-		if (WeaponCategory)
-		{
-			chosenId = _CurrentWeaponSetIDs()[(int)i];
-			viewedId = idToSet;
-			if (viewedId != null && chosenId != null && viewedId.Equals(chosenId) && WeaponManager.sharedManager != null && WeaponManager.sharedManager.FilteredShopLists.Count > (int)i && !WeaponManager.sharedManager.FilteredShopLists[(int)i].Find(_003CCategoryChosen_003Em__4EF))
-			{
-				viewedId = null;
-			}
-			viewedId = chosenId;
-			if (viewedId == null)
-			{
-				CategoryNames cn;
-				string text2 = TempGunOrHighestDPSGun(i, out cn);
-				if (i == cn)
-				{
-					viewedId = text2;
-				}
-				else
-				{
-					viewedId = TemppOrHighestDPSGunInCategory((int)i);
-				}
-			}
-			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-			{
-				if (trainingState > TrainingState.OnArmor && currentCategory == CategoryNames.ArmorCategory)
-				{
-					viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-					idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-				}
-				else if (currentCategory == CategoryNames.SniperCategory)
-				{
-					viewedId = WeaponTags.HunterRifleTag;
-					idToSet = WeaponTags.HunterRifleTag;
-				}
-			}
-			if (InTrainingAfterNoviceArmorRemoved && currentCategory == CategoryNames.ArmorCategory)
-			{
-				viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-				idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-			}
-		}
-		else
-		{
-			switch (currentCategory)
-			{
-			case CategoryNames.HatsCategory:
-			{
-				_003CCategoryChosen_003Ec__AnonStorey32E _003CCategoryChosen_003Ec__AnonStorey32E = new _003CCategoryChosen_003Ec__AnonStorey32E();
-				_003CCategoryChosen_003Ec__AnonStorey32E._003C_003Ef__this = this;
-				string text3 = null;
-				try
-				{
-					Dictionary<Wear.LeagueItemState, List<string>> dictionary = Wear.LeagueItems();
-					text3 = dictionary[Wear.LeagueItemState.Open].Union(dictionary[Wear.LeagueItemState.Purchased]).OrderBy(_003CCategoryChosen_003Ec__AnonStorey32E._003C_003Em__4F0).FirstOrDefault();
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("CategoryChoosen: exception in getting firstLeagueItem: " + ex);
-				}
-				_003CCategoryChosen_003Ec__AnonStorey32E.fu = text3 ?? WeaponManager.FirstUnboughtTag("hat_Headphones");
-				int num3 = hats.FindIndex(_003CCategoryChosen_003Ec__AnonStorey32E._003C_003Em__4F1);
-				viewedId = ((_CurrentEquippedWear == null || _CurrentNoneEquipped == null || _CurrentEquippedWear.Equals(_CurrentNoneEquipped) || WeaponManager.LastBoughtTag(_CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(_CurrentEquippedWear).Equals(_CurrentEquippedWear)) ? hats[(num3 <= -1) ? (hats.Count - 1) : num3].name : _CurrentEquippedWear);
-				break;
-			}
-			case CategoryNames.ArmorCategory:
-				viewedId = ((_CurrentEquippedWear == null || _CurrentNoneEquipped == null || _CurrentEquippedWear.Equals(_CurrentNoneEquipped) || WeaponManager.LastBoughtTag(_CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(_CurrentEquippedWear).Equals(_CurrentEquippedWear)) ? WeaponManager.FirstUnboughtTag(Wear.wear[CategoryNames.ArmorCategory][0][0]) : _CurrentEquippedWear);
-				scrollViewPanel.transform.localPosition = Vector3.zero;
-				scrollViewPanel.clipOffset = new Vector2(0f, 0f);
-				if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-				{
-					viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-					idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-				}
-				if (InTrainingAfterNoviceArmorRemoved)
-				{
-					viewedId = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-					idToSet = WeaponManager.LastBoughtTag("Armor_Army_1") ?? "Armor_Army_1";
-				}
-				break;
-			case CategoryNames.SkinsCategory:
-				if (SkinsController.currentSkinNameForPers != null)
-				{
-					viewedId = SkinsController.currentSkinNameForPers;
-				}
-				else
-				{
-					if (SkinsController.skinsForPers == null || SkinsController.skinsForPers.Keys.Count <= 0)
-					{
-						break;
-					}
-					using (Dictionary<string, Texture2D>.KeyCollection.Enumerator enumerator2 = SkinsController.skinsForPers.Keys.GetEnumerator())
-					{
-						if (enumerator2.MoveNext())
-						{
-							string text4 = (viewedId = enumerator2.Current);
-						}
-					}
-				}
-				break;
-			case CategoryNames.CapesCategory:
-				viewedId = ((_CurrentEquippedWear == null || _CurrentNoneEquipped == null || _CurrentEquippedWear.Equals(_CurrentNoneEquipped) || WeaponManager.LastBoughtTag(_CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(_CurrentEquippedWear).Equals(_CurrentEquippedWear)) ? (WeaponManager.LastBoughtTag(capes[1].name) ?? capes[1].name) : _CurrentEquippedWear);
-				break;
-			case CategoryNames.BootsCategory:
-				viewedId = ((_CurrentEquippedWear == null || _CurrentNoneEquipped == null || _CurrentEquippedWear.Equals(_CurrentNoneEquipped) || WeaponManager.LastBoughtTag(_CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(_CurrentEquippedWear).Equals(_CurrentEquippedWear)) ? (WeaponManager.LastBoughtTag(boots[0].name) ?? boots[0].name) : _CurrentEquippedWear);
-				break;
-			case CategoryNames.MaskCategory:
-				viewedId = ((_CurrentEquippedWear == null || _CurrentNoneEquipped == null || _CurrentEquippedWear.Equals(_CurrentNoneEquipped) || WeaponManager.LastBoughtTag(_CurrentEquippedWear) == null || !WeaponManager.LastBoughtTag(_CurrentEquippedWear).Equals(_CurrentEquippedWear)) ? (WeaponManager.LastBoughtTag(masks[0].name) ?? masks[0].name) : _CurrentEquippedWear);
-				break;
-			case CategoryNames.GearCategory:
-			{
-				int num = GearManager.CurrentNumberOfUphradesForGear(GearManager.InvisibilityPotion);
-				int num2 = ((num >= GearManager.NumOfGearUpgrades) ? num : num);
-				viewedId = GearManager.NameForUpgrade(GearManager.InvisibilityPotion, num2);
-				break;
-			}
-			}
-		}
-		armorWearProperties.SetActive(currentCategory == CategoryNames.ArmorCategory);
-		nonArmorWearProperties.SetActive(IsWearCategory(currentCategory) && currentCategory != CategoryNames.ArmorCategory);
-		gearProperties.SetActive(currentCategory == CategoryNames.GearCategory);
-		skinProperties.SetActive(currentCategory == CategoryNames.SkinsCategory);
-		border.SetActive(currentCategory != CategoryNames.SkinsCategory);
-		ReloadCarousel(idToSet);
-		SetCamera();
-		if (!IsWeaponCategory(i) && weapon == null)
-		{
-			SetWeapon(_CurrentWeaponSetIDs()[0] ?? WeaponManager._initialWeaponName);
-		}
-		if (currentCategory == CategoryNames.SkinsCategory)
-		{
-			shopCarouselCollider.center = new Vector3(0f, -40f, 0f);
-			shopCarouselCollider.size = new Vector3(shopCarouselCollider.size.x, 363f, shopCarouselCollider.size.z);
-		}
-		else
-		{
-			shopCarouselCollider.center = new Vector3(0f, 0f, 0f);
-			shopCarouselCollider.size = new Vector3(shopCarouselCollider.size.x, 252f, shopCarouselCollider.size.z);
-		}
-	}
-
-	private void HandleCarouselCentering()
-	{
-		HandleCarouselCentering(carouselCenter.centeredObject);
-	}
-
-	private void HandleCarouselCentering(GameObject centeredObj)
-	{
-		if (centeredObj != null && centeredObj != _lastSelectedItem)
-		{
-			_lastSelectedItem = centeredObj;
-			if (highlightedCarouselObject != null)
-			{
-			}
-			highlightedCarouselObject = centeredObj.transform;
-			if (highlightedCarouselObject != null)
-			{
-			}
-			ShopCarouselElement component = centeredObj.GetComponent<ShopCarouselElement>();
-			ChooseCarouselItem(component.itemID);
-		}
-		if (EnableConfigurePos && centeredObj != null)
-		{
-			centeredObj.GetComponent<ShopCarouselElement>().SetPos(1f, 0f);
-		}
-	}
-
-	private void CheckCenterItemChanging()
-	{
-		if (!scrollViewPanel.cachedGameObject.activeInHierarchy)
-		{
+			UnityEngine.Debug.LogError("Skin id should not be null!");
 			return;
 		}
-		Transform cachedTransform = scrollViewPanel.cachedTransform;
-		itemIndex = -1;
-		int num = (int)wrapContent.cellWidth;
-		int childCount = wrapContent.transform.childCount;
-		if (cachedTransform.localPosition.x > 0f)
+		this.SetSkinOnPers(SkinsController.skinsForPers[skinId]);
+	}
+
+	public void UpdatePersWithNewItem()
+	{
+		if (!this.WeaponCategory)
 		{
-			itemIndex = 0;
-		}
-		else if (cachedTransform.localPosition.x < (float)(-1 * num * childCount))
-		{
-			itemIndex = childCount - 1;
+			switch (this.currentCategory)
+			{
+				case ShopNGUIController.CategoryNames.HatsCategory:
+				{
+					this.UpdatePersHat(this.viewedId);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.ArmorCategory:
+				{
+					this.UpdatePersArmor(this.viewedId);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.SkinsCategory:
+				{
+					if (!this.viewedId.Equals("CustomSkinID"))
+					{
+						this.UpdatePersSkin(this.viewedId);
+					}
+					break;
+				}
+				case ShopNGUIController.CategoryNames.CapesCategory:
+				{
+					this.UpdatePersCape(this.viewedId);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.BootsCategory:
+				{
+					this.UpdatePersBoots(this.viewedId);
+					break;
+				}
+				case ShopNGUIController.CategoryNames.GearCategory:
+				{
+					break;
+				}
+				case ShopNGUIController.CategoryNames.MaskCategory:
+				{
+					this.UpdatePersMask(this.viewedId);
+					break;
+				}
+				default:
+				{
+					goto case ShopNGUIController.CategoryNames.GearCategory;
+				}
+			}
 		}
 		else
 		{
-			itemIndex = -1 * Mathf.RoundToInt((cachedTransform.localPosition.x - (float)(Mathf.CeilToInt(cachedTransform.localPosition.x / (float)num / (float)childCount) * num * childCount)) / (float)num);
-		}
-		itemIndex = Mathf.Clamp(itemIndex, 0, childCount - 1);
-		if (itemIndex >= 0 && itemIndex < wrapContent.transform.childCount)
-		{
-			GameObject centeredObj = wrapContent.transform.GetChild(itemIndex).gameObject;
-			if (!EnableConfigurePos)
+			string tag = this.viewedId;
+			if (tag == null && WeaponManager.sharedManager.playerWeapons.Count > 0)
 			{
-				HandleCarouselCentering(centeredObj);
+				tag = ItemDb.GetByPrefabName((WeaponManager.sharedManager.playerWeapons[0] as Weapon).weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag;
 			}
+			this.SetWeapon(tag);
 		}
 	}
 
-	public static void SetPersArmorVisible(Transform armorPoint)
+	private void UpdateTempItemTime()
 	{
-		SetRenderersVisibleFromPoint(armorPoint, ShowArmor);
-		if (armorPoint.childCount <= 0)
+		if (TempItemsController.sharedController != null)
 		{
-			return;
-		}
-		Transform child = armorPoint.GetChild(0);
-		ArmorRefs component = child.GetChild(0).GetComponent<ArmorRefs>();
-		if (component != null)
-		{
-			if (component.leftBone != null)
+			bool flag = (!TempItemsController.PriceCoefs.ContainsKey(this.viewedId) ? false : !TempItemsController.sharedController.ContainsItem(this.viewedId));
+			if (this.notRented.activeInHierarchy != flag)
 			{
-				SetRenderersVisibleFromPoint(component.leftBone, ShowArmor);
+				this.notRented.SetActive(flag);
 			}
-			if (component.rightBone != null)
+			string str = TempItemsController.sharedController.TimeRemainingForItemString(this.viewedId);
+			bool flag1 = (!TempItemsController.sharedController.ContainsItem(this.viewedId) ? false : str.Length < 5);
+			if (this.daysLeftLabel.gameObject.activeInHierarchy != flag1)
 			{
-				SetRenderersVisibleFromPoint(component.rightBone, ShowArmor);
+				this.daysLeftLabel.gameObject.SetActive(flag1);
 			}
-		}
-	}
-
-	public static void SetPersHatVisible(Transform hatPoint)
-	{
-	}
-
-	public static void SetRenderersVisibleFromPoint(Transform pt, bool showArmor)
-	{
-		_003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F _003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F = new _003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F();
-		_003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F.showArmor = showArmor;
-		Player_move_c.PerformActionRecurs(pt.gameObject, _003CSetRenderersVisibleFromPoint_003Ec__AnonStorey32F._003C_003Em__4F2);
-	}
-
-	private void Awake()
-	{
-		_003CAwake_003Ec__AnonStorey330 _003CAwake_003Ec__AnonStorey = new _003CAwake_003Ec__AnonStorey330();
-		_003CAwake_003Ec__AnonStorey._003C_003Ef__this = this;
-		showHatButton.gameObject.SetActive(false);
-		_ShowArmor = PlayerPrefs.GetInt("ShowArmorKeySetting", 1) == 1;
-		_ShowHat = PlayerPrefs.GetInt("ShowHatKeySetting", 1) == 1;
-		HOTween.Init(true, true, true);
-		HOTween.EnableOverwriteManager();
-		timeToUpdateTempGunTime = Time.realtimeSinceStartup;
-		if (category != null)
-		{
-			category.Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4F3;
-		}
-		if (buy != null)
-		{
-			buy.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4F4;
-		}
-		if (buyGear != null)
-		{
-			buyGear.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4F5;
-		}
-		if (upgrade != null)
-		{
-			upgrade.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4F6;
-		}
-		if (upgradeGear != null)
-		{
-			upgradeGear.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4F7;
-		}
-		showArmorButton.IsChecked = !ShowArmor;
-		showHatButton.IsChecked = !ShowHat;
-		showArmorButtonTempArmor.IsChecked = !ShowArmor;
-		showHatButtonTempHat.IsChecked = !ShowHat;
-		_003CAwake_003Ec__AnonStorey.toggleShowArmor = _003CAwake_003Ec__AnonStorey._003C_003Em__4F8;
-		_003CAwake_003Ec__AnonStorey.toggleShowHat = _003CAwake_003Ec__AnonStorey._003C_003Em__4F9;
-		showArmorButton.Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FA;
-		showHatButton.Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FB;
-		showArmorButtonTempArmor.Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FC;
-		showHatButtonTempHat.Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FD;
-		sharedShop = this;
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		ActiveObject.SetActive(false);
-		if (coinShopButton != null)
-		{
-			coinShopButton.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FE;
-		}
-		if (backButton != null)
-		{
-			backButton.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__4FF;
-		}
-		_003CAwake_003Ec__AnonStorey332 _003CAwake_003Ec__AnonStorey2 = new _003CAwake_003Ec__AnonStorey332();
-		_003CAwake_003Ec__AnonStorey2._003C_003Ef__this = this;
-		UIButton[] array = equips;
-		for (int i = 0; i < array.Length; i++)
-		{
-			_003CAwake_003Ec__AnonStorey2.ee = array[i];
-			_003CAwake_003Ec__AnonStorey2.ee.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey2._003C_003Em__500;
-		}
-		unequip.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__501;
-		enable.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__502;
-		create.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__503;
-		edit.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__504;
-		delete.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Ec__AnonStorey._003C_003Em__505;
-		hats.AddRange(Resources.LoadAll<ShopPositionParams>("Hats_Info"));
-		sort(hats, CategoryNames.HatsCategory);
-		armor.AddRange(Resources.LoadAll<ShopPositionParams>("Armor_Info"));
-		sort(armor, CategoryNames.ArmorCategory);
-		capes.AddRange(Resources.LoadAll<ShopPositionParams>("Capes_Info"));
-		sort(capes, CategoryNames.CapesCategory);
-		masks.AddRange(Resources.LoadAll<ShopPositionParams>("Masks_Info"));
-		sort(masks, CategoryNames.MaskCategory);
-		boots.AddRange(Resources.LoadAll<ShopPositionParams>("Shop_Boots_Info"));
-		sort(boots, CategoryNames.BootsCategory);
-		pixlMan = Resources.Load<GameObject>("PixlManForSkins");
-		if (!Device.IsLoweMemoryDevice)
-		{
-			_onPersArmorRefs = Resources.LoadAll<GameObject>("Armor_Shop");
-		}
-		if (Device.isPixelGunLow)
-		{
-			_refOnLowPolyArmor = Resources.Load<GameObject>("Armor_Low");
-			_refsOnLowPolyArmorMaterials = Resources.LoadAll<Material>("LowPolyArmorMaterials");
-		}
-	}
-
-	public void goToSM()
-	{
-		GameObject gameObject = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("SkinEditorController"));
-		SkinEditorController component = gameObject.GetComponent<SkinEditorController>();
-		if (component != null)
-		{
-			_003CgoToSM_003Ec__AnonStorey336 _003CgoToSM_003Ec__AnonStorey = new _003CgoToSM_003Ec__AnonStorey336();
-			_003CgoToSM_003Ec__AnonStorey._003C_003Ef__this = this;
-			_003CgoToSM_003Ec__AnonStorey.backHandler = null;
-			_003CgoToSM_003Ec__AnonStorey.backHandler = _003CgoToSM_003Ec__AnonStorey._003C_003Em__506;
-			SkinEditorController.ExitFromSkinEditor += _003CgoToSM_003Ec__AnonStorey.backHandler;
-			SkinEditorController.currentSkinName = ((!viewedId.Equals("CustomSkinID")) ? viewedId : null);
-			SkinEditorController.modeEditor = ((currentCategory != CategoryNames.SkinsCategory) ? SkinEditorController.ModeEditor.Cape : SkinEditorController.ModeEditor.SkinPers);
-			mainPanel.SetActive(false);
-		}
-	}
-
-	public IEnumerator ReloadAfterEditing(string n, bool shouldReload = true)
-	{
-		yield return null;
-		if (shouldReload)
-		{
-			ReloadCarousel(n ?? "cape_Custom");
-		}
-		PlayWeaponAnimation();
-		UpdateIcon(currentCategory);
-	}
-
-	private static List<Camera> BankRelatedCameras()
-	{
-		List<Camera> list = BankController.Instance.GetComponentsInChildren<Camera>(true).ToList();
-		if (FreeAwardController.Instance != null && FreeAwardController.Instance.renderCamera != null)
-		{
-			list.Add(FreeAwardController.Instance.renderCamera);
-		}
-		return list;
-	}
-
-	private static void SetBankCamerasEnabled()
-	{
-		List<Camera> list = BankRelatedCameras();
-		foreach (Camera item in list)
-		{
-			if ((!(ExpController.Instance != null) || !ExpController.Instance.IsRenderedWithCamera(item)) && !item.gameObject.tag.Equals("CamTemp") && !sharedShop.ourCameras.Contains(item))
+			if (this.daysLeftValueLabel.gameObject.activeInHierarchy != flag1)
 			{
-				item.rect = new Rect(0f, 0f, 1f, 1f);
+				this.daysLeftValueLabel.gameObject.SetActive(flag1);
+			}
+			if (flag1)
+			{
+				this.daysLeftValueLabel.text = str;
+			}
+			bool flag2 = (!TempItemsController.sharedController.ContainsItem(this.viewedId) ? false : str.Length >= 5);
+			if (this.timeLeftLabel.gameObject.activeInHierarchy != flag2)
+			{
+				this.timeLeftLabel.gameObject.SetActive(flag2);
+			}
+			if (this.timeLeftValueLabel.gameObject.activeInHierarchy != flag2)
+			{
+				this.timeLeftValueLabel.gameObject.SetActive(flag2);
+			}
+			if (flag2)
+			{
+				this.timeLeftValueLabel.text = str;
+			}
+			bool flag3 = (!flag2 ? false : TempItemsController.sharedController.TimeRemainingForItems(this.viewedId) <= (long)3600);
+			if (this.redBackForTime.activeInHierarchy != flag3)
+			{
+				this.redBackForTime.SetActive(flag3);
 			}
 		}
 	}
 
-	private void BuyOrUpgradeWeapon(bool upgradeNotBuy = false)
-	{
-		_003CBuyOrUpgradeWeapon_003Ec__AnonStorey337 _003CBuyOrUpgradeWeapon_003Ec__AnonStorey = new _003CBuyOrUpgradeWeapon_003Ec__AnonStorey337();
-		_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.upgradeNotBuy = upgradeNotBuy;
-		_003CBuyOrUpgradeWeapon_003Ec__AnonStorey._003C_003Ef__this = this;
-		_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id = ((currentCategory != CategoryNames.GearCategory) ? viewedId : ((!_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.upgradeNotBuy) ? IDForCurrentGear : NextUpgradeIDForCurrentGear));
-		_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.tg = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id;
-		if (WeaponManager.tagToStoreIDMapping.ContainsKey(_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.tg))
-		{
-			_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id = WeaponManager.tagToStoreIDMapping[WeaponManager.FirstUnboughtOrForOurTier(_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.tg)];
-		}
-		if (WearCategory)
-		{
-			_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id = WeaponManager.FirstUnboughtTag(_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id);
-			_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.tg = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id;
-		}
-		if (_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.id != null)
-		{
-			_003CBuyOrUpgradeWeapon_003Ec__AnonStorey.price = currentPrice(viewedId, currentCategory, _003CBuyOrUpgradeWeapon_003Ec__AnonStorey.upgradeNotBuy);
-			GameObject obj = mainPanel;
-			ItemPrice itemPrice = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey.price;
-			Action onSuccess = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey._003C_003Em__507;
-			Action onFailure = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey._003C_003Em__508;
-			Action onReturnFromBank = _003CBuyOrUpgradeWeapon_003Ec__AnonStorey._003C_003Em__509;
-			if (_003C_003Ef__am_0024cacheCA == null)
-			{
-				_003C_003Ef__am_0024cacheCA = _003CBuyOrUpgradeWeapon_003Em__50A;
-			}
-			TryToBuy(obj, itemPrice, onSuccess, onFailure, null, onReturnFromBank, _003C_003Ef__am_0024cacheCA, _003CBuyOrUpgradeWeapon_003Ec__AnonStorey._003C_003Em__50B);
-		}
-	}
-
-	public static void ProvideShopItemOnStarterPackBoguht(CategoryNames c, string sourceTg, int gearCount = 1, bool buyArmorUpToSourceTg = false, int timeForRentIndex = 0, Action<string> contextSpecificAction = null, Action<string> customEquipWearAction = null, bool equipSkin = true, bool equipWear = true, bool doAndroidCloudSync = true)
-	{
-		_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey338 _003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey = new _003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey338();
-		_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.customEquipWearAction = customEquipWearAction;
-		_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.equipWear = equipWear;
-		_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.c = c;
-		_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.equipSkin = equipSkin;
-		string text = ((_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.c != CategoryNames.GearCategory) ? sourceTg : GearManager.HolderQuantityForID(sourceTg));
-		string text2 = text;
-		if (WeaponManager.tagToStoreIDMapping.ContainsKey(text2))
-		{
-			text = WeaponManager.tagToStoreIDMapping[text2];
-		}
-		if (text != null)
-		{
-			ProvdeShopItemWithRightId(_003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey.c, text, text2, null, _003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey._003C_003Em__50C, contextSpecificAction, _003CProvideShopItemOnStarterPackBoguht_003Ec__AnonStorey._003C_003Em__50D, true, gearCount, buyArmorUpToSourceTg, timeForRentIndex, doAndroidCloudSync);
-		}
-	}
-
-	public static void ProvideAllTypeShopItem(CategoryNames category, string sourceTag, int gearCount, int timeForRent)
-	{
-		int num = 0;
-		if (timeForRent != -1)
-		{
-			int days = timeForRent / 24;
-			num = TempItemsController.RentIndexFromDays(days);
-		}
-		int timeForRentIndex = num;
-		if (_003C_003Ef__am_0024cacheCB == null)
-		{
-			_003C_003Ef__am_0024cacheCB = _003CProvideAllTypeShopItem_003Em__50E;
-		}
-		ProvideShopItemOnStarterPackBoguht(category, sourceTag, gearCount, false, timeForRentIndex, null, _003C_003Ef__am_0024cacheCB);
-		TempItemsController.sharedController.ExpiredItems.Remove(sourceTag);
-	}
-
-	private static int AddedNumberOfGearWhenBuyingPack(string id)
-	{
-		int num = GearManager.ItemsInPackForGear(GearManager.HolderQuantityForID(id));
-		if (Storager.getInt(id, false) + num > GearManager.MaxCountForGear(id))
-		{
-			num = GearManager.MaxCountForGear(id) - Storager.getInt(id, false);
-		}
-		return num;
-	}
-
-	private static void ProvdeShopItemWithRightId(CategoryNames c, string id, string tg, Action UNUSED_DO_NOT_SET_onTrainingAction, Action<string> onEquipWearAction, Action<string> contextSpecificAction, Action<string> onSkinBoughtAction, bool giveOneItemOfGear = false, int gearCount = 1, bool buyArmorAndHatsUpToTg = false, int timeForRentIndex = 0, bool doAndroidCloudSync = true)
-	{
-		if (ShopNGUIController.GunBought != null)
-		{
-			ShopNGUIController.GunBought();
-		}
-		if (IsWearCategory(c))
-		{
-			if (buyArmorAndHatsUpToTg && Wear.wear.ContainsKey(c))
-			{
-				List<List<string>> list = Wear.wear[c];
-				List<string> list2 = null;
-				foreach (List<string> item in list)
-				{
-					if (item.Contains(tg))
-					{
-						list2 = item;
-						break;
-					}
-				}
-				if (list2 != null)
-				{
-					for (int i = 0; i < list2.Count; i++)
-					{
-						Storager.setInt(list2[i], 1, true);
-						if (list2[i].Equals(tg))
-						{
-							break;
-						}
-					}
-				}
-			}
-			else if (TempItemsController.PriceCoefs.ContainsKey(tg))
-			{
-				int tm = TempItemsController.RentTimeForIndex(timeForRentIndex);
-				TempItemsController.sharedController.AddTemporaryItem(tg, tm);
-			}
-			else
-			{
-				Storager.setInt(tg, 1, true);
-			}
-			if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted) && doAndroidCloudSync)
-			{
-				SynchronizeAndroidPurchases("Wear: " + tg);
-			}
-			if (onEquipWearAction != null)
-			{
-				onEquipWearAction(tg);
-			}
-		}
-		if (IsWeaponCategory(c) && !WeaponManager.FirstUnboughtTag(tg).Equals(tg))
-		{
-			List<string> list3 = WeaponUpgrades.ChainForTag(tg);
-			if (list3 != null)
-			{
-				int num = list3.IndexOf(tg) - 1;
-				if (num >= 0)
-				{
-					for (int j = 0; j <= num; j++)
-					{
-						try
-						{
-							Storager.setInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[list3[j]]], 1, true);
-						}
-						catch
-						{
-							Debug.LogError("Error filling chain in indexOfWeaponBeforeCurrentTg");
-						}
-					}
-				}
-			}
-		}
-		WeaponManager.sharedManager.AddMinerWeapon(id, timeForRentIndex);
-		if (WeaponManager.sharedManager != null)
-		{
-			try
-			{
-				bool flag = WeaponManager.sharedManager.IsAvailableTryGun(WeaponManager.LastBoughtTag(tg));
-				bool flag2 = WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(WeaponManager.LastBoughtTag(tg));
-				WeaponManager.RemoveGunFromAllTryGunRelated(tg);
-				if (flag2)
-				{
-					string empty = string.Empty;
-					string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(tg), empty, c);
-					AnalyticsStuff.LogWEaponsSpecialOffers_Conversion(false, itemNameNonLocalized);
-				}
-				if (flag2 || flag)
-				{
-					Action<string> tryGunBought = ShopNGUIController.TryGunBought;
-					if (tryGunBought != null)
-					{
-						tryGunBought(WeaponManager.LastBoughtTag(tg));
-					}
-					if (FriendsController.useBuffSystem)
-					{
-						BuffSystem.instance.OnTryGunBuyed(ItemDb.GetByTag(tg).PrefabName);
-					}
-					else
-					{
-						KillRateCheck.OnTryGunBuyed();
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception in removeing TryGun structures: " + ex);
-			}
-		}
-		if (c == CategoryNames.GearCategory)
-		{
-			if (id.Contains(GearManager.UpgradeSuffix))
-			{
-				string key = GearManager.NameForUpgrade(GearManager.HolderQuantityForID(id), GearManager.CurrentNumberOfUphradesForGear(GearManager.HolderQuantityForID(id)) + 1);
-				Storager.setInt(key, 1, false);
-			}
-			else
-			{
-				int num2 = AddedNumberOfGearWhenBuyingPack(id);
-				Storager.setInt(id, Storager.getInt(id, false) + ((!giveOneItemOfGear) ? num2 : gearCount), false);
-			}
-		}
-		if (contextSpecificAction != null)
-		{
-			contextSpecificAction(id);
-		}
-		if (c != CategoryNames.SkinsCategory)
-		{
-			return;
-		}
-		if (id != null && SkinsController.shopKeyFromNameSkin.ContainsKey(id))
-		{
-			string text = SkinsController.shopKeyFromNameSkin[id];
-			if (Array.IndexOf(StoreKitEventListener.skinIDs, text) >= 0)
-			{
-				foreach (KeyValuePair<string, string> value in InAppData.inAppData.Values)
-				{
-					if (value.Key != null && value.Key.Equals(text))
-					{
-						Storager.setInt(value.Value, 1, true);
-						if (doAndroidCloudSync)
-						{
-							SynchronizeAndroidPurchases("Skin: " + text);
-						}
-						break;
-					}
-				}
-			}
-		}
-		if (onSkinBoughtAction != null)
-		{
-			onSkinBoughtAction(id);
-		}
-	}
-
-	public void FireBuyAction(string item)
-	{
-		if (buyAction != null)
-		{
-			buyAction(item);
-		}
-	}
-
-	private void LogShopPurchasesTotalAndPayingNonPaying(string itemName)
+	private void UpdateTryGunDiscountTime()
 	{
 		try
 		{
-			string text = currentCategory.ToString();
-			string eventName = string.Format("Shop Purchases {0}", "Total");
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("All Categories", text);
-			dictionary.Add(text, itemName);
-			dictionary.Add("Item", itemName);
-			Dictionary<string, string> dictionary2 = dictionary;
-			if (currentCategory != CategoryNames.GearCategory)
-			{
-				dictionary2.Add("Without Quick Shop", itemName);
-			}
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, dictionary2);
-			string payingSuffix = FlurryPluginWrapper.GetPayingSuffix();
-			string eventName2 = string.Format("Shop Purchases {0}", "Total" + payingSuffix);
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName2, dictionary2);
+			this.tryGunDiscountTime.text = TempItemsController.TempItemTimeRemainsStringRepresentation(WeaponManager.sharedManager.StartTimeForTryGunDiscount(this.viewedId) + (long)WeaponManager.TryGunPromoDuration() - PromoActionsManager.CurrentUnixTime);
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("LogShopPurchasesTotalAndPayingNonPaying exception: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in tryGunDiscountPanelActive.text: ", exception));
 		}
 	}
 
-	private void ActualBuy(string id, string tg, ItemPrice itemPrice)
+	private static int UpperCoinsBankBound()
 	{
-		_003CActualBuy_003Ec__AnonStorey339 _003CActualBuy_003Ec__AnonStorey = new _003CActualBuy_003Ec__AnonStorey339();
-		_003CActualBuy_003Ec__AnonStorey.id = id;
-		_003CActualBuy_003Ec__AnonStorey._003C_003Ef__this = this;
-		if (currentCategory == CategoryNames.ArmorCategory || IsWeaponCategory(currentCategory))
-		{
-			FireWeaponOrArmorBought();
-		}
-		_003CActualBuy_003Ec__AnonStorey.c = currentCategory;
-		int num = AddedNumberOfGearWhenBuyingPack(_003CActualBuy_003Ec__AnonStorey.id);
-		ProvdeShopItemWithRightId(_003CActualBuy_003Ec__AnonStorey.c, _003CActualBuy_003Ec__AnonStorey.id, tg, null, _003CActualBuy_003Ec__AnonStorey._003C_003Em__50F, _003CActualBuy_003Ec__AnonStorey._003C_003Em__510, _003CActualBuy_003Ec__AnonStorey._003C_003Em__511);
-		if (WeaponManager.tagToStoreIDMapping.ContainsValue(_003CActualBuy_003Ec__AnonStorey.id))
-		{
-			IEnumerable<KeyValuePair<string, string>> source = WeaponManager.tagToStoreIDMapping.Where(_003CActualBuy_003Ec__AnonStorey._003C_003Em__512);
-			if (_003C_003Ef__am_0024cacheCC == null)
-			{
-				_003C_003Ef__am_0024cacheCC = _003CActualBuy_003Em__513;
-			}
-			IEnumerable<string> source2 = source.Select(_003C_003Ef__am_0024cacheCC);
-			SynchronizeAndroidPurchases("Weapon: " + source2.FirstOrDefault());
-			ItemPrice priceByShopId = ItemDb.GetPriceByShopId(_003CActualBuy_003Ec__AnonStorey.id);
-			int? num2 = null;
-			if (priceByShopId != null)
-			{
-				num2 = priceByShopId.Price;
-			}
-			if (num2.HasValue && num2.Value >= PlayerPrefs.GetInt(Defs.MostExpensiveWeapon, 0))
-			{
-				PlayerPrefs.SetInt(Defs.MostExpensiveWeapon, num2.Value);
-				PlayerPrefs.SetString(Defs.MenuPersWeaponTag, (source2.Count() <= 0) ? string.Empty : source2.ElementAt(0));
-				PlayerPrefs.Save();
-			}
-		}
-		string text = _003CActualBuy_003Ec__AnonStorey.id;
-		try
-		{
-			if (WeaponManager.tagToStoreIDMapping.ContainsKey(_003CActualBuy_003Ec__AnonStorey.id))
-			{
-				text = WeaponManager.tagToStoreIDMapping[_003CActualBuy_003Ec__AnonStorey.id];
-			}
-			if (currentCategory == CategoryNames.SkinsCategory && text != null && SkinsController.shopKeyFromNameSkin.ContainsKey(text))
-			{
-				text = SkinsController.shopKeyFromNameSkin[text];
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in setting shopId: " + ex);
-		}
-		try
-		{
-			string text2 = WeaponManager.LastBoughtTag(viewedId) ?? WeaponManager.FirstUnboughtTag(viewedId);
-			string text3 = ItemDb.GetItemNameNonLocalized(text2, text, currentCategory);
-			try
-			{
-				if (currentCategory == CategoryNames.SkinsCategory)
-				{
-					text3 = LocalizationStore.GetByDefault(SkinsController.skinsLocalizeKey[int.Parse(_003CActualBuy_003Ec__AnonStorey.id)]);
-				}
-			}
-			catch (Exception ex2)
-			{
-				Debug.LogError("Shop: ActualBuy: get readable skin name: " + ex2);
-			}
-			FlurryPluginWrapper.LogPurchaseByModes(currentCategory, (currentCategory != CategoryNames.GearCategory) ? text3 : GearManager.HolderQuantityForID(text), (currentCategory != CategoryNames.GearCategory) ? 1 : num, false);
-			if (currentCategory != CategoryNames.GearCategory)
-			{
-				FlurryPluginWrapper.LogPurchasesPoints(IsWeaponCategory(currentCategory));
-				FlurryPluginWrapper.LogPurchaseByPoints(currentCategory, text3, 1);
-			}
-			else
-			{
-				FlurryPluginWrapper.LogGearPurchases(GearManager.HolderQuantityForID(text), num, false);
-				if (Application.loadedLevelName == Defs.MainMenuScene)
-				{
-					FlurryPluginWrapper.LogPurchaseByPoints(currentCategory, GearManager.HolderQuantityForID(text), num);
-				}
-			}
-			try
-			{
-				bool isDaterWeapon = false;
-				if (IsWeaponCategory(currentCategory))
-				{
-					WeaponSounds weaponInfo = ItemDb.GetWeaponInfo(text2);
-					isDaterWeapon = weaponInfo != null && weaponInfo.IsAvalibleFromFilter(3);
-				}
-				string text4 = ((!FlurryEvents.shopCategoryToLogSalesNamesMapping.ContainsKey(currentCategory)) ? currentCategory.ToString() : FlurryEvents.shopCategoryToLogSalesNamesMapping[currentCategory]);
-				AnalyticsStuff.LogSales(text3, text4, isDaterWeapon);
-				AnalyticsFacade.InAppPurchase(text3, text4, 1, itemPrice.Price, itemPrice.Currency);
-				if (_isFromPromoActions && _promoActionsIdClicked != null && text2 != null && _promoActionsIdClicked == text2)
-				{
-					AnalyticsStuff.LogSpecialOffersPanel("Efficiency", "Buy", text4 ?? "Unknown", text3);
-				}
-				_isFromPromoActions = false;
-			}
-			catch (Exception ex3)
-			{
-				Debug.LogError("Exception in LogSales block in Shop: " + ex3);
-			}
-			bool onlyServerDiscount;
-			int num3 = DiscountFor(WeaponManager.LastBoughtTag(viewedId) ?? WeaponManager.FirstUnboughtTag(viewedId), out onlyServerDiscount);
-			if (num3 > 0)
-			{
-				string itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(WeaponManager.LastBoughtTag(viewedId) ?? WeaponManager.FirstUnboughtTag(viewedId), text, currentCategory, "Unknown");
-				Dictionary<string, string> dictionary = new Dictionary<string, string>();
-				dictionary.Add(num3.ToString(), itemNameNonLocalized);
-				Dictionary<string, string> parameters = dictionary;
-				FlurryPluginWrapper.LogEventAndDublicateToConsole("Offers Sale", parameters);
-			}
-			if (currentCategory == CategoryNames.GearCategory && text3 != null && !text3.Contains(GearManager.UpgradeSuffix) && GearManager.AllGear.Contains(text3))
-			{
-				text3 = GearManager.AnalyticsIDForOneItemOfGear(text3);
-			}
-			LogShopPurchasesTotalAndPayingNonPaying(text3);
-			if (ExperienceController.sharedController != null)
-			{
-				int currentLevel = ExperienceController.sharedController.currentLevel;
-				int num4 = (currentLevel - 1) / 9;
-				string arg = string.Format("[{0}, {1})", num4 * 9 + 1, (num4 + 1) * 9 + 1);
-				string eventName = string.Format("Shop Purchases On Level {0} ({1}){2}", arg, FlurryPluginWrapper.GetPayingSuffix().Trim(), string.Empty);
-				Dictionary<string, string> dictionary = new Dictionary<string, string>();
-				dictionary.Add("Level " + currentLevel, text3);
-				Dictionary<string, string> parameters2 = dictionary;
-				FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters2);
-			}
-			LogPurchaseAfterPaymentAnalyticsEvent(text3);
-		}
-		catch (Exception ex4)
-		{
-			Debug.LogError("Exception in Shop Logging: " + ex4);
-		}
-		chosenId = WeaponManager.LastBoughtTag(viewedId);
-		viewedId = ((currentCategory != CategoryNames.GearCategory) ? chosenId : GearManager.NameForUpgrade(GearManager.HolderQuantityForID(viewedId), GearManager.CurrentNumberOfUphradesForGear(GearManager.HolderQuantityForID(viewedId))));
-		UpdateIcon(currentCategory, true);
-		ReloadCarousel();
-		ChooseCarouselItem(viewedId, false, true);
-		Resources.UnloadUnusedAssets();
-		if (!inGame && currentCategory == CategoryNames.CapesCategory && viewedId.Equals("cape_Custom"))
-		{
-			FlurryPluginWrapper.LogEvent("Enable_Custom Cape");
-			wholePrice.gameObject.SetActive(false);
-			goToSM();
-		}
+		int num = (ExperienceController.sharedController == null ? 1 : ExperienceController.sharedController.currentLevel);
+		num = Mathf.Clamp(num, 0, (int)ExperienceController.addCoinsFromLevels.Length - 1);
+		return Storager.getInt("Coins", false) + 30 + ExperienceController.addCoinsFromLevels[num];
 	}
 
-	private static void SaveSkinAndSendToServer(string id)
+	private static int UpperGemsBankBound()
 	{
-		SkinsController.SetCurrentSkin(id);
-		byte[] array = SkinsController.currentSkinForPers.EncodeToPNG();
-		if (array != null)
+		int num = (ExperienceController.sharedController == null ? 1 : ExperienceController.sharedController.currentLevel);
+		num = Mathf.Clamp(num, 0, (int)ExperienceController.addGemsFromLevels.Length - 1);
+		return Storager.getInt("GemsCurrency", false) + ExperienceController.addGemsFromLevels[num];
+	}
+
+	public string WearForCat(ShopNGUIController.CategoryNames c)
+	{
+		string str;
+		if (c == ShopNGUIController.CategoryNames.CapesCategory)
 		{
-			string text = Convert.ToBase64String(array);
-			if (text != null)
-			{
-				FriendsController.sharedController.skin = text;
-				FriendsController.sharedController.SendOurData(true);
-			}
+			str = this._currentCape;
 		}
-	}
-
-	private void FireOnEquipSkin(string id)
-	{
-		if (onEquipSkinAction != null)
+		else if (c == ShopNGUIController.CategoryNames.BootsCategory)
 		{
-			onEquipSkinAction(id);
+			str = this._currentBoots;
 		}
-	}
-
-	public void SetSkinAsCurrent(string id)
-	{
-		SaveSkinAndSendToServer(id);
-		FireOnEquipSkin(id);
-	}
-
-	public static void SetAsEquippedAndSendToServer(string tg, CategoryNames c)
-	{
-		Storager.setString(SnForWearCategory(c), tg, false);
-		if (FriendsController.sharedController == null)
+		else if (c == ShopNGUIController.CategoryNames.ArmorCategory)
 		{
-			Debug.LogError("FriendsController.sharedController == null");
+			str = this._currentArmor;
+		}
+		else if (c != ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			str = (c != ShopNGUIController.CategoryNames.MaskCategory ? string.Empty : this._currentMask);
 		}
 		else
 		{
-			FriendsController.sharedController.SendAccessories();
+			str = this._currentHat;
 		}
+		return str;
 	}
 
-	public IEnumerator BackAfterDelay()
+	public static event Action GunBought;
+
+	public static event Action GunOrArmorBought;
+
+	public static event Action ShowArmorChanged;
+
+	public static event Action<string> TryGunBought;
+
+	public delegate void Action7<T1, T2, T3, T4, T5, T6, T7>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7);
+
+	public enum CategoryNames
 	{
-		_isFromPromoActions = false;
-		yield return null;
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-		{
-			TrainingController.CompletedTrainingStage = TrainingController.NewTrainingCompletedStage.ShopCompleted;
-			HintController.instance.StartShow();
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Back_Shop);
-		}
-		if (resumeAction != null)
-		{
-			resumeAction();
-		}
-		else
-		{
-			GuiActive = false;
-		}
-		if (wearResumeAction != null)
-		{
-			wearResumeAction();
-		}
-		if (InTrainingAfterNoviceArmorRemoved)
-		{
-			trainingColliders.SetActive(false);
-			trainingRemoveNoviceArmorCollider.SetActive(false);
-		}
-		InTrainingAfterNoviceArmorRemoved = false;
-		if (ExperienceController.sharedController != null)
-		{
-			ExperienceController.sharedController.isShowRanks = false;
-		}
+		PrimaryCategory,
+		BackupCategory,
+		MeleeCategory,
+		SpecilCategory,
+		SniperCategory,
+		PremiumCategory,
+		HatsCategory,
+		ArmorCategory,
+		SkinsCategory,
+		CapesCategory,
+		BootsCategory,
+		GearCategory,
+		MaskCategory
 	}
 
-	public static string SnForWearCategory(CategoryNames c)
+	public enum TrainingState
 	{
-		object result;
-		switch (c)
-		{
-		case CategoryNames.CapesCategory:
-			result = Defs.CapeEquppedSN;
-			break;
-		case CategoryNames.BootsCategory:
-			result = Defs.BootsEquppedSN;
-			break;
-		case CategoryNames.ArmorCategory:
-			result = Defs.ArmorNewEquppedSN;
-			break;
-		case CategoryNames.MaskCategory:
-			result = "MaskEquippedSN";
-			break;
-		default:
-			result = Defs.HatEquppedSN;
-			break;
-		}
-		return (string)result;
-	}
-
-	public static string NoneEquippedForWearCategory(CategoryNames c)
-	{
-		object result;
-		switch (c)
-		{
-		case CategoryNames.CapesCategory:
-			result = Defs.CapeNoneEqupped;
-			break;
-		case CategoryNames.BootsCategory:
-			result = Defs.BootsNoneEqupped;
-			break;
-		case CategoryNames.ArmorCategory:
-			result = Defs.ArmorNewNoneEqupped;
-			break;
-		case CategoryNames.MaskCategory:
-			result = "MaskNoneEquipped";
-			break;
-		default:
-			result = Defs.HatNoneEqupped;
-			break;
-		}
-		return (string)result;
-	}
-
-	public string WearForCat(CategoryNames c)
-	{
-		string result;
-		switch (c)
-		{
-		case CategoryNames.CapesCategory:
-			result = _currentCape;
-			break;
-		case CategoryNames.BootsCategory:
-			result = _currentBoots;
-			break;
-		case CategoryNames.ArmorCategory:
-			result = _currentArmor;
-			break;
-		case CategoryNames.HatsCategory:
-			result = _currentHat;
-			break;
-		case CategoryNames.MaskCategory:
-			result = _currentMask;
-			break;
-		default:
-			result = string.Empty;
-			break;
-		}
-		return result;
-	}
-
-	private void SetWearForCategory(CategoryNames cat, string wear)
-	{
-		switch (cat)
-		{
-		case CategoryNames.CapesCategory:
-			_currentCape = wear;
-			break;
-		case CategoryNames.HatsCategory:
-			_currentHat = wear;
-			break;
-		case CategoryNames.BootsCategory:
-			_currentBoots = wear;
-			break;
-		case CategoryNames.ArmorCategory:
-			_currentArmor = wear;
-			break;
-		case CategoryNames.MaskCategory:
-			_currentMask = wear;
-			break;
-		case CategoryNames.SkinsCategory:
-		case CategoryNames.GearCategory:
-			break;
-		}
-	}
-
-	public void LoadCurrentWearToVars()
-	{
-		_currentCape = Storager.getString(Defs.CapeEquppedSN, false);
-		_currentHat = Storager.getString(Defs.HatEquppedSN, false);
-		_currentBoots = Storager.getString(Defs.BootsEquppedSN, false);
-		_currentArmor = Storager.getString(Defs.ArmorNewEquppedSN, false);
-		_currentMask = Storager.getString("MaskEquippedSN", false);
-	}
-
-	private void HandleActionsUUpdated()
-	{
-		UpdateButtons();
-		UpdateItemParameters();
-	}
-
-	private void OnDestroy()
-	{
-		if (profile != null)
-		{
-			Resources.UnloadAsset(profile);
-			profile = null;
-		}
-	}
-
-	private void Start()
-	{
-		StartCoroutine(TryToShowExpiredBanner());
-	}
-
-	private IEnumerator TryToShowExpiredBanner()
-	{
-		while (FriendsController.sharedController == null || TempItemsController.sharedController == null)
-		{
-			yield return null;
-		}
-		while (true)
-		{
-			yield return StartCoroutine(FriendsController.sharedController.MyWaitForSeconds(1f));
-			try
-			{
-				if (!GuiActive || rentScreenPoint.childCount != 0)
-				{
-					continue;
-				}
-				if (Storager.getInt("Training.ShouldRemoveNoviceArmorInShopKey", false) == 1)
-				{
-					GameObject window = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("NguiWindows/WeRemoveNoviceArmorBanner"));
-					window.transform.parent = rentScreenPoint;
-					Player_move_c.SetLayerRecursively(window, LayerMask.NameToLayer("NGUIShop"));
-					window.transform.localPosition = new Vector3(0f, 0f, -130f);
-					window.transform.localRotation = Quaternion.identity;
-					window.transform.localScale = new Vector3(1f, 1f, 1f);
-					UpdatePersArmor(Defs.ArmorNewNoneEqupped);
-					sharedShop.trainingColliders.SetActive(true);
-					sharedShop.trainingRemoveNoviceArmorCollider.SetActive(true);
-					trainingStateRemoveNoviceArmor = TrainingState.NotInArmorCategory;
-					InTrainingAfterNoviceArmorRemoved = true;
-					if (HintController.instance != null)
-					{
-						HintController.instance.HideHintByName("shop_remove_novice_armor");
-					}
-				}
-				else if ((_shouldShowRewardWindowSkin || _shouldShowRewardWindowCape) && !Device.isPixelGunLow)
-				{
-					PlayerPrefs.SetInt((!_shouldShowRewardWindowSkin) ? Defs.ShownRewardWindowForCape : Defs.ShownRewardWindowForSkin, 1);
-					if (FacebookController.FacebookSupported || TwitterController.TwitterSupported)
-					{
-						_isFromPromoActions = false;
-						GameObject window2 = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("NguiWindows/CreateNewItemNGUI"));
-						RewardWindowBase rwb = window2.GetComponent<RewardWindowBase>();
-						bool skin = _shouldShowRewardWindowSkin;
-						FacebookController.StoryPriority priority = (rwb.priority = FacebookController.StoryPriority.Green);
-						rwb.shareAction = ((_003CTryToShowExpiredBanner_003Ec__Iterator1AB)(object)this)._003C_003Em__529;
-						rwb.HasReward = false;
-						if (skin)
-						{
-							if (_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheB == null)
-							{
-								_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheB = _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Em__52A;
-							}
-							rwb.twitterStatus = _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheB;
-							rwb.EventTitle = "Painted Skin";
-						}
-						else
-						{
-							if (_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheC == null)
-							{
-								_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheC = _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Em__52B;
-							}
-							rwb.twitterStatus = _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheC;
-							rwb.EventTitle = "Painted Cape";
-						}
-						window2.transform.parent = rentScreenPoint;
-						Player_move_c.SetLayerRecursively(window2, LayerMask.NameToLayer("NGUIShop"));
-						window2.transform.localPosition = new Vector3(0f, 0f, -130f);
-						window2.transform.localRotation = Quaternion.identity;
-						window2.transform.localScale = new Vector3(1f, 1f, 1f);
-						DrawItemRewardWindow dirw = window2.GetComponent<DrawItemRewardWindow>();
-						dirw.skin.SetActive(_shouldShowRewardWindowSkin);
-						dirw.cape.SetActive(!_shouldShowRewardWindowSkin);
-					}
-					if (_shouldShowRewardWindowSkin)
-					{
-						_shouldShowRewardWindowSkin = false;
-					}
-					else if (_shouldShowRewardWindowCape)
-					{
-						_shouldShowRewardWindowCape = false;
-					}
-				}
-				else if (Storager.getInt(Defs.PremiumEnabledFromServer, false) != 1 || !(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.myPlayerMoveC == null) || !ShowPremimAccountExpiredIfPossible(rentScreenPoint, "NGUIShop", string.Empty))
-				{
-					Transform point = rentScreenPoint;
-					Action<string> onPurchase = ((_003CTryToShowExpiredBanner_003Ec__Iterator1AB)(object)this)._003C_003Em__52C;
-					if (_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheD == null)
-					{
-						_003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheD = _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Em__52D;
-					}
-					ShowTempItemExpiredIfPossible(point, "NGUIShop", onPurchase, _003CTryToShowExpiredBanner_003Ec__Iterator1AB._003C_003Ef__am_0024cacheD, ((_003CTryToShowExpiredBanner_003Ec__Iterator1AB)(object)this)._003C_003Em__52E, ((_003CTryToShowExpiredBanner_003Ec__Iterator1AB)(object)this)._003C_003Em__52F);
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.LogWarning("exception in Shop  TryToShowExpiredBanner: " + e);
-			}
-		}
-	}
-
-	private void Update()
-	{
-		if (!ActiveObject.activeInHierarchy)
-		{
-			return;
-		}
-		ExperienceController.sharedController.isShowRanks = rentScreenPoint.childCount == 0 && SkinEditorController.sharedController == null && (!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled);
-		if (Time.realtimeSinceStartup - timeToUpdateTempGunTime >= 1f)
-		{
-			timeToUpdateTempGunTime = Time.realtimeSinceStartup;
-			if (GuiActive && viewedId != null && WeaponManager.sharedManager != null && WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(viewedId))
-			{
-				UpdateTryGunDiscountTime();
-			}
-		}
-		string showHatTag = ((hatPoint.transform.childCount > 1) ? hatPoint.transform.GetChild(1).gameObject.tag : ((hatPoint.transform.childCount <= 0) ? "none" : hatPoint.transform.GetChild(0).gameObject.tag));
-		bool flag = currentCategory == CategoryNames.HatsCategory && !Wear.NonArmorHat(showHatTag);
-		bool flag2 = currentCategory == CategoryNames.ArmorCategory && viewedId != null && !TempItemsController.PriceCoefs.ContainsKey(viewedId);
-		if (showArmorButton.gameObject.activeSelf != flag2)
-		{
-			showArmorButton.gameObject.SetActive(flag2);
-		}
-		bool flag3 = false;
-		if (showHatButton.gameObject.activeSelf != flag3)
-		{
-			showHatButton.gameObject.SetActive(flag3);
-		}
-		bool flag4 = currentCategory == CategoryNames.ArmorCategory && viewedId != null && TempItemsController.PriceCoefs.ContainsKey(viewedId);
-		if (showArmorButtonTempArmor.gameObject.activeSelf != flag4)
-		{
-			showArmorButtonTempArmor.gameObject.SetActive(flag4);
-		}
-		bool flag5 = flag && viewedId != null && TempItemsController.PriceCoefs.ContainsKey(viewedId);
-		if (showHatButtonTempHat.gameObject.activeSelf != flag5)
-		{
-			showHatButtonTempHat.gameObject.SetActive(flag5);
-		}
-		if (Time.realtimeSinceStartup - _timePurchaseSuccessfulShown >= 2f)
-		{
-			purchaseSuccessful.SetActive(false);
-		}
-		if (Time.realtimeSinceStartup - _timePurchaseRentSuccessfulShown >= 2f)
-		{
-			purchaseSuccessfulRent.SetActive(false);
-		}
-		if (mainPanel.activeInHierarchy && !HOTween.IsTweening(MainMenu_Pers))
-		{
-			float num = -120f;
-			num *= ((BuildSettings.BuildTargetPlatform == RuntimePlatform.Android) ? 2f : ((!Application.isEditor) ? 0.5f : 100f));
-			Rect rect = new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height);
-			if (Input.touchCount > 0)
-			{
-				Touch touch = Input.GetTouch(0);
-				if (touch.phase == TouchPhase.Moved && rect.Contains(touch.position))
-				{
-					idleTimerLastTime = Time.realtimeSinceStartup;
-					MainMenu_Pers.Rotate(Vector3.up, touch.deltaPosition.x * num * 0.5f * (Time.realtimeSinceStartup - lastTime));
-				}
-			}
-			if (Application.isEditor)
-			{
-				float num2 = Input.GetAxis("Mouse ScrollWheel") * 3f * num * (Time.realtimeSinceStartup - lastTime);
-				MainMenu_Pers.Rotate(Vector3.up, num2);
-				if (num2 != 0f)
-				{
-					idleTimerLastTime = Time.realtimeSinceStartup;
-				}
-			}
-			lastTime = Time.realtimeSinceStartup;
-		}
-		if (currentCategory != CategoryNames.CapesCategory && Time.realtimeSinceStartup - idleTimerLastTime > IdleTimeoutPers)
-		{
-			SetCamera();
-		}
-		ActivityIndicator.IsActiveIndicator = StoreKitEventListener.restoreInProcess;
-		CheckCenterItemChanging();
-	}
-
-	private void LateUpdate()
-	{
-		float num = scrollViewPanel.GetViewSize().x / 2f;
-		ShopCarouselElement[] componentsInChildren = wrapContent.GetComponentsInChildren<ShopCarouselElement>(false);
-		ShopCarouselElement[] array = componentsInChildren;
-		foreach (ShopCarouselElement shopCarouselElement in array)
-		{
-			Transform transform = shopCarouselElement.transform;
-			float x = scrollViewPanel.clipOffset.x;
-			float num2 = Mathf.Abs(transform.localPosition.x - x);
-			float num3 = scaleCoef + (1f - scaleCoef) * (1f - num2 / num);
-			float num4 = 0.65f;
-			num3 = ((!(num2 <= num / 3f)) ? (scaleCoef + (num4 - scaleCoef) * (1f - (num2 - num / 3f) / (num * 2f / 3f))) : (num4 + (1f - num4) * (1f - num2 / (num / 3f))));
-			if (num2 >= num * 0.9f)
-			{
-				num3 = 0f;
-			}
-			float num5 = transform.localPosition.x - x;
-			float num6 = 0f;
-			float num7 = ((num5 <= 0f) ? 1 : (-1));
-			if (num5 != 0f)
-			{
-				num6 = ((Mathf.Abs(num5) <= wrapContent.cellWidth) ? (firstOFfset * (Mathf.Abs(num5) / wrapContent.cellWidth)) : ((!(Mathf.Abs(num5) <= 2f * wrapContent.cellWidth)) ? (secondOffset * (1f - (Mathf.Abs(num5) - 2f * wrapContent.cellWidth) / wrapContent.cellWidth)) : (firstOFfset + (secondOffset - firstOFfset) * ((Mathf.Abs(num5) - wrapContent.cellWidth) / wrapContent.cellWidth))));
-			}
-			num6 *= num7;
-			if (!EnableConfigurePos || scrollViewPanel.GetComponent<UIScrollView>().isDragging || scrollViewPanel.GetComponent<UIScrollView>().currentMomentum.x > 0f)
-			{
-				shopCarouselElement.SetPos(num3, num6);
-			}
-			shopCarouselElement.topSeller.gameObject.SetActive(shopCarouselElement.showTS && Mathf.Abs(num2) <= wrapContent.cellWidth / 10f);
-			shopCarouselElement.newnew.gameObject.SetActive(shopCarouselElement.showNew && Mathf.Abs(num2) <= wrapContent.cellWidth / 10f);
-			shopCarouselElement.quantity.gameObject.SetActive(shopCarouselElement.showQuantity && Mathf.Abs(num2) <= wrapContent.cellWidth / 10f);
-		}
-		if (_escapeRequested)
-		{
-			StartCoroutine(BackAfterDelay());
-			_escapeRequested = false;
-		}
-	}
-
-	private void HandleEscape()
-	{
-		if ((BankController.Instance != null && BankController.Instance.InterfaceEnabled) || (ProfileController.Instance != null && ProfileController.Instance.InterfaceEnabled) || (FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled))
-		{
-			return;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted)
-		{
-			if (Application.isEditor)
-			{
-				Debug.Log("Ignoring [Escape] since Tutorial is not completed.");
-			}
-		}
-		else if (InTrainingAfterNoviceArmorRemoved)
-		{
-			if (Application.isEditor)
-			{
-				Debug.Log("Ignoring [Escape] since Tutorial after removing Novice Armor is not completed.");
-			}
-		}
-		else if (!GuiActive)
-		{
-			if (Application.isEditor)
-			{
-				Debug.Log(GetType().Name + ".LateUpdate():    Ignoring Escape because Shop GUI is not active.");
-			}
-		}
-		else
-		{
-			_escapeRequested = true;
-		}
-	}
-
-	public void SetInGame(bool e)
-	{
-		inGame = e;
-	}
-
-	private IEnumerator DisableStub()
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			yield return null;
-		}
-		stub.SetActive(false);
-	}
-
-	public void MakeACtiveAfterDelay(string idToSet, CategoryNames cn)
-	{
-		Light[] array = UnityEngine.Object.FindObjectsOfType<Light>();
-		if (array == null)
-		{
-			array = new Light[0];
-		}
-		Light[] array2 = array;
-		foreach (Light light in array2)
-		{
-			if (!mylights.Contains(light))
-			{
-				light.cullingMask &= ~(1 << LayerMask.NameToLayer("NGUIShop"));
-			}
-		}
-		sharedShop.ActiveObject.SetActive(true);
-		wrapContent.Reposition();
-		if (ExperienceController.sharedController != null && ExpController.Instance != null)
-		{
-			ExperienceController.sharedController.isShowRanks = true;
-			ExpController.Instance.InterfaceEnabled = true;
-		}
-		UpdatePersHat(_currentHat);
-		UpdatePersCape(_currentCape);
-		UpdatePersArmor(_currentArmor);
-		UpdatePersBoots(_currentBoots);
-		UpdatePersMask(_currentMask);
-		UpdatePersSkin(SkinsController.currentSkinNameForPers);
-		MyCenterOnChild myCenterOnChild = carouselCenter;
-		myCenterOnChild.onFinished = (SpringPanel.OnFinished)Delegate.Combine(myCenterOnChild.onFinished, new SpringPanel.OnFinished(HandleCarouselCentering));
-		PromoActionsManager.ActionsUUpdated += HandleActionsUUpdated;
-		PlayWeaponAnimation();
-		idleTimerLastTime = Time.realtimeSinceStartup;
-		if (idToSet != null)
-		{
-			sharedShop.ChooseCarouselItem(idToSet, false, true);
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-		{
-			ForceResetTrainingState();
-		}
-		sharedShop.carouselCenter.enabled = true;
-		AdjustCategoryButtonsForFilterMap();
-	}
-
-	private void AdjustCategoryButtonsForFilterMap()
-	{
-		List<int> list = new List<int>();
-		if (SceneLoader.ActiveSceneName.Equals("Sniper"))
-		{
-			List<int> list2 = new List<int>();
-			list2.Add(0);
-			list2.Add(3);
-			list2.Add(5);
-			list = list2;
-		}
-		else if (SceneLoader.ActiveSceneName.Equals("Knife"))
-		{
-			List<int> list2 = new List<int>();
-			list2.Add(0);
-			list2.Add(1);
-			list2.Add(3);
-			list2.Add(5);
-			list2.Add(4);
-			list = list2;
-		}
-		else if (Defs.isHunger)
-		{
-			List<int> list2 = new List<int>();
-			list2.Add(7);
-			list = list2;
-		}
-		for (int i = 0; i < category.buttons.Length; i++)
-		{
-			category.buttons[i].onButton.GetComponent<BoxCollider>().enabled = !list.Contains(i) && category.buttons[i].onButton.GetComponent<BoxCollider>().enabled;
-			category.buttons[i].offButton.GetComponent<BoxCollider>().enabled = !list.Contains(i);
-		}
-	}
-
-	public IEnumerator MyWaitForSeconds(float tm)
-	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
-	}
-
-	private static string TemppOrHighestDPSGunInCategory(int cInt)
-	{
-		string text = null;
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.FilteredShopLists != null && WeaponManager.sharedManager.FilteredShopLists.Count > cInt)
-		{
-			List<GameObject> list = WeaponManager.sharedManager.FilteredShopLists[cInt];
-			if (_003C_003Ef__am_0024cacheCD == null)
-			{
-				_003C_003Ef__am_0024cacheCD = _003CTemppOrHighestDPSGunInCategory_003Em__514;
-			}
-			GameObject gameObject = list.Find(_003C_003Ef__am_0024cacheCD);
-			if (gameObject != null)
-			{
-				text = ItemDb.GetByPrefabName(gameObject.name.Replace("(Clone)", string.Empty)).Tag;
-			}
-			if (text == null && list.Count > 0)
-			{
-				for (int num = list.Count - 1; num >= 0; num--)
-				{
-					string text2 = ItemDb.GetByPrefabName(list[num].name.Replace("(Clone)", string.Empty)).Tag;
-					if (!ItemDb.IsTemporaryGun(text2) && ExpController.Instance != null && list[num].GetComponent<WeaponSounds>().tier <= ExpController.Instance.OurTier)
-					{
-						text = text2;
-						break;
-					}
-				}
-			}
-		}
-		return text;
-	}
-
-	public static string TempGunOrHighestDPSGun(CategoryNames c, out CategoryNames cn)
-	{
-		cn = c;
-		string text = null;
-		text = TemppOrHighestDPSGunInCategory((int)c);
-		if (text == null && WeaponManager.sharedManager.playerWeapons.Count > 0)
-		{
-			int num = (WeaponManager.sharedManager.playerWeapons[0] as Weapon).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1;
-			text = TemppOrHighestDPSGunInCategory(num);
-			cn = (CategoryNames)num;
-		}
-		return text;
-	}
-
-	private void OnLevelWasLoaded(int level)
-	{
-		if (GuiActive)
-		{
-			_storedAmbientLight = RenderSettings.ambientLight;
-			_storedFogEnabled = RenderSettings.fog;
-			RenderSettings.ambientLight = Defs.AmbientLightColorForShop();
-			RenderSettings.fog = false;
-		}
-	}
-
-	public void SetOtherCamerasEnabled(bool e)
-	{
-		List<Camera> list = (Camera.allCameras ?? new Camera[0]).ToList();
-		List<Camera> collection = ProfileController.Instance.GetComponentsInChildren<Camera>(true).ToList();
-		list.AddRange(collection);
-		list.AddRange(BankRelatedCameras());
-		foreach (Camera item in list)
-		{
-			if ((!(ExpController.Instance != null) || !ExpController.Instance.IsRenderedWithCamera(item)) && !item.gameObject.tag.Equals("CamTemp") && !sharedShop.ourCameras.Contains(item))
-			{
-				item.rect = new Rect(0f, 0f, e ? 1 : 0, e ? 1 : 0);
-			}
-		}
-	}
-
-	private static void SetIconChosen(CategoryNames cn)
-	{
-		for (int i = 0; i < sharedShop.category.buttons.Length; i++)
-		{
-			sharedShop.category.buttons[i].SetCheckedImage(i == (int)cn);
-			if (i == (int)cn)
-			{
-				sharedShop.category.buttons[i].onButton.GetComponent<BoxCollider>().enabled = false;
-			}
-		}
-	}
-
-	public void IsInShopFromPromoPanel(bool isFromPromoACtions, string tg)
-	{
-		_isFromPromoActions = isFromPromoACtions;
-		_promoActionsIdClicked = tg;
-	}
-
-	public static void DisableLightProbesRecursively(GameObject w)
-	{
-		if (_003C_003Ef__am_0024cacheCE == null)
-		{
-			_003C_003Ef__am_0024cacheCE = _003CDisableLightProbesRecursively_003Em__515;
-		}
-		Player_move_c.PerformActionRecurs(w, _003C_003Ef__am_0024cacheCE);
-	}
-
-	public void SetWeapon(string tg)
-	{
-		animationCoroutineRunner.StopAllCoroutines();
-		if (WeaponManager.sharedManager == null)
-		{
-			return;
-		}
-		if (armorPoint.childCount > 0)
-		{
-			ArmorRefs component = armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
-			if (component != null)
-			{
-				if (component.leftBone != null)
-				{
-					Vector3 position = component.leftBone.position;
-					Quaternion rotation = component.leftBone.rotation;
-					component.leftBone.parent = armorPoint.GetChild(0).GetChild(0);
-					component.leftBone.position = position;
-					component.leftBone.rotation = rotation;
-				}
-				if (component.rightBone != null)
-				{
-					Vector3 position2 = component.rightBone.position;
-					Quaternion rotation2 = component.rightBone.rotation;
-					component.rightBone.parent = armorPoint.GetChild(0).GetChild(0);
-					component.rightBone.position = position2;
-					component.rightBone.rotation = rotation2;
-				}
-			}
-		}
-		List<Transform> list = new List<Transform>();
-		foreach (Transform item in body.transform)
-		{
-			list.Add(item);
-		}
-		foreach (Transform item2 in list)
-		{
-			item2.parent = null;
-			item2.position = new Vector3(0f, -10000f, 0f);
-			UnityEngine.Object.Destroy(item2.gameObject);
-		}
-		if (tg == null)
-		{
-			return;
-		}
-		if (profile != null)
-		{
-			Resources.UnloadAsset(profile);
-			profile = null;
-		}
-		ItemRecord byTag = ItemDb.GetByTag(tg);
-		if (byTag == null || string.IsNullOrEmpty(byTag.PrefabName))
-		{
-			Debug.Log("rec == null || string.IsNullOrEmpty(rec.PrefabName)");
-			return;
-		}
-		GameObject gameObject = Resources.Load<GameObject>("Weapons/" + byTag.PrefabName);
-		if (gameObject == null)
-		{
-			Debug.Log("pref==null");
-			return;
-		}
-		profile = Resources.Load<AnimationClip>("ProfileAnimClips/" + gameObject.name + "_Profile");
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		DisableLightProbesRecursively(gameObject2);
-		Player_move_c.SetLayerRecursively(gameObject2, LayerMask.NameToLayer("NGUIShop"));
-		gameObject2.transform.parent = body.transform;
-		weapon = gameObject2;
-		weapon.transform.localScale = new Vector3(1f, 1f, 1f);
-		weapon.transform.position = body.transform.position;
-		weapon.transform.localPosition = Vector3.zero;
-		weapon.transform.localRotation = Quaternion.identity;
-		WeaponSounds component2 = weapon.GetComponent<WeaponSounds>();
-		if (armorPoint.childCount > 0 && component2 != null)
-		{
-			ArmorRefs component3 = armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
-			if (component3 != null)
-			{
-				if (component3.leftBone != null && component2.LeftArmorHand != null)
-				{
-					component3.leftBone.parent = component2.LeftArmorHand;
-					component3.leftBone.localPosition = Vector3.zero;
-					component3.leftBone.localRotation = Quaternion.identity;
-					component3.leftBone.localScale = new Vector3(1f, 1f, 1f);
-				}
-				if (component3.rightBone != null && component2.RightArmorHand != null)
-				{
-					component3.rightBone.parent = component2.RightArmorHand;
-					component3.rightBone.localPosition = Vector3.zero;
-					component3.rightBone.localRotation = Quaternion.identity;
-					component3.rightBone.localScale = new Vector3(1f, 1f, 1f);
-				}
-			}
-		}
-		PlayWeaponAnimation();
-		DisableGunflashes(weapon);
-		if (SkinsController.currentSkinForPers != null)
-		{
-			SetSkinOnPers(SkinsController.currentSkinForPers);
-		}
-		_assignedWeaponTag = tg;
-	}
-
-	internal static void SynchronizeAndroidPurchases(string comment)
-	{
-		_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A = new _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A();
-		_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A.comment = comment;
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-		{
-			_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B = new _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B();
-			_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B._003C_003Ef__ref_0024826 = _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A;
-			Debug.LogFormat("Trying to synchronize purchases to cloud ({0})", _003CSynchronizeAndroidPurchases_003Ec__AnonStorey33A.comment);
-			if (_003C_003Ef__am_0024cacheCF == null)
-			{
-				_003C_003Ef__am_0024cacheCF = _003CSynchronizeAndroidPurchases_003Em__516;
-			}
-			_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B.ResetWeaponManager = _003C_003Ef__am_0024cacheCF;
-			switch (Defs.AndroidEdition)
-			{
-			case Defs.RuntimeAndroidEdition.Amazon:
-				PurchasesSynchronizer.Instance.SynchronizeAmazonPurchases();
-				_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B.ResetWeaponManager();
-				break;
-			case Defs.RuntimeAndroidEdition.GoogleLite:
-				PlayerPrefs.SetInt("PendingGooglePlayGamesSync", 1);
-				PurchasesSynchronizer.Instance.AuthenticateAndSynchronize(_003CSynchronizeAndroidPurchases_003Ec__AnonStorey33B._003C_003Em__517, true);
-				break;
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private static void _003Csort_003Em__4C4(List<ShopPositionParams> prefabs, CategoryNames c)
-	{
-		_003Csort_003Ec__AnonStorey31B _003Csort_003Ec__AnonStorey31B = new _003Csort_003Ec__AnonStorey31B();
-		_003Csort_003Ec__AnonStorey31B.c = c;
-		Comparison<ShopPositionParams> comparison = _003Csort_003Ec__AnonStorey31B._003C_003Em__518;
-		prefabs.Sort(comparison);
-	}
-
-	[CompilerGenerated]
-	private static Comparison<GameObject> _003CFillModelsList_003Em__4C8(CategoryNames cn)
-	{
-		_003CFillModelsList_003Ec__AnonStorey31E _003CFillModelsList_003Ec__AnonStorey31E = new _003CFillModelsList_003Ec__AnonStorey31E();
-		_003CFillModelsList_003Ec__AnonStorey31E.cn = cn;
-		return _003CFillModelsList_003Ec__AnonStorey31E._003C_003Em__519;
-	}
-
-	[CompilerGenerated]
-	private void _003CSetCamera_003Em__4C9()
-	{
-		idleTimerLastTime = Time.realtimeSinceStartup;
-	}
-
-	[CompilerGenerated]
-	private static void _003CUpdateIcon_003Em__4CC(Transform ch)
-	{
-		if (ch.gameObject.name.Equals("Sprite"))
-		{
-			ch.gameObject.SetActive(true);
-		}
-	}
-
-	[CompilerGenerated]
-	private static void _003CUpdateIcon_003Em__4CD(Transform ch)
-	{
-		if (ch.gameObject.name.Equals("ShopIcon"))
-		{
-			ch.GetComponent<UITexture>().mainTexture = null;
-		}
-	}
-
-	[CompilerGenerated]
-	private static void _003CUpdateIcon_003Em__4CF(Transform ch)
-	{
-		if (ch.gameObject.name.Equals("Sprite"))
-		{
-			ch.gameObject.SetActive(true);
-		}
-		else if (ch.gameObject.name.Equals("ShopIcon"))
-		{
-			ch.GetComponent<UITexture>().mainTexture = null;
-		}
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CShowTryGunIfPossible_003Em__4D2(KeyValuePair<CategoryNames, List<List<string>>> kvp)
-	{
-		return kvp.Value[ExpController.OurTierForAnyPlace()];
-	}
-
-	[CompilerGenerated]
-	private static ItemRecord _003CShowTryGunIfPossible_003Em__4D3(string prefabName)
-	{
-		return ItemDb.GetByPrefabName(prefabName);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CShowTryGunIfPossible_003Em__4D4(ItemRecord rec)
-	{
-		return rec.StorageId != null && Storager.getInt(rec.StorageId, true) == 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CShowTryGunIfPossible_003Em__4D5(ItemRecord rec)
-	{
-		return !WeaponManager.sharedManager.IsAvailableTryGun(rec.Tag) && !WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(rec.Tag);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CShowTryGunIfPossible_003Em__4D6(ItemRecord rec)
-	{
-		return rec.Price.Currency == "Coins";
-	}
-
-	[CompilerGenerated]
-	private static bool _003CShowTryGunIfPossible_003Em__4D8(ItemRecord rec)
-	{
-		return rec.Price.Currency == "GemsCurrency";
-	}
-
-	[CompilerGenerated]
-	private static int _003CTryGunForCategoryWithMaxUnbought_003Em__4DA(CategoryNames cat)
-	{
-		_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey324 _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey = new _003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey324();
-		_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey.cat = cat;
-		UnityEngine.Object[] weaponsInGame = WeaponManager.sharedManager.weaponsInGame;
-		if (_003C_003Ef__am_0024cacheD0 == null)
-		{
-			_003C_003Ef__am_0024cacheD0 = _003CTryGunForCategoryWithMaxUnbought_003Em__51A;
-		}
-		IEnumerable<WeaponSounds> source = weaponsInGame.Select(_003C_003Ef__am_0024cacheD0).Where(_003CTryGunForCategoryWithMaxUnbought_003Ec__AnonStorey._003C_003Em__51B);
-		if (_003C_003Ef__am_0024cacheD1 == null)
-		{
-			_003C_003Ef__am_0024cacheD1 = _003CTryGunForCategoryWithMaxUnbought_003Em__51C;
-		}
-		List<WeaponSounds> list = source.Where(_003C_003Ef__am_0024cacheD1).ToList();
-		return list.Count;
-	}
-
-	[CompilerGenerated]
-	private static WeaponSounds _003CTryGunForCategoryWithMaxUnbought_003Em__4DB(UnityEngine.Object w)
-	{
-		return ((GameObject)w).GetComponent<WeaponSounds>();
-	}
-
-	[CompilerGenerated]
-	private static bool _003CTryGunForCategoryWithMaxUnbought_003Em__4DD(WeaponSounds ws)
-	{
-		List<string> list = WeaponUpgrades.ChainForTag(ItemDb.GetByPrefabName(ws.name).Tag);
-		return list == null || (list.Count > 0 && list[0] == ItemDb.GetByPrefabName(ws.name).Tag);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CTryGunForCategoryWithMaxUnbought_003Em__4DE(WeaponSounds ws)
-	{
-		return WeaponManager.tagToStoreIDMapping.ContainsKey(ItemDb.GetByPrefabName(ws.name).Tag) && WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]) && Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]], true) == 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CTryGunForCategoryWithMaxUnbought_003Em__4E0(WeaponSounds ws)
-	{
-		return !WeaponManager.sharedManager.IsAvailableTryGun(ItemDb.GetByPrefabName(ws.name).Tag) && !WeaponManager.sharedManager.IsWeaponDiscountedAsTryGun(ItemDb.GetByPrefabName(ws.name).Tag);
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleFacebookButton_003Em__4E1()
-	{
-		if (_003C_003Ef__am_0024cacheD2 == null)
-		{
-			_003C_003Ef__am_0024cacheD2 = _003CHandleFacebookButton_003Em__51D;
-		}
-		FacebookController.Login(_003C_003Ef__am_0024cacheD2, null, "Shop");
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleFacebookButton_003Em__4E2()
-	{
-		FacebookController.Login(null, null, "Shop");
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleProfileButton_003Em__4E3()
-	{
-	}
-
-	[CompilerGenerated]
-	private static int _003CReloadCarousel_003Em__4E5(string kvp1, string kvp2)
-	{
-		//Discarded unreachable code: IL_00bd, IL_00cb
-		try
-		{
-			if (kvp1 == "61" || kvp2 == "61")
-			{
-				string text = 4.ToString();
-				string text2 = ((!(kvp1 == "61")) ? kvp1 : kvp2);
-				if (text2 == text)
-				{
-					text2 = 6.ToString();
-				}
-				if (kvp1 == "61")
-				{
-					return long.Parse(text).CompareTo(long.Parse(text2));
-				}
-				return long.Parse(text2).CompareTo(long.Parse(text));
-			}
-			return long.Parse(kvp1).CompareTo(long.Parse(kvp2));
-		}
-		catch
-		{
-			return 0;
-		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003CReloadCarousel_003Em__4E6(string kvp)
-	{
-		long result;
-		if (long.TryParse(kvp, out result))
-		{
-			return result >= 1000000;
-		}
-		return false;
-	}
-
-	[CompilerGenerated]
-	private static int _003CUpdateButtons_003Em__4ED(GameObject sp1, GameObject sp2)
-	{
-		return Defs.CompareAlphaNumerically(sp1.gameObject.name, sp2.gameObject.name);
-	}
-
-	[CompilerGenerated]
-	private bool _003CCategoryChosen_003Em__4EF(GameObject go)
-	{
-		return go.name.Equals(viewedId);
-	}
-
-	[CompilerGenerated]
-	private static void _003CBuyOrUpgradeWeapon_003Em__50A()
-	{
-		SetBankCamerasEnabled();
-	}
-
-	[CompilerGenerated]
-	private static void _003CProvideAllTypeShopItem_003Em__50E(string tg)
-	{
-		if (!(WeaponManager.sharedManager != null) || WeaponManager.sharedManager.weaponsInGame == null)
-		{
-			return;
-		}
-		if (GuiActive && sharedShop != null)
-		{
-			int num = PromoActionsGUIController.CatForTg(tg);
-			if (num != -1)
-			{
-				EquipWearInCategoryIfNotEquiped(tg, (CategoryNames)num, WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null);
-			}
-		}
-		else
-		{
-			int num2 = PromoActionsGUIController.CatForTg(tg);
-			if (num2 != -1)
-			{
-				SetAsEquippedAndSendToServer(tg, (CategoryNames)num2);
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private static string _003CActualBuy_003Em__513(KeyValuePair<string, string> kv)
-	{
-		return kv.Key;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CTemppOrHighestDPSGunInCategory_003Em__514(GameObject w)
-	{
-		return ItemDb.IsTemporaryGun(ItemDb.GetByPrefabName(w.name.Replace("(Clone)", string.Empty)).Tag);
-	}
-
-	[CompilerGenerated]
-	private static void _003CDisableLightProbesRecursively_003Em__515(Transform t)
-	{
-		MeshRenderer component = t.GetComponent<MeshRenderer>();
-		SkinnedMeshRenderer component2 = t.GetComponent<SkinnedMeshRenderer>();
-		if (component != null)
-		{
-			component.useLightProbes = false;
-		}
-		if (component2 != null)
-		{
-			component2.useLightProbes = false;
-		}
-	}
-
-	[CompilerGenerated]
-	private static void _003CSynchronizeAndroidPurchases_003Em__516()
-	{
-		PlayerPrefs.DeleteKey("PendingGooglePlayGamesSync");
-		if (WeaponManager.sharedManager != null)
-		{
-			int currentWeaponIndex = WeaponManager.sharedManager.CurrentWeaponIndex;
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(Application.loadedLevelName) ? Defs.filterMaps[Application.loadedLevelName] : 0);
-			WeaponManager.sharedManager.CurrentWeaponIndex = currentWeaponIndex;
-		}
-		if (GuiActive)
-		{
-			sharedShop.UpdateIcons();
-		}
-	}
-
-	[CompilerGenerated]
-	private static WeaponSounds _003CTryGunForCategoryWithMaxUnbought_003Em__51A(UnityEngine.Object w)
-	{
-		return ((GameObject)w).GetComponent<WeaponSounds>();
-	}
-
-	[CompilerGenerated]
-	private static bool _003CTryGunForCategoryWithMaxUnbought_003Em__51C(WeaponSounds ws)
-	{
-		return WeaponManager.tagToStoreIDMapping.ContainsKey(ItemDb.GetByPrefabName(ws.name).Tag) && WeaponManager.storeIDtoDefsSNMapping.ContainsKey(WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]) && Storager.getInt(WeaponManager.storeIDtoDefsSNMapping[WeaponManager.tagToStoreIDMapping[ItemDb.GetByPrefabName(ws.name).Tag]], true) == 1;
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleFacebookButton_003Em__51D()
-	{
-		if (GuiActive)
-		{
-			sharedShop.UpdateButtons();
-		}
+		NotInSniperCategory,
+		OnSniperRifle,
+		InSniperCategoryNotOnSniperRifle,
+		NotInArmorCategory,
+		OnArmor,
+		InArmorCategoryNotOnArmor,
+		BackBlinking
 	}
 }

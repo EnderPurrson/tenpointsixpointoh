@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class crossHair : MonoBehaviour
@@ -12,22 +13,30 @@ internal sealed class crossHair : MonoBehaviour
 
 	private PhotonView photonView;
 
-	private void Start()
+	public crossHair()
 	{
-		photonView = PhotonView.Get(this);
-		if ((((!Defs.isInet && GetComponent<NetworkView>().isMine) || (Defs.isInet && photonView.isMine)) && Defs.isMulti) || !Defs.isMulti)
-		{
-			crossHairPosition = new Rect((Screen.width - crossHairTexture.width * Screen.height / 640) / 2, (Screen.height - crossHairTexture.height * Screen.height / 640) / 2, crossHairTexture.width * Screen.height / 640, crossHairTexture.height * Screen.height / 640);
-			pauser = GameObject.FindGameObjectWithTag("GameController").GetComponent<Pauser>();
-			playerMoveC = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
-		}
 	}
 
 	private void OnGUI()
 	{
-		if (((((!Defs.isInet && GetComponent<NetworkView>().isMine) || (Defs.isInet && photonView.isMine)) && Defs.isMulti) || !Defs.isMulti) && !pauser.paused)
+		if ((!Defs.isInet && base.GetComponent<NetworkView>().isMine || Defs.isInet && this.photonView.isMine) && Defs.isMulti || !Defs.isMulti)
 		{
-			GUI.DrawTexture(crossHairPosition, crossHairTexture);
+			if (this.pauser.paused)
+			{
+				return;
+			}
+			GUI.DrawTexture(this.crossHairPosition, this.crossHairTexture);
+		}
+	}
+
+	private void Start()
+	{
+		this.photonView = PhotonView.Get(this);
+		if ((!Defs.isInet && base.GetComponent<NetworkView>().isMine || Defs.isInet && this.photonView.isMine) && Defs.isMulti || !Defs.isMulti)
+		{
+			this.crossHairPosition = new Rect((float)((Screen.width - this.crossHairTexture.width * Screen.height / 640) / 2), (float)((Screen.height - this.crossHairTexture.height * Screen.height / 640) / 2), (float)(this.crossHairTexture.width * Screen.height / 640), (float)(this.crossHairTexture.height * Screen.height / 640));
+			this.pauser = GameObject.FindGameObjectWithTag("GameController").GetComponent<Pauser>();
+			this.playerMoveC = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
 		}
 	}
 }

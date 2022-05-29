@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class NucBomb : MonoBehaviour
@@ -7,18 +11,19 @@ public class NucBomb : MonoBehaviour
 
 	public float BeforeDestroy = 90f;
 
-	private IEnumerator Start()
+	public NucBomb()
 	{
-		GetComponent<AudioSource>().Play();
-		GetComponent<AudioSource>().mute = !Defs.isSoundFX;
-		yield return new WaitForSeconds(BeforeActivate);
-		base.transform.GetChild(0).gameObject.SetActive(true);
-		yield return new WaitForSeconds(Mathf.Max(0f, BeforeDestroy - BeforeActivate));
-		Object.Destroy(base.gameObject);
 	}
 
 	private void FixedUpdate()
 	{
-		GetComponent<AudioSource>().mute = !Defs.isSoundFX;
+		base.GetComponent<AudioSource>().mute = !Defs.isSoundFX;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		NucBomb.u003cStartu003ec__IteratorD0 variable = null;
+		return variable;
 	}
 }

@@ -6,45 +6,65 @@ public class AGSRequestAchievementsForPlayerResponse : AGSRequestAchievementsRes
 {
 	public string playerId;
 
-	public new static AGSRequestAchievementsForPlayerResponse FromJSON(string json)
+	public AGSRequestAchievementsForPlayerResponse()
 	{
-		//Discarded unreachable code: IL_011e, IL_0148
+	}
+
+	public static new AGSRequestAchievementsForPlayerResponse FromJSON(string json)
+	{
+		AGSRequestAchievementsForPlayerResponse blankResponseWithError;
 		try
 		{
 			AGSRequestAchievementsForPlayerResponse aGSRequestAchievementsForPlayerResponse = new AGSRequestAchievementsForPlayerResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestAchievementsForPlayerResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestAchievementsForPlayerResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestAchievementsForPlayerResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestAchievementsForPlayerResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
 			aGSRequestAchievementsForPlayerResponse.achievements = new List<AGSAchievement>();
-			if (hashtable.ContainsKey("achievements"))
+			if (hashtables.ContainsKey("achievements"))
 			{
-				foreach (Hashtable item in hashtable["achievements"] as ArrayList)
+				IEnumerator enumerator = (hashtables["achievements"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestAchievementsForPlayerResponse.achievements.Add(AGSAchievement.fromHashtable(item));
+					while (enumerator.MoveNext())
+					{
+						Hashtable current = (Hashtable)enumerator.Current;
+						aGSRequestAchievementsForPlayerResponse.achievements.Add(AGSAchievement.fromHashtable(current));
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			aGSRequestAchievementsForPlayerResponse.playerId = ((!hashtable.ContainsKey("playerId")) ? string.Empty : hashtable["playerId"].ToString());
-			return aGSRequestAchievementsForPlayerResponse;
+			aGSRequestAchievementsForPlayerResponse.playerId = (!hashtables.ContainsKey("playerId") ? string.Empty : hashtables["playerId"].ToString());
+			blankResponseWithError = aGSRequestAchievementsForPlayerResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty);
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestAchievementsForPlayerResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSRequestAchievementsForPlayerResponse GetBlankResponseWithError(string error, string playerId = "", int userData = 0)
 	{
-		AGSRequestAchievementsForPlayerResponse aGSRequestAchievementsForPlayerResponse = new AGSRequestAchievementsForPlayerResponse();
-		aGSRequestAchievementsForPlayerResponse.error = error;
-		aGSRequestAchievementsForPlayerResponse.playerId = playerId;
-		aGSRequestAchievementsForPlayerResponse.userData = userData;
-		aGSRequestAchievementsForPlayerResponse.achievements = new List<AGSAchievement>();
+		AGSRequestAchievementsForPlayerResponse aGSRequestAchievementsForPlayerResponse = new AGSRequestAchievementsForPlayerResponse()
+		{
+			error = error,
+			playerId = playerId,
+			userData = userData,
+			achievements = new List<AGSAchievement>()
+		};
 		return aGSRequestAchievementsForPlayerResponse;
 	}
 
 	public static AGSRequestAchievementsForPlayerResponse GetPlatformNotSupportedResponse(string playerId, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", playerId, userData);
+		return AGSRequestAchievementsForPlayerResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", playerId, userData);
 	}
 }

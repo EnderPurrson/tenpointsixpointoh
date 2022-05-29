@@ -1,14 +1,11 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class FacebookFriendButton : MonoBehaviour
 {
-	private void Start()
+	public FacebookFriendButton()
 	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
-		{
-			base.gameObject.SetActive(false);
-		}
 	}
 
 	private void OnClick()
@@ -18,7 +15,15 @@ public class FacebookFriendButton : MonoBehaviour
 		{
 			NGUITools.GetRoot(base.gameObject).GetComponent<FriendsGUIController>().friendsPanel.gameObject.SetActive(false);
 			NGUITools.GetRoot(base.gameObject).GetComponent<FriendsGUIController>().facebookFriensPanel.gameObject.SetActive(true);
-			FacebookController.sharedController.InputFacebookFriends();
+			FacebookController.sharedController.InputFacebookFriends(null, false);
+		}
+	}
+
+	private void Start()
+	{
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+		{
+			base.gameObject.SetActive(false);
 		}
 	}
 }

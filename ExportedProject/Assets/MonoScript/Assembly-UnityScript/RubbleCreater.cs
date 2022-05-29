@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
 
-[Serializable]
 [AddComponentMenu("ExplosionScripts/BetCopyer")]
+[Serializable]
 public class RubbleCreater : MonoBehaviour
 {
 	public Rigidbody bits;
@@ -21,38 +21,38 @@ public class RubbleCreater : MonoBehaviour
 
 	public RubbleCreater()
 	{
-		vel = 20f;
-		up = 20f;
-		amount = 20;
-		amountRandom = 5;
-	}
-
-	public override void Start()
-	{
-		CreateObject();
+		this.vel = (float)20;
+		this.up = (float)20;
+		this.amount = 20;
+		this.amountRandom = 5;
 	}
 
 	public override void CreateObject()
 	{
-		amount += UnityEngine.Random.Range(-amountRandom, amountRandom);
-		for (int i = 0; i < amount; i++)
+		this.amount += UnityEngine.Random.Range(-this.amountRandom, this.amountRandom);
+		for (int i = 0; i < this.amount; i++)
 		{
-			Rigidbody rigidbody = (Rigidbody)UnityEngine.Object.Instantiate(bits, transform.position, transform.rotation);
-			float x = UnityEngine.Random.Range(0f - vel, vel);
-			float num = UnityEngine.Random.Range(5f, up);
-			float z = UnityEngine.Random.Range(0f - vel, vel);
-			if (useUp)
+			Rigidbody rigidbody = (Rigidbody)UnityEngine.Object.Instantiate(this.bits, this.transform.position, this.transform.rotation);
+			float single = UnityEngine.Random.Range(-this.vel, this.vel);
+			UnityEngine.Random.Range((float)5, this.up);
+			float single1 = UnityEngine.Random.Range(-this.vel, this.vel);
+			if (!this.useUp)
 			{
-				rigidbody.GetComponent<Rigidbody>().velocity = transform.TransformDirection(x, UnityEngine.Random.Range(up / 2f, up), z);
+				rigidbody.GetComponent<Rigidbody>().velocity = this.transform.TransformDirection(single, UnityEngine.Random.Range(-this.up, this.up), single1);
 			}
 			else
 			{
-				rigidbody.GetComponent<Rigidbody>().velocity = transform.TransformDirection(x, UnityEngine.Random.Range(0f - up, up), z);
+				rigidbody.GetComponent<Rigidbody>().velocity = this.transform.TransformDirection(single, UnityEngine.Random.Range(this.up / (float)2, this.up), single1);
 			}
 		}
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override void Start()
+	{
+		this.CreateObject();
 	}
 }

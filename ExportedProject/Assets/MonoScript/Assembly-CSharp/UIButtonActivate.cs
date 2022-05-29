@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Button Activate")]
@@ -7,11 +8,15 @@ public class UIButtonActivate : MonoBehaviour
 
 	public bool state = true;
 
+	public UIButtonActivate()
+	{
+	}
+
 	private void OnClick()
 	{
-		if (target != null)
+		if (this.target != null)
 		{
-			NGUITools.SetActive(target, state);
+			NGUITools.SetActive(this.target, this.state);
 		}
 	}
 }

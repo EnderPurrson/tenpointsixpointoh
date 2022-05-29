@@ -1,16 +1,21 @@
+using System;
 using UnityEngine;
 
 public class Button_light : MonoBehaviour
 {
 	public UITexture lightTexture;
 
-	private void Start()
+	public Button_light()
 	{
-		lightTexture.enabled = false;
 	}
 
 	private void OnPress(bool isDown)
 	{
-		lightTexture.enabled = isDown;
+		this.lightTexture.enabled = isDown;
+	}
+
+	private void Start()
+	{
+		this.lightTexture.enabled = false;
 	}
 }

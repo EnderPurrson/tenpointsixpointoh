@@ -5,7 +5,7 @@ using UnityEngine;
 public class TweenAlpha : UITweener
 {
 	[Range(0f, 1f)]
-	public float from = 1f;
+	public float @from = 1f;
 
 	[Range(0f, 1f)]
 	public float to = 1f;
@@ -23,85 +23,65 @@ public class TweenAlpha : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public float value
+	public float @value
 	{
 		get
 		{
-			if (!mCached)
+			if (!this.mCached)
 			{
-				Cache();
+				this.Cache();
 			}
-			if (mRect != null)
+			if (this.mRect != null)
 			{
-				return mRect.alpha;
+				return this.mRect.alpha;
 			}
-			if (mSr != null)
+			if (this.mSr != null)
 			{
-				return mSr.color.a;
+				return this.mSr.color.a;
 			}
-			return (!(mMat != null)) ? 1f : mMat.color.a;
+			return (this.mMat == null ? 1f : this.mMat.color.a);
 		}
 		set
 		{
-			if (!mCached)
+			if (!this.mCached)
 			{
-				Cache();
+				this.Cache();
 			}
-			if (mRect != null)
+			if (this.mRect != null)
 			{
-				mRect.alpha = value;
+				this.mRect.alpha = value;
 			}
-			else if (mSr != null)
+			else if (this.mSr != null)
 			{
-				Color color = mSr.color;
+				Color color = this.mSr.color;
 				color.a = value;
-				mSr.color = color;
+				this.mSr.color = color;
 			}
-			else if (mMat != null)
+			else if (this.mMat != null)
 			{
-				Color color2 = mMat.color;
-				color2.a = value;
-				mMat.color = color2;
+				Color color1 = this.mMat.color;
+				color1.a = value;
+				this.mMat.color = color1;
 			}
 		}
 	}
 
-	private void Cache()
+	public TweenAlpha()
 	{
-		mCached = true;
-		mRect = GetComponent<UIRect>();
-		mSr = GetComponent<SpriteRenderer>();
-		if (mRect == null && mSr == null)
-		{
-			Renderer component = GetComponent<Renderer>();
-			if (component != null)
-			{
-				mMat = component.material;
-			}
-			if (mMat == null)
-			{
-				mRect = GetComponentInChildren<UIRect>();
-			}
-		}
-	}
-
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		value = Mathf.Lerp(from, to, factor);
 	}
 
 	public static TweenAlpha Begin(GameObject go, float duration, float alpha)
 	{
 		TweenAlpha tweenAlpha = UITweener.Begin<TweenAlpha>(go, duration);
-		tweenAlpha.from = tweenAlpha.value;
+		tweenAlpha.@from = tweenAlpha.@value;
 		tweenAlpha.to = alpha;
 		if (duration <= 0f)
 		{
@@ -111,13 +91,37 @@ public class TweenAlpha : UITweener
 		return tweenAlpha;
 	}
 
-	public override void SetStartToCurrentValue()
+	private void Cache()
 	{
-		from = value;
+		this.mCached = true;
+		this.mRect = base.GetComponent<UIRect>();
+		this.mSr = base.GetComponent<SpriteRenderer>();
+		if (this.mRect == null && this.mSr == null)
+		{
+			Renderer component = base.GetComponent<Renderer>();
+			if (component != null)
+			{
+				this.mMat = component.material;
+			}
+			if (this.mMat == null)
+			{
+				this.mRect = base.GetComponentInChildren<UIRect>();
+			}
+		}
+	}
+
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		this.@value = Mathf.Lerp(this.@from, this.to, factor);
 	}
 
 	public override void SetEndToCurrentValue()
 	{
-		to = value;
+		this.to = this.@value;
+	}
+
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

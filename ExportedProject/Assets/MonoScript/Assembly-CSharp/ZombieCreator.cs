@@ -1,12 +1,14 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using Rilisoft;
 using Rilisoft.NullExtensions;
 using RilisoftBot;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class ZombieCreator : MonoBehaviour
@@ -23,7 +25,7 @@ public sealed class ZombieCreator : MonoBehaviour
 
 	private static List<List<string>> _enemiesInWaves;
 
-	private static readonly HashSet<string> _allEnemiesSurvival;
+	private readonly static HashSet<string> _allEnemiesSurvival;
 
 	public List<GameObject> waveZombiePrefabs = new List<GameObject>();
 
@@ -43,7 +45,7 @@ public sealed class ZombieCreator : MonoBehaviour
 
 	public GUIStyle labelStyle;
 
-	private int[] _intervalArr = new int[3] { 6, 4, 3 };
+	private int[] _intervalArr = new int[] { 6, 4, 3 };
 
 	private int _genWithThisTimeInterval;
 
@@ -73,43 +75,29 @@ public sealed class ZombieCreator : MonoBehaviour
 
 	private List<string[]> _enemies = new List<string[]>();
 
-	[CompilerGenerated]
-	private static Func<GameObject[], GameObject> _003C_003Ef__am_0024cache22;
-
-	[CompilerGenerated]
-	private static Func<GotToNextLevel, GameObject> _003C_003Ef__am_0024cache23;
-
-	public GameObject[] bossGuads { get; private set; }
-
-	public static int EnemyCountInSurvivalWave
+	public GameObject[] bossGuads
 	{
-		get
-		{
-			return (!_enemyCountInSurvivalWave.HasValue) ? DefaultEnemyCountInSurvivalWave : _enemyCountInSurvivalWave.Value;
-		}
-		set
-		{
-			_enemyCountInSurvivalWave = value;
-		}
+		get;
+		private set;
 	}
 
 	public static int DefaultEnemyCountInSurvivalWave
 	{
 		get
 		{
-			return _ZombiesInWave;
+			return ZombieCreator._ZombiesInWave;
 		}
 	}
 
-	public int NumOfLiveZombies
+	public static int EnemyCountInSurvivalWave
 	{
 		get
 		{
-			return _numOfLiveZombies.Value;
+			return (!ZombieCreator._enemyCountInSurvivalWave.HasValue ? ZombieCreator.DefaultEnemyCountInSurvivalWave : ZombieCreator._enemyCountInSurvivalWave.Value);
 		}
 		set
 		{
-			_numOfLiveZombies = value;
+			ZombieCreator._enemyCountInSurvivalWave = new int?(value);
 		}
 	}
 
@@ -117,7 +105,7 @@ public sealed class ZombieCreator : MonoBehaviour
 	{
 		get
 		{
-			return NumOfDeadZombies + 1 == NumOfEnemisesToKill && !bossShowm;
+			return (this.NumOfDeadZombies + 1 != ZombieCreator.NumOfEnemisesToKill ? false : !this.bossShowm);
 		}
 	}
 
@@ -125,157 +113,152 @@ public sealed class ZombieCreator : MonoBehaviour
 	{
 		get
 		{
-			return _numOfDeadZombies.Value;
+			return this._numOfDeadZombies.Value;
 		}
 		set
 		{
-			if (bossShowm)
+			if (this.bossShowm)
 			{
-				bossShowm = false;
-				if (!Defs.IsSurvival)
+				this.bossShowm = false;
+				if (Defs.IsSurvival)
 				{
-					if (ZombieCreator.BossKilled != null)
+					this.totalNumOfKilledEnemies++;
+					ZombieCreator numOfLiveZombies = this;
+					numOfLiveZombies.NumOfLiveZombies = numOfLiveZombies.NumOfLiveZombies - 1;
+					this.NextWave();
+					return;
+				}
+				if (ZombieCreator.BossKilled != null)
+				{
+					ZombieCreator.BossKilled();
+				}
+				if (LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
+				{
+					GameObject gameObject = (
+						from g in (IEnumerable<GotToNextLevel>)UnityEngine.Object.FindObjectsOfType<GotToNextLevel>()
+						select g.gameObject).FirstOrDefault<GameObject>();
+					if (gameObject != null)
 					{
-						ZombieCreator.BossKilled();
-					}
-					if (!LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
-					{
-						GameObject[] teleports = _teleports;
-						foreach (GameObject gameObject in teleports)
+						PlayerArrowToPortalController component = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
+						if (component != null)
 						{
-							gameObject.SetActive(true);
-						}
-						GameObject[] teleports2 = _teleports;
-						if (_003C_003Ef__am_0024cache22 == null)
-						{
-							_003C_003Ef__am_0024cache22 = _003Cset_NumOfDeadZombies_003Em__4B9;
-						}
-						GameObject gameObject2 = teleports2.Map(_003C_003Ef__am_0024cache22);
-						if (gameObject2 != null)
-						{
-							PlayerArrowToPortalController component = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
-							if (component != null)
-							{
-								component.RemovePointOfInterest();
-								component.SetPointOfInterest(gameObject2.transform);
-							}
-						}
-						return;
-					}
-					GotToNextLevel[] source = UnityEngine.Object.FindObjectsOfType<GotToNextLevel>();
-					if (_003C_003Ef__am_0024cache23 == null)
-					{
-						_003C_003Ef__am_0024cache23 = _003Cset_NumOfDeadZombies_003Em__4BA;
-					}
-					GameObject gameObject3 = source.Select(_003C_003Ef__am_0024cache23).FirstOrDefault();
-					if (gameObject3 != null)
-					{
-						PlayerArrowToPortalController component2 = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
-						if (component2 != null)
-						{
-							component2.RemovePointOfInterest();
-							component2.SetPointOfInterest(gameObject3.transform);
+							component.RemovePointOfInterest();
+							component.SetPointOfInterest(gameObject.transform);
 						}
 					}
 				}
 				else
 				{
-					totalNumOfKilledEnemies++;
-					NumOfLiveZombies--;
-					NextWave();
+					GameObject[] gameObjectArray = this._teleports;
+					for (int i = 0; i < (int)gameObjectArray.Length; i++)
+					{
+						gameObjectArray[i].SetActive(true);
+					}
+					GameObject gameObject1 = this._teleports.Map<GameObject[], GameObject>((GameObject[] ts) => ts.FirstOrDefault<GameObject>());
+					if (gameObject1 != null)
+					{
+						PlayerArrowToPortalController playerArrowToPortalController = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
+						if (playerArrowToPortalController != null)
+						{
+							playerArrowToPortalController.RemovePointOfInterest();
+							playerArrowToPortalController.SetPointOfInterest(gameObject1.transform);
+						}
+					}
 				}
 				return;
 			}
-			int num = value - _numOfDeadZombies.Value;
-			_numOfDeadZombies = value;
-			totalNumOfKilledEnemies += num;
-			NumOfLiveZombies -= num;
-			if (!Defs.IsSurvival && NumOfEnemisesToKill - _numOfDeadZombies.Value <= 3 && Initializer.enemiesObj.Count > 0)
+			int num = value - this._numOfDeadZombies.Value;
+			this._numOfDeadZombies = value;
+			this.totalNumOfKilledEnemies += num;
+			ZombieCreator zombieCreator = this;
+			zombieCreator.NumOfLiveZombies = zombieCreator.NumOfLiveZombies - num;
+			if (!Defs.IsSurvival && ZombieCreator.NumOfEnemisesToKill - this._numOfDeadZombies.Value <= 3 && Initializer.enemiesObj.Count > 0)
 			{
-				PlayerArrowToPortalController component3 = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
-				Transform transform = null;
-				float num2 = float.MaxValue;
+				PlayerArrowToPortalController component1 = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
+				Transform item = null;
+				float single = Single.MaxValue;
 				for (int j = 0; j < Initializer.enemiesObj.Count; j++)
 				{
 					if (Initializer.enemiesObj[j].GetComponent<BaseBot>().health > 0f)
 					{
-						float sqrMagnitude = (WeaponManager.sharedManager.myPlayer.transform.position - Initializer.enemiesObj[j].transform.position).sqrMagnitude;
-						if (sqrMagnitude < num2)
+						Vector3 vector3 = WeaponManager.sharedManager.myPlayer.transform.position - Initializer.enemiesObj[j].transform.position;
+						float single1 = vector3.sqrMagnitude;
+						if (single1 < single)
 						{
-							transform = Initializer.enemiesObj[j].transform;
-							num2 = sqrMagnitude;
+							item = Initializer.enemiesObj[j].transform;
+							single = single1;
 						}
 					}
 				}
-				component3.RemovePointOfInterest();
-				if (transform != null)
+				component1.RemovePointOfInterest();
+				if (item != null)
 				{
-					component3.RemovePointOfInterest();
-					component3.SetPointOfInterest(transform);
+					component1.RemovePointOfInterest();
+					component1.SetPointOfInterest(item);
 				}
 			}
 			if (!Defs.IsSurvival)
 			{
-				_numOfDeadZombsSinceLastFast = _numOfDeadZombsSinceLastFast.Value + num;
-				if (_numOfDeadZombsSinceLastFast.Value == 12)
+				this._numOfDeadZombsSinceLastFast = this._numOfDeadZombsSinceLastFast.Value + num;
+				if (this._numOfDeadZombsSinceLastFast.Value == 12)
 				{
-					if (curInterval > 5f)
+					if (this.curInterval > 5f)
 					{
-						curInterval -= 5f;
+						this.curInterval -= 5f;
 					}
-					_numOfDeadZombsSinceLastFast = 0;
+					this._numOfDeadZombsSinceLastFast = 0;
 				}
-				if (IsLasTMonsRemains && ZombieCreator.LastEnemy != null)
+				if (this.IsLasTMonsRemains && ZombieCreator.LastEnemy != null)
 				{
 					ZombieCreator.LastEnemy();
 				}
 			}
-			if (Defs.IsSurvival && NumOfDeadZombies == NumOfEnemisesToKill - 1)
+			if (Defs.IsSurvival && this.NumOfDeadZombies == ZombieCreator.NumOfEnemisesToKill - 1)
 			{
-				stopGeneratingBonuses = true;
+				this.stopGeneratingBonuses = true;
 			}
-			if (_numOfDeadZombies.Value < NumOfEnemisesToKill)
+			if (this._numOfDeadZombies.Value >= ZombieCreator.NumOfEnemisesToKill)
 			{
-				return;
-			}
-			if (Defs.IsSurvival)
-			{
-				if (bossesSurvival.ContainsKey(currentWave))
+				if (Defs.IsSurvival)
 				{
-					CreateBoss();
+					if (!ZombieCreator.bossesSurvival.ContainsKey(this.currentWave))
+					{
+						this.NextWave();
+					}
+					else
+					{
+						this.CreateBoss();
+					}
+				}
+				else if (CurrentCampaignGame.currentLevel != 0)
+				{
+					this.CreateBoss();
+					if (this.bossMus != null)
+					{
+						GameObject gameObject2 = GameObject.FindGameObjectWithTag("BackgroundMusic");
+						if (gameObject2 != null && gameObject2.GetComponent<AudioSource>())
+						{
+							gameObject2.GetComponent<AudioSource>().Stop();
+							gameObject2.GetComponent<AudioSource>().clip = this.bossMus;
+							if (Defs.isSoundMusic)
+							{
+								gameObject2.GetComponent<AudioSource>().Play();
+							}
+						}
+					}
 				}
 				else
 				{
-					NextWave();
-				}
-				return;
-			}
-			if (CurrentCampaignGame.currentLevel == 0)
-			{
-				GameObject[] teleports3 = _teleports;
-				foreach (GameObject gameObject4 in teleports3)
-				{
-					if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+					GameObject[] gameObjectArray1 = this._teleports;
+					for (int k = 0; k < (int)gameObjectArray1.Length; k++)
 					{
-						TrainingController.isNextStep = TrainingState.KillZombie;
+						GameObject gameObject3 = gameObjectArray1[k];
+						if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+						{
+							TrainingController.isNextStep = TrainingState.KillZombie;
+						}
+						gameObject3.SetActive(true);
 					}
-					gameObject4.SetActive(true);
-				}
-				return;
-			}
-			CreateBoss();
-			if (!(bossMus != null))
-			{
-				return;
-			}
-			GameObject gameObject5 = GameObject.FindGameObjectWithTag("BackgroundMusic");
-			if (gameObject5 != null && (bool)gameObject5.GetComponent<AudioSource>())
-			{
-				gameObject5.GetComponent<AudioSource>().Stop();
-				gameObject5.GetComponent<AudioSource>().clip = bossMus;
-				if (Defs.isSoundMusic)
-				{
-					gameObject5.GetComponent<AudioSource>().Play();
 				}
 			}
 		}
@@ -285,429 +268,344 @@ public sealed class ZombieCreator : MonoBehaviour
 	{
 		get
 		{
-			return (!Defs.IsSurvival) ? GlobalGameController.EnemiesToKill : EnemyCountInSurvivalWave;
+			return (!Defs.IsSurvival ? GlobalGameController.EnemiesToKill : ZombieCreator.EnemyCountInSurvivalWave);
 		}
 	}
 
-	public static event Action LastEnemy;
-
-	public static event Action BossKilled;
+	public int NumOfLiveZombies
+	{
+		get
+		{
+			return this._numOfLiveZombies.Value;
+		}
+		set
+		{
+			this._numOfLiveZombies = value;
+		}
+	}
 
 	static ZombieCreator()
 	{
-		sharedCreator = null;
-		_ZombiesInWave = 45;
-		_enemiesInWaves = new List<List<string>>();
-		_allEnemiesSurvival = new HashSet<string>();
-		bossesSurvival = new Dictionary<int, int>();
-		_WeaponsAddedInWaves = new List<List<string>>();
-		survivalAvailableWeapons = new List<string>();
-		List<string> item = new List<string>
+		ZombieCreator.sharedCreator = null;
+		ZombieCreator._ZombiesInWave = 45;
+		ZombieCreator._enemiesInWaves = new List<List<string>>();
+		ZombieCreator._allEnemiesSurvival = new HashSet<string>();
+		ZombieCreator.bossesSurvival = new Dictionary<int, int>();
+		ZombieCreator._WeaponsAddedInWaves = new List<List<string>>();
+		ZombieCreator.survivalAvailableWeapons = new List<string>();
+		List<string> strs = new List<string>()
 		{
 			WeaponManager.PistolWN,
 			WeaponManager.ShotgunWN,
 			WeaponManager.MP5WN
 		};
-		List<string> item2 = new List<string>
+		List<string> strs1 = new List<string>()
 		{
 			WeaponManager.AK47WN,
 			WeaponManager.RevolverWN
 		};
-		List<string> item3 = new List<string>
+		List<string> strs2 = new List<string>()
 		{
 			WeaponManager.M16_2WN,
 			WeaponManager.ObrezWN
 		};
-		List<string> item4 = new List<string> { WeaponManager.MachinegunWN };
-		List<string> item5 = new List<string> { WeaponManager.AlienGunWN };
-		_WeaponsAddedInWaves.Add(item);
-		_WeaponsAddedInWaves.Add(item2);
-		_WeaponsAddedInWaves.Add(item3);
-		_WeaponsAddedInWaves.Add(item4);
-		_WeaponsAddedInWaves.Add(item5);
+		List<string> strs3 = new List<string>()
+		{
+			WeaponManager.MachinegunWN
+		};
+		List<string> strs4 = new List<string>()
+		{
+			WeaponManager.AlienGunWN
+		};
+		ZombieCreator._WeaponsAddedInWaves.Add(strs);
+		ZombieCreator._WeaponsAddedInWaves.Add(strs1);
+		ZombieCreator._WeaponsAddedInWaves.Add(strs2);
+		ZombieCreator._WeaponsAddedInWaves.Add(strs3);
+		ZombieCreator._WeaponsAddedInWaves.Add(strs4);
 	}
 
-	public void SuppressDrawingWaveMessage()
+	public ZombieCreator()
 	{
 	}
 
+	private Vector3 _createPos(GameObject spawnZone)
+	{
+		BoxCollider component = spawnZone.GetComponent<BoxCollider>();
+		float single = component.size.x * spawnZone.transform.localScale.x;
+		float single1 = component.size.z;
+		Vector3 vector3 = spawnZone.transform.localScale;
+		Vector2 vector2 = new Vector2(single, single1 * vector3.z);
+		Vector3 vector31 = spawnZone.transform.position;
+		float single2 = vector31.x - vector2.x / 2f;
+		Vector3 vector32 = spawnZone.transform.position;
+		Rect rect = new Rect(single2, vector32.z - vector2.y / 2f, vector2.x, vector2.y);
+		float single3 = rect.x + UnityEngine.Random.Range(0f, rect.width);
+		Vector3 vector33 = spawnZone.transform.position;
+		Vector3 vector34 = new Vector3(single3, vector33.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
+		return vector34;
+	}
+
+	[DebuggerHidden]
 	private IEnumerator _DrawFirstMessage()
 	{
-		if (Defs.IsSurvival)
-		{
-			while (InGameGUI.sharedInGameGUI == null)
-			{
-				yield return null;
-			}
-			if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.Wave1_And_Counter != null)
-			{
-				InGameGUI.sharedInGameGUI.Wave1_And_Counter.gameObject.SetActive(true);
-				InGameGUI.sharedInGameGUI.Wave1_And_Counter.text = string.Format("{0} 1", LocalizationStore.Key_0349);
-				yield return new WaitForSeconds(2f);
-				InGameGUI.sharedInGameGUI.Wave1_And_Counter.gameObject.SetActive(false);
-			}
-		}
+		return new ZombieCreator.u003c_DrawFirstMessageu003ec__Iterator1A3();
 	}
 
+	[DebuggerHidden]
 	private IEnumerator _DrawWaveMessage(Action act)
 	{
-		Dictionary<string, string> parameters = new Dictionary<string, string>
+		ZombieCreator.u003c_DrawWaveMessageu003ec__Iterator1A4 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _PrerenderBoss()
+	{
+		ZombieCreator.u003c_PrerenderBossu003ec__Iterator1A5 variable = null;
+		return variable;
+	}
+
+	private void _ResetInterval()
+	{
+		this.curInterval = Mathf.Max(1f, this.curInterval);
+	}
+
+	private void _SetZombiePrefabs()
+	{
+		this.waveZombiePrefabs.Clear();
+		int num = (this.currentWave < ZombieCreator._enemiesInWaves.Count ? this.currentWave : ZombieCreator._enemiesInWaves.Count - 1);
+		foreach (GameObject zombiePrefab in this.zombiePrefabs)
 		{
+			string str = zombiePrefab.name.Substring("Enemy".Length).Substring(0, zombiePrefab.name.Substring("Enemy".Length).IndexOf("_"));
+			if (!ZombieCreator._enemiesInWaves[num].Contains(str))
 			{
-				"Wave (All)",
-				currentWave.ToString()
-			},
-			{
-				(!FlurryPluginWrapper.IsPayingUser()) ? "Wave (Non Paying)" : "Wave (Paying)",
-				currentWave.ToString()
+				continue;
 			}
-		};
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Survived Wave", parameters);
-		if (InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.waveDone.gameObject.SetActive(true);
-		}
-		yield return new WaitForSeconds(5f);
-		if (InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.waveDone.gameObject.SetActive(false);
-		}
-		if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.Wave1_And_Counter != null)
-		{
-			InGameGUI.sharedInGameGUI.Wave1_And_Counter.gameObject.SetActive(true);
-			for (int i = 5; i > 0; i--)
-			{
-				InGameGUI.sharedInGameGUI.Wave1_And_Counter.text = i.ToString();
-				yield return new WaitForSeconds(1f);
-			}
-			InGameGUI.sharedInGameGUI.Wave1_And_Counter.gameObject.SetActive(false);
-		}
-		if (InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.newWave.gameObject.SetActive(true);
-		}
-		act();
-		yield return new WaitForSeconds(1f);
-		if (InGameGUI.sharedInGameGUI != null)
-		{
-			InGameGUI.sharedInGameGUI.newWave.gameObject.SetActive(false);
+			this.waveZombiePrefabs.Add(zombiePrefab);
 		}
 	}
 
-	private void OnDestroy()
+	private void _UpdateAvailableWeapons()
 	{
-		sharedCreator = null;
-		if (Defs.IsSurvival)
+		if (this.currentWave < ZombieCreator._WeaponsAddedInWaves.Count)
 		{
-			PlayerPrefs.SetInt(Defs.KilledZombiesSett, totalNumOfKilledEnemies);
-			int @int = PlayerPrefs.GetInt(Defs.KilledZombiesMaxSett, 0);
-			if (totalNumOfKilledEnemies > @int)
+			foreach (string item in ZombieCreator._WeaponsAddedInWaves[this.currentWave])
 			{
-				PlayerPrefs.SetInt(Defs.KilledZombiesMaxSett, totalNumOfKilledEnemies);
-			}
-			PlayerPrefs.SetInt(Defs.WavesSurvivedS, currentWave);
-			int int2 = PlayerPrefs.GetInt(Defs.WavesSurvivedMaxS, 0);
-			if (currentWave > int2)
-			{
-				PlayerPrefs.SetInt(Defs.WavesSurvivedMaxS, currentWave);
+				ZombieCreator.survivalAvailableWeapons.Add(item);
 			}
 		}
 	}
 
 	private void _UpdateIntervalStructures()
 	{
-		_genWithThisTimeInterval = 0;
-		_indexInTimesArray = 0;
-		curInterval = _intervalArr[_indexInTimesArray];
+		this._genWithThisTimeInterval = 0;
+		this._indexInTimesArray = 0;
+		this.curInterval = (float)this._intervalArr[this._indexInTimesArray];
 	}
 
-	private void SetWaveNumberInGUI()
+	[DebuggerHidden]
+	private IEnumerator AddZombies()
 	{
-		if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.SurvivalWaveNumber != null)
-		{
-			InGameGUI.sharedInGameGUI.SurvivalWaveNumber.text = string.Format("{0} {1}", LocalizationStore.Get("Key_0349"), currentWave + 1);
-		}
-	}
-
-	public void NextWave()
-	{
-		QuestMediator.NotifySurviveWaveInArena();
-		currentWave++;
-		StoreKitEventListener.State.Parameters.Clear();
-		StoreKitEventListener.State.Parameters.Add("Waves", ((currentWave >= 10) ? (string.Empty + currentWave / 10 * 10 + "-" + ((currentWave / 10 + 1) * 10 - 1)) : (string.Empty + (currentWave + 1))) + " In game");
-		StartCoroutine(_DrawWaveMessage(_003CNextWave_003Em__4BB));
-		Vector3 position = ((!SceneLoader.ActiveSceneName.Equals("Pizza")) ? new Vector3(0f, 1f, 0f) : new Vector3(-7.83f, 0.46f, -2.44f));
-		GameObject gameObject = Initializer.CreateBonusAtPosition(position, VirtualCurrencyBonusType.Coin);
-		if (!(gameObject == null))
-		{
-			CoinBonus component = gameObject.GetComponent<CoinBonus>();
-			if (component == null)
-			{
-				Debug.LogErrorFormat("Cannot find component '{0}'", component.GetType().Name);
-			}
-			else
-			{
-				component.SetPlayer();
-			}
-		}
-	}
-
-	public static void SetLayerRecursively(GameObject go, int layerNumber)
-	{
-		if (!(go == null))
-		{
-			Transform[] componentsInChildren = go.GetComponentsInChildren<Transform>(true);
-			foreach (Transform transform in componentsInChildren)
-			{
-				transform.gameObject.layer = layerNumber;
-			}
-		}
-	}
-
-	private IEnumerator _PrerenderBoss()
-	{
-		GameObject prer = UnityEngine.Object.Instantiate(Resources.Load("ObjectPrerenderer") as GameObject, new Vector3(0f, 0f, -10000f), Quaternion.identity) as GameObject;
-		ObjectPrerenderer op = prer.GetComponentInChildren<ObjectPrerenderer>();
-		if ((bool)op)
-		{
-			GameObject bc = UnityEngine.Object.Instantiate(boss.transform.GetChild(0).gameObject);
-			bc.transform.parent = op.transform;
-			bc.transform.localPosition = new Vector3(0f, 0f, 2.7f);
-			bc.layer = op.gameObject.layer;
-			SetLayerRecursively(bc, bc.layer);
-			if (weaponBonus != null)
-			{
-				GameObject w = BonusCreator._CreateBonusFromPrefab(weaponBonus, Vector3.zero);
-				w.transform.parent = op.transform;
-				w.transform.localPosition = new Vector3(1.5f, 0f, 3f);
-				w.layer = op.gameObject.layer;
-				SetLayerRecursively(w, w.layer);
-			}
-			yield return null;
-			op.Render_();
-			UnityEngine.Object.Destroy(prer);
-		}
-	}
-
-	private void TryCreateBossGuard(GameObject bossObj)
-	{
-		bossGuads = null;
-		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(bossObj.transform);
-		if (botScriptForObject == null)
-		{
-			return;
-		}
-		int num = botScriptForObject.guards.Length;
-		if (num != 0)
-		{
-			bossGuads = new GameObject[num];
-			for (int i = 0; i < num; i++)
-			{
-				GameObject original = botScriptForObject.guards[i];
-				bossGuads[i] = UnityEngine.Object.Instantiate(original);
-				bossGuads[i].name = string.Format("{0}{1}", "BossGuard", i + 1);
-				bossGuads[i].SetActive(false);
-			}
-		}
+		ZombieCreator.u003cAddZombiesu003ec__Iterator1A6 variable = null;
+		return variable;
 	}
 
 	private void Awake()
 	{
-		string callee = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", GetType().Name);
-		ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+		string str = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", new object[] { base.GetType().Name });
+		ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 		try
 		{
-			if (Defs.isMulti)
+			if (!Defs.isMulti)
 			{
-				return;
-			}
-			if (Defs.IsSurvival)
-			{
-				_enemiesInWaves.Clear();
-				if (SceneLoader.ActiveSceneName.Equals("Pizza"))
+				if (Defs.IsSurvival)
 				{
-					List<string> list = new List<string>();
-					List<string> list2 = new List<string>();
-					List<string> list3 = new List<string>();
-					List<string> list4 = new List<string>();
-					List<string> list5 = new List<string>();
-					List<string> list6 = new List<string>();
-					list.Add("88");
-					list.Add("85");
-					list.Add("86");
-					list2.Add("85");
-					list2.Add("87");
-					list2.Add("82");
-					list2.Add("81");
-					list2.Add("88");
-					list3.Add("86");
-					list3.Add("82");
-					list3.Add("84");
-					list3.Add("81");
-					list3.Add("88");
-					list3.Add("87");
-					list4.Add("81");
-					list4.Add("82");
-					list4.Add("86");
-					list4.Add("80");
-					list4.Add("83");
-					list4.Add("87");
-					list4.Add("84");
-					list5.Add("81");
-					list5.Add("86");
-					list5.Add("88");
-					list5.Add("80");
-					list5.Add("83");
-					list5.Add("82");
-					list5.Add("84");
-					list5.Add("87");
-					list6.Add("81");
-					list6.Add("80");
-					list6.Add("83");
-					list6.Add("82");
-					list6.Add("84");
-					list6.Add("87");
-					_enemiesInWaves.Add(list);
-					_enemiesInWaves.Add(list2);
-					_enemiesInWaves.Add(list3);
-					_enemiesInWaves.Add(list4);
-					_enemiesInWaves.Add(list5);
-					_enemiesInWaves.Add(list6);
-				}
-				else
-				{
-					List<string> list7 = new List<string>();
-					List<string> list8 = new List<string>();
-					List<string> list9 = new List<string>();
-					List<string> list10 = new List<string>();
-					List<string> list11 = new List<string>();
-					List<string> list12 = new List<string>();
-					List<string> list13 = new List<string>();
-					List<string> list14 = new List<string>();
-					list7.Add("1");
-					list7.Add("2");
-					list7.Add("15");
-					list8.Add("1");
-					list8.Add("2");
-					list8.Add("15");
-					list8.Add("77");
-					list8.Add("12");
-					list9.Add("3");
-					list9.Add("9");
-					list9.Add("10");
-					list9.Add("11");
-					list9.Add("12");
-					list9.Add("57");
-					list10.Add("49");
-					list10.Add("9");
-					list10.Add("24");
-					list10.Add("29");
-					list10.Add("38");
-					list10.Add("74");
-					list10.Add("48");
-					list10.Add("10");
-					list11.Add("80");
-					list11.Add("81");
-					list11.Add("82");
-					list11.Add("83");
-					list11.Add("84");
-					list11.Add("85");
-					list11.Add("86");
-					list11.Add("87");
-					list11.Add("88");
-					list12.Add("37");
-					list12.Add("46");
-					list12.Add("47");
-					list12.Add("57");
-					list12.Add("24");
-					list12.Add("74");
-					list12.Add("50");
-					list12.Add("20");
-					list12.Add("51");
-					list13.Add("74");
-					list13.Add("57");
-					list13.Add("20");
-					list13.Add("66");
-					list13.Add("60");
-					list13.Add("50");
-					list13.Add("53");
-					list13.Add("33");
-					list13.Add("24");
-					list13.Add("46");
-					list14.Add("74");
-					list14.Add("57");
-					list14.Add("49");
-					list14.Add("66");
-					list14.Add("60");
-					list14.Add("50");
-					list14.Add("53");
-					list14.Add("59");
-					list14.Add("24");
-					list14.Add("46");
-					_enemiesInWaves.Add(list7);
-					_enemiesInWaves.Add(list8);
-					_enemiesInWaves.Add(list9);
-					_enemiesInWaves.Add(list10);
-					_enemiesInWaves.Add(list11);
-					_enemiesInWaves.Add(list12);
-					_enemiesInWaves.Add(list13);
-					_enemiesInWaves.Add(list14);
-				}
-				foreach (List<string> enemiesInWave in _enemiesInWaves)
-				{
-					foreach (string item in enemiesInWave)
+					ZombieCreator._enemiesInWaves.Clear();
+					if (!SceneLoader.ActiveSceneName.Equals("Pizza"))
 					{
-						_allEnemiesSurvival.Add(item);
+						List<string> strs = new List<string>();
+						List<string> strs1 = new List<string>();
+						List<string> strs2 = new List<string>();
+						List<string> strs3 = new List<string>();
+						List<string> strs4 = new List<string>();
+						List<string> strs5 = new List<string>();
+						List<string> strs6 = new List<string>();
+						List<string> strs7 = new List<string>();
+						strs.Add("1");
+						strs.Add("2");
+						strs.Add("15");
+						strs1.Add("1");
+						strs1.Add("2");
+						strs1.Add("15");
+						strs1.Add("77");
+						strs1.Add("12");
+						strs2.Add("3");
+						strs2.Add("9");
+						strs2.Add("10");
+						strs2.Add("11");
+						strs2.Add("12");
+						strs2.Add("57");
+						strs3.Add("49");
+						strs3.Add("9");
+						strs3.Add("24");
+						strs3.Add("29");
+						strs3.Add("38");
+						strs3.Add("74");
+						strs3.Add("48");
+						strs3.Add("10");
+						strs4.Add("80");
+						strs4.Add("81");
+						strs4.Add("82");
+						strs4.Add("83");
+						strs4.Add("84");
+						strs4.Add("85");
+						strs4.Add("86");
+						strs4.Add("87");
+						strs4.Add("88");
+						strs5.Add("37");
+						strs5.Add("46");
+						strs5.Add("47");
+						strs5.Add("57");
+						strs5.Add("24");
+						strs5.Add("74");
+						strs5.Add("50");
+						strs5.Add("20");
+						strs5.Add("51");
+						strs6.Add("74");
+						strs6.Add("57");
+						strs6.Add("20");
+						strs6.Add("66");
+						strs6.Add("60");
+						strs6.Add("50");
+						strs6.Add("53");
+						strs6.Add("33");
+						strs6.Add("24");
+						strs6.Add("46");
+						strs7.Add("74");
+						strs7.Add("57");
+						strs7.Add("49");
+						strs7.Add("66");
+						strs7.Add("60");
+						strs7.Add("50");
+						strs7.Add("53");
+						strs7.Add("59");
+						strs7.Add("24");
+						strs7.Add("46");
+						ZombieCreator._enemiesInWaves.Add(strs);
+						ZombieCreator._enemiesInWaves.Add(strs1);
+						ZombieCreator._enemiesInWaves.Add(strs2);
+						ZombieCreator._enemiesInWaves.Add(strs3);
+						ZombieCreator._enemiesInWaves.Add(strs4);
+						ZombieCreator._enemiesInWaves.Add(strs5);
+						ZombieCreator._enemiesInWaves.Add(strs6);
+						ZombieCreator._enemiesInWaves.Add(strs7);
+					}
+					else
+					{
+						List<string> strs8 = new List<string>();
+						List<string> strs9 = new List<string>();
+						List<string> strs10 = new List<string>();
+						List<string> strs11 = new List<string>();
+						List<string> strs12 = new List<string>();
+						List<string> strs13 = new List<string>();
+						strs8.Add("88");
+						strs8.Add("85");
+						strs8.Add("86");
+						strs9.Add("85");
+						strs9.Add("87");
+						strs9.Add("82");
+						strs9.Add("81");
+						strs9.Add("88");
+						strs10.Add("86");
+						strs10.Add("82");
+						strs10.Add("84");
+						strs10.Add("81");
+						strs10.Add("88");
+						strs10.Add("87");
+						strs11.Add("81");
+						strs11.Add("82");
+						strs11.Add("86");
+						strs11.Add("80");
+						strs11.Add("83");
+						strs11.Add("87");
+						strs11.Add("84");
+						strs12.Add("81");
+						strs12.Add("86");
+						strs12.Add("88");
+						strs12.Add("80");
+						strs12.Add("83");
+						strs12.Add("82");
+						strs12.Add("84");
+						strs12.Add("87");
+						strs13.Add("81");
+						strs13.Add("80");
+						strs13.Add("83");
+						strs13.Add("82");
+						strs13.Add("84");
+						strs13.Add("87");
+						ZombieCreator._enemiesInWaves.Add(strs8);
+						ZombieCreator._enemiesInWaves.Add(strs9);
+						ZombieCreator._enemiesInWaves.Add(strs10);
+						ZombieCreator._enemiesInWaves.Add(strs11);
+						ZombieCreator._enemiesInWaves.Add(strs12);
+						ZombieCreator._enemiesInWaves.Add(strs13);
+					}
+					foreach (List<string> _enemiesInWafe in ZombieCreator._enemiesInWaves)
+					{
+						foreach (string str1 in _enemiesInWafe)
+						{
+							ZombieCreator._allEnemiesSurvival.Add(str1);
+						}
 					}
 				}
-			}
-			stopGeneratingBonuses = false;
-			sharedCreator = this;
-			if (!Defs.IsSurvival && CurrentCampaignGame.currentLevel != 0)
-			{
-				string b = "Boss" + CurrentCampaignGame.currentLevel;
-				boss = UnityEngine.Object.Instantiate(Resources.Load(ResPath.Combine("Bosses", b))) as GameObject;
-				TryCreateBossGuard(boss);
-				boss.SetActive(false);
-				if (LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
+				this.stopGeneratingBonuses = false;
+				ZombieCreator.sharedCreator = this;
+				if (!Defs.IsSurvival && CurrentCampaignGame.currentLevel != 0)
 				{
-					string weaponName = LevelBox.weaponsFromBosses[Application.loadedLevelName];
-					weaponBonus = BonusCreator._CreateBonusPrefab(weaponName);
+					string str2 = string.Concat("Boss", CurrentCampaignGame.currentLevel);
+					this.boss = UnityEngine.Object.Instantiate(Resources.Load(ResPath.Combine("Bosses", str2))) as GameObject;
+					this.TryCreateBossGuard(this.boss);
+					this.boss.SetActive(false);
+					if (LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName))
+					{
+						string item = LevelBox.weaponsFromBosses[Application.loadedLevelName];
+						this.weaponBonus = BonusCreator._CreateBonusPrefab(item);
+					}
+					base.StartCoroutine(this._PrerenderBoss());
+					this.bossMus = Resources.Load("Snd/boss_campaign") as AudioClip;
 				}
-				StartCoroutine(_PrerenderBoss());
-				bossMus = Resources.Load("Snd/boss_campaign") as AudioClip;
+				GlobalGameController.curThr = GlobalGameController.thrStep;
+				this._enemies.Add(new string[] { "1", "2", "1", "11", "12", "13" });
+				this._enemies.Add(new string[] { "30", "31", "32", "33", "34", "77" });
+				this._enemies.Add(new string[] { "1", "2", "3", "9", "10", "12", "14", "15", "78" });
+				this._enemies.Add(new string[] { "1", "2", "4", "11", "9", "16", "78" });
+				this._enemies.Add(new string[] { "1", "2", "4", "9", "11", "10", "12" });
+				this._enemies.Add(new string[] { "43", "44", "45", "46", "47", "73" });
+				this._enemies.Add(new string[] { "6", "7", "7" });
+				this._enemies.Add(new string[] { "1", "2", "8", "10", "11", "12", "76" });
+				this._enemies.Add(new string[] { "18", "19", "20" });
+				this._enemies.Add(new string[] { "21", "22", "23", "24", "25", "75" });
+				this._enemies.Add(new string[] { "1", "15" });
+				this._enemies.Add(new string[] { "1", "3", "9", "10", "14", "15", "16", "78" });
+				this._enemies.Add(new string[] { "8", "21", "22", "79" });
+				this._enemies.Add(new string[] { "26", "27", "28", "29", "57" });
+				this._enemies.Add(new string[] { "35", "36", "37", "38", "48", "57" });
+				this._enemies.Add(new string[] { "39", "40", "41", "42", "74" });
+				this._enemies.Add(new string[] { "53", "55", "57", "61" });
+				this._enemies.Add(new string[] { "59", "56", "54", "60" });
+				this._enemies.Add(new string[] { "67", "68", "66", "69" });
+				this._enemies.Add(new string[] { "70", "71", "72" });
+				this._enemies.Add(new string[] { "58", "63", "64", "65" });
+				this.UpdateBotPrefabs();
+				if (Defs.IsSurvival)
+				{
+					this._SetZombiePrefabs();
+				}
+				ZombieCreator.survivalAvailableWeapons.Clear();
+				this._UpdateAvailableWeapons();
+				this._UpdateIntervalStructures();
+				base.StartCoroutine(this._DrawFirstMessage());
 			}
-			GlobalGameController.curThr = GlobalGameController.thrStep;
-			_enemies.Add(new string[6] { "1", "2", "1", "11", "12", "13" });
-			_enemies.Add(new string[6] { "30", "31", "32", "33", "34", "77" });
-			_enemies.Add(new string[9] { "1", "2", "3", "9", "10", "12", "14", "15", "78" });
-			_enemies.Add(new string[7] { "1", "2", "4", "11", "9", "16", "78" });
-			_enemies.Add(new string[7] { "1", "2", "4", "9", "11", "10", "12" });
-			_enemies.Add(new string[6] { "43", "44", "45", "46", "47", "73" });
-			_enemies.Add(new string[3] { "6", "7", "7" });
-			_enemies.Add(new string[7] { "1", "2", "8", "10", "11", "12", "76" });
-			_enemies.Add(new string[3] { "18", "19", "20" });
-			_enemies.Add(new string[6] { "21", "22", "23", "24", "25", "75" });
-			_enemies.Add(new string[2] { "1", "15" });
-			_enemies.Add(new string[8] { "1", "3", "9", "10", "14", "15", "16", "78" });
-			_enemies.Add(new string[4] { "8", "21", "22", "79" });
-			_enemies.Add(new string[5] { "26", "27", "28", "29", "57" });
-			_enemies.Add(new string[6] { "35", "36", "37", "38", "48", "57" });
-			_enemies.Add(new string[5] { "39", "40", "41", "42", "74" });
-			_enemies.Add(new string[4] { "53", "55", "57", "61" });
-			_enemies.Add(new string[4] { "59", "56", "54", "60" });
-			_enemies.Add(new string[4] { "67", "68", "66", "69" });
-			_enemies.Add(new string[3] { "70", "71", "72" });
-			_enemies.Add(new string[4] { "58", "63", "64", "65" });
-			UpdateBotPrefabs();
-			if (Defs.IsSurvival)
-			{
-				_SetZombiePrefabs();
-			}
-			survivalAvailableWeapons.Clear();
-			_UpdateAvailableWeapons();
-			_UpdateIntervalStructures();
-			StartCoroutine(_DrawFirstMessage());
 		}
 		finally
 		{
@@ -715,42 +613,174 @@ public sealed class ZombieCreator : MonoBehaviour
 		}
 	}
 
-	private void _SetZombiePrefabs()
+	public void BeganCreateEnemies()
 	{
-		waveZombiePrefabs.Clear();
-		int index = ((currentWave < _enemiesInWaves.Count) ? currentWave : (_enemiesInWaves.Count - 1));
-		foreach (GameObject zombiePrefab in zombiePrefabs)
+		if (Application.isEditor && Defs.IsSurvival && !SceneLoader.ActiveSceneName.Equals(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % (int)Defs.SurvivalMaps.Length]))
 		{
-			string item = zombiePrefab.name.Substring("Enemy".Length).Substring(0, zombiePrefab.name.Substring("Enemy".Length).IndexOf("_"));
-			if (_enemiesInWaves[index].Contains(item))
+			return;
+		}
+		if (Defs.IsSurvival)
+		{
+			this.SetWaveNumberInGUI();
+		}
+		base.StartCoroutine(this.AddZombies());
+	}
+
+	private void CreateBoss()
+	{
+		GameObject gameObject = null;
+		float single = Single.PositiveInfinity;
+		GameObject gameObject1 = GameObject.FindGameObjectWithTag("Player");
+		if (!gameObject1)
+		{
+			return;
+		}
+		GameObject[] gameObjectArray = this._enemyCreationZones;
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
+		{
+			GameObject gameObject2 = gameObjectArray[i];
+			float single1 = Vector3.SqrMagnitude(gameObject1.transform.position - gameObject2.transform.position);
+			float single2 = gameObject1.transform.position.y;
+			Vector3 vector3 = gameObject2.transform.position;
+			float single3 = Mathf.Abs(single2 - vector3.y);
+			if (single1 > 225f && single1 < single && single3 < 2.5f)
 			{
-				waveZombiePrefabs.Add(zombiePrefab);
+				single = single1;
+				gameObject = gameObject2;
+			}
+		}
+		if (!gameObject)
+		{
+			gameObject = this._enemyCreationZones[0];
+		}
+		Vector3 vector31 = this._createPos(gameObject);
+		if (this.boss != null)
+		{
+			GameObject gameObject3 = GameObject.FindGameObjectWithTag("BossRespawnPoint");
+			if (gameObject3 != null)
+			{
+				vector31 = gameObject3.transform.position;
+			}
+			this.boss.transform.position = vector31;
+			this.boss.transform.rotation = Quaternion.identity;
+			this.boss.SetActive(true);
+			this.ShowGuards(vector31);
+		}
+		else if (Defs.IsSurvival && ZombieCreator.bossesSurvival.ContainsKey(this.currentWave))
+		{
+			string str = string.Concat("Boss", ZombieCreator.bossesSurvival[this.currentWave]);
+			this.boss = UnityEngine.Object.Instantiate(Resources.Load(ResPath.Combine("Bosses", str))) as GameObject;
+			this.boss.transform.position = vector31;
+			this.boss.transform.rotation = Quaternion.identity;
+		}
+		if (this.boss != null && !Defs.IsSurvival)
+		{
+			PlayerArrowToPortalController component = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
+			if (component != null)
+			{
+				component.RemovePointOfInterest();
+				component.SetPointOfInterest(this.boss.transform, Color.red);
+			}
+		}
+		this.boss = null;
+		this.bossShowm = true;
+	}
+
+	public static int GetCountMobsForLevel()
+	{
+		Dictionary<string, int> strs = Switcher.counCreateMobsInLevel;
+		string str = CurrentCampaignGame.levelSceneName;
+		if (!strs.ContainsKey(str))
+		{
+			return GlobalGameController.ZombiesInWave;
+		}
+		return strs[str];
+	}
+
+	public void NextWave()
+	{
+		Vector3 vector3;
+		QuestMediator.NotifySurviveWaveInArena();
+		this.currentWave++;
+		StoreKitEventListener.State.Parameters.Clear();
+		StoreKitEventListener.State.Parameters.Add("Waves", string.Concat((this.currentWave >= 10 ? string.Concat(new object[] { string.Empty, this.currentWave / 10 * 10, "-", (this.currentWave / 10 + 1) * 10 - 1 }) : string.Concat(string.Empty, this.currentWave + 1)), " In game"));
+		base.StartCoroutine(this._DrawWaveMessage(() => {
+			this._UpdateIntervalStructures();
+			this._numOfDeadZombies = 0;
+			this._numOfDeadZombsSinceLastFast = 0;
+			this._SetZombiePrefabs();
+			this._UpdateAvailableWeapons();
+			this._generatingZombiesIsStopped = false;
+			this.stopGeneratingBonuses = false;
+			this.SetWaveNumberInGUI();
+		}));
+		vector3 = (!SceneLoader.ActiveSceneName.Equals("Pizza") ? new Vector3(0f, 1f, 0f) : new Vector3(-7.83f, 0.46f, -2.44f));
+		GameObject gameObject = Initializer.CreateBonusAtPosition(vector3, VirtualCurrencyBonusType.Coin);
+		if (gameObject == null)
+		{
+			return;
+		}
+		CoinBonus component = gameObject.GetComponent<CoinBonus>();
+		if (component != null)
+		{
+			component.SetPlayer();
+			return;
+		}
+		UnityEngine.Debug.LogErrorFormat("Cannot find component '{0}'", new object[] { component.GetType().Name });
+	}
+
+	private void OnDestroy()
+	{
+		ZombieCreator.sharedCreator = null;
+		if (Defs.IsSurvival)
+		{
+			PlayerPrefs.SetInt(Defs.KilledZombiesSett, this.totalNumOfKilledEnemies);
+			int num = PlayerPrefs.GetInt(Defs.KilledZombiesMaxSett, 0);
+			if (this.totalNumOfKilledEnemies > num)
+			{
+				PlayerPrefs.SetInt(Defs.KilledZombiesMaxSett, this.totalNumOfKilledEnemies);
+			}
+			PlayerPrefs.SetInt(Defs.WavesSurvivedS, this.currentWave);
+			int num1 = PlayerPrefs.GetInt(Defs.WavesSurvivedMaxS, 0);
+			if (this.currentWave > num1)
+			{
+				PlayerPrefs.SetInt(Defs.WavesSurvivedMaxS, this.currentWave);
 			}
 		}
 	}
 
-	private void _UpdateAvailableWeapons()
+	public static void SetLayerRecursively(GameObject go, int layerNumber)
 	{
-		if (currentWave >= _WeaponsAddedInWaves.Count)
+		if (go == null)
 		{
 			return;
 		}
-		foreach (string item in _WeaponsAddedInWaves[currentWave])
+		Transform[] componentsInChildren = go.GetComponentsInChildren<Transform>(true);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
 		{
-			survivalAvailableWeapons.Add(item);
+			componentsInChildren[i].gameObject.layer = layerNumber;
 		}
 	}
 
-	private void UpdateBotPrefabs()
+	private void SetWaveNumberInGUI()
 	{
-		zombiePrefabs.Clear();
-		string[] array = null;
-		array = (Defs.IsSurvival ? _allEnemiesSurvival.ToArray() : ((CurrentCampaignGame.currentLevel != 0) ? _enemies[CurrentCampaignGame.currentLevel - 1] : new string[1] { "1" }));
-		string[] array2 = array;
-		foreach (string text in array2)
+		if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.SurvivalWaveNumber != null)
 		{
-			GameObject item = Resources.Load("Enemies/Enemy" + text + "_go") as GameObject;
-			zombiePrefabs.Add(item);
+			InGameGUI.sharedInGameGUI.SurvivalWaveNumber.text = string.Format("{0} {1}", LocalizationStore.Get("Key_0349"), this.currentWave + 1);
+		}
+	}
+
+	private void ShowGuards(Vector3 bossPosition)
+	{
+		if (this.bossGuads == null)
+		{
+			return;
+		}
+		for (int i = 0; i < (int)this.bossGuads.Length; i++)
+		{
+			this.bossGuads[i].transform.position = BaseBot.GetPositionSpawnGuard(bossPosition);
+			this.bossGuads[i].transform.rotation = Quaternion.identity;
+			this.bossGuads[i].SetActive(true);
 		}
 	}
 
@@ -759,209 +789,83 @@ public sealed class ZombieCreator : MonoBehaviour
 		if (Defs.IsSurvival)
 		{
 			StoreKitEventListener.State.Parameters.Clear();
-			StoreKitEventListener.State.Parameters.Add("Waves", currentWave + 1 + " In game");
+			StoreKitEventListener.State.Parameters.Add("Waves", string.Concat(this.currentWave + 1, " In game"));
 		}
-		labelStyle.fontSize = Mathf.RoundToInt(50f * Defs.Coef);
-		labelStyle.font = LocalizationStore.GetFontByLocalize("Key_04B_03");
-		if (Defs.isMulti)
+		this.labelStyle.fontSize = Mathf.RoundToInt(50f * Defs.Coef);
+		this.labelStyle.font = LocalizationStore.GetFontByLocalize("Key_04B_03");
+		if (!Defs.isMulti)
 		{
-			_isMultiplayer = true;
+			this._isMultiplayer = false;
 		}
 		else
 		{
-			_isMultiplayer = false;
+			this._isMultiplayer = true;
 		}
-		_teleports = GameObject.FindGameObjectsWithTag("Portal");
-		GameObject[] teleports = _teleports;
-		foreach (GameObject gameObject in teleports)
+		this._teleports = GameObject.FindGameObjectsWithTag("Portal");
+		GameObject[] gameObjectArray = this._teleports;
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
 		{
-			gameObject.SetActive(false);
+			gameObjectArray[i].SetActive(false);
 		}
-		if (!_isMultiplayer)
+		if (!this._isMultiplayer)
 		{
-			_enemyCreationZones = GameObject.FindGameObjectsWithTag("EnemyCreationZone");
+			this._enemyCreationZones = GameObject.FindGameObjectsWithTag("EnemyCreationZone");
 			if (!Defs.IsSurvival)
 			{
-				_ResetInterval();
+				this._ResetInterval();
 			}
 		}
 	}
 
-	private void _ResetInterval()
+	public void SuppressDrawingWaveMessage()
 	{
-		curInterval = Mathf.Max(1f, curInterval);
 	}
 
-	public void BeganCreateEnemies()
+	private void TryCreateBossGuard(GameObject bossObj)
 	{
-		if (!Application.isEditor || !Defs.IsSurvival || SceneLoader.ActiveSceneName.Equals(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % Defs.SurvivalMaps.Length]))
-		{
-			if (Defs.IsSurvival)
-			{
-				SetWaveNumberInGUI();
-			}
-			StartCoroutine(AddZombies());
-		}
-	}
-
-	public static int GetCountMobsForLevel()
-	{
-		Dictionary<string, int> counCreateMobsInLevel = Switcher.counCreateMobsInLevel;
-		string levelSceneName = CurrentCampaignGame.levelSceneName;
-		if (counCreateMobsInLevel.ContainsKey(levelSceneName))
-		{
-			return counCreateMobsInLevel[levelSceneName];
-		}
-		return GlobalGameController.ZombiesInWave;
-	}
-
-	private IEnumerator AddZombies()
-	{
-		do
-		{
-			int numOfZombsToAdd = GlobalGameController.ZombiesInWave;
-			numOfZombsToAdd = Mathf.Min(numOfZombsToAdd, GlobalGameController.SimultaneousEnemiesOnLevelConstraint - NumOfLiveZombies);
-			numOfZombsToAdd = Mathf.Min(numOfZombsToAdd, NumOfEnemisesToKill - (NumOfDeadZombies + NumOfLiveZombies));
-			string[] enemyNumbers = null;
-			if (!Defs.IsSurvival)
-			{
-				enemyNumbers = ((CurrentCampaignGame.currentLevel != 0) ? _enemies[CurrentCampaignGame.currentLevel - 1] : new string[1] { "1" });
-			}
-			else
-			{
-				int ind = ((currentWave < _enemiesInWaves.Count) ? currentWave : (_enemiesInWaves.Count - 1));
-				enemyNumbers = _enemiesInWaves[ind].ToArray();
-			}
-			for (int i = 0; i < numOfZombsToAdd; i++)
-			{
-				int typeOfZomb = UnityEngine.Random.Range(0, enemyNumbers.Length);
-				GameObject spawnZone = ((!Defs.IsSurvival) ? _enemyCreationZones[UnityEngine.Random.Range(0, _enemyCreationZones.Length)] : _enemyCreationZones[i % _enemyCreationZones.Length]);
-				UnityEngine.Object.Instantiate(position: _createPos(spawnZone), original: (!Defs.IsSurvival) ? zombiePrefabs[typeOfZomb] : waveZombiePrefabs[typeOfZomb], rotation: Quaternion.identity);
-			}
-			if (Defs.IsSurvival && NumOfDeadZombies + NumOfLiveZombies >= NumOfEnemisesToKill)
-			{
-				_generatingZombiesIsStopped = true;
-				do
-				{
-					yield return new WaitForEndOfFrame();
-				}
-				while (_generatingZombiesIsStopped);
-			}
-			yield return new WaitForSeconds(curInterval);
-			if (Defs.IsSurvival)
-			{
-				_genWithThisTimeInterval++;
-				if (_genWithThisTimeInterval == 3 && _indexInTimesArray < _intervalArr.Length - 1)
-				{
-					_indexInTimesArray++;
-				}
-				curInterval = _intervalArr[_indexInTimesArray];
-			}
-		}
-		while (NumOfDeadZombies + NumOfLiveZombies < NumOfEnemisesToKill || Defs.IsSurvival);
-	}
-
-	private Vector3 _createPos(GameObject spawnZone)
-	{
-		BoxCollider component = spawnZone.GetComponent<BoxCollider>();
-		Vector2 vector = new Vector2(component.size.x * spawnZone.transform.localScale.x, component.size.z * spawnZone.transform.localScale.z);
-		Rect rect = new Rect(spawnZone.transform.position.x - vector.x / 2f, spawnZone.transform.position.z - vector.y / 2f, vector.x, vector.y);
-		Vector3 result = new Vector3(rect.x + UnityEngine.Random.Range(0f, rect.width), spawnZone.transform.position.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
-		return result;
-	}
-
-	private void ShowGuards(Vector3 bossPosition)
-	{
-		if (bossGuads != null)
-		{
-			for (int i = 0; i < bossGuads.Length; i++)
-			{
-				bossGuads[i].transform.position = BaseBot.GetPositionSpawnGuard(bossPosition);
-				bossGuads[i].transform.rotation = Quaternion.identity;
-				bossGuads[i].SetActive(true);
-			}
-		}
-	}
-
-	private void CreateBoss()
-	{
-		GameObject gameObject = null;
-		float num = float.PositiveInfinity;
-		GameObject gameObject2 = GameObject.FindGameObjectWithTag("Player");
-		if (!gameObject2)
+		this.bossGuads = null;
+		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(bossObj.transform);
+		if (botScriptForObject == null)
 		{
 			return;
 		}
-		GameObject[] enemyCreationZones = _enemyCreationZones;
-		foreach (GameObject gameObject3 in enemyCreationZones)
+		int length = (int)botScriptForObject.guards.Length;
+		if (length == 0)
 		{
-			float num2 = Vector3.SqrMagnitude(gameObject2.transform.position - gameObject3.transform.position);
-			float num3 = Mathf.Abs(gameObject2.transform.position.y - gameObject3.transform.position.y);
-			if (num2 > 225f && num2 < num && num3 < 2.5f)
-			{
-				num = num2;
-				gameObject = gameObject3;
-			}
+			return;
 		}
-		if (!gameObject)
+		this.bossGuads = new GameObject[length];
+		for (int i = 0; i < length; i++)
 		{
-			gameObject = _enemyCreationZones[0];
+			GameObject gameObject = botScriptForObject.guards[i];
+			this.bossGuads[i] = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+			this.bossGuads[i].name = string.Format("{0}{1}", "BossGuard", i + 1);
+			this.bossGuads[i].SetActive(false);
 		}
-		Vector3 vector = _createPos(gameObject);
-		if (boss != null)
-		{
-			GameObject gameObject4 = GameObject.FindGameObjectWithTag("BossRespawnPoint");
-			if (gameObject4 != null)
-			{
-				vector = gameObject4.transform.position;
-			}
-			boss.transform.position = vector;
-			boss.transform.rotation = Quaternion.identity;
-			boss.SetActive(true);
-			ShowGuards(vector);
-		}
-		else if (Defs.IsSurvival && bossesSurvival.ContainsKey(currentWave))
-		{
-			string b = "Boss" + bossesSurvival[currentWave];
-			boss = UnityEngine.Object.Instantiate(Resources.Load(ResPath.Combine("Bosses", b))) as GameObject;
-			boss.transform.position = vector;
-			boss.transform.rotation = Quaternion.identity;
-		}
-		if (boss != null && !Defs.IsSurvival)
-		{
-			PlayerArrowToPortalController component = WeaponManager.sharedManager.myPlayer.GetComponent<PlayerArrowToPortalController>();
-			if (component != null)
-			{
-				component.RemovePointOfInterest();
-				component.SetPointOfInterest(boss.transform, Color.red);
-			}
-		}
-		boss = null;
-		bossShowm = true;
 	}
 
-	[CompilerGenerated]
-	private static GameObject _003Cset_NumOfDeadZombies_003Em__4B9(GameObject[] ts)
+	private void UpdateBotPrefabs()
 	{
-		return ts.FirstOrDefault();
+		this.zombiePrefabs.Clear();
+		string[] array = null;
+		if (!Defs.IsSurvival)
+		{
+			array = (CurrentCampaignGame.currentLevel != 0 ? this._enemies[CurrentCampaignGame.currentLevel - 1] : new string[] { "1" });
+		}
+		else
+		{
+			array = ZombieCreator._allEnemiesSurvival.ToArray<string>();
+		}
+		string[] strArrays = array;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			string str = strArrays[i];
+			GameObject gameObject = Resources.Load(string.Concat("Enemies/Enemy", str, "_go")) as GameObject;
+			this.zombiePrefabs.Add(gameObject);
+		}
 	}
 
-	[CompilerGenerated]
-	private static GameObject _003Cset_NumOfDeadZombies_003Em__4BA(GotToNextLevel g)
-	{
-		return g.gameObject;
-	}
+	public static event Action BossKilled;
 
-	[CompilerGenerated]
-	private void _003CNextWave_003Em__4BB()
-	{
-		_UpdateIntervalStructures();
-		_numOfDeadZombies = 0;
-		_numOfDeadZombsSinceLastFast = 0;
-		_SetZombiePrefabs();
-		_UpdateAvailableWeapons();
-		_generatingZombiesIsStopped = false;
-		stopGeneratingBonuses = false;
-		SetWaveNumberInGUI();
-	}
+	public static event Action LastEnemy;
 }

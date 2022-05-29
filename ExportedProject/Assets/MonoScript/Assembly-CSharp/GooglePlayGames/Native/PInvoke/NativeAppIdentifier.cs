@@ -1,24 +1,15 @@
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeAppIdentifier : BaseReferenceHolder
 	{
-		internal NativeAppIdentifier(IntPtr pointer)
-			: base(pointer)
+		internal NativeAppIdentifier(IntPtr pointer) : base(pointer)
 		{
-		}
-
-		[DllImport("gpg")]
-		internal static extern IntPtr NearbyUtils_ConstructAppIdentifier(string appId);
-
-		internal string Id()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CId_003Em__131);
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -28,13 +19,15 @@ namespace GooglePlayGames.Native.PInvoke
 
 		internal static NativeAppIdentifier FromString(string appId)
 		{
-			return new NativeAppIdentifier(NearbyUtils_ConstructAppIdentifier(appId));
+			return new NativeAppIdentifier(NativeAppIdentifier.NearbyUtils_ConstructAppIdentifier(appId));
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CId_003Em__131(StringBuilder out_arg, UIntPtr out_size)
+		internal string Id()
 		{
-			return NearbyConnectionTypes.AppIdentifier_GetIdentifier(SelfPtr(), out_arg, out_size);
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_arg, UIntPtr out_size) => NearbyConnectionTypes.AppIdentifier_GetIdentifier(base.SelfPtr(), out_arg, out_size));
 		}
+
+		[DllImport("gpg", CharSet=CharSet.None, ExactSpelling=false)]
+		internal static extern IntPtr NearbyUtils_ConstructAppIdentifier(string appId);
 	}
 }

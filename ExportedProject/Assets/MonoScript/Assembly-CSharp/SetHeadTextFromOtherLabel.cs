@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SetHeadTextFromOtherLabel : MonoBehaviour
@@ -6,11 +7,15 @@ public class SetHeadTextFromOtherLabel : MonoBehaviour
 
 	public UILabel[] headLabels;
 
+	public SetHeadTextFromOtherLabel()
+	{
+	}
+
 	private void Update()
 	{
-		for (int i = 0; i < headLabels.Length; i++)
+		for (int i = 0; i < (int)this.headLabels.Length; i++)
 		{
-			headLabels[i].text = otherLabel.text;
+			this.headLabels[i].text = this.otherLabel.text;
 		}
 	}
 }

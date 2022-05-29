@@ -1,9 +1,12 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Rilisoft;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 internal sealed class ComicsCampaign : MonoBehaviour
@@ -18,13 +21,7 @@ internal sealed class ComicsCampaign : MonoBehaviour
 
 	public Text subtitlesText;
 
-	private string[] _subtitles = new string[4]
-	{
-		string.Empty,
-		string.Empty,
-		string.Empty,
-		string.Empty
-	};
+	private string[] _subtitles = new string[] { string.Empty, string.Empty, string.Empty, string.Empty };
 
 	private int _frameCount;
 
@@ -36,200 +33,151 @@ internal sealed class ComicsCampaign : MonoBehaviour
 
 	private Action _skipHandler;
 
-	public void HandleSkipPressed()
+	public ComicsCampaign()
 	{
-		ButtonClickSound.TryPlayClick();
-		Debug.Log("[Skip] pressed.");
-		if (_skipHandler != null)
-		{
-			_skipHandler();
-		}
 	}
 
-	public void HandleBackPressed()
+	private void Awake()
 	{
-		ButtonClickSound.TryPlayClick();
-		Singleton<SceneLoader>.Instance.LoadScene("ChooseLevel");
+		if (this.subtitlesText != null)
+		{
+			this.subtitlesText.transform.parent.gameObject.SetActive(LocalizationStore.CurrentLanguage != "English");
+		}
+		this._frameCount = Math.Min(4, (int)this.comicFrames.Length);
+		this._isFirstLaunch = this.DetermineIfFirstLaunch();
 	}
 
 	private bool DetermineIfFirstLaunch()
 	{
 		if (LevelArt.endOfBox)
 		{
-			string[] source = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
-			return !source.Any(CurrentCampaignGame.boXName.Equals);
+			string[] strArrays = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
+			return !strArrays.Any<string>(new Func<string, bool>(CurrentCampaignGame.boXName.Equals));
 		}
-		string[] source2 = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
-		return !source2.Any(CurrentCampaignGame.levelSceneName.Equals);
+		string[] strArrays1 = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
+		return !strArrays1.Any<string>(new Func<string, bool>(CurrentCampaignGame.levelSceneName.Equals));
 	}
 
-	private void Awake()
-	{
-		if (subtitlesText != null)
-		{
-			subtitlesText.transform.parent.gameObject.SetActive(LocalizationStore.CurrentLanguage != "English");
-		}
-		_frameCount = Math.Min(4, comicFrames.Length);
-		_isFirstLaunch = DetermineIfFirstLaunch();
-	}
-
-	private IEnumerator Start()
-	{
-		Texture nextTexture = Resources.Load<Texture>(GetNameForIndex(_frameCount + 1, LevelArt.endOfBox));
-		_hasSecondPage = nextTexture != null;
-		if (_isFirstLaunch)
-		{
-			SetSkipHandler(null);
-			backButton.gameObject.SetActive(false);
-		}
-		else if (_hasSecondPage)
-		{
-			SetSkipHandler(GotoNextPage);
-		}
-		else
-		{
-			SetSkipHandler(GotoLevelOrBoxmap);
-		}
-		if (background != null)
-		{
-			background.texture = Resources.Load<Texture>("Arts_background_" + CurrentCampaignGame.boXName);
-		}
-		for (int i = 0; i != _frameCount; i++)
-		{
-			string pathToComicTexture = GetNameForIndex(i + 1, LevelArt.endOfBox);
-			Texture texture = Resources.Load<Texture>(pathToComicTexture);
-			if (texture == null)
-			{
-				Debug.LogWarning("Texture is null: " + pathToComicTexture);
-				break;
-			}
-			comicFrames[i].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, texture.width);
-			comicFrames[i].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, texture.height);
-			comicFrames[i].texture = texture;
-			comicFrames[i].color = new Color(1f, 1f, 1f, 0f);
-			string localizationKey = ((!LevelArt.endOfBox) ? string.Format("{0}_{1}", CurrentCampaignGame.levelSceneName, i) : string.Format("{0}_{1}", CurrentCampaignGame.boXName, i));
-			_subtitles[i] = LocalizationStore.Get(localizationKey) ?? string.Empty;
-		}
-		_coroutine = StartCoroutine(FadeInCoroutine());
-		yield return _coroutine;
-		if (_hasSecondPage)
-		{
-			SetSkipHandler(GotoNextPage);
-		}
-		else
-		{
-			SetSkipHandler(GotoLevelOrBoxmap);
-		}
-	}
-
-	private void GotoNextPage()
-	{
-		if (_isFirstLaunch)
-		{
-			SetSkipHandler(null);
-		}
-		else
-		{
-			SetSkipHandler(GotoLevelOrBoxmap);
-		}
-		if (_coroutine != null)
-		{
-			StopCoroutine(_coroutine);
-		}
-		for (int i = 0; i != comicFrames.Length; i++)
-		{
-			if (!(comicFrames[i] == null))
-			{
-				comicFrames[i].texture = null;
-				comicFrames[i].color = new Color(1f, 1f, 1f, 0f);
-				_subtitles[i] = string.Empty;
-			}
-		}
-		Resources.UnloadUnusedAssets();
-		for (int j = 0; j != _frameCount; j++)
-		{
-			string nameForIndex = GetNameForIndex(_frameCount + j + 1, LevelArt.endOfBox);
-			Texture texture = Resources.Load<Texture>(nameForIndex);
-			if (texture == null)
-			{
-				break;
-			}
-			comicFrames[j].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, texture.width);
-			comicFrames[j].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, texture.height);
-			comicFrames[j].texture = texture;
-			string term = ((!LevelArt.endOfBox) ? string.Format("{0}_{1}", CurrentCampaignGame.levelSceneName, _frameCount + j) : string.Format("{0}_{1}", CurrentCampaignGame.boXName, _frameCount + j));
-			_subtitles[j] = LocalizationStore.Get(term) ?? string.Empty;
-		}
-		_coroutine = StartCoroutine(FadeInCoroutine(GotoLevelOrBoxmap));
-	}
-
-	private void GotoLevelOrBoxmap()
-	{
-		if (_coroutine != null)
-		{
-			StopCoroutine(_coroutine);
-		}
-		if (LevelArt.endOfBox)
-		{
-			string[] array = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
-			if (Array.IndexOf(array, CurrentCampaignGame.boXName) == -1)
-			{
-				List<string> list = new List<string>(array);
-				list.Add(CurrentCampaignGame.boXName);
-				Save.SaveStringArray(Defs.ArtBoxS, list.ToArray());
-			}
-		}
-		else
-		{
-			string[] array2 = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
-			if (Array.IndexOf(array2, CurrentCampaignGame.levelSceneName) == -1)
-			{
-				List<string> list2 = new List<string>(array2);
-				list2.Add(CurrentCampaignGame.levelSceneName);
-				Save.SaveStringArray(Defs.ArtLevsS, list2.ToArray());
-			}
-		}
-		Singleton<SceneLoader>.Instance.LoadScene((!LevelArt.endOfBox) ? "CampaignLoading" : "ChooseLevel");
-	}
-
-	private void SetSkipHandler(Action skipHandler)
-	{
-		_skipHandler = skipHandler;
-		if (skipButton != null)
-		{
-			skipButton.gameObject.SetActive(skipHandler != null);
-		}
-	}
-
+	[DebuggerHidden]
 	private IEnumerator FadeInCoroutine(Action skipHandler = null)
 	{
-		for (int comicFrameIndex = 0; comicFrameIndex != comicFrames.Length; comicFrameIndex++)
-		{
-			RawImage f = comicFrames[comicFrameIndex];
-			if (!(f == null))
-			{
-				if (subtitlesText != null)
-				{
-					subtitlesText.text = _subtitles[comicFrameIndex];
-				}
-				for (int i = 0; i != 30; i++)
-				{
-					float newAlpha = Mathf.InverseLerp(0f, 30f, i);
-					f.color = new Color(1f, 1f, 1f, newAlpha);
-					yield return new WaitForSeconds(1f / 30f);
-				}
-				f.color = new Color(1f, 1f, 1f, 1f);
-				yield return new WaitForSeconds(2f);
-			}
-		}
-		if (skipHandler != null)
-		{
-			SetSkipHandler(skipHandler);
-		}
+		ComicsCampaign.u003cFadeInCoroutineu003ec__Iterator12F variable = null;
+		return variable;
 	}
 
 	private static string GetNameForIndex(int num, bool endOfBox)
 	{
-		return ResPath.Combine("Arts", ResPath.Combine((!endOfBox) ? CurrentCampaignGame.levelSceneName : CurrentCampaignGame.boXName, num.ToString()));
+		return ResPath.Combine("Arts", ResPath.Combine((!endOfBox ? CurrentCampaignGame.levelSceneName : CurrentCampaignGame.boXName), num.ToString()));
+	}
+
+	private void GotoLevelOrBoxmap()
+	{
+		if (this._coroutine != null)
+		{
+			base.StopCoroutine(this._coroutine);
+		}
+		if (!LevelArt.endOfBox)
+		{
+			string[] strArrays = Load.LoadStringArray(Defs.ArtLevsS) ?? new string[0];
+			if (Array.IndexOf<string>(strArrays, CurrentCampaignGame.levelSceneName) == -1)
+			{
+				List<string> strs = new List<string>(strArrays)
+				{
+					CurrentCampaignGame.levelSceneName
+				};
+				Save.SaveStringArray(Defs.ArtLevsS, strs.ToArray());
+			}
+		}
+		else
+		{
+			string[] strArrays1 = Load.LoadStringArray(Defs.ArtBoxS) ?? new string[0];
+			if (Array.IndexOf<string>(strArrays1, CurrentCampaignGame.boXName) == -1)
+			{
+				List<string> strs1 = new List<string>(strArrays1)
+				{
+					CurrentCampaignGame.boXName
+				};
+				Save.SaveStringArray(Defs.ArtBoxS, strs1.ToArray());
+			}
+		}
+		Singleton<SceneLoader>.Instance.LoadScene((!LevelArt.endOfBox ? "CampaignLoading" : "ChooseLevel"), LoadSceneMode.Single);
+	}
+
+	private void GotoNextPage()
+	{
+		if (!this._isFirstLaunch)
+		{
+			this.SetSkipHandler(new Action(this.GotoLevelOrBoxmap));
+		}
+		else
+		{
+			this.SetSkipHandler(null);
+		}
+		if (this._coroutine != null)
+		{
+			base.StopCoroutine(this._coroutine);
+		}
+		for (int i = 0; i != (int)this.comicFrames.Length; i++)
+		{
+			if (this.comicFrames[i] != null)
+			{
+				this.comicFrames[i].texture = null;
+				this.comicFrames[i].color = new Color(1f, 1f, 1f, 0f);
+				this._subtitles[i] = string.Empty;
+			}
+		}
+		Resources.UnloadUnusedAssets();
+		int num = 0;
+		while (num != this._frameCount)
+		{
+			string nameForIndex = ComicsCampaign.GetNameForIndex(this._frameCount + num + 1, LevelArt.endOfBox);
+			Texture texture = Resources.Load<Texture>(nameForIndex);
+			if (texture != null)
+			{
+				this.comicFrames[num].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, (float)texture.width);
+				this.comicFrames[num].rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, (float)texture.height);
+				this.comicFrames[num].texture = texture;
+				string str = (!LevelArt.endOfBox ? string.Format("{0}_{1}", CurrentCampaignGame.levelSceneName, this._frameCount + num) : string.Format("{0}_{1}", CurrentCampaignGame.boXName, this._frameCount + num));
+				this._subtitles[num] = LocalizationStore.Get(str) ?? string.Empty;
+				num++;
+			}
+			else
+			{
+				break;
+			}
+		}
+		this._coroutine = base.StartCoroutine(this.FadeInCoroutine(new Action(this.GotoLevelOrBoxmap)));
+	}
+
+	public void HandleBackPressed()
+	{
+		ButtonClickSound.TryPlayClick();
+		Singleton<SceneLoader>.Instance.LoadScene("ChooseLevel", LoadSceneMode.Single);
+	}
+
+	public void HandleSkipPressed()
+	{
+		ButtonClickSound.TryPlayClick();
+		UnityEngine.Debug.Log("[Skip] pressed.");
+		if (this._skipHandler != null)
+		{
+			this._skipHandler();
+		}
+	}
+
+	private void SetSkipHandler(Action skipHandler)
+	{
+		this._skipHandler = skipHandler;
+		if (this.skipButton != null)
+		{
+			this.skipButton.gameObject.SetActive(skipHandler != null);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		ComicsCampaign.u003cStartu003ec__Iterator12E variable = null;
+		return variable;
 	}
 }

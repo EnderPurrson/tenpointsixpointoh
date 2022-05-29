@@ -4,5 +4,8 @@ namespace Rilisoft.WP8
 {
 	public class RPC : Attribute
 	{
+		public RPC()
+		{
+		}
 	}
 }

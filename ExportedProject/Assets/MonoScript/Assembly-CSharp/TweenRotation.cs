@@ -4,7 +4,7 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Tween/Tween Rotation")]
 public class TweenRotation : UITweener
 {
-	public Vector3 from;
+	public Vector3 @from;
 
 	public Vector3 to;
 
@@ -16,11 +16,11 @@ public class TweenRotation : UITweener
 	{
 		get
 		{
-			if (mTrans == null)
+			if (this.mTrans == null)
 			{
-				mTrans = base.transform;
+				this.mTrans = base.transform;
 			}
-			return mTrans;
+			return this.mTrans;
 		}
 	}
 
@@ -29,35 +29,34 @@ public class TweenRotation : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public Quaternion value
+	public Quaternion @value
 	{
 		get
 		{
-			return cachedTransform.localRotation;
+			return this.cachedTransform.localRotation;
 		}
 		set
 		{
-			cachedTransform.localRotation = value;
+			this.cachedTransform.localRotation = value;
 		}
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
+	public TweenRotation()
 	{
-		value = ((!quaternionLerp) ? Quaternion.Euler(new Vector3(Mathf.Lerp(from.x, to.x, factor), Mathf.Lerp(from.y, to.y, factor), Mathf.Lerp(from.z, to.z, factor))) : Quaternion.Slerp(Quaternion.Euler(from), Quaternion.Euler(to), factor));
 	}
 
 	public static TweenRotation Begin(GameObject go, float duration, Quaternion rot)
 	{
 		TweenRotation tweenRotation = UITweener.Begin<TweenRotation>(go, duration);
-		tweenRotation.from = tweenRotation.value.eulerAngles;
+		tweenRotation.@from = tweenRotation.@value.eulerAngles;
 		tweenRotation.to = rot.eulerAngles;
 		if (duration <= 0f)
 		{
@@ -67,27 +66,32 @@ public class TweenRotation : UITweener
 		return tweenRotation;
 	}
 
-	[ContextMenu("Set 'From' to current value")]
-	public override void SetStartToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		from = value.eulerAngles;
-	}
-
-	[ContextMenu("Set 'To' to current value")]
-	public override void SetEndToCurrentValue()
-	{
-		to = value.eulerAngles;
-	}
-
-	[ContextMenu("Assume value of 'From'")]
-	private void SetCurrentValueToStart()
-	{
-		value = Quaternion.Euler(from);
+		this.@value = (!this.quaternionLerp ? Quaternion.Euler(new Vector3(Mathf.Lerp(this.@from.x, this.to.x, factor), Mathf.Lerp(this.@from.y, this.to.y, factor), Mathf.Lerp(this.@from.z, this.to.z, factor))) : Quaternion.Slerp(Quaternion.Euler(this.@from), Quaternion.Euler(this.to), factor));
 	}
 
 	[ContextMenu("Assume value of 'To'")]
 	private void SetCurrentValueToEnd()
 	{
-		value = Quaternion.Euler(to);
+		this.@value = Quaternion.Euler(this.to);
+	}
+
+	[ContextMenu("Assume value of 'From'")]
+	private void SetCurrentValueToStart()
+	{
+		this.@value = Quaternion.Euler(this.@from);
+	}
+
+	[ContextMenu("Set 'To' to current value")]
+	public override void SetEndToCurrentValue()
+	{
+		this.to = this.@value.eulerAngles;
+	}
+
+	[ContextMenu("Set 'From' to current value")]
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value.eulerAngles;
 	}
 }

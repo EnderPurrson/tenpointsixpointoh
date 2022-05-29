@@ -1,6 +1,8 @@
+using System;
+
 public enum ReceiverGroup : byte
 {
-	Others = 0,
-	All = 1,
-	MasterClient = 2
+	Others,
+	All,
+	MasterClient
 }

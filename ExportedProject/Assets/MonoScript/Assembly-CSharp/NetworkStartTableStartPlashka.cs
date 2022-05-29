@@ -1,31 +1,36 @@
+using System;
 using UnityEngine;
 
 public class NetworkStartTableStartPlashka : MonoBehaviour
 {
 	public GameObject plashka;
 
+	public NetworkStartTableStartPlashka()
+	{
+	}
+
 	private void Start()
 	{
 		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
 		{
 			base.gameObject.SetActive(false);
-			plashka.SetActive(false);
+			this.plashka.SetActive(false);
 		}
 		else if (Defs.isCOOP)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0555;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0555;
 		}
 		else if (Defs.isHunger)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0556;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0556;
 		}
-		else if (Defs.isDaterRegim)
+		else if (!Defs.isDaterRegim)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Get("Key_1539");
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0557;
 		}
 		else
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0557;
+			base.GetComponent<UILabel>().text = LocalizationStore.Get("Key_1539");
 		}
 	}
 

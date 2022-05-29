@@ -1,135 +1,134 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AGSGameDataMap : AGSSyncable
 {
-	public AGSGameDataMap(AmazonJavaWrapper javaObject)
-		: base(javaObject)
+	public AGSGameDataMap(AmazonJavaWrapper javaObject) : base(javaObject)
 	{
 	}
 
-	public AGSGameDataMap(AndroidJavaObject javaObject)
-		: base(javaObject)
+	public AGSGameDataMap(AndroidJavaObject javaObject) : base(javaObject)
 	{
-	}
-
-	public AGSSyncableDeveloperString getDeveloperString(string name)
-	{
-		return GetAGSSyncable<AGSSyncableDeveloperString>(SyncableMethod.getDeveloperString, name);
-	}
-
-	public HashSet<string> getDeveloperStringKeys()
-	{
-		return GetHashSet(HashSetMethod.getDeveloperStringKeys);
-	}
-
-	public AGSSyncableNumber GetHighestNumber(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumber>(SyncableMethod.getHighestNumber, name);
-	}
-
-	public HashSet<string> GetHighestNumberKeys()
-	{
-		return GetHashSet(HashSetMethod.getHighestNumberKeys);
-	}
-
-	public AGSSyncableNumber GetLowestNumber(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumber>(SyncableMethod.getLowestNumber, name);
-	}
-
-	public HashSet<string> GetLowestNumberKeys()
-	{
-		return GetHashSet(HashSetMethod.getLowestNumberKeys);
-	}
-
-	public AGSSyncableNumber GetLatestNumber(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumber>(SyncableMethod.getLatestNumber, name);
-	}
-
-	public HashSet<string> GetLatestNumberKeys()
-	{
-		return GetHashSet(HashSetMethod.getLatestNumberKeys);
-	}
-
-	public AGSSyncableNumberList GetHighNumberList(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumberList>(SyncableMethod.getHighNumberList, name);
-	}
-
-	public HashSet<string> GetHighNumberListKeys()
-	{
-		return GetHashSet(HashSetMethod.getHighNumberListKeys);
-	}
-
-	public AGSSyncableNumberList GetLowNumberList(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumberList>(SyncableMethod.getLowNumberList, name);
-	}
-
-	public HashSet<string> GetLowNumberListKeys()
-	{
-		return GetHashSet(HashSetMethod.getLowNumberListKeys);
-	}
-
-	public AGSSyncableNumberList GetLatestNumberList(string name)
-	{
-		return GetAGSSyncable<AGSSyncableNumberList>(SyncableMethod.getLatestNumberList, name);
-	}
-
-	public HashSet<string> GetLatestNumberListKeys()
-	{
-		return GetHashSet(HashSetMethod.getLatestNumberListKeys);
 	}
 
 	public AGSSyncableAccumulatingNumber GetAccumulatingNumber(string name)
 	{
-		return GetAGSSyncable<AGSSyncableAccumulatingNumber>(SyncableMethod.getAccumulatingNumber, name);
+		return base.GetAGSSyncable<AGSSyncableAccumulatingNumber>(AGSSyncable.SyncableMethod.getAccumulatingNumber, name);
 	}
 
 	public HashSet<string> GetAccumulatingNumberKeys()
 	{
-		return GetHashSet(HashSetMethod.getAccumulatingNumberKeys);
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getAccumulatingNumberKeys);
+	}
+
+	public AGSSyncableDeveloperString getDeveloperString(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableDeveloperString>(AGSSyncable.SyncableMethod.getDeveloperString, name);
+	}
+
+	public HashSet<string> getDeveloperStringKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getDeveloperStringKeys);
+	}
+
+	public AGSSyncableNumber GetHighestNumber(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableNumber>(AGSSyncable.SyncableMethod.getHighestNumber, name);
+	}
+
+	public HashSet<string> GetHighestNumberKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getHighestNumberKeys);
+	}
+
+	public AGSSyncableNumberList GetHighNumberList(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableNumberList>(AGSSyncable.SyncableMethod.getHighNumberList, name);
+	}
+
+	public HashSet<string> GetHighNumberListKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getHighNumberListKeys);
+	}
+
+	public AGSSyncableNumber GetLatestNumber(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableNumber>(AGSSyncable.SyncableMethod.getLatestNumber, name);
+	}
+
+	public HashSet<string> GetLatestNumberKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLatestNumberKeys);
+	}
+
+	public AGSSyncableNumberList GetLatestNumberList(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableNumberList>(AGSSyncable.SyncableMethod.getLatestNumberList, name);
+	}
+
+	public HashSet<string> GetLatestNumberListKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLatestNumberListKeys);
 	}
 
 	public AGSSyncableString GetLatestString(string name)
 	{
-		return GetAGSSyncable<AGSSyncableString>(SyncableMethod.getLatestString, name);
+		return base.GetAGSSyncable<AGSSyncableString>(AGSSyncable.SyncableMethod.getLatestString, name);
 	}
 
 	public HashSet<string> GetLatestStringKeys()
 	{
-		return GetHashSet(HashSetMethod.getLatestStringKeys);
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLatestStringKeys);
 	}
 
 	public AGSSyncableStringList GetLatestStringList(string name)
 	{
-		return GetAGSSyncable<AGSSyncableStringList>(SyncableMethod.getLatestStringList, name);
+		return base.GetAGSSyncable<AGSSyncableStringList>(AGSSyncable.SyncableMethod.getLatestStringList, name);
 	}
 
 	public HashSet<string> GetLatestStringListKeys()
 	{
-		return GetHashSet(HashSetMethod.getLatestStringListKeys);
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLatestStringListKeys);
 	}
 
-	public AGSSyncableStringSet GetStringSet(string name)
+	public AGSSyncableNumber GetLowestNumber(string name)
 	{
-		return GetAGSSyncable<AGSSyncableStringSet>(SyncableMethod.getStringSet, name);
+		return base.GetAGSSyncable<AGSSyncableNumber>(AGSSyncable.SyncableMethod.getLowestNumber, name);
 	}
 
-	public HashSet<string> GetStringSetKeys()
+	public HashSet<string> GetLowestNumberKeys()
 	{
-		return GetHashSet(HashSetMethod.getStringSetKeys);
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLowestNumberKeys);
+	}
+
+	public AGSSyncableNumberList GetLowNumberList(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableNumberList>(AGSSyncable.SyncableMethod.getLowNumberList, name);
+	}
+
+	public HashSet<string> GetLowNumberListKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getLowNumberListKeys);
 	}
 
 	public AGSGameDataMap GetMap(string name)
 	{
-		return GetAGSSyncable<AGSGameDataMap>(SyncableMethod.getMap, name);
+		return base.GetAGSSyncable<AGSGameDataMap>(AGSSyncable.SyncableMethod.getMap, name);
 	}
 
 	public HashSet<string> GetMapKeys()
 	{
-		return GetHashSet(HashSetMethod.getMapKeys);
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getMapKeys);
+	}
+
+	public AGSSyncableStringSet GetStringSet(string name)
+	{
+		return base.GetAGSSyncable<AGSSyncableStringSet>(AGSSyncable.SyncableMethod.getStringSet, name);
+	}
+
+	public HashSet<string> GetStringSetKeys()
+	{
+		return base.GetHashSet(AGSSyncable.HashSetMethod.getStringSetKeys);
 	}
 }

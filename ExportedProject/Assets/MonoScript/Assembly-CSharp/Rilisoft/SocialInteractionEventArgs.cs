@@ -1,23 +1,33 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public sealed class SocialInteractionEventArgs : EventArgs
 	{
-		public string Kind { get; set; }
+		public string Kind
+		{
+			get;
+			set;
+		}
+
+		public SocialInteractionEventArgs()
+		{
+		}
 
 		public Dictionary<string, object> ToJson()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("kind", Kind);
-			return dictionary;
+			return new Dictionary<string, object>()
+			{
+				{ "kind", this.Kind }
+			};
 		}
 
 		public override string ToString()
 		{
-			return Json.Serialize(ToJson());
+			return Json.Serialize(this.ToJson());
 		}
 	}
 }

@@ -1,190 +1,66 @@
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using AOT;
-using GooglePlayGames.Native.Cwrapper;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class RealtimeManager
 	{
-		internal class RealTimeRoomResponse : BaseReferenceHolder
+		private readonly GooglePlayGames.Native.PInvoke.GameServices mGameServices;
+
+		internal RealtimeManager(GooglePlayGames.Native.PInvoke.GameServices gameServices)
 		{
-			internal RealTimeRoomResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.MultiplayerStatus ResponseStatus()
-			{
-				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_GetStatus(SelfPtr());
-			}
-
-			internal bool RequestSucceeded()
-			{
-				return ResponseStatus() > (CommonErrorStatus.MultiplayerStatus)0;
-			}
-
-			internal NativeRealTimeRoom Room()
-			{
-				if (!RequestSucceeded())
-				{
-					return null;
-				}
-				return new NativeRealTimeRoom(RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_GetRoom(SelfPtr()));
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_Dispose(selfPointer);
-			}
-
-			internal static RealTimeRoomResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new RealTimeRoomResponse(pointer);
-			}
+			this.mGameServices = Misc.CheckNotNull<GooglePlayGames.Native.PInvoke.GameServices>(gameServices);
 		}
 
-		internal class RoomInboxUIResponse : BaseReferenceHolder
+		internal void AcceptInvitation(GooglePlayGames.Native.PInvoke.MultiplayerInvitation invitation, GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper listener, Action<RealtimeManager.RealTimeRoomResponse> callback)
 		{
-			internal RoomInboxUIResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.UIStatus ResponseStatus()
-			{
-				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_GetStatus(SelfPtr());
-			}
-
-			internal MultiplayerInvitation Invitation()
-			{
-				if (ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
-				{
-					return null;
-				}
-				return new MultiplayerInvitation(RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_GetInvitation(SelfPtr()));
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_Dispose(selfPointer);
-			}
-
-			internal static RoomInboxUIResponse FromPointer(IntPtr pointer)
-			{
-				if (PInvokeUtilities.IsNull(pointer))
-				{
-					return null;
-				}
-				return new RoomInboxUIResponse(pointer);
-			}
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_AcceptInvitation(this.mGameServices.AsHandle(), invitation.AsPointer(), listener.AsPointer(), new RealTimeMultiplayerManager.RealTimeRoomCallback(RealtimeManager.InternalRealTimeRoomCallback), RealtimeManager.ToCallbackPointer(callback));
 		}
 
-		internal class WaitingRoomUIResponse : BaseReferenceHolder
+		internal void CreateRoom(RealtimeRoomConfig config, GooglePlayGames.Native.PInvoke.RealTimeEventListenerHelper helper, Action<RealtimeManager.RealTimeRoomResponse> callback)
 		{
-			internal WaitingRoomUIResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.UIStatus ResponseStatus()
-			{
-				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_GetStatus(SelfPtr());
-			}
-
-			internal NativeRealTimeRoom Room()
-			{
-				if (ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
-				{
-					return null;
-				}
-				return new NativeRealTimeRoom(RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_GetRoom(SelfPtr()));
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_Dispose(selfPointer);
-			}
-
-			internal static WaitingRoomUIResponse FromPointer(IntPtr pointer)
-			{
-				if (PInvokeUtilities.IsNull(pointer))
-				{
-					return null;
-				}
-				return new WaitingRoomUIResponse(pointer);
-			}
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_CreateRealTimeRoom(this.mGameServices.AsHandle(), config.AsPointer(), helper.AsPointer(), new RealTimeMultiplayerManager.RealTimeRoomCallback(RealtimeManager.InternalRealTimeRoomCallback), RealtimeManager.ToCallbackPointer(callback));
 		}
 
-		internal class FetchInvitationsResponse : BaseReferenceHolder
+		internal void DeclineInvitation(GooglePlayGames.Native.PInvoke.MultiplayerInvitation invitation)
 		{
-			internal FetchInvitationsResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal bool RequestSucceeded()
-			{
-				return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
-			}
-
-			internal CommonErrorStatus.ResponseStatus ResponseStatus()
-			{
-				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetStatus(SelfPtr());
-			}
-
-			internal IEnumerable<MultiplayerInvitation> Invitations()
-			{
-				return PInvokeUtilities.ToEnumerable(RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetInvitations_Length(SelfPtr()), _003CInvitations_003Em__166);
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchInvitationsResponse FromPointer(IntPtr pointer)
-			{
-				if (PInvokeUtilities.IsNull(pointer))
-				{
-					return null;
-				}
-				return new FetchInvitationsResponse(pointer);
-			}
-
-			[CompilerGenerated]
-			private MultiplayerInvitation _003CInvitations_003Em__166(UIntPtr index)
-			{
-				return new MultiplayerInvitation(RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetInvitations_GetElement(SelfPtr(), index));
-			}
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_DeclineInvitation(this.mGameServices.AsHandle(), invitation.AsPointer());
 		}
 
-		private readonly GameServices mGameServices;
-
-		[CompilerGenerated]
-		private static Func<MultiplayerParticipant, IntPtr> _003C_003Ef__am_0024cache1;
-
-		internal RealtimeManager(GameServices gameServices)
+		internal void FetchInvitations(Action<RealtimeManager.FetchInvitationsResponse> callback)
 		{
-			mGameServices = Misc.CheckNotNull(gameServices);
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitations(this.mGameServices.AsHandle(), new RealTimeMultiplayerManager.FetchInvitationsCallback(RealtimeManager.InternalFetchInvitationsCallback), Callbacks.ToIntPtr<RealtimeManager.FetchInvitationsResponse>(callback, new Func<IntPtr, RealtimeManager.FetchInvitationsResponse>(RealtimeManager.FetchInvitationsResponse.FromPointer)));
 		}
 
-		internal void CreateRoom(RealtimeRoomConfig config, RealTimeEventListenerHelper helper, Action<RealTimeRoomResponse> callback)
+		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.FetchInvitationsCallback))]
+		internal static void InternalFetchInvitationsCallback(IntPtr response, IntPtr data)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_CreateRealTimeRoom(mGameServices.AsHandle(), config.AsPointer(), helper.AsPointer(), InternalRealTimeRoomCallback, ToCallbackPointer(callback));
+			Callbacks.PerformInternalCallback("RealtimeManager#InternalFetchInvitationsCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void ShowPlayerSelectUI(uint minimumPlayers, uint maxiumPlayers, bool allowAutomatching, Action<PlayerSelectUIResponse> callback)
+		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.LeaveRoomCallback))]
+		internal static void InternalLeaveRoomCallback(CommonErrorStatus.ResponseStatus response, IntPtr data)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowPlayerSelectUI(mGameServices.AsHandle(), minimumPlayers, maxiumPlayers, allowAutomatching, InternalPlayerSelectUIcallback, Callbacks.ToIntPtr(callback, PlayerSelectUIResponse.FromPointer));
+			Logger.d("Entering internal callback for InternalLeaveRoomCallback");
+			Action<CommonErrorStatus.ResponseStatus> tempCallback = Callbacks.IntPtrToTempCallback<Action<CommonErrorStatus.ResponseStatus>>(data);
+			if (tempCallback == null)
+			{
+				return;
+			}
+			try
+			{
+				tempCallback(response);
+			}
+			catch (Exception exception)
+			{
+				Logger.e(string.Concat("Error encountered executing InternalLeaveRoomCallback. Smothering to avoid passing exception into Native: ", exception));
+			}
 		}
 
 		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.PlayerSelectUICallback))]
@@ -205,15 +81,23 @@ namespace GooglePlayGames.Native.PInvoke
 			Callbacks.PerformInternalCallback("RealtimeManager#InternalRoomInboxUICallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void ShowRoomInboxUI(Action<RoomInboxUIResponse> callback)
+		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.SendReliableMessageCallback))]
+		internal static void InternalSendReliableMessageCallback(CommonErrorStatus.MultiplayerStatus response, IntPtr data)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowRoomInboxUI(mGameServices.AsHandle(), InternalRoomInboxUICallback, Callbacks.ToIntPtr(callback, RoomInboxUIResponse.FromPointer));
-		}
-
-		internal void ShowWaitingRoomUI(NativeRealTimeRoom room, uint minimumParticipantsBeforeStarting, Action<WaitingRoomUIResponse> callback)
-		{
-			Misc.CheckNotNull(room);
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowWaitingRoomUI(mGameServices.AsHandle(), room.AsPointer(), minimumParticipantsBeforeStarting, InternalWaitingRoomUICallback, Callbacks.ToIntPtr(callback, WaitingRoomUIResponse.FromPointer));
+			Logger.d(string.Concat("Entering internal callback for InternalSendReliableMessageCallback ", response));
+			Action<CommonErrorStatus.MultiplayerStatus> tempCallback = Callbacks.IntPtrToTempCallback<Action<CommonErrorStatus.MultiplayerStatus>>(data);
+			if (tempCallback == null)
+			{
+				return;
+			}
+			try
+			{
+				tempCallback(response);
+			}
+			catch (Exception exception)
+			{
+				Logger.e(string.Concat("Error encountered executing InternalSendReliableMessageCallback. Smothering to avoid passing exception into Native: ", exception));
+			}
 		}
 
 		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.WaitingRoomUICallback))]
@@ -222,100 +106,193 @@ namespace GooglePlayGames.Native.PInvoke
 			Callbacks.PerformInternalCallback("RealtimeManager#InternalWaitingRoomUICallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.FetchInvitationsCallback))]
-		internal static void InternalFetchInvitationsCallback(IntPtr response, IntPtr data)
-		{
-			Callbacks.PerformInternalCallback("RealtimeManager#InternalFetchInvitationsCallback", Callbacks.Type.Temporary, response, data);
-		}
-
-		internal void FetchInvitations(Action<FetchInvitationsResponse> callback)
-		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitations(mGameServices.AsHandle(), InternalFetchInvitationsCallback, Callbacks.ToIntPtr(callback, FetchInvitationsResponse.FromPointer));
-		}
-
-		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.LeaveRoomCallback))]
-		internal static void InternalLeaveRoomCallback(CommonErrorStatus.ResponseStatus response, IntPtr data)
-		{
-			Logger.d("Entering internal callback for InternalLeaveRoomCallback");
-			Action<CommonErrorStatus.ResponseStatus> action = Callbacks.IntPtrToTempCallback<Action<CommonErrorStatus.ResponseStatus>>(data);
-			if (action == null)
-			{
-				return;
-			}
-			try
-			{
-				action(response);
-			}
-			catch (Exception ex)
-			{
-				Logger.e("Error encountered executing InternalLeaveRoomCallback. Smothering to avoid passing exception into Native: " + ex);
-			}
-		}
-
 		internal void LeaveRoom(NativeRealTimeRoom room, Action<CommonErrorStatus.ResponseStatus> callback)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_LeaveRoom(mGameServices.AsHandle(), room.AsPointer(), InternalLeaveRoomCallback, Callbacks.ToIntPtr(callback));
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_LeaveRoom(this.mGameServices.AsHandle(), room.AsPointer(), new RealTimeMultiplayerManager.LeaveRoomCallback(RealtimeManager.InternalLeaveRoomCallback), Callbacks.ToIntPtr(callback));
 		}
 
-		internal void AcceptInvitation(MultiplayerInvitation invitation, RealTimeEventListenerHelper listener, Action<RealTimeRoomResponse> callback)
+		internal void SendReliableMessage(NativeRealTimeRoom room, GooglePlayGames.Native.PInvoke.MultiplayerParticipant participant, byte[] data, Action<CommonErrorStatus.MultiplayerStatus> callback)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_AcceptInvitation(mGameServices.AsHandle(), invitation.AsPointer(), listener.AsPointer(), InternalRealTimeRoomCallback, ToCallbackPointer(callback));
-		}
-
-		internal void DeclineInvitation(MultiplayerInvitation invitation)
-		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_DeclineInvitation(mGameServices.AsHandle(), invitation.AsPointer());
-		}
-
-		internal void SendReliableMessage(NativeRealTimeRoom room, MultiplayerParticipant participant, byte[] data, Action<CommonErrorStatus.MultiplayerStatus> callback)
-		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendReliableMessage(mGameServices.AsHandle(), room.AsPointer(), participant.AsPointer(), data, PInvokeUtilities.ArrayToSizeT(data), InternalSendReliableMessageCallback, Callbacks.ToIntPtr(callback));
-		}
-
-		[MonoPInvokeCallback(typeof(RealTimeMultiplayerManager.SendReliableMessageCallback))]
-		internal static void InternalSendReliableMessageCallback(CommonErrorStatus.MultiplayerStatus response, IntPtr data)
-		{
-			Logger.d("Entering internal callback for InternalSendReliableMessageCallback " + response);
-			Action<CommonErrorStatus.MultiplayerStatus> action = Callbacks.IntPtrToTempCallback<Action<CommonErrorStatus.MultiplayerStatus>>(data);
-			if (action == null)
-			{
-				return;
-			}
-			try
-			{
-				action(response);
-			}
-			catch (Exception ex)
-			{
-				Logger.e("Error encountered executing InternalSendReliableMessageCallback. Smothering to avoid passing exception into Native: " + ex);
-			}
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendReliableMessage(this.mGameServices.AsHandle(), room.AsPointer(), participant.AsPointer(), data, PInvokeUtilities.ArrayToSizeT<byte>(data), new RealTimeMultiplayerManager.SendReliableMessageCallback(RealtimeManager.InternalSendReliableMessageCallback), Callbacks.ToIntPtr(callback));
 		}
 
 		internal void SendUnreliableMessageToAll(NativeRealTimeRoom room, byte[] data)
 		{
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendUnreliableMessageToOthers(mGameServices.AsHandle(), room.AsPointer(), data, PInvokeUtilities.ArrayToSizeT(data));
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendUnreliableMessageToOthers(this.mGameServices.AsHandle(), room.AsPointer(), data, PInvokeUtilities.ArrayToSizeT<byte>(data));
 		}
 
-		internal void SendUnreliableMessageToSpecificParticipants(NativeRealTimeRoom room, List<MultiplayerParticipant> recipients, byte[] data)
+		internal void SendUnreliableMessageToSpecificParticipants(NativeRealTimeRoom room, List<GooglePlayGames.Native.PInvoke.MultiplayerParticipant> recipients, byte[] data)
 		{
-			HandleRef self = mGameServices.AsHandle();
-			IntPtr room2 = room.AsPointer();
-			if (_003C_003Ef__am_0024cache1 == null)
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendUnreliableMessage(this.mGameServices.AsHandle(), room.AsPointer(), (
+				from r in recipients
+				select r.AsPointer()).ToArray<IntPtr>(), new UIntPtr((ulong)recipients.LongCount<GooglePlayGames.Native.PInvoke.MultiplayerParticipant>()), data, PInvokeUtilities.ArrayToSizeT<byte>(data));
+		}
+
+		internal void ShowPlayerSelectUI(uint minimumPlayers, uint maxiumPlayers, bool allowAutomatching, Action<PlayerSelectUIResponse> callback)
+		{
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowPlayerSelectUI(this.mGameServices.AsHandle(), minimumPlayers, maxiumPlayers, allowAutomatching, new RealTimeMultiplayerManager.PlayerSelectUICallback(RealtimeManager.InternalPlayerSelectUIcallback), Callbacks.ToIntPtr<PlayerSelectUIResponse>(callback, new Func<IntPtr, PlayerSelectUIResponse>(PlayerSelectUIResponse.FromPointer)));
+		}
+
+		internal void ShowRoomInboxUI(Action<RealtimeManager.RoomInboxUIResponse> callback)
+		{
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowRoomInboxUI(this.mGameServices.AsHandle(), new RealTimeMultiplayerManager.RoomInboxUICallback(RealtimeManager.InternalRoomInboxUICallback), Callbacks.ToIntPtr<RealtimeManager.RoomInboxUIResponse>(callback, new Func<IntPtr, RealtimeManager.RoomInboxUIResponse>(RealtimeManager.RoomInboxUIResponse.FromPointer)));
+		}
+
+		internal void ShowWaitingRoomUI(NativeRealTimeRoom room, uint minimumParticipantsBeforeStarting, Action<RealtimeManager.WaitingRoomUIResponse> callback)
+		{
+			Misc.CheckNotNull<NativeRealTimeRoom>(room);
+			RealTimeMultiplayerManager.RealTimeMultiplayerManager_ShowWaitingRoomUI(this.mGameServices.AsHandle(), room.AsPointer(), minimumParticipantsBeforeStarting, new RealTimeMultiplayerManager.WaitingRoomUICallback(RealtimeManager.InternalWaitingRoomUICallback), Callbacks.ToIntPtr<RealtimeManager.WaitingRoomUIResponse>(callback, new Func<IntPtr, RealtimeManager.WaitingRoomUIResponse>(RealtimeManager.WaitingRoomUIResponse.FromPointer)));
+		}
+
+		private static IntPtr ToCallbackPointer(Action<RealtimeManager.RealTimeRoomResponse> callback)
+		{
+			return Callbacks.ToIntPtr<RealtimeManager.RealTimeRoomResponse>(callback, new Func<IntPtr, RealtimeManager.RealTimeRoomResponse>(RealtimeManager.RealTimeRoomResponse.FromPointer));
+		}
+
+		internal class FetchInvitationsResponse : BaseReferenceHolder
+		{
+			internal FetchInvitationsResponse(IntPtr selfPointer) : base(selfPointer)
 			{
-				_003C_003Ef__am_0024cache1 = _003CSendUnreliableMessageToSpecificParticipants_003Em__165;
 			}
-			RealTimeMultiplayerManager.RealTimeMultiplayerManager_SendUnreliableMessage(self, room2, recipients.Select(_003C_003Ef__am_0024cache1).ToArray(), new UIntPtr((ulong)recipients.LongCount()), data, PInvokeUtilities.ArrayToSizeT(data));
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_Dispose(selfPointer);
+			}
+
+			internal static RealtimeManager.FetchInvitationsResponse FromPointer(IntPtr pointer)
+			{
+				if (PInvokeUtilities.IsNull(pointer))
+				{
+					return null;
+				}
+				return new RealtimeManager.FetchInvitationsResponse(pointer);
+			}
+
+			internal IEnumerable<GooglePlayGames.Native.PInvoke.MultiplayerInvitation> Invitations()
+			{
+				return PInvokeUtilities.ToEnumerable<GooglePlayGames.Native.PInvoke.MultiplayerInvitation>(RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetInvitations_Length(base.SelfPtr()), (UIntPtr index) => new GooglePlayGames.Native.PInvoke.MultiplayerInvitation(RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetInvitations_GetElement(base.SelfPtr(), index)));
+			}
+
+			internal bool RequestSucceeded()
+			{
+				return (int)this.ResponseStatus() > 0;
+			}
+
+			internal CommonErrorStatus.ResponseStatus ResponseStatus()
+			{
+				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_FetchInvitationsResponse_GetStatus(base.SelfPtr());
+			}
 		}
 
-		private static IntPtr ToCallbackPointer(Action<RealTimeRoomResponse> callback)
+		internal class RealTimeRoomResponse : BaseReferenceHolder
 		{
-			return Callbacks.ToIntPtr(callback, RealTimeRoomResponse.FromPointer);
+			internal RealTimeRoomResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_Dispose(selfPointer);
+			}
+
+			internal static RealtimeManager.RealTimeRoomResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new RealtimeManager.RealTimeRoomResponse(pointer);
+			}
+
+			internal bool RequestSucceeded()
+			{
+				return (int)this.ResponseStatus() > 0;
+			}
+
+			internal CommonErrorStatus.MultiplayerStatus ResponseStatus()
+			{
+				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_GetStatus(base.SelfPtr());
+			}
+
+			internal NativeRealTimeRoom Room()
+			{
+				if (!this.RequestSucceeded())
+				{
+					return null;
+				}
+				return new NativeRealTimeRoom(RealTimeMultiplayerManager.RealTimeMultiplayerManager_RealTimeRoomResponse_GetRoom(base.SelfPtr()));
+			}
 		}
 
-		[CompilerGenerated]
-		private static IntPtr _003CSendUnreliableMessageToSpecificParticipants_003Em__165(MultiplayerParticipant r)
+		internal class RoomInboxUIResponse : BaseReferenceHolder
 		{
-			return r.AsPointer();
+			internal RoomInboxUIResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_Dispose(selfPointer);
+			}
+
+			internal static RealtimeManager.RoomInboxUIResponse FromPointer(IntPtr pointer)
+			{
+				if (PInvokeUtilities.IsNull(pointer))
+				{
+					return null;
+				}
+				return new RealtimeManager.RoomInboxUIResponse(pointer);
+			}
+
+			internal GooglePlayGames.Native.PInvoke.MultiplayerInvitation Invitation()
+			{
+				if (this.ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.MultiplayerInvitation(RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_GetInvitation(base.SelfPtr()));
+			}
+
+			internal CommonErrorStatus.UIStatus ResponseStatus()
+			{
+				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_RoomInboxUIResponse_GetStatus(base.SelfPtr());
+			}
+		}
+
+		internal class WaitingRoomUIResponse : BaseReferenceHolder
+		{
+			internal WaitingRoomUIResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_Dispose(selfPointer);
+			}
+
+			internal static RealtimeManager.WaitingRoomUIResponse FromPointer(IntPtr pointer)
+			{
+				if (PInvokeUtilities.IsNull(pointer))
+				{
+					return null;
+				}
+				return new RealtimeManager.WaitingRoomUIResponse(pointer);
+			}
+
+			internal CommonErrorStatus.UIStatus ResponseStatus()
+			{
+				return RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_GetStatus(base.SelfPtr());
+			}
+
+			internal NativeRealTimeRoom Room()
+			{
+				if (this.ResponseStatus() != CommonErrorStatus.UIStatus.VALID)
+				{
+					return null;
+				}
+				return new NativeRealTimeRoom(RealTimeMultiplayerManager.RealTimeMultiplayerManager_WaitingRoomUIResponse_GetRoom(base.SelfPtr()));
+			}
 		}
 	}
 }

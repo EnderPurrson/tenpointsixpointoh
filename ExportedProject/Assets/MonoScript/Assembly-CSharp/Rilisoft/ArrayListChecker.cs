@@ -18,40 +18,41 @@ namespace Rilisoft
 
 		public ArrayListChecker(ArrayList arrayList, string label)
 		{
-			_arrayList = arrayList;
-			_label = label ?? string.Empty;
-			CheckOverflowIfDebug();
-		}
-
-		public void Dispose()
-		{
-			if (!_disposed)
-			{
-				CheckOverflowIfDebug();
-				_disposed = true;
-			}
+			this._arrayList = arrayList;
+			this._label = label ?? string.Empty;
+			this.CheckOverflowIfDebug();
 		}
 
 		private void CheckOverflowIfDebug()
 		{
 			if (Debug.isDebugBuild)
 			{
-				if (_arrayList == null)
+				if (this._arrayList == null)
 				{
-					Debug.LogWarning(_label + ": ArrayList is null.");
+					Debug.LogWarning(string.Concat(this._label, ": ArrayList is null."));
 				}
-				else if (_arrayList.Count > 50 || _arrayList.Capacity > 1000)
+				else if (this._arrayList.Count > 50 || this._arrayList.Capacity > 1000)
 				{
-					HandleOverflow();
+					this.HandleOverflow();
 				}
 			}
 		}
 
+		public void Dispose()
+		{
+			if (this._disposed)
+			{
+				return;
+			}
+			this.CheckOverflowIfDebug();
+			this._disposed = true;
+		}
+
 		private void HandleOverflow()
 		{
-			string text = string.Format("{0}: Count: {1}, Capacity: {2}", _label, _arrayList.Count, _arrayList.Capacity);
-			string message = text + Environment.NewLine + Environment.NewLine + Environment.StackTrace;
-			Debug.LogWarning(message);
+			string str = string.Format("{0}: Count: {1}, Capacity: {2}", this._label, this._arrayList.Count, this._arrayList.Capacity);
+			string str1 = string.Concat(str, Environment.NewLine, Environment.NewLine, Environment.StackTrace);
+			Debug.LogWarning(str1);
 		}
 	}
 }

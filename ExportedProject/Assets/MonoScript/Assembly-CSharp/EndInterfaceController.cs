@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class EndInterfaceController : MonoBehaviour
@@ -7,4 +8,8 @@ public class EndInterfaceController : MonoBehaviour
 	public GameObject socialPnl;
 
 	public GameObject SpectratorModePnl;
+
+	public EndInterfaceController()
+	{
+	}
 }

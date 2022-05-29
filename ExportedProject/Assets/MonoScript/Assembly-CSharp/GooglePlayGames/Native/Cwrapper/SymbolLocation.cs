@@ -1,3 +1,5 @@
+using System;
+
 namespace GooglePlayGames.Native.Cwrapper
 {
 	internal static class SymbolLocation

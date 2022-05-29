@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class PropertyInfoScreenController : MonoBehaviour
@@ -10,11 +10,13 @@ public class PropertyInfoScreenController : MonoBehaviour
 
 	private IDisposable _escapeSubscription;
 
-	public virtual void Show(bool isMelee)
+	public PropertyInfoScreenController()
 	{
-		base.gameObject.SetActive(true);
-		((!isMelee) ? description : descriptionMelee).SetActive(true);
-		((!isMelee) ? descriptionMelee : description).SetActive(false);
+	}
+
+	private void HandleEscape()
+	{
+		this.Hide();
 	}
 
 	public virtual void Hide()
@@ -22,26 +24,28 @@ public class PropertyInfoScreenController : MonoBehaviour
 		base.gameObject.SetActive(false);
 	}
 
-	private void OnEnable()
-	{
-		if (_escapeSubscription != null)
-		{
-			_escapeSubscription.Dispose();
-		}
-		_escapeSubscription = BackSystem.Instance.Register(HandleEscape, "Property Info");
-	}
-
 	private void OnDisable()
 	{
-		if (_escapeSubscription != null)
+		if (this._escapeSubscription != null)
 		{
-			_escapeSubscription.Dispose();
-			_escapeSubscription = null;
+			this._escapeSubscription.Dispose();
+			this._escapeSubscription = null;
 		}
 	}
 
-	private void HandleEscape()
+	private void OnEnable()
 	{
-		Hide();
+		if (this._escapeSubscription != null)
+		{
+			this._escapeSubscription.Dispose();
+		}
+		this._escapeSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Property Info");
+	}
+
+	public virtual void Show(bool isMelee)
+	{
+		base.gameObject.SetActive(true);
+		((!isMelee ? this.description : this.descriptionMelee)).SetActive(true);
+		((!isMelee ? this.descriptionMelee : this.description)).SetActive(false);
 	}
 }

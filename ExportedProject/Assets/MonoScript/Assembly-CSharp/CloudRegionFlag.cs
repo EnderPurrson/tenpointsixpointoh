@@ -7,8 +7,8 @@ public enum CloudRegionFlag
 	us = 2,
 	asia = 4,
 	jp = 8,
-	au = 0x10,
-	usw = 0x20,
-	sa = 0x40,
-	cae = 0x80
+	au = 16,
+	usw = 32,
+	sa = 64,
+	cae = 128
 }

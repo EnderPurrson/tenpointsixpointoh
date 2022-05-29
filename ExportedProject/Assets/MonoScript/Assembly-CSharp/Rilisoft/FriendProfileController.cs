@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,15 +9,6 @@ namespace Rilisoft
 {
 	internal sealed class FriendProfileController : IDisposable
 	{
-		private enum AccessoriesType
-		{
-			cape = 0,
-			hat = 1,
-			boots = 2,
-			armor = 3,
-			mask = 4
-		}
-
 		public static string currentFriendId;
 
 		private bool _disposed;
@@ -37,137 +29,386 @@ namespace Rilisoft
 
 		private Action<bool> OnCloseEvent;
 
-		[CompilerGenerated]
-		private static Func<Dictionary<string, object>, bool> _003C_003Ef__am_0024cacheA;
-
 		public GameObject FriendProfileGo
 		{
 			get
 			{
-				return _friendProfileViewGo;
+				return this._friendProfileViewGo;
 			}
+		}
+
+		static FriendProfileController()
+		{
 		}
 
 		public FriendProfileController(IFriendsGUIController friendsGuiController, bool oldInterface = true)
 		{
-			Initialize(friendsGuiController, oldInterface);
+			this.Initialize(friendsGuiController, oldInterface);
 		}
 
 		public FriendProfileController(Action<bool> onCloseEvent)
 		{
-			Initialize(null, false);
-			OnCloseEvent = onCloseEvent;
+			this.Initialize(null, false);
+			this.OnCloseEvent = onCloseEvent;
+		}
+
+		public void CallbackClanInviteRequest(bool isComplete, bool isRequestExist)
+		{
+			this._friendProfileView.SetEnableInviteClanButton(true);
+			InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
+			if (isComplete)
+			{
+				this.SetWindowStateByFriendAndClanData(this._friendId, this._windowType);
+			}
+		}
+
+		public void CallbackFriendAddRequest(bool isComplete, bool isRequestExist)
+		{
+			this.OnCompleteAddOrDeleteResponse(isComplete, isRequestExist, true);
+		}
+
+		public void CallbackRequestDeleteFriend(bool isComplete)
+		{
+			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object>()
+			{
+				{ "Deleted Friends", "Profile" }
+			});
+			this.OnCompleteAddOrDeleteResponse(isComplete, false, false);
+		}
+
+		public void Dispose()
+		{
+			if (this._disposed)
+			{
+				return;
+			}
+			FriendPreviewClicker.FriendPreviewClicked -= new Action<string>(this.HandleProfileClicked);
+			this._friendProfileView.BackButtonClickEvent -= new Action(this.HandleBackClicked);
+			this._friendProfileView.JoinButtonClickEvent -= new Action(this.HandleJoinClicked);
+			this._friendProfileView.CopyMyIdButtonClickEvent -= new Action(this.HandleCopyMyIdClicked);
+			this._friendProfileView.ChatButtonClickEvent -= new Action(this.HandleChatClicked);
+			this._friendProfileView.AddButtonClickEvent -= new Action(this.HandleAddFriendClicked);
+			this._friendProfileView.RemoveButtonClickEvent -= new Action(this.HandleRemoveFriendClicked);
+			this._friendProfileView.InviteToClanButtonClickEvent -= new Action(this.HandleInviteToClanClicked);
+			this._friendProfileView.UpdateRequested -= new Action(this.HandleUpdateRequested);
+			FriendsController.FullInfoUpdated -= new Action(this.HandleUpdateRequested);
+			this._friendProfileView = null;
+			UnityEngine.Object.DestroyObject(this._friendProfileViewGo);
+			this._friendProfileViewGo = null;
+			this._disposed = true;
+		}
+
+		private void HandleAddFriendClicked()
+		{
+			this._friendProfileView.SetEnableAddButton(false);
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "Added Friends", "Profile" },
+				{ "Deleted Friends", "Add" }
+			};
+			Dictionary<string, object> strs1 = strs;
+			FriendsController.SendFriendshipRequest(this._friendId, strs1, new Action<bool, bool>(this.CallbackFriendAddRequest));
+		}
+
+		public void HandleBackClicked()
+		{
+			this._friendProfileView.Reset();
+			this._friendProfileViewGo.SetActive(false);
+			FriendsController.sharedController.StopRefreshingInfo();
+			if (this._friendsGuiController != null)
+			{
+				this._friendsGuiController.Hide(false);
+			}
+			else if (this.OnCloseEvent != null)
+			{
+				this.OnCloseEvent(this._needUpdateFriendList);
+			}
+		}
+
+		private void HandleChatClicked()
+		{
+			this.HandleBackClicked();
+			if (this._windowType == ProfileWindowType.friend)
+			{
+				FriendsWindowController instance = FriendsWindowController.Instance;
+				if (instance != null)
+				{
+					instance.SetActiveChatTab(this._friendId);
+				}
+			}
+		}
+
+		private void HandleCopyMyIdClicked()
+		{
+			FriendsController.CopyPlayerIdToClipboard(this._friendId);
+		}
+
+		private void HandleInviteToClanClicked()
+		{
+			this._friendProfileView.SetEnableInviteClanButton(false);
+			FriendsController.SendPlayerInviteToClan(this._friendId, new Action<bool, bool>(this.CallbackClanInviteRequest));
+		}
+
+		private void HandleJoinClicked()
+		{
+			ButtonClickSound.TryPlayClick();
+			if (!this._friendProfileView.IsCanConnectToFriend)
+			{
+				InfoWindowController.ShowInfoBox(this._friendProfileView.NotConnectCondition);
+				return;
+			}
+			if (FriendsController.sharedController.onlineInfo.ContainsKey(this._friendId))
+			{
+				int num = int.Parse(FriendsController.sharedController.onlineInfo[this._friendId]["game_mode"]);
+				string item = FriendsController.sharedController.onlineInfo[this._friendId]["room_name"];
+				string str = FriendsController.sharedController.onlineInfo[this._friendId]["map"];
+				if (SceneInfoController.instance.GetInfoScene(int.Parse(str)) != null)
+				{
+					JoinRoomFromFrends.sharedJoinRoomFromFrends.ConnectToRoom(num, item, str);
+				}
+			}
+		}
+
+		internal void HandleProfileClicked(string id)
+		{
+			this.HandleProfileClickedCore(id, ProfileWindowType.other, null);
+		}
+
+		internal void HandleProfileClickedCore(string id, ProfileWindowType type, Action<bool> onCloseEvent)
+		{
+			if (this._disposed)
+			{
+				return;
+			}
+			this.OnCloseEvent = onCloseEvent;
+			this._needUpdateFriendList = false;
+			this._friendId = id;
+			this._friendProfileView.FriendId = id;
+			this._windowType = type;
+			FriendProfileController.currentFriendId = id;
+			this._friendProfileView.Reset();
+			this._isPlayerOurFriend = FriendsController.IsPlayerOurFriend(id);
+			this.Update();
+			if (this._friendsGuiController != null)
+			{
+				this._friendsGuiController.Hide(true);
+			}
+			FriendsController.sharedController.StartRefreshingInfo(this._friendId);
+			this._friendProfileViewGo.SetActive(true);
+			this.SetWindowStateByFriendAndClanData(this._friendId, type);
+		}
+
+		private void HandleRemoveFriendClicked()
+		{
+			this._friendProfileView.SetEnableRemoveButton(false);
+			FriendsController.DeleteFriend(this._friendId, new Action<bool>(this.CallbackRequestDeleteFriend));
+		}
+
+		private void HandleUpdateRequested()
+		{
+			this.Update();
+		}
+
+		private void Initialize(IFriendsGUIController friendsGuiController, bool oldInterface = true)
+		{
+			this._friendsGuiController = friendsGuiController;
+			string str = (!oldInterface ? "FriendProfileView(UI)" : "FriendProfileView");
+			this._friendProfileViewGo = UnityEngine.Object.Instantiate(Resources.Load(str)) as GameObject;
+			if (this._friendProfileViewGo == null)
+			{
+				this._disposed = true;
+				return;
+			}
+			this._friendProfileViewGo.SetActive(false);
+			this._friendProfileView = this._friendProfileViewGo.GetComponent<FriendProfileView>();
+			if (this._friendProfileView == null)
+			{
+				UnityEngine.Object.DestroyObject(this._friendProfileViewGo);
+				this._friendProfileViewGo = null;
+				this._disposed = true;
+				return;
+			}
+			FriendPreviewClicker.FriendPreviewClicked += new Action<string>(this.HandleProfileClicked);
+			this._friendProfileView.BackButtonClickEvent += new Action(this.HandleBackClicked);
+			this._friendProfileView.JoinButtonClickEvent += new Action(this.HandleJoinClicked);
+			this._friendProfileView.CopyMyIdButtonClickEvent += new Action(this.HandleCopyMyIdClicked);
+			this._friendProfileView.ChatButtonClickEvent += new Action(this.HandleChatClicked);
+			this._friendProfileView.AddButtonClickEvent += new Action(this.HandleAddFriendClicked);
+			this._friendProfileView.RemoveButtonClickEvent += new Action(this.HandleRemoveFriendClicked);
+			this._friendProfileView.InviteToClanButtonClickEvent += new Action(this.HandleInviteToClanClicked);
+			this._friendProfileView.UpdateRequested += new Action(this.HandleUpdateRequested);
+			FriendsController.FullInfoUpdated += new Action(this.HandleUpdateRequested);
+		}
+
+		private void OnCompleteAddOrDeleteResponse(bool isComplete, bool isRequestExist, bool isAddRequest)
+		{
+			if (!isAddRequest)
+			{
+				this._friendProfileView.SetEnableRemoveButton(true);
+			}
+			else
+			{
+				this._friendProfileView.SetEnableAddButton(true);
+			}
+			InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
+			if (isComplete)
+			{
+				this._needUpdateFriendList = true;
+				this._isPlayerOurFriend = FriendsController.IsPlayerOurFriend(this._friendId);
+				this.SetWindowStateByFriendAndClanData(this._friendId, this._windowType);
+			}
+		}
+
+		private void SetDefaultStateProfile()
+		{
 		}
 
 		private void SetTitle(string playerId, ProfileWindowType type)
 		{
 			bool flag = FriendsController.IsPlayerOurClanMember(playerId);
-			if (_isPlayerOurFriend && flag)
+			if (this._isPlayerOurFriend && flag)
 			{
-				if (type == ProfileWindowType.clan)
+				if (type != ProfileWindowType.clan)
 				{
-					_friendProfileView.SetTitle(LocalizationStore.Get("Key_1527"));
+					this._friendProfileView.SetTitle(LocalizationStore.Get("Key_1526"));
 				}
 				else
 				{
-					_friendProfileView.SetTitle(LocalizationStore.Get("Key_1526"));
+					this._friendProfileView.SetTitle(LocalizationStore.Get("Key_1527"));
 				}
 			}
-			else if (_isPlayerOurFriend)
+			else if (this._isPlayerOurFriend)
 			{
-				_friendProfileView.SetTitle(LocalizationStore.Get("Key_1526"));
+				this._friendProfileView.SetTitle(LocalizationStore.Get("Key_1526"));
 			}
-			else if (flag)
+			else if (!flag)
 			{
-				_friendProfileView.SetTitle(LocalizationStore.Get("Key_1527"));
+				this._friendProfileView.SetTitle(LocalizationStore.Get("Key_1525"));
 			}
 			else
 			{
-				_friendProfileView.SetTitle(LocalizationStore.Get("Key_1525"));
+				this._friendProfileView.SetTitle(LocalizationStore.Get("Key_1527"));
 			}
 		}
 
 		private void SetupStateBottomButtons(string playerId, ProfileWindowType type)
 		{
 			bool flag = FriendsController.IsPlayerOurClanMember(playerId);
-			bool flag2 = FriendsController.IsSelfClanLeader();
-			bool flag3 = FriendsController.IsMyPlayerId(playerId);
-			bool flag4 = FriendsController.IsAlreadySendInvitePlayer(playerId);
-			bool flag5 = FriendsController.IsAlreadySendClanInvitePlayer(playerId);
-			bool flag6 = FriendsController.IsFriendsMax();
-			bool flag7 = FriendsController.IsMaxClanMembers();
-			bool activeChatButton = _isPlayerOurFriend && type == ProfileWindowType.friend && !flag3;
-			bool flag8 = !flag && flag2 && !flag3 && !flag7;
-			bool flag9 = !_isPlayerOurFriend && !flag3 && !flag6;
-			bool activeRemoveButton = _isPlayerOurFriend && !flag3;
-			_friendProfileView.SetActiveAddButton(flag9 && !flag4);
-			_friendProfileView.SetActiveAddButtonSent(flag9 && flag4);
-			_friendProfileView.SetActiveInviteButton(flag8 && !flag5);
-			_friendProfileView.SetActiveAddClanButtonSent(flag8 && flag5);
-			_friendProfileView.SetActiveChatButton(activeChatButton);
-			_friendProfileView.SetActiveRemoveButton(activeRemoveButton);
+			bool flag1 = FriendsController.IsSelfClanLeader();
+			bool flag2 = FriendsController.IsMyPlayerId(playerId);
+			bool flag3 = FriendsController.IsAlreadySendInvitePlayer(playerId);
+			bool flag4 = FriendsController.IsAlreadySendClanInvitePlayer(playerId);
+			bool flag5 = FriendsController.IsFriendsMax();
+			bool flag6 = FriendsController.IsMaxClanMembers();
+			bool flag7 = (!this._isPlayerOurFriend || type != ProfileWindowType.friend ? false : !flag2);
+			bool flag8 = (flag || !flag1 || flag2 ? false : !flag6);
+			bool flag9 = (this._isPlayerOurFriend || flag2 ? false : !flag5);
+			bool flag10 = (!this._isPlayerOurFriend ? false : !flag2);
+			this._friendProfileView.SetActiveAddButton((!flag9 ? false : !flag3));
+			this._friendProfileView.SetActiveAddButtonSent((!flag9 ? false : flag3));
+			this._friendProfileView.SetActiveInviteButton((!flag8 ? false : !flag4));
+			this._friendProfileView.SetActiveAddClanButtonSent((!flag8 ? false : flag4));
+			this._friendProfileView.SetActiveChatButton(flag7);
+			this._friendProfileView.SetActiveRemoveButton(flag10);
 		}
 
 		private void SetWindowStateByFriendAndClanData(string playerId, ProfileWindowType type)
 		{
-			SetTitle(playerId, type);
-			SetupStateBottomButtons(playerId, type);
+			this.SetTitle(playerId, type);
+			this.SetupStateBottomButtons(playerId, type);
 		}
 
-		private void Initialize(IFriendsGUIController friendsGuiController, bool oldInterface = true)
+		private void Update()
 		{
-			_friendsGuiController = friendsGuiController;
-			string path = ((!oldInterface) ? "FriendProfileView(UI)" : "FriendProfileView");
-			_friendProfileViewGo = UnityEngine.Object.Instantiate(Resources.Load(path)) as GameObject;
-			if (_friendProfileViewGo == null)
+			if (string.IsNullOrEmpty(this._friendId))
 			{
-				_disposed = true;
 				return;
 			}
-			_friendProfileViewGo.SetActive(false);
-			_friendProfileView = _friendProfileViewGo.GetComponent<FriendProfileView>();
-			if (_friendProfileView == null)
+			this.UpdateAllData(this._friendId);
+		}
+
+		private void UpdateAccessories(Dictionary<string, object> playerInfo)
+		{
+			object obj;
+			object obj1;
+			object obj2;
+			int num;
+			object obj3;
+			if (playerInfo == null || playerInfo.Count == 0)
 			{
-				UnityEngine.Object.DestroyObject(_friendProfileViewGo);
-				_friendProfileViewGo = null;
-				_disposed = true;
 				return;
 			}
-			FriendPreviewClicker.FriendPreviewClicked += HandleProfileClicked;
-			_friendProfileView.BackButtonClickEvent += HandleBackClicked;
-			_friendProfileView.JoinButtonClickEvent += HandleJoinClicked;
-			_friendProfileView.CopyMyIdButtonClickEvent += HandleCopyMyIdClicked;
-			_friendProfileView.ChatButtonClickEvent += HandleChatClicked;
-			_friendProfileView.AddButtonClickEvent += HandleAddFriendClicked;
-			_friendProfileView.RemoveButtonClickEvent += HandleRemoveFriendClicked;
-			_friendProfileView.InviteToClanButtonClickEvent += HandleInviteToClanClicked;
-			_friendProfileView.UpdateRequested += HandleUpdateRequested;
-			FriendsController.FullInfoUpdated += HandleUpdateRequested;
-		}
-
-		public void Dispose()
-		{
-			if (!_disposed)
+			if (playerInfo.TryGetValue("accessories", out obj))
 			{
-				FriendPreviewClicker.FriendPreviewClicked -= HandleProfileClicked;
-				_friendProfileView.BackButtonClickEvent -= HandleBackClicked;
-				_friendProfileView.JoinButtonClickEvent -= HandleJoinClicked;
-				_friendProfileView.CopyMyIdButtonClickEvent -= HandleCopyMyIdClicked;
-				_friendProfileView.ChatButtonClickEvent -= HandleChatClicked;
-				_friendProfileView.AddButtonClickEvent -= HandleAddFriendClicked;
-				_friendProfileView.RemoveButtonClickEvent -= HandleRemoveFriendClicked;
-				_friendProfileView.InviteToClanButtonClickEvent -= HandleInviteToClanClicked;
-				_friendProfileView.UpdateRequested -= HandleUpdateRequested;
-				FriendsController.FullInfoUpdated -= HandleUpdateRequested;
-				_friendProfileView = null;
-				UnityEngine.Object.DestroyObject(_friendProfileViewGo);
-				_friendProfileViewGo = null;
-				_disposed = true;
+				List<object> objs = obj as List<object>;
+				if (objs != null)
+				{
+					IEnumerator<Dictionary<string, object>> enumerator = objs.OfType<Dictionary<string, object>>().GetEnumerator();
+					try
+					{
+						while (enumerator.MoveNext())
+						{
+							Dictionary<string, object> current = enumerator.Current;
+							string empty = string.Empty;
+							if (current.TryGetValue("name", out obj1))
+							{
+								empty = obj1 as string ?? string.Empty;
+							}
+							if (!current.TryGetValue("type", out obj2) || !int.TryParse(obj2 as string, out num))
+							{
+								continue;
+							}
+							switch (num)
+							{
+								case 0:
+								{
+									if (!empty.Equals("cape_Custom", StringComparison.Ordinal))
+									{
+										this._friendProfileView.SetStockCape(empty);
+									}
+									else if (current.TryGetValue("skin", out obj3))
+									{
+										string str = obj3 as string;
+										if (!string.IsNullOrEmpty(str))
+										{
+											byte[] numArray = Convert.FromBase64String(str);
+											this._friendProfileView.SetCustomCape(numArray);
+										}
+									}
+									continue;
+								}
+								case 1:
+								{
+									this._friendProfileView.SetHat(empty);
+									continue;
+								}
+								case 2:
+								{
+									this._friendProfileView.SetBoots(empty);
+									continue;
+								}
+								case 3:
+								{
+									this._friendProfileView.SetArmor(empty);
+									continue;
+								}
+								case 4:
+								{
+									this._friendProfileView.SetMask(empty);
+									continue;
+								}
+							}
+						}
+					}
+					finally
+					{
+						if (enumerator == null)
+						{
+						}
+						enumerator.Dispose();
+					}
+				}
 			}
-		}
-
-		private void SetDefaultStateProfile()
-		{
 		}
 
 		private void UpdateAllData(string friendId)
@@ -177,440 +418,216 @@ namespace Rilisoft
 			{
 				return;
 			}
-			UpdatePlayer(fullPlayerDataById);
-			UpdateScores(fullPlayerDataById);
-			UpdateAccessories(fullPlayerDataById);
-			FriendsController sharedController = FriendsController.sharedController;
-			if (sharedController != null)
+			this.UpdatePlayer(fullPlayerDataById);
+			this.UpdateScores(fullPlayerDataById);
+			this.UpdateAccessories(fullPlayerDataById);
+			FriendsController friendsController = FriendsController.sharedController;
+			if (friendsController != null)
 			{
-				Dictionary<string, Dictionary<string, string>> onlineInfo = sharedController.onlineInfo;
-				if (onlineInfo.ContainsKey(friendId))
+				Dictionary<string, Dictionary<string, string>> strs = friendsController.onlineInfo;
+				if (strs.ContainsKey(friendId))
 				{
-					UpdateOnline(onlineInfo[friendId]);
+					this.UpdateOnline(strs[friendId]);
 				}
-				else if (_isPlayerOurFriend)
+				else if (!this._isPlayerOurFriend)
 				{
-					_friendProfileView.Online = OnlineState.offline;
+					this._friendProfileView.Online = OnlineState.none;
 				}
 				else
 				{
-					_friendProfileView.Online = OnlineState.none;
-				}
-			}
-		}
-
-		private void Update()
-		{
-			if (!string.IsNullOrEmpty(_friendId))
-			{
-				UpdateAllData(_friendId);
-			}
-		}
-
-		private void UpdateAccessories(Dictionary<string, object> playerInfo)
-		{
-			object value;
-			if (playerInfo == null || playerInfo.Count == 0 || !playerInfo.TryGetValue("accessories", out value))
-			{
-				return;
-			}
-			List<object> list = value as List<object>;
-			if (list == null)
-			{
-				return;
-			}
-			IEnumerable<Dictionary<string, object>> enumerable = list.OfType<Dictionary<string, object>>();
-			foreach (Dictionary<string, object> item in enumerable)
-			{
-				string text = string.Empty;
-				object value2;
-				if (item.TryGetValue("name", out value2))
-				{
-					text = (value2 as string) ?? string.Empty;
-				}
-				object value3;
-				int result;
-				if (!item.TryGetValue("type", out value3) || !int.TryParse(value3 as string, out result))
-				{
-					continue;
-				}
-				switch (result)
-				{
-				case 0:
-					if (text.Equals("cape_Custom", StringComparison.Ordinal))
-					{
-						object value4;
-						if (item.TryGetValue("skin", out value4))
-						{
-							string text2 = value4 as string;
-							if (!string.IsNullOrEmpty(text2))
-							{
-								byte[] customCape = Convert.FromBase64String(text2);
-								_friendProfileView.SetCustomCape(customCape);
-							}
-						}
-					}
-					else
-					{
-						_friendProfileView.SetStockCape(text);
-					}
-					break;
-				case 1:
-					_friendProfileView.SetHat(text);
-					break;
-				case 2:
-					_friendProfileView.SetBoots(text);
-					break;
-				case 3:
-					_friendProfileView.SetArmor(text);
-					break;
-				case 4:
-					_friendProfileView.SetMask(text);
-					break;
+					this._friendProfileView.Online = OnlineState.offline;
 				}
 			}
 		}
 
 		private void UpdateOnline(Dictionary<string, string> onlineInfo)
 		{
-			FriendsController.ResultParseOnlineData resultParseOnlineData = FriendsController.ParseOnlineData(onlineInfo);
-			if (resultParseOnlineData == null)
+			FriendsController.ResultParseOnlineData resultParseOnlineDatum = FriendsController.ParseOnlineData(onlineInfo);
+			if (resultParseOnlineDatum == null)
 			{
-				_friendProfileView.Online = OnlineState.none;
+				this._friendProfileView.Online = OnlineState.none;
 				return;
 			}
-			_friendProfileView.Online = resultParseOnlineData.GetOnlineStatus();
-			_friendProfileView.FriendGameMode = resultParseOnlineData.GetGameModeName();
-			_friendProfileView.FriendLocation = resultParseOnlineData.GetMapName();
-			_friendProfileView.IsCanConnectToFriend = resultParseOnlineData.IsCanConnect;
-			_friendProfileView.NotConnectCondition = resultParseOnlineData.GetNotConnectConditionString();
+			this._friendProfileView.Online = resultParseOnlineDatum.GetOnlineStatus();
+			this._friendProfileView.FriendGameMode = resultParseOnlineDatum.GetGameModeName();
+			this._friendProfileView.FriendLocation = resultParseOnlineDatum.GetMapName();
+			this._friendProfileView.IsCanConnectToFriend = resultParseOnlineDatum.IsCanConnect;
+			this._friendProfileView.NotConnectCondition = resultParseOnlineDatum.GetNotConnectConditionString();
 		}
 
 		private void UpdatePlayer(Dictionary<string, object> playerInfo)
 		{
+			object obj;
+			int num;
+			object obj1;
+			object obj2;
+			int num1;
+			object obj3;
+			object obj4;
+			object obj5;
+			object obj6;
+			object obj7;
+			int num2;
 			if (playerInfo == null || playerInfo.Count == 0)
 			{
 				Debug.LogWarning("playerInfo == null || playerInfo.Count == 0");
 				return;
 			}
-			Dictionary<string, object> dictionary = null;
-			dictionary = playerInfo["player"] as Dictionary<string, object>;
-			if (dictionary == null)
+			Dictionary<string, object> item = null;
+			item = playerInfo["player"] as Dictionary<string, object>;
+			if (item != null)
 			{
-				return;
-			}
-			object value;
-			int result;
-			if (dictionary.TryGetValue("friends", out value) && int.TryParse(value as string, out result))
-			{
-				_friendProfileView.FriendCount = result;
-			}
-			else
-			{
-				_friendProfileView.FriendCount = -1;
-			}
-			object value2;
-			if (dictionary.TryGetValue("nick", out value2))
-			{
-				_friendProfileView.FriendName = value2 as string;
-			}
-			object value3;
-			int result2;
-			if (dictionary.TryGetValue("rank", out value3) && int.TryParse(Convert.ToString(value3), out result2))
-			{
-				_friendProfileView.Rank = result2;
-			}
-			object value4;
-			if (dictionary.TryGetValue("skin", out value4))
-			{
-				string text = value4 as string;
-				if (!string.IsNullOrEmpty(text))
+				if (!item.TryGetValue("friends", out obj) || !int.TryParse(obj as string, out num))
 				{
-					byte[] array = Convert.FromBase64String(text);
-					if (array != null && array.Length > 0)
-					{
-						_friendProfileView.SetSkin(array);
-					}
-				}
-			}
-			object value5;
-			if (dictionary.TryGetValue("clan_name", out value5))
-			{
-				_friendProfileView.clanName.gameObject.SetActive(true);
-				string text2 = value5 as string;
-				if (!string.IsNullOrEmpty(text2))
-				{
-					int num = 10000;
-					if (text2 != null && text2.Length > num)
-					{
-						text2 = string.Format("{0}..{1}", text2.Substring(0, (num - 2) / 2), text2.Substring(text2.Length - (num - 2) / 2, (num - 2) / 2));
-					}
-					_friendProfileView.clanName.text = text2 ?? string.Empty;
+					this._friendProfileView.FriendCount = -1;
 				}
 				else
 				{
-					_friendProfileView.clanName.gameObject.SetActive(false);
+					this._friendProfileView.FriendCount = num;
 				}
-			}
-			object value6;
-			if (dictionary.TryGetValue("clan_logo", out value6))
-			{
-				string text3 = value6 as string;
-				if (!string.IsNullOrEmpty(text3))
+				if (item.TryGetValue("nick", out obj1))
 				{
-					_friendProfileView.clanLogo.gameObject.SetActive(true);
-					byte[] array2 = Convert.FromBase64String(text3);
-					if (array2 != null && array2.Length > 0)
+					this._friendProfileView.FriendName = obj1 as string;
+				}
+				if (item.TryGetValue("rank", out obj2) && int.TryParse(Convert.ToString(obj2), out num1))
+				{
+					this._friendProfileView.Rank = num1;
+				}
+				if (item.TryGetValue("skin", out obj3))
+				{
+					string str = obj3 as string;
+					if (!string.IsNullOrEmpty(str))
 					{
-						try
+						byte[] numArray = Convert.FromBase64String(str);
+						if (numArray != null && (int)numArray.Length > 0)
 						{
-							Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-							texture2D.LoadImage(array2);
-							texture2D.filterMode = FilterMode.Point;
-							texture2D.Apply();
-							Texture mainTexture = _friendProfileView.clanLogo.mainTexture;
-							_friendProfileView.clanLogo.mainTexture = texture2D;
-							if (mainTexture != null)
-							{
-								UnityEngine.Object.DestroyImmediate(mainTexture, true);
-							}
+							this._friendProfileView.SetSkin(numArray);
 						}
-						catch (Exception)
+					}
+				}
+				if (item.TryGetValue("clan_name", out obj4))
+				{
+					this._friendProfileView.clanName.gameObject.SetActive(true);
+					string str1 = obj4 as string;
+					if (string.IsNullOrEmpty(str1))
+					{
+						this._friendProfileView.clanName.gameObject.SetActive(false);
+					}
+					else
+					{
+						int num3 = 10000;
+						if (str1 != null && str1.Length > num3)
 						{
-							Texture mainTexture2 = _friendProfileView.clanLogo.mainTexture;
-							_friendProfileView.clanLogo.mainTexture = null;
-							if (mainTexture2 != null)
+							str1 = string.Format("{0}..{1}", str1.Substring(0, (num3 - 2) / 2), str1.Substring(str1.Length - (num3 - 2) / 2, (num3 - 2) / 2));
+						}
+						this._friendProfileView.clanName.text = str1 ?? string.Empty;
+					}
+				}
+				if (item.TryGetValue("clan_logo", out obj5))
+				{
+					string str2 = obj5 as string;
+					if (string.IsNullOrEmpty(str2))
+					{
+						this._friendProfileView.clanLogo.gameObject.SetActive(false);
+					}
+					else
+					{
+						this._friendProfileView.clanLogo.gameObject.SetActive(true);
+						byte[] numArray1 = Convert.FromBase64String(str2);
+						if (numArray1 != null && (int)numArray1.Length > 0)
+						{
+							try
 							{
-								UnityEngine.Object.DestroyImmediate(mainTexture2, true);
+								Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
+								texture2D.LoadImage(numArray1);
+								texture2D.filterMode = FilterMode.Point;
+								texture2D.Apply();
+								Texture texture = this._friendProfileView.clanLogo.mainTexture;
+								this._friendProfileView.clanLogo.mainTexture = texture2D;
+								if (texture != null)
+								{
+									UnityEngine.Object.DestroyImmediate(texture, true);
+								}
+							}
+							catch (Exception exception)
+							{
+								Texture texture1 = this._friendProfileView.clanLogo.mainTexture;
+								this._friendProfileView.clanLogo.mainTexture = null;
+								if (texture1 != null)
+								{
+									UnityEngine.Object.DestroyImmediate(texture1, true);
+								}
 							}
 						}
 					}
 				}
-				else
+				string playerNameOrDefault = ProfileController.GetPlayerNameOrDefault();
+				this._friendProfileView.Username = playerNameOrDefault;
+				if (!item.TryGetValue("wins", out obj6))
 				{
-					_friendProfileView.clanLogo.gameObject.SetActive(false);
-				}
-			}
-			string playerNameOrDefault = ProfileController.GetPlayerNameOrDefault();
-			_friendProfileView.Username = playerNameOrDefault;
-			object value7;
-			if (dictionary.TryGetValue("wins", out value7))
-			{
-				int winCount = Convert.ToInt32(value7);
-				_friendProfileView.WinCount = winCount;
-			}
-			else
-			{
-				_friendProfileView.WinCount = -1;
-			}
-			object value8;
-			if (dictionary.TryGetValue("total_wins", out value8))
-			{
-				int result3;
-				if (int.TryParse(value8 as string, out result3))
-				{
-					_friendProfileView.TotalWinCount = result3;
+					this._friendProfileView.WinCount = -1;
 				}
 				else
 				{
-					Debug.LogWarning("Can not parse “total_wins” field: " + value8);
+					int num4 = Convert.ToInt32(obj6);
+					this._friendProfileView.WinCount = num4;
 				}
-			}
-			else
-			{
-				_friendProfileView.TotalWinCount = -1;
+				if (!item.TryGetValue("total_wins", out obj7))
+				{
+					this._friendProfileView.TotalWinCount = -1;
+				}
+				else if (!int.TryParse(obj7 as string, out num2))
+				{
+					Debug.LogWarning(string.Concat("Can not parse “total_wins” field: ", obj7));
+				}
+				else
+				{
+					this._friendProfileView.TotalWinCount = num2;
+				}
 			}
 		}
 
 		private void UpdateScores(Dictionary<string, object> playerInfo)
 		{
-			object value;
-			if (playerInfo == null || playerInfo.Count == 0 || !playerInfo.TryGetValue("scores", out value))
+			object obj;
+			object obj1;
+			int num;
+			if (playerInfo == null || playerInfo.Count == 0)
 			{
 				return;
 			}
-			List<object> list = value as List<object>;
-			if (list == null)
+			if (playerInfo.TryGetValue("scores", out obj))
 			{
-				return;
-			}
-			IEnumerable<Dictionary<string, object>> source = list.OfType<Dictionary<string, object>>();
-			if (!source.Any())
-			{
-				return;
-			}
-			if (_003C_003Ef__am_0024cacheA == null)
-			{
-				_003C_003Ef__am_0024cacheA = _003CUpdateScores_003Em__29E;
-			}
-			Dictionary<string, object> dictionary = source.FirstOrDefault(_003C_003Ef__am_0024cacheA);
-			if (dictionary != null)
-			{
-				object value2;
-				int result;
-				if (dictionary.TryGetValue("max_score", out value2) && int.TryParse(value2 as string, out result))
+				List<object> objs = obj as List<object>;
+				if (objs != null)
 				{
-					_friendProfileView.SurvivalScore = result;
-				}
-				else
-				{
-					_friendProfileView.SurvivalScore = -1;
+					IEnumerable<Dictionary<string, object>> dictionaries = objs.OfType<Dictionary<string, object>>();
+					if (dictionaries.Any<Dictionary<string, object>>())
+					{
+						Dictionary<string, object> strs = dictionaries.FirstOrDefault<Dictionary<string, object>>((Dictionary<string, object> d) => (!d.ContainsKey("game") ? false : d["game"].Equals("0")));
+						if (strs != null)
+						{
+							if (!strs.TryGetValue("max_score", out obj1) || !int.TryParse(obj1 as string, out num))
+							{
+								this._friendProfileView.SurvivalScore = -1;
+							}
+							else
+							{
+								this._friendProfileView.SurvivalScore = num;
+							}
+						}
+					}
 				}
 			}
 		}
 
-		internal void HandleProfileClicked(string id)
+		private enum AccessoriesType
 		{
-			HandleProfileClickedCore(id, ProfileWindowType.other, null);
-		}
-
-		internal void HandleProfileClickedCore(string id, ProfileWindowType type, Action<bool> onCloseEvent)
-		{
-			if (!_disposed)
-			{
-				OnCloseEvent = onCloseEvent;
-				_needUpdateFriendList = false;
-				_friendId = id;
-				_friendProfileView.FriendId = id;
-				_windowType = type;
-				currentFriendId = id;
-				_friendProfileView.Reset();
-				_isPlayerOurFriend = FriendsController.IsPlayerOurFriend(id);
-				Update();
-				if (_friendsGuiController != null)
-				{
-					_friendsGuiController.Hide(true);
-				}
-				FriendsController.sharedController.StartRefreshingInfo(_friendId);
-				_friendProfileViewGo.SetActive(true);
-				SetWindowStateByFriendAndClanData(_friendId, type);
-			}
-		}
-
-		public void HandleBackClicked()
-		{
-			_friendProfileView.Reset();
-			_friendProfileViewGo.SetActive(false);
-			FriendsController.sharedController.StopRefreshingInfo();
-			if (_friendsGuiController != null)
-			{
-				_friendsGuiController.Hide(false);
-			}
-			else if (OnCloseEvent != null)
-			{
-				OnCloseEvent(_needUpdateFriendList);
-			}
-		}
-
-		private void HandleJoinClicked()
-		{
-			ButtonClickSound.TryPlayClick();
-			if (!_friendProfileView.IsCanConnectToFriend)
-			{
-				InfoWindowController.ShowInfoBox(_friendProfileView.NotConnectCondition);
-			}
-			else if (FriendsController.sharedController.onlineInfo.ContainsKey(_friendId))
-			{
-				int game_mode = int.Parse(FriendsController.sharedController.onlineInfo[_friendId]["game_mode"]);
-				string room_name = FriendsController.sharedController.onlineInfo[_friendId]["room_name"];
-				string text = FriendsController.sharedController.onlineInfo[_friendId]["map"];
-				SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(text));
-				if (infoScene != null)
-				{
-					JoinRoomFromFrends.sharedJoinRoomFromFrends.ConnectToRoom(game_mode, room_name, text);
-				}
-			}
-		}
-
-		private void HandleCopyMyIdClicked()
-		{
-			FriendsController.CopyPlayerIdToClipboard(_friendId);
-		}
-
-		private void HandleChatClicked()
-		{
-			HandleBackClicked();
-			if (_windowType == ProfileWindowType.friend)
-			{
-				FriendsWindowController instance = FriendsWindowController.Instance;
-				if (instance != null)
-				{
-					instance.SetActiveChatTab(_friendId);
-				}
-			}
-		}
-
-		private void OnCompleteAddOrDeleteResponse(bool isComplete, bool isRequestExist, bool isAddRequest)
-		{
-			if (isAddRequest)
-			{
-				_friendProfileView.SetEnableAddButton(true);
-			}
-			else
-			{
-				_friendProfileView.SetEnableRemoveButton(true);
-			}
-			InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
-			if (isComplete)
-			{
-				_needUpdateFriendList = true;
-				_isPlayerOurFriend = FriendsController.IsPlayerOurFriend(_friendId);
-				SetWindowStateByFriendAndClanData(_friendId, _windowType);
-			}
-		}
-
-		public void CallbackRequestDeleteFriend(bool isComplete)
-		{
-			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object> { { "Deleted Friends", "Profile" } });
-			OnCompleteAddOrDeleteResponse(isComplete, false, false);
-		}
-
-		public void CallbackFriendAddRequest(bool isComplete, bool isRequestExist)
-		{
-			OnCompleteAddOrDeleteResponse(isComplete, isRequestExist, true);
-		}
-
-		private void HandleAddFriendClicked()
-		{
-			_friendProfileView.SetEnableAddButton(false);
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Added Friends", "Profile");
-			dictionary.Add("Deleted Friends", "Add");
-			Dictionary<string, object> socialEventParameters = dictionary;
-			FriendsController.SendFriendshipRequest(_friendId, socialEventParameters, CallbackFriendAddRequest);
-		}
-
-		private void HandleRemoveFriendClicked()
-		{
-			_friendProfileView.SetEnableRemoveButton(false);
-			FriendsController.DeleteFriend(_friendId, CallbackRequestDeleteFriend);
-		}
-
-		public void CallbackClanInviteRequest(bool isComplete, bool isRequestExist)
-		{
-			_friendProfileView.SetEnableInviteClanButton(true);
-			InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
-			if (isComplete)
-			{
-				SetWindowStateByFriendAndClanData(_friendId, _windowType);
-			}
-		}
-
-		private void HandleInviteToClanClicked()
-		{
-			_friendProfileView.SetEnableInviteClanButton(false);
-			FriendsController.SendPlayerInviteToClan(_friendId, CallbackClanInviteRequest);
-		}
-
-		private void HandleUpdateRequested()
-		{
-			Update();
-		}
-
-		[CompilerGenerated]
-		private static bool _003CUpdateScores_003Em__29E(Dictionary<string, object> d)
-		{
-			return d.ContainsKey("game") && d["game"].Equals("0");
+			cape,
+			hat,
+			boots,
+			armor,
+			mask
 		}
 	}
 }

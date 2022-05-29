@@ -1,8 +1,9 @@
+using Rilisoft.MiniJson;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 internal sealed class ControlSizeController : MonoBehaviour
@@ -13,75 +14,45 @@ internal sealed class ControlSizeController : MonoBehaviour
 
 	public UISprite _currentSprite;
 
-	[CompilerGenerated]
-	private static Func<UISprite, int> _003C_003Ef__am_0024cache2;
-
-	[CompilerGenerated]
-	private static Func<UISprite, bool> _003C_003Ef__am_0024cache3;
-
-	public void HandleSizeSliderChanged(UISlider slider)
+	public ControlSizeController()
 	{
-		if (_currentSprite == null)
-		{
-			Debug.LogWarning("_currentSprite == null");
-			return;
-		}
-		ControlSize component = _currentSprite.GetComponent<ControlSize>();
-		if (component == null)
-		{
-			Debug.LogWarning("cs == null");
-		}
-		else
-		{
-			_currentSprite.width = Mathf.RoundToInt(Mathf.Lerp(component.minValue, component.maxValue, slider.value));
-		}
 	}
 
-	private void HandleControlPressedDown(object sender, EventArgs e)
+	private void Awake()
 	{
-		if (!base.gameObject.activeInHierarchy)
+		if (this.view != null && this.view.slider != null)
 		{
-			return;
-		}
-		Debug.Log("Pressed");
-		GameObject gameObject = sender as GameObject;
-		if (!(gameObject == null))
-		{
-			UISprite component = gameObject.GetComponent<UISprite>();
-			if (!(component == null))
+			ControlSizeSlider component = this.view.slider.GetComponent<ControlSizeSlider>();
+			if (component != null)
 			{
-				SetCurrentSprite(component, view.slider);
+				component.EnabledChanged += new EventHandler<ControlSizeSlider.EnabledChangedEventArgs>(this.HandleEnabledChanged);
 			}
 		}
+		ButtonJoystickAdjust.PressedDown += new EventHandler<EventArgs>(this.HandleControlPressedDown);
+		PressDetector.PressedDown += new EventHandler<EventArgs>(this.HandleControlPressedDown);
 	}
 
-	public void HandleControlButton(UISprite sprite, UISlider slider)
+	public static void ChangeLeftHanded(bool isChecked, Action handler = null)
 	{
-	}
-
-	public void HandleSaveButton()
-	{
-		Debug.Log("[Save] Pressed.");
-		SaveControlSize();
-	}
-
-	public void HandleDefaultButton()
-	{
-		Debug.Log("[Default] Pressed.");
-		if (view == null || view.buttons == null)
+		if (Application.isEditor)
 		{
-			Debug.LogWarning("view == null || view.buttons == null");
-			return;
+			Debug.Log(string.Concat("[Left Handed] button clicked: ", isChecked));
 		}
-		UISprite[] buttons = view.buttons;
-		foreach (UISprite uISprite in buttons)
+		if (GlobalGameController.LeftHanded != isChecked)
 		{
-			if (!(uISprite == null))
+			GlobalGameController.LeftHanded = isChecked;
+			PlayerPrefs.SetInt(Defs.LeftHandedSN, (!isChecked ? 0 : 1));
+			PlayerPrefs.Save();
+			if (handler != null)
 			{
-				ControlSize component = uISprite.GetComponent<ControlSize>();
-				if (!(component == null))
+				handler();
+			}
+			if (!isChecked)
+			{
+				FlurryPluginWrapper.LogEvent("Left-handed Layout Enabled");
+				if (Debug.isDebugBuild)
 				{
-					uISprite.width = component.defaultValue;
+					Debug.Log("Left-handed Layout Enabled");
 				}
 			}
 		}
@@ -92,113 +63,125 @@ internal sealed class ControlSizeController : MonoBehaviour
 		Debug.Log("[Cancel] Pressed.");
 	}
 
-	public void LoadControlSize()
+	public void HandleControlButton(UISprite sprite, UISlider slider)
 	{
-		if (view == null || view.buttons == null)
+	}
+
+	private void HandleControlPressedDown(object sender, EventArgs e)
+	{
+		if (!base.gameObject.activeInHierarchy)
+		{
+			return;
+		}
+		Debug.Log("Pressed");
+		GameObject gameObject = sender as GameObject;
+		if (gameObject == null)
+		{
+			return;
+		}
+		UISprite component = gameObject.GetComponent<UISprite>();
+		if (component == null)
+		{
+			return;
+		}
+		this.SetCurrentSprite(component, this.view.slider);
+	}
+
+	public void HandleDefaultButton()
+	{
+		Debug.Log("[Default] Pressed.");
+		if (this.view == null || this.view.buttons == null)
 		{
 			Debug.LogWarning("view == null || view.buttons == null");
 			return;
 		}
-		object obj = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]"));
-		List<object> list = obj as List<object>;
-		if (list == null)
+		UISprite[] uISpriteArray = this.view.buttons;
+		for (int i = 0; i < (int)uISpriteArray.Length; i++)
 		{
-			list = new List<object>(view.buttons.Length);
-			Debug.LogWarning(list.GetType().FullName);
-		}
-		int num = view.buttons.Length;
-		for (int i = 0; i != num; i++)
-		{
-			if (!(view.buttons[i] == null))
+			UISprite uISprite = uISpriteArray[i];
+			if (uISprite != null)
 			{
-				int num2 = 0;
-				if (i < list.Count)
+				ControlSize component = uISprite.GetComponent<ControlSize>();
+				if (component != null)
 				{
-					num2 = Convert.ToInt32(list[i]);
+					uISprite.width = component.defaultValue;
 				}
-				view.buttons[i].width = ((num2 <= 0) ? view.buttons[i].GetComponent<ControlSize>().defaultValue : num2);
 			}
 		}
-	}
-
-	public void SaveControlSize()
-	{
-		if (view == null)
-		{
-			Debug.LogWarning("view == null");
-			return;
-		}
-		if (_003C_003Ef__am_0024cache2 == null)
-		{
-			_003C_003Ef__am_0024cache2 = _003CSaveControlSize_003Em__287;
-		}
-		Func<UISprite, int> selector = _003C_003Ef__am_0024cache2;
-		int[] obj = view.buttons.Select(selector).ToArray();
-		PlayerPrefs.SetString("Controls.Size", Json.Serialize(obj));
-	}
-
-	private void Awake()
-	{
-		if (view != null && view.slider != null)
-		{
-			ControlSizeSlider component = view.slider.GetComponent<ControlSizeSlider>();
-			if (component != null)
-			{
-				component.EnabledChanged += HandleEnabledChanged;
-			}
-		}
-		ButtonJoystickAdjust.PressedDown = (EventHandler<EventArgs>)Delegate.Combine(ButtonJoystickAdjust.PressedDown, new EventHandler<EventArgs>(HandleControlPressedDown));
-		PressDetector.PressedDown = (EventHandler<EventArgs>)Delegate.Combine(PressDetector.PressedDown, new EventHandler<EventArgs>(HandleControlPressedDown));
-	}
-
-	private void OnDestroy()
-	{
-		if (view != null && view.slider != null)
-		{
-			ControlSizeSlider component = view.slider.GetComponent<ControlSizeSlider>();
-			if (component != null)
-			{
-				component.EnabledChanged -= HandleEnabledChanged;
-			}
-		}
-		ButtonJoystickAdjust.PressedDown = (EventHandler<EventArgs>)Delegate.Remove(ButtonJoystickAdjust.PressedDown, new EventHandler<EventArgs>(HandleControlPressedDown));
-		PressDetector.PressedDown = (EventHandler<EventArgs>)Delegate.Remove(PressDetector.PressedDown, new EventHandler<EventArgs>(HandleControlPressedDown));
 	}
 
 	private void HandleEnabledChanged(object sender, ControlSizeSlider.EnabledChangedEventArgs e)
 	{
 		if (e.Enabled)
 		{
-			LoadControlSize();
-			SetCurrentSprite(view.buttons[0], view.slider);
+			this.LoadControlSize();
+			this.SetCurrentSprite(this.view.buttons[0], this.view.slider);
 		}
 	}
 
-	public static void ChangeLeftHanded(bool isChecked, Action handler = null)
+	public void HandleSaveButton()
 	{
-		if (Application.isEditor)
+		Debug.Log("[Save] Pressed.");
+		this.SaveControlSize();
+	}
+
+	public void HandleSizeSliderChanged(UISlider slider)
+	{
+		if (this._currentSprite == null)
 		{
-			Debug.Log("[Left Handed] button clicked: " + isChecked);
-		}
-		if (GlobalGameController.LeftHanded == isChecked)
-		{
+			Debug.LogWarning("_currentSprite == null");
 			return;
 		}
-		GlobalGameController.LeftHanded = isChecked;
-		PlayerPrefs.SetInt(Defs.LeftHandedSN, isChecked ? 1 : 0);
-		PlayerPrefs.Save();
-		if (handler != null)
+		ControlSize component = this._currentSprite.GetComponent<ControlSize>();
+		if (component == null)
 		{
-			handler();
+			Debug.LogWarning("cs == null");
+			return;
 		}
-		if (!isChecked)
+		this._currentSprite.width = Mathf.RoundToInt(Mathf.Lerp((float)component.minValue, (float)component.maxValue, slider.@value));
+	}
+
+	public void LoadControlSize()
+	{
+		if (this.view == null || this.view.buttons == null)
 		{
-			FlurryPluginWrapper.LogEvent("Left-handed Layout Enabled");
-			if (Debug.isDebugBuild)
+			Debug.LogWarning("view == null || view.buttons == null");
+			return;
+		}
+		object obj = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]"));
+		List<object> objs = obj as List<object>;
+		if (objs == null)
+		{
+			objs = new List<object>((int)this.view.buttons.Length);
+			Debug.LogWarning(objs.GetType().FullName);
+		}
+		int length = (int)this.view.buttons.Length;
+		for (int i = 0; i != length; i++)
+		{
+			if (this.view.buttons[i] != null)
 			{
-				Debug.Log("Left-handed Layout Enabled");
+				int num = 0;
+				if (i < objs.Count)
+				{
+					num = Convert.ToInt32(objs[i]);
+				}
+				this.view.buttons[i].width = (num <= 0 ? this.view.buttons[i].GetComponent<ControlSize>().defaultValue : num);
 			}
 		}
+	}
+
+	private void OnDestroy()
+	{
+		if (this.view != null && this.view.slider != null)
+		{
+			ControlSizeSlider component = this.view.slider.GetComponent<ControlSizeSlider>();
+			if (component != null)
+			{
+				component.EnabledChanged -= new EventHandler<ControlSizeSlider.EnabledChangedEventArgs>(this.HandleEnabledChanged);
+			}
+		}
+		ButtonJoystickAdjust.PressedDown -= new EventHandler<EventArgs>(this.HandleControlPressedDown);
+		PressDetector.PressedDown -= new EventHandler<EventArgs>(this.HandleControlPressedDown);
 	}
 
 	private void RefreshSlider(UISlider slider)
@@ -207,66 +190,77 @@ internal sealed class ControlSizeController : MonoBehaviour
 		{
 			return;
 		}
-		if (_currentSprite == null)
+		if (this._currentSprite != null)
 		{
-			slider.value = 0f;
-			return;
-		}
-		ControlSize component = _currentSprite.GetComponent<ControlSize>();
-		if (component == null)
-		{
-			slider.value = 0f;
+			ControlSize component = this._currentSprite.GetComponent<ControlSize>();
+			if (component != null)
+			{
+				slider.@value = Mathf.InverseLerp((float)component.minValue, (float)component.maxValue, (float)this._currentSprite.width);
+			}
+			else
+			{
+				slider.@value = 0f;
+			}
 		}
 		else
 		{
-			slider.value = Mathf.InverseLerp(component.minValue, component.maxValue, _currentSprite.width);
+			slider.@value = 0f;
 		}
+	}
+
+	public void SaveControlSize()
+	{
+		if (this.view == null)
+		{
+			Debug.LogWarning("view == null");
+			return;
+		}
+		Func<UISprite, int> func = (UISprite s) => (s == null ? 0 : s.width);
+		int[] array = this.view.buttons.Select<UISprite, int>(func).ToArray<int>();
+		PlayerPrefs.SetString("Controls.Size", Json.Serialize(array));
 	}
 
 	private void SetCurrentSprite(UISprite sprite, UISlider slider)
 	{
-		_currentSprite = sprite;
-		UISprite[] buttons = view.buttons;
-		if (_003C_003Ef__am_0024cache3 == null)
+		this._currentSprite = sprite;
+		IEnumerator<UISprite> enumerator = (
+			from b in (IEnumerable<UISprite>)this.view.buttons
+			where b != null
+			select b).GetEnumerator();
+		try
 		{
-			_003C_003Ef__am_0024cache3 = _003CSetCurrentSprite_003Em__288;
-		}
-		foreach (UISprite item in buttons.Where(_003C_003Ef__am_0024cache3))
-		{
-			UISprite[] componentsInChildren = item.gameObject.GetComponentsInChildren<UISprite>();
-			if (componentsInChildren.Length == 0)
+			while (enumerator.MoveNext())
 			{
-				continue;
-			}
-			if (item.gameObject == sprite.gameObject)
-			{
-				UISprite[] array = componentsInChildren;
-				foreach (UISprite uISprite in array)
+				UISprite current = enumerator.Current;
+				UISprite[] componentsInChildren = current.gameObject.GetComponentsInChildren<UISprite>();
+				if ((int)componentsInChildren.Length != 0)
 				{
-					uISprite.color = Color.red;
+					if (current.gameObject != sprite.gameObject)
+					{
+						UISprite[] uISpriteArray = componentsInChildren;
+						for (int i = 0; i < (int)uISpriteArray.Length; i++)
+						{
+							uISpriteArray[i].color = Color.white;
+						}
+					}
+					else
+					{
+						UISprite[] uISpriteArray1 = componentsInChildren;
+						for (int j = 0; j < (int)uISpriteArray1.Length; j++)
+						{
+							uISpriteArray1[j].color = Color.red;
+						}
+					}
 				}
 			}
-			else
-			{
-				UISprite[] array2 = componentsInChildren;
-				foreach (UISprite uISprite2 in array2)
-				{
-					uISprite2.color = Color.white;
-				}
-			}
 		}
-		RefreshSlider(slider);
-	}
-
-	[CompilerGenerated]
-	private static int _003CSaveControlSize_003Em__287(UISprite s)
-	{
-		return (s != null) ? s.width : 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CSetCurrentSprite_003Em__288(UISprite b)
-	{
-		return b != null;
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		this.RefreshSlider(slider);
 	}
 }

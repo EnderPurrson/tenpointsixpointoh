@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,45 +14,53 @@ public class ScenePrerenderer : MonoBehaviour
 
 	private GameObject _enemiesToRender;
 
-	private void Awake()
+	public ScenePrerenderer()
 	{
-		_rt = new RenderTexture(32, 32, 24);
-		_rt.Create();
-		activeCamera.targetTexture = _rt;
-		activeCamera.useOcclusionCulling = false;
 	}
 
-	private void Start()
+	private void Awake()
 	{
-		Render_();
+		this._rt = new RenderTexture(32, 32, 24);
+		this._rt.Create();
+		this.activeCamera.targetTexture = this._rt;
+		this.activeCamera.useOcclusionCulling = false;
 	}
 
 	private void Render_()
 	{
-		List<GameObject> zombiePrefabs = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>().zombiePrefabs;
-		GameObject[] array = new GameObject[zombiePrefabs.Count];
+		List<GameObject> component = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>().zombiePrefabs;
+		GameObject[] gameObjectArray = new GameObject[component.Count];
 		int num = 0;
-		foreach (GameObject item in zombiePrefabs)
+		foreach (GameObject gameObject in component)
 		{
-			GameObject gameObject = (GameObject)Object.Instantiate(item.transform.GetChild(0).gameObject, new Vector3(base.transform.position.x, base.transform.position.y - 20f, base.transform.position.z), item.transform.GetChild(0).gameObject.transform.rotation);
-			string text = "(Clone)";
-			int num2 = gameObject.name.IndexOf(text);
-			gameObject.name = ((num2 >= 0) ? gameObject.name.Remove(num2, text.Length) : gameObject.name);
-			gameObject.transform.parent = base.transform.parent;
-			SkinsController.GetSkinForObj(gameObject);
-			array[num] = gameObject;
+			GameObject child = gameObject.transform.GetChild(0).gameObject;
+			float single = base.transform.position.x;
+			Vector3 vector3 = base.transform.position;
+			Vector3 vector31 = base.transform.position;
+			GameObject gameObject1 = (GameObject)UnityEngine.Object.Instantiate(child, new Vector3(single, vector3.y - 20f, vector31.z), gameObject.transform.GetChild(0).gameObject.transform.rotation);
+			string str = "(Clone)";
+			int num1 = gameObject1.name.IndexOf(str);
+			gameObject1.name = (num1 >= 0 ? gameObject1.name.Remove(num1, str.Length) : gameObject1.name);
+			gameObject1.transform.parent = base.transform.parent;
+			SkinsController.GetSkinForObj(gameObject1);
+			gameObjectArray[num] = gameObject1;
 			num++;
 		}
-		activeCamera.Render();
-		RenderTexture.active = _rt;
-		activeCamera.targetTexture = null;
+		this.activeCamera.Render();
+		RenderTexture.active = this._rt;
+		this.activeCamera.targetTexture = null;
 		RenderTexture.active = null;
-		GameObject[] array2 = objsToRender;
-		foreach (GameObject obj in array2)
+		GameObject[] gameObjectArray1 = this.objsToRender;
+		for (int i = 0; i < (int)gameObjectArray1.Length; i++)
 		{
-			Object.Destroy(obj);
+			UnityEngine.Object.Destroy(gameObjectArray1[i]);
 		}
-		Object.Destroy(base.transform.parent.parent.gameObject);
-		Object.Destroy(activeCamera);
+		UnityEngine.Object.Destroy(base.transform.parent.parent.gameObject);
+		UnityEngine.Object.Destroy(this.activeCamera);
+	}
+
+	private void Start()
+	{
+		this.Render_();
 	}
 }

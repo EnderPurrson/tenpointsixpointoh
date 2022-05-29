@@ -1,12 +1,10 @@
+using System;
+
 namespace Facebook.Unity
 {
 	internal interface IFacebookCallbackHandler
 	{
-		void OnInitComplete(string message);
-
-		void OnLoginComplete(string message);
-
-		void OnLogoutComplete(string message);
+		void OnAppRequestsComplete(string message);
 
 		void OnGetAppLinkComplete(string message);
 
@@ -14,7 +12,11 @@ namespace Facebook.Unity
 
 		void OnGroupJoinComplete(string message);
 
-		void OnAppRequestsComplete(string message);
+		void OnInitComplete(string message);
+
+		void OnLoginComplete(string message);
+
+		void OnLogoutComplete(string message);
 
 		void OnShareLinkComplete(string message);
 	}

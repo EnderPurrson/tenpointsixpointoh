@@ -6,35 +6,6 @@ using UnityEngine;
 
 public static class Wear
 {
-	public enum LeagueItemState
-	{
-		Open = 0,
-		Closed = 1,
-		Purchased = 2
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CAllWears_003Ec__AnonStorey319
-	{
-		internal ShopNGUIController.CategoryNames category;
-
-		internal bool _003C_003Em__4A8(string item)
-		{
-			return LeagueForWear(item, category) == 0;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CAllWears_003Ec__AnonStorey31A
-	{
-		internal string item;
-
-		internal bool _003C_003Em__4A9(List<string> l)
-		{
-			return l[0] != item;
-		}
-	}
-
 	public const int IndexOfArmorHatsList = 0;
 
 	public const int NumberOfArmorsPerTier = 3;
@@ -301,7 +272,7 @@ public static class Wear
 
 	public static Dictionary<string, string> descriptionLocalizationKeys;
 
-	public static readonly Dictionary<ShopNGUIController.CategoryNames, List<List<string>>> wear;
+	public readonly static Dictionary<ShopNGUIController.CategoryNames, List<List<string>>> wear;
 
 	public static Dictionary<string, float> armorNum;
 
@@ -317,63 +288,9 @@ public static class Wear
 
 	public static Dictionary<string, float> curArmor;
 
-	[CompilerGenerated]
-	private static Func<List<string>, IEnumerable<string>> _003C_003Ef__am_0024cache9;
-
-	[CompilerGenerated]
-	private static Func<List<string>, IEnumerable<string>> _003C_003Ef__am_0024cacheA;
-
-	[CompilerGenerated]
-	private static Func<List<string>, string, string> _003C_003Ef__am_0024cacheB;
-
-	[CompilerGenerated]
-	private static Func<KeyValuePair<RatingSystem.RatingLeague, List<string>>, RatingSystem.RatingLeague> _003C_003Ef__am_0024cacheC;
-
-	[CompilerGenerated]
-	private static Func<KeyValuePair<RatingSystem.RatingLeague, List<string>>, List<string>> _003C_003Ef__am_0024cacheD;
-
-	[CompilerGenerated]
-	private static Func<List<string>, IEnumerable<string>> _003C_003Ef__am_0024cacheE;
-
-	[CompilerGenerated]
-	private static Func<string, int> _003C_003Ef__am_0024cacheF;
-
-	[CompilerGenerated]
-	private static Func<IGrouping<int, string>, bool> _003C_003Ef__am_0024cache10;
-
-	[CompilerGenerated]
-	private static Func<IGrouping<int, string>, RatingSystem.RatingLeague> _003C_003Ef__am_0024cache11;
-
-	[CompilerGenerated]
-	private static Func<IGrouping<int, string>, List<string>> _003C_003Ef__am_0024cache12;
-
-	[CompilerGenerated]
-	private static Func<List<string>, IEnumerable<string>> _003C_003Ef__am_0024cache13;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache14;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache15;
-
-	[CompilerGenerated]
-	private static Func<string, int> _003C_003Ef__am_0024cache16;
-
-	[CompilerGenerated]
-	private static Func<string, int> _003C_003Ef__am_0024cache17;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache18;
-
-	[CompilerGenerated]
-	private static Func<string, int> _003C_003Ef__am_0024cache19;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache1A;
-
 	static Wear()
 	{
-		descriptionLocalizationKeys = new Dictionary<string, string>
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
 			{ "boots_tabi", "Key_1816" },
 			{ "boots_blue", "Key_1164" },
@@ -443,206 +360,1284 @@ public static class Wear
 			{ "mask_engineer_up1", "Key_1906" },
 			{ "mask_engineer_up2", "Key_1907" }
 		};
-		wear = new Dictionary<ShopNGUIController.CategoryNames, List<List<string>>>
+		Wear.descriptionLocalizationKeys = strs;
+		Dictionary<ShopNGUIController.CategoryNames, List<List<string>>> categoryNames = new Dictionary<ShopNGUIController.CategoryNames, List<List<string>>>();
+		List<List<string>> lists = new List<List<string>>();
+		List<string> strs1 = new List<string>()
 		{
+			"cape_Custom"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_EliteCrafter",
+			"StormTrooperCape_Up1",
+			"StormTrooperCape_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_Archimage",
+			"HitmanCape_Up1",
+			"HitmanCape_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_BloodyDemon",
+			"BerserkCape_Up1",
+			"BerserkCape_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_Engineer",
+			"cape_Engineer_Up1",
+			"cape_Engineer_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_SkeletonLord",
+			"SniperCape_Up1",
+			"SniperCape_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"cape_RoyalKnight",
+			"DemolitionCape_Up1",
+			"DemolitionCape_Up2"
+		};
+		lists.Add(strs1);
+		categoryNames.Add(ShopNGUIController.CategoryNames.CapesCategory, lists);
+		lists = new List<List<string>>();
+		strs1 = new List<string>()
+		{
+			"hat_Army_1",
+			"hat_Army_2",
+			"hat_Army_3",
+			"hat_Steel_1",
+			"hat_Steel_2",
+			"hat_Steel_3",
+			"hat_Royal_1",
+			"hat_Royal_2",
+			"hat_Royal_3",
+			"hat_Almaz_1",
+			"hat_Almaz_2",
+			"hat_Almaz_3",
+			"hat_Rubin_1",
+			"hat_Rubin_2",
+			"hat_Rubin_3",
+			"hat_Adamant_Const_1",
+			"hat_Adamant_Const_2",
+			"hat_Adamant_Const_3"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"league2_hat_cowboyhat"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"league3_hat_afro"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"league4_hat_mushroom"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"league5_hat_brain"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"league6_hat_tiara"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_Adamant_3"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_Headphones"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_KingsCrown"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_Samurai"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_DiamondHelmet"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_SeriousManHat"
+		};
+		lists.Add(strs1);
+		categoryNames.Add(ShopNGUIController.CategoryNames.HatsCategory, lists);
+		lists = new List<List<string>>();
+		strs1 = new List<string>()
+		{
+			"boots_gray",
+			"StormTrooperBoots_Up1",
+			"StormTrooperBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"boots_red",
+			"HitmanBoots_Up1",
+			"HitmanBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"boots_black",
+			"BerserkBoots_Up1",
+			"BerserkBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"EngineerBoots",
+			"EngineerBoots_Up1",
+			"EngineerBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"boots_blue",
+			"SniperBoots_Up1",
+			"SniperBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"boots_green",
+			"DemolitionBoots_Up1",
+			"DemolitionBoots_Up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"boots_tabi"
+		};
+		lists.Add(strs1);
+		categoryNames.Add(ShopNGUIController.CategoryNames.BootsCategory, lists);
+		lists = new List<List<string>>();
+		strs1 = new List<string>()
+		{
+			"Armor_Army_1",
+			"Armor_Army_2",
+			"Armor_Army_3",
+			"Armor_Steel_1",
+			"Armor_Steel_2",
+			"Armor_Steel_3",
+			"Armor_Royal_1",
+			"Armor_Royal_2",
+			"Armor_Royal_3",
+			"Armor_Almaz_1",
+			"Armor_Almaz_2",
+			"Armor_Almaz_3",
+			"Armor_Rubin_1",
+			"Armor_Rubin_2",
+			"Armor_Rubin_3",
+			"Armor_Adamant_Const_1",
+			"Armor_Adamant_Const_2",
+			"Armor_Adamant_Const_3"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"Armor_Novice"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"Armor_Adamant_3"
+		};
+		lists.Add(strs1);
+		categoryNames.Add(ShopNGUIController.CategoryNames.ArmorCategory, lists);
+		lists = new List<List<string>>();
+		strs1 = new List<string>()
+		{
+			"mask_trooper",
+			"mask_trooper_up1",
+			"mask_trooper_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"mask_hitman_1",
+			"mask_hitman_1_up1",
+			"mask_hitman_1_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"mask_berserk",
+			"mask_berserk_up1",
+			"mask_berserk_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"mask_engineer",
+			"mask_engineer_up1",
+			"mask_engineer_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"mask_sniper",
+			"mask_sniper_up1",
+			"mask_sniper_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"mask_demolition",
+			"mask_demolition_up1",
+			"mask_demolition_up2"
+		};
+		lists.Add(strs1);
+		strs1 = new List<string>()
+		{
+			"hat_ManiacMask"
+		};
+		lists.Add(strs1);
+		categoryNames.Add(ShopNGUIController.CategoryNames.MaskCategory, lists);
+		Wear.wear = categoryNames;
+		Wear.armorNum = new Dictionary<string, float>();
+		Dictionary<string, List<float>> strs2 = new Dictionary<string, List<float>>();
+		List<float> singles = new List<float>()
+		{
+			5f,
+			10f,
+			16f,
+			20f,
+			25f
+		};
+		strs2.Add("Armor_Adamant_3", singles);
+		singles = new List<float>()
+		{
+			5f,
+			10f,
+			16f,
+			20f,
+			25f
+		};
+		strs2.Add("hat_Adamant_3", singles);
+		Wear.armorNumTemp = strs2;
+		Wear.bootsMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
+		Wear.capesMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
+		Wear.hatsMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
+		Wear.armorMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
+		Wear.curArmor = new Dictionary<string, float>();
+		Wear.bootsMethods.Add("boots_red", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.ActivateBoots_red), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivateBoots_red)));
+		Wear.bootsMethods.Add("boots_gray", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.ActivateBoots_grey), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivateBoots_grey)));
+		Wear.bootsMethods.Add("boots_blue", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.ActivateBoots_blue), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivateBoots_blue)));
+		Wear.bootsMethods.Add("boots_green", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.ActivateBoots_green), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivateBoots_green)));
+		Wear.bootsMethods.Add("boots_black", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.ActivateBoots_black), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivateBoots_black)));
+		Wear.capesMethods.Add("cape_BloodyDemon", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_BloodyDemon), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_BloodyDemon)));
+		Wear.capesMethods.Add("cape_RoyalKnight", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_RoyalKnight), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_RoyalKnight)));
+		Wear.capesMethods.Add("cape_SkeletonLord", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_SkeletonLord), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_SkeletonLord)));
+		Wear.capesMethods.Add("cape_Archimage", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_Archimage), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_Archimage)));
+		Wear.capesMethods.Add("cape_EliteCrafter", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_EliteCrafter), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_EliteCrafter)));
+		Wear.capesMethods.Add("cape_Custom", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_cape_Custom), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_cape_Custom)));
+		Wear.hatsMethods.Add("hat_Adamant_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_EMPTY)));
+		Wear.hatsMethods.Add("hat_Headphones", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_EMPTY)));
+		Wear.hatsMethods.Add("hat_ManiacMask", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_ManiacMask), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_ManiacMask)));
+		Wear.hatsMethods.Add("hat_KingsCrown", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_KingsCrown), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_KingsCrown)));
+		Wear.hatsMethods.Add("hat_Samurai", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_Samurai), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_Samurai)));
+		Wear.hatsMethods.Add("hat_DiamondHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_DiamondHelmet), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_DiamondHelmet)));
+		Wear.hatsMethods.Add("hat_SeriousManHat", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_SeriousManHat), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_SeriousManHat)));
+		Wear.hatsMethods.Add("league2_hat_cowboyhat", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.hatsMethods.Add("league3_hat_afro", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.hatsMethods.Add("league4_hat_mushroom", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.hatsMethods.Add("league5_hat_brain", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.hatsMethods.Add("league6_hat_tiara", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.hatsMethods.Add("hat_AlmazHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_AlmazHelmet), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_AlmazHelmet)));
+		Wear.hatsMethods.Add("hat_ArmyHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_ArmyHelmet), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_ArmyHelmet)));
+		Wear.hatsMethods.Add("hat_GoldHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_GoldHelmet), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_GoldHelmet)));
+		Wear.hatsMethods.Add("hat_SteelHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_SteelHelmet), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_SteelHelmet)));
+		Wear.hatsMethods.Add("hat_Steel_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_Steel_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_Steel_1)));
+		Wear.hatsMethods.Add("hat_Royal_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_Royal_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_Royal_1)));
+		Wear.hatsMethods.Add("hat_Almaz_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_hat_Almaz_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_hat_Almaz_1)));
+		Wear.bootsMethods.Add("boots_tabi", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_boots_tabi), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_boots_tabi)));
+		Wear.armorMethods.Add("Armor_Adamant_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.armorMethods.Add("Armor_Steel_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_EMPTY), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_EMPTY)));
+		Wear.armorMethods.Add("Armor_Steel_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Steel_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Steel_2)));
+		Wear.armorMethods.Add("Armor_Steel_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Steel_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Steel_3)));
+		Wear.armorMethods.Add("Armor_Steel_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Steel_4), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Steel_4)));
+		Wear.armorMethods.Add("Armor_Royal_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Royal_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Royal_1)));
+		Wear.armorMethods.Add("Armor_Royal_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Royal_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Royal_2)));
+		Wear.armorMethods.Add("Armor_Royal_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Royal_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Royal_3)));
+		Wear.armorMethods.Add("Armor_Royal_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Royal_4), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Royal_4)));
+		Wear.armorMethods.Add("Armor_Almaz_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Almaz_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Almaz_1)));
+		Wear.armorMethods.Add("Armor_Almaz_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Almaz_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Almaz_2)));
+		Wear.armorMethods.Add("Armor_Almaz_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Almaz_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Almaz_3)));
+		Wear.armorMethods.Add("Armor_Almaz_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Almaz_4), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Almaz_4)));
+		Wear.armorMethods.Add("Armor_Novice", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Almaz_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Almaz_2)));
+		Wear.armorMethods.Add("Armor_Army_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_1)));
+		Wear.armorMethods.Add("Armor_Army_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_2)));
+		Wear.armorMethods.Add("Armor_Army_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_3)));
+		Wear.armorMethods.Add("Armor_Army_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_4), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_4)));
+		Wear.armorMethods.Add("Armor_Rubin_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_1)));
+		Wear.armorMethods.Add("Armor_Rubin_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_2)));
+		Wear.armorMethods.Add("Armor_Rubin_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_3)));
+		Wear.armorMethods.Add("Armor_Adamant_Const_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_1)));
+		Wear.armorMethods.Add("Armor_Adamant_Const_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_2)));
+		Wear.armorMethods.Add("Armor_Adamant_Const_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_3)));
+		Wear.armorMethods.Add("hat_Rubin_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_1)));
+		Wear.armorMethods.Add("hat_Rubin_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_2)));
+		Wear.armorMethods.Add("hat_Rubin_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_3)));
+		Wear.armorMethods.Add("hat_Adamant_Const_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_1), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_1)));
+		Wear.armorMethods.Add("hat_Adamant_Const_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_2), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_2)));
+		Wear.armorMethods.Add("hat_Adamant_Const_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(new Action<Player_move_c, Dictionary<string, object>>(Wear.Activate_Armor_Army_3), new Action<Player_move_c, Dictionary<string, object>>(Wear.deActivate_Armor_Army_3)));
+		Wear.armorNum.Add("Armor_Novice", 0f);
+		Wear.armorNum.Add("Armor_Army_1", 1f);
+		Wear.armorNum.Add("Armor_Army_2", 2f);
+		Wear.armorNum.Add("Armor_Army_3", 3f);
+		Wear.armorNum.Add("Armor_Army_4", 9f);
+		Wear.armorNum.Add("Armor_Steel_1", 4f);
+		Wear.armorNum.Add("Armor_Steel_2", 5f);
+		Wear.armorNum.Add("Armor_Steel_3", 8f);
+		Wear.armorNum.Add("Armor_Steel_4", 27f);
+		Wear.armorNum.Add("Armor_Royal_1", 9f);
+		Wear.armorNum.Add("Armor_Royal_2", 10f);
+		Wear.armorNum.Add("Armor_Royal_3", 14f);
+		Wear.armorNum.Add("Armor_Royal_4", 63f);
+		Wear.armorNum.Add("Armor_Almaz_1", 15f);
+		Wear.armorNum.Add("Armor_Almaz_2", 16f);
+		Wear.armorNum.Add("Armor_Almaz_3", 18f);
+		Wear.armorNum.Add("Armor_Almaz_4", 133f);
+		Wear.armorNum.Add("Armor_Rubin_1", 19f);
+		Wear.armorNum.Add("Armor_Rubin_2", 20f);
+		Wear.armorNum.Add("Armor_Rubin_3", 22f);
+		Wear.armorNum.Add("Armor_Adamant_Const_1", 24f);
+		Wear.armorNum.Add("Armor_Adamant_Const_2", 26f);
+		Wear.armorNum.Add("Armor_Adamant_Const_3", 28f);
+		Wear.armorNum.Add("hat_Army_1", 1f);
+		Wear.armorNum.Add("hat_Steel_1", 4f);
+		Wear.armorNum.Add("hat_Royal_1", 9f);
+		Wear.armorNum.Add("hat_Almaz_1", 15f);
+		Wear.armorNum.Add("hat_Army_2", 2f);
+		Wear.armorNum.Add("hat_Steel_2", 5f);
+		Wear.armorNum.Add("hat_Royal_2", 10f);
+		Wear.armorNum.Add("hat_Almaz_2", 16f);
+		Wear.armorNum.Add("hat_Army_3", 3f);
+		Wear.armorNum.Add("hat_Steel_3", 8f);
+		Wear.armorNum.Add("hat_Royal_3", 14f);
+		Wear.armorNum.Add("hat_Almaz_3", 18f);
+		Wear.armorNum.Add("hat_Army_4", 1f);
+		Wear.armorNum.Add("hat_Steel_4", 1f);
+		Wear.armorNum.Add("hat_Royal_4", 2f);
+		Wear.armorNum.Add("hat_Almaz_4", 3f);
+		Wear.armorNum.Add("hat_Rubin_1", 19f);
+		Wear.armorNum.Add("hat_Rubin_2", 20f);
+		Wear.armorNum.Add("hat_Rubin_3", 22f);
+		Wear.armorNum.Add("hat_Adamant_Const_1", 24f);
+		Wear.armorNum.Add("hat_Adamant_Const_2", 26f);
+		Wear.armorNum.Add("hat_Adamant_Const_3", 28f);
+	}
+
+	public static void Activate_Armor_Almaz_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Almaz_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Almaz_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Almaz_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Army_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Army_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Army_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Army_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_EMPTY(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Royal_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Royal_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Royal_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Royal_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Steel_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Steel_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_Armor_Steel_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_boots_tabi(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_cape_Archimage(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_cape_BloodyDemon(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_cape_Custom(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins + 0.05f;
+	}
+
+	public static void Activate_cape_EliteCrafter(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_cape_RoyalKnight(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_cape_SkeletonLord(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_Almaz_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_AlmazHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_ArmyHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_DiamondHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_EMPTY(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_GoldHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_KingsCrown(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins + 0.05f;
+	}
+
+	public static void Activate_hat_ManiacMask(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_Royal_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_Samurai(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins + 0.05f;
+	}
+
+	public static void Activate_hat_SeriousManHat(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_Steel_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void Activate_hat_SteelHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void ActivateBoots_black(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void ActivateBoots_blue(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void ActivateBoots_green(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void ActivateBoots_grey(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void ActivateBoots_red(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static List<string> AllWears(ShopNGUIController.CategoryNames category, bool onlyNonLeagueItems = true)
+	{
+		List<string> strs = new List<string>();
+		strs = (
+			from l in Wear.wear[category]
+			from i in l
+			select i).ToList<string>();
+		if (onlyNonLeagueItems)
+		{
+			try
 			{
-				ShopNGUIController.CategoryNames.CapesCategory,
-				new List<List<string>>
-				{
-					new List<string> { "cape_Custom" },
-					new List<string> { "cape_EliteCrafter", "StormTrooperCape_Up1", "StormTrooperCape_Up2" },
-					new List<string> { "cape_Archimage", "HitmanCape_Up1", "HitmanCape_Up2" },
-					new List<string> { "cape_BloodyDemon", "BerserkCape_Up1", "BerserkCape_Up2" },
-					new List<string> { "cape_Engineer", "cape_Engineer_Up1", "cape_Engineer_Up2" },
-					new List<string> { "cape_SkeletonLord", "SniperCape_Up1", "SniperCape_Up2" },
-					new List<string> { "cape_RoyalKnight", "DemolitionCape_Up1", "DemolitionCape_Up2" }
-				}
-			},
+				strs = (
+					from item in strs
+					where Wear.LeagueForWear(item, category) == 0
+					select item).ToList<string>();
+			}
+			catch (Exception exception)
 			{
-				ShopNGUIController.CategoryNames.HatsCategory,
-				new List<List<string>>
-				{
-					new List<string>
-					{
-						"hat_Army_1", "hat_Army_2", "hat_Army_3", "hat_Steel_1", "hat_Steel_2", "hat_Steel_3", "hat_Royal_1", "hat_Royal_2", "hat_Royal_3", "hat_Almaz_1",
-						"hat_Almaz_2", "hat_Almaz_3", "hat_Rubin_1", "hat_Rubin_2", "hat_Rubin_3", "hat_Adamant_Const_1", "hat_Adamant_Const_2", "hat_Adamant_Const_3"
-					},
-					new List<string> { "league2_hat_cowboyhat" },
-					new List<string> { "league3_hat_afro" },
-					new List<string> { "league4_hat_mushroom" },
-					new List<string> { "league5_hat_brain" },
-					new List<string> { "league6_hat_tiara" },
-					new List<string> { "hat_Adamant_3" },
-					new List<string> { "hat_Headphones" },
-					new List<string> { "hat_KingsCrown" },
-					new List<string> { "hat_Samurai" },
-					new List<string> { "hat_DiamondHelmet" },
-					new List<string> { "hat_SeriousManHat" }
-				}
-			},
+				Debug.LogError(string.Concat("Exception in AllWears filtering onlyNonLeagueItems: ", exception));
+			}
+		}
+		return strs;
+	}
+
+	public static List<string> AllWears(ShopNGUIController.CategoryNames category, int tier, bool includePreviousTiers_UNUSED = false, bool withoutUpgrades = false)
+	{
+		List<int> nums = new List<int>();
+		for (int i = 0; i <= tier; i++)
+		{
+			nums.Add(i);
+		}
+		List<string> strs = new List<string>();
+		foreach (string str in Wear.AllWears(category, true))
+		{
+			if (!nums.Contains(Wear.TierForWear(str)))
 			{
-				ShopNGUIController.CategoryNames.BootsCategory,
-				new List<List<string>>
-				{
-					new List<string> { "boots_gray", "StormTrooperBoots_Up1", "StormTrooperBoots_Up2" },
-					new List<string> { "boots_red", "HitmanBoots_Up1", "HitmanBoots_Up2" },
-					new List<string> { "boots_black", "BerserkBoots_Up1", "BerserkBoots_Up2" },
-					new List<string> { "EngineerBoots", "EngineerBoots_Up1", "EngineerBoots_Up2" },
-					new List<string> { "boots_blue", "SniperBoots_Up1", "SniperBoots_Up2" },
-					new List<string> { "boots_green", "DemolitionBoots_Up1", "DemolitionBoots_Up2" },
-					new List<string> { "boots_tabi" }
-				}
-			},
+				continue;
+			}
+			strs.Add(str);
+		}
+		if (withoutUpgrades)
+		{
+			List<List<string>> item = Wear.wear[category];
+			for (int j = strs.Count; j > 0; j--)
 			{
-				ShopNGUIController.CategoryNames.ArmorCategory,
-				new List<List<string>>
+				string item1 = strs[j - 1];
+				if (item.All<List<string>>((List<string> l) => l[0] != item1))
 				{
-					new List<string>
-					{
-						"Armor_Army_1", "Armor_Army_2", "Armor_Army_3", "Armor_Steel_1", "Armor_Steel_2", "Armor_Steel_3", "Armor_Royal_1", "Armor_Royal_2", "Armor_Royal_3", "Armor_Almaz_1",
-						"Armor_Almaz_2", "Armor_Almaz_3", "Armor_Rubin_1", "Armor_Rubin_2", "Armor_Rubin_3", "Armor_Adamant_Const_1", "Armor_Adamant_Const_2", "Armor_Adamant_Const_3"
-					},
-					new List<string> { "Armor_Novice" },
-					new List<string> { "Armor_Adamant_3" }
-				}
-			},
-			{
-				ShopNGUIController.CategoryNames.MaskCategory,
-				new List<List<string>>
-				{
-					new List<string> { "mask_trooper", "mask_trooper_up1", "mask_trooper_up2" },
-					new List<string> { "mask_hitman_1", "mask_hitman_1_up1", "mask_hitman_1_up2" },
-					new List<string> { "mask_berserk", "mask_berserk_up1", "mask_berserk_up2" },
-					new List<string> { "mask_engineer", "mask_engineer_up1", "mask_engineer_up2" },
-					new List<string> { "mask_sniper", "mask_sniper_up1", "mask_sniper_up2" },
-					new List<string> { "mask_demolition", "mask_demolition_up1", "mask_demolition_up2" },
-					new List<string> { "hat_ManiacMask" }
+					strs.Remove(item1);
 				}
 			}
-		};
-		armorNum = new Dictionary<string, float>();
-		armorNumTemp = new Dictionary<string, List<float>>
+		}
+		return strs;
+	}
+
+	public static string ArmorOrArmorHatAvailableForBuy(ShopNGUIController.CategoryNames category)
+	{
+		string empty;
+		if (category != ShopNGUIController.CategoryNames.ArmorCategory && category != ShopNGUIController.CategoryNames.HatsCategory)
 		{
+			Debug.LogError(string.Concat("ArmorOrArmorHatAvailableForBuy incorrect category ", category));
+			return string.Empty;
+		}
+		if (category == ShopNGUIController.CategoryNames.ArmorCategory && ShopNGUIController.NoviceArmorAvailable)
+		{
+			return string.Empty;
+		}
+		try
+		{
+			string str = WeaponManager.LastBoughtTag(Wear.wear[category][0][0]);
+			string str1 = WeaponManager.FirstUnboughtTag(Wear.wear[category][0][0]);
+			if (str == null || !(str == str1))
 			{
-				"Armor_Adamant_3",
-				new List<float> { 5f, 10f, 16f, 20f, 25f }
-			},
-			{
-				"hat_Adamant_3",
-				new List<float> { 5f, 10f, 16f, 20f, 25f }
+				empty = (Wear.TierForWear(str1) > ExpController.OurTierForAnyPlace() ? string.Empty : str1);
 			}
-		};
-		bootsMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
-		capesMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
-		hatsMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
-		armorMethods = new Dictionary<string, KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>>();
-		curArmor = new Dictionary<string, float>();
-		bootsMethods.Add("boots_red", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(ActivateBoots_red, deActivateBoots_red));
-		bootsMethods.Add("boots_gray", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(ActivateBoots_grey, deActivateBoots_grey));
-		bootsMethods.Add("boots_blue", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(ActivateBoots_blue, deActivateBoots_blue));
-		bootsMethods.Add("boots_green", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(ActivateBoots_green, deActivateBoots_green));
-		bootsMethods.Add("boots_black", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(ActivateBoots_black, deActivateBoots_black));
-		capesMethods.Add("cape_BloodyDemon", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_BloodyDemon, deActivate_cape_BloodyDemon));
-		capesMethods.Add("cape_RoyalKnight", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_RoyalKnight, deActivate_cape_RoyalKnight));
-		capesMethods.Add("cape_SkeletonLord", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_SkeletonLord, deActivate_cape_SkeletonLord));
-		capesMethods.Add("cape_Archimage", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_Archimage, deActivate_cape_Archimage));
-		capesMethods.Add("cape_EliteCrafter", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_EliteCrafter, deActivate_cape_EliteCrafter));
-		capesMethods.Add("cape_Custom", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_cape_Custom, deActivate_cape_Custom));
-		hatsMethods.Add("hat_Adamant_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_EMPTY, deActivate_hat_EMPTY));
-		hatsMethods.Add("hat_Headphones", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_EMPTY, deActivate_hat_EMPTY));
-		hatsMethods.Add("hat_ManiacMask", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_ManiacMask, deActivate_hat_ManiacMask));
-		hatsMethods.Add("hat_KingsCrown", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_KingsCrown, deActivate_hat_KingsCrown));
-		hatsMethods.Add("hat_Samurai", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_Samurai, deActivate_hat_Samurai));
-		hatsMethods.Add("hat_DiamondHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_DiamondHelmet, deActivate_hat_DiamondHelmet));
-		hatsMethods.Add("hat_SeriousManHat", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_SeriousManHat, deActivate_hat_SeriousManHat));
-		hatsMethods.Add("league2_hat_cowboyhat", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		hatsMethods.Add("league3_hat_afro", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		hatsMethods.Add("league4_hat_mushroom", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		hatsMethods.Add("league5_hat_brain", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		hatsMethods.Add("league6_hat_tiara", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		hatsMethods.Add("hat_AlmazHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_AlmazHelmet, deActivate_hat_AlmazHelmet));
-		hatsMethods.Add("hat_ArmyHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_ArmyHelmet, deActivate_hat_ArmyHelmet));
-		hatsMethods.Add("hat_GoldHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_GoldHelmet, deActivate_hat_GoldHelmet));
-		hatsMethods.Add("hat_SteelHelmet", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_SteelHelmet, deActivate_hat_SteelHelmet));
-		hatsMethods.Add("hat_Steel_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_Steel_1, deActivate_hat_Steel_1));
-		hatsMethods.Add("hat_Royal_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_Royal_1, deActivate_hat_Royal_1));
-		hatsMethods.Add("hat_Almaz_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_hat_Almaz_1, deActivate_hat_Almaz_1));
-		bootsMethods.Add("boots_tabi", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_boots_tabi, deActivate_boots_tabi));
-		armorMethods.Add("Armor_Adamant_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		armorMethods.Add("Armor_Steel_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_EMPTY, deActivate_Armor_EMPTY));
-		armorMethods.Add("Armor_Steel_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Steel_2, deActivate_Armor_Steel_2));
-		armorMethods.Add("Armor_Steel_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Steel_3, deActivate_Armor_Steel_3));
-		armorMethods.Add("Armor_Steel_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Steel_4, deActivate_Armor_Steel_4));
-		armorMethods.Add("Armor_Royal_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Royal_1, deActivate_Armor_Royal_1));
-		armorMethods.Add("Armor_Royal_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Royal_2, deActivate_Armor_Royal_2));
-		armorMethods.Add("Armor_Royal_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Royal_3, deActivate_Armor_Royal_3));
-		armorMethods.Add("Armor_Royal_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Royal_4, deActivate_Armor_Royal_4));
-		armorMethods.Add("Armor_Almaz_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Almaz_1, deActivate_Armor_Almaz_1));
-		armorMethods.Add("Armor_Almaz_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Almaz_2, deActivate_Armor_Almaz_2));
-		armorMethods.Add("Armor_Almaz_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Almaz_3, deActivate_Armor_Almaz_3));
-		armorMethods.Add("Armor_Almaz_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Almaz_4, deActivate_Armor_Almaz_4));
-		armorMethods.Add("Armor_Novice", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Almaz_2, deActivate_Armor_Almaz_2));
-		armorMethods.Add("Armor_Army_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_1, deActivate_Armor_Army_1));
-		armorMethods.Add("Armor_Army_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_2, deActivate_Armor_Army_2));
-		armorMethods.Add("Armor_Army_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_3, deActivate_Armor_Army_3));
-		armorMethods.Add("Armor_Army_4", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_4, deActivate_Armor_Army_4));
-		armorMethods.Add("Armor_Rubin_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_1, deActivate_Armor_Army_1));
-		armorMethods.Add("Armor_Rubin_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_2, deActivate_Armor_Army_2));
-		armorMethods.Add("Armor_Rubin_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_3, deActivate_Armor_Army_3));
-		armorMethods.Add("Armor_Adamant_Const_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_1, deActivate_Armor_Army_1));
-		armorMethods.Add("Armor_Adamant_Const_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_2, deActivate_Armor_Army_2));
-		armorMethods.Add("Armor_Adamant_Const_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_3, deActivate_Armor_Army_3));
-		armorMethods.Add("hat_Rubin_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_1, deActivate_Armor_Army_1));
-		armorMethods.Add("hat_Rubin_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_2, deActivate_Armor_Army_2));
-		armorMethods.Add("hat_Rubin_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_3, deActivate_Armor_Army_3));
-		armorMethods.Add("hat_Adamant_Const_1", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_1, deActivate_Armor_Army_1));
-		armorMethods.Add("hat_Adamant_Const_2", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_2, deActivate_Armor_Army_2));
-		armorMethods.Add("hat_Adamant_Const_3", new KeyValuePair<Action<Player_move_c, Dictionary<string, object>>, Action<Player_move_c, Dictionary<string, object>>>(Activate_Armor_Army_3, deActivate_Armor_Army_3));
-		armorNum.Add("Armor_Novice", 0f);
-		armorNum.Add("Armor_Army_1", 1f);
-		armorNum.Add("Armor_Army_2", 2f);
-		armorNum.Add("Armor_Army_3", 3f);
-		armorNum.Add("Armor_Army_4", 9f);
-		armorNum.Add("Armor_Steel_1", 4f);
-		armorNum.Add("Armor_Steel_2", 5f);
-		armorNum.Add("Armor_Steel_3", 8f);
-		armorNum.Add("Armor_Steel_4", 27f);
-		armorNum.Add("Armor_Royal_1", 9f);
-		armorNum.Add("Armor_Royal_2", 10f);
-		armorNum.Add("Armor_Royal_3", 14f);
-		armorNum.Add("Armor_Royal_4", 63f);
-		armorNum.Add("Armor_Almaz_1", 15f);
-		armorNum.Add("Armor_Almaz_2", 16f);
-		armorNum.Add("Armor_Almaz_3", 18f);
-		armorNum.Add("Armor_Almaz_4", 133f);
-		armorNum.Add("Armor_Rubin_1", 19f);
-		armorNum.Add("Armor_Rubin_2", 20f);
-		armorNum.Add("Armor_Rubin_3", 22f);
-		armorNum.Add("Armor_Adamant_Const_1", 24f);
-		armorNum.Add("Armor_Adamant_Const_2", 26f);
-		armorNum.Add("Armor_Adamant_Const_3", 28f);
-		armorNum.Add("hat_Army_1", 1f);
-		armorNum.Add("hat_Steel_1", 4f);
-		armorNum.Add("hat_Royal_1", 9f);
-		armorNum.Add("hat_Almaz_1", 15f);
-		armorNum.Add("hat_Army_2", 2f);
-		armorNum.Add("hat_Steel_2", 5f);
-		armorNum.Add("hat_Royal_2", 10f);
-		armorNum.Add("hat_Almaz_2", 16f);
-		armorNum.Add("hat_Army_3", 3f);
-		armorNum.Add("hat_Steel_3", 8f);
-		armorNum.Add("hat_Royal_3", 14f);
-		armorNum.Add("hat_Almaz_3", 18f);
-		armorNum.Add("hat_Army_4", 1f);
-		armorNum.Add("hat_Steel_4", 1f);
-		armorNum.Add("hat_Royal_4", 2f);
-		armorNum.Add("hat_Almaz_4", 3f);
-		armorNum.Add("hat_Rubin_1", 19f);
-		armorNum.Add("hat_Rubin_2", 20f);
-		armorNum.Add("hat_Rubin_3", 22f);
-		armorNum.Add("hat_Adamant_Const_1", 24f);
-		armorNum.Add("hat_Adamant_Const_2", 26f);
-		armorNum.Add("hat_Adamant_Const_3", 28f);
+			else
+			{
+				empty = string.Empty;
+			}
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("ArmorOrArmorHatAvailableForBuy Exception: ", exception));
+			empty = string.Empty;
+		}
+		return empty;
+	}
+
+	public static void deActivate_Armor_Almaz_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Almaz_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Almaz_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Almaz_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Army_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Army_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Army_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Army_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_EMPTY(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Royal_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Royal_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Royal_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Royal_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Steel_2(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Steel_3(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_Armor_Steel_4(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_boots_tabi(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_cape_Archimage(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_cape_BloodyDemon(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_cape_Custom(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins - 0.05f;
+	}
+
+	public static void deActivate_cape_EliteCrafter(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_cape_RoyalKnight(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_cape_SkeletonLord(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_Almaz_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_AlmazHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_ArmyHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_DiamondHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_EMPTY(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_GoldHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_KingsCrown(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins - 0.05f;
+	}
+
+	public static void deActivate_hat_ManiacMask(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_Royal_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_Samurai(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null || Defs.isHunger)
+		{
+			return;
+		}
+		Player_move_c playerMoveC = move;
+		playerMoveC.koofDamageWeaponFromPotoins = playerMoveC.koofDamageWeaponFromPotoins - 0.05f;
+	}
+
+	public static void deActivate_hat_SeriousManHat(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_Steel_1(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivate_hat_SteelHelmet(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivateBoots_black(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivateBoots_blue(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivateBoots_green(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivateBoots_grey(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static void deActivateBoots_red(Player_move_c move, Dictionary<string, object> p)
+	{
+		if (move == null)
+		{
+			return;
+		}
+	}
+
+	public static int GetArmorCountFor(string armorTag, string hatTag)
+	{
+		return (int)(Wear.MaxArmorForItem(armorTag, (int)ExpController.LevelsForTiers.Length - 1) + Wear.MaxArmorForItem(hatTag, (int)ExpController.LevelsForTiers.Length - 1));
+	}
+
+	public static int LeagueForWear(string name, ShopNGUIController.CategoryNames category)
+	{
+		if (name == null)
+		{
+			Debug.LogError("LeagueForWear: name == null");
+			return 0;
+		}
+		ShopPositionParams infoForNonWeaponItem = null;
+		try
+		{
+			infoForNonWeaponItem = ItemDb.GetInfoForNonWeaponItem(name, category);
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("LeagueForWear: Exception: ", exception));
+		}
+		return (infoForNonWeaponItem == null ? 0 : infoForNonWeaponItem.League);
+	}
+
+	public static Dictionary<Wear.LeagueItemState, List<string>> LeagueItems()
+	{
+		Dictionary<Wear.LeagueItemState, List<string>> leagueItemStates = new Dictionary<Wear.LeagueItemState, List<string>>();
+		try
+		{
+			IEnumerable<string> strs = Wear.wear[ShopNGUIController.CategoryNames.HatsCategory].SelectMany<List<string>, string>((List<string> list) => list).Where<string>((string item) => Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory) > 0);
+			leagueItemStates[Wear.LeagueItemState.Open] = (
+				from item in strs
+				where Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory) <= (int)RatingSystem.instance.currentLeague
+				orderby Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory)
+				select item).ToList<string>();
+			leagueItemStates[Wear.LeagueItemState.Closed] = (
+				from item in strs.Except<string>(leagueItemStates[Wear.LeagueItemState.Open])
+				orderby Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory)
+				select item).ToList<string>();
+			leagueItemStates[Wear.LeagueItemState.Purchased] = (
+				from item in strs
+				where Storager.getInt(item, true) > 0
+				orderby Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory)
+				select item).ToList<string>();
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("Exception in UnboughtLeagueItems: ", exception));
+		}
+		return leagueItemStates;
+	}
+
+	public static Dictionary<RatingSystem.RatingLeague, List<string>> LeagueItemsByLeagues()
+	{
+		Dictionary<RatingSystem.RatingLeague, List<string>> ratingLeagues = new Dictionary<RatingSystem.RatingLeague, List<string>>();
+		try
+		{
+			ratingLeagues = Wear.wear[ShopNGUIController.CategoryNames.HatsCategory].SelectMany<List<string>, string>((List<string> list) => list).GroupBy<string, int>((string item) => Wear.LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory)).Where<IGrouping<int, string>>((IGrouping<int, string> grouping) => grouping.Key > 0).ToDictionary<IGrouping<int, string>, RatingSystem.RatingLeague, List<string>>((IGrouping<int, string> grouping) => (RatingSystem.RatingLeague)grouping.Key, (IGrouping<int, string> grouping) => grouping.ToList<string>());
+			ratingLeagues[RatingSystem.RatingLeague.Wood] = new List<string>();
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("Exception in LeagueItemsByLeagues: ", exception));
+		}
+		return ratingLeagues;
+	}
+
+	public static float MaxArmorForItem(string armorName, int roomTier)
+	{
+		float item = 0f;
+		if (armorName == null || !TempItemsController.PriceCoefs.ContainsKey(armorName) || !(ExpController.Instance != null))
+		{
+			int num = Math.Min((ExpController.Instance == null ? (int)ExpController.LevelsForTiers.Length - 1 : ExpController.Instance.OurTier), roomTier);
+			bool flag = false;
+			List<string> strs = null;
+			foreach (List<List<string>> value in Wear.wear.Values)
+			{
+				foreach (List<string> strs1 in value)
+				{
+					if (!strs1.Contains(armorName ?? string.Empty))
+					{
+						continue;
+					}
+					flag = true;
+					strs = strs1;
+					break;
+				}
+				if (!flag)
+				{
+					continue;
+				}
+				break;
+			}
+			if (strs != null)
+			{
+				if (strs.IndexOf(armorName ?? string.Empty) > 3 * (num + 1) - 1)
+				{
+					armorName = strs[3 * (num + 1) - 1];
+				}
+			}
+			Wear.armorNum.TryGetValue(armorName ?? string.Empty, out item);
+		}
+		else if (Wear.armorNumTemp.ContainsKey(armorName) && Wear.armorNumTemp[armorName].Count > ExpController.Instance.OurTier)
+		{
+			item = Wear.armorNumTemp[armorName][Math.Min(roomTier, ExpController.Instance.OurTier)];
+		}
+		item *= EffectsController.IcnreaseEquippedArmorPercentage;
+		return item;
+	}
+
+	public static bool NonArmorHat(string showHatTag)
+	{
+		bool flag;
+		if (showHatTag != null)
+		{
+			if (!Wear.wear[ShopNGUIController.CategoryNames.HatsCategory].SelectMany<List<string>, string>((List<string> list) => list).Contains<string>(showHatTag) || !(showHatTag != "hat_Adamant_3"))
+			{
+				flag = false;
+				return flag;
+			}
+			flag = !Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(showHatTag);
+			return flag;
+		}
+		flag = false;
+		return flag;
 	}
 
 	public static void RemoveTemporaryWear(string item)
@@ -661,1040 +1656,89 @@ public static class Wear
 		}
 	}
 
-	public static string ArmorOrArmorHatAvailableForBuy(ShopNGUIController.CategoryNames category)
+	public static void RenewCurArmor(int roomTier)
 	{
-		//Discarded unreachable code: IL_00b9, IL_00da
-		if (category != ShopNGUIController.CategoryNames.ArmorCategory && category != ShopNGUIController.CategoryNames.HatsCategory)
+		Wear.curArmor.Clear();
+		foreach (string key in Wear.armorNum.Keys)
 		{
-			Debug.LogError("ArmorOrArmorHatAvailableForBuy incorrect category " + category);
-			return string.Empty;
+			Wear.curArmor.Add(key, (!Defs.isHunger ? Wear.MaxArmorForItem(key, roomTier) : 0f));
 		}
-		if (category == ShopNGUIController.CategoryNames.ArmorCategory && ShopNGUIController.NoviceArmorAvailable)
+		foreach (string str in Wear.armorNumTemp.Keys)
 		{
-			return string.Empty;
-		}
-		try
-		{
-			string text = WeaponManager.LastBoughtTag(wear[category][0][0]);
-			string text2 = WeaponManager.FirstUnboughtTag(wear[category][0][0]);
-			if (text != null && text == text2)
-			{
-				return string.Empty;
-			}
-			if (TierForWear(text2) <= ExpController.OurTierForAnyPlace())
-			{
-				return text2;
-			}
-			return string.Empty;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("ArmorOrArmorHatAvailableForBuy Exception: " + ex);
-			return string.Empty;
-		}
-	}
-
-	public static bool NonArmorHat(string showHatTag)
-	{
-		int result;
-		if (showHatTag != null)
-		{
-			List<List<string>> source = wear[ShopNGUIController.CategoryNames.HatsCategory];
-			if (_003C_003Ef__am_0024cache9 == null)
-			{
-				_003C_003Ef__am_0024cache9 = _003CNonArmorHat_003Em__4A5;
-			}
-			if (source.SelectMany(_003C_003Ef__am_0024cache9).Contains(showHatTag) && showHatTag != "hat_Adamant_3")
-			{
-				result = ((!wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(showHatTag)) ? 1 : 0);
-				goto IL_006b;
-			}
-		}
-		result = 0;
-		goto IL_006b;
-		IL_006b:
-		return (byte)result != 0;
-	}
-
-	public static float MaxArmorForItem(string armorName, int roomTier)
-	{
-		float value = 0f;
-		if (armorName != null && TempItemsController.PriceCoefs.ContainsKey(armorName) && ExpController.Instance != null)
-		{
-			if (armorNumTemp.ContainsKey(armorName) && armorNumTemp[armorName].Count > ExpController.Instance.OurTier)
-			{
-				value = armorNumTemp[armorName][Math.Min(roomTier, ExpController.Instance.OurTier)];
-			}
-		}
-		else
-		{
-			int num = Math.Min((!(ExpController.Instance != null)) ? (ExpController.LevelsForTiers.Length - 1) : ExpController.Instance.OurTier, roomTier);
-			bool flag = false;
-			List<string> list = null;
-			foreach (List<List<string>> value2 in wear.Values)
-			{
-				foreach (List<string> item in value2)
-				{
-					if (item.Contains(armorName ?? string.Empty))
-					{
-						flag = true;
-						list = item;
-						break;
-					}
-				}
-				if (flag)
-				{
-					break;
-				}
-			}
-			if (list != null)
-			{
-				int num2 = list.IndexOf(armorName ?? string.Empty);
-				if (num2 > 3 * (num + 1) - 1)
-				{
-					armorName = list[3 * (num + 1) - 1];
-				}
-			}
-			armorNum.TryGetValue(armorName ?? string.Empty, out value);
-		}
-		return value * EffectsController.IcnreaseEquippedArmorPercentage;
-	}
-
-	public static int GetArmorCountFor(string armorTag, string hatTag)
-	{
-		return (int)(MaxArmorForItem(armorTag, ExpController.LevelsForTiers.Length - 1) + MaxArmorForItem(hatTag, ExpController.LevelsForTiers.Length - 1));
-	}
-
-	public static List<string> AllWears(ShopNGUIController.CategoryNames category, bool onlyNonLeagueItems = true)
-	{
-		_003CAllWears_003Ec__AnonStorey319 _003CAllWears_003Ec__AnonStorey = new _003CAllWears_003Ec__AnonStorey319();
-		_003CAllWears_003Ec__AnonStorey.category = category;
-		List<string> list = new List<string>();
-		List<List<string>> source = wear[_003CAllWears_003Ec__AnonStorey.category];
-		if (_003C_003Ef__am_0024cacheA == null)
-		{
-			_003C_003Ef__am_0024cacheA = _003CAllWears_003Em__4A6;
-		}
-		Func<List<string>, IEnumerable<string>> collectionSelector = _003C_003Ef__am_0024cacheA;
-		if (_003C_003Ef__am_0024cacheB == null)
-		{
-			_003C_003Ef__am_0024cacheB = _003CAllWears_003Em__4A7;
-		}
-		list = source.SelectMany(collectionSelector, _003C_003Ef__am_0024cacheB).ToList();
-		if (onlyNonLeagueItems)
-		{
-			try
-			{
-				list = list.Where(_003CAllWears_003Ec__AnonStorey._003C_003Em__4A8).ToList();
-				return list;
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception in AllWears filtering onlyNonLeagueItems: " + ex);
-				return list;
-			}
-		}
-		return list;
-	}
-
-	public static List<string> AllWears(ShopNGUIController.CategoryNames category, int tier, bool includePreviousTiers_UNUSED = false, bool withoutUpgrades = false)
-	{
-		List<int> list = new List<int>();
-		for (int i = 0; i <= tier; i++)
-		{
-			list.Add(i);
-		}
-		List<string> list2 = new List<string>();
-		foreach (string item2 in AllWears(category))
-		{
-			int item = TierForWear(item2);
-			if (list.Contains(item))
-			{
-				list2.Add(item2);
-			}
-		}
-		if (withoutUpgrades)
-		{
-			List<List<string>> source = wear[category];
-			for (int num = list2.Count; num > 0; num--)
-			{
-				_003CAllWears_003Ec__AnonStorey31A _003CAllWears_003Ec__AnonStorey31A = new _003CAllWears_003Ec__AnonStorey31A();
-				_003CAllWears_003Ec__AnonStorey31A.item = list2[num - 1];
-				if (source.All(_003CAllWears_003Ec__AnonStorey31A._003C_003Em__4A9))
-				{
-					list2.Remove(_003CAllWears_003Ec__AnonStorey31A.item);
-				}
-			}
-		}
-		return list2;
-	}
-
-	public static int LeagueForWear(string name, ShopNGUIController.CategoryNames category)
-	{
-		if (name == null)
-		{
-			Debug.LogError("LeagueForWear: name == null");
-			return 0;
-		}
-		ShopPositionParams shopPositionParams = null;
-		try
-		{
-			shopPositionParams = ItemDb.GetInfoForNonWeaponItem(name, category);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("LeagueForWear: Exception: " + ex);
-		}
-		return (shopPositionParams != null) ? shopPositionParams.League : 0;
-	}
-
-	public static Dictionary<RatingSystem.RatingLeague, List<string>> UnboughtLeagueItemsByLeagues()
-	{
-		Dictionary<RatingSystem.RatingLeague, List<string>> dictionary = LeagueItemsByLeagues();
-		try
-		{
-			Dictionary<RatingSystem.RatingLeague, List<string>> source = dictionary;
-			if (_003C_003Ef__am_0024cacheC == null)
-			{
-				_003C_003Ef__am_0024cacheC = _003CUnboughtLeagueItemsByLeagues_003Em__4AA;
-			}
-			Func<KeyValuePair<RatingSystem.RatingLeague, List<string>>, RatingSystem.RatingLeague> keySelector = _003C_003Ef__am_0024cacheC;
-			if (_003C_003Ef__am_0024cacheD == null)
-			{
-				_003C_003Ef__am_0024cacheD = _003CUnboughtLeagueItemsByLeagues_003Em__4AB;
-			}
-			dictionary = source.ToDictionary(keySelector, _003C_003Ef__am_0024cacheD);
-			return dictionary;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in UnboughtLeagueItemsByLeagues: " + ex);
-			return dictionary;
-		}
-	}
-
-	public static Dictionary<RatingSystem.RatingLeague, List<string>> LeagueItemsByLeagues()
-	{
-		Dictionary<RatingSystem.RatingLeague, List<string>> dictionary = new Dictionary<RatingSystem.RatingLeague, List<string>>();
-		try
-		{
-			List<List<string>> source = wear[ShopNGUIController.CategoryNames.HatsCategory];
-			if (_003C_003Ef__am_0024cacheE == null)
-			{
-				_003C_003Ef__am_0024cacheE = _003CLeagueItemsByLeagues_003Em__4AC;
-			}
-			IEnumerable<string> source2 = source.SelectMany(_003C_003Ef__am_0024cacheE);
-			if (_003C_003Ef__am_0024cacheF == null)
-			{
-				_003C_003Ef__am_0024cacheF = _003CLeagueItemsByLeagues_003Em__4AD;
-			}
-			IEnumerable<IGrouping<int, string>> source3 = source2.GroupBy(_003C_003Ef__am_0024cacheF);
-			if (_003C_003Ef__am_0024cache10 == null)
-			{
-				_003C_003Ef__am_0024cache10 = _003CLeagueItemsByLeagues_003Em__4AE;
-			}
-			IEnumerable<IGrouping<int, string>> source4 = source3.Where(_003C_003Ef__am_0024cache10);
-			if (_003C_003Ef__am_0024cache11 == null)
-			{
-				_003C_003Ef__am_0024cache11 = _003CLeagueItemsByLeagues_003Em__4AF;
-			}
-			Func<IGrouping<int, string>, RatingSystem.RatingLeague> keySelector = _003C_003Ef__am_0024cache11;
-			if (_003C_003Ef__am_0024cache12 == null)
-			{
-				_003C_003Ef__am_0024cache12 = _003CLeagueItemsByLeagues_003Em__4B0;
-			}
-			dictionary = source4.ToDictionary(keySelector, _003C_003Ef__am_0024cache12);
-			dictionary[RatingSystem.RatingLeague.Wood] = new List<string>();
-			return dictionary;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in LeagueItemsByLeagues: " + ex);
-			return dictionary;
-		}
-	}
-
-	public static Dictionary<LeagueItemState, List<string>> LeagueItems()
-	{
-		Dictionary<LeagueItemState, List<string>> dictionary = new Dictionary<LeagueItemState, List<string>>();
-		try
-		{
-			List<List<string>> source = wear[ShopNGUIController.CategoryNames.HatsCategory];
-			if (_003C_003Ef__am_0024cache13 == null)
-			{
-				_003C_003Ef__am_0024cache13 = _003CLeagueItems_003Em__4B1;
-			}
-			IEnumerable<string> source2 = source.SelectMany(_003C_003Ef__am_0024cache13);
-			if (_003C_003Ef__am_0024cache14 == null)
-			{
-				_003C_003Ef__am_0024cache14 = _003CLeagueItems_003Em__4B2;
-			}
-			IEnumerable<string> enumerable = source2.Where(_003C_003Ef__am_0024cache14);
-			if (_003C_003Ef__am_0024cache15 == null)
-			{
-				_003C_003Ef__am_0024cache15 = _003CLeagueItems_003Em__4B3;
-			}
-			IEnumerable<string> source3 = enumerable.Where(_003C_003Ef__am_0024cache15);
-			if (_003C_003Ef__am_0024cache16 == null)
-			{
-				_003C_003Ef__am_0024cache16 = _003CLeagueItems_003Em__4B4;
-			}
-			dictionary[LeagueItemState.Open] = source3.OrderBy(_003C_003Ef__am_0024cache16).ToList();
-			IEnumerable<string> source4 = enumerable.Except(dictionary[LeagueItemState.Open]);
-			if (_003C_003Ef__am_0024cache17 == null)
-			{
-				_003C_003Ef__am_0024cache17 = _003CLeagueItems_003Em__4B5;
-			}
-			dictionary[LeagueItemState.Closed] = source4.OrderBy(_003C_003Ef__am_0024cache17).ToList();
-			if (_003C_003Ef__am_0024cache18 == null)
-			{
-				_003C_003Ef__am_0024cache18 = _003CLeagueItems_003Em__4B6;
-			}
-			IEnumerable<string> source5 = enumerable.Where(_003C_003Ef__am_0024cache18);
-			if (_003C_003Ef__am_0024cache19 == null)
-			{
-				_003C_003Ef__am_0024cache19 = _003CLeagueItems_003Em__4B7;
-			}
-			dictionary[LeagueItemState.Purchased] = source5.OrderBy(_003C_003Ef__am_0024cache19).ToList();
-			return dictionary;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in UnboughtLeagueItems: " + ex);
-			return dictionary;
+			Wear.curArmor.Add(str, (!Defs.isHunger ? Wear.MaxArmorForItem(str, roomTier) : 0f));
 		}
 	}
 
 	public static int TierForWear(string w)
 	{
+		int num;
 		if (w == null)
 		{
 			return 0;
 		}
-		if (wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(w))
+		if (Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(w))
 		{
-			return wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(w) / 3;
+			return Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(w) / 3;
 		}
-		if (wear[ShopNGUIController.CategoryNames.ArmorCategory][0].Contains(w))
+		if (Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].Contains(w))
 		{
-			return wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(w) / 3;
+			return Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(w) / 3;
 		}
-		foreach (KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> item in wear)
+		Dictionary<ShopNGUIController.CategoryNames, List<List<string>>>.Enumerator enumerator = Wear.wear.GetEnumerator();
+		try
 		{
-			foreach (List<string> item2 in item.Value)
+			while (enumerator.MoveNext())
 			{
-				if (item2.Contains(w))
+				KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> current = enumerator.Current;
+				List<List<string>>.Enumerator enumerator1 = current.Value.GetEnumerator();
+				try
 				{
-					return (item.Key != ShopNGUIController.CategoryNames.MaskCategory) ? item2.IndexOf(w) : (item2.IndexOf(w) * 2);
+					while (enumerator1.MoveNext())
+					{
+						List<string> strs = enumerator1.Current;
+						if (!strs.Contains(w))
+						{
+							continue;
+						}
+						num = (current.Key != ShopNGUIController.CategoryNames.MaskCategory ? strs.IndexOf(w) : strs.IndexOf(w) * 2);
+						return num;
+					}
+				}
+				finally
+				{
+					((IDisposable)(object)enumerator1).Dispose();
 				}
 			}
+			return 0;
 		}
-		return 0;
-	}
-
-	public static void ActivateBoots_red(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivateBoots_red(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_boots_tabi(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_boots_tabi(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void ActivateBoots_grey(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivateBoots_grey(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void ActivateBoots_blue(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivateBoots_blue(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void ActivateBoots_green(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivateBoots_green(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void ActivateBoots_black(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivateBoots_black(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_BloodyDemon(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_cape_BloodyDemon(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_RoyalKnight(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_cape_RoyalKnight(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_SkeletonLord(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_cape_SkeletonLord(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_Archimage(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_cape_Archimage(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_EliteCrafter(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_cape_EliteCrafter(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_cape_Custom(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins += 0.05f;
-		}
-	}
-
-	public static void deActivate_cape_Custom(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins -= 0.05f;
-		}
-	}
-
-	public static void Activate_hat_EMPTY(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_EMPTY(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_ManiacMask(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_ManiacMask(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_KingsCrown(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins += 0.05f;
-		}
-	}
-
-	public static void deActivate_hat_KingsCrown(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins -= 0.05f;
-		}
-	}
-
-	public static void Activate_hat_Samurai(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins += 0.05f;
-		}
-	}
-
-	public static void deActivate_hat_Samurai(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null) && !Defs.isHunger)
-		{
-			move.koofDamageWeaponFromPotoins -= 0.05f;
-		}
-	}
-
-	public static void Activate_hat_DiamondHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_DiamondHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_SeriousManHat(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_SeriousManHat(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_EMPTY(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_EMPTY(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Steel_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Steel_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Steel_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Steel_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Steel_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Steel_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Royal_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Royal_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Royal_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Royal_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Royal_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Royal_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Royal_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Royal_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Almaz_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Almaz_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Almaz_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Almaz_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Almaz_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Almaz_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Almaz_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Almaz_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Army_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Army_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Army_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Army_2(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Army_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Army_3(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_Armor_Army_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_Armor_Army_4(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_SteelHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_SteelHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_GoldHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_GoldHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_ArmyHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_ArmyHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_AlmazHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_AlmazHelmet(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_Steel_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_Steel_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_Royal_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void deActivate_hat_Royal_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
-		{
-		}
-	}
-
-	public static void Activate_hat_Almaz_1(Player_move_c move, Dictionary<string, object> p)
-	{
-		if (!(move == null))
+		finally
 		{
+			((IDisposable)(object)enumerator).Dispose();
 		}
+		return num;
 	}
 
-	public static void deActivate_hat_Almaz_1(Player_move_c move, Dictionary<string, object> p)
+	public static Dictionary<RatingSystem.RatingLeague, List<string>> UnboughtLeagueItemsByLeagues()
 	{
-		if (!(move == null))
+		Dictionary<RatingSystem.RatingLeague, List<string>> dictionary = Wear.LeagueItemsByLeagues();
+		try
 		{
+			dictionary = dictionary.ToDictionary<KeyValuePair<RatingSystem.RatingLeague, List<string>>, RatingSystem.RatingLeague, List<string>>((KeyValuePair<RatingSystem.RatingLeague, List<string>> kvp) => kvp.Key, (KeyValuePair<RatingSystem.RatingLeague, List<string>> kvp) => (
+				from item in kvp.Value
+				where Storager.getInt(item, true) == 0
+				select item).ToList<string>());
 		}
-	}
-
-	public static void RenewCurArmor(int roomTier)
-	{
-		curArmor.Clear();
-		foreach (string key in armorNum.Keys)
-		{
-			curArmor.Add(key, (!Defs.isHunger) ? MaxArmorForItem(key, roomTier) : 0f);
-		}
-		foreach (string key2 in armorNumTemp.Keys)
-		{
-			curArmor.Add(key2, (!Defs.isHunger) ? MaxArmorForItem(key2, roomTier) : 0f);
-		}
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CNonArmorHat_003Em__4A5(List<string> list)
-	{
-		return list;
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CAllWears_003Em__4A6(List<string> l)
-	{
-		return l;
-	}
-
-	[CompilerGenerated]
-	private static string _003CAllWears_003Em__4A7(List<string> l, string i)
-	{
-		return i;
-	}
-
-	[CompilerGenerated]
-	private static RatingSystem.RatingLeague _003CUnboughtLeagueItemsByLeagues_003Em__4AA(KeyValuePair<RatingSystem.RatingLeague, List<string>> kvp)
-	{
-		return kvp.Key;
-	}
-
-	[CompilerGenerated]
-	private static List<string> _003CUnboughtLeagueItemsByLeagues_003Em__4AB(KeyValuePair<RatingSystem.RatingLeague, List<string>> kvp)
-	{
-		List<string> value = kvp.Value;
-		if (_003C_003Ef__am_0024cache1A == null)
+		catch (Exception exception)
 		{
-			_003C_003Ef__am_0024cache1A = _003CUnboughtLeagueItemsByLeagues_003Em__4B8;
+			Debug.LogError(string.Concat("Exception in UnboughtLeagueItemsByLeagues: ", exception));
 		}
-		return value.Where(_003C_003Ef__am_0024cache1A).ToList();
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CLeagueItemsByLeagues_003Em__4AC(List<string> list)
-	{
-		return list;
-	}
-
-	[CompilerGenerated]
-	private static int _003CLeagueItemsByLeagues_003Em__4AD(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CLeagueItemsByLeagues_003Em__4AE(IGrouping<int, string> grouping)
-	{
-		return grouping.Key > 0;
-	}
-
-	[CompilerGenerated]
-	private static RatingSystem.RatingLeague _003CLeagueItemsByLeagues_003Em__4AF(IGrouping<int, string> grouping)
-	{
-		return (RatingSystem.RatingLeague)grouping.Key;
-	}
-
-	[CompilerGenerated]
-	private static List<string> _003CLeagueItemsByLeagues_003Em__4B0(IGrouping<int, string> grouping)
-	{
-		return grouping.ToList();
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<string> _003CLeagueItems_003Em__4B1(List<string> list)
-	{
-		return list;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CLeagueItems_003Em__4B2(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory) > 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CLeagueItems_003Em__4B3(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory) <= (int)RatingSystem.instance.currentLeague;
-	}
-
-	[CompilerGenerated]
-	private static int _003CLeagueItems_003Em__4B4(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory);
-	}
-
-	[CompilerGenerated]
-	private static int _003CLeagueItems_003Em__4B5(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CLeagueItems_003Em__4B6(string item)
-	{
-		return Storager.getInt(item, true) > 0;
-	}
-
-	[CompilerGenerated]
-	private static int _003CLeagueItems_003Em__4B7(string item)
-	{
-		return LeagueForWear(item, ShopNGUIController.CategoryNames.HatsCategory);
+		return dictionary;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CUnboughtLeagueItemsByLeagues_003Em__4B8(string item)
+	public enum LeagueItemState
 	{
-		return Storager.getInt(item, true) == 0;
+		Open,
+		Closed,
+		Purchased
 	}
 }

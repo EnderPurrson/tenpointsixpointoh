@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InnerWeaponPars : MonoBehaviour
@@ -36,41 +37,45 @@ public class InnerWeaponPars : MonoBehaviour
 
 	private SkinnedMeshRenderer renderArms;
 
+	public InnerWeaponPars()
+	{
+	}
+
 	private void Awake()
 	{
-		FindArms();
+		this.FindArms();
 	}
 
 	private void FindArms()
 	{
-		if (renderArms != null)
+		if (this.renderArms != null)
 		{
 			return;
 		}
-		SkinnedMeshRenderer[] componentsInChildren = GetComponentsInChildren<SkinnedMeshRenderer>(true);
-		if (componentsInChildren == null)
+		SkinnedMeshRenderer[] componentsInChildren = base.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+		if (componentsInChildren != null)
 		{
-			return;
-		}
-		foreach (SkinnedMeshRenderer skinnedMeshRenderer in componentsInChildren)
-		{
-			if (skinnedMeshRenderer != null && skinnedMeshRenderer.gameObject != bonusPrefab)
+			for (int i = 0; i < (int)componentsInChildren.Length; i++)
 			{
-				renderArms = skinnedMeshRenderer;
-				break;
+				SkinnedMeshRenderer skinnedMeshRenderer = componentsInChildren[i];
+				if (skinnedMeshRenderer != null && skinnedMeshRenderer.gameObject != this.bonusPrefab)
+				{
+					this.renderArms = skinnedMeshRenderer;
+					return;
+				}
 			}
 		}
 	}
 
 	public void SetMaterialForArms(Material shMat)
 	{
-		if (renderArms == null)
+		if (this.renderArms == null)
 		{
-			FindArms();
+			this.FindArms();
 		}
-		if (renderArms != null)
+		if (this.renderArms != null)
 		{
-			renderArms.sharedMaterial = shMat;
+			this.renderArms.sharedMaterial = shMat;
 		}
 	}
 }

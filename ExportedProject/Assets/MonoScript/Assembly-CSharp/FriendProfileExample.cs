@@ -1,27 +1,32 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class FriendProfileExample : MonoBehaviour
 {
 	public FriendProfileView friendProfileView;
 
+	public FriendProfileExample()
+	{
+	}
+
 	private void Start()
 	{
-		if (friendProfileView != null)
+		if (this.friendProfileView != null)
 		{
-			friendProfileView.Reset();
-			friendProfileView.IsCanConnectToFriend = true;
-			friendProfileView.FriendLocation = "Deathmatch/Bridge";
-			friendProfileView.FriendCount = 42;
-			friendProfileView.FriendName = "Дуэйн «Rock» Джонсон";
-			friendProfileView.Online = OnlineState.playing;
-			friendProfileView.Rank = 4;
-			friendProfileView.SurvivalScore = 4376;
-			friendProfileView.Username = "John Doe";
-			friendProfileView.WinCount = 13;
-			friendProfileView.SetBoots("boots_blue");
-			friendProfileView.SetHat("hat_KingsCrown");
-			friendProfileView.SetStockCape("cape_BloodyDemon");
+			this.friendProfileView.Reset();
+			this.friendProfileView.IsCanConnectToFriend = true;
+			this.friendProfileView.FriendLocation = "Deathmatch/Bridge";
+			this.friendProfileView.FriendCount = 42;
+			this.friendProfileView.FriendName = "Дуэйн «Rock» Джонсон";
+			this.friendProfileView.Online = OnlineState.playing;
+			this.friendProfileView.Rank = 4;
+			this.friendProfileView.SurvivalScore = 4376;
+			this.friendProfileView.Username = "John Doe";
+			this.friendProfileView.WinCount = 13;
+			this.friendProfileView.SetBoots("boots_blue");
+			this.friendProfileView.SetHat("hat_KingsCrown");
+			this.friendProfileView.SetStockCape("cape_BloodyDemon");
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -9,37 +10,41 @@ namespace Rilisoft
 
 		private IDisposable _escapeSubscription;
 
-		public string Context { get; set; }
+		public string Context
+		{
+			get;
+			set;
+		}
 
 		public DialogEscape()
 		{
-			_buttonHandler = new Lazy<ButtonHandler>(base.GetComponent<ButtonHandler>);
-		}
-
-		private void OnEnable()
-		{
-			if (_escapeSubscription != null)
-			{
-				_escapeSubscription.Dispose();
-			}
-			_escapeSubscription = BackSystem.Instance.Register(HandleEscape, Context ?? "Dialog");
-		}
-
-		private void OnDisable()
-		{
-			if (_escapeSubscription != null)
-			{
-				_escapeSubscription.Dispose();
-				_escapeSubscription = null;
-			}
+			this._buttonHandler = new Lazy<ButtonHandler>(new Func<ButtonHandler>(this.GetComponent<ButtonHandler>));
 		}
 
 		private void HandleEscape()
 		{
-			if (_buttonHandler.Value != null)
+			if (this._buttonHandler.Value != null)
 			{
-				_buttonHandler.Value.DoClick();
+				this._buttonHandler.Value.DoClick();
 			}
+		}
+
+		private void OnDisable()
+		{
+			if (this._escapeSubscription != null)
+			{
+				this._escapeSubscription.Dispose();
+				this._escapeSubscription = null;
+			}
+		}
+
+		private void OnEnable()
+		{
+			if (this._escapeSubscription != null)
+			{
+				this._escapeSubscription.Dispose();
+			}
+			this._escapeSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), this.Context ?? "Dialog");
 		}
 	}
 }

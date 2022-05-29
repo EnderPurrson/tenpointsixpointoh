@@ -1,4 +1,6 @@
 using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class InRoomRoundTimer : MonoBehaviour
@@ -13,36 +15,35 @@ public class InRoomRoundTimer : MonoBehaviour
 
 	private bool startRoundWhenTimeIsSynced;
 
-	private void StartRoundNow()
+	public InRoomRoundTimer()
 	{
-		if (PhotonNetwork.time < 9.999999747378752E-05)
+	}
+
+	public void OnGUI()
+	{
+		double startTime = PhotonNetwork.time - this.StartTime;
+		double secondsPerTurn = (double)this.SecondsPerTurn - startTime % (double)this.SecondsPerTurn;
+		int num = (int)(startTime / (double)this.SecondsPerTurn);
+		GUILayout.BeginArea(this.TextPos);
+		GUILayout.Label(string.Format("elapsed: {0:0.000}", startTime), new GUILayoutOption[0]);
+		GUILayout.Label(string.Format("remaining: {0:0.000}", secondsPerTurn), new GUILayoutOption[0]);
+		GUILayout.Label(string.Format("turn: {0:0}", num), new GUILayoutOption[0]);
+		if (GUILayout.Button("new round", new GUILayoutOption[0]))
 		{
-			startRoundWhenTimeIsSynced = true;
-			return;
+			this.StartRoundNow();
 		}
-		startRoundWhenTimeIsSynced = false;
-		Hashtable hashtable = new Hashtable();
-		hashtable["st"] = PhotonNetwork.time;
-		PhotonNetwork.room.SetCustomProperties(hashtable);
+		GUILayout.EndArea();
 	}
 
 	public void OnJoinedRoom()
 	{
-		if (PhotonNetwork.isMasterClient)
+		if (!PhotonNetwork.isMasterClient)
 		{
-			StartRoundNow();
+			Debug.Log(string.Concat("StartTime already set: ", PhotonNetwork.room.customProperties.ContainsKey("st")));
 		}
 		else
 		{
-			Debug.Log("StartTime already set: " + PhotonNetwork.room.customProperties.ContainsKey("st"));
-		}
-	}
-
-	public void OnPhotonCustomRoomPropertiesChanged(Hashtable propertiesThatChanged)
-	{
-		if (propertiesThatChanged.ContainsKey("st"))
-		{
-			StartTime = (double)propertiesThatChanged["st"];
+			this.StartRoundNow();
 		}
 	}
 
@@ -51,31 +52,36 @@ public class InRoomRoundTimer : MonoBehaviour
 		if (!PhotonNetwork.room.customProperties.ContainsKey("st"))
 		{
 			Debug.Log("The new master starts a new round, cause we didn't start yet.");
-			StartRoundNow();
+			this.StartRoundNow();
 		}
+	}
+
+	public void OnPhotonCustomRoomPropertiesChanged(Hashtable propertiesThatChanged)
+	{
+		if (propertiesThatChanged.ContainsKey("st"))
+		{
+			this.StartTime = (double)propertiesThatChanged["st"];
+		}
+	}
+
+	private void StartRoundNow()
+	{
+		if (PhotonNetwork.time < 9.999999747378752E-05)
+		{
+			this.startRoundWhenTimeIsSynced = true;
+			return;
+		}
+		this.startRoundWhenTimeIsSynced = false;
+		Hashtable hashtable = new Hashtable();
+		hashtable["st"] = PhotonNetwork.time;
+		PhotonNetwork.room.SetCustomProperties(hashtable, null, false);
 	}
 
 	private void Update()
 	{
-		if (startRoundWhenTimeIsSynced)
+		if (this.startRoundWhenTimeIsSynced)
 		{
-			StartRoundNow();
+			this.StartRoundNow();
 		}
-	}
-
-	public void OnGUI()
-	{
-		double num = PhotonNetwork.time - StartTime;
-		double num2 = (double)SecondsPerTurn - num % (double)SecondsPerTurn;
-		int num3 = (int)(num / (double)SecondsPerTurn);
-		GUILayout.BeginArea(TextPos);
-		GUILayout.Label(string.Format("elapsed: {0:0.000}", num));
-		GUILayout.Label(string.Format("remaining: {0:0.000}", num2));
-		GUILayout.Label(string.Format("turn: {0:0}", num3));
-		if (GUILayout.Button("new round"))
-		{
-			StartRoundNow();
-		}
-		GUILayout.EndArea();
 	}
 }

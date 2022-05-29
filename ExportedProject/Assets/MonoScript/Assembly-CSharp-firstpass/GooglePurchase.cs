@@ -1,90 +1,132 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public class GooglePurchase
 {
-	public enum GooglePurchaseState
+	public string developerPayload
 	{
-		Purchased = 0,
-		Canceled = 1,
-		Refunded = 2
+		get;
+		private set;
 	}
 
-	public string packageName { get; private set; }
+	public string orderId
+	{
+		get;
+		private set;
+	}
 
-	public string orderId { get; private set; }
+	public string originalJson
+	{
+		get;
+		private set;
+	}
 
-	public string productId { get; private set; }
+	public string packageName
+	{
+		get;
+		private set;
+	}
 
-	public string developerPayload { get; private set; }
+	public string productId
+	{
+		get;
+		private set;
+	}
 
-	public string type { get; private set; }
+	public GooglePurchase.GooglePurchaseState purchaseState
+	{
+		get;
+		private set;
+	}
 
-	public long purchaseTime { get; private set; }
+	public long purchaseTime
+	{
+		get;
+		private set;
+	}
 
-	public GooglePurchaseState purchaseState { get; private set; }
+	public string purchaseToken
+	{
+		get;
+		private set;
+	}
 
-	public string purchaseToken { get; private set; }
+	public string signature
+	{
+		get;
+		private set;
+	}
 
-	public string signature { get; private set; }
-
-	public string originalJson { get; private set; }
+	public string type
+	{
+		get;
+		private set;
+	}
 
 	public GooglePurchase(Dictionary<string, object> dict)
 	{
 		if (dict.ContainsKey("packageName"))
 		{
-			packageName = dict["packageName"].ToString();
+			this.packageName = dict["packageName"].ToString();
 		}
 		if (dict.ContainsKey("orderId"))
 		{
-			orderId = dict["orderId"].ToString();
+			this.orderId = dict["orderId"].ToString();
 		}
 		if (dict.ContainsKey("productId"))
 		{
-			productId = dict["productId"].ToString();
+			this.productId = dict["productId"].ToString();
 		}
 		if (dict.ContainsKey("developerPayload"))
 		{
-			developerPayload = dict["developerPayload"].ToString();
+			this.developerPayload = dict["developerPayload"].ToString();
 		}
 		if (dict.ContainsKey("type"))
 		{
-			type = dict["type"] as string;
+			this.type = dict["type"] as string;
 		}
 		if (dict.ContainsKey("purchaseTime"))
 		{
-			purchaseTime = long.Parse(dict["purchaseTime"].ToString());
+			this.purchaseTime = long.Parse(dict["purchaseTime"].ToString());
 		}
 		if (dict.ContainsKey("purchaseState"))
 		{
-			purchaseState = (GooglePurchaseState)int.Parse(dict["purchaseState"].ToString());
+			this.purchaseState = (GooglePurchase.GooglePurchaseState)int.Parse(dict["purchaseState"].ToString());
 		}
 		if (dict.ContainsKey("purchaseToken"))
 		{
-			purchaseToken = dict["purchaseToken"].ToString();
+			this.purchaseToken = dict["purchaseToken"].ToString();
 		}
 		if (dict.ContainsKey("signature"))
 		{
-			signature = dict["signature"].ToString();
+			this.signature = dict["signature"].ToString();
 		}
 		if (dict.ContainsKey("originalJson"))
 		{
-			originalJson = dict["originalJson"].ToString();
+			this.originalJson = dict["originalJson"].ToString();
 		}
 	}
 
 	public static List<GooglePurchase> fromList(List<object> items)
 	{
-		List<GooglePurchase> list = new List<GooglePurchase>();
+		List<GooglePurchase> googlePurchases = new List<GooglePurchase>();
 		foreach (Dictionary<string, object> item in items)
 		{
-			list.Add(new GooglePurchase(item));
+			googlePurchases.Add(new GooglePurchase(item));
 		}
-		return list;
+		return googlePurchases;
 	}
 
 	public override string ToString()
 	{
-		return string.Format("<GooglePurchase> packageName: {0}, orderId: {1}, productId: {2}, developerPayload: {3}, purchaseToken: {4}, purchaseState: {5}, signature: {6}, type: {7}, json: {8}", packageName, orderId, productId, developerPayload, purchaseToken, purchaseState, signature, type, originalJson);
+		return string.Format("<GooglePurchase> packageName: {0}, orderId: {1}, productId: {2}, developerPayload: {3}, purchaseToken: {4}, purchaseState: {5}, signature: {6}, type: {7}, json: {8}", new object[] { this.packageName, this.orderId, this.productId, this.developerPayload, this.purchaseToken, this.purchaseState, this.signature, this.type, this.originalJson });
+	}
+
+	public enum GooglePurchaseState
+	{
+		Purchased,
+		Canceled,
+		Refunded
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DaterHockeyController : MonoBehaviour
@@ -32,38 +33,98 @@ public class DaterHockeyController : MonoBehaviour
 
 	private bool isMine;
 
+	public DaterHockeyController()
+	{
+	}
+
+	private void AddForce(Vector3 _force)
+	{
+		if (!Defs.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("AddForceRPC", RPCMode.Server, new object[] { _force });
+			this.AddForceRPC(_force);
+		}
+		else
+		{
+			this.photonView.RPC("AddForceRPC", PhotonTargets.All, new object[] { _force });
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void AddForceRPC(Vector3 _force)
+	{
+		base.GetComponent<Rigidbody>().AddForce(_force);
+	}
+
 	private void Awake()
 	{
-		photonView = GetComponent<PhotonView>();
-		thisRigidbody = GetComponent<Rigidbody>();
-		thisTransform = base.transform;
-		resetPositionPoint = thisTransform.position;
+		this.photonView = base.GetComponent<PhotonView>();
+		this.thisRigidbody = base.GetComponent<Rigidbody>();
+		this.thisTransform = base.transform;
+		this.resetPositionPoint = this.thisTransform.position;
 	}
 
-	private void Start()
+	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		isMine = !Defs.isMulti || (!Defs.isInet && GetComponent<NetworkView>().isMine) || (Defs.isInet && photonView.isMine);
-	}
-
-	private void Update()
-	{
-		if (isForceMyPlayer && WeaponManager.sharedManager.myPlayer == null)
+		if (!stream.isWriting)
 		{
-			isForceMyPlayer = false;
-		}
-		if (isForceMyPlayer)
-		{
-			timerToSendForce -= Time.deltaTime;
-			if (timerToSendForce < 0f)
+			this.synchPos = (Vector3)stream.ReceiveNext();
+			this.synchRot = (Quaternion)stream.ReceiveNext();
+			this.thisRigidbody.velocity = (Vector3)stream.ReceiveNext();
+			this.thisRigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
+			this.isResetPosition = (bool)stream.ReceiveNext();
+			if (this.isFirstSynhPos)
 			{
-				timerToSendForce = timeSendForce;
-				AddForce(Vector3.Normalize(thisTransform.position - WeaponManager.sharedManager.myPlayerMoveC.myPlayerTransform.position) * coefForce);
+				this.thisTransform.position = this.synchPos;
+				this.thisTransform.rotation = this.synchRot;
+				this.isFirstSynhPos = false;
+				this.isResetPosition = false;
 			}
 		}
-		if (!isMine)
+		else
 		{
-			thisTransform.position = Vector3.Lerp(thisTransform.position, synchPos, Time.deltaTime * 5f);
-			thisTransform.rotation = Quaternion.Lerp(thisTransform.rotation, synchRot, Time.deltaTime * 5f);
+			stream.SendNext(this.thisTransform.position);
+			stream.SendNext(this.thisTransform.rotation);
+			stream.SendNext(this.thisRigidbody.velocity);
+			stream.SendNext(this.thisRigidbody.angularVelocity);
+			stream.SendNext(this.isResetPosition);
+		}
+	}
+
+	private void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
+	{
+		if (!stream.isWriting)
+		{
+			Vector3 vector3 = Vector3.zero;
+			Quaternion quaternion = Quaternion.identity;
+			bool flag = false;
+			stream.Serialize(ref vector3);
+			stream.Serialize(ref quaternion);
+			stream.Serialize(ref flag);
+			this.synchPos = vector3;
+			this.synchRot = quaternion;
+			this.isResetPosition = flag;
+			if (this.isFirstSynhPos || this.isResetPosition)
+			{
+				this.thisTransform.position = this.synchPos;
+				this.thisTransform.rotation = this.synchRot;
+				this.isFirstSynhPos = false;
+				this.isResetPosition = false;
+			}
+		}
+		else
+		{
+			Vector3 vector31 = this.thisTransform.position;
+			Quaternion quaternion1 = this.thisTransform.rotation;
+			stream.Serialize(ref vector31);
+			stream.Serialize(ref quaternion1);
+			bool flag1 = this.isResetPosition;
+			stream.Serialize(ref flag1);
+			if (this.isResetPosition)
+			{
+				this.isResetPosition = false;
+			}
 		}
 	}
 
@@ -71,16 +132,16 @@ public class DaterHockeyController : MonoBehaviour
 	{
 		if (WeaponManager.sharedManager.myPlayerMoveC != null && collider.gameObject.transform.parent != null && collider.gameObject.transform.parent.Equals(WeaponManager.sharedManager.myPlayerMoveC.myPlayerTransform))
 		{
-			isForceMyPlayer = true;
+			this.isForceMyPlayer = true;
 			return;
 		}
-		if (isMine && collider.gameObject.name.Equals("Gates1"))
+		if (this.isMine && collider.gameObject.name.Equals("Gates1"))
 		{
-			ResetPosition();
+			this.ResetPosition();
 		}
-		if (isMine && collider.gameObject.name.Equals("Gates2"))
+		if (this.isMine && collider.gameObject.name.Equals("Gates2"))
 		{
-			ResetPosition();
+			this.ResetPosition();
 		}
 	}
 
@@ -88,98 +149,55 @@ public class DaterHockeyController : MonoBehaviour
 	{
 		if (WeaponManager.sharedManager.myPlayerMoveC != null && collider.gameObject.transform.parent != null && collider.gameObject.transform.parent.Equals(WeaponManager.sharedManager.myPlayerMoveC.myPlayerTransform))
 		{
-			isForceMyPlayer = false;
+			this.isForceMyPlayer = false;
 		}
-		if (isMine && collider.gameObject.name.Equals("Stadium"))
+		if (this.isMine && collider.gameObject.name.Equals("Stadium"))
 		{
-			ResetPosition();
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void AddForceRPC(Vector3 _force)
-	{
-		GetComponent<Rigidbody>().AddForce(_force);
-	}
-
-	private void AddForce(Vector3 _force)
-	{
-		if (Defs.isInet)
-		{
-			photonView.RPC("AddForceRPC", PhotonTargets.All, _force);
-		}
-		else
-		{
-			GetComponent<NetworkView>().RPC("AddForceRPC", RPCMode.Server, _force);
-			AddForceRPC(_force);
+			this.ResetPosition();
 		}
 	}
 
 	private void ResetPosition()
 	{
-		thisTransform.position = resetPositionPoint;
-		thisRigidbody.velocity = Vector3.zero;
-		thisRigidbody.angularVelocity = Vector3.zero;
-		isResetPosition = true;
+		this.thisTransform.position = this.resetPositionPoint;
+		this.thisRigidbody.velocity = Vector3.zero;
+		this.thisRigidbody.angularVelocity = Vector3.zero;
+		this.isResetPosition = true;
 	}
 
-	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	private void Start()
 	{
-		if (stream.isWriting)
+		bool flag;
+		if (!Defs.isMulti || !Defs.isInet && base.GetComponent<NetworkView>().isMine)
 		{
-			stream.SendNext(thisTransform.position);
-			stream.SendNext(thisTransform.rotation);
-			stream.SendNext(thisRigidbody.velocity);
-			stream.SendNext(thisRigidbody.angularVelocity);
-			stream.SendNext(isResetPosition);
-			return;
+			flag = true;
 		}
-		synchPos = (Vector3)stream.ReceiveNext();
-		synchRot = (Quaternion)stream.ReceiveNext();
-		thisRigidbody.velocity = (Vector3)stream.ReceiveNext();
-		thisRigidbody.angularVelocity = (Vector3)stream.ReceiveNext();
-		isResetPosition = (bool)stream.ReceiveNext();
-		if (isFirstSynhPos)
+		else
 		{
-			thisTransform.position = synchPos;
-			thisTransform.rotation = synchRot;
-			isFirstSynhPos = false;
-			isResetPosition = false;
+			flag = (!Defs.isInet ? false : this.photonView.isMine);
 		}
+		this.isMine = flag;
 	}
 
-	private void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
+	private void Update()
 	{
-		if (stream.isWriting)
+		if (this.isForceMyPlayer && WeaponManager.sharedManager.myPlayer == null)
 		{
-			Vector3 value = thisTransform.position;
-			Quaternion value2 = thisTransform.rotation;
-			stream.Serialize(ref value);
-			stream.Serialize(ref value2);
-			bool value3 = isResetPosition;
-			stream.Serialize(ref value3);
-			if (isResetPosition)
+			this.isForceMyPlayer = false;
+		}
+		if (this.isForceMyPlayer)
+		{
+			this.timerToSendForce -= Time.deltaTime;
+			if (this.timerToSendForce < 0f)
 			{
-				isResetPosition = false;
+				this.timerToSendForce = this.timeSendForce;
+				this.AddForce(Vector3.Normalize(this.thisTransform.position - WeaponManager.sharedManager.myPlayerMoveC.myPlayerTransform.position) * this.coefForce);
 			}
-			return;
 		}
-		Vector3 value4 = Vector3.zero;
-		Quaternion value5 = Quaternion.identity;
-		bool value6 = false;
-		stream.Serialize(ref value4);
-		stream.Serialize(ref value5);
-		stream.Serialize(ref value6);
-		synchPos = value4;
-		synchRot = value5;
-		isResetPosition = value6;
-		if (isFirstSynhPos || isResetPosition)
+		if (!this.isMine)
 		{
-			thisTransform.position = synchPos;
-			thisTransform.rotation = synchRot;
-			isFirstSynhPos = false;
-			isResetPosition = false;
+			this.thisTransform.position = Vector3.Lerp(this.thisTransform.position, this.synchPos, Time.deltaTime * 5f);
+			this.thisTransform.rotation = Quaternion.Lerp(this.thisTransform.rotation, this.synchRot, Time.deltaTime * 5f);
 		}
 	}
 }

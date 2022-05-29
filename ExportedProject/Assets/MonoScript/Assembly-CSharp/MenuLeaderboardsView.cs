@@ -1,20 +1,14 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class MenuLeaderboardsView : MonoBehaviour
 {
-	public enum State
-	{
-		Friends = 0,
-		BestPlayers = 1,
-		Clans = 2
-	}
-
 	public UIGrid friendsGrid;
 
 	public UIGrid bestPlayersGrid;
@@ -55,58 +49,88 @@ internal sealed class MenuLeaderboardsView : MonoBehaviour
 
 	public GameObject opened;
 
-	private State _currentState;
+	private MenuLeaderboardsView.State _currentState;
 
 	private Vector3 _desiredPosition = Vector3.zero;
 
 	private Vector3 _outOfScreenPosition = Vector3.zero;
 
-	[CompilerGenerated]
-	private static Func<UIButton, bool> _003C_003Ef__am_0024cache17;
+	public IList<LeaderboardItemViewModel> BestPlayersList
+	{
+		set
+		{
+			base.StartCoroutine(MenuLeaderboardsView.SetGrid(this.bestPlayersGrid, value, this.temporaryBackground));
+			if (this.bestPlayersDefaultSprite != null)
+			{
+				this.bestPlayersDefaultSprite.gameObject.SetActive(false);
+				UnityEngine.Object.Destroy(this.bestPlayersDefaultSprite);
+				this.bestPlayersDefaultSprite = null;
+			}
+		}
+	}
 
-	[CompilerGenerated]
-	private static Func<UIScrollView, bool> _003C_003Ef__am_0024cache18;
+	public IList<LeaderboardItemViewModel> ClansList
+	{
+		set
+		{
+			base.StartCoroutine(MenuLeaderboardsView.SetGrid(this.clansGrid, value, this.temporaryBackground));
+			if (this.clansDefaultSprite != null)
+			{
+				this.clansDefaultSprite.gameObject.SetActive(false);
+				UnityEngine.Object.Destroy(this.clansDefaultSprite);
+				this.clansDefaultSprite = null;
+			}
+		}
+	}
 
-	public State CurrentState
+	public MenuLeaderboardsView.State CurrentState
 	{
 		get
 		{
-			return _currentState;
+			return this._currentState;
 		}
 		set
 		{
-			friendsButton.isEnabled = value != State.Friends;
-			Transform transform = friendsButton.transform.FindChild("IdleLabel");
-			Transform transform2 = friendsButton.transform.FindChild("ActiveLabel");
-			if (transform != null && (bool)transform2)
+			this.friendsButton.isEnabled = value != MenuLeaderboardsView.State.Friends;
+			Transform transforms = this.friendsButton.transform.FindChild("IdleLabel");
+			Transform transforms1 = this.friendsButton.transform.FindChild("ActiveLabel");
+			if (transforms != null && transforms1)
 			{
-				transform.gameObject.SetActive(value != State.Friends);
-				transform2.gameObject.SetActive(value == State.Friends);
+				transforms.gameObject.SetActive(value != MenuLeaderboardsView.State.Friends);
+				transforms1.gameObject.SetActive(value == MenuLeaderboardsView.State.Friends);
 			}
-			bestPlayersButton.isEnabled = value != State.BestPlayers;
-			Transform transform3 = bestPlayersButton.transform.FindChild("IdleLabel");
-			Transform transform4 = bestPlayersButton.transform.FindChild("ActiveLabel");
-			if (transform3 != null && (bool)transform4)
+			this.bestPlayersButton.isEnabled = value != MenuLeaderboardsView.State.BestPlayers;
+			Transform transforms2 = this.bestPlayersButton.transform.FindChild("IdleLabel");
+			Transform transforms3 = this.bestPlayersButton.transform.FindChild("ActiveLabel");
+			if (transforms2 != null && transforms3)
 			{
-				transform3.gameObject.SetActive(value != State.BestPlayers);
-				transform4.gameObject.SetActive(value == State.BestPlayers);
+				transforms2.gameObject.SetActive(value != MenuLeaderboardsView.State.BestPlayers);
+				transforms3.gameObject.SetActive(value == MenuLeaderboardsView.State.BestPlayers);
 			}
-			clansButton.isEnabled = value != State.Clans;
-			Transform transform5 = clansButton.transform.FindChild("IdleLabel");
-			Transform transform6 = clansButton.transform.FindChild("ActiveLabel");
-			if (transform5 != null && (bool)transform6)
+			this.clansButton.isEnabled = value != MenuLeaderboardsView.State.Clans;
+			Transform transforms4 = this.clansButton.transform.FindChild("IdleLabel");
+			Transform transforms5 = this.clansButton.transform.FindChild("ActiveLabel");
+			if (transforms4 != null && transforms5)
 			{
-				transform5.gameObject.SetActive(value != State.Clans);
-				transform6.gameObject.SetActive(value == State.Clans);
+				transforms4.gameObject.SetActive(value != MenuLeaderboardsView.State.Clans);
+				transforms5.gameObject.SetActive(value == MenuLeaderboardsView.State.Clans);
 			}
-			if (nickOrClanName != null)
+			if (this.nickOrClanName != null)
 			{
-				nickOrClanName.text = ((value != State.Clans) ? LocalizationStore.Get("Key_0071") : LocalizationStore.Get("Key_0257"));
+				this.nickOrClanName.text = (value != MenuLeaderboardsView.State.Clans ? LocalizationStore.Get("Key_0071") : LocalizationStore.Get("Key_0257"));
 			}
-			friendsPanel.transform.localPosition = ((value != 0) ? _outOfScreenPosition : _desiredPosition);
-			bestPlayersPanel.transform.localPosition = ((value != State.BestPlayers) ? _outOfScreenPosition : _desiredPosition);
-			clansPanel.transform.localPosition = ((value != State.Clans) ? _outOfScreenPosition : _desiredPosition);
-			_currentState = value;
+			this.friendsPanel.transform.localPosition = (value != MenuLeaderboardsView.State.Friends ? this._outOfScreenPosition : this._desiredPosition);
+			this.bestPlayersPanel.transform.localPosition = (value != MenuLeaderboardsView.State.BestPlayers ? this._outOfScreenPosition : this._desiredPosition);
+			this.clansPanel.transform.localPosition = (value != MenuLeaderboardsView.State.Clans ? this._outOfScreenPosition : this._desiredPosition);
+			this._currentState = value;
+		}
+	}
+
+	public IList<LeaderboardItemViewModel> FriendsList
+	{
+		set
+		{
+			base.StartCoroutine(MenuLeaderboardsView.SetGrid(this.friendsGrid, value, this.temporaryBackground));
 		}
 	}
 
@@ -127,39 +151,12 @@ internal sealed class MenuLeaderboardsView : MonoBehaviour
 		}
 	}
 
-	public IList<LeaderboardItemViewModel> FriendsList
+	public LeaderboardItemViewModel SelfClanStats
 	{
 		set
 		{
-			StartCoroutine(SetGrid(friendsGrid, value, temporaryBackground));
-		}
-	}
-
-	public IList<LeaderboardItemViewModel> BestPlayersList
-	{
-		set
-		{
-			StartCoroutine(SetGrid(bestPlayersGrid, value, temporaryBackground));
-			if (bestPlayersDefaultSprite != null)
-			{
-				bestPlayersDefaultSprite.gameObject.SetActive(false);
-				UnityEngine.Object.Destroy(bestPlayersDefaultSprite);
-				bestPlayersDefaultSprite = null;
-			}
-		}
-	}
-
-	public IList<LeaderboardItemViewModel> ClansList
-	{
-		set
-		{
-			StartCoroutine(SetGrid(clansGrid, value, temporaryBackground));
-			if (clansDefaultSprite != null)
-			{
-				clansDefaultSprite.gameObject.SetActive(false);
-				UnityEngine.Object.Destroy(clansDefaultSprite);
-				clansDefaultSprite = null;
-			}
+			this.clanFooter.Reset(value);
+			this.clanFooter.gameObject.SetActive(value != LeaderboardItemViewModel.Empty);
 		}
 	}
 
@@ -167,198 +164,126 @@ internal sealed class MenuLeaderboardsView : MonoBehaviour
 	{
 		set
 		{
-			footer.Reset(value);
-			footer.gameObject.SetActive(value != LeaderboardItemViewModel.Empty);
+			this.footer.Reset(value);
+			this.footer.gameObject.SetActive(value != LeaderboardItemViewModel.Empty);
 		}
 	}
 
-	public LeaderboardItemViewModel SelfClanStats
+	public MenuLeaderboardsView()
 	{
-		set
-		{
-			clanFooter.Reset(value);
-			clanFooter.gameObject.SetActive(value != LeaderboardItemViewModel.Empty);
-		}
-	}
-
-	private void OnEnable()
-	{
-		StartCoroutine(UpdateGridsAndScrollers());
 	}
 
 	private void Awake()
 	{
-		footer.gameObject.SetActive(false);
-		clanFooter.gameObject.SetActive(false);
-		if (bestPlayersDefaultSprite != null)
+		this.footer.gameObject.SetActive(false);
+		this.clanFooter.gameObject.SetActive(false);
+		if (this.bestPlayersDefaultSprite != null)
 		{
-			bestPlayersDefaultSprite.gameObject.SetActive(true);
+			this.bestPlayersDefaultSprite.gameObject.SetActive(true);
 		}
-		if (clansDefaultSprite != null)
+		if (this.clansDefaultSprite != null)
 		{
-			clansDefaultSprite.gameObject.SetActive(true);
+			this.clansDefaultSprite.gameObject.SetActive(true);
 		}
-		temporaryBackground.gameObject.SetActive(false);
-	}
-
-	private void Start()
-	{
-		_desiredPosition = friendsPanel.transform.localPosition;
-		_outOfScreenPosition = new Vector3(9000f, _desiredPosition.y, _desiredPosition.z);
-		UIButton[] source = new UIButton[3] { friendsButton, bestPlayersButton, clansButton };
-		if (_003C_003Ef__am_0024cache17 == null)
-		{
-			_003C_003Ef__am_0024cache17 = _003CStart_003Em__369;
-		}
-		IEnumerable<UIButton> enumerable = source.Where(_003C_003Ef__am_0024cache17);
-		foreach (UIButton item in enumerable)
-		{
-			ButtonHandler component = item.GetComponent<ButtonHandler>();
-			if (component != null)
-			{
-				component.Clicked += HandleTabPressed;
-			}
-		}
-		UIScrollView[] source2 = new UIScrollView[3] { friendsScroll, bestPlayersScroll, clansScroll };
-		if (_003C_003Ef__am_0024cache18 == null)
-		{
-			_003C_003Ef__am_0024cache18 = _003CStart_003Em__36A;
-		}
-		IEnumerable<UIScrollView> enumerable2 = source2.Where(_003C_003Ef__am_0024cache18);
-		foreach (UIScrollView item2 in enumerable2)
-		{
-			item2.ResetPosition();
-		}
-		CurrentState = State.BestPlayers;
-		bool isNeedShow = IsNeedShow;
-		Show(isNeedShow, false);
-		btnLeaderboards.IsChecked = false;
+		this.temporaryBackground.gameObject.SetActive(false);
 	}
 
 	private void HandleTabPressed(object sender, EventArgs e)
 	{
 		GameObject gameObject = ((ButtonHandler)sender).gameObject;
-		if (gameObject == friendsButton.gameObject)
+		if (gameObject == this.friendsButton.gameObject)
 		{
-			CurrentState = State.Friends;
+			this.CurrentState = MenuLeaderboardsView.State.Friends;
 		}
-		else if (gameObject == bestPlayersButton.gameObject)
+		else if (gameObject == this.bestPlayersButton.gameObject)
 		{
-			CurrentState = State.BestPlayers;
+			this.CurrentState = MenuLeaderboardsView.State.BestPlayers;
 		}
-		else if (gameObject == clansButton.gameObject)
+		else if (gameObject == this.clansButton.gameObject)
 		{
-			CurrentState = State.Clans;
+			this.CurrentState = MenuLeaderboardsView.State.Clans;
 		}
 	}
 
+	private void OnEnable()
+	{
+		base.StartCoroutine(this.UpdateGridsAndScrollers());
+	}
+
+	[DebuggerHidden]
 	private static IEnumerator SetGrid(UIGrid grid, IList<LeaderboardItemViewModel> value, UISprite temporaryBackground)
 	{
-		temporaryBackground.gameObject.SetActive(true);
-		try
-		{
-			if (grid == null)
-			{
-				yield break;
-			}
-			while (!grid.gameObject.activeInHierarchy)
-			{
-				yield return null;
-			}
-			IEnumerable<LeaderboardItemViewModel> enumerable2;
-			if (value == null)
-			{
-				IEnumerable<LeaderboardItemViewModel> enumerable = new List<LeaderboardItemViewModel>();
-				enumerable2 = enumerable;
-			}
-			else
-			{
-				if (_003CSetGrid_003Ec__Iterator167._003C_003Ef__am_0024cache10 == null)
-				{
-					_003CSetGrid_003Ec__Iterator167._003C_003Ef__am_0024cache10 = _003CSetGrid_003Ec__Iterator167._003C_003Em__36B;
-				}
-				enumerable2 = value.Where(_003CSetGrid_003Ec__Iterator167._003C_003Ef__am_0024cache10);
-			}
-			IEnumerable<LeaderboardItemViewModel> filteredList = enumerable2;
-			List<Transform> list = grid.GetChildList();
-			for (int i = 0; i != list.Count; i++)
-			{
-				UnityEngine.Object.Destroy(list[i].gameObject);
-			}
-			list.Clear();
-			grid.Reposition();
-			foreach (LeaderboardItemViewModel item in filteredList)
-			{
-				GameObject o = ((!item.Highlight) ? (UnityEngine.Object.Instantiate(Resources.Load("Leaderboards/MenuLeaderboardItem")) as GameObject) : (UnityEngine.Object.Instantiate(Resources.Load("Leaderboards/MenuLeaderboardSelectedItem")) as GameObject));
-				if (o != null)
-				{
-					LeaderboardItemView liv = o.GetComponent<LeaderboardItemView>();
-					if (liv != null)
-					{
-						liv.Reset(item);
-						o.transform.parent = grid.transform;
-						grid.AddChild(o.transform);
-						o.transform.localScale = Vector3.one;
-					}
-				}
-			}
-			grid.Reposition();
-			UIScrollView scrollView = grid.transform.parent.gameObject.GetComponent<UIScrollView>();
-			if (scrollView != null)
-			{
-				scrollView.enabled = true;
-				yield return null;
-				scrollView.ResetPosition();
-				scrollView.UpdatePosition();
-				yield return null;
-				scrollView.enabled = value.Count >= 10;
-			}
-		}
-		finally
-		{
-			temporaryBackground.gameObject.SetActive(false);
-		}
-	}
-
-	private IEnumerator UpdateGridsAndScrollers()
-	{
-		UIGrid[] source = new UIGrid[3] { friendsGrid, bestPlayersGrid, clansGrid };
-		if (_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cache9 == null)
-		{
-			_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cache9 = _003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Em__36C;
-		}
-		IEnumerable<UIGrid> grids = source.Where(_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cache9);
-		foreach (UIGrid g in grids)
-		{
-			g.Reposition();
-		}
-		yield return null;
-		UIScrollView[] source2 = new UIScrollView[3] { friendsScroll, bestPlayersScroll, clansScroll };
-		if (_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cacheA == null)
-		{
-			_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cacheA = _003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Em__36D;
-		}
-		IEnumerable<UIScrollView> scrolls = source2.Where(_003CUpdateGridsAndScrollers_003Ec__Iterator168._003C_003Ef__am_0024cacheA);
-		foreach (UIScrollView s in scrolls)
-		{
-			s.ResetPosition();
-			s.UpdatePosition();
-		}
+		MenuLeaderboardsView.u003cSetGridu003ec__Iterator167 variable = null;
+		return variable;
 	}
 
 	public void Show(bool needShow, bool animate)
 	{
 	}
 
-	[CompilerGenerated]
-	private static bool _003CStart_003Em__369(UIButton b)
+	private void Start()
 	{
-		return b != null;
+		this._desiredPosition = this.friendsPanel.transform.localPosition;
+		this._outOfScreenPosition = new Vector3(9000f, this._desiredPosition.y, this._desiredPosition.z);
+		IEnumerable<UIButton> uIButtons = 
+			from b in (IEnumerable<UIButton>)(new UIButton[] { this.friendsButton, this.bestPlayersButton, this.clansButton })
+			where b != null
+			select b;
+		IEnumerator<UIButton> enumerator = uIButtons.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				ButtonHandler component = enumerator.Current.GetComponent<ButtonHandler>();
+				if (component == null)
+				{
+					continue;
+				}
+				component.Clicked += new EventHandler(this.HandleTabPressed);
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		IEnumerable<UIScrollView> uIScrollViews = 
+			from s in (IEnumerable<UIScrollView>)(new UIScrollView[] { this.friendsScroll, this.bestPlayersScroll, this.clansScroll })
+			where s != null
+			select s;
+		IEnumerator<UIScrollView> enumerator1 = uIScrollViews.GetEnumerator();
+		try
+		{
+			while (enumerator1.MoveNext())
+			{
+				enumerator1.Current.ResetPosition();
+			}
+		}
+		finally
+		{
+			if (enumerator1 == null)
+			{
+			}
+			enumerator1.Dispose();
+		}
+		this.CurrentState = MenuLeaderboardsView.State.BestPlayers;
+		this.Show(MenuLeaderboardsView.IsNeedShow, false);
+		this.btnLeaderboards.IsChecked = false;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CStart_003Em__36A(UIScrollView s)
+	[DebuggerHidden]
+	private IEnumerator UpdateGridsAndScrollers()
 	{
-		return s != null;
+		MenuLeaderboardsView.u003cUpdateGridsAndScrollersu003ec__Iterator168 variable = null;
+		return variable;
+	}
+
+	public enum State
+	{
+		Friends,
+		BestPlayers,
+		Clans
 	}
 }

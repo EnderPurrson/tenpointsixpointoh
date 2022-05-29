@@ -1,33 +1,13 @@
+using GooglePlayGames.OurUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.BasicApi.Multiplayer
 {
 	public class TurnBasedMatch
 	{
-		public enum MatchStatus
-		{
-			Active = 0,
-			AutoMatching = 1,
-			Cancelled = 2,
-			Complete = 3,
-			Expired = 4,
-			Unknown = 5,
-			Deleted = 6
-		}
-
-		public enum MatchTurnStatus
-		{
-			Complete = 0,
-			Invited = 1,
-			MyTurn = 2,
-			TheirTurn = 3,
-			Unknown = 4
-		}
-
 		private string mMatchId;
 
 		private byte[] mData;
@@ -42,30 +22,19 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 
 		private string mPendingParticipantId;
 
-		private MatchTurnStatus mTurnStatus;
+		private TurnBasedMatch.MatchTurnStatus mTurnStatus;
 
-		private MatchStatus mMatchStatus;
+		private TurnBasedMatch.MatchStatus mMatchStatus;
 
 		private uint mVariant;
 
 		private uint mVersion;
 
-		[CompilerGenerated]
-		private static Func<Participant, string> _003C_003Ef__am_0024cacheB;
-
-		public string MatchId
+		public uint AvailableAutomatchSlots
 		{
 			get
 			{
-				return mMatchId;
-			}
-		}
-
-		public byte[] Data
-		{
-			get
-			{
-				return mData;
+				return this.mAvailableAutomatchSlots;
 			}
 		}
 
@@ -73,23 +42,23 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mCanRematch;
+				return this.mCanRematch;
 			}
 		}
 
-		public string SelfParticipantId
+		public byte[] Data
 		{
 			get
 			{
-				return mSelfParticipantId;
+				return this.mData;
 			}
 		}
 
-		public Participant Self
+		public string MatchId
 		{
 			get
 			{
-				return GetParticipant(mSelfParticipantId);
+				return this.mMatchId;
 			}
 		}
 
@@ -97,15 +66,7 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mParticipants;
-			}
-		}
-
-		public string PendingParticipantId
-		{
-			get
-			{
-				return mPendingParticipantId;
+				return this.mParticipants;
 			}
 		}
 
@@ -113,23 +74,56 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return (mPendingParticipantId != null) ? GetParticipant(mPendingParticipantId) : null;
+				Participant participant;
+				if (this.mPendingParticipantId != null)
+				{
+					participant = this.GetParticipant(this.mPendingParticipantId);
+				}
+				else
+				{
+					participant = null;
+				}
+				return participant;
 			}
 		}
 
-		public MatchTurnStatus TurnStatus
+		public string PendingParticipantId
 		{
 			get
 			{
-				return mTurnStatus;
+				return this.mPendingParticipantId;
 			}
 		}
 
-		public MatchStatus Status
+		public Participant Self
 		{
 			get
 			{
-				return mMatchStatus;
+				return this.GetParticipant(this.mSelfParticipantId);
+			}
+		}
+
+		public string SelfParticipantId
+		{
+			get
+			{
+				return this.mSelfParticipantId;
+			}
+		}
+
+		public TurnBasedMatch.MatchStatus Status
+		{
+			get
+			{
+				return this.mMatchStatus;
+			}
+		}
+
+		public TurnBasedMatch.MatchTurnStatus TurnStatus
+		{
+			get
+			{
+				return this.mTurnStatus;
 			}
 		}
 
@@ -137,7 +131,7 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mVariant;
+				return this.mVariant;
 			}
 		}
 
@@ -145,68 +139,84 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mVersion;
+				return this.mVersion;
 			}
 		}
 
-		public uint AvailableAutomatchSlots
+		internal TurnBasedMatch(string matchId, byte[] data, bool canRematch, string selfParticipantId, List<Participant> participants, uint availableAutomatchSlots, string pendingParticipantId, TurnBasedMatch.MatchTurnStatus turnStatus, TurnBasedMatch.MatchStatus matchStatus, uint variant, uint version)
 		{
-			get
-			{
-				return mAvailableAutomatchSlots;
-			}
-		}
-
-		internal TurnBasedMatch(string matchId, byte[] data, bool canRematch, string selfParticipantId, List<Participant> participants, uint availableAutomatchSlots, string pendingParticipantId, MatchTurnStatus turnStatus, MatchStatus matchStatus, uint variant, uint version)
-		{
-			mMatchId = matchId;
-			mData = data;
-			mCanRematch = canRematch;
-			mSelfParticipantId = selfParticipantId;
-			mParticipants = participants;
-			mParticipants.Sort();
-			mAvailableAutomatchSlots = availableAutomatchSlots;
-			mPendingParticipantId = pendingParticipantId;
-			mTurnStatus = turnStatus;
-			mMatchStatus = matchStatus;
-			mVariant = variant;
-			mVersion = version;
+			this.mMatchId = matchId;
+			this.mData = data;
+			this.mCanRematch = canRematch;
+			this.mSelfParticipantId = selfParticipantId;
+			this.mParticipants = participants;
+			this.mParticipants.Sort();
+			this.mAvailableAutomatchSlots = availableAutomatchSlots;
+			this.mPendingParticipantId = pendingParticipantId;
+			this.mTurnStatus = turnStatus;
+			this.mMatchStatus = matchStatus;
+			this.mVariant = variant;
+			this.mVersion = version;
 		}
 
 		public Participant GetParticipant(string participantId)
 		{
-			foreach (Participant mParticipant in mParticipants)
+			Participant participant;
+			List<Participant>.Enumerator enumerator = this.mParticipants.GetEnumerator();
+			try
 			{
-				if (mParticipant.ParticipantId.Equals(participantId))
+				while (enumerator.MoveNext())
 				{
-					return mParticipant;
+					Participant current = enumerator.Current;
+					if (!current.ParticipantId.Equals(participantId))
+					{
+						continue;
+					}
+					participant = current;
+					return participant;
 				}
+				Logger.w(string.Concat("Participant not found in turn-based match: ", participantId));
+				return null;
 			}
-			Logger.w("Participant not found in turn-based match: " + participantId);
-			return null;
+			finally
+			{
+				((IDisposable)(object)enumerator).Dispose();
+			}
+			return participant;
 		}
 
 		public override string ToString()
 		{
-			object[] obj = new object[10] { mMatchId, mData, mCanRematch, mSelfParticipantId, null, null, null, null, null, null };
-			List<Participant> source = mParticipants;
-			if (_003C_003Ef__am_0024cacheB == null)
-			{
-				_003C_003Ef__am_0024cacheB = _003CToString_003Em__77;
-			}
-			obj[4] = string.Join(",", source.Select(_003C_003Ef__am_0024cacheB).ToArray());
-			obj[5] = mPendingParticipantId;
-			obj[6] = mTurnStatus;
-			obj[7] = mMatchStatus;
-			obj[8] = mVariant;
-			obj[9] = mVersion;
-			return string.Format("[TurnBasedMatch: mMatchId={0}, mData={1}, mCanRematch={2}, mSelfParticipantId={3}, mParticipants={4}, mPendingParticipantId={5}, mTurnStatus={6}, mMatchStatus={7}, mVariant={8}, mVersion={9}]", obj);
+			object[] objArray = new object[] { this.mMatchId, this.mData, this.mCanRematch, this.mSelfParticipantId, null, null, null, null, null, null };
+			objArray[4] = string.Join(",", (
+				from p in this.mParticipants
+				select p.ToString()).ToArray<string>());
+			objArray[5] = this.mPendingParticipantId;
+			objArray[6] = this.mTurnStatus;
+			objArray[7] = this.mMatchStatus;
+			objArray[8] = this.mVariant;
+			objArray[9] = this.mVersion;
+			return string.Format("[TurnBasedMatch: mMatchId={0}, mData={1}, mCanRematch={2}, mSelfParticipantId={3}, mParticipants={4}, mPendingParticipantId={5}, mTurnStatus={6}, mMatchStatus={7}, mVariant={8}, mVersion={9}]", objArray);
 		}
 
-		[CompilerGenerated]
-		private static string _003CToString_003Em__77(Participant p)
+		public enum MatchStatus
 		{
-			return p.ToString();
+			Active,
+			AutoMatching,
+			Cancelled,
+			Complete,
+			Expired,
+			Unknown,
+			Deleted
+		}
+
+		public enum MatchTurnStatus
+		{
+			Complete,
+			Invited,
+			MyTurn,
+			TheirTurn,
+			Unknown
 		}
 	}
 }

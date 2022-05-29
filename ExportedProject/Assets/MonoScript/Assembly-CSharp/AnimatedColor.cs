@@ -1,21 +1,26 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(UIWidget))]
 [ExecuteInEditMode]
+[RequireComponent(typeof(UIWidget))]
 public class AnimatedColor : MonoBehaviour
 {
 	public Color color = Color.white;
 
 	private UIWidget mWidget;
 
-	private void OnEnable()
+	public AnimatedColor()
 	{
-		mWidget = GetComponent<UIWidget>();
-		LateUpdate();
 	}
 
 	private void LateUpdate()
 	{
-		mWidget.color = color;
+		this.mWidget.color = this.color;
+	}
+
+	private void OnEnable()
+	{
+		this.mWidget = base.GetComponent<UIWidget>();
+		this.LateUpdate();
 	}
 }

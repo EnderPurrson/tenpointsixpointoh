@@ -1,3 +1,5 @@
+using Facebook.Unity;
+using System;
 using UnityEngine;
 
 namespace Facebook.Unity.Canvas
@@ -12,24 +14,8 @@ namespace Facebook.Unity.Canvas
 			}
 		}
 
-		public void OnPayComplete(string result)
+		public CanvasFacebookGameObject()
 		{
-			CanvasFacebookImpl.OnPayComplete(result);
-		}
-
-		public void OnFacebookAuthResponseChange(string message)
-		{
-			CanvasFacebookImpl.OnFacebookAuthResponseChange(message);
-		}
-
-		public void OnUrlResponse(string message)
-		{
-			CanvasFacebookImpl.OnUrlResponse(message);
-		}
-
-		public void OnHideUnity(bool hide)
-		{
-			CanvasFacebookImpl.OnHideUnity(hide);
 		}
 
 		protected override void OnAwake()
@@ -37,6 +23,26 @@ namespace Facebook.Unity.Canvas
 			GameObject gameObject = new GameObject("FacebookJsBridge");
 			gameObject.AddComponent<JsBridge>();
 			gameObject.transform.parent = base.gameObject.transform;
+		}
+
+		public void OnFacebookAuthResponseChange(string message)
+		{
+			this.CanvasFacebookImpl.OnFacebookAuthResponseChange(message);
+		}
+
+		public void OnHideUnity(bool hide)
+		{
+			this.CanvasFacebookImpl.OnHideUnity(hide);
+		}
+
+		public void OnPayComplete(string result)
+		{
+			this.CanvasFacebookImpl.OnPayComplete(result);
+		}
+
+		public void OnUrlResponse(string message)
+		{
+			this.CanvasFacebookImpl.OnUrlResponse(message);
 		}
 	}
 }

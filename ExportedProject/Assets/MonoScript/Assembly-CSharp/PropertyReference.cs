@@ -16,33 +16,18 @@ public class PropertyReference
 
 	private PropertyInfo mProperty;
 
-	private static int s_Hash = "PropertyBinding".GetHashCode();
+	private static int s_Hash;
 
-	public Component target
+	public bool isEnabled
 	{
 		get
 		{
-			return mTarget;
-		}
-		set
-		{
-			mTarget = value;
-			mProperty = null;
-			mField = null;
-		}
-	}
-
-	public string name
-	{
-		get
-		{
-			return mName;
-		}
-		set
-		{
-			mName = value;
-			mProperty = null;
-			mField = null;
+			if (this.mTarget == null)
+			{
+				return false;
+			}
+			MonoBehaviour monoBehaviour = this.mTarget as MonoBehaviour;
+			return (monoBehaviour == null ? true : monoBehaviour.enabled);
 		}
 	}
 
@@ -50,21 +35,41 @@ public class PropertyReference
 	{
 		get
 		{
-			return mTarget != null && !string.IsNullOrEmpty(mName);
+			return (this.mTarget == null ? false : !string.IsNullOrEmpty(this.mName));
 		}
 	}
 
-	public bool isEnabled
+	public string name
 	{
 		get
 		{
-			if (mTarget == null)
-			{
-				return false;
-			}
-			MonoBehaviour monoBehaviour = mTarget as MonoBehaviour;
-			return monoBehaviour == null || monoBehaviour.enabled;
+			return this.mName;
 		}
+		set
+		{
+			this.mName = value;
+			this.mProperty = null;
+			this.mField = null;
+		}
+	}
+
+	public Component target
+	{
+		get
+		{
+			return this.mTarget;
+		}
+		set
+		{
+			this.mTarget = value;
+			this.mProperty = null;
+			this.mField = null;
+		}
+	}
+
+	static PropertyReference()
+	{
+		PropertyReference.s_Hash = "PropertyBinding".GetHashCode();
 	}
 
 	public PropertyReference()
@@ -73,120 +78,195 @@ public class PropertyReference
 
 	public PropertyReference(Component target, string fieldName)
 	{
-		mTarget = target;
-		mName = fieldName;
+		this.mTarget = target;
+		this.mName = fieldName;
 	}
 
-	public Type GetPropertyType()
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	private bool Cache()
 	{
-		if (mProperty == null && mField == null && isValid)
+		if (!(this.mTarget != null) || string.IsNullOrEmpty(this.mName))
 		{
-			Cache();
+			this.mField = null;
+			this.mProperty = null;
 		}
-		if (mProperty != null)
+		else
 		{
-			return mProperty.PropertyType;
+			Type type = this.mTarget.GetType();
+			this.mField = type.GetField(this.mName);
+			this.mProperty = type.GetProperty(this.mName);
 		}
-		if (mField != null)
+		return (this.mField != null ? true : this.mProperty != null);
+	}
+
+	public void Clear()
+	{
+		this.mTarget = null;
+		this.mName = null;
+	}
+
+	private bool Convert(ref object value)
+	{
+		Type type;
+		if (this.mTarget == null)
 		{
-			return mField.FieldType;
+			return false;
 		}
-		return typeof(void);
+		Type propertyType = this.GetPropertyType();
+		if (value != null)
+		{
+			type = value.GetType();
+		}
+		else
+		{
+			if (!propertyType.IsClass)
+			{
+				return false;
+			}
+			type = propertyType;
+		}
+		return PropertyReference.Convert(ref value, type, propertyType);
+	}
+
+	public static bool Convert(Type from, Type to)
+	{
+		object obj = null;
+		return PropertyReference.Convert(ref obj, from, to);
+	}
+
+	public static bool Convert(object value, Type to)
+	{
+		if (value != null)
+		{
+			return PropertyReference.Convert(ref value, value.GetType(), to);
+		}
+		value = null;
+		return PropertyReference.Convert(ref value, to, to);
+	}
+
+	public static bool Convert(ref object value, Type from, Type to)
+	{
+		int num;
+		float single;
+		if (to.IsAssignableFrom(from))
+		{
+			return true;
+		}
+		if (to == typeof(string))
+		{
+			value = (value == null ? "null" : value.ToString());
+			return true;
+		}
+		if (value == null)
+		{
+			return false;
+		}
+		if (to != typeof(int))
+		{
+			if (to == typeof(float) && from == typeof(string) && float.TryParse((string)value, out single))
+			{
+				value = single;
+				return true;
+			}
+		}
+		else if (from == typeof(string))
+		{
+			if (int.TryParse((string)value, out num))
+			{
+				value = num;
+				return true;
+			}
+		}
+		else if (from == typeof(float))
+		{
+			value = Mathf.RoundToInt((float)value);
+			return true;
+		}
+		return false;
 	}
 
 	public override bool Equals(object obj)
 	{
 		if (obj == null)
 		{
-			return !isValid;
+			return !this.isValid;
 		}
-		if (obj is PropertyReference)
+		if (!(obj is PropertyReference))
 		{
-			PropertyReference propertyReference = obj as PropertyReference;
-			return mTarget == propertyReference.mTarget && string.Equals(mName, propertyReference.mName);
+			return false;
 		}
-		return false;
-	}
-
-	public override int GetHashCode()
-	{
-		return s_Hash;
-	}
-
-	public void Set(Component target, string methodName)
-	{
-		mTarget = target;
-		mName = methodName;
-	}
-
-	public void Clear()
-	{
-		mTarget = null;
-		mName = null;
-	}
-
-	public void Reset()
-	{
-		mField = null;
-		mProperty = null;
-	}
-
-	public override string ToString()
-	{
-		return ToString(mTarget, name);
-	}
-
-	public static string ToString(Component comp, string property)
-	{
-		if (comp != null)
-		{
-			string text = comp.GetType().ToString();
-			int num = text.LastIndexOf('.');
-			if (num > 0)
-			{
-				text = text.Substring(num + 1);
-			}
-			if (!string.IsNullOrEmpty(property))
-			{
-				return text + "." + property;
-			}
-			return text + ".[property]";
-		}
-		return null;
+		PropertyReference propertyReference = obj as PropertyReference;
+		return (this.mTarget != propertyReference.mTarget ? false : string.Equals(this.mName, propertyReference.mName));
 	}
 
 	[DebuggerHidden]
 	[DebuggerStepThrough]
 	public object Get()
 	{
-		if (mProperty == null && mField == null && isValid)
+		if (this.mProperty == null && this.mField == null && this.isValid)
 		{
-			Cache();
+			this.Cache();
 		}
-		if (mProperty != null)
+		if (this.mProperty != null)
 		{
-			if (mProperty.CanRead)
+			if (this.mProperty.CanRead)
 			{
-				return mProperty.GetValue(mTarget, null);
+				return this.mProperty.GetValue(this.mTarget, null);
 			}
 		}
-		else if (mField != null)
+		else if (this.mField != null)
 		{
-			return mField.GetValue(mTarget);
+			return this.mField.GetValue(this.mTarget);
 		}
 		return null;
 	}
 
-	[DebuggerStepThrough]
+	public override int GetHashCode()
+	{
+		return PropertyReference.s_Hash;
+	}
+
+	public Type GetPropertyType()
+	{
+		if (this.mProperty == null && this.mField == null && this.isValid)
+		{
+			this.Cache();
+		}
+		if (this.mProperty != null)
+		{
+			return this.mProperty.PropertyType;
+		}
+		if (this.mField == null)
+		{
+			return typeof(void);
+		}
+		return this.mField.FieldType;
+	}
+
+	public void Reset()
+	{
+		this.mField = null;
+		this.mProperty = null;
+	}
+
+	public void Set(Component target, string methodName)
+	{
+		this.mTarget = target;
+		this.mName = methodName;
+	}
+
 	[DebuggerHidden]
+	[DebuggerStepThrough]
 	public bool Set(object value)
 	{
-		//Discarded unreachable code: IL_00a6
-		if (mProperty == null && mField == null && isValid)
+		bool flag;
+		object[] type;
+		if (this.mProperty == null && this.mField == null && this.isValid)
 		{
-			Cache();
+			this.Cache();
 		}
-		if (mProperty == null && mField == null)
+		if (this.mProperty == null && this.mField == null)
 		{
 			return false;
 		}
@@ -194,140 +274,87 @@ public class PropertyReference
 		{
 			try
 			{
-				if (mProperty == null)
+				if (this.mProperty == null)
 				{
-					mField.SetValue(mTarget, null);
-					return true;
+					this.mField.SetValue(this.mTarget, null);
+					flag = true;
 				}
-				if (mProperty.CanWrite)
+				else if (!this.mProperty.CanWrite)
 				{
-					mProperty.SetValue(mTarget, null, null);
-					return true;
+					if (this.Convert(ref value))
+					{
+						if (this.mField != null)
+						{
+							this.mField.SetValue(this.mTarget, value);
+							return true;
+						}
+						if (this.mProperty.CanWrite)
+						{
+							this.mProperty.SetValue(this.mTarget, value, null);
+							return true;
+						}
+					}
+					else if (Application.isPlaying)
+					{
+						type = new object[] { "Unable to convert ", value.GetType(), " to ", this.GetPropertyType() };
+						UnityEngine.Debug.LogError(string.Concat(type));
+					}
+					return false;
+				}
+				else
+				{
+					this.mProperty.SetValue(this.mTarget, null, null);
+					flag = true;
 				}
 			}
-			catch (Exception)
+			catch (Exception exception)
 			{
-				return false;
+				flag = false;
 			}
+			return flag;
 		}
-		if (!Convert(ref value))
+		if (this.Convert(ref value))
 		{
-			if (Application.isPlaying)
+			if (this.mField != null)
 			{
-				UnityEngine.Debug.LogError(string.Concat("Unable to convert ", value.GetType(), " to ", GetPropertyType()));
-			}
-		}
-		else
-		{
-			if (mField != null)
-			{
-				mField.SetValue(mTarget, value);
+				this.mField.SetValue(this.mTarget, value);
 				return true;
 			}
-			if (mProperty.CanWrite)
+			if (this.mProperty.CanWrite)
 			{
-				mProperty.SetValue(mTarget, value, null);
+				this.mProperty.SetValue(this.mTarget, value, null);
 				return true;
 			}
+		}
+		else if (Application.isPlaying)
+		{
+			type = new object[] { "Unable to convert ", value.GetType(), " to ", this.GetPropertyType() };
+			UnityEngine.Debug.LogError(string.Concat(type));
 		}
 		return false;
 	}
 
-	[DebuggerStepThrough]
-	[DebuggerHidden]
-	private bool Cache()
+	public override string ToString()
 	{
-		if (mTarget != null && !string.IsNullOrEmpty(mName))
-		{
-			Type type = mTarget.GetType();
-			mField = type.GetField(mName);
-			mProperty = type.GetProperty(mName);
-		}
-		else
-		{
-			mField = null;
-			mProperty = null;
-		}
-		return mField != null || mProperty != null;
+		return PropertyReference.ToString(this.mTarget, this.name);
 	}
 
-	private bool Convert(ref object value)
+	public static string ToString(Component comp, string property)
 	{
-		if (mTarget == null)
+		if (comp == null)
 		{
-			return false;
+			return null;
 		}
-		Type propertyType = GetPropertyType();
-		Type from;
-		if (value == null)
+		string str = comp.GetType().ToString();
+		int num = str.LastIndexOf('.');
+		if (num > 0)
 		{
-			if (!propertyType.IsClass)
-			{
-				return false;
-			}
-			from = propertyType;
+			str = str.Substring(num + 1);
 		}
-		else
+		if (string.IsNullOrEmpty(property))
 		{
-			from = value.GetType();
+			return string.Concat(str, ".[property]");
 		}
-		return Convert(ref value, from, propertyType);
-	}
-
-	public static bool Convert(Type from, Type to)
-	{
-		object value = null;
-		return Convert(ref value, from, to);
-	}
-
-	public static bool Convert(object value, Type to)
-	{
-		if (value == null)
-		{
-			value = null;
-			return Convert(ref value, to, to);
-		}
-		return Convert(ref value, value.GetType(), to);
-	}
-
-	public static bool Convert(ref object value, Type from, Type to)
-	{
-		if (to.IsAssignableFrom(from))
-		{
-			return true;
-		}
-		if (to == typeof(string))
-		{
-			value = ((value == null) ? "null" : value.ToString());
-			return true;
-		}
-		if (value == null)
-		{
-			return false;
-		}
-		float result2;
-		if (to == typeof(int))
-		{
-			if (from == typeof(string))
-			{
-				int result;
-				if (int.TryParse((string)value, out result))
-				{
-					value = result;
-					return true;
-				}
-			}
-			else if (from == typeof(float))
-			{
-				value = Mathf.RoundToInt((float)value);
-				return true;
-			}
-		}
-		else if (to == typeof(float) && from == typeof(string) && float.TryParse((string)value, out result2))
-		{
-			value = result2;
-			return true;
-		}
-		return false;
+		return string.Concat(str, ".", property);
 	}
 }

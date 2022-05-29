@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class RilisoftRotator : MonoBehaviour
@@ -6,13 +7,17 @@ public class RilisoftRotator : MonoBehaviour
 
 	private Transform _transform;
 
+	public RilisoftRotator()
+	{
+	}
+
 	private void Start()
 	{
-		_transform = base.transform;
+		this._transform = base.transform;
 	}
 
 	private void Update()
 	{
-		_transform.Rotate(Vector3.forward, rate * Time.deltaTime, Space.Self);
+		this._transform.Rotate(Vector3.forward, this.rate * Time.deltaTime, Space.Self);
 	}
 }

@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public sealed class BackFromNetworkTable : MonoBehaviour
@@ -8,37 +8,54 @@ public sealed class BackFromNetworkTable : MonoBehaviour
 
 	private bool offFriendsController;
 
-	private void OnEnable()
+	public BackFromNetworkTable()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(OnClick, "Back From Network Table");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
 	}
 
 	private void OnClick()
 	{
-		if ((!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled) && (!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown) && !LoadingInAfterGame.isShowLoading && !ShopNGUIController.GuiActive && !ExperienceController.sharedController.isShowNextPlashka)
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
 		{
-			ButtonClickSound.Instance.PlayClick();
-			if (WeaponManager.sharedManager.myTable != null)
-			{
-				WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().BackButtonPress();
-			}
-			else if (NetworkStartTableNGUIController.sharedController != null)
-			{
-				NetworkStartTableNGUIController.sharedController.CheckHideInternalPanel();
-			}
+			return;
 		}
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		if (LoadingInAfterGame.isShowLoading)
+		{
+			return;
+		}
+		if (ShopNGUIController.GuiActive || ExperienceController.sharedController.isShowNextPlashka)
+		{
+			return;
+		}
+		ButtonClickSound.Instance.PlayClick();
+		if (WeaponManager.sharedManager.myTable != null)
+		{
+			WeaponManager.sharedManager.myTable.GetComponent<NetworkStartTable>().BackButtonPress();
+		}
+		else if (NetworkStartTableNGUIController.sharedController != null)
+		{
+			NetworkStartTableNGUIController.sharedController.CheckHideInternalPanel();
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.OnClick), "Back From Network Table");
 	}
 }

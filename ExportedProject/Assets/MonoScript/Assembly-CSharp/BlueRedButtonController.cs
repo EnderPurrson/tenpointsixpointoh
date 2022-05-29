@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BlueRedButtonController : MonoBehaviour
@@ -14,6 +16,10 @@ public class BlueRedButtonController : MonoBehaviour
 
 	public int countRed;
 
+	public BlueRedButtonController()
+	{
+	}
+
 	private void Start()
 	{
 		if (!Defs.isFlag && !Defs.isCompany && !Defs.isCapturePoints)
@@ -24,36 +30,36 @@ public class BlueRedButtonController : MonoBehaviour
 
 	private void Update()
 	{
-		countBlue = 0;
-		countRed = 0;
+		this.countBlue = 0;
+		this.countRed = 0;
 		for (int i = 0; i < Initializer.networkTables.Count; i++)
 		{
 			if (Initializer.networkTables[i].myCommand == 1)
 			{
-				countBlue++;
+				this.countBlue++;
 			}
 			if (Initializer.networkTables[i].myCommand == 2)
 			{
-				countRed++;
+				this.countRed++;
 			}
 		}
-		isBlueAvalible = true;
-		isRedAvalible = true;
-		if (PhotonNetwork.room != null && (countBlue >= PhotonNetwork.room.maxPlayers / 2 || countBlue - countRed > 1))
+		this.isBlueAvalible = true;
+		this.isRedAvalible = true;
+		if (PhotonNetwork.room != null && (this.countBlue >= PhotonNetwork.room.maxPlayers / 2 || this.countBlue - this.countRed > 1))
 		{
-			isBlueAvalible = false;
+			this.isBlueAvalible = false;
 		}
-		if (PhotonNetwork.room != null && (countRed >= PhotonNetwork.room.maxPlayers / 2 || countRed - countBlue > 1))
+		if (PhotonNetwork.room != null && (this.countRed >= PhotonNetwork.room.maxPlayers / 2 || this.countRed - this.countBlue > 1))
 		{
-			isRedAvalible = false;
+			this.isRedAvalible = false;
 		}
-		if (isBlueAvalible != blueButton.isEnabled)
+		if (this.isBlueAvalible != this.blueButton.isEnabled)
 		{
-			blueButton.isEnabled = isBlueAvalible;
+			this.blueButton.isEnabled = this.isBlueAvalible;
 		}
-		if (isRedAvalible != redButton.isEnabled)
+		if (this.isRedAvalible != this.redButton.isEnabled)
 		{
-			redButton.isEnabled = isRedAvalible;
+			this.redButton.isEnabled = this.isRedAvalible;
 		}
 	}
 }

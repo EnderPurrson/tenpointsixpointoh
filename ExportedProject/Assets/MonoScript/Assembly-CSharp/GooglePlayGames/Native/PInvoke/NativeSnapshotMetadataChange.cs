@@ -1,51 +1,13 @@
-using System;
-using System.Runtime.InteropServices;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeSnapshotMetadataChange : BaseReferenceHolder
 	{
-		internal class Builder : BaseReferenceHolder
-		{
-			internal Builder()
-				: base(SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Construct())
-			{
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Dispose(selfPointer);
-			}
-
-			internal Builder SetDescription(string description)
-			{
-				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetDescription(SelfPtr(), description);
-				return this;
-			}
-
-			internal Builder SetPlayedTime(ulong playedTime)
-			{
-				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetPlayedTime(SelfPtr(), playedTime);
-				return this;
-			}
-
-			internal Builder SetCoverImageFromPngData(byte[] pngData)
-			{
-				Misc.CheckNotNull(pngData);
-				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetCoverImageFromPngData(SelfPtr(), pngData, new UIntPtr((ulong)pngData.LongLength));
-				return this;
-			}
-
-			internal NativeSnapshotMetadataChange Build()
-			{
-				return FromPointer(SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Create(SelfPtr()));
-			}
-		}
-
-		internal NativeSnapshotMetadataChange(IntPtr selfPointer)
-			: base(selfPointer)
+		internal NativeSnapshotMetadataChange(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
@@ -61,6 +23,42 @@ namespace GooglePlayGames.Native.PInvoke
 				return null;
 			}
 			return new NativeSnapshotMetadataChange(pointer);
+		}
+
+		internal class Builder : BaseReferenceHolder
+		{
+			internal Builder() : base(SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Construct())
+			{
+			}
+
+			internal NativeSnapshotMetadataChange Build()
+			{
+				return NativeSnapshotMetadataChange.FromPointer(SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Create(base.SelfPtr()));
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_Dispose(selfPointer);
+			}
+
+			internal NativeSnapshotMetadataChange.Builder SetCoverImageFromPngData(byte[] pngData)
+			{
+				Misc.CheckNotNull<byte[]>(pngData);
+				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetCoverImageFromPngData(base.SelfPtr(), pngData, new UIntPtr((ulong)pngData.LongLength));
+				return this;
+			}
+
+			internal NativeSnapshotMetadataChange.Builder SetDescription(string description)
+			{
+				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetDescription(base.SelfPtr(), description);
+				return this;
+			}
+
+			internal NativeSnapshotMetadataChange.Builder SetPlayedTime(ulong playedTime)
+			{
+				SnapshotMetadataChangeBuilder.SnapshotMetadataChange_Builder_SetPlayedTime(base.SelfPtr(), playedTime);
+				return this;
+			}
 		}
 	}
 }

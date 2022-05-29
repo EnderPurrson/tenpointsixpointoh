@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InvitationsPanelSwitch : MonoBehaviour
@@ -22,60 +23,65 @@ public class InvitationsPanelSwitch : MonoBehaviour
 
 	public GameObject[] anotherToggles;
 
-	private void OnPress(bool isPress)
+	public InvitationsPanelSwitch()
 	{
-		Debug.Log("press " + isPress);
-		if (isPress)
-		{
-			GetComponent<UISprite>().spriteName = "trans_btn_n";
-		}
-		else
-		{
-			GetComponent<UISprite>().spriteName = "trans_btn";
-		}
 	}
 
 	private void OnClick()
 	{
 		Debug.Log("OnClick");
-		if (left)
+		if (this.left)
 		{
-			leftPanel.SetActive(true);
-			MiddlePanel.SetActive(false);
-			rightPanel.SetActive(false);
+			this.leftPanel.SetActive(true);
+			this.MiddlePanel.SetActive(false);
+			this.rightPanel.SetActive(false);
 		}
-		else if (Middle)
+		else if (!this.Middle)
 		{
-			leftPanel.SetActive(false);
-			MiddlePanel.SetActive(true);
-			rightPanel.SetActive(false);
+			this.leftPanel.SetActive(false);
+			this.MiddlePanel.SetActive(false);
+			this.rightPanel.SetActive(true);
 		}
 		else
 		{
-			leftPanel.SetActive(false);
-			MiddlePanel.SetActive(false);
-			rightPanel.SetActive(true);
+			this.leftPanel.SetActive(false);
+			this.MiddlePanel.SetActive(true);
+			this.rightPanel.SetActive(false);
 		}
-		GetComponent<UIButton>().enabled = false;
-		butt.GetComponent<UILabel>().gameObject.SetActive(false);
-		chekmark.SetActive(true);
-		GetComponent<UISprite>().spriteName = "trans_btn_n";
-		GameObject[] array = anotherButtons;
-		foreach (GameObject gameObject in array)
+		base.GetComponent<UIButton>().enabled = false;
+		this.butt.GetComponent<UILabel>().gameObject.SetActive(false);
+		this.chekmark.SetActive(true);
+		base.GetComponent<UISprite>().spriteName = "trans_btn_n";
+		GameObject[] gameObjectArray = this.anotherButtons;
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
 		{
-			gameObject.SetActive(true);
+			gameObjectArray[i].SetActive(true);
 		}
-		GameObject[] array2 = anotherToggles;
-		foreach (GameObject gameObject2 in array2)
+		GameObject[] gameObjectArray1 = this.anotherToggles;
+		for (int j = 0; j < (int)gameObjectArray1.Length; j++)
 		{
-			gameObject2.GetComponent<UIButton>().enabled = true;
-			gameObject2.GetComponent<UISprite>().spriteName = "trans_btn";
+			GameObject gameObject = gameObjectArray1[j];
+			gameObject.GetComponent<UIButton>().enabled = true;
+			gameObject.GetComponent<UISprite>().spriteName = "trans_btn";
 		}
-		GameObject[] array3 = anotherChekmarks;
-		foreach (GameObject gameObject3 in array3)
+		GameObject[] gameObjectArray2 = this.anotherChekmarks;
+		for (int k = 0; k < (int)gameObjectArray2.Length; k++)
 		{
-			gameObject3.SetActive(false);
+			gameObjectArray2[k].SetActive(false);
 		}
 		ButtonClickSound.Instance.PlayClick();
+	}
+
+	private void OnPress(bool isPress)
+	{
+		Debug.Log(string.Concat("press ", isPress));
+		if (!isPress)
+		{
+			base.GetComponent<UISprite>().spriteName = "trans_btn";
+		}
+		else
+		{
+			base.GetComponent<UISprite>().spriteName = "trans_btn_n";
+		}
 	}
 }

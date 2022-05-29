@@ -1,5 +1,5 @@
-using System;
 using ExitGames.Client.Photon;
+using System;
 
 public class RoomOptions
 {
@@ -23,27 +23,16 @@ public class RoomOptions
 
 	private bool publishUserIdField;
 
-	public bool IsVisible
+	[Obsolete("Use property with uppercase naming instead.")]
+	public bool cleanupCacheOnLeave
 	{
 		get
 		{
-			return isVisibleField;
+			return this.cleanupCacheOnLeaveField;
 		}
 		set
 		{
-			isVisibleField = value;
-		}
-	}
-
-	public bool IsOpen
-	{
-		get
-		{
-			return isOpenField;
-		}
-		set
-		{
-			isOpenField = value;
+			this.cleanupCacheOnLeaveField = value;
 		}
 	}
 
@@ -51,83 +40,11 @@ public class RoomOptions
 	{
 		get
 		{
-			return cleanupCacheOnLeaveField;
+			return this.cleanupCacheOnLeaveField;
 		}
 		set
 		{
-			cleanupCacheOnLeaveField = value;
-		}
-	}
-
-	public bool SuppressRoomEvents
-	{
-		get
-		{
-			return suppressRoomEventsField;
-		}
-	}
-
-	public bool PublishUserId
-	{
-		get
-		{
-			return publishUserIdField;
-		}
-		set
-		{
-			publishUserIdField = value;
-		}
-	}
-
-	[Obsolete("Use property with uppercase naming instead.")]
-	public bool isVisible
-	{
-		get
-		{
-			return isVisibleField;
-		}
-		set
-		{
-			isVisibleField = value;
-		}
-	}
-
-	[Obsolete("Use property with uppercase naming instead.")]
-	public bool isOpen
-	{
-		get
-		{
-			return isOpenField;
-		}
-		set
-		{
-			isOpenField = value;
-		}
-	}
-
-	[Obsolete("Use property with uppercase naming instead.")]
-	public byte maxPlayers
-	{
-		get
-		{
-			return MaxPlayers;
-		}
-		set
-		{
-			MaxPlayers = value;
-		}
-	}
-
-	[Obsolete("Use property with uppercase naming instead.")]
-	public bool cleanupCacheOnLeave
-	{
-		get
-		{
-			return cleanupCacheOnLeaveField;
-		}
-		set
-		{
-			cleanupCacheOnLeaveField = value;
+			this.cleanupCacheOnLeaveField = value;
 		}
 	}
 
@@ -136,11 +53,11 @@ public class RoomOptions
 	{
 		get
 		{
-			return CustomRoomProperties;
+			return this.CustomRoomProperties;
 		}
 		set
 		{
-			CustomRoomProperties = value;
+			this.CustomRoomProperties = value;
 		}
 	}
 
@@ -149,11 +66,74 @@ public class RoomOptions
 	{
 		get
 		{
-			return CustomRoomPropertiesForLobby;
+			return this.CustomRoomPropertiesForLobby;
 		}
 		set
 		{
-			CustomRoomPropertiesForLobby = value;
+			this.CustomRoomPropertiesForLobby = value;
+		}
+	}
+
+	[Obsolete("Use property with uppercase naming instead.")]
+	public bool isOpen
+	{
+		get
+		{
+			return this.isOpenField;
+		}
+		set
+		{
+			this.isOpenField = value;
+		}
+	}
+
+	public bool IsOpen
+	{
+		get
+		{
+			return this.isOpenField;
+		}
+		set
+		{
+			this.isOpenField = value;
+		}
+	}
+
+	[Obsolete("Use property with uppercase naming instead.")]
+	public bool isVisible
+	{
+		get
+		{
+			return this.isVisibleField;
+		}
+		set
+		{
+			this.isVisibleField = value;
+		}
+	}
+
+	public bool IsVisible
+	{
+		get
+		{
+			return this.isVisibleField;
+		}
+		set
+		{
+			this.isVisibleField = value;
+		}
+	}
+
+	[Obsolete("Use property with uppercase naming instead.")]
+	public byte maxPlayers
+	{
+		get
+		{
+			return this.MaxPlayers;
+		}
+		set
+		{
+			this.MaxPlayers = value;
 		}
 	}
 
@@ -162,20 +142,11 @@ public class RoomOptions
 	{
 		get
 		{
-			return Plugins;
+			return this.Plugins;
 		}
 		set
 		{
-			Plugins = value;
-		}
-	}
-
-	[Obsolete("Use property with uppercase naming instead.")]
-	public bool suppressRoomEvents
-	{
-		get
-		{
-			return suppressRoomEventsField;
+			this.Plugins = value;
 		}
 	}
 
@@ -184,11 +155,44 @@ public class RoomOptions
 	{
 		get
 		{
-			return publishUserIdField;
+			return this.publishUserIdField;
 		}
 		set
 		{
-			publishUserIdField = value;
+			this.publishUserIdField = value;
 		}
+	}
+
+	public bool PublishUserId
+	{
+		get
+		{
+			return this.publishUserIdField;
+		}
+		set
+		{
+			this.publishUserIdField = value;
+		}
+	}
+
+	[Obsolete("Use property with uppercase naming instead.")]
+	public bool suppressRoomEvents
+	{
+		get
+		{
+			return this.suppressRoomEventsField;
+		}
+	}
+
+	public bool SuppressRoomEvents
+	{
+		get
+		{
+			return this.suppressRoomEventsField;
+		}
+	}
+
+	public RoomOptions()
+	{
 	}
 }

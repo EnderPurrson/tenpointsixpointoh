@@ -1,13 +1,19 @@
+using GooglePlayGames.OurUtils;
 using System;
 using System.Reflection;
-using GooglePlayGames.OurUtils;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace GooglePlayGames.Native
 {
 	internal static class JavaUtils
 	{
-		private static ConstructorInfo IntPtrConstructor = typeof(AndroidJavaObject).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[1] { typeof(IntPtr) }, null);
+		private static ConstructorInfo IntPtrConstructor;
+
+		static JavaUtils()
+		{
+			JavaUtils.IntPtrConstructor = typeof(AndroidJavaObject).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[] { typeof(IntPtr) }, null);
+		}
 
 		internal static AndroidJavaObject JavaObjectFromPointer(IntPtr jobject)
 		{
@@ -15,25 +21,30 @@ namespace GooglePlayGames.Native
 			{
 				return null;
 			}
-			return (AndroidJavaObject)IntPtrConstructor.Invoke(new object[1] { jobject });
+			return (AndroidJavaObject)JavaUtils.IntPtrConstructor.Invoke(new object[] { jobject });
 		}
 
 		internal static AndroidJavaObject NullSafeCall(this AndroidJavaObject target, string methodName, params object[] args)
 		{
-			//Discarded unreachable code: IL_000e, IL_0047
+			AndroidJavaObject androidJavaObject;
 			try
 			{
-				return target.Call<AndroidJavaObject>(methodName, args);
+				androidJavaObject = target.Call<AndroidJavaObject>(methodName, args);
 			}
-			catch (Exception ex)
+			catch (Exception exception1)
 			{
-				if (ex.Message.Contains("null"))
+				Exception exception = exception1;
+				if (!exception.Message.Contains("null"))
 				{
-					return null;
+					GooglePlayGames.OurUtils.Logger.w(string.Concat("CallObjectMethod exception: ", exception));
+					androidJavaObject = null;
 				}
-				GooglePlayGames.OurUtils.Logger.w("CallObjectMethod exception: " + ex);
-				return null;
+				else
+				{
+					androidJavaObject = null;
+				}
 			}
+			return androidJavaObject;
 		}
 	}
 }

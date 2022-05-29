@@ -6,17 +6,6 @@ using UnityEngine;
 
 public static class ItemDb
 {
-	[CompilerGenerated]
-	private sealed class _003CGetItemName_003Ec__AnonStorey34B
-	{
-		internal ItemRecord firstRec;
-
-		internal bool _003C_003Em__55D(WeaponSounds weapon)
-		{
-			return weapon.name == firstRec.PrefabName;
-		}
-	}
-
 	public const int CrystalCrossbowCoinsPrice = 150;
 
 	private static List<ItemRecord> _records;
@@ -31,211 +20,41 @@ public static class ItemDb
 
 	private static Dictionary<string, ItemRecord> _recordsByPrefabName;
 
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cache6;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cache7;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, string> _003C_003Ef__am_0024cache8;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, bool> _003C_003Ef__am_0024cache9;
-
-	[CompilerGenerated]
-	private static Func<ItemRecord, string> _003C_003Ef__am_0024cacheA;
-
 	public static List<ItemRecord> allRecords
 	{
 		get
 		{
-			return _records;
+			return ItemDb._records;
 		}
 	}
 
 	static ItemDb()
 	{
-		_records = ItemDbRecords.GetRecords();
-		_recordsById = new Dictionary<int, ItemRecord>(_records.Count);
-		_recordsByTag = new Dictionary<string, ItemRecord>(_records.Count);
-		_recordsByStorageId = new Dictionary<string, ItemRecord>(_records.Count);
-		_recordsByShopId = new Dictionary<string, ItemRecord>(_records.Count);
-		_recordsByPrefabName = new Dictionary<string, ItemRecord>(_records.Count);
-		for (int i = 0; i < _records.Count; i++)
+		ItemDb._records = ItemDbRecords.GetRecords();
+		ItemDb._recordsById = new Dictionary<int, ItemRecord>(ItemDb._records.Count);
+		ItemDb._recordsByTag = new Dictionary<string, ItemRecord>(ItemDb._records.Count);
+		ItemDb._recordsByStorageId = new Dictionary<string, ItemRecord>(ItemDb._records.Count);
+		ItemDb._recordsByShopId = new Dictionary<string, ItemRecord>(ItemDb._records.Count);
+		ItemDb._recordsByPrefabName = new Dictionary<string, ItemRecord>(ItemDb._records.Count);
+		for (int i = 0; i < ItemDb._records.Count; i++)
 		{
-			ItemRecord itemRecord = _records[i];
-			_recordsById[itemRecord.Id] = itemRecord;
-			if (!string.IsNullOrEmpty(itemRecord.Tag))
+			ItemRecord item = ItemDb._records[i];
+			ItemDb._recordsById[item.Id] = item;
+			if (!string.IsNullOrEmpty(item.Tag))
 			{
-				_recordsByTag[itemRecord.Tag] = itemRecord;
+				ItemDb._recordsByTag[item.Tag] = item;
 			}
-			if (!string.IsNullOrEmpty(itemRecord.StorageId))
+			if (!string.IsNullOrEmpty(item.StorageId))
 			{
-				_recordsByStorageId[itemRecord.StorageId] = itemRecord;
+				ItemDb._recordsByStorageId[item.StorageId] = item;
 			}
-			if (!string.IsNullOrEmpty(itemRecord.ShopId))
+			if (!string.IsNullOrEmpty(item.ShopId))
 			{
-				_recordsByShopId[itemRecord.ShopId] = itemRecord;
+				ItemDb._recordsByShopId[item.ShopId] = item;
 			}
-			if (!string.IsNullOrEmpty(itemRecord.PrefabName))
+			if (!string.IsNullOrEmpty(item.PrefabName))
 			{
-				_recordsByPrefabName[itemRecord.PrefabName] = itemRecord;
-			}
-		}
-	}
-
-	public static ItemRecord GetById(int id)
-	{
-		if (_recordsById.ContainsKey(id))
-		{
-			return _recordsById[id];
-		}
-		return null;
-	}
-
-	public static ItemRecord GetByTag(string tag)
-	{
-		if (tag == null)
-		{
-			return null;
-		}
-		ItemRecord value;
-		if (_recordsByTag.TryGetValue(tag, out value))
-		{
-			return value;
-		}
-		return null;
-	}
-
-	public static ItemRecord GetByPrefabName(string prefabName)
-	{
-		if (prefabName == null)
-		{
-			return null;
-		}
-		ItemRecord value;
-		if (_recordsByPrefabName.TryGetValue(prefabName, out value))
-		{
-			return value;
-		}
-		return null;
-	}
-
-	public static ItemRecord GetByShopId(string shopId)
-	{
-		if (shopId == null)
-		{
-			return null;
-		}
-		ItemRecord value;
-		if (_recordsByShopId.TryGetValue(shopId, out value))
-		{
-			return value;
-		}
-		return null;
-	}
-
-	public static ItemPrice GetPriceByShopId(string shopId)
-	{
-		if (shopId == null)
-		{
-			return null;
-		}
-		ItemRecord value;
-		if (_recordsByShopId.TryGetValue(shopId, out value))
-		{
-			return value.Price;
-		}
-		return VirtualCurrencyHelper.Price(shopId);
-	}
-
-	public static bool IsCanBuy(string tag)
-	{
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag != null)
-		{
-			return byTag.CanBuy;
-		}
-		return false;
-	}
-
-	public static string GetShopIdByTag(string tag)
-	{
-		ItemRecord byTag = GetByTag(tag);
-		return (byTag == null) ? null : byTag.ShopId;
-	}
-
-	public static string GetTagByShopId(string shopId)
-	{
-		ItemRecord byShopId = GetByShopId(shopId);
-		return (byShopId == null) ? null : byShopId.Tag;
-	}
-
-	public static string GetStorageIdByTag(string tag)
-	{
-		ItemRecord byTag = GetByTag(tag);
-		return (byTag == null) ? null : byTag.StorageId;
-	}
-
-	public static string GetStorageIdByShopId(string shopId)
-	{
-		ItemRecord byShopId = GetByShopId(shopId);
-		return (byShopId == null) ? null : byShopId.StorageId;
-	}
-
-	public static IEnumerable<ItemRecord> GetCanBuyWeapon(bool includeDeactivated = false)
-	{
-		if (includeDeactivated)
-		{
-			List<ItemRecord> records = _records;
-			if (_003C_003Ef__am_0024cache6 == null)
-			{
-				_003C_003Ef__am_0024cache6 = _003CGetCanBuyWeapon_003Em__558;
-			}
-			return records.Where(_003C_003Ef__am_0024cache6);
-		}
-		List<ItemRecord> records2 = _records;
-		if (_003C_003Ef__am_0024cache7 == null)
-		{
-			_003C_003Ef__am_0024cache7 = _003CGetCanBuyWeapon_003Em__559;
-		}
-		return records2.Where(_003C_003Ef__am_0024cache7);
-	}
-
-	public static string[] GetCanBuyWeaponTags(bool includeDeactivated = false)
-	{
-		IEnumerable<ItemRecord> canBuyWeapon = GetCanBuyWeapon(includeDeactivated);
-		if (_003C_003Ef__am_0024cache8 == null)
-		{
-			_003C_003Ef__am_0024cache8 = _003CGetCanBuyWeaponTags_003Em__55A;
-		}
-		return canBuyWeapon.Select(_003C_003Ef__am_0024cache8).ToArray();
-	}
-
-	public static List<string> GetCanBuyWeaponStorageIds(bool includeDeactivated = false)
-	{
-		IEnumerable<ItemRecord> canBuyWeapon = GetCanBuyWeapon(includeDeactivated);
-		if (_003C_003Ef__am_0024cache9 == null)
-		{
-			_003C_003Ef__am_0024cache9 = _003CGetCanBuyWeaponStorageIds_003Em__55B;
-		}
-		IEnumerable<ItemRecord> source = canBuyWeapon.Where(_003C_003Ef__am_0024cache9);
-		if (_003C_003Ef__am_0024cacheA == null)
-		{
-			_003C_003Ef__am_0024cacheA = _003CGetCanBuyWeaponStorageIds_003Em__55C;
-		}
-		return source.Select(_003C_003Ef__am_0024cacheA).ToList();
-	}
-
-	public static void Fill_tagToStoreIDMapping(Dictionary<string, string> tagToStoreIDMapping)
-	{
-		tagToStoreIDMapping.Clear();
-		foreach (KeyValuePair<string, ItemRecord> item in _recordsByTag)
-		{
-			if (!string.IsNullOrEmpty(item.Value.ShopId))
-			{
-				tagToStoreIDMapping[item.Key] = item.Value.ShopId;
+				ItemDb._recordsByPrefabName[item.PrefabName] = item;
 			}
 		}
 	}
@@ -243,195 +62,311 @@ public static class ItemDb
 	public static void Fill_storeIDtoDefsSNMapping(Dictionary<string, string> storeIDtoDefsSNMapping)
 	{
 		storeIDtoDefsSNMapping.Clear();
-		foreach (KeyValuePair<string, ItemRecord> item in _recordsByShopId)
+		foreach (KeyValuePair<string, ItemRecord> storageId in ItemDb._recordsByShopId)
 		{
-			if (!string.IsNullOrEmpty(item.Value.StorageId))
+			if (string.IsNullOrEmpty(storageId.Value.StorageId))
 			{
-				storeIDtoDefsSNMapping[item.Key] = item.Value.StorageId;
+				continue;
 			}
+			storeIDtoDefsSNMapping[storageId.Key] = storageId.Value.StorageId;
 		}
 	}
 
-	public static bool IsTemporaryGun(string tg)
+	public static void Fill_tagToStoreIDMapping(Dictionary<string, string> tagToStoreIDMapping)
 	{
-		if (tg == null)
+		tagToStoreIDMapping.Clear();
+		foreach (KeyValuePair<string, ItemRecord> shopId in ItemDb._recordsByTag)
 		{
-			return false;
-		}
-		ItemRecord byTag = GetByTag(tg);
-		return byTag != null && byTag.TemporaryGun;
-	}
-
-	public static bool IsWeaponCanDrop(string tag)
-	{
-		if (tag == "Knife")
-		{
-			return false;
-		}
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag == null)
-		{
-			return false;
-		}
-		return !byTag.CanBuy;
-	}
-
-	public static void InitStorageForTag(string tag)
-	{
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag == null)
-		{
-			Debug.LogWarning("item didn't found for tag: " + tag);
-		}
-		else if (string.IsNullOrEmpty(byTag.StorageId))
-		{
-			Debug.LogWarning("StoragId is null or empty for tag: " + tag);
-		}
-		else
-		{
-			Storager.setInt(byTag.StorageId, 0, false);
-		}
-	}
-
-	public static int GetItemCategory(string tag)
-	{
-		int num = -1;
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag != null)
-		{
-			WeaponSounds weaponSounds = Resources.Load<WeaponSounds>("Weapons/" + byTag.PrefabName);
-			return (!(weaponSounds != null)) ? (-1) : (weaponSounds.categoryNabor - 1);
-		}
-		if (num == -1)
-		{
-			bool flag = false;
-			foreach (KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> item in Wear.wear)
+			if (string.IsNullOrEmpty(shopId.Value.ShopId))
 			{
-				foreach (List<string> item2 in item.Value)
-				{
-					if (item2.Contains(tag))
-					{
-						flag = true;
-						num = (int)item.Key;
-						break;
-					}
-				}
-				if (flag)
-				{
-					break;
-				}
+				continue;
 			}
+			tagToStoreIDMapping[shopId.Key] = shopId.Value.ShopId;
 		}
-		if (num == -1 && (SkinsController.skinsNamesForPers.ContainsKey(tag) || tag.Equals("CustomSkinID")))
-		{
-			num = 8;
-		}
-		if (num == -1 && GearManager.IsItemGear(tag))
-		{
-			num = 11;
-		}
-		return num;
 	}
 
-	public static int[] GetItemFilterMap(string tag)
+	public static ItemRecord GetById(int id)
 	{
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag != null)
+		if (!ItemDb._recordsById.ContainsKey(id))
 		{
-			WeaponSounds weaponSounds = Resources.Load<WeaponSounds>("Weapons/" + byTag.PrefabName);
-			return (!(weaponSounds != null)) ? new int[0] : ((weaponSounds.filterMap == null) ? new int[0] : weaponSounds.filterMap);
+			return null;
 		}
-		return new int[0];
+		return ItemDb._recordsById[id];
+	}
+
+	public static ItemRecord GetByPrefabName(string prefabName)
+	{
+		ItemRecord itemRecord;
+		if (prefabName == null)
+		{
+			return null;
+		}
+		if (ItemDb._recordsByPrefabName.TryGetValue(prefabName, out itemRecord))
+		{
+			return itemRecord;
+		}
+		return null;
+	}
+
+	public static ItemRecord GetByShopId(string shopId)
+	{
+		ItemRecord itemRecord;
+		if (shopId == null)
+		{
+			return null;
+		}
+		if (ItemDb._recordsByShopId.TryGetValue(shopId, out itemRecord))
+		{
+			return itemRecord;
+		}
+		return null;
+	}
+
+	public static ItemRecord GetByTag(string tag)
+	{
+		ItemRecord itemRecord;
+		if (tag == null)
+		{
+			return null;
+		}
+		if (ItemDb._recordsByTag.TryGetValue(tag, out itemRecord))
+		{
+			return itemRecord;
+		}
+		return null;
+	}
+
+	public static IEnumerable<ItemRecord> GetCanBuyWeapon(bool includeDeactivated = false)
+	{
+		if (includeDeactivated)
+		{
+			return 
+				from item in ItemDb._records
+				where item.CanBuy
+				select item;
+		}
+		return 
+			from item in ItemDb._records
+			where (!item.CanBuy ? false : !item.Deactivated)
+			select item;
+	}
+
+	public static List<string> GetCanBuyWeaponStorageIds(bool includeDeactivated = false)
+	{
+		return (
+			from item in ItemDb.GetCanBuyWeapon(includeDeactivated)
+			where item.StorageId != null
+			select item.StorageId).ToList<string>();
+	}
+
+	public static string[] GetCanBuyWeaponTags(bool includeDeactivated = false)
+	{
+		return (
+			from item in ItemDb.GetCanBuyWeapon(includeDeactivated)
+			select item.Tag).ToArray<string>();
 	}
 
 	public static ShopPositionParams GetInfoForNonWeaponItem(string name, ShopNGUIController.CategoryNames category)
 	{
-		ShopPositionParams result = null;
+		ShopPositionParams shopPositionParam = null;
 		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Armor_Info/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Armor_Info/", name));
 		}
 		if (category == ShopNGUIController.CategoryNames.HatsCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Hats_Info/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Hats_Info/", name));
 		}
 		if (category == ShopNGUIController.CategoryNames.CapesCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Capes_Info/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Capes_Info/", name));
 		}
 		if (category == ShopNGUIController.CategoryNames.BootsCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Shop_Boots_Info/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Shop_Boots_Info/", name));
 		}
 		if (category == ShopNGUIController.CategoryNames.GearCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Shop_Gear/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Shop_Gear/", name));
 		}
 		if (category == ShopNGUIController.CategoryNames.MaskCategory)
 		{
-			result = Resources.Load<ShopPositionParams>("Masks_Info/" + name);
+			shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Masks_Info/", name));
 		}
-		return result;
+		return shopPositionParam;
 	}
 
-	public static GameObject GetWearFromResources(string name, ShopNGUIController.CategoryNames category)
+	public static int GetItemCategory(string tag)
 	{
-		GameObject result = null;
-		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
+		int key = -1;
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag != null)
 		{
-			result = Resources.Load<GameObject>("Armor/" + name);
+			WeaponSounds weaponSound = Resources.Load<WeaponSounds>(string.Concat("Weapons/", byTag.PrefabName));
+			return (weaponSound == null ? -1 : weaponSound.categoryNabor - 1);
 		}
-		if (category == ShopNGUIController.CategoryNames.HatsCategory)
+		if (key == -1)
 		{
-			result = Resources.Load<GameObject>("Hats/" + name);
+			string str = tag;
+			bool flag = false;
+			foreach (KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> keyValuePair in Wear.wear)
+			{
+				foreach (List<string> value in keyValuePair.Value)
+				{
+					if (!value.Contains(str))
+					{
+						continue;
+					}
+					flag = true;
+					key = (int)keyValuePair.Key;
+					break;
+				}
+				if (!flag)
+				{
+					continue;
+				}
+				break;
+			}
 		}
-		if (category == ShopNGUIController.CategoryNames.CapesCategory)
+		if (key == -1 && (SkinsController.skinsNamesForPers.ContainsKey(tag) || tag.Equals("CustomSkinID")))
 		{
-			result = Resources.Load<GameObject>("Capes/" + name);
+			key = 8;
 		}
-		if (category == ShopNGUIController.CategoryNames.BootsCategory)
+		if (key == -1 && GearManager.IsItemGear(tag))
 		{
-			result = Resources.Load<GameObject>("Shop_Boots/" + name);
+			key = 11;
 		}
-		if (category == ShopNGUIController.CategoryNames.GearCategory)
-		{
-			result = Resources.Load<GameObject>("Shop_Gear/" + name);
-		}
-		if (category == ShopNGUIController.CategoryNames.MaskCategory)
-		{
-			result = Resources.Load<GameObject>("Masks/" + name);
-		}
-		return result;
+		return key;
 	}
 
-	public static ResourceRequest GetWearFromResourcesAsync(string name, ShopNGUIController.CategoryNames category)
+	public static int[] GetItemFilterMap(string tag)
 	{
-		ResourceRequest result = null;
-		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
+		int[] numArray;
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
 		{
-			result = Resources.LoadAsync<GameObject>("Armor/" + name);
+			return new int[0];
 		}
-		if (category == ShopNGUIController.CategoryNames.HatsCategory)
+		WeaponSounds weaponSound = Resources.Load<WeaponSounds>(string.Concat("Weapons/", byTag.PrefabName));
+		if (weaponSound == null)
 		{
-			result = Resources.LoadAsync<GameObject>("Hats/" + name);
+			numArray = new int[0];
 		}
-		if (category == ShopNGUIController.CategoryNames.CapesCategory)
+		else
 		{
-			result = Resources.LoadAsync<GameObject>("Capes/" + name);
+			numArray = (weaponSound.filterMap == null ? new int[0] : weaponSound.filterMap);
 		}
-		if (category == ShopNGUIController.CategoryNames.BootsCategory)
+		return numArray;
+	}
+
+	public static Texture GetItemIcon(string tag, ShopNGUIController.CategoryNames category, bool withUpdates)
+	{
+		bool flag;
+		int num;
+		if (category == (ShopNGUIController.CategoryNames.BackupCategory | ShopNGUIController.CategoryNames.MeleeCategory | ShopNGUIController.CategoryNames.SpecilCategory | ShopNGUIController.CategoryNames.SniperCategory | ShopNGUIController.CategoryNames.PremiumCategory | ShopNGUIController.CategoryNames.HatsCategory | ShopNGUIController.CategoryNames.ArmorCategory | ShopNGUIController.CategoryNames.SkinsCategory | ShopNGUIController.CategoryNames.CapesCategory | ShopNGUIController.CategoryNames.BootsCategory | ShopNGUIController.CategoryNames.GearCategory | ShopNGUIController.CategoryNames.MaskCategory))
 		{
-			result = Resources.LoadAsync<GameObject>("Shop_Boots/" + name);
+			return null;
 		}
-		if (category == ShopNGUIController.CategoryNames.GearCategory)
+		string str = null;
+		string item = tag;
+		if (ShopNGUIController.IsWeaponCategory(category))
 		{
-			result = Resources.LoadAsync<GameObject>("Shop_Gear/" + name);
+			foreach (List<string> upgrade in WeaponUpgrades.upgrades)
+			{
+				if (!upgrade.Contains(tag))
+				{
+					continue;
+				}
+				item = upgrade[0];
+				break;
+			}
 		}
-		if (category == ShopNGUIController.CategoryNames.MaskCategory)
+		if (item != null)
 		{
-			result = Resources.LoadAsync<GameObject>("Masks/" + name);
+			if (!withUpdates)
+			{
+				str = string.Concat(item, "_icon1_big");
+			}
+			else
+			{
+				int num1 = 1;
+				if (ShopNGUIController.IsWeaponCategory(category))
+				{
+					ItemRecord byTag = ItemDb.GetByTag(tag);
+					if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
+					{
+						num1 = 1 + ShopNGUIController._CurrentNumberOfUpgrades(item, out flag, category, true);
+					}
+				}
+				else if (category == ShopNGUIController.CategoryNames.GearCategory)
+				{
+					if (!Defs.isDaterRegim)
+					{
+						num = (tag == GearManager.Grenade ? 1 : 1 + GearManager.CurrentNumberOfUphradesForGear(tag));
+					}
+					else
+					{
+						num = 0;
+					}
+					num1 = num;
+				}
+				str = string.Concat(item, "_icon", num1.ToString(), "_big");
+			}
 		}
-		return result;
+		if (string.IsNullOrEmpty(str))
+		{
+			return null;
+		}
+		return Resources.Load<Texture>(string.Concat("OfferIcons/", str));
+	}
+
+	public static Texture GetItemIcon(string tag, ShopNGUIController.CategoryNames category, int? upgradeNum = null)
+	{
+		if (category == (ShopNGUIController.CategoryNames.BackupCategory | ShopNGUIController.CategoryNames.MeleeCategory | ShopNGUIController.CategoryNames.SpecilCategory | ShopNGUIController.CategoryNames.SniperCategory | ShopNGUIController.CategoryNames.PremiumCategory | ShopNGUIController.CategoryNames.HatsCategory | ShopNGUIController.CategoryNames.ArmorCategory | ShopNGUIController.CategoryNames.SkinsCategory | ShopNGUIController.CategoryNames.CapesCategory | ShopNGUIController.CategoryNames.BootsCategory | ShopNGUIController.CategoryNames.GearCategory | ShopNGUIController.CategoryNames.MaskCategory))
+		{
+			return null;
+		}
+		string str = null;
+		string item = tag;
+		if (ShopNGUIController.IsWeaponCategory(category))
+		{
+			foreach (List<string> upgrade in WeaponUpgrades.upgrades)
+			{
+				int num = upgrade.IndexOf(tag);
+				if (num == -1)
+				{
+					continue;
+				}
+				item = upgrade[0];
+				if (!upgradeNum.HasValue)
+				{
+					upgradeNum = new int?(1 + num);
+				}
+				break;
+			}
+		}
+		if (!upgradeNum.HasValue)
+		{
+			str = string.Concat(item, "_icon1_big");
+		}
+		else
+		{
+			int num1 = 1;
+			if (ShopNGUIController.IsWeaponCategory(category))
+			{
+				ItemRecord byTag = ItemDb.GetByTag(tag);
+				if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
+				{
+					num1 = (!upgradeNum.HasValue ? 1 : upgradeNum.Value);
+				}
+			}
+			str = string.Concat(item, "_icon", num1.ToString(), "_big");
+		}
+		if (string.IsNullOrEmpty(str))
+		{
+			return null;
+		}
+		return Resources.Load<Texture>(string.Concat("OfferIcons/", str));
 	}
 
 	public static string GetItemName(string tag, ShopNGUIController.CategoryNames category)
@@ -440,276 +375,348 @@ public static class ItemDb
 		{
 			return string.Empty;
 		}
-		ShopPositionParams shopPositionParams = null;
-		ItemRecord byTag = GetByTag(tag);
-		if (byTag != null)
+		ShopPositionParams infoForNonWeaponItem = null;
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
 		{
-			WeaponSounds weaponSounds = Resources.Load<WeaponSounds>("Weapons/" + byTag.PrefabName);
-			string empty = string.Empty;
-			if (weaponSounds != null)
+			infoForNonWeaponItem = ItemDb.GetInfoForNonWeaponItem(tag, category);
+			if (infoForNonWeaponItem == null)
 			{
-				try
-				{
-					_003CGetItemName_003Ec__AnonStorey34B _003CGetItemName_003Ec__AnonStorey34B = new _003CGetItemName_003Ec__AnonStorey34B();
-					ItemRecord byPrefabName = GetByPrefabName(weaponSounds.name.Replace("(Clone)", string.Empty));
-					string tag2 = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
-					_003CGetItemName_003Ec__AnonStorey34B.firstRec = GetByTag(tag2);
-					return WeaponManager.AllWrapperPrefabs().First(_003CGetItemName_003Ec__AnonStorey34B._003C_003Em__55D).shopName;
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("Error in getting shop name of first upgrade: " + ex);
-					return weaponSounds.shopName;
-				}
+				return string.Empty;
 			}
-			return empty;
+			return infoForNonWeaponItem.shopName;
 		}
-		shopPositionParams = GetInfoForNonWeaponItem(tag, category);
-		if (shopPositionParams != null)
+		WeaponSounds weaponSound = Resources.Load<WeaponSounds>(string.Concat("Weapons/", byTag.PrefabName));
+		string empty = string.Empty;
+		if (weaponSound != null)
 		{
-			return shopPositionParams.shopName;
+			try
+			{
+				ItemRecord byPrefabName = ItemDb.GetByPrefabName(weaponSound.name.Replace("(Clone)", string.Empty));
+				string str = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
+				ItemRecord itemRecord = ItemDb.GetByTag(str);
+				empty = WeaponManager.AllWrapperPrefabs().First<WeaponSounds>((WeaponSounds weapon) => weapon.name == itemRecord.PrefabName).shopName;
+			}
+			catch (Exception exception)
+			{
+				Debug.LogError(string.Concat("Error in getting shop name of first upgrade: ", exception));
+				empty = weaponSound.shopName;
+			}
 		}
-		return string.Empty;
+		return empty;
+	}
+
+	public static string GetItemNameByTag(string tag)
+	{
+		return ItemDb.GetItemName(tag, (ShopNGUIController.CategoryNames)ItemDb.GetItemCategory(tag));
 	}
 
 	public static string GetItemNameNonLocalized(string tag, string shopId, ShopNGUIController.CategoryNames category, string defaultDesc = null)
 	{
-		ItemRecord byTag = GetByTag(tag);
+		ItemRecord byTag = ItemDb.GetByTag(tag);
 		if (byTag != null)
 		{
-			WeaponSounds weaponSounds = Resources.Load<WeaponSounds>("Weapons/" + byTag.PrefabName);
-			return (!(weaponSounds != null)) ? string.Empty : weaponSounds.shopNameNonLocalized;
+			WeaponSounds weaponSound = Resources.Load<WeaponSounds>(string.Concat("Weapons/", byTag.PrefabName));
+			return (weaponSound == null ? string.Empty : weaponSound.shopNameNonLocalized);
 		}
-		switch (category)
+		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
 		{
-		case ShopNGUIController.CategoryNames.ArmorCategory:
-			return Resources.Load<ShopPositionParams>("Armor_Info/" + tag).shopNameNonLocalized;
-		case ShopNGUIController.CategoryNames.HatsCategory:
-		{
-			ShopPositionParams shopPositionParams = Resources.Load<ShopPositionParams>("Hats_Info/" + tag);
-			return (!(shopPositionParams != null)) ? string.Empty : shopPositionParams.shopNameNonLocalized;
+			return Resources.Load<ShopPositionParams>(string.Concat("Armor_Info/", tag)).shopNameNonLocalized;
 		}
-		default:
+		if (category != ShopNGUIController.CategoryNames.HatsCategory)
+		{
 			if (InAppData.inappReadableNames.ContainsKey(shopId))
 			{
 				return InAppData.inappReadableNames[shopId];
 			}
 			return defaultDesc ?? shopId;
 		}
+		ShopPositionParams shopPositionParam = Resources.Load<ShopPositionParams>(string.Concat("Hats_Info/", tag));
+		return (shopPositionParam == null ? string.Empty : shopPositionParam.shopNameNonLocalized);
 	}
 
-	public static Texture GetItemIcon(string tag, ShopNGUIController.CategoryNames category, bool withUpdates)
+	public static ItemPrice GetPriceByShopId(string shopId)
 	{
-		if (category == (ShopNGUIController.CategoryNames)(-1))
+		ItemRecord itemRecord;
+		if (shopId == null)
 		{
 			return null;
 		}
-		string text = null;
-		string text2 = tag;
-		if (ShopNGUIController.IsWeaponCategory(category))
+		if (ItemDb._recordsByShopId.TryGetValue(shopId, out itemRecord))
 		{
-			foreach (List<string> upgrade in WeaponUpgrades.upgrades)
-			{
-				if (upgrade.Contains(tag))
-				{
-					text2 = upgrade[0];
-					break;
-				}
-			}
+			return itemRecord.Price;
 		}
-		if (text2 != null)
-		{
-			if (withUpdates)
-			{
-				int num = 1;
-				if (ShopNGUIController.IsWeaponCategory(category))
-				{
-					ItemRecord byTag = GetByTag(tag);
-					if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
-					{
-						bool maxUpgrade;
-						num = 1 + ShopNGUIController._CurrentNumberOfUpgrades(text2, out maxUpgrade, category);
-					}
-				}
-				else if (category == ShopNGUIController.CategoryNames.GearCategory)
-				{
-					num = ((!Defs.isDaterRegim) ? ((!(tag != GearManager.Grenade)) ? 1 : (1 + GearManager.CurrentNumberOfUphradesForGear(tag))) : 0);
-				}
-				text = text2 + "_icon" + num + "_big";
-			}
-			else
-			{
-				text = text2 + "_icon1_big";
-			}
-		}
-		if (!string.IsNullOrEmpty(text))
-		{
-			return Resources.Load<Texture>("OfferIcons/" + text);
-		}
-		return null;
+		return VirtualCurrencyHelper.Price(shopId);
 	}
 
-	public static Texture GetItemIcon(string tag, ShopNGUIController.CategoryNames category, int? upgradeNum = null)
+	public static string GetShopIdByTag(string tag)
 	{
-		if (category == (ShopNGUIController.CategoryNames)(-1))
+		string shopId;
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
 		{
-			return null;
-		}
-		string text = null;
-		string text2 = tag;
-		if (ShopNGUIController.IsWeaponCategory(category))
-		{
-			foreach (List<string> upgrade in WeaponUpgrades.upgrades)
-			{
-				int num = upgrade.IndexOf(tag);
-				if (num != -1)
-				{
-					text2 = upgrade[0];
-					if (!upgradeNum.HasValue)
-					{
-						upgradeNum = 1 + num;
-					}
-					break;
-				}
-			}
-		}
-		if (upgradeNum.HasValue)
-		{
-			int num2 = 1;
-			if (ShopNGUIController.IsWeaponCategory(category))
-			{
-				ItemRecord byTag = GetByTag(tag);
-				if ((byTag == null || !byTag.UseImagesFromFirstUpgrade) && (byTag == null || !byTag.TemporaryGun))
-				{
-					num2 = ((!upgradeNum.HasValue) ? 1 : upgradeNum.Value);
-				}
-			}
-			text = text2 + "_icon" + num2 + "_big";
+			shopId = null;
 		}
 		else
 		{
-			text = text2 + "_icon1_big";
+			shopId = byTag.ShopId;
 		}
-		if (!string.IsNullOrEmpty(text))
+		return shopId;
+	}
+
+	public static string GetStorageIdByShopId(string shopId)
+	{
+		string storageId;
+		ItemRecord byShopId = ItemDb.GetByShopId(shopId);
+		if (byShopId == null)
 		{
-			return Resources.Load<Texture>("OfferIcons/" + text);
+			storageId = null;
 		}
-		return null;
-	}
-
-	public static Texture GetTextureItemByTag(string tag, int? upgradeNum = null)
-	{
-		int itemCategory = GetItemCategory(tag);
-		return GetItemIcon(tag, (ShopNGUIController.CategoryNames)itemCategory, upgradeNum);
-	}
-
-	public static bool IsItemInInventory(string tag)
-	{
-		string key = tag;
-		string storageIdByTag = GetStorageIdByTag(tag);
-		if (!string.IsNullOrEmpty(storageIdByTag))
+		else
 		{
-			key = storageIdByTag;
+			storageId = byShopId.StorageId;
 		}
-		if (!Storager.hasKey(key))
-		{
-			return false;
-		}
-		return Storager.getInt(key, true) == 1;
+		return storageId;
 	}
 
-	public static bool HasWeaponNeedUpgradesForBuyNext(string tag)
+	public static string GetStorageIdByTag(string tag)
 	{
-		foreach (List<string> upgrade in WeaponUpgrades.upgrades)
-		{
-			int num = upgrade.IndexOf(tag);
-			if (num != -1)
-			{
-				bool flag = true;
-				for (int i = 0; i < num; i++)
-				{
-					flag = flag && IsItemInInventory(upgrade[i]);
-				}
-				return flag;
-			}
-		}
-		return true;
-	}
-
-	public static string GetItemNameByTag(string tag)
-	{
-		int itemCategory = GetItemCategory(tag);
-		return GetItemName(tag, (ShopNGUIController.CategoryNames)itemCategory);
-	}
-
-	public static WeaponSounds GetWeaponInfoByPrefabName(string prefabName)
-	{
-		if (prefabName != null)
-		{
-			WeaponSounds weaponSounds = Resources.Load<WeaponSounds>("Weapons/" + prefabName);
-			return (!(weaponSounds != null)) ? null : weaponSounds;
-		}
-		return null;
-	}
-
-	public static WeaponSounds GetWeaponInfo(string weaponTag)
-	{
-		ItemRecord byTag = GetByTag(weaponTag);
+		string storageId;
+		ItemRecord byTag = ItemDb.GetByTag(tag);
 		if (byTag == null)
 		{
-			return null;
+			storageId = null;
 		}
-		return GetWeaponInfoByPrefabName(byTag.PrefabName);
+		else
+		{
+			storageId = byTag.StorageId;
+		}
+		return storageId;
+	}
+
+	public static string GetTagByShopId(string shopId)
+	{
+		string tag;
+		ItemRecord byShopId = ItemDb.GetByShopId(shopId);
+		if (byShopId == null)
+		{
+			tag = null;
+		}
+		else
+		{
+			tag = byShopId.Tag;
+		}
+		return tag;
 	}
 
 	public static Texture GetTextureForShopItem(string itemTag)
 	{
-		int value = 0;
-		string text = itemTag;
+		int num = 0;
+		string str = itemTag;
 		bool flag = GearManager.IsItemGear(itemTag);
 		if (flag)
 		{
-			text = GearManager.HolderQuantityForID(itemTag);
-			value = GearManager.CurrentNumberOfUphradesForGear(text) + 1;
+			str = GearManager.HolderQuantityForID(itemTag);
+			num = GearManager.CurrentNumberOfUphradesForGear(str) + 1;
 		}
-		if (flag && (text == GearManager.Turret || text == GearManager.Mech))
+		if (flag && (str == GearManager.Turret || str == GearManager.Mech))
 		{
-			int? upgradeNum = value;
-			if (upgradeNum.HasValue && upgradeNum.Value > 0)
+			int? nullable = new int?(num);
+			if ((!nullable.HasValue ? false : nullable.Value > 0))
 			{
-				return GetTextureItemByTag(text, upgradeNum);
+				return ItemDb.GetTextureItemByTag(str, nullable);
 			}
 		}
-		return GetTextureItemByTag(text);
+		return ItemDb.GetTextureItemByTag(str, null);
 	}
 
-	[CompilerGenerated]
-	private static bool _003CGetCanBuyWeapon_003Em__558(ItemRecord item)
+	public static Texture GetTextureItemByTag(string tag, int? upgradeNum = null)
 	{
-		return item.CanBuy;
+		return ItemDb.GetItemIcon(tag, (ShopNGUIController.CategoryNames)ItemDb.GetItemCategory(tag), upgradeNum);
 	}
 
-	[CompilerGenerated]
-	private static bool _003CGetCanBuyWeapon_003Em__559(ItemRecord item)
+	public static WeaponSounds GetWeaponInfo(string weaponTag)
 	{
-		return item.CanBuy && !item.Deactivated;
+		ItemRecord byTag = ItemDb.GetByTag(weaponTag);
+		if (byTag == null)
+		{
+			return null;
+		}
+		return ItemDb.GetWeaponInfoByPrefabName(byTag.PrefabName);
 	}
 
-	[CompilerGenerated]
-	private static string _003CGetCanBuyWeaponTags_003Em__55A(ItemRecord item)
+	public static WeaponSounds GetWeaponInfoByPrefabName(string prefabName)
 	{
-		return item.Tag;
+		WeaponSounds weaponSound;
+		if (prefabName == null)
+		{
+			return null;
+		}
+		WeaponSounds weaponSound1 = Resources.Load<WeaponSounds>(string.Concat("Weapons/", prefabName));
+		if (weaponSound1 == null)
+		{
+			weaponSound = null;
+		}
+		else
+		{
+			weaponSound = weaponSound1;
+		}
+		return weaponSound;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CGetCanBuyWeaponStorageIds_003Em__55B(ItemRecord item)
+	public static GameObject GetWearFromResources(string name, ShopNGUIController.CategoryNames category)
 	{
-		return item.StorageId != null;
+		GameObject gameObject = null;
+		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Armor/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Hats/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.CapesCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Capes/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.BootsCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Shop_Boots/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.GearCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Shop_Gear/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.MaskCategory)
+		{
+			gameObject = Resources.Load<GameObject>(string.Concat("Masks/", name));
+		}
+		return gameObject;
 	}
 
-	[CompilerGenerated]
-	private static string _003CGetCanBuyWeaponStorageIds_003Em__55C(ItemRecord item)
+	public static ResourceRequest GetWearFromResourcesAsync(string name, ShopNGUIController.CategoryNames category)
 	{
-		return item.StorageId;
+		ResourceRequest resourceRequest = null;
+		if (category == ShopNGUIController.CategoryNames.ArmorCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Armor/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.HatsCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Hats/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.CapesCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Capes/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.BootsCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Shop_Boots/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.GearCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Shop_Gear/", name));
+		}
+		if (category == ShopNGUIController.CategoryNames.MaskCategory)
+		{
+			resourceRequest = Resources.LoadAsync<GameObject>(string.Concat("Masks/", name));
+		}
+		return resourceRequest;
+	}
+
+	public static bool HasWeaponNeedUpgradesForBuyNext(string tag)
+	{
+		bool flag;
+		List<List<string>>.Enumerator enumerator = WeaponUpgrades.upgrades.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				List<string> current = enumerator.Current;
+				int num = current.IndexOf(tag);
+				if (num == -1)
+				{
+					continue;
+				}
+				bool flag1 = true;
+				for (int i = 0; i < num; i++)
+				{
+					flag1 = (!flag1 ? false : ItemDb.IsItemInInventory(current[i]));
+				}
+				flag = flag1;
+				return flag;
+			}
+			return true;
+		}
+		finally
+		{
+			((IDisposable)(object)enumerator).Dispose();
+		}
+		return flag;
+	}
+
+	public static void InitStorageForTag(string tag)
+	{
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
+		{
+			Debug.LogWarning(string.Concat("item didn't found for tag: ", tag));
+			return;
+		}
+		if (string.IsNullOrEmpty(byTag.StorageId))
+		{
+			Debug.LogWarning(string.Concat("StoragId is null or empty for tag: ", tag));
+			return;
+		}
+		Storager.setInt(byTag.StorageId, 0, false);
+	}
+
+	public static bool IsCanBuy(string tag)
+	{
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
+		{
+			return false;
+		}
+		return byTag.CanBuy;
+	}
+
+	public static bool IsItemInInventory(string tag)
+	{
+		string str = tag;
+		string storageIdByTag = ItemDb.GetStorageIdByTag(tag);
+		if (!string.IsNullOrEmpty(storageIdByTag))
+		{
+			str = storageIdByTag;
+		}
+		if (!Storager.hasKey(str))
+		{
+			return false;
+		}
+		return Storager.getInt(str, true) == 1;
+	}
+
+	public static bool IsTemporaryGun(string tg)
+	{
+		if (tg == null)
+		{
+			return false;
+		}
+		ItemRecord byTag = ItemDb.GetByTag(tg);
+		return (byTag == null ? false : byTag.TemporaryGun);
+	}
+
+	public static bool IsWeaponCanDrop(string tag)
+	{
+		if (tag == "Knife")
+		{
+			return false;
+		}
+		ItemRecord byTag = ItemDb.GetByTag(tag);
+		if (byTag == null)
+		{
+			return false;
+		}
+		return !byTag.CanBuy;
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Photon
@@ -10,12 +11,16 @@ namespace Photon
 		{
 			get
 			{
-				if (pvCache == null)
+				if (this.pvCache == null)
 				{
-					pvCache = PhotonView.Get(this);
+					this.pvCache = PhotonView.Get(this);
 				}
-				return pvCache;
+				return this.pvCache;
 			}
+		}
+
+		public MonoBehaviour()
+		{
 		}
 	}
 }

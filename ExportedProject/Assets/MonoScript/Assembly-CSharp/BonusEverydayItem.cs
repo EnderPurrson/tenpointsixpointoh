@@ -1,3 +1,6 @@
+using I2.Loc;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BonusEverydayItem : MonoBehaviour
@@ -26,106 +29,115 @@ public class BonusEverydayItem : MonoBehaviour
 
 	private BonusMarafonItem _bonusData;
 
-	protected int BonusIndex { get; set; }
-
-	private void Start()
+	protected int BonusIndex
 	{
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
+		get;
+		set;
 	}
 
-	private void OnDestroy()
+	public BonusEverydayItem()
 	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void HandleLocalizationChanged()
-	{
-		SetTitleItem();
-	}
-
-	public void SetCheckForTakedReward()
-	{
-		checkTakedReward.gameObject.SetActive(true);
-	}
-
-	public void SetImageForReward(Texture2D image)
-	{
-		imageReward.mainTexture = image;
-	}
-
-	public void SetDescriptionItem(string text)
-	{
-		descriptionReward.text = text;
-		if (descriptionReward1 != null)
-		{
-			descriptionReward1.text = text;
-		}
-		if (descriptionReward2 != null)
-		{
-			descriptionReward2.text = text;
-		}
-	}
-
-	private void SetTitleItem(string text)
-	{
-		titleDayTakeReward.text = text;
-	}
-
-	private void SetTitleItem()
-	{
-		SetTitleItem(string.Format("{0} {1}", LocalizationStore.Get("Key_0469"), BonusIndex + 1));
 	}
 
 	public void FillData(int bonusIndex, int currentBonusIndex, bool isBonusWeekly)
 	{
-		BonusIndex = bonusIndex;
-		SetTitleItem();
+		this.BonusIndex = bonusIndex;
+		this.SetTitleItem();
 		if (bonusIndex < currentBonusIndex)
 		{
-			SetCheckForTakedReward();
+			this.SetCheckForTakedReward();
 		}
 		bool flag = bonusIndex == currentBonusIndex;
-		if (hightlightBonus != null && !isBonusWeekly)
+		if (this.hightlightBonus != null && !isBonusWeekly)
 		{
-			hightlightBonus.alpha = ((!flag) ? 0f : 1f);
+			this.hightlightBonus.alpha = (!flag ? 0f : 1f);
 		}
-		if (_bonusData != null)
+		if (this._bonusData != null)
 		{
-			SetDescriptionItem(_bonusData.GetShortDescription());
-			SetImageForReward(_bonusData.GetIcon());
+			this.SetDescriptionItem(this._bonusData.GetShortDescription());
+			this.SetImageForReward(this._bonusData.GetIcon());
 		}
-		if (isBonusWeekly && hightlightWeeklyBonus != null)
+		if (isBonusWeekly && this.hightlightWeeklyBonus != null)
 		{
-			SetBackgroundForBonusWeek();
-			hightlightWeeklyBonus.alpha = ((!flag) ? 0f : 1f);
-		}
-	}
-
-	public void SetBackgroundForBonusWeek()
-	{
-		background.gameObject.SetActive(false);
-		if (backgroundWeekly != null)
-		{
-			backgroundWeekly.gameObject.SetActive(true);
+			this.SetBackgroundForBonusWeek();
+			this.hightlightWeeklyBonus.alpha = (!flag ? 0f : 1f);
 		}
 	}
 
-	private void OnClickDetailInfo()
+	private void HandleLocalizationChanged()
 	{
-		if (_bonusData != null)
-		{
-			string shortDescription = _bonusData.GetShortDescription();
-			string longDescription = _bonusData.GetLongDescription();
-			Texture2D icon = _bonusData.GetIcon();
-			windowDetail.SetTitle(shortDescription);
-			windowDetail.SetDescription(longDescription);
-			windowDetail.SetImage(icon);
-			windowDetail.Show();
-		}
+		this.SetTitleItem();
 	}
 
 	private void OnClick()
 	{
-		OnClickDetailInfo();
+		this.OnClickDetailInfo();
+	}
+
+	private void OnClickDetailInfo()
+	{
+		if (this._bonusData == null)
+		{
+			return;
+		}
+		string shortDescription = this._bonusData.GetShortDescription();
+		string longDescription = this._bonusData.GetLongDescription();
+		Texture2D icon = this._bonusData.GetIcon();
+		this.windowDetail.SetTitle(shortDescription);
+		this.windowDetail.SetDescription(longDescription);
+		this.windowDetail.SetImage(icon);
+		this.windowDetail.Show();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	public void SetBackgroundForBonusWeek()
+	{
+		this.background.gameObject.SetActive(false);
+		if (this.backgroundWeekly != null)
+		{
+			this.backgroundWeekly.gameObject.SetActive(true);
+		}
+	}
+
+	public void SetCheckForTakedReward()
+	{
+		this.checkTakedReward.gameObject.SetActive(true);
+	}
+
+	public void SetDescriptionItem(string text)
+	{
+		this.descriptionReward.text = text;
+		if (this.descriptionReward1 != null)
+		{
+			this.descriptionReward1.text = text;
+		}
+		if (this.descriptionReward2 != null)
+		{
+			this.descriptionReward2.text = text;
+		}
+	}
+
+	public void SetImageForReward(Texture2D image)
+	{
+		this.imageReward.mainTexture = image;
+	}
+
+	private void SetTitleItem(string text)
+	{
+		this.titleDayTakeReward.text = text;
+	}
+
+	private void SetTitleItem()
+	{
+		this.SetTitleItem(string.Format("{0} {1}", LocalizationStore.Get("Key_0469"), this.BonusIndex + 1));
+	}
+
+	private void Start()
+	{
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 }

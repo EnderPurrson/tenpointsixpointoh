@@ -1,75 +1,148 @@
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.BasicApi.SavedGame;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-using GooglePlayGames.BasicApi.SavedGame;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	internal struct CampaignProgressSynchronizerGpgFacade
 	{
+		public const string Filename = "CampaignProgress";
+
+		private readonly static DummySavedGameClient _dummy;
+
+		private static ISavedGameClient SavedGame
+		{
+			get
+			{
+				ISavedGameClient savedGame;
+				try
+				{
+					if (PlayGamesPlatform.Instance == null)
+					{
+						savedGame = CampaignProgressSynchronizerGpgFacade._dummy;
+					}
+					else if (PlayGamesPlatform.Instance.SavedGame != null)
+					{
+						savedGame = PlayGamesPlatform.Instance.SavedGame;
+					}
+					else
+					{
+						savedGame = CampaignProgressSynchronizerGpgFacade._dummy;
+					}
+				}
+				catch (NullReferenceException nullReferenceException)
+				{
+					savedGame = CampaignProgressSynchronizerGpgFacade._dummy;
+				}
+				return savedGame;
+			}
+		}
+
+		static CampaignProgressSynchronizerGpgFacade()
+		{
+			CampaignProgressSynchronizerGpgFacade._dummy = new DummySavedGameClient("CampaignProgress");
+		}
+
+		public Task<GoogleSavedGameRequestResult<CampaignProgressMemento>> Pull()
+		{
+			Task<GoogleSavedGameRequestResult<CampaignProgressMemento>> task;
+			string str = string.Concat(this.GetType().Name, ".Pull()");
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>>();
+				ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+				try
+				{
+					CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback = new CampaignProgressSynchronizerGpgFacade.PullCallback(taskCompletionSource);
+					CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback1 = pullCallback;
+					CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, new ConflictCallback(pullCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+				}
+				finally
+				{
+					scopeLogger1.Dispose();
+				}
+				task = taskCompletionSource.Task;
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
+		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(CampaignProgressMemento campaignProgress)
+		{
+			Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> task;
+			string str = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", new object[] { this.GetType().Name, campaignProgress.Levels.Count });
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
+				ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+				try
+				{
+					CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback = new CampaignProgressSynchronizerGpgFacade.PushCallback(campaignProgress, taskCompletionSource);
+					CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback1 = pushCallback;
+					CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, new ConflictCallback(pushCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+				}
+				finally
+				{
+					scopeLogger1.Dispose();
+				}
+				task = taskCompletionSource.Task;
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
 		private abstract class Callback
 		{
 			protected CampaignProgressMemento? _resolved;
 
-			[CompilerGenerated]
-			private static Func<LevelProgressMemento, int> _003C_003Ef__am_0024cache1;
+			protected abstract DataSource DefaultDataSource
+			{
+				get;
+			}
 
-			[CompilerGenerated]
-			private static Func<LevelProgressMemento, int> _003C_003Ef__am_0024cache2;
-
-			protected abstract DataSource DefaultDataSource { get; }
-
-			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
+			protected Callback()
+			{
+			}
 
 			protected abstract void HandleAuthenticationCompleted(bool succeeded);
 
-			protected abstract void TrySetException(Exception ex);
+			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
 
 			internal void HandleOpenConflict(IConflictResolver resolver, ISavedGameMetadata original, byte[] originalData, ISavedGameMetadata unmerged, byte[] unmergedData)
 			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenConflict('{2}', '{3}')", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, original.Description, unmerged.Description);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenConflict('{2}', '{3}')", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, this.GetType().Name, original.Description, unmerged.Description });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
-					CampaignProgressMemento campaignProgressMemento = Parse(originalData);
-					CampaignProgressMemento campaignProgressMemento2 = Parse(unmergedData);
+					CampaignProgressMemento campaignProgressMemento = CampaignProgressSynchronizerGpgFacade.Callback.Parse(originalData);
+					CampaignProgressMemento campaignProgressMemento1 = CampaignProgressSynchronizerGpgFacade.Callback.Parse(unmergedData);
 					if (Defs.IsDeveloperBuild)
 					{
-						Debug.LogFormat("[CampaignProgress] original: {0}, unmerged: {1}", campaignProgressMemento, campaignProgressMemento2);
+						Debug.LogFormat("[CampaignProgress] original: {0}, unmerged: {1}", new object[] { campaignProgressMemento, campaignProgressMemento1 });
 					}
-					List<LevelProgressMemento> levels = campaignProgressMemento.Levels;
-					if (_003C_003Ef__am_0024cache1 == null)
-					{
-						_003C_003Ef__am_0024cache1 = _003CHandleOpenConflict_003Em__57A;
-					}
-					int num = levels.Sum(_003C_003Ef__am_0024cache1);
-					List<LevelProgressMemento> levels2 = campaignProgressMemento2.Levels;
-					if (_003C_003Ef__am_0024cache2 == null)
-					{
-						_003C_003Ef__am_0024cache2 = _003CHandleOpenConflict_003Em__57B;
-					}
-					int num2 = levels2.Sum(_003C_003Ef__am_0024cache2);
-					ISavedGameMetadata savedGameMetadata;
-					if (num >= num2)
-					{
-						savedGameMetadata = original;
-					}
-					else
-					{
-						savedGameMetadata = unmerged;
-					}
-					ISavedGameMetadata chosenMetadata = savedGameMetadata;
-					resolver.ChooseMetadata(chosenMetadata);
-					CampaignProgressMemento other = CampaignProgressMemento.Merge(campaignProgressMemento, campaignProgressMemento2);
-					_resolved = MergeWithResolved(other, true);
-					SavedGame.OpenWithManualConflictResolution("CampaignProgress", DefaultDataSource, true, HandleOpenConflict, HandleOpenCompleted);
+					int num = campaignProgressMemento.Levels.Sum<LevelProgressMemento>((LevelProgressMemento l) => l.CoinCount + l.GemCount);
+					resolver.ChooseMetadata((num < campaignProgressMemento1.Levels.Sum<LevelProgressMemento>((LevelProgressMemento l) => l.CoinCount + l.GemCount) ? unmerged : original));
+					CampaignProgressMemento campaignProgressMemento2 = CampaignProgressMemento.Merge(campaignProgressMemento, campaignProgressMemento1);
+					this._resolved = new CampaignProgressMemento?(this.MergeWithResolved(campaignProgressMemento2, true));
+					CampaignProgressSynchronizerGpgFacade.Callback callback = this;
+					CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(callback.HandleOpenCompleted));
 				}
 				finally
 				{
@@ -79,52 +152,193 @@ namespace Rilisoft
 
 			protected CampaignProgressMemento MergeWithResolved(CampaignProgressMemento other, bool forceConflicted)
 			{
-				CampaignProgressMemento result = ((!_resolved.HasValue) ? other : CampaignProgressMemento.Merge(_resolved.Value, other));
+				CampaignProgressMemento campaignProgressMemento = (!this._resolved.HasValue ? other : CampaignProgressMemento.Merge(this._resolved.Value, other));
 				if (forceConflicted)
 				{
-					result.SetConflicted();
+					campaignProgressMemento.SetConflicted();
 				}
-				return result;
+				return campaignProgressMemento;
 			}
 
 			protected static CampaignProgressMemento Parse(byte[] data)
 			{
-				//Discarded unreachable code: IL_004e, IL_0091
-				if (data == null || data.Length <= 0)
+				CampaignProgressMemento campaignProgressMemento;
+				if (data == null || (int)data.Length <= 0)
 				{
-					return default(CampaignProgressMemento);
+					return new CampaignProgressMemento();
 				}
-				string @string = Encoding.UTF8.GetString(data, 0, data.Length);
-				if (string.IsNullOrEmpty(@string))
+				string str = Encoding.UTF8.GetString(data, 0, (int)data.Length);
+				if (string.IsNullOrEmpty(str))
 				{
-					return default(CampaignProgressMemento);
+					return new CampaignProgressMemento();
 				}
 				try
 				{
-					return JsonUtility.FromJson<CampaignProgressMemento>(@string);
+					campaignProgressMemento = JsonUtility.FromJson<CampaignProgressMemento>(str);
 				}
-				catch (ArgumentException exception)
+				catch (ArgumentException argumentException1)
 				{
-					Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", typeof(CampaignProgressMemento).Name, @string);
-					Debug.LogException(exception);
-					return default(CampaignProgressMemento);
+					ArgumentException argumentException = argumentException1;
+					Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", new object[] { typeof(CampaignProgressMemento).Name, str });
+					Debug.LogException(argumentException);
+					campaignProgressMemento = new CampaignProgressMemento();
+				}
+				return campaignProgressMemento;
+			}
+
+			protected abstract void TrySetException(Exception ex);
+		}
+
+		private sealed class PullCallback : CampaignProgressSynchronizerGpgFacade.Callback
+		{
+			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> _promise;
+
+			protected override DataSource DefaultDataSource
+			{
+				get
+				{
+					return DataSource.ReadNetworkOnly;
 				}
 			}
 
-			[CompilerGenerated]
-			private static int _003CHandleOpenConflict_003Em__57A(LevelProgressMemento l)
+			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> promise)
 			{
-				return l.CoinCount + l.GemCount;
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>>();
 			}
 
-			[CompilerGenerated]
-			private static int _003CHandleOpenConflict_003Em__57B(LevelProgressMemento l)
+			protected override void HandleAuthenticationCompleted(bool succeeded)
 			{
-				return l.CoinCount + l.GemCount;
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					if (succeeded)
+					{
+						CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback = this;
+						CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback.HandleOpenCompleted));
+					}
+					else
+					{
+						TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> taskCompletionSource = this._promise;
+						CampaignProgressMemento campaignProgressMemento = new CampaignProgressMemento();
+						taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(SavedGameRequestStatus.AuthenticationError, campaignProgressMemento));
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
+			{
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
+				try
+				{
+					switch (requestStatus)
+					{
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback = this;
+							instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						case 0:
+						{
+							TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> taskCompletionSource = this._promise;
+							CampaignProgressMemento campaignProgressMemento = new CampaignProgressMemento();
+							taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, campaignProgressMemento));
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback1 = this;
+							CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+							break;
+						}
+						case SavedGameRequestStatus.Success:
+						{
+							CampaignProgressSynchronizerGpgFacade.SavedGame.ReadBinaryData(metadata, new Action<SavedGameRequestStatus, byte[]>(this.HandleReadCompleted));
+							break;
+						}
+						default:
+						{
+							goto case 0;
+						}
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
+			{
+				CultureInfo invariantCulture = CultureInfo.InvariantCulture;
+				object[] name = new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, requestStatus, null };
+				name[3] = (data == null ? 0 : (int)data.Length);
+				string str = string.Format(invariantCulture, "{0}.{1}.HandleReadCompleted('{2}', {3})", name);
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					switch (requestStatus)
+					{
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback = this;
+							instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						case 0:
+						{
+							TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> taskCompletionSource = this._promise;
+							CampaignProgressMemento campaignProgressMemento = new CampaignProgressMemento();
+							taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, campaignProgressMemento));
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							CampaignProgressSynchronizerGpgFacade.PullCallback pullCallback1 = this;
+							CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+							break;
+						}
+						case SavedGameRequestStatus.Success:
+						{
+							CampaignProgressMemento campaignProgressMemento1 = CampaignProgressSynchronizerGpgFacade.Callback.Parse(data);
+							if (Defs.IsDeveloperBuild)
+							{
+								Debug.LogFormat("[CampaignProgress] Incoming: {0}", new object[] { campaignProgressMemento1 });
+							}
+							CampaignProgressMemento campaignProgressMemento2 = base.MergeWithResolved(campaignProgressMemento1, false);
+							this._promise.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, campaignProgressMemento2));
+							break;
+						}
+						default:
+						{
+							goto case 0;
+						}
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			protected override void TrySetException(Exception ex)
+			{
+				this._promise.TrySetException(ex);
 			}
 		}
 
-		private sealed class PushCallback : Callback
+		private sealed class PushCallback : CampaignProgressSynchronizerGpgFacade.Callback
 		{
 			private readonly CampaignProgressMemento _campaignProgressMemento;
 
@@ -140,65 +354,24 @@ namespace Rilisoft
 
 			public PushCallback(CampaignProgressMemento campaignProgressMemento, TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> promise)
 			{
-				_campaignProgressMemento = campaignProgressMemento;
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
+				this._campaignProgressMemento = campaignProgressMemento;
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
 			}
 
 			protected override void HandleAuthenticationCompleted(bool succeeded)
 			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
-					if (!succeeded)
+					if (succeeded)
 					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
+						CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback = this;
+						CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback.HandleOpenCompleted));
 					}
 					else
 					{
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-
-			protected override void TrySetException(Exception ex)
-			{
-				_promise.TrySetException(ex);
-			}
-
-			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
-			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						CampaignProgressMemento campaignProgressMemento = MergeWithResolved(_campaignProgressMemento, false);
-						string text2 = (campaignProgressMemento.Conflicted ? "resolved" : ((!_resolved.HasValue) ? "none" : "trivial"));
-						string description = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", SystemInfo.deviceModel, text2);
-						SavedGameMetadataUpdate updateForMetadata = default(SavedGameMetadataUpdate.Builder).WithUpdatedDescription(description).Build();
-						string s = JsonUtility.ToJson(campaignProgressMemento);
-						byte[] bytes = Encoding.UTF8.GetBytes(s);
-						SavedGame.CommitUpdate(metadata, updateForMetadata, bytes, HandleCommitCompleted);
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
-						break;
+						this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
 					}
 				}
 				finally
@@ -209,25 +382,36 @@ namespace Rilisoft
 
 			private void HandleCommitCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleCommitCompleted('{2}', '{3}')", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleCommitCompleted('{2}', '{3}')", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
 				try
 				{
 					switch (requestStatus)
 					{
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-					{
-						GoogleSavedGameRequestResult<ISavedGameMetadata> result = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
-						_promise.TrySetResult(result);
-						break;
-					}
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback = this;
+							instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						{
+							GoogleSavedGameRequestResult<ISavedGameMetadata> googleSavedGameRequestResult = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
+							this._promise.TrySetResult(googleSavedGameRequestResult);
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback1 = this;
+							CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+							break;
+						}
+						default:
+						{
+							goto case SavedGameRequestStatus.InternalError;
+						}
 					}
 				}
 				finally
@@ -235,38 +419,59 @@ namespace Rilisoft
 					scopeLogger.Dispose();
 				}
 			}
-		}
 
-		private sealed class PullCallback : Callback
-		{
-			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> _promise;
-
-			protected override DataSource DefaultDataSource
+			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				get
-				{
-					return DataSource.ReadNetworkOnly;
-				}
-			}
-
-			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> promise)
-			{
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>>();
-			}
-
-			protected override void HandleAuthenticationCompleted(bool succeeded)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str;
+				string str1 = (metadata == null ? string.Empty : metadata.Description);
+				string str2 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", new object[] { typeof(CampaignProgressSynchronizerGpgFacade).Name, base.GetType().Name, requestStatus, str1 });
+				ScopeLogger scopeLogger = new ScopeLogger(str2, Defs.IsDeveloperBuild);
 				try
 				{
-					if (!succeeded)
+					switch (requestStatus)
 					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(SavedGameRequestStatus.AuthenticationError, default(CampaignProgressMemento)));
-					}
-					else
-					{
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback = this;
+							instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						case 0:
+						{
+							this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							CampaignProgressSynchronizerGpgFacade.PushCallback pushCallback1 = this;
+							CampaignProgressSynchronizerGpgFacade.SavedGame.OpenWithManualConflictResolution("CampaignProgress", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+							break;
+						}
+						case SavedGameRequestStatus.Success:
+						{
+							CampaignProgressMemento campaignProgressMemento = base.MergeWithResolved(this._campaignProgressMemento, false);
+							if (!campaignProgressMemento.Conflicted)
+							{
+								str = (!this._resolved.HasValue ? "none" : "trivial");
+							}
+							else
+							{
+								str = "resolved";
+							}
+							string str3 = str;
+							string str4 = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", new object[] { SystemInfo.deviceModel, str3 });
+							SavedGameMetadataUpdate savedGameMetadataUpdate = (new SavedGameMetadataUpdate.Builder()).WithUpdatedDescription(str4).Build();
+							string json = JsonUtility.ToJson(campaignProgressMemento);
+							byte[] bytes = Encoding.UTF8.GetBytes(json);
+							CampaignProgressSynchronizerGpgFacade.SavedGame.CommitUpdate(metadata, savedGameMetadataUpdate, bytes, new Action<SavedGameRequestStatus, ISavedGameMetadata>(this.HandleCommitCompleted));
+							break;
+						}
+						default:
+						{
+							goto case 0;
+						}
 					}
 				}
 				finally
@@ -277,152 +482,7 @@ namespace Rilisoft
 
 			protected override void TrySetException(Exception ex)
 			{
-				_promise.TrySetException(ex);
-			}
-
-			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
-			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-						SavedGame.ReadBinaryData(metadata, HandleReadCompleted);
-						break;
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, default(CampaignProgressMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-
-			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleReadCompleted('{2}', {3})", typeof(CampaignProgressSynchronizerGpgFacade).Name, GetType().Name, requestStatus, (data != null) ? data.Length : 0);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						CampaignProgressMemento campaignProgressMemento = Callback.Parse(data);
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.LogFormat("[CampaignProgress] Incoming: {0}", campaignProgressMemento);
-						}
-						CampaignProgressMemento value = MergeWithResolved(campaignProgressMemento, false);
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, value));
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<CampaignProgressMemento>(requestStatus, default(CampaignProgressMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-		}
-
-		public const string Filename = "CampaignProgress";
-
-		private static readonly DummySavedGameClient _dummy = new DummySavedGameClient("CampaignProgress");
-
-		private static ISavedGameClient SavedGame
-		{
-			get
-			{
-				//Discarded unreachable code: IL_003f, IL_0050
-				try
-				{
-					if (PlayGamesPlatform.Instance == null)
-					{
-						return _dummy;
-					}
-					if (PlayGamesPlatform.Instance.SavedGame == null)
-					{
-						return _dummy;
-					}
-					return PlayGamesPlatform.Instance.SavedGame;
-				}
-				catch (NullReferenceException)
-				{
-					return _dummy;
-				}
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(CampaignProgressMemento campaignProgress)
-		{
-			//Discarded unreachable code: IL_00b6
-			string text = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", GetType().Name, campaignProgress.Levels.Count);
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					PushCallback pushCallback = new PushCallback(campaignProgress, taskCompletionSource);
-					SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, pushCallback.HandleOpenConflict, pushCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<CampaignProgressMemento>> Pull()
-		{
-			//Discarded unreachable code: IL_0093
-			string text = GetType().Name + ".Pull()";
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<CampaignProgressMemento>>();
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					PullCallback pullCallback = new PullCallback(taskCompletionSource);
-					SavedGame.OpenWithManualConflictResolution("CampaignProgress", DataSource.ReadNetworkOnly, true, pullCallback.HandleOpenConflict, pullCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
+				this._promise.TrySetException(ex);
 			}
 		}
 	}

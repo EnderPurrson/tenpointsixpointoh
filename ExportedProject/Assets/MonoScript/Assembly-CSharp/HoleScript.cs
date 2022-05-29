@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class HoleScript : MonoBehaviour
@@ -10,33 +11,38 @@ public sealed class HoleScript : MonoBehaviour
 
 	private Transform myTransform;
 
+	public HoleScript()
+	{
+	}
+
 	public void Init()
 	{
-		myTransform = base.transform;
-		myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+		this.myTransform = base.transform;
+		this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
 		base.gameObject.SetActive(false);
 	}
 
 	public void StartShowHole(Vector3 pos, Quaternion rot, bool _isUseMine)
 	{
-		isUseMine = _isUseMine;
-		liveTime = maxliveTime;
-		myTransform.position = pos;
-		myTransform.rotation = rot;
+		this.isUseMine = _isUseMine;
+		this.liveTime = this.maxliveTime;
+		this.myTransform.position = pos;
+		this.myTransform.rotation = rot;
 		base.gameObject.SetActive(true);
 	}
 
 	private void Update()
 	{
-		if (!(liveTime < 0f))
+		if (this.liveTime < 0f)
 		{
-			liveTime -= Time.deltaTime;
-			if (liveTime < 0f && (bool)myTransform)
-			{
-				myTransform.position = new Vector3(-10000f, -10000f, -10000f);
-				isUseMine = false;
-				base.gameObject.SetActive(false);
-			}
+			return;
+		}
+		this.liveTime -= Time.deltaTime;
+		if (this.liveTime < 0f && this.myTransform)
+		{
+			this.myTransform.position = new Vector3(-10000f, -10000f, -10000f);
+			this.isUseMine = false;
+			base.gameObject.SetActive(false);
 		}
 	}
 }

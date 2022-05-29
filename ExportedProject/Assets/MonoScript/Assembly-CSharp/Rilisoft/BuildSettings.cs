@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Rilisoft
@@ -10,13 +11,14 @@ namespace Rilisoft
 			{
 				switch (Application.platform)
 				{
-				case RuntimePlatform.MetroPlayerX86:
-				case RuntimePlatform.MetroPlayerX64:
-				case RuntimePlatform.MetroPlayerARM:
-					return RuntimePlatform.MetroPlayerX64;
-				default:
-					return Application.platform;
+					case RuntimePlatform.MetroPlayerX86:
+					case RuntimePlatform.MetroPlayerX64:
+					case RuntimePlatform.MetroPlayerARM:
+					{
+						return RuntimePlatform.MetroPlayerX64;
+					}
 				}
+				return Application.platform;
 			}
 		}
 	}

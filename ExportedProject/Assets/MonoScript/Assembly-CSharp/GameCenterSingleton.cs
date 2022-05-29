@@ -6,61 +6,112 @@ using UnityEngine.SocialPlatforms.GameCenter;
 
 public class GameCenterSingleton
 {
-	[CompilerGenerated]
-	private sealed class _003CReportAchievementProgress_003Ec__AnonStorey2AF
-	{
-		internal bool success;
-
-		internal GameCenterSingleton _003C_003Ef__this;
-
-		internal void _003C_003Em__2BD(bool result)
-		{
-			if (result)
-			{
-				success = true;
-				_003C_003Ef__this.LoadAchievements();
-				Debug.Log("Successfully reported progress");
-			}
-			else
-			{
-				success = false;
-				Debug.Log("Failed to report progress");
-			}
-		}
-	}
-
 	private static GameCenterSingleton instance;
 
-	private static string _leaderboardID = ((!GlobalGameController.isFullVersion) ? "zombieslayerslite" : "zombieslayers");
+	private static string _leaderboardID;
 
-	public static string SurvivalTableID = "arena_heroes";
+	public static string SurvivalTableID;
 
 	public string bestScore = "0";
 
 	private IAchievement[] achievements;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache5;
-
 	public static GameCenterSingleton Instance
 	{
 		get
 		{
-			if (instance == null)
+			if (GameCenterSingleton.instance == null)
 			{
-				instance = new GameCenterSingleton();
-				instance.Initialize();
+				GameCenterSingleton.instance = new GameCenterSingleton();
+				GameCenterSingleton.instance.Initialize();
 			}
-			return instance;
+			return GameCenterSingleton.instance;
 		}
+	}
+
+	static GameCenterSingleton()
+	{
+		GameCenterSingleton._leaderboardID = (!GlobalGameController.isFullVersion ? "zombieslayerslite" : "zombieslayers");
+		GameCenterSingleton.SurvivalTableID = "arena_heroes";
+	}
+
+	public GameCenterSingleton()
+	{
+	}
+
+	public bool AddAchievementProgress(string achievementID, float percentageToAdd)
+	{
+		IAchievement achievement = this.GetAchievement(achievementID);
+		if (achievement == null)
+		{
+			return this.ReportAchievementProgress(achievementID, percentageToAdd);
+		}
+		return this.ReportAchievementProgress(achievementID, (float)achievement.percentCompleted + percentageToAdd);
+	}
+
+	private IAchievement GetAchievement(string achievementID)
+	{
+		if (this.achievements != null)
+		{
+			IAchievement[] achievementArray = this.achievements;
+			for (int i = 0; i < (int)achievementArray.Length; i++)
+			{
+				IAchievement achievement = achievementArray[i];
+				if (achievement.id == achievementID)
+				{
+					return achievement;
+				}
+			}
+		}
+		return null;
+	}
+
+	public void GetScore()
+	{
+		Social.LoadScores(GameCenterSingleton._leaderboardID, (IScore[] scores) => {
+			if ((int)scores.Length <= 0)
+			{
+				Debug.Log("No scores loaded");
+			}
+			else
+			{
+				Debug.Log(string.Concat("Got ", (int)scores.Length, " scores"));
+				if ((int)scores.Length > 0)
+				{
+					this.bestScore = scores[0].formattedValue;
+					if (this.bestScore == null || this.bestScore.Equals(string.Empty))
+					{
+						this.bestScore = "0";
+					}
+				}
+			}
+			this.bestScore = "0";
+		});
 	}
 
 	public void Initialize()
 	{
-		if (!IsUserAuthenticated())
+		if (!this.IsUserAuthenticated())
 		{
-			Social.localUser.Authenticate(ProcessAuthentication);
+			Social.localUser.Authenticate(new Action<bool>(this.ProcessAuthentication));
 		}
+	}
+
+	private bool IsAchievementComplete(string achievementID)
+	{
+		if (this.achievements != null)
+		{
+			IAchievement[] achievementArray = this.achievements;
+			for (int i = 0; i < (int)achievementArray.Length; i++)
+			{
+				IAchievement achievement = achievementArray[i];
+				if (achievement.id == achievementID && achievement.completed)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public bool IsUserAuthenticated()
@@ -73,90 +124,21 @@ public class GameCenterSingleton
 		return false;
 	}
 
-	public void ShowAchievementUI()
-	{
-		if (IsUserAuthenticated())
-		{
-			Social.ShowAchievementsUI();
-		}
-	}
-
-	public void ShowLeaderboardUI()
-	{
-		if (IsUserAuthenticated())
-		{
-			Social.ShowLeaderboardUI();
-		}
-	}
-
-	public bool AddAchievementProgress(string achievementID, float percentageToAdd)
-	{
-		IAchievement achievement = GetAchievement(achievementID);
-		if (achievement != null)
-		{
-			return ReportAchievementProgress(achievementID, (float)achievement.percentCompleted + percentageToAdd);
-		}
-		return ReportAchievementProgress(achievementID, percentageToAdd);
-	}
-
-	public void ReportScore(long score, string tableName = null)
-	{
-		if (tableName == null)
-		{
-			tableName = _leaderboardID;
-		}
-		Debug.Log("Reporting score " + score + " on leaderboard " + tableName);
-		string board = tableName;
-		if (_003C_003Ef__am_0024cache5 == null)
-		{
-			_003C_003Ef__am_0024cache5 = _003CReportScore_003Em__2BB;
-		}
-		Social.ReportScore(score, board, _003C_003Ef__am_0024cache5);
-	}
-
-	public void GetScore()
-	{
-		Social.LoadScores(_leaderboardID, _003CGetScore_003Em__2BC);
-	}
-
-	public bool ReportAchievementProgress(string achievementID, float progressCompleted)
-	{
-		if (Social.localUser.authenticated)
-		{
-			if (!IsAchievementComplete(achievementID))
-			{
-				_003CReportAchievementProgress_003Ec__AnonStorey2AF _003CReportAchievementProgress_003Ec__AnonStorey2AF = new _003CReportAchievementProgress_003Ec__AnonStorey2AF();
-				_003CReportAchievementProgress_003Ec__AnonStorey2AF._003C_003Ef__this = this;
-				_003CReportAchievementProgress_003Ec__AnonStorey2AF.success = false;
-				Social.ReportProgress(achievementID, progressCompleted, _003CReportAchievementProgress_003Ec__AnonStorey2AF._003C_003Em__2BD);
-				return _003CReportAchievementProgress_003Ec__AnonStorey2AF.success;
-			}
-			return true;
-		}
-		Debug.Log("ERROR: GameCenter user not authenticated");
-		return false;
-	}
-
-	public void ResetAchievements()
-	{
-		GameCenterPlatform.ResetAllAchievements(ResetAchievementsHandler);
-	}
-
 	private void LoadAchievements()
 	{
-		Social.LoadAchievements(ProcessLoadedAchievements);
+		Social.LoadAchievements(new Action<IAchievement[]>(this.ProcessLoadedAchievements));
 	}
 
 	private void ProcessAuthentication(bool success)
 	{
-		if (success)
+		if (!success)
 		{
-			Debug.Log("Authenticated, checking achievements");
-			GetScore();
+			Debug.Log("Failed to authenticate");
 		}
 		else
 		{
-			Debug.Log("Failed to authenticate");
+			Debug.Log("Authenticated, checking achievements");
+			this.GetScore();
 		}
 	}
 
@@ -166,95 +148,96 @@ public class GameCenterSingleton
 		{
 			this.achievements = null;
 		}
-		if (achievements.Length == 0)
+		if ((int)achievements.Length != 0)
+		{
+			Debug.Log(string.Concat("Got ", (int)achievements.Length, " achievements"));
+			this.achievements = achievements;
+		}
+		else
 		{
 			Debug.Log("Error: no achievements found");
-			return;
 		}
-		Debug.Log("Got " + achievements.Length + " achievements");
-		this.achievements = achievements;
 	}
 
-	private bool IsAchievementComplete(string achievementID)
+	public bool ReportAchievementProgress(string achievementID, float progressCompleted)
 	{
-		if (achievements != null)
+		if (!Social.localUser.authenticated)
 		{
-			IAchievement[] array = achievements;
-			foreach (IAchievement achievement in array)
-			{
-				if (achievement.id == achievementID && achievement.completed)
-				{
-					return true;
-				}
-			}
+			Debug.Log("ERROR: GameCenter user not authenticated");
+			return false;
 		}
-		return false;
+		if (this.IsAchievementComplete(achievementID))
+		{
+			return true;
+		}
+		bool flag = false;
+		Social.ReportProgress(achievementID, (double)progressCompleted, (bool result) => {
+			if (!result)
+			{
+				flag = false;
+				Debug.Log("Failed to report progress");
+			}
+			else
+			{
+				flag = true;
+				this.LoadAchievements();
+				Debug.Log("Successfully reported progress");
+			}
+		});
+		return flag;
 	}
 
-	private IAchievement GetAchievement(string achievementID)
+	public void ReportScore(long score, string tableName = null)
 	{
-		if (achievements != null)
+		if (tableName == null)
 		{
-			IAchievement[] array = achievements;
-			foreach (IAchievement achievement in array)
-			{
-				if (achievement.id == achievementID)
-				{
-					return achievement;
-				}
-			}
+			tableName = GameCenterSingleton._leaderboardID;
 		}
-		return null;
+		Debug.Log(string.Concat(new object[] { "Reporting score ", score, " on leaderboard ", tableName }));
+		Social.ReportScore(score, tableName, (bool success) => Debug.Log((!success ? "Failed to report score" : "Reported score successfully")));
+	}
+
+	public void ResetAchievements()
+	{
+		GameCenterPlatform.ResetAllAchievements(new Action<bool>(this.ResetAchievementsHandler));
 	}
 
 	private void ResetAchievementsHandler(bool status)
 	{
-		if (status)
+		if (!status)
 		{
-			if (achievements != null)
-			{
-				achievements = null;
-			}
-			LoadAchievements();
-			Debug.Log("Achievements successfully resetted!");
+			Debug.Log("Achievements reset failure!");
 		}
 		else
 		{
-			Debug.Log("Achievements reset failure!");
+			if (this.achievements != null)
+			{
+				this.achievements = null;
+			}
+			this.LoadAchievements();
+			Debug.Log("Achievements successfully resetted!");
+		}
+	}
+
+	public void ShowAchievementUI()
+	{
+		if (this.IsUserAuthenticated())
+		{
+			Social.ShowAchievementsUI();
+		}
+	}
+
+	public void ShowLeaderboardUI()
+	{
+		if (this.IsUserAuthenticated())
+		{
+			Social.ShowLeaderboardUI();
 		}
 	}
 
 	public void updateGameCenter()
 	{
-		instance = new GameCenterSingleton();
-		instance.Initialize();
-	}
-
-	[CompilerGenerated]
-	private static void _003CReportScore_003Em__2BB(bool success)
-	{
-		Debug.Log((!success) ? "Failed to report score" : "Reported score successfully");
-	}
-
-	[CompilerGenerated]
-	private void _003CGetScore_003Em__2BC(IScore[] scores)
-	{
-		if (scores.Length > 0)
-		{
-			Debug.Log("Got " + scores.Length + " scores");
-			if (scores.Length > 0)
-			{
-				bestScore = scores[0].formattedValue;
-				if (bestScore == null || bestScore.Equals(string.Empty))
-				{
-					bestScore = "0";
-				}
-			}
-		}
-		else
-		{
-			Debug.Log("No scores loaded");
-		}
-		bestScore = "0";
+		GameCenterSingleton.instance = new GameCenterSingleton();
+		GameCenterSingleton.instance.Initialize();
 	}
 }

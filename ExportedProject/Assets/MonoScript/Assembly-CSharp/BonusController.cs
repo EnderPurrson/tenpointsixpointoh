@@ -1,25 +1,12 @@
-using System;
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Rilisoft;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BonusController : MonoBehaviour
 {
-	public enum TypeBonus
-	{
-		Ammo = 0,
-		Health = 1,
-		Armor = 2,
-		Chest = 3,
-		Grenade = 4,
-		Mech = 5,
-		JetPack = 6,
-		Invisible = 7,
-		Turret = 8,
-		Gem = 9
-	}
-
 	public static BonusController sharedController;
 
 	public List<int> lowLevelPlayers = new List<int>();
@@ -58,291 +45,179 @@ public class BonusController : MonoBehaviour
 
 	private Dictionary<int, Dictionary<string, int>> probabilityBonus = new Dictionary<int, Dictionary<string, int>>();
 
-	private NetworkView _networkView { get; set; }
-
-	private void InitStack()
+	private NetworkView _networkView
 	{
-		bonusStack = new BonusItem[maxCountBonus + 6];
-		for (int i = 0; i < bonusStack.Length; i++)
-		{
-			GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(bonusPrefab, Vector3.down * 100f, Quaternion.identity);
-			gameObject.transform.parent = base.transform;
-			bonusStack[i] = gameObject.GetComponent<BonusItem>();
-		}
+		get;
+		set;
 	}
 
-	private void Awake()
+	public BonusController()
 	{
-		if (sharedController == null)
-		{
-			sharedController = this;
-		}
-		else
-		{
-			UnityEngine.Object.Destroy(base.gameObject);
-		}
-		if (Defs.IsSurvival)
-		{
-			creationInterval = 9f;
-		}
-		timerToAddBonus = creationInterval;
-		isMulti = Defs.isMulti;
-		isInet = Defs.isInet;
-		maxCountBonus = ((!Defs.IsSurvival) ? 5 : 3);
-	}
-
-	private void Start()
-	{
-		photonView = PhotonView.Get(this);
-		_networkView = GetComponent<NetworkView>();
-		if ((bool)photonView)
-		{
-			PhotonObjectCacher.AddObject(base.gameObject);
-		}
-		bonusCreationZones = GameObject.FindGameObjectsWithTag("BonusCreationZone");
-		if (maxCountBonus > bonusCreationZones.Length)
-		{
-			maxCountBonus = bonusCreationZones.Length;
-		}
-		zombieCreator = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>();
-		_weaponManager = WeaponManager.sharedManager;
-		SetProbability();
-		InitStack();
-	}
-
-	private void SetProbability()
-	{
-		probabilityBonusDict.Clear();
-		probabilityBonus.Clear();
-		sumProbabilitys = 0;
-		if (Defs.isMulti)
-		{
-			if (Defs.isHunger)
-			{
-				probabilityBonusDict.Add(3, 100);
-			}
-			else if (SceneLoader.ActiveSceneName.Equals("Knife"))
-			{
-				probabilityBonusDict.Add(1, 75);
-				probabilityBonusDict.Add(2, 25);
-			}
-			else if (Defs.isDaterRegim)
-			{
-				probabilityBonusDict.Add(0, 100);
-			}
-			else if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-			{
-				probabilityBonusDict.Add(0, 100);
-			}
-			else if (Defs.isCOOP)
-			{
-				probabilityBonusDict.Add(0, 55);
-				probabilityBonusDict.Add(1, 14);
-				probabilityBonusDict.Add(2, 12);
-				probabilityBonusDict.Add(4, 15);
-			}
-			else if (SceneLoader.ActiveSceneName.Equals("WalkingFortress"))
-			{
-				probabilityBonusDict.Add(0, 50);
-				probabilityBonusDict.Add(1, 10);
-				probabilityBonusDict.Add(2, 5);
-				probabilityBonusDict.Add(4, 10);
-				probabilityBonusDict.Add(5, 2);
-				probabilityBonusDict.Add(8, 5);
-				probabilityBonusDict.Add(7, 3);
-				probabilityBonusDict.Add(6, 15);
-			}
-			else
-			{
-				probabilityBonusDict.Add(0, 50);
-				probabilityBonusDict.Add(1, 10);
-				probabilityBonusDict.Add(2, 10);
-				if (WeaponManager.sharedManager._currentFilterMap == 0)
-				{
-					probabilityBonusDict.Add(4, 15);
-				}
-				probabilityBonusDict.Add(5, 2);
-				probabilityBonusDict.Add(8, 5);
-				probabilityBonusDict.Add(7, 3);
-				probabilityBonusDict.Add(6, 5);
-			}
-		}
-		else if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			probabilityBonusDict.Add(0, 100);
-		}
-		else
-		{
-			probabilityBonusDict.Add(0, 55);
-			probabilityBonusDict.Add(1, 14);
-			probabilityBonusDict.Add(2, 12);
-			probabilityBonusDict.Add(4, 15);
-		}
-		foreach (KeyValuePair<int, int> item in probabilityBonusDict)
-		{
-			Dictionary<string, int> dictionary = new Dictionary<string, int>();
-			dictionary.Add("min", sumProbabilitys);
-			sumProbabilitys += item.Value;
-			dictionary.Add("max", sumProbabilitys);
-			probabilityBonus.Add(item.Key, dictionary);
-		}
-	}
-
-	public void AddWeaponAfterKillPlayer(string _weaponName, Vector3 _pos)
-	{
-		photonView.RPC("AddWeaponAfterKillPlayerRPC", PhotonTargets.MasterClient, _weaponName, _pos);
-	}
-
-	[RPC]
-	[PunRPC]
-	private void AddWeaponAfterKillPlayerRPC(string _weaponName, Vector3 _pos)
-	{
-		PhotonNetwork.InstantiateSceneObject("Weapon_Bonuses/" + _weaponName + "_Bonus", new Vector3(_pos.x, _pos.y - 0.5f, _pos.z), Quaternion.identity, 0, null);
-	}
-
-	public void AddBonusAfterKillPlayer(Vector3 _pos)
-	{
-		if (Defs.isInet)
-		{
-			photonView.RPC("AddBonusAfterKillPlayerRPC", PhotonTargets.MasterClient, _pos);
-		}
-		else
-		{
-			_networkView.RPC("AddBonusAfterKillPlayerRPC", RPCMode.Server, _pos);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void AddBonusAfterKillPlayerRPC(Vector3 _pos)
-	{
-		AddBonusAfterKillPlayerRPC(IndexBonusOnKill(), _pos);
-	}
-
-	[RPC]
-	[PunRPC]
-	private void AddBonusAfterKillPlayerRPC(int _type, Vector3 _pos)
-	{
-		if (Defs.isMulti)
-		{
-			if (Defs.isInet && PhotonNetwork.isMasterClient && !Defs.isHunger)
-			{
-				AddBonus(_pos, _type);
-			}
-			if (!Defs.isInet && Network.isServer)
-			{
-				AddBonus(_pos, _type);
-			}
-		}
-		else
-		{
-			AddBonus(_pos, _type);
-		}
 	}
 
 	private void AddBonus(Vector3 pos, int _type)
 	{
-		if (Defs.isMulti && Defs.isInet && lowLevelPlayers.Count > 0 && (_type == 5 || _type == 8 || _type == 7 || _type == 6))
+		GameObject gameObject;
+		if (Defs.isMulti && Defs.isInet && this.lowLevelPlayers.Count > 0 && (_type == 5 || _type == 8 || _type == 7 || _type == 6))
 		{
 			return;
 		}
-		if (!isMulti)
+		if (!this.isMulti)
 		{
-			int num = GlobalGameController.EnemiesToKill - zombieCreator.NumOfDeadZombies;
-			if ((!Defs.IsSurvival && num <= 0 && !zombieCreator.bossShowm) || (Defs.IsSurvival && zombieCreator.stopGeneratingBonuses))
+			int enemiesToKill = GlobalGameController.EnemiesToKill - this.zombieCreator.NumOfDeadZombies;
+			if (!Defs.IsSurvival && enemiesToKill <= 0 && !this.zombieCreator.bossShowm || Defs.IsSurvival && this.zombieCreator.stopGeneratingBonuses)
 			{
 				if (!Defs.IsSurvival)
 				{
-					isStopCreateBonus = true;
+					this.isStopCreateBonus = true;
 				}
 				return;
 			}
 		}
 		if (_type == 9)
 		{
-			if (!CanSpawnGemBonus())
+			if (!this.CanSpawnGemBonus())
 			{
 				return;
 			}
 			Hashtable hashtable = new Hashtable();
-			hashtable["SpecialBonus"] = PhotonNetwork.time + 480.0;
-			PhotonNetwork.room.SetCustomProperties(hashtable);
+			hashtable["SpecialBonus"] = PhotonNetwork.time + 480;
+			PhotonNetwork.room.SetCustomProperties(hashtable, null, false);
 		}
-		int num2 = -1;
+		int num = -1;
 		if (pos.Equals(Vector3.zero))
 		{
-			GameObject[] array = GameObject.FindGameObjectsWithTag("Chest");
-			if (activeBonusesCount + array.Length >= maxCountBonus)
+			GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Chest");
+			if (this.activeBonusesCount + (int)gameObjectArray.Length >= this.maxCountBonus)
 			{
 				return;
 			}
-			num2 = UnityEngine.Random.Range(0, bonusCreationZones.Length);
-			bool[] array2 = new bool[bonusCreationZones.Length];
-			for (int i = 0; i < array2.Length; i++)
+			num = UnityEngine.Random.Range(0, (int)this.bonusCreationZones.Length);
+			bool[] flagArray = new bool[(int)this.bonusCreationZones.Length];
+			for (int i = 0; i < (int)flagArray.Length; i++)
 			{
-				array2[i] = false;
+				flagArray[i] = false;
 			}
-			for (int j = 0; j < bonusStack.Length; j++)
+			for (int j = 0; j < (int)this.bonusStack.Length; j++)
 			{
-				if (bonusStack[j].isActive && bonusStack[j].mySpawnNumber != -1)
+				if (this.bonusStack[j].isActive && this.bonusStack[j].mySpawnNumber != -1)
 				{
-					array2[bonusStack[j].mySpawnNumber] = true;
+					flagArray[this.bonusStack[j].mySpawnNumber] = true;
 				}
 			}
-			for (int k = 0; k < array.Length; k++)
+			for (int k = 0; k < (int)gameObjectArray.Length; k++)
 			{
-				if (array[k].GetComponent<SettingBonus>().numberSpawnZone != -1)
+				if (gameObjectArray[k].GetComponent<SettingBonus>().numberSpawnZone != -1)
 				{
-					array2[array[k].GetComponent<SettingBonus>().numberSpawnZone] = true;
+					flagArray[gameObjectArray[k].GetComponent<SettingBonus>().numberSpawnZone] = true;
 				}
 			}
-			while (array2[num2])
+			while (flagArray[num])
 			{
-				num2++;
-				if (num2 == array2.Length)
-				{
-					num2 = 0;
-				}
-			}
-			GameObject gameObject = bonusCreationZones[num2];
-			BoxCollider component = gameObject.GetComponent<BoxCollider>();
-			Vector2 vector = new Vector2(component.size.x * gameObject.transform.localScale.x, component.size.z * gameObject.transform.localScale.z);
-			Rect rect = new Rect(gameObject.transform.position.x - vector.x / 2f, gameObject.transform.position.z - vector.y / 2f, vector.x, vector.y);
-			pos = new Vector3(rect.x + UnityEngine.Random.Range(0f, rect.width), gameObject.transform.position.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
-		}
-		if (_type != 3)
-		{
-			for (int l = 0; l < bonusStack.Length; l++)
-			{
-				if (bonusStack[l].isActive)
+				num++;
+				if (num != (int)flagArray.Length)
 				{
 					continue;
 				}
-				MakeBonusRPC(l, _type, pos, (num2 != -1) ? (-1f) : ((float)GetTimeForBonus()), num2);
-				if (isMulti)
+				num = 0;
+			}
+			GameObject gameObject1 = this.bonusCreationZones[num];
+			BoxCollider component = gameObject1.GetComponent<BoxCollider>();
+			float single = component.size.x * gameObject1.transform.localScale.x;
+			float single1 = component.size.z;
+			Vector3 vector3 = gameObject1.transform.localScale;
+			Vector2 vector2 = new Vector2(single, single1 * vector3.z);
+			Vector3 vector31 = gameObject1.transform.position;
+			float single2 = vector31.x - vector2.x / 2f;
+			Vector3 vector32 = gameObject1.transform.position;
+			Rect rect = new Rect(single2, vector32.z - vector2.y / 2f, vector2.x, vector2.y);
+			float single3 = rect.x + UnityEngine.Random.Range(0f, rect.width);
+			Vector3 vector33 = gameObject1.transform.position;
+			pos = new Vector3(single3, vector33.y, rect.y + UnityEngine.Random.Range(0f, rect.height));
+		}
+		if (_type != 3)
+		{
+			int num1 = 0;
+			while (num1 < (int)this.bonusStack.Length)
+			{
+				if (this.bonusStack[num1].isActive)
 				{
-					if (isInet)
-					{
-						photonView.RPC("MakeBonusRPC", PhotonTargets.Others, l, _type, pos, (num2 != -1) ? (-1f) : ((float)GetTimeForBonus()), num2);
-					}
-					else
-					{
-						_networkView.RPC("MakeBonusRPC", RPCMode.Others, l, _type, pos, (num2 != -1) ? (-1f) : ((float)GetTimeForBonus()), num2);
-					}
+					num1++;
 				}
-				break;
+				else
+				{
+					this.MakeBonusRPC(num1, _type, pos, (num != -1 ? -1f : (float)this.GetTimeForBonus()), num);
+					if (this.isMulti)
+					{
+						if (!this.isInet)
+						{
+							NetworkView networkView = this._networkView;
+							object[] objArray = new object[] { num1, _type, pos, null, null };
+							objArray[3] = (num != -1 ? -1f : (float)this.GetTimeForBonus());
+							objArray[4] = num;
+							networkView.RPC("MakeBonusRPC", RPCMode.Others, objArray);
+						}
+						else
+						{
+							PhotonView photonView = this.photonView;
+							object[] objArray1 = new object[] { num1, _type, pos, null, null };
+							objArray1[3] = (num != -1 ? -1f : (float)this.GetTimeForBonus());
+							objArray1[4] = num;
+							photonView.RPC("MakeBonusRPC", PhotonTargets.Others, objArray1);
+						}
+					}
+					break;
+				}
 			}
 		}
-		else if (!isMulti || !isInet)
+		else if (!this.isMulti || !this.isInet)
 		{
-			GameObject original = Resources.Load("Bonuses/Bonus_" + _type) as GameObject;
-			GameObject gameObject2 = (GameObject)UnityEngine.Object.Instantiate(original, pos, Quaternion.identity);
-			gameObject2.GetComponent<SettingBonus>().numberSpawnZone = num2;
+			GameObject gameObject2 = Resources.Load(string.Concat("Bonuses/Bonus_", _type)) as GameObject;
+			gameObject = (GameObject)UnityEngine.Object.Instantiate(gameObject2, pos, Quaternion.identity);
+			gameObject.GetComponent<SettingBonus>().numberSpawnZone = num;
 		}
 		else
 		{
-			GameObject gameObject2 = PhotonNetwork.InstantiateSceneObject("Bonuses/Bonus_" + ((_type == -1) ? IndexBonus() : _type), pos, Quaternion.identity, 0, null);
-			gameObject2.GetComponent<SettingBonus>().SetNumberSpawnZone(num2);
+			gameObject = PhotonNetwork.InstantiateSceneObject(string.Concat("Bonuses/Bonus_", (_type == -1 ? this.IndexBonus() : _type)), pos, Quaternion.identity, 0, null);
+			gameObject.GetComponent<SettingBonus>().SetNumberSpawnZone(num);
+		}
+	}
+
+	public void AddBonusAfterKillPlayer(Vector3 _pos)
+	{
+		if (!Defs.isInet)
+		{
+			this._networkView.RPC("AddBonusAfterKillPlayerRPC", RPCMode.Server, new object[] { _pos });
+		}
+		else
+		{
+			this.photonView.RPC("AddBonusAfterKillPlayerRPC", PhotonTargets.MasterClient, new object[] { _pos });
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void AddBonusAfterKillPlayerRPC(Vector3 _pos)
+	{
+		this.AddBonusAfterKillPlayerRPC(this.IndexBonusOnKill(), _pos);
+	}
+
+	[PunRPC]
+	[RPC]
+	private void AddBonusAfterKillPlayerRPC(int _type, Vector3 _pos)
+	{
+		if (!Defs.isMulti)
+		{
+			this.AddBonus(_pos, _type);
+			return;
+		}
+		if (Defs.isInet && PhotonNetwork.isMasterClient && !Defs.isHunger)
+		{
+			this.AddBonus(_pos, _type);
+		}
+		if (!Defs.isInet && Network.isServer)
+		{
+			this.AddBonus(_pos, _type);
 		}
 	}
 
@@ -352,167 +227,62 @@ public class BonusController : MonoBehaviour
 		{
 			return;
 		}
-		for (int i = 0; i < bonusStack.Length; i++)
+		int num = 0;
+		while (num < (int)this.bonusStack.Length)
 		{
-			if (bonusStack[i].isActive)
+			if (this.bonusStack[num].isActive)
 			{
-				continue;
-			}
-			MakeBonusRPC(i, _type, pos, -1f, spawnZoneIndex);
-			if (isMulti)
-			{
-				if (isInet)
-				{
-					photonView.RPC("MakeBonusRPC", PhotonTargets.Others, i, _type, pos, -1f, spawnZoneIndex);
-				}
-				else
-				{
-					_networkView.RPC("MakeBonusRPC", RPCMode.Others, i, _type, pos, -1f, spawnZoneIndex);
-				}
-			}
-			break;
-		}
-	}
-
-	public void RemoveBonus(int index)
-	{
-		RemoveBonusRPC(index);
-		if (isMulti)
-		{
-			if (isInet)
-			{
-				photonView.RPC("RemoveBonusRPC", PhotonTargets.Others, index);
+				num++;
 			}
 			else
 			{
-				_networkView.RPC("RemoveBonusRPC", RPCMode.Others, index);
+				this.MakeBonusRPC(num, _type, pos, -1f, spawnZoneIndex);
+				if (this.isMulti)
+				{
+					if (!this.isInet)
+					{
+						this._networkView.RPC("MakeBonusRPC", RPCMode.Others, new object[] { num, _type, pos, -1f, spawnZoneIndex });
+					}
+					else
+					{
+						this.photonView.RPC("MakeBonusRPC", PhotonTargets.Others, new object[] { num, _type, pos, -1f, spawnZoneIndex });
+					}
+				}
+				break;
 			}
 		}
 	}
 
-	public void GetAndRemoveBonus(int index)
+	public void AddWeaponAfterKillPlayer(string _weaponName, Vector3 _pos)
 	{
-		if (isMulti && isInet && !NetworkStartTable.LocalOrPasswordRoom())
-		{
-			RemoveBonusWithRewardRPC(PhotonNetwork.player, index);
-			photonView.RPC("RemoveBonusWithRewardRPC", PhotonTargets.Others, PhotonNetwork.player, index);
-		}
-	}
-
-	public void ClearBonuses()
-	{
-		for (int i = 0; i < bonusStack.Length; i++)
-		{
-			if (bonusStack[i].isActive)
-			{
-				RemoveBonusRPC(i);
-			}
-		}
-	}
-
-	private void OnPhotonPlayerConnected(PhotonPlayer player)
-	{
-		if (!PhotonNetwork.isMasterClient)
-		{
-			return;
-		}
-		for (int i = 0; i < bonusStack.Length; i++)
-		{
-			if (bonusStack[i].isActive)
-			{
-				photonView.RPC("MakeBonusRPC", player, i, (int)bonusStack[i].type, bonusStack[i].transform.position, (float)bonusStack[i].expireTime, bonusStack[i].mySpawnNumber);
-			}
-		}
-	}
-
-	private void OnPlayerConnected(NetworkPlayer player)
-	{
-		if (!Network.isServer)
-		{
-			return;
-		}
-		for (int i = 0; i < bonusStack.Length; i++)
-		{
-			if (bonusStack[i].isActive)
-			{
-				_networkView.RPC("MakeBonusRPC", player, i, (int)bonusStack[i].type, bonusStack[i].transform.position, (float)bonusStack[i].expireTime, bonusStack[i].mySpawnNumber);
-			}
-		}
+		this.photonView.RPC("AddWeaponAfterKillPlayerRPC", PhotonTargets.MasterClient, new object[] { _weaponName, _pos });
 	}
 
 	[PunRPC]
 	[RPC]
-	private void MakeBonusRPC(int index, int type, Vector3 position, float expireTime, int zoneNumber)
+	private void AddWeaponAfterKillPlayerRPC(string _weaponName, Vector3 _pos)
 	{
-		if (index < bonusStack.Length && !bonusStack[index].isActive)
-		{
-			bonusStack[index].ActivateBonus((TypeBonus)type, position, expireTime, zoneNumber, index);
-			if (!bonusStack[index].isTimeBonus)
-			{
-				activeBonusesCount++;
-			}
-		}
+		PhotonNetwork.InstantiateSceneObject(string.Concat("Weapon_Bonuses/", _weaponName, "_Bonus"), new Vector3(_pos.x, _pos.y - 0.5f, _pos.z), Quaternion.identity, 0, null);
 	}
 
-	private void PickupBonus(int index, PhotonPlayer player)
+	private void Awake()
 	{
-		if (index < bonusStack.Length && bonusStack[index].isActive && !bonusStack[index].isPickedUp)
+		if (BonusController.sharedController != null)
 		{
-			bonusStack[index].PickupBonus(player);
+			UnityEngine.Object.Destroy(base.gameObject);
 		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void RemoveBonusRPC(int index)
-	{
-		if (index < bonusStack.Length && bonusStack[index].isActive)
+		else
 		{
-			if (!bonusStack[index].isTimeBonus)
-			{
-				activeBonusesCount--;
-			}
-			bonusStack[index].DeactivateBonus();
+			BonusController.sharedController = this;
 		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void RemoveBonusWithRewardRPC(PhotonPlayer sender, int index)
-	{
-		if (isMulti && isInet && !NetworkStartTable.LocalOrPasswordRoom() && index < bonusStack.Length && bonusStack[index].isActive)
+		if (Defs.IsSurvival)
 		{
-			PickupBonus(index, sender);
+			this.creationInterval = 9f;
 		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void GetBonusRewardRPC(int index)
-	{
-		if (index >= bonusStack.Length || !bonusStack[index].isActive || !bonusStack[index].isPickedUp)
-		{
-			return;
-		}
-		if (bonusStack[index].playerPicked.Equals(PhotonNetwork.player))
-		{
-			TypeBonus type = bonusStack[index].type;
-			if (type == TypeBonus.Gem)
-			{
-				BankController.AddGems(1);
-			}
-		}
-		RemoveBonusRPC(index);
-	}
-
-	private double GetTimeForBonus()
-	{
-		double num = -1.0;
-		if (Defs.isInet)
-		{
-			return PhotonNetwork.time + 15.0;
-		}
-		return Network.time + 15.0;
+		this.timerToAddBonus = this.creationInterval;
+		this.isMulti = Defs.isMulti;
+		this.isInet = Defs.isInet;
+		this.maxCountBonus = (!Defs.IsSurvival ? 5 : 3);
 	}
 
 	private bool CanSpawnGemBonus()
@@ -521,73 +291,368 @@ public class BonusController : MonoBehaviour
 		{
 			return false;
 		}
-		if (PhotonNetwork.room == null || PhotonNetwork.room.customProperties["SpecialBonus"] == null || Convert.ToDouble(PhotonNetwork.room.customProperties["SpecialBonus"]) > PhotonNetwork.time)
+		if (PhotonNetwork.room != null && PhotonNetwork.room.customProperties["SpecialBonus"] != null && Convert.ToDouble(PhotonNetwork.room.customProperties["SpecialBonus"]) <= PhotonNetwork.time)
 		{
-			return false;
+			return true;
 		}
-		return true;
+		return false;
+	}
+
+	public void ClearBonuses()
+	{
+		for (int i = 0; i < (int)this.bonusStack.Length; i++)
+		{
+			if (this.bonusStack[i].isActive)
+			{
+				this.RemoveBonusRPC(i);
+			}
+		}
+	}
+
+	public void GetAndRemoveBonus(int index)
+	{
+		if (this.isMulti && this.isInet && !NetworkStartTable.LocalOrPasswordRoom())
+		{
+			this.RemoveBonusWithRewardRPC(PhotonNetwork.player, index);
+			this.photonView.RPC("RemoveBonusWithRewardRPC", PhotonTargets.Others, new object[] { PhotonNetwork.player, index });
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void GetBonusRewardRPC(int index)
+	{
+		if (index < (int)this.bonusStack.Length && this.bonusStack[index].isActive && this.bonusStack[index].isPickedUp)
+		{
+			if (this.bonusStack[index].playerPicked.Equals(PhotonNetwork.player))
+			{
+				if (this.bonusStack[index].type == BonusController.TypeBonus.Gem)
+				{
+					BankController.AddGems(1, true, AnalyticsConstants.AccrualType.Earned);
+				}
+			}
+			this.RemoveBonusRPC(index);
+		}
+	}
+
+	private double GetTimeForBonus()
+	{
+		double num = -1;
+		num = (!Defs.isInet ? Network.time + 15 : PhotonNetwork.time + 15);
+		return num;
 	}
 
 	private int IndexBonus()
 	{
-		int num = UnityEngine.Random.Range(0, sumProbabilitys);
-		foreach (KeyValuePair<int, Dictionary<string, int>> probabilityBonu in probabilityBonus)
+		int key;
+		int num = UnityEngine.Random.Range(0, this.sumProbabilitys);
+		Dictionary<int, Dictionary<string, int>>.Enumerator enumerator = this.probabilityBonus.GetEnumerator();
+		try
 		{
-			if (num >= probabilityBonu.Value["min"] && num < probabilityBonu.Value["max"])
+			while (enumerator.MoveNext())
 			{
-				return probabilityBonu.Key;
+				KeyValuePair<int, Dictionary<string, int>> current = enumerator.Current;
+				if (num < current.Value["min"] || num >= current.Value["max"])
+				{
+					continue;
+				}
+				key = current.Key;
+				return key;
 			}
+			return 0;
 		}
-		return 0;
+		finally
+		{
+			((IDisposable)(object)enumerator).Dispose();
+		}
+		return key;
 	}
 
 	private int IndexBonusOnKill()
 	{
-		if (CanSpawnGemBonus() && UnityEngine.Random.Range(0, 100) < 5)
+		int key;
+		if (this.CanSpawnGemBonus() && UnityEngine.Random.Range(0, 100) < 5)
 		{
 			return 9;
 		}
-		int num = UnityEngine.Random.Range(0, sumProbabilitys);
-		foreach (KeyValuePair<int, Dictionary<string, int>> probabilityBonu in probabilityBonus)
+		int num = UnityEngine.Random.Range(0, this.sumProbabilitys);
+		Dictionary<int, Dictionary<string, int>>.Enumerator enumerator = this.probabilityBonus.GetEnumerator();
+		try
 		{
-			if (num >= probabilityBonu.Value["min"] && num < probabilityBonu.Value["max"])
+			while (enumerator.MoveNext())
 			{
-				return probabilityBonu.Key;
+				KeyValuePair<int, Dictionary<string, int>> current = enumerator.Current;
+				if (num < current.Value["min"] || num >= current.Value["max"])
+				{
+					continue;
+				}
+				key = current.Key;
+				return key;
 			}
+			return 0;
 		}
-		return 0;
+		finally
+		{
+			((IDisposable)(object)enumerator).Dispose();
+		}
+		return key;
 	}
 
-	private void Update()
+	private void InitStack()
 	{
-		bool flag = false;
-		flag = !isMulti || ((!isInet) ? Network.isServer : PhotonNetwork.isMasterClient);
-		if (flag)
+		this.bonusStack = new BonusItem[this.maxCountBonus + 6];
+		for (int i = 0; i < (int)this.bonusStack.Length; i++)
 		{
-			for (int i = 0; i < bonusStack.Length; i++)
+			GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(this.bonusPrefab, Vector3.down * 100f, Quaternion.identity);
+			gameObject.transform.parent = base.transform;
+			this.bonusStack[i] = gameObject.GetComponent<BonusItem>();
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void MakeBonusRPC(int index, int type, Vector3 position, float expireTime, int zoneNumber)
+	{
+		if (index < (int)this.bonusStack.Length && !this.bonusStack[index].isActive)
+		{
+			this.bonusStack[index].ActivateBonus((BonusController.TypeBonus)type, position, (double)expireTime, zoneNumber, index);
+			if (!this.bonusStack[index].isTimeBonus)
 			{
-				if (bonusStack[i].isActive && bonusStack[i].isPickedUp)
-				{
-					photonView.RPC("GetBonusRewardRPC", PhotonTargets.All, i);
-				}
+				this.activeBonusesCount++;
 			}
-		}
-		if (!isStopCreateBonus && flag)
-		{
-			timerToAddBonus -= Time.deltaTime;
-		}
-		if (timerToAddBonus < 0f)
-		{
-			timerToAddBonus = creationInterval;
-			AddBonus(Vector3.zero, IndexBonus());
 		}
 	}
 
 	private void OnDestroy()
 	{
-		if ((bool)photonView)
+		if (this.photonView)
 		{
 			PhotonObjectCacher.RemoveObject(base.gameObject);
 		}
+	}
+
+	private void OnPhotonPlayerConnected(PhotonPlayer player)
+	{
+		if (PhotonNetwork.isMasterClient)
+		{
+			for (int i = 0; i < (int)this.bonusStack.Length; i++)
+			{
+				if (this.bonusStack[i].isActive)
+				{
+					this.photonView.RPC("MakeBonusRPC", player, new object[] { i, (int)this.bonusStack[i].type, this.bonusStack[i].transform.position, (float)this.bonusStack[i].expireTime, this.bonusStack[i].mySpawnNumber });
+				}
+			}
+		}
+	}
+
+	private void OnPlayerConnected(NetworkPlayer player)
+	{
+		if (Network.isServer)
+		{
+			for (int i = 0; i < (int)this.bonusStack.Length; i++)
+			{
+				if (this.bonusStack[i].isActive)
+				{
+					this._networkView.RPC("MakeBonusRPC", player, new object[] { i, (int)this.bonusStack[i].type, this.bonusStack[i].transform.position, (float)this.bonusStack[i].expireTime, this.bonusStack[i].mySpawnNumber });
+				}
+			}
+		}
+	}
+
+	private void PickupBonus(int index, PhotonPlayer player)
+	{
+		if (index < (int)this.bonusStack.Length && this.bonusStack[index].isActive && !this.bonusStack[index].isPickedUp)
+		{
+			this.bonusStack[index].PickupBonus(player);
+		}
+	}
+
+	public void RemoveBonus(int index)
+	{
+		this.RemoveBonusRPC(index);
+		if (this.isMulti)
+		{
+			if (!this.isInet)
+			{
+				this._networkView.RPC("RemoveBonusRPC", RPCMode.Others, new object[] { index });
+			}
+			else
+			{
+				this.photonView.RPC("RemoveBonusRPC", PhotonTargets.Others, new object[] { index });
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void RemoveBonusRPC(int index)
+	{
+		if (index < (int)this.bonusStack.Length && this.bonusStack[index].isActive)
+		{
+			if (!this.bonusStack[index].isTimeBonus)
+			{
+				this.activeBonusesCount--;
+			}
+			this.bonusStack[index].DeactivateBonus();
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void RemoveBonusWithRewardRPC(PhotonPlayer sender, int index)
+	{
+		if (!this.isMulti || !this.isInet || NetworkStartTable.LocalOrPasswordRoom())
+		{
+			return;
+		}
+		if (index < (int)this.bonusStack.Length && this.bonusStack[index].isActive)
+		{
+			this.PickupBonus(index, sender);
+		}
+	}
+
+	private void SetProbability()
+	{
+		this.probabilityBonusDict.Clear();
+		this.probabilityBonus.Clear();
+		this.sumProbabilitys = 0;
+		if (!Defs.isMulti)
+		{
+			if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.None)
+			{
+				this.probabilityBonusDict.Add(0, 55);
+				this.probabilityBonusDict.Add(1, 14);
+				this.probabilityBonusDict.Add(2, 12);
+				this.probabilityBonusDict.Add(4, 15);
+			}
+			else
+			{
+				this.probabilityBonusDict.Add(0, 100);
+			}
+		}
+		else if (Defs.isHunger)
+		{
+			this.probabilityBonusDict.Add(3, 100);
+		}
+		else if (SceneLoader.ActiveSceneName.Equals("Knife"))
+		{
+			this.probabilityBonusDict.Add(1, 75);
+			this.probabilityBonusDict.Add(2, 25);
+		}
+		else if (Defs.isDaterRegim)
+		{
+			this.probabilityBonusDict.Add(0, 100);
+		}
+		else if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			this.probabilityBonusDict.Add(0, 100);
+		}
+		else if (Defs.isCOOP)
+		{
+			this.probabilityBonusDict.Add(0, 55);
+			this.probabilityBonusDict.Add(1, 14);
+			this.probabilityBonusDict.Add(2, 12);
+			this.probabilityBonusDict.Add(4, 15);
+		}
+		else if (!SceneLoader.ActiveSceneName.Equals("WalkingFortress"))
+		{
+			this.probabilityBonusDict.Add(0, 50);
+			this.probabilityBonusDict.Add(1, 10);
+			this.probabilityBonusDict.Add(2, 10);
+			if (WeaponManager.sharedManager._currentFilterMap == 0)
+			{
+				this.probabilityBonusDict.Add(4, 15);
+			}
+			this.probabilityBonusDict.Add(5, 2);
+			this.probabilityBonusDict.Add(8, 5);
+			this.probabilityBonusDict.Add(7, 3);
+			this.probabilityBonusDict.Add(6, 5);
+		}
+		else
+		{
+			this.probabilityBonusDict.Add(0, 50);
+			this.probabilityBonusDict.Add(1, 10);
+			this.probabilityBonusDict.Add(2, 5);
+			this.probabilityBonusDict.Add(4, 10);
+			this.probabilityBonusDict.Add(5, 2);
+			this.probabilityBonusDict.Add(8, 5);
+			this.probabilityBonusDict.Add(7, 3);
+			this.probabilityBonusDict.Add(6, 15);
+		}
+		foreach (KeyValuePair<int, int> keyValuePair in this.probabilityBonusDict)
+		{
+			Dictionary<string, int> strs = new Dictionary<string, int>()
+			{
+				{ "min", this.sumProbabilitys }
+			};
+			this.sumProbabilitys += keyValuePair.Value;
+			strs.Add("max", this.sumProbabilitys);
+			this.probabilityBonus.Add(keyValuePair.Key, strs);
+		}
+	}
+
+	private void Start()
+	{
+		this.photonView = PhotonView.Get(this);
+		this._networkView = base.GetComponent<NetworkView>();
+		if (this.photonView)
+		{
+			PhotonObjectCacher.AddObject(base.gameObject);
+		}
+		this.bonusCreationZones = GameObject.FindGameObjectsWithTag("BonusCreationZone");
+		if (this.maxCountBonus > (int)this.bonusCreationZones.Length)
+		{
+			this.maxCountBonus = (int)this.bonusCreationZones.Length;
+		}
+		this.zombieCreator = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>();
+		this._weaponManager = WeaponManager.sharedManager;
+		this.SetProbability();
+		this.InitStack();
+	}
+
+	private void Update()
+	{
+		bool flag = false;
+		if (!this.isMulti)
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = (!this.isInet ? Network.isServer : PhotonNetwork.isMasterClient);
+		}
+		if (flag)
+		{
+			for (int i = 0; i < (int)this.bonusStack.Length; i++)
+			{
+				if (this.bonusStack[i].isActive && this.bonusStack[i].isPickedUp)
+				{
+					this.photonView.RPC("GetBonusRewardRPC", PhotonTargets.All, new object[] { i });
+				}
+			}
+		}
+		if (!this.isStopCreateBonus && flag)
+		{
+			this.timerToAddBonus -= Time.deltaTime;
+		}
+		if (this.timerToAddBonus < 0f)
+		{
+			this.timerToAddBonus = this.creationInterval;
+			this.AddBonus(Vector3.zero, this.IndexBonus());
+		}
+	}
+
+	public enum TypeBonus
+	{
+		Ammo,
+		Health,
+		Armor,
+		Chest,
+		Grenade,
+		Mech,
+		JetPack,
+		Invisible,
+		Turret,
+		Gem
 	}
 }

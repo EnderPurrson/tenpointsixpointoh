@@ -1,73 +1,22 @@
+using EveryplayMiniJSON;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
-using EveryplayMiniJSON;
 using UnityEngine;
 
 public class Everyplay : MonoBehaviour
 {
-	public enum FaceCamPreviewOrigin
-	{
-		TopLeft = 0,
-		TopRight = 1,
-		BottomLeft = 2,
-		BottomRight = 3
-	}
-
-	public enum FaceCamRecordingMode
-	{
-		RecordAudio = 0,
-		RecordVideo = 1,
-		PassThrough = 2
-	}
-
-	public enum UserInterfaceIdiom
-	{
-		Phone = 0,
-		Tablet = 1,
-		TV = 2,
-		iPhone = 0,
-		iPad = 1
-	}
-
-	public delegate void WasClosedDelegate();
-
-	public delegate void ReadyForRecordingDelegate(bool enabled);
-
-	public delegate void RecordingStartedDelegate();
-
-	public delegate void RecordingStoppedDelegate();
-
-	public delegate void FaceCamSessionStartedDelegate();
-
-	public delegate void FaceCamRecordingPermissionDelegate(bool granted);
-
-	public delegate void FaceCamSessionStoppedDelegate();
-
-	[Obsolete("Use ThumbnailTextureReadyDelegate(Texture2D texture,bool portrait) instead.")]
-	public delegate void ThumbnailReadyAtTextureIdDelegate(int textureId, bool portrait);
-
-	public delegate void ThumbnailTextureReadyDelegate(Texture2D texture, bool portrait);
-
-	public delegate void UploadDidStartDelegate(int videoId);
-
-	public delegate void UploadDidProgressDelegate(int videoId, float progress);
-
-	public delegate void UploadDidCompleteDelegate(int videoId);
-
-	public delegate void RequestReadyDelegate(string response);
-
-	public delegate void RequestFailedDelegate(string error);
-
 	private const string nativeMethodSource = "__Internal";
 
 	private static string clientId;
 
 	private static bool appIsClosing;
 
-	private static bool hasMethods = true;
+	private static bool hasMethods;
 
 	private static bool seenInitialization;
 
@@ -81,600 +30,847 @@ public class Everyplay : MonoBehaviour
 
 	private static AndroidJavaObject everyplayUnity;
 
+	private static Everyplay EveryplayInstance
+	{
+		get
+		{
+			Everyplay everyplay;
+			if (Everyplay.everyplayInstance == null && !Everyplay.appIsClosing)
+			{
+				EveryplaySettings everyplaySetting = (EveryplaySettings)Resources.Load("EveryplaySettings");
+				if (everyplaySetting != null && everyplaySetting.IsEnabled)
+				{
+					GameObject gameObject = new GameObject("Everyplay");
+					if (gameObject != null)
+					{
+						Everyplay.everyplayInstance = gameObject.AddComponent<Everyplay>();
+						if (Everyplay.everyplayInstance != null)
+						{
+							Everyplay.clientId = everyplaySetting.clientId;
+							Everyplay.hasMethods = true;
+							try
+							{
+								Everyplay.InitEveryplay(everyplaySetting.clientId, everyplaySetting.clientSecret, everyplaySetting.redirectURI);
+								Everyplay.seenInitialization;
+								Everyplay.seenInitialization = true;
+								if (everyplaySetting.testButtonsEnabled)
+								{
+									Everyplay.AddTestButtons(gameObject);
+								}
+								UnityEngine.Object.DontDestroyOnLoad(gameObject);
+								return Everyplay.everyplayInstance;
+							}
+							catch (DllNotFoundException dllNotFoundException)
+							{
+								Everyplay.hasMethods = false;
+								Everyplay.everyplayInstance.OnApplicationQuit();
+								everyplay = null;
+							}
+							catch (EntryPointNotFoundException entryPointNotFoundException)
+							{
+								Everyplay.hasMethods = false;
+								Everyplay.everyplayInstance.OnApplicationQuit();
+								everyplay = null;
+							}
+							return everyplay;
+						}
+					}
+				}
+			}
+			return Everyplay.everyplayInstance;
+		}
+	}
+
 	[Obsolete("Calling Everyplay with SharedInstance is deprecated, you may remove SharedInstance.")]
 	public static EveryplayLegacy SharedInstance
 	{
 		get
 		{
-			if (EveryplayInstance != null && everyplayLegacy == null)
+			if (Everyplay.EveryplayInstance != null && Everyplay.everyplayLegacy == null)
 			{
-				everyplayLegacy = everyplayInstance.gameObject.AddComponent<EveryplayLegacy>();
+				Everyplay.everyplayLegacy = Everyplay.everyplayInstance.gameObject.AddComponent<EveryplayLegacy>();
 			}
-			return everyplayLegacy;
+			return Everyplay.everyplayLegacy;
 		}
 	}
 
-	private static Everyplay EveryplayInstance
+	static Everyplay()
 	{
-		get
-		{
-			//Discarded unreachable code: IL_00b8, IL_00d5
-			if (everyplayInstance == null && !appIsClosing)
-			{
-				EveryplaySettings everyplaySettings = (EveryplaySettings)Resources.Load("EveryplaySettings");
-				if (everyplaySettings != null && everyplaySettings.IsEnabled)
-				{
-					GameObject gameObject = new GameObject("Everyplay");
-					if (gameObject != null)
-					{
-						everyplayInstance = gameObject.AddComponent<Everyplay>();
-						if (everyplayInstance != null)
-						{
-							clientId = everyplaySettings.clientId;
-							hasMethods = true;
-							try
-							{
-								InitEveryplay(everyplaySettings.clientId, everyplaySettings.clientSecret, everyplaySettings.redirectURI);
-							}
-							catch (DllNotFoundException)
-							{
-								hasMethods = false;
-								everyplayInstance.OnApplicationQuit();
-								return null;
-							}
-							catch (EntryPointNotFoundException)
-							{
-								hasMethods = false;
-								everyplayInstance.OnApplicationQuit();
-								return null;
-							}
-							if (!seenInitialization)
-							{
-							}
-							seenInitialization = true;
-							if (everyplaySettings.testButtonsEnabled)
-							{
-								AddTestButtons(gameObject);
-							}
-							UnityEngine.Object.DontDestroyOnLoad(gameObject);
-						}
-					}
-				}
-			}
-			return everyplayInstance;
-		}
+		Everyplay.hasMethods = true;
 	}
 
-	public static event WasClosedDelegate WasClosed;
-
-	public static event ReadyForRecordingDelegate ReadyForRecording;
-
-	public static event RecordingStartedDelegate RecordingStarted;
-
-	public static event RecordingStoppedDelegate RecordingStopped;
-
-	public static event FaceCamSessionStartedDelegate FaceCamSessionStarted;
-
-	public static event FaceCamRecordingPermissionDelegate FaceCamRecordingPermission;
-
-	public static event FaceCamSessionStoppedDelegate FaceCamSessionStopped;
-
-	[Obsolete("Use ThumbnailTextureReady instead.")]
-	public static event ThumbnailReadyAtTextureIdDelegate ThumbnailReadyAtTextureId;
-
-	public static event ThumbnailTextureReadyDelegate ThumbnailTextureReady;
-
-	public static event UploadDidStartDelegate UploadDidStart;
-
-	public static event UploadDidProgressDelegate UploadDidProgress;
-
-	public static event UploadDidCompleteDelegate UploadDidComplete;
-
-	public static void Initialize()
+	public Everyplay()
 	{
-		if (EveryplayInstance == null)
-		{
-			Debug.Log("Unable to initialize Everyplay. Everyplay might be disabled for this platform or the app is closing.");
-		}
-	}
-
-	public static void Show()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayShow();
-		}
-	}
-
-	public static void ShowWithPath(string path)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayShowWithPath(path);
-		}
-	}
-
-	public static void PlayVideoWithURL(string url)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayPlayVideoWithURL(url);
-		}
-	}
-
-	public static void PlayVideoWithDictionary(Dictionary<string, object> dict)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayPlayVideoWithDictionary(Json.Serialize(dict));
-		}
-	}
-
-	public static void MakeRequest(string method, string url, Dictionary<string, object> data, RequestReadyDelegate readyDelegate, RequestFailedDelegate failedDelegate)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayInstance.AsyncMakeRequest(method, url, data, readyDelegate, failedDelegate);
-		}
 	}
 
 	public static string AccessToken()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			return EveryplayAccountAccessToken();
+			return Everyplay.EveryplayAccountAccessToken();
 		}
 		return null;
 	}
 
-	public static void ShowSharingModal()
+	private static void AddTestButtons(GameObject gameObject)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		Texture2D texture2D = (Texture2D)Resources.Load("everyplay-test-buttons", typeof(Texture2D));
+		if (texture2D != null)
 		{
-			EveryplayShowSharingModal();
+			EveryplayRecButtons everyplayRecButton = gameObject.AddComponent<EveryplayRecButtons>();
+			if (everyplayRecButton != null)
+			{
+				everyplayRecButton.atlasTexture = texture2D;
+			}
 		}
 	}
 
-	public static void PlayLastRecording()
+	private void AsyncMakeRequest(string method, string url, Dictionary<string, object> data, Everyplay.RequestReadyDelegate readyDelegate, Everyplay.RequestFailedDelegate failedDelegate)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		base.StartCoroutine(this.MakeRequestEnumerator(method, url, data, readyDelegate, failedDelegate));
+	}
+
+	public static string EveryplayAccountAccessToken()
+	{
+		return Everyplay.everyplayUnity.Call<string>("getAccessToken", new object[0]);
+	}
+
+	public static float EveryplayFaceCamAudioPeakLevel()
+	{
+		return Everyplay.everyplayUnity.Call<float>("faceCamAudioPeakLevel", new object[0]);
+	}
+
+	public static float EveryplayFaceCamAudioPowerLevel()
+	{
+		return Everyplay.everyplayUnity.Call<float>("faceCamAudioPowerLevel", new object[0]);
+	}
+
+	public static bool EveryplayFaceCamIsAudioRecordingSupported()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("faceCamIsAudioRecordingSupported", new object[0]);
+	}
+
+	public static bool EveryplayFaceCamIsHeadphonesPluggedIn()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("faceCamIsHeadphonesPluggedIn", new object[0]);
+	}
+
+	public static bool EveryplayFaceCamIsRecordingPermissionGranted()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("faceCamIsRecordingPermissionGranted", new object[0]);
+	}
+
+	public static bool EveryplayFaceCamIsSessionRunning()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("faceCamIsSessionRunning", new object[0]);
+	}
+
+	public static bool EveryplayFaceCamIsVideoRecordingSupported()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("faceCamIsVideoRecordingSupported", new object[0]);
+	}
+
+	private void EveryplayFaceCamRecordingPermission(string jsonMsg)
+	{
+		bool flag;
+		if (Everyplay.FaceCamRecordingPermission != null && EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg).TryGetValue<bool>("granted", out flag))
 		{
-			EveryplayPlayLastRecording();
+			Everyplay.FaceCamRecordingPermission(flag);
 		}
 	}
 
-	public static void StartRecording()
+	public static void EveryplayFaceCamRequestRecordingPermission()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		Everyplay.everyplayUnity.Call("faceCamRequestRecordingPermission", new object[0]);
+	}
+
+	private void EveryplayFaceCamSessionStarted(string msg)
+	{
+		if (Everyplay.FaceCamSessionStarted != null)
 		{
-			EveryplayStartRecording();
+			Everyplay.FaceCamSessionStarted();
 		}
 	}
 
-	public static void StopRecording()
+	private void EveryplayFaceCamSessionStopped(string msg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.FaceCamSessionStopped != null)
 		{
-			EveryplayStopRecording();
+			Everyplay.FaceCamSessionStopped();
 		}
 	}
 
-	public static void PauseRecording()
+	public static void EveryplayFaceCamSetAudioOnly(bool audioOnly)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		Everyplay.everyplayUnity.Call("faceCamSetAudioOnly", new object[] { audioOnly });
+	}
+
+	public static void EveryplayFaceCamSetMonitorAudioLevels(bool enabled)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetSetMonitorAudioLevels", new object[] { enabled });
+	}
+
+	public static void EveryplayFaceCamSetPreviewBorderColor(float r, float g, float b, float a)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewBorderColor", new object[] { r, g, b, a });
+	}
+
+	public static void EveryplayFaceCamSetPreviewBorderWidth(int width)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewBorderWidth", new object[] { width });
+	}
+
+	public static void EveryplayFaceCamSetPreviewOrigin(int origin)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewOrigin", new object[] { origin });
+	}
+
+	public static void EveryplayFaceCamSetPreviewPositionX(int x)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewPositionX", new object[] { x });
+	}
+
+	public static void EveryplayFaceCamSetPreviewPositionY(int y)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewPositionY", new object[] { y });
+	}
+
+	public static void EveryplayFaceCamSetPreviewScaleRetina(bool autoScale)
+	{
+		UnityEngine.Debug.Log(string.Concat(MethodBase.GetCurrentMethod().Name, " not available on Android"));
+	}
+
+	public static void EveryplayFaceCamSetPreviewSideWidth(int width)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewSideWidth", new object[] { width });
+	}
+
+	public static void EveryplayFaceCamSetPreviewVisible(bool visible)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetPreviewVisible", new object[] { visible });
+	}
+
+	public static void EveryplayFaceCamSetRecordingMode(int mode)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetRecordingMode", new object[] { mode });
+	}
+
+	public static void EveryplayFaceCamSetTargetTextureHeight(int textureHeight)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetTargetTextureHeight", new object[] { textureHeight });
+	}
+
+	public static void EveryplayFaceCamSetTargetTextureId(int textureId)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetTargetTextureId", new object[] { textureId });
+	}
+
+	public static void EveryplayFaceCamSetTargetTextureWidth(int textureWidth)
+	{
+		Everyplay.everyplayUnity.Call("faceCamSetTargetTextureWidth", new object[] { textureWidth });
+	}
+
+	public static void EveryplayFaceCamStartSession()
+	{
+		Everyplay.everyplayUnity.Call("faceCamStartSession", new object[0]);
+	}
+
+	public static void EveryplayFaceCamStopSession()
+	{
+		Everyplay.everyplayUnity.Call("faceCamStopSession", new object[0]);
+	}
+
+	public static int EveryplayGetUserInterfaceIdiom()
+	{
+		return Everyplay.everyplayUnity.Call<int>("getUserInterfaceIdiom", new object[0]);
+	}
+
+	private void EveryplayHidden(string msg)
+	{
+		if (Everyplay.WasClosed != null)
 		{
-			EveryplayPauseRecording();
+			Everyplay.WasClosed();
 		}
 	}
 
-	public static void ResumeRecording()
+	public static bool EveryplayIsPaused()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		return Everyplay.everyplayUnity.Call<bool>("isPaused", new object[0]);
+	}
+
+	public static bool EveryplayIsRecording()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("isRecording", new object[0]);
+	}
+
+	public static bool EveryplayIsRecordingSupported()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("isRecordingSupported", new object[0]);
+	}
+
+	public static bool EveryplayIsSingleCoreDevice()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("isSingleCoreDevice", new object[0]);
+	}
+
+	public static bool EveryplayIsSupported()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("isSupported", new object[0]);
+	}
+
+	public static void EveryplayPauseRecording()
+	{
+		Everyplay.everyplayUnity.Call("pauseRecording", new object[0]);
+	}
+
+	public static void EveryplayPlayLastRecording()
+	{
+		Everyplay.everyplayUnity.Call("playLastRecording", new object[0]);
+	}
+
+	public static void EveryplayPlayVideoWithDictionary(string dic)
+	{
+		Everyplay.everyplayUnity.Call("playVideoWithDictionary", new object[] { dic });
+	}
+
+	public static void EveryplayPlayVideoWithURL(string url)
+	{
+		Everyplay.everyplayUnity.Call("playVideoWithURL", new object[] { url });
+	}
+
+	private void EveryplayReadyForRecording(string jsonMsg)
+	{
+		bool flag;
+		if (Everyplay.ReadyForRecording != null && EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg).TryGetValue<bool>("enabled", out flag))
 		{
-			EveryplayResumeRecording();
+			Everyplay.readyForRecording = flag;
+			Everyplay.ReadyForRecording(flag);
 		}
 	}
 
-	public static bool IsRecording()
+	private void EveryplayRecordingStarted(string msg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.RecordingStarted != null)
 		{
-			return EveryplayIsRecording();
-		}
-		return false;
-	}
-
-	public static bool IsRecordingSupported()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayIsRecordingSupported();
-		}
-		return false;
-	}
-
-	public static bool IsPaused()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayIsPaused();
-		}
-		return false;
-	}
-
-	public static bool SnapshotRenderbuffer()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplaySnapshotRenderbuffer();
-		}
-		return false;
-	}
-
-	public static bool IsSupported()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayIsSupported();
-		}
-		return false;
-	}
-
-	public static bool IsSingleCoreDevice()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayIsSingleCoreDevice();
-		}
-		return false;
-	}
-
-	public static int GetUserInterfaceIdiom()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayGetUserInterfaceIdiom();
-		}
-		return 0;
-	}
-
-	public static void SetMetadata(string key, object val)
-	{
-		if (EveryplayInstance != null && hasMethods && key != null && val != null)
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add(key, val);
-			EveryplaySetMetadata(Json.Serialize(dictionary));
+			Everyplay.RecordingStarted();
 		}
 	}
 
-	public static void SetMetadata(Dictionary<string, object> dict)
+	private void EveryplayRecordingStopped(string msg)
 	{
-		if (EveryplayInstance != null && hasMethods && dict != null && dict.Count > 0)
+		if (Everyplay.RecordingStopped != null)
 		{
-			EveryplaySetMetadata(Json.Serialize(dict));
+			Everyplay.RecordingStopped();
 		}
 	}
 
-	public static void SetTargetFPS(int fps)
+	public static void EveryplayResumeRecording()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		Everyplay.everyplayUnity.Call("resumeRecording", new object[0]);
+	}
+
+	public static void EveryplaySetDisableSingleCoreDevices(bool state)
+	{
+		Everyplay.everyplayUnity.Call("setDisableSingleCoreDevices", new object[] { (!state ? 0 : 1) });
+	}
+
+	public static void EveryplaySetLowMemoryDevice(bool state)
+	{
+		Everyplay.everyplayUnity.Call("setLowMemoryDevice", new object[] { (!state ? 0 : 1) });
+	}
+
+	public static void EveryplaySetMaxRecordingMinutesLength(int minutes)
+	{
+		Everyplay.everyplayUnity.Call("setMaxRecordingMinutesLength", new object[] { minutes });
+	}
+
+	public static void EveryplaySetMetadata(string json)
+	{
+		Everyplay.everyplayUnity.Call("setMetadata", new object[] { json });
+	}
+
+	public static void EveryplaySetMotionFactor(int factor)
+	{
+		Everyplay.everyplayUnity.Call("setMotionFactor", new object[] { factor });
+	}
+
+	public static void EveryplaySetTargetFPS(int fps)
+	{
+		Everyplay.everyplayUnity.Call("setTargetFPS", new object[] { fps });
+	}
+
+	public static void EveryplaySetThumbnailTargetTextureHeight(int textureHeight)
+	{
+		Everyplay.everyplayUnity.Call("setThumbnailTargetTextureHeight", new object[] { textureHeight });
+	}
+
+	public static void EveryplaySetThumbnailTargetTextureId(int textureId)
+	{
+		Everyplay.everyplayUnity.Call("setThumbnailTargetTextureId", new object[] { textureId });
+	}
+
+	public static void EveryplaySetThumbnailTargetTextureWidth(int textureWidth)
+	{
+		Everyplay.everyplayUnity.Call("setThumbnailTargetTextureWidth", new object[] { textureWidth });
+	}
+
+	public static void EveryplayShow()
+	{
+		Everyplay.everyplayUnity.Call<bool>("showEveryplay", new object[0]);
+	}
+
+	public static void EveryplayShowSharingModal()
+	{
+		Everyplay.everyplayUnity.Call("showSharingModal", new object[0]);
+	}
+
+	public static void EveryplayShowWithPath(string path)
+	{
+		Everyplay.everyplayUnity.Call<bool>("showEveryplay", new object[] { path });
+	}
+
+	public static bool EveryplaySnapshotRenderbuffer()
+	{
+		return Everyplay.everyplayUnity.Call<bool>("snapshotRenderbuffer", new object[0]);
+	}
+
+	public static void EveryplayStartRecording()
+	{
+		Everyplay.everyplayUnity.Call("startRecording", new object[0]);
+	}
+
+	public static void EveryplayStopRecording()
+	{
+		Everyplay.everyplayUnity.Call("stopRecording", new object[0]);
+	}
+
+	public static void EveryplayTakeThumbnail()
+	{
+		Everyplay.everyplayUnity.Call("takeThumbnail", new object[0]);
+	}
+
+	private void EveryplayThumbnailReadyAtTextureId(string jsonMsg)
+	{
+		int num;
+		bool flag;
+		if (Everyplay.ThumbnailReadyAtTextureId != null || Everyplay.ThumbnailTextureReady != null)
 		{
-			EveryplaySetTargetFPS(fps);
+			Dictionary<string, object> dictionary = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
+			if (dictionary.TryGetValue<int>("textureId", out num) && dictionary.TryGetValue<bool>("portrait", out flag))
+			{
+				if (Everyplay.ThumbnailReadyAtTextureId != null)
+				{
+					Everyplay.ThumbnailReadyAtTextureId(num, flag);
+				}
+				if (Everyplay.ThumbnailTextureReady != null && Everyplay.currentThumbnailTargetTexture != null && Everyplay.currentThumbnailTargetTexture.GetNativeTextureID() == num)
+				{
+					Everyplay.ThumbnailTextureReady(Everyplay.currentThumbnailTargetTexture, flag);
+				}
+			}
 		}
 	}
 
-	public static void SetMotionFactor(int factor)
+	private void EveryplayThumbnailTextureReady(string jsonMsg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		long num;
+		bool flag;
+		if (Everyplay.ThumbnailTextureReady != null)
 		{
-			EveryplaySetMotionFactor(factor);
+			Dictionary<string, object> dictionary = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
+			if (Everyplay.currentThumbnailTargetTexture != null && dictionary.TryGetValue<long>("texturePtr", out num) && dictionary.TryGetValue<bool>("portrait", out flag) && (long)Everyplay.currentThumbnailTargetTexture.GetNativeTexturePtr() == num)
+			{
+				Everyplay.ThumbnailTextureReady(Everyplay.currentThumbnailTargetTexture, flag);
+			}
 		}
 	}
 
-	public static void SetMaxRecordingMinutesLength(int minutes)
+	private void EveryplayUploadDidComplete(string jsonMsg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		int num;
+		if (Everyplay.UploadDidComplete != null && EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg).TryGetValue<int>("videoId", out num))
 		{
-			EveryplaySetMaxRecordingMinutesLength(minutes);
+			Everyplay.UploadDidComplete(num);
 		}
 	}
 
-	public static void SetLowMemoryDevice(bool state)
+	private void EveryplayUploadDidProgress(string jsonMsg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		int num;
+		double num1;
+		if (Everyplay.UploadDidProgress != null)
 		{
-			EveryplaySetLowMemoryDevice(state);
+			Dictionary<string, object> dictionary = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
+			if (dictionary.TryGetValue<int>("videoId", out num) && dictionary.TryGetValue<double>("progress", out num1))
+			{
+				Everyplay.UploadDidProgress(num, (float)num1);
+			}
 		}
 	}
 
-	public static void SetDisableSingleCoreDevices(bool state)
+	private void EveryplayUploadDidStart(string jsonMsg)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		int num;
+		if (Everyplay.UploadDidStart != null && EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg).TryGetValue<int>("videoId", out num))
 		{
-			EveryplaySetDisableSingleCoreDevices(state);
+			Everyplay.UploadDidStart(num);
 		}
-	}
-
-	public static bool FaceCamIsVideoRecordingSupported()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayFaceCamIsVideoRecordingSupported();
-		}
-		return false;
-	}
-
-	public static bool FaceCamIsAudioRecordingSupported()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayFaceCamIsAudioRecordingSupported();
-		}
-		return false;
-	}
-
-	public static bool FaceCamIsHeadphonesPluggedIn()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayFaceCamIsHeadphonesPluggedIn();
-		}
-		return false;
-	}
-
-	public static bool FaceCamIsSessionRunning()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayFaceCamIsSessionRunning();
-		}
-		return false;
-	}
-
-	public static bool FaceCamIsRecordingPermissionGranted()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			return EveryplayFaceCamIsRecordingPermissionGranted();
-		}
-		return false;
 	}
 
 	public static float FaceCamAudioPeakLevel()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			return EveryplayFaceCamAudioPeakLevel();
+			return Everyplay.EveryplayFaceCamAudioPeakLevel();
 		}
 		return 0f;
 	}
 
 	public static float FaceCamAudioPowerLevel()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			return EveryplayFaceCamAudioPowerLevel();
+			return Everyplay.EveryplayFaceCamAudioPowerLevel();
 		}
 		return 0f;
 	}
 
-	public static void FaceCamSetMonitorAudioLevels(bool enabled)
+	public static bool FaceCamIsAudioRecordingSupported()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetMonitorAudioLevels(enabled);
+			return Everyplay.EveryplayFaceCamIsAudioRecordingSupported();
 		}
+		return false;
 	}
 
-	public static void FaceCamSetRecordingMode(FaceCamRecordingMode mode)
+	public static bool FaceCamIsHeadphonesPluggedIn()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetRecordingMode((int)mode);
+			return Everyplay.EveryplayFaceCamIsHeadphonesPluggedIn();
+		}
+		return false;
+	}
+
+	public static bool FaceCamIsRecordingPermissionGranted()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayFaceCamIsRecordingPermissionGranted();
+		}
+		return false;
+	}
+
+	public static bool FaceCamIsSessionRunning()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayFaceCamIsSessionRunning();
+		}
+		return false;
+	}
+
+	public static bool FaceCamIsVideoRecordingSupported()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayFaceCamIsVideoRecordingSupported();
+		}
+		return false;
+	}
+
+	public static void FaceCamRequestRecordingPermission()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamRequestRecordingPermission();
 		}
 	}
 
 	public static void FaceCamSetAudioOnly(bool audioOnly)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetAudioOnly(audioOnly);
+			Everyplay.EveryplayFaceCamSetAudioOnly(audioOnly);
 		}
 	}
 
-	public static void FaceCamSetPreviewVisible(bool visible)
+	public static void FaceCamSetMonitorAudioLevels(bool enabled)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetPreviewVisible(visible);
-		}
-	}
-
-	public static void FaceCamSetPreviewScaleRetina(bool autoScale)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetPreviewScaleRetina(autoScale);
-		}
-	}
-
-	public static void FaceCamSetPreviewSideWidth(int width)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetPreviewSideWidth(width);
-		}
-	}
-
-	public static void FaceCamSetPreviewBorderWidth(int width)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetPreviewBorderWidth(width);
-		}
-	}
-
-	public static void FaceCamSetPreviewPositionX(int x)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetPreviewPositionX(x);
-		}
-	}
-
-	public static void FaceCamSetPreviewPositionY(int y)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetPreviewPositionY(y);
+			Everyplay.EveryplayFaceCamSetMonitorAudioLevels(enabled);
 		}
 	}
 
 	public static void FaceCamSetPreviewBorderColor(float r, float g, float b, float a)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetPreviewBorderColor(r, g, b, a);
+			Everyplay.EveryplayFaceCamSetPreviewBorderColor(r, g, b, a);
 		}
 	}
 
-	public static void FaceCamSetPreviewOrigin(FaceCamPreviewOrigin origin)
+	public static void FaceCamSetPreviewBorderWidth(int width)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetPreviewOrigin((int)origin);
+			Everyplay.EveryplayFaceCamSetPreviewBorderWidth(width);
+		}
+	}
+
+	public static void FaceCamSetPreviewOrigin(Everyplay.FaceCamPreviewOrigin origin)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewOrigin((int)origin);
+		}
+	}
+
+	public static void FaceCamSetPreviewPositionX(int x)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewPositionX(x);
+		}
+	}
+
+	public static void FaceCamSetPreviewPositionY(int y)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewPositionY(y);
+		}
+	}
+
+	public static void FaceCamSetPreviewScaleRetina(bool autoScale)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewScaleRetina(autoScale);
+		}
+	}
+
+	public static void FaceCamSetPreviewSideWidth(int width)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewSideWidth(width);
+		}
+	}
+
+	public static void FaceCamSetPreviewVisible(bool visible)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetPreviewVisible(visible);
+		}
+	}
+
+	public static void FaceCamSetRecordingMode(Everyplay.FaceCamRecordingMode mode)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetRecordingMode((int)mode);
 		}
 	}
 
 	public static void FaceCamSetTargetTexture(Texture2D texture)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			if (texture != null)
+			if (texture == null)
 			{
-				EveryplayFaceCamSetTargetTextureId(texture.GetNativeTextureID());
-				EveryplayFaceCamSetTargetTextureWidth(texture.width);
-				EveryplayFaceCamSetTargetTextureHeight(texture.height);
+				Everyplay.EveryplayFaceCamSetTargetTextureId(0);
 			}
 			else
 			{
-				EveryplayFaceCamSetTargetTextureId(0);
+				Everyplay.EveryplayFaceCamSetTargetTextureId(texture.GetNativeTextureID());
+				Everyplay.EveryplayFaceCamSetTargetTextureWidth(texture.width);
+				Everyplay.EveryplayFaceCamSetTargetTextureHeight(texture.height);
 			}
-		}
-	}
-
-	[Obsolete("Use FaceCamSetTargetTexture(Texture2D texture) instead.")]
-	public static void FaceCamSetTargetTextureId(int textureId)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetTargetTextureId(textureId);
-		}
-	}
-
-	[Obsolete("Defining texture width is no longer required when FaceCamSetTargetTexture(Texture2D texture) is used.")]
-	public static void FaceCamSetTargetTextureWidth(int textureWidth)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamSetTargetTextureWidth(textureWidth);
 		}
 	}
 
 	[Obsolete("Defining texture height is no longer required when FaceCamSetTargetTexture(Texture2D texture) is used.")]
 	public static void FaceCamSetTargetTextureHeight(int textureHeight)
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamSetTargetTextureHeight(textureHeight);
+			Everyplay.EveryplayFaceCamSetTargetTextureHeight(textureHeight);
+		}
+	}
+
+	[Obsolete("Use FaceCamSetTargetTexture(Texture2D texture) instead.")]
+	public static void FaceCamSetTargetTextureId(int textureId)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetTargetTextureId(textureId);
+		}
+	}
+
+	[Obsolete("Defining texture width is no longer required when FaceCamSetTargetTexture(Texture2D texture) is used.")]
+	public static void FaceCamSetTargetTextureWidth(int textureWidth)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayFaceCamSetTargetTextureWidth(textureWidth);
 		}
 	}
 
 	public static void FaceCamStartSession()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamStartSession();
-		}
-	}
-
-	public static void FaceCamRequestRecordingPermission()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayFaceCamRequestRecordingPermission();
+			Everyplay.EveryplayFaceCamStartSession();
 		}
 	}
 
 	public static void FaceCamStopSession()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayFaceCamStopSession();
+			Everyplay.EveryplayFaceCamStopSession();
 		}
 	}
 
-	public static void SetThumbnailTargetTexture(Texture2D texture)
+	public static int GetUserInterfaceIdiom()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			currentThumbnailTargetTexture = texture;
-			if (texture != null)
-			{
-				EveryplaySetThumbnailTargetTextureId(currentThumbnailTargetTexture.GetNativeTextureID());
-				EveryplaySetThumbnailTargetTextureWidth(currentThumbnailTargetTexture.width);
-				EveryplaySetThumbnailTargetTextureHeight(currentThumbnailTargetTexture.height);
-			}
-			else
-			{
-				EveryplaySetThumbnailTargetTextureId(0);
-			}
+			return Everyplay.EveryplayGetUserInterfaceIdiom();
+		}
+		return 0;
+	}
+
+	public static void InitEveryplay(string clientId, string clientSecret, string redirectURI)
+	{
+		AndroidJavaObject @static = (new AndroidJavaClass("com.unity3d.player.UnityPlayer")).GetStatic<AndroidJavaObject>("currentActivity");
+		Everyplay.everyplayUnity = new AndroidJavaObject("com.everyplay.Everyplay.unity.EveryplayUnity3DWrapper", new object[0]);
+		Everyplay.everyplayUnity.Call("initEveryplay", new object[] { @static, clientId, clientSecret, redirectURI });
+	}
+
+	public static void Initialize()
+	{
+		if (Everyplay.EveryplayInstance == null)
+		{
+			UnityEngine.Debug.Log("Unable to initialize Everyplay. Everyplay might be disabled for this platform or the app is closing.");
 		}
 	}
 
-	[Obsolete("Use SetThumbnailTargetTexture(Texture2D texture) instead.")]
-	public static void SetThumbnailTargetTextureId(int textureId)
+	public static bool IsPaused()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplaySetThumbnailTargetTextureId(textureId);
+			return Everyplay.EveryplayIsPaused();
 		}
-	}
-
-	[Obsolete("Defining texture width is no longer required when SetThumbnailTargetTexture(Texture2D texture) is used.")]
-	public static void SetThumbnailTargetTextureWidth(int textureWidth)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplaySetThumbnailTargetTextureWidth(textureWidth);
-		}
-	}
-
-	[Obsolete("Defining texture height is no longer required when SetThumbnailTargetTexture(Texture2D texture) is used.")]
-	public static void SetThumbnailTargetTextureHeight(int textureHeight)
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplaySetThumbnailTargetTextureHeight(textureHeight);
-		}
-	}
-
-	public static void TakeThumbnail()
-	{
-		if (EveryplayInstance != null && hasMethods)
-		{
-			EveryplayTakeThumbnail();
-		}
+		return false;
 	}
 
 	public static bool IsReadyForRecording()
 	{
-		if (EveryplayInstance != null && hasMethods)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			return readyForRecording;
+			return Everyplay.readyForRecording;
 		}
 		return false;
+	}
+
+	public static bool IsRecording()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayIsRecording();
+		}
+		return false;
+	}
+
+	public static bool IsRecordingSupported()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayIsRecordingSupported();
+		}
+		return false;
+	}
+
+	public static bool IsSingleCoreDevice()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayIsSingleCoreDevice();
+		}
+		return false;
+	}
+
+	public static bool IsSupported()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			return Everyplay.EveryplayIsSupported();
+		}
+		return false;
+	}
+
+	public static void MakeRequest(string method, string url, Dictionary<string, object> data, Everyplay.RequestReadyDelegate readyDelegate, Everyplay.RequestFailedDelegate failedDelegate)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayInstance.AsyncMakeRequest(method, url, data, readyDelegate, failedDelegate);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator MakeRequestEnumerator(string method, string url, Dictionary<string, object> data, Everyplay.RequestReadyDelegate readyDelegate, Everyplay.RequestFailedDelegate failedDelegate)
+	{
+		Everyplay.u003cMakeRequestEnumeratoru003ec__Iterator6 variable = null;
+		return variable;
+	}
+
+	private void OnApplicationQuit()
+	{
+		Everyplay.Reset();
+		if (Everyplay.currentThumbnailTargetTexture != null)
+		{
+			Everyplay.SetThumbnailTargetTexture(null);
+			Everyplay.currentThumbnailTargetTexture = null;
+		}
+		Everyplay.RemoveAllEventHandlers();
+		Everyplay.appIsClosing = true;
+		Everyplay.everyplayInstance = null;
+	}
+
+	public static void PauseRecording()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayPauseRecording();
+		}
+	}
+
+	public static void PlayLastRecording()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayPlayLastRecording();
+		}
+	}
+
+	public static void PlayVideoWithDictionary(Dictionary<string, object> dict)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayPlayVideoWithDictionary(Json.Serialize(dict));
+		}
+	}
+
+	public static void PlayVideoWithURL(string url)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayPlayVideoWithURL(url);
+		}
 	}
 
 	private static void RemoveAllEventHandlers()
@@ -697,495 +893,251 @@ public class Everyplay : MonoBehaviour
 	{
 	}
 
-	private static void AddTestButtons(GameObject gameObject)
+	public static void ResumeRecording()
 	{
-		Texture2D texture2D = (Texture2D)Resources.Load("everyplay-test-buttons", typeof(Texture2D));
-		if (texture2D != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			EveryplayRecButtons everyplayRecButtons = gameObject.AddComponent<EveryplayRecButtons>();
-			if (everyplayRecButtons != null)
+			Everyplay.EveryplayResumeRecording();
+		}
+	}
+
+	public static void SetDisableSingleCoreDevices(bool state)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplaySetDisableSingleCoreDevices(state);
+		}
+	}
+
+	public static void SetLowMemoryDevice(bool state)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplaySetLowMemoryDevice(state);
+		}
+	}
+
+	public static void SetMaxRecordingMinutesLength(int minutes)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplaySetMaxRecordingMinutesLength(minutes);
+		}
+	}
+
+	public static void SetMetadata(string key, object val)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods && key != null && val != null)
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>()
 			{
-				everyplayRecButtons.atlasTexture = texture2D;
+				{ key, val }
+			};
+			Everyplay.EveryplaySetMetadata(Json.Serialize(strs));
+		}
+	}
+
+	public static void SetMetadata(Dictionary<string, object> dict)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods && dict != null && dict.Count > 0)
+		{
+			Everyplay.EveryplaySetMetadata(Json.Serialize(dict));
+		}
+	}
+
+	public static void SetMotionFactor(int factor)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplaySetMotionFactor(factor);
+		}
+	}
+
+	public static void SetTargetFPS(int fps)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplaySetTargetFPS(fps);
+		}
+	}
+
+	public static void SetThumbnailTargetTexture(Texture2D texture)
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.currentThumbnailTargetTexture = texture;
+			if (texture == null)
+			{
+				Everyplay.EveryplaySetThumbnailTargetTextureId(0);
+			}
+			else
+			{
+				Everyplay.EveryplaySetThumbnailTargetTextureId(Everyplay.currentThumbnailTargetTexture.GetNativeTextureID());
+				Everyplay.EveryplaySetThumbnailTargetTextureWidth(Everyplay.currentThumbnailTargetTexture.width);
+				Everyplay.EveryplaySetThumbnailTargetTextureHeight(Everyplay.currentThumbnailTargetTexture.height);
 			}
 		}
 	}
 
-	private void AsyncMakeRequest(string method, string url, Dictionary<string, object> data, RequestReadyDelegate readyDelegate, RequestFailedDelegate failedDelegate)
+	[Obsolete("Defining texture height is no longer required when SetThumbnailTargetTexture(Texture2D texture) is used.")]
+	public static void SetThumbnailTargetTextureHeight(int textureHeight)
 	{
-		StartCoroutine(MakeRequestEnumerator(method, url, data, readyDelegate, failedDelegate));
-	}
-
-	private IEnumerator MakeRequestEnumerator(string method, string url, Dictionary<string, object> data, RequestReadyDelegate readyDelegate, RequestFailedDelegate failedDelegate)
-	{
-		if (data == null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			data = new Dictionary<string, object>();
-		}
-		if (url.IndexOf("http") != 0)
-		{
-			if (url.IndexOf("/") != 0)
-			{
-				url = "/" + url;
-			}
-			url = "https://api.everyplay.com" + url;
-		}
-		method = method.ToLower();
-		Dictionary<string, string> headers = new Dictionary<string, string>();
-		string accessToken = AccessToken();
-		if (accessToken != null)
-		{
-			headers["Authorization"] = "Bearer " + accessToken;
-		}
-		else if (url.IndexOf("client_id") == -1)
-		{
-			url = ((url.IndexOf("?") != -1) ? (url + "&") : (url + "?"));
-			url = url + "client_id=" + clientId;
-		}
-		data.Add("_method", method);
-		string dataString = Json.Serialize(data);
-		byte[] dataArray = Encoding.UTF8.GetBytes(dataString);
-		headers["Accept"] = "application/json";
-		headers["Content-Type"] = "application/json";
-		headers["Data-Type"] = "json";
-		headers["Content-Length"] = dataArray.Length.ToString();
-		WWW www = new WWW(url, dataArray, headers);
-		yield return www;
-		if (!string.IsNullOrEmpty(www.error) && failedDelegate != null)
-		{
-			failedDelegate("Everyplay error: " + www.error);
-		}
-		else if (string.IsNullOrEmpty(www.error) && readyDelegate != null)
-		{
-			readyDelegate(www.text);
+			Everyplay.EveryplaySetThumbnailTargetTextureHeight(textureHeight);
 		}
 	}
 
-	private void OnApplicationQuit()
+	[Obsolete("Use SetThumbnailTargetTexture(Texture2D texture) instead.")]
+	public static void SetThumbnailTargetTextureId(int textureId)
 	{
-		Reset();
-		if (currentThumbnailTargetTexture != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			SetThumbnailTargetTexture(null);
-			currentThumbnailTargetTexture = null;
-		}
-		RemoveAllEventHandlers();
-		appIsClosing = true;
-		everyplayInstance = null;
-	}
-
-	private void EveryplayHidden(string msg)
-	{
-		if (Everyplay.WasClosed != null)
-		{
-			Everyplay.WasClosed();
+			Everyplay.EveryplaySetThumbnailTargetTextureId(textureId);
 		}
 	}
 
-	private void EveryplayReadyForRecording(string jsonMsg)
+	[Obsolete("Defining texture width is no longer required when SetThumbnailTargetTexture(Texture2D texture) is used.")]
+	public static void SetThumbnailTargetTextureWidth(int textureWidth)
 	{
-		if (Everyplay.ReadyForRecording != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-			bool value;
-			if (dict.TryGetValue<bool>("enabled", out value))
-			{
-				readyForRecording = value;
-				Everyplay.ReadyForRecording(value);
-			}
+			Everyplay.EveryplaySetThumbnailTargetTextureWidth(textureWidth);
 		}
 	}
 
-	private void EveryplayRecordingStarted(string msg)
+	public static void Show()
 	{
-		if (Everyplay.RecordingStarted != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Everyplay.RecordingStarted();
+			Everyplay.EveryplayShow();
 		}
 	}
 
-	private void EveryplayRecordingStopped(string msg)
+	public static void ShowSharingModal()
 	{
-		if (Everyplay.RecordingStopped != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Everyplay.RecordingStopped();
+			Everyplay.EveryplayShowSharingModal();
 		}
 	}
 
-	private void EveryplayFaceCamSessionStarted(string msg)
+	public static void ShowWithPath(string path)
 	{
-		if (Everyplay.FaceCamSessionStarted != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Everyplay.FaceCamSessionStarted();
+			Everyplay.EveryplayShowWithPath(path);
 		}
 	}
 
-	private void EveryplayFaceCamRecordingPermission(string jsonMsg)
+	public static bool SnapshotRenderbuffer()
 	{
-		if (Everyplay.FaceCamRecordingPermission != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-			bool value;
-			if (dict.TryGetValue<bool>("granted", out value))
-			{
-				Everyplay.FaceCamRecordingPermission(value);
-			}
+			return Everyplay.EveryplaySnapshotRenderbuffer();
+		}
+		return false;
+	}
+
+	public static void StartRecording()
+	{
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
+		{
+			Everyplay.EveryplayStartRecording();
 		}
 	}
 
-	private void EveryplayFaceCamSessionStopped(string msg)
+	public static void StopRecording()
 	{
-		if (Everyplay.FaceCamSessionStopped != null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			Everyplay.FaceCamSessionStopped();
+			Everyplay.EveryplayStopRecording();
 		}
 	}
 
-	private void EveryplayThumbnailReadyAtTextureId(string jsonMsg)
+	public static void TakeThumbnail()
 	{
-		if (Everyplay.ThumbnailReadyAtTextureId == null && Everyplay.ThumbnailTextureReady == null)
+		if (Everyplay.EveryplayInstance != null && Everyplay.hasMethods)
 		{
-			return;
-		}
-		Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-		int value;
-		bool value2;
-		if (dict.TryGetValue<int>("textureId", out value) && dict.TryGetValue<bool>("portrait", out value2))
-		{
-			if (Everyplay.ThumbnailReadyAtTextureId != null)
-			{
-				Everyplay.ThumbnailReadyAtTextureId(value, value2);
-			}
-			if (Everyplay.ThumbnailTextureReady != null && currentThumbnailTargetTexture != null && currentThumbnailTargetTexture.GetNativeTextureID() == value)
-			{
-				Everyplay.ThumbnailTextureReady(currentThumbnailTargetTexture, value2);
-			}
+			Everyplay.EveryplayTakeThumbnail();
 		}
 	}
 
-	private void EveryplayThumbnailTextureReady(string jsonMsg)
+	public static event Everyplay.FaceCamRecordingPermissionDelegate FaceCamRecordingPermission;
+
+	public static event Everyplay.FaceCamSessionStartedDelegate FaceCamSessionStarted;
+
+	public static event Everyplay.FaceCamSessionStoppedDelegate FaceCamSessionStopped;
+
+	public static event Everyplay.ReadyForRecordingDelegate ReadyForRecording;
+
+	public static event Everyplay.RecordingStartedDelegate RecordingStarted;
+
+	public static event Everyplay.RecordingStoppedDelegate RecordingStopped;
+
+	[Obsolete("Use ThumbnailTextureReady instead.")]
+	public static event Everyplay.ThumbnailReadyAtTextureIdDelegate ThumbnailReadyAtTextureId;
+
+	public static event Everyplay.ThumbnailTextureReadyDelegate ThumbnailTextureReady;
+
+	public static event Everyplay.UploadDidCompleteDelegate UploadDidComplete;
+
+	public static event Everyplay.UploadDidProgressDelegate UploadDidProgress;
+
+	public static event Everyplay.UploadDidStartDelegate UploadDidStart;
+
+	public static event Everyplay.WasClosedDelegate WasClosed;
+
+	public enum FaceCamPreviewOrigin
 	{
-		if (Everyplay.ThumbnailTextureReady == null)
-		{
-			return;
-		}
-		Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-		long value;
-		bool value2;
-		if (currentThumbnailTargetTexture != null && dict.TryGetValue<long>("texturePtr", out value) && dict.TryGetValue<bool>("portrait", out value2))
-		{
-			long num = (long)currentThumbnailTargetTexture.GetNativeTexturePtr();
-			if (num == value)
-			{
-				Everyplay.ThumbnailTextureReady(currentThumbnailTargetTexture, value2);
-			}
-		}
+		TopLeft,
+		TopRight,
+		BottomLeft,
+		BottomRight
 	}
 
-	private void EveryplayUploadDidStart(string jsonMsg)
+	public enum FaceCamRecordingMode
 	{
-		if (Everyplay.UploadDidStart != null)
-		{
-			Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-			int value;
-			if (dict.TryGetValue<int>("videoId", out value))
-			{
-				Everyplay.UploadDidStart(value);
-			}
-		}
+		RecordAudio,
+		RecordVideo,
+		PassThrough
 	}
 
-	private void EveryplayUploadDidProgress(string jsonMsg)
+	public delegate void FaceCamRecordingPermissionDelegate(bool granted);
+
+	public delegate void FaceCamSessionStartedDelegate();
+
+	public delegate void FaceCamSessionStoppedDelegate();
+
+	public delegate void ReadyForRecordingDelegate(bool enabled);
+
+	public delegate void RecordingStartedDelegate();
+
+	public delegate void RecordingStoppedDelegate();
+
+	public delegate void RequestFailedDelegate(string error);
+
+	public delegate void RequestReadyDelegate(string response);
+
+	[Obsolete("Use ThumbnailTextureReadyDelegate(Texture2D texture,bool portrait) instead.")]
+	public delegate void ThumbnailReadyAtTextureIdDelegate(int textureId, bool portrait);
+
+	public delegate void ThumbnailTextureReadyDelegate(Texture2D texture, bool portrait);
+
+	public delegate void UploadDidCompleteDelegate(int videoId);
+
+	public delegate void UploadDidProgressDelegate(int videoId, float progress);
+
+	public delegate void UploadDidStartDelegate(int videoId);
+
+	public enum UserInterfaceIdiom
 	{
-		if (Everyplay.UploadDidProgress != null)
-		{
-			Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-			int value;
-			double value2;
-			if (dict.TryGetValue<int>("videoId", out value) && dict.TryGetValue<double>("progress", out value2))
-			{
-				Everyplay.UploadDidProgress(value, (float)value2);
-			}
-		}
+		iPhone = 0,
+		Phone = 0,
+		iPad = 1,
+		Tablet = 1,
+		TV = 2
 	}
 
-	private void EveryplayUploadDidComplete(string jsonMsg)
-	{
-		if (Everyplay.UploadDidComplete != null)
-		{
-			Dictionary<string, object> dict = EveryplayDictionaryExtensions.JsonToDictionary(jsonMsg);
-			int value;
-			if (dict.TryGetValue<int>("videoId", out value))
-			{
-				Everyplay.UploadDidComplete(value);
-			}
-		}
-	}
-
-	public static void InitEveryplay(string clientId, string clientSecret, string redirectURI)
-	{
-		AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-		AndroidJavaObject @static = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
-		everyplayUnity = new AndroidJavaObject("com.everyplay.Everyplay.unity.EveryplayUnity3DWrapper");
-		everyplayUnity.Call("initEveryplay", @static, clientId, clientSecret, redirectURI);
-	}
-
-	public static void EveryplayShow()
-	{
-		everyplayUnity.Call<bool>("showEveryplay", new object[0]);
-	}
-
-	public static void EveryplayShowWithPath(string path)
-	{
-		everyplayUnity.Call<bool>("showEveryplay", new object[1] { path });
-	}
-
-	public static void EveryplayPlayVideoWithURL(string url)
-	{
-		everyplayUnity.Call("playVideoWithURL", url);
-	}
-
-	public static void EveryplayPlayVideoWithDictionary(string dic)
-	{
-		everyplayUnity.Call("playVideoWithDictionary", dic);
-	}
-
-	public static string EveryplayAccountAccessToken()
-	{
-		return everyplayUnity.Call<string>("getAccessToken", new object[0]);
-	}
-
-	public static void EveryplayShowSharingModal()
-	{
-		everyplayUnity.Call("showSharingModal");
-	}
-
-	public static void EveryplayPlayLastRecording()
-	{
-		everyplayUnity.Call("playLastRecording");
-	}
-
-	public static void EveryplayStartRecording()
-	{
-		everyplayUnity.Call("startRecording");
-	}
-
-	public static void EveryplayStopRecording()
-	{
-		everyplayUnity.Call("stopRecording");
-	}
-
-	public static void EveryplayPauseRecording()
-	{
-		everyplayUnity.Call("pauseRecording");
-	}
-
-	public static void EveryplayResumeRecording()
-	{
-		everyplayUnity.Call("resumeRecording");
-	}
-
-	public static bool EveryplayIsRecording()
-	{
-		return everyplayUnity.Call<bool>("isRecording", new object[0]);
-	}
-
-	public static bool EveryplayIsRecordingSupported()
-	{
-		return everyplayUnity.Call<bool>("isRecordingSupported", new object[0]);
-	}
-
-	public static bool EveryplayIsPaused()
-	{
-		return everyplayUnity.Call<bool>("isPaused", new object[0]);
-	}
-
-	public static bool EveryplaySnapshotRenderbuffer()
-	{
-		return everyplayUnity.Call<bool>("snapshotRenderbuffer", new object[0]);
-	}
-
-	public static void EveryplaySetMetadata(string json)
-	{
-		everyplayUnity.Call("setMetadata", json);
-	}
-
-	public static void EveryplaySetTargetFPS(int fps)
-	{
-		everyplayUnity.Call("setTargetFPS", fps);
-	}
-
-	public static void EveryplaySetMotionFactor(int factor)
-	{
-		everyplayUnity.Call("setMotionFactor", factor);
-	}
-
-	public static void EveryplaySetMaxRecordingMinutesLength(int minutes)
-	{
-		everyplayUnity.Call("setMaxRecordingMinutesLength", minutes);
-	}
-
-	public static void EveryplaySetLowMemoryDevice(bool state)
-	{
-		everyplayUnity.Call("setLowMemoryDevice", state ? 1 : 0);
-	}
-
-	public static void EveryplaySetDisableSingleCoreDevices(bool state)
-	{
-		everyplayUnity.Call("setDisableSingleCoreDevices", state ? 1 : 0);
-	}
-
-	public static bool EveryplayIsSupported()
-	{
-		return everyplayUnity.Call<bool>("isSupported", new object[0]);
-	}
-
-	public static bool EveryplayIsSingleCoreDevice()
-	{
-		return everyplayUnity.Call<bool>("isSingleCoreDevice", new object[0]);
-	}
-
-	public static int EveryplayGetUserInterfaceIdiom()
-	{
-		return everyplayUnity.Call<int>("getUserInterfaceIdiom", new object[0]);
-	}
-
-	public static bool EveryplayFaceCamIsVideoRecordingSupported()
-	{
-		return everyplayUnity.Call<bool>("faceCamIsVideoRecordingSupported", new object[0]);
-	}
-
-	public static bool EveryplayFaceCamIsAudioRecordingSupported()
-	{
-		return everyplayUnity.Call<bool>("faceCamIsAudioRecordingSupported", new object[0]);
-	}
-
-	public static bool EveryplayFaceCamIsHeadphonesPluggedIn()
-	{
-		return everyplayUnity.Call<bool>("faceCamIsHeadphonesPluggedIn", new object[0]);
-	}
-
-	public static bool EveryplayFaceCamIsSessionRunning()
-	{
-		return everyplayUnity.Call<bool>("faceCamIsSessionRunning", new object[0]);
-	}
-
-	public static bool EveryplayFaceCamIsRecordingPermissionGranted()
-	{
-		return everyplayUnity.Call<bool>("faceCamIsRecordingPermissionGranted", new object[0]);
-	}
-
-	public static float EveryplayFaceCamAudioPeakLevel()
-	{
-		return everyplayUnity.Call<float>("faceCamAudioPeakLevel", new object[0]);
-	}
-
-	public static float EveryplayFaceCamAudioPowerLevel()
-	{
-		return everyplayUnity.Call<float>("faceCamAudioPowerLevel", new object[0]);
-	}
-
-	public static void EveryplayFaceCamSetMonitorAudioLevels(bool enabled)
-	{
-		everyplayUnity.Call("faceCamSetSetMonitorAudioLevels", enabled);
-	}
-
-	public static void EveryplayFaceCamSetRecordingMode(int mode)
-	{
-		everyplayUnity.Call("faceCamSetRecordingMode", mode);
-	}
-
-	public static void EveryplayFaceCamSetAudioOnly(bool audioOnly)
-	{
-		everyplayUnity.Call("faceCamSetAudioOnly", audioOnly);
-	}
-
-	public static void EveryplayFaceCamSetPreviewVisible(bool visible)
-	{
-		everyplayUnity.Call("faceCamSetPreviewVisible", visible);
-	}
-
-	public static void EveryplayFaceCamSetPreviewScaleRetina(bool autoScale)
-	{
-		Debug.Log(MethodBase.GetCurrentMethod().Name + " not available on Android");
-	}
-
-	public static void EveryplayFaceCamSetPreviewSideWidth(int width)
-	{
-		everyplayUnity.Call("faceCamSetPreviewSideWidth", width);
-	}
-
-	public static void EveryplayFaceCamSetPreviewBorderWidth(int width)
-	{
-		everyplayUnity.Call("faceCamSetPreviewBorderWidth", width);
-	}
-
-	public static void EveryplayFaceCamSetPreviewPositionX(int x)
-	{
-		everyplayUnity.Call("faceCamSetPreviewPositionX", x);
-	}
-
-	public static void EveryplayFaceCamSetPreviewPositionY(int y)
-	{
-		everyplayUnity.Call("faceCamSetPreviewPositionY", y);
-	}
-
-	public static void EveryplayFaceCamSetPreviewBorderColor(float r, float g, float b, float a)
-	{
-		everyplayUnity.Call("faceCamSetPreviewBorderColor", r, g, b, a);
-	}
-
-	public static void EveryplayFaceCamSetPreviewOrigin(int origin)
-	{
-		everyplayUnity.Call("faceCamSetPreviewOrigin", origin);
-	}
-
-	public static void EveryplayFaceCamSetTargetTextureId(int textureId)
-	{
-		everyplayUnity.Call("faceCamSetTargetTextureId", textureId);
-	}
-
-	public static void EveryplayFaceCamSetTargetTextureWidth(int textureWidth)
-	{
-		everyplayUnity.Call("faceCamSetTargetTextureWidth", textureWidth);
-	}
-
-	public static void EveryplayFaceCamSetTargetTextureHeight(int textureHeight)
-	{
-		everyplayUnity.Call("faceCamSetTargetTextureHeight", textureHeight);
-	}
-
-	public static void EveryplayFaceCamStartSession()
-	{
-		everyplayUnity.Call("faceCamStartSession");
-	}
-
-	public static void EveryplayFaceCamRequestRecordingPermission()
-	{
-		everyplayUnity.Call("faceCamRequestRecordingPermission");
-	}
-
-	public static void EveryplayFaceCamStopSession()
-	{
-		everyplayUnity.Call("faceCamStopSession");
-	}
-
-	public static void EveryplaySetThumbnailTargetTextureId(int textureId)
-	{
-		everyplayUnity.Call("setThumbnailTargetTextureId", textureId);
-	}
-
-	public static void EveryplaySetThumbnailTargetTextureWidth(int textureWidth)
-	{
-		everyplayUnity.Call("setThumbnailTargetTextureWidth", textureWidth);
-	}
-
-	public static void EveryplaySetThumbnailTargetTextureHeight(int textureHeight)
-	{
-		everyplayUnity.Call("setThumbnailTargetTextureHeight", textureHeight);
-	}
-
-	public static void EveryplayTakeThumbnail()
-	{
-		everyplayUnity.Call("takeThumbnail");
-	}
+	public delegate void WasClosedDelegate();
 }

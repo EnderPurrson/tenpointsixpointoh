@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 public class CountKillsCommandBlue : MonoBehaviour
 {
-	public static float localScaleForLabels = 1.25f;
+	public static float localScaleForLabels;
 
 	private UILabel _label;
 
@@ -14,61 +15,71 @@ public class CountKillsCommandBlue : MonoBehaviour
 
 	private Color goldColor = new Color(1f, 1f, 0f);
 
+	static CountKillsCommandBlue()
+	{
+		CountKillsCommandBlue.localScaleForLabels = 1.25f;
+	}
+
+	public CountKillsCommandBlue()
+	{
+	}
+
 	private void Start()
 	{
-		_weaponManager = WeaponManager.sharedManager;
-		InGameGUI sharedInGameGUI = InGameGUI.sharedInGameGUI;
-		_label = GetComponent<UILabel>();
+		this._weaponManager = WeaponManager.sharedManager;
+		InGameGUI inGameGUI = InGameGUI.sharedInGameGUI;
+		this._label = base.GetComponent<UILabel>();
 	}
 
 	private void Update()
 	{
-		if (!_weaponManager || !_weaponManager.myPlayer)
+		if (this._weaponManager && this._weaponManager.myPlayer)
 		{
-			return;
-		}
-		string text = "0";
-		bool flag = false;
-		if (Defs.isFlag)
-		{
-			if (WeaponManager.sharedManager.myTable != null)
+			string str = "0";
+			bool flag = false;
+			if (Defs.isFlag)
 			{
-				if (isEnemyCommandLabel == (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
+				if (WeaponManager.sharedManager.myTable != null)
 				{
-					text = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1.ToString();
-					flag = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1 > WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2;
+					if (this.isEnemyCommandLabel != (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
+					{
+						str = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2.ToString();
+						flag = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2 > WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1;
+					}
+					else
+					{
+						str = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1.ToString();
+						flag = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1 > WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2;
+					}
+				}
+			}
+			else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
+			{
+				if (this.isEnemyCommandLabel != (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
+				{
+					int num = Mathf.RoundToInt(CapturePointController.sharedController.scoreRed);
+					str = num.ToString();
+					flag = CapturePointController.sharedController.scoreRed > CapturePointController.sharedController.scoreBlue;
 				}
 				else
 				{
-					text = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2.ToString();
-					flag = WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag2 > WeaponManager.sharedManager.myNetworkStartTable.scoreCommandFlag1;
+					int num1 = Mathf.RoundToInt(CapturePointController.sharedController.scoreBlue);
+					str = num1.ToString();
+					flag = CapturePointController.sharedController.scoreBlue > CapturePointController.sharedController.scoreRed;
 				}
 			}
-		}
-		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
-		{
-			if (isEnemyCommandLabel == (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
+			else if (this.isEnemyCommandLabel != (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
 			{
-				text = Mathf.RoundToInt(CapturePointController.sharedController.scoreBlue).ToString();
-				flag = CapturePointController.sharedController.scoreBlue > CapturePointController.sharedController.scoreRed;
+				str = this._weaponManager.myPlayerMoveC.countKillsCommandRed.ToString();
+				flag = WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandRed > WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandBlue;
 			}
 			else
 			{
-				text = Mathf.RoundToInt(CapturePointController.sharedController.scoreRed).ToString();
-				flag = CapturePointController.sharedController.scoreRed > CapturePointController.sharedController.scoreBlue;
+				str = this._weaponManager.myPlayerMoveC.countKillsCommandBlue.ToString();
+				flag = WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandBlue > WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandRed;
 			}
+			this._label.text = str;
+			this._label.color = (!flag ? Color.white : this.goldColor);
 		}
-		else if (isEnemyCommandLabel == (WeaponManager.sharedManager.myNetworkStartTable.myCommand == 2))
-		{
-			text = _weaponManager.myPlayerMoveC.countKillsCommandBlue.ToString();
-			flag = WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandBlue > WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandRed;
-		}
-		else
-		{
-			text = _weaponManager.myPlayerMoveC.countKillsCommandRed.ToString();
-			flag = WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandRed > WeaponManager.sharedManager.myPlayerMoveC.countKillsCommandBlue;
-		}
-		_label.text = text;
-		_label.color = ((!flag) ? Color.white : goldColor);
 	}
 }

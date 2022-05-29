@@ -17,9 +17,12 @@ internal sealed class ZombiSynchPhoton : MonoBehaviour
 
 	private Transform myTransform;
 
+	public ZombiSynchPhoton()
+	{
+	}
+
 	private void Awake()
 	{
-		//Discarded unreachable code: IL_0033
 		try
 		{
 			if (!Defs.isMulti || !Defs.isInet)
@@ -27,26 +30,9 @@ internal sealed class ZombiSynchPhoton : MonoBehaviour
 				base.enabled = false;
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
-			Debug.LogError("Cooperative mode failure.");
-			Debug.LogException(exception);
-			throw;
-		}
-	}
-
-	private void Start()
-	{
-		//Discarded unreachable code: IL_0052
-		try
-		{
-			myTransform = base.transform;
-			photonView = PhotonView.Get(this);
-			correctPlayerPos = myTransform.position;
-			correctPlayerRot = myTransform.rotation;
-		}
-		catch (Exception exception)
-		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;
@@ -55,35 +41,53 @@ internal sealed class ZombiSynchPhoton : MonoBehaviour
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			stream.SendNext(myTransform.position);
-			stream.SendNext(myTransform.rotation);
+			this.correctPlayerPos = (Vector3)stream.ReceiveNext();
+			this.correctPlayerRot = (Quaternion)stream.ReceiveNext();
 		}
 		else
 		{
-			correctPlayerPos = (Vector3)stream.ReceiveNext();
-			correctPlayerRot = (Quaternion)stream.ReceiveNext();
+			stream.SendNext(this.myTransform.position);
+			stream.SendNext(this.myTransform.rotation);
+		}
+	}
+
+	private void Start()
+	{
+		try
+		{
+			this.myTransform = base.transform;
+			this.photonView = PhotonView.Get(this);
+			this.correctPlayerPos = this.myTransform.position;
+			this.correctPlayerRot = this.myTransform.rotation;
+		}
+		catch (Exception exception1)
+		{
+			Exception exception = exception1;
+			Debug.LogError("Cooperative mode failure.");
+			Debug.LogException(exception);
+			throw;
 		}
 	}
 
 	private void Update()
 	{
-		//Discarded unreachable code: IL_009b
 		try
 		{
-			if (!photonView.isMine)
+			if (!this.photonView.isMine)
 			{
-				myTransform.position = Vector3.Lerp(myTransform.position, correctPlayerPos, Time.deltaTime * 5f);
-				myTransform.rotation = Quaternion.Lerp(myTransform.rotation, correctPlayerRot, Time.deltaTime * 5f);
-				if (сountUpdate < 10)
+				this.myTransform.position = Vector3.Lerp(this.myTransform.position, this.correctPlayerPos, Time.deltaTime * 5f);
+				this.myTransform.rotation = Quaternion.Lerp(this.myTransform.rotation, this.correctPlayerRot, Time.deltaTime * 5f);
+				if (this.сountUpdate < 10)
 				{
-					сountUpdate++;
+					this.сountUpdate++;
 				}
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
+			Exception exception = exception1;
 			Debug.LogError("Cooperative mode failure.");
 			Debug.LogException(exception);
 			throw;

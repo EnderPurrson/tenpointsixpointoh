@@ -1,30 +1,13 @@
+using Boo.Lang;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Boo.Lang;
 using UnityEngine;
 
 [Serializable]
 public class FireFade : MonoBehaviour
 {
-	[Serializable]
-	[CompilerGenerated]
-	internal sealed class _0024Start_002419 : GenericGenerator<WaitForSeconds>
-	{
-		internal FireFade _0024self__002421;
-
-		public _0024Start_002419(FireFade self_)
-		{
-			_0024self__002421 = self_;
-		}
-
-		public override IEnumerator<WaitForSeconds> GetEnumerator()
-		{
-			return new _0024(_0024self__002421);
-		}
-	}
-
 	public float smokeDestroyTime;
 
 	public float destroySpeed;
@@ -33,27 +16,27 @@ public class FireFade : MonoBehaviour
 
 	public FireFade()
 	{
-		smokeDestroyTime = 6f;
-		destroySpeed = 0.05f;
-	}
-
-	public override IEnumerator Start()
-	{
-		return new _0024Start_002419(this).GetEnumerator();
-	}
-
-	public override void Update()
-	{
-		if (destroyEnabled)
-		{
-			ParticleRenderer particleRenderer = (ParticleRenderer)GetComponent(typeof(ParticleRenderer));
-			Color color = particleRenderer.materials[1].GetColor("_TintColor");
-			color.a -= destroySpeed * Time.deltaTime;
-			particleRenderer.materials[1].SetColor("_TintColor", color);
-		}
+		this.smokeDestroyTime = (float)6;
+		this.destroySpeed = 0.05f;
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override IEnumerator Start()
+	{
+		return (new FireFade.u0024Startu002419(this)).GetEnumerator();
+	}
+
+	public override void Update()
+	{
+		if (this.destroyEnabled)
+		{
+			ParticleRenderer component = (ParticleRenderer)this.GetComponent(typeof(ParticleRenderer));
+			Color color = component.materials[1].GetColor("_TintColor");
+			color.a = color.a - this.destroySpeed * Time.deltaTime;
+			component.materials[1].SetColor("_TintColor", color);
+		}
 	}
 }

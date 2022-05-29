@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityStandardAssets.Effects;
@@ -9,44 +10,7 @@ namespace UnityStandardAssets.SceneUtils
 {
 	public class ParticleSceneControls : MonoBehaviour
 	{
-		public enum Mode
-		{
-			Activate = 0,
-			Instantiate = 1,
-			Trail = 2
-		}
-
-		public enum AlignMode
-		{
-			Normal = 0,
-			Up = 1
-		}
-
-		[Serializable]
-		public class DemoParticleSystem
-		{
-			public Transform transform;
-
-			public Mode mode;
-
-			public AlignMode align;
-
-			public int maxCount;
-
-			public float minDist;
-
-			public int camOffset = 15;
-
-			public string instructionText;
-		}
-
-		[Serializable]
-		public class DemoParticleSystemList
-		{
-			public DemoParticleSystem[] items;
-		}
-
-		public DemoParticleSystemList demoParticles;
+		public ParticleSceneControls.DemoParticleSystemList demoParticles;
 
 		public float spawnOffset = 0.5f;
 
@@ -80,139 +44,192 @@ namespace UnityStandardAssets.SceneUtils
 
 		private Vector3 m_LastPos;
 
-		private static DemoParticleSystem s_Selected;
+		private static ParticleSceneControls.DemoParticleSystem s_Selected;
+
+		static ParticleSceneControls()
+		{
+		}
+
+		public ParticleSceneControls()
+		{
+		}
 
 		private void Awake()
 		{
-			Select(s_SelectedIndex);
-			previousButton.onClick.AddListener(Previous);
-			nextButton.onClick.AddListener(Next);
-		}
-
-		private void OnDisable()
-		{
-			previousButton.onClick.RemoveListener(Previous);
-			nextButton.onClick.RemoveListener(Next);
-		}
-
-		private void Previous()
-		{
-			s_SelectedIndex--;
-			if (s_SelectedIndex == -1)
-			{
-				s_SelectedIndex = demoParticles.items.Length - 1;
-			}
-			Select(s_SelectedIndex);
-		}
-
-		public void Next()
-		{
-			s_SelectedIndex++;
-			if (s_SelectedIndex == demoParticles.items.Length)
-			{
-				s_SelectedIndex = 0;
-			}
-			Select(s_SelectedIndex);
-		}
-
-		private void Update()
-		{
-			sceneCamera.localPosition = Vector3.SmoothDamp(sceneCamera.localPosition, Vector3.forward * -s_Selected.camOffset, ref m_CamOffsetVelocity, 1f);
-			if (s_Selected.mode == Mode.Activate || CheckForGuiCollision())
-			{
-				return;
-			}
-			bool flag = Input.GetMouseButtonDown(0) && s_Selected.mode == Mode.Instantiate;
-			bool flag2 = Input.GetMouseButton(0) && s_Selected.mode == Mode.Trail;
-			if (!flag && !flag2)
-			{
-				return;
-			}
-			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-			RaycastHit hitInfo;
-			if (!Physics.Raycast(ray, out hitInfo))
-			{
-				return;
-			}
-			Quaternion rotation = Quaternion.LookRotation(hitInfo.normal);
-			if (s_Selected.align == AlignMode.Up)
-			{
-				rotation = Quaternion.identity;
-			}
-			Vector3 vector = hitInfo.point + hitInfo.normal * spawnOffset;
-			if (!((vector - m_LastPos).magnitude > s_Selected.minDist))
-			{
-				return;
-			}
-			if (s_Selected.mode != Mode.Trail || m_Instance == null)
-			{
-				m_Instance = (Transform)UnityEngine.Object.Instantiate(s_Selected.transform, vector, rotation);
-				if (m_ParticleMultiplier != null)
-				{
-					m_Instance.GetComponent<ParticleSystemMultiplier>().multiplier = multiply;
-				}
-				m_CurrentParticleList.Add(m_Instance);
-				if (s_Selected.maxCount > 0 && m_CurrentParticleList.Count > s_Selected.maxCount)
-				{
-					if (m_CurrentParticleList[0] != null)
-					{
-						UnityEngine.Object.Destroy(m_CurrentParticleList[0].gameObject);
-					}
-					m_CurrentParticleList.RemoveAt(0);
-				}
-			}
-			else
-			{
-				m_Instance.position = vector;
-				m_Instance.rotation = rotation;
-			}
-			if (s_Selected.mode == Mode.Trail)
-			{
-				m_Instance.transform.GetComponent<ParticleSystem>().enableEmission = false;
-				m_Instance.transform.GetComponent<ParticleSystem>().Emit(1);
-			}
-			m_Instance.parent = hitInfo.transform;
-			m_LastPos = vector;
+			this.Select(ParticleSceneControls.s_SelectedIndex);
+			this.previousButton.onClick.AddListener(new UnityAction(this.Previous));
+			this.nextButton.onClick.AddListener(new UnityAction(this.Next));
 		}
 
 		private bool CheckForGuiCollision()
 		{
-			PointerEventData pointerEventData = new PointerEventData(eventSystem);
-			pointerEventData.pressPosition = Input.mousePosition;
-			pointerEventData.position = Input.mousePosition;
-			List<RaycastResult> list = new List<RaycastResult>();
-			graphicRaycaster.Raycast(pointerEventData, list);
-			return list.Count > 0;
+			PointerEventData pointerEventDatum = new PointerEventData(this.eventSystem)
+			{
+				pressPosition = Input.mousePosition,
+				position = Input.mousePosition
+			};
+			List<RaycastResult> raycastResults = new List<RaycastResult>();
+			this.graphicRaycaster.Raycast(pointerEventDatum, raycastResults);
+			return raycastResults.Count > 0;
+		}
+
+		public void Next()
+		{
+			ParticleSceneControls.s_SelectedIndex++;
+			if (ParticleSceneControls.s_SelectedIndex == (int)this.demoParticles.items.Length)
+			{
+				ParticleSceneControls.s_SelectedIndex = 0;
+			}
+			this.Select(ParticleSceneControls.s_SelectedIndex);
+		}
+
+		private void OnDisable()
+		{
+			this.previousButton.onClick.RemoveListener(new UnityAction(this.Previous));
+			this.nextButton.onClick.RemoveListener(new UnityAction(this.Next));
+		}
+
+		private void Previous()
+		{
+			ParticleSceneControls.s_SelectedIndex--;
+			if (ParticleSceneControls.s_SelectedIndex == -1)
+			{
+				ParticleSceneControls.s_SelectedIndex = (int)this.demoParticles.items.Length - 1;
+			}
+			this.Select(ParticleSceneControls.s_SelectedIndex);
 		}
 
 		private void Select(int i)
 		{
-			s_Selected = demoParticles.items[i];
-			m_Instance = null;
-			DemoParticleSystem[] items = demoParticles.items;
-			foreach (DemoParticleSystem demoParticleSystem in items)
+			ParticleSceneControls.s_Selected = this.demoParticles.items[i];
+			this.m_Instance = null;
+			ParticleSceneControls.DemoParticleSystem[] demoParticleSystemArray = this.demoParticles.items;
+			for (int num = 0; num < (int)demoParticleSystemArray.Length; num++)
 			{
-				if (demoParticleSystem != s_Selected && demoParticleSystem.mode == Mode.Activate)
+				ParticleSceneControls.DemoParticleSystem demoParticleSystem = demoParticleSystemArray[num];
+				if (demoParticleSystem != ParticleSceneControls.s_Selected && demoParticleSystem.mode == ParticleSceneControls.Mode.Activate)
 				{
 					demoParticleSystem.transform.gameObject.SetActive(false);
 				}
 			}
-			if (s_Selected.mode == Mode.Activate)
+			if (ParticleSceneControls.s_Selected.mode == ParticleSceneControls.Mode.Activate)
 			{
-				s_Selected.transform.gameObject.SetActive(true);
+				ParticleSceneControls.s_Selected.transform.gameObject.SetActive(true);
 			}
-			m_ParticleMultiplier = s_Selected.transform.GetComponent<ParticleSystemMultiplier>();
-			multiply = 1f;
-			if (clearOnChange)
+			this.m_ParticleMultiplier = ParticleSceneControls.s_Selected.transform.GetComponent<ParticleSystemMultiplier>();
+			this.multiply = 1f;
+			if (this.clearOnChange)
 			{
-				while (m_CurrentParticleList.Count > 0)
+				while (this.m_CurrentParticleList.Count > 0)
 				{
-					UnityEngine.Object.Destroy(m_CurrentParticleList[0].gameObject);
-					m_CurrentParticleList.RemoveAt(0);
+					UnityEngine.Object.Destroy(this.m_CurrentParticleList[0].gameObject);
+					this.m_CurrentParticleList.RemoveAt(0);
 				}
 			}
-			instructionText.text = s_Selected.instructionText;
-			titleText.text = s_Selected.transform.name;
+			this.instructionText.text = ParticleSceneControls.s_Selected.instructionText;
+			this.titleText.text = ParticleSceneControls.s_Selected.transform.name;
+		}
+
+		private void Update()
+		{
+			RaycastHit raycastHit;
+			this.sceneCamera.localPosition = Vector3.SmoothDamp(this.sceneCamera.localPosition, Vector3.forward * (float)(-ParticleSceneControls.s_Selected.camOffset), ref this.m_CamOffsetVelocity, 1f);
+			if (ParticleSceneControls.s_Selected.mode == ParticleSceneControls.Mode.Activate)
+			{
+				return;
+			}
+			if (this.CheckForGuiCollision())
+			{
+				return;
+			}
+			bool flag = (!Input.GetMouseButtonDown(0) ? false : ParticleSceneControls.s_Selected.mode == ParticleSceneControls.Mode.Instantiate);
+			bool flag1 = (!Input.GetMouseButton(0) ? false : ParticleSceneControls.s_Selected.mode == ParticleSceneControls.Mode.Trail);
+			if ((flag || flag1) && Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out raycastHit))
+			{
+				Quaternion quaternion = Quaternion.LookRotation(raycastHit.normal);
+				if (ParticleSceneControls.s_Selected.align == ParticleSceneControls.AlignMode.Up)
+				{
+					quaternion = Quaternion.identity;
+				}
+				Vector3 vector3 = raycastHit.point + (raycastHit.normal * this.spawnOffset);
+				if ((vector3 - this.m_LastPos).magnitude > ParticleSceneControls.s_Selected.minDist)
+				{
+					if (ParticleSceneControls.s_Selected.mode != ParticleSceneControls.Mode.Trail || this.m_Instance == null)
+					{
+						this.m_Instance = (Transform)UnityEngine.Object.Instantiate(ParticleSceneControls.s_Selected.transform, vector3, quaternion);
+						if (this.m_ParticleMultiplier != null)
+						{
+							this.m_Instance.GetComponent<ParticleSystemMultiplier>().multiplier = this.multiply;
+						}
+						this.m_CurrentParticleList.Add(this.m_Instance);
+						if (ParticleSceneControls.s_Selected.maxCount > 0 && this.m_CurrentParticleList.Count > ParticleSceneControls.s_Selected.maxCount)
+						{
+							if (this.m_CurrentParticleList[0] != null)
+							{
+								UnityEngine.Object.Destroy(this.m_CurrentParticleList[0].gameObject);
+							}
+							this.m_CurrentParticleList.RemoveAt(0);
+						}
+					}
+					else
+					{
+						this.m_Instance.position = vector3;
+						this.m_Instance.rotation = quaternion;
+					}
+					if (ParticleSceneControls.s_Selected.mode == ParticleSceneControls.Mode.Trail)
+					{
+						this.m_Instance.transform.GetComponent<ParticleSystem>().enableEmission = false;
+						this.m_Instance.transform.GetComponent<ParticleSystem>().Emit(1);
+					}
+					this.m_Instance.parent = raycastHit.transform;
+					this.m_LastPos = vector3;
+				}
+			}
+		}
+
+		public enum AlignMode
+		{
+			Normal,
+			Up
+		}
+
+		[Serializable]
+		public class DemoParticleSystem
+		{
+			public Transform transform;
+
+			public ParticleSceneControls.Mode mode;
+
+			public ParticleSceneControls.AlignMode align;
+
+			public int maxCount;
+
+			public float minDist;
+
+			public int camOffset;
+
+			public string instructionText;
+
+			public DemoParticleSystem()
+			{
+			}
+		}
+
+		[Serializable]
+		public class DemoParticleSystemList
+		{
+			public ParticleSceneControls.DemoParticleSystem[] items;
+
+			public DemoParticleSystemList()
+			{
+			}
+		}
+
+		public enum Mode
+		{
+			Activate,
+			Instantiate,
+			Trail
 		}
 	}
 }

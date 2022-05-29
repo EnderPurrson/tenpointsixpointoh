@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Drag and Drop Root")]
@@ -5,16 +6,20 @@ public class UIDragDropRoot : MonoBehaviour
 {
 	public static Transform root;
 
-	private void OnEnable()
+	public UIDragDropRoot()
 	{
-		root = base.transform;
 	}
 
 	private void OnDisable()
 	{
-		if (root == base.transform)
+		if (UIDragDropRoot.root == base.transform)
 		{
-			root = null;
+			UIDragDropRoot.root = null;
 		}
+	}
+
+	private void OnEnable()
+	{
+		UIDragDropRoot.root = base.transform;
 	}
 }

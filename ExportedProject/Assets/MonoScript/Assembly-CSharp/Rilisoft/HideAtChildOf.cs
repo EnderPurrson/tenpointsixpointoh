@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Linq;
 using UnityEngine;
@@ -9,21 +11,36 @@ namespace Rilisoft
 		[SerializeField]
 		private string _rootObjectName;
 
+		public HideAtChildOf()
+		{
+		}
+
 		private void Start()
 		{
-			if (_rootObjectName.IsNullOrEmpty())
+			if (this._rootObjectName.IsNullOrEmpty())
 			{
 				return;
 			}
-			_rootObjectName = _rootObjectName.ToLower();
-			IEnumerable<GameObject> enumerable = base.gameObject.Ancestors();
-			foreach (GameObject item in enumerable)
+			this._rootObjectName = this._rootObjectName.ToLower();
+			IEnumerator<GameObject> enumerator = base.gameObject.Ancestors().GetEnumerator();
+			try
 			{
-				if (item.name.ToLower() == _rootObjectName)
+				while (enumerator.MoveNext())
 				{
+					if (enumerator.Current.name.ToLower() != this._rootObjectName)
+					{
+						continue;
+					}
 					base.gameObject.SetActive(false);
 					break;
 				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
 			}
 		}
 	}

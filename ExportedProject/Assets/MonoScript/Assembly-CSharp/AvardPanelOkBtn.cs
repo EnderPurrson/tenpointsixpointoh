@@ -1,27 +1,13 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class AvardPanelOkBtn : MonoBehaviour
 {
 	private IDisposable _backSubscription;
 
-	private void OnEnable()
+	public AvardPanelOkBtn()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(OnClick, "Award Panel");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
 	}
 
 	private void OnClick()
@@ -31,5 +17,23 @@ internal sealed class AvardPanelOkBtn : MonoBehaviour
 		{
 			NetworkStartTableNGUIController.sharedController.HideAvardPanel();
 		}
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.OnClick), "Award Panel");
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ReviewController : MonoBehaviour
@@ -16,9 +17,9 @@ public class ReviewController : MonoBehaviour
 
 	public static ReviewController instance;
 
-	public static int _IsNeedActive = -1;
+	public static int _IsNeedActive;
 
-	public static int _ExistReviewForSend = -1;
+	public static int _ExistReviewForSend;
 
 	public static bool isSending;
 
@@ -26,40 +27,40 @@ public class ReviewController : MonoBehaviour
 	{
 		get
 		{
-			if (_ExistReviewForSend < 0)
+			if (ReviewController._ExistReviewForSend < 0)
 			{
-				_ExistReviewForSend = (Load.LoadBool("keyNeedSendMsgReview") ? 1 : 0);
+				ReviewController._ExistReviewForSend = (!Load.LoadBool("keyNeedSendMsgReview") ? 0 : 1);
 			}
-			return (_ExistReviewForSend != 0) ? true : false;
+			return (ReviewController._ExistReviewForSend != 0 ? true : false);
 		}
 		set
 		{
 			Save.SaveBool("keyNeedSendMsgReview", value);
-			_ExistReviewForSend = (value ? 1 : 0);
+			ReviewController._ExistReviewForSend = (!value ? 0 : 1);
 		}
 	}
 
-	public static int ReviewRating
+	public static bool IsNeedActive
 	{
 		get
 		{
-			return Load.LoadInt("keyReviewSaveRating");
+			if (ReviewController._IsNeedActive < 0)
+			{
+				ReviewController._IsNeedActive = (!Load.LoadBool("keyNeedActiveReview") ? 0 : 1);
+			}
+			return (ReviewController._IsNeedActive != 0 ? true : false);
 		}
 		set
 		{
-			Save.SaveInt("keyReviewSaveRating", value);
-		}
-	}
-
-	public static string ReviewMsg
-	{
-		get
-		{
-			return Load.LoadString("keyReviewSaveMsg");
-		}
-		set
-		{
-			Save.SaveString("keyReviewSaveMsg", value);
+			if (ReviewController.ExistReviewForSend && value)
+			{
+				return;
+			}
+			if (ReviewController.IsNeedActive != value)
+			{
+				Save.SaveBool("keyNeedActiveReview", value);
+			}
+			ReviewController._IsNeedActive = (!value ? 0 : 1);
 		}
 	}
 
@@ -75,53 +76,68 @@ public class ReviewController : MonoBehaviour
 		}
 	}
 
-	public static bool IsNeedActive
+	public static string ReviewMsg
 	{
 		get
 		{
-			if (_IsNeedActive < 0)
-			{
-				_IsNeedActive = (Load.LoadBool("keyNeedActiveReview") ? 1 : 0);
-			}
-			return (_IsNeedActive != 0) ? true : false;
+			return Load.LoadString("keyReviewSaveMsg");
 		}
 		set
 		{
-			if (!ExistReviewForSend || !value)
-			{
-				if (IsNeedActive != value)
-				{
-					Save.SaveBool("keyNeedActiveReview", value);
-				}
-				_IsNeedActive = (value ? 1 : 0);
-			}
+			Save.SaveString("keyReviewSaveMsg", value);
 		}
+	}
+
+	public static int ReviewRating
+	{
+		get
+		{
+			return Load.LoadInt("keyReviewSaveRating");
+		}
+		set
+		{
+			Save.SaveInt("keyReviewSaveRating", value);
+		}
+	}
+
+	static ReviewController()
+	{
+		ReviewController._IsNeedActive = -1;
+		ReviewController._ExistReviewForSend = -1;
+	}
+
+	public ReviewController()
+	{
 	}
 
 	private void Awake()
 	{
-		instance = this;
-		Object.DontDestroyOnLoad(base.gameObject);
-	}
-
-	private void OnDestroy()
-	{
-		instance = null;
+		ReviewController.instance = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	public static void CheckActiveReview()
 	{
-		if (!(ExperienceController.sharedController == null) && GlobalGameController.CountDaySessionInCurrentVersion > 2 && ExperienceController.sharedController.currentLevel >= 4 && !IsSendReview)
+		if (ExperienceController.sharedController == null)
 		{
-			IsNeedActive = true;
+			return;
 		}
+		if (GlobalGameController.CountDaySessionInCurrentVersion > 2 && ExperienceController.sharedController.currentLevel >= 4 && !ReviewController.IsSendReview)
+		{
+			ReviewController.IsNeedActive = true;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		ReviewController.instance = null;
 	}
 
 	public static void SendReview(int rating, string msgReview)
 	{
-		ReviewRating = rating;
-		ReviewMsg = msgReview;
-		ExistReviewForSend = true;
+		ReviewController.ReviewRating = rating;
+		ReviewController.ReviewMsg = msgReview;
+		ReviewController.ExistReviewForSend = true;
 		if (rating == 5)
 		{
 			Application.OpenURL(Defs2.ApplicationUrl);

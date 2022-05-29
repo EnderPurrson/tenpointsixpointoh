@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class BlinkReloadButton : MonoBehaviour
@@ -20,40 +21,48 @@ internal sealed class BlinkReloadButton : MonoBehaviour
 
 	public bool isBlinkTemp;
 
+	static BlinkReloadButton()
+	{
+	}
+
+	public BlinkReloadButton()
+	{
+	}
+
 	private void Start()
 	{
-		isBlink = false;
-		isBlinkState = false;
+		BlinkReloadButton.isBlink = false;
+		BlinkReloadButton.isBlinkState = false;
 	}
 
 	private void Update()
 	{
-		isBlinkTemp = isBlink;
-		if (isBlinkOld != isBlink)
+		this.isBlinkTemp = BlinkReloadButton.isBlink;
+		if (this.isBlinkOld != BlinkReloadButton.isBlink)
 		{
-			timerBlink = maxTimerBlink;
+			this.timerBlink = this.maxTimerBlink;
 		}
-		if (isBlink)
+		if (BlinkReloadButton.isBlink)
 		{
-			timerBlink -= Time.deltaTime;
-			if (timerBlink < 0f)
+			this.timerBlink -= Time.deltaTime;
+			if (this.timerBlink < 0f)
 			{
-				timerBlink = maxTimerBlink;
-				isBlinkState = !isBlinkState;
-				for (int i = 0; i < blinkObjs.Length; i++)
+				this.timerBlink = this.maxTimerBlink;
+				BlinkReloadButton.isBlinkState = !BlinkReloadButton.isBlinkState;
+				for (int i = 0; i < (int)this.blinkObjs.Length; i++)
 				{
-					blinkObjs[i].color = ((!isBlinkState) ? unBlinkColor : blinkColor);
+					this.blinkObjs[i].color = (!BlinkReloadButton.isBlinkState ? this.unBlinkColor : this.blinkColor);
 				}
 			}
 		}
-		if (!isBlink && isBlinkState)
+		if (!BlinkReloadButton.isBlink && BlinkReloadButton.isBlinkState)
 		{
-			isBlinkState = !isBlinkState;
-			for (int j = 0; j < blinkObjs.Length; j++)
+			BlinkReloadButton.isBlinkState = !BlinkReloadButton.isBlinkState;
+			for (int j = 0; j < (int)this.blinkObjs.Length; j++)
 			{
-				blinkObjs[j].color = ((!isBlinkState) ? unBlinkColor : blinkColor);
+				this.blinkObjs[j].color = (!BlinkReloadButton.isBlinkState ? this.unBlinkColor : this.blinkColor);
 			}
 		}
-		isBlinkOld = isBlink;
+		this.isBlinkOld = BlinkReloadButton.isBlink;
 	}
 }

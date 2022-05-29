@@ -1,28 +1,45 @@
 using System;
+using System.Runtime.CompilerServices;
 
 public class AuthenticationValues
 {
 	private CustomAuthenticationType authType = CustomAuthenticationType.None;
 
+	public string AuthGetParameters
+	{
+		get;
+		set;
+	}
+
+	public object AuthPostData
+	{
+		get;
+		private set;
+	}
+
 	public CustomAuthenticationType AuthType
 	{
 		get
 		{
-			return authType;
+			return this.authType;
 		}
 		set
 		{
-			authType = value;
+			this.authType = value;
 		}
 	}
 
-	public string AuthGetParameters { get; set; }
+	public string Token
+	{
+		get;
+		set;
+	}
 
-	public object AuthPostData { get; private set; }
-
-	public string Token { get; set; }
-
-	public string UserId { get; set; }
+	public string UserId
+	{
+		get;
+		set;
+	}
 
 	public AuthenticationValues()
 	{
@@ -30,27 +47,36 @@ public class AuthenticationValues
 
 	public AuthenticationValues(string userId)
 	{
-		UserId = userId;
-	}
-
-	public virtual void SetAuthPostData(string stringData)
-	{
-		AuthPostData = ((!string.IsNullOrEmpty(stringData)) ? stringData : null);
-	}
-
-	public virtual void SetAuthPostData(byte[] byteData)
-	{
-		AuthPostData = byteData;
+		this.UserId = userId;
 	}
 
 	public virtual void AddAuthParameter(string key, string value)
 	{
-		string text = ((!string.IsNullOrEmpty(AuthGetParameters)) ? "&" : string.Empty);
-		AuthGetParameters = string.Format("{0}{1}{2}={3}", AuthGetParameters, text, Uri.EscapeDataString(key), Uri.EscapeDataString(value));
+		string str = (!string.IsNullOrEmpty(this.AuthGetParameters) ? "&" : string.Empty);
+		this.AuthGetParameters = string.Format("{0}{1}{2}={3}", new object[] { this.AuthGetParameters, str, Uri.EscapeDataString(key), Uri.EscapeDataString(value) });
+	}
+
+	public virtual void SetAuthPostData(string stringData)
+	{
+		object obj;
+		if (!string.IsNullOrEmpty(stringData))
+		{
+			obj = stringData;
+		}
+		else
+		{
+			obj = null;
+		}
+		this.AuthPostData = obj;
+	}
+
+	public virtual void SetAuthPostData(byte[] byteData)
+	{
+		this.AuthPostData = byteData;
 	}
 
 	public override string ToString()
 	{
-		return string.Format("AuthenticationValues UserId: {0}, GetParameters: {1} Token available: {2}", UserId, AuthGetParameters, Token != null);
+		return string.Format("AuthenticationValues UserId: {0}, GetParameters: {1} Token available: {2}", this.UserId, this.AuthGetParameters, this.Token != null);
 	}
 }

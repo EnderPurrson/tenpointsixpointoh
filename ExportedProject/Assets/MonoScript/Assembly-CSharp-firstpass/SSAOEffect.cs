@@ -6,16 +6,9 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class SSAOEffect : MonoBehaviour
 {
-	public enum SSAOSamples
-	{
-		Low = 0,
-		Medium = 1,
-		High = 2
-	}
-
 	public float m_Radius = 0.4f;
 
-	public SSAOSamples m_SampleCount = SSAOSamples.Medium;
+	public SSAOEffect.SSAOSamples m_SampleCount = SSAOEffect.SSAOSamples.Medium;
 
 	public float m_OcclusionIntensity = 1.5f;
 
@@ -35,20 +28,34 @@ public class SSAOEffect : MonoBehaviour
 
 	private bool m_Supported;
 
+	public SSAOEffect()
+	{
+	}
+
 	private static Material CreateMaterial(Shader shader)
 	{
 		if (!shader)
 		{
 			return null;
 		}
-		Material material = new Material(shader);
-		material.hideFlags = HideFlags.HideAndDontSave;
-		return material;
+		return new Material(shader)
+		{
+			hideFlags = HideFlags.HideAndDontSave
+		};
+	}
+
+	private void CreateMaterials()
+	{
+		if (!this.m_SSAOMaterial && this.m_SSAOShader.isSupported)
+		{
+			this.m_SSAOMaterial = SSAOEffect.CreateMaterial(this.m_SSAOShader);
+			this.m_SSAOMaterial.SetTexture("_RandomTexture", this.m_RandomTexture);
+		}
 	}
 
 	private static void DestroyMaterial(Material mat)
 	{
-		if ((bool)mat)
+		if (mat)
 		{
 			UnityEngine.Object.DestroyImmediate(mat);
 			mat = null;
@@ -57,96 +64,102 @@ public class SSAOEffect : MonoBehaviour
 
 	private void OnDisable()
 	{
-		DestroyMaterial(m_SSAOMaterial);
+		SSAOEffect.DestroyMaterial(this.m_SSAOMaterial);
+	}
+
+	private void OnEnable()
+	{
+		Camera component = base.GetComponent<Camera>();
+		component.depthTextureMode = component.depthTextureMode | DepthTextureMode.DepthNormals;
+	}
+
+	[ImageEffectOpaque]
+	private void OnRenderImage(RenderTexture source, RenderTexture destination)
+	{
+		int mRandomTexture;
+		int num;
+		Texture texture;
+		if (!this.m_Supported || !this.m_SSAOShader.isSupported)
+		{
+			base.enabled = false;
+			return;
+		}
+		this.CreateMaterials();
+		this.m_Downsampling = Mathf.Clamp(this.m_Downsampling, 1, 6);
+		this.m_Radius = Mathf.Clamp(this.m_Radius, 0.05f, 1f);
+		this.m_MinZ = Mathf.Clamp(this.m_MinZ, 1E-05f, 0.5f);
+		this.m_OcclusionIntensity = Mathf.Clamp(this.m_OcclusionIntensity, 0.5f, 4f);
+		this.m_OcclusionAttenuation = Mathf.Clamp(this.m_OcclusionAttenuation, 0.2f, 2f);
+		this.m_Blur = Mathf.Clamp(this.m_Blur, 0, 4);
+		RenderTexture temporary = RenderTexture.GetTemporary(source.width / this.m_Downsampling, source.height / this.m_Downsampling, 0);
+		float component = base.GetComponent<Camera>().fieldOfView;
+		float single = base.GetComponent<Camera>().farClipPlane;
+		float single1 = Mathf.Tan(component * 0.017453292f * 0.5f) * single;
+		float component1 = single1 * base.GetComponent<Camera>().aspect;
+		this.m_SSAOMaterial.SetVector("_FarCorner", new Vector3(component1, single1, single));
+		if (!this.m_RandomTexture)
+		{
+			mRandomTexture = 1;
+			num = 1;
+		}
+		else
+		{
+			mRandomTexture = this.m_RandomTexture.width;
+			num = this.m_RandomTexture.height;
+		}
+		this.m_SSAOMaterial.SetVector("_NoiseScale", new Vector3((float)temporary.width / (float)mRandomTexture, (float)temporary.height / (float)num, 0f));
+		this.m_SSAOMaterial.SetVector("_Params", new Vector4(this.m_Radius, this.m_MinZ, 1f / this.m_OcclusionAttenuation, this.m_OcclusionIntensity));
+		bool mBlur = this.m_Blur > 0;
+		if (!mBlur)
+		{
+			texture = source;
+		}
+		else
+		{
+			texture = null;
+		}
+		Graphics.Blit(texture, temporary, this.m_SSAOMaterial, (int)this.m_SampleCount);
+		if (mBlur)
+		{
+			RenderTexture renderTexture = RenderTexture.GetTemporary(source.width, source.height, 0);
+			this.m_SSAOMaterial.SetVector("_TexelOffsetScale", new Vector4((float)this.m_Blur / (float)source.width, 0f, 0f, 0f));
+			this.m_SSAOMaterial.SetTexture("_SSAO", temporary);
+			Graphics.Blit(null, renderTexture, this.m_SSAOMaterial, 3);
+			RenderTexture.ReleaseTemporary(temporary);
+			RenderTexture temporary1 = RenderTexture.GetTemporary(source.width, source.height, 0);
+			this.m_SSAOMaterial.SetVector("_TexelOffsetScale", new Vector4(0f, (float)this.m_Blur / (float)source.height, 0f, 0f));
+			this.m_SSAOMaterial.SetTexture("_SSAO", renderTexture);
+			Graphics.Blit(source, temporary1, this.m_SSAOMaterial, 3);
+			RenderTexture.ReleaseTemporary(renderTexture);
+			temporary = temporary1;
+		}
+		this.m_SSAOMaterial.SetTexture("_SSAO", temporary);
+		Graphics.Blit(source, destination, this.m_SSAOMaterial, 4);
+		RenderTexture.ReleaseTemporary(temporary);
 	}
 
 	private void Start()
 	{
 		if (!SystemInfo.supportsImageEffects || !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth))
 		{
-			m_Supported = false;
+			this.m_Supported = false;
 			base.enabled = false;
 			return;
 		}
-		CreateMaterials();
-		if (!m_SSAOMaterial || m_SSAOMaterial.passCount != 5)
+		this.CreateMaterials();
+		if (this.m_SSAOMaterial && this.m_SSAOMaterial.passCount == 5)
 		{
-			m_Supported = false;
-			base.enabled = false;
-		}
-		else
-		{
-			m_Supported = true;
-		}
-	}
-
-	private void OnEnable()
-	{
-		GetComponent<Camera>().depthTextureMode |= DepthTextureMode.DepthNormals;
-	}
-
-	private void CreateMaterials()
-	{
-		if (!m_SSAOMaterial && m_SSAOShader.isSupported)
-		{
-			m_SSAOMaterial = CreateMaterial(m_SSAOShader);
-			m_SSAOMaterial.SetTexture("_RandomTexture", m_RandomTexture);
-		}
-	}
-
-	[ImageEffectOpaque]
-	private void OnRenderImage(RenderTexture source, RenderTexture destination)
-	{
-		if (!m_Supported || !m_SSAOShader.isSupported)
-		{
-			base.enabled = false;
+			this.m_Supported = true;
 			return;
 		}
-		CreateMaterials();
-		m_Downsampling = Mathf.Clamp(m_Downsampling, 1, 6);
-		m_Radius = Mathf.Clamp(m_Radius, 0.05f, 1f);
-		m_MinZ = Mathf.Clamp(m_MinZ, 1E-05f, 0.5f);
-		m_OcclusionIntensity = Mathf.Clamp(m_OcclusionIntensity, 0.5f, 4f);
-		m_OcclusionAttenuation = Mathf.Clamp(m_OcclusionAttenuation, 0.2f, 2f);
-		m_Blur = Mathf.Clamp(m_Blur, 0, 4);
-		RenderTexture renderTexture = RenderTexture.GetTemporary(source.width / m_Downsampling, source.height / m_Downsampling, 0);
-		float fieldOfView = GetComponent<Camera>().fieldOfView;
-		float farClipPlane = GetComponent<Camera>().farClipPlane;
-		float num = Mathf.Tan(fieldOfView * ((float)Math.PI / 180f) * 0.5f) * farClipPlane;
-		float x = num * GetComponent<Camera>().aspect;
-		m_SSAOMaterial.SetVector("_FarCorner", new Vector3(x, num, farClipPlane));
-		int num2;
-		int num3;
-		if ((bool)m_RandomTexture)
-		{
-			num2 = m_RandomTexture.width;
-			num3 = m_RandomTexture.height;
-		}
-		else
-		{
-			num2 = 1;
-			num3 = 1;
-		}
-		m_SSAOMaterial.SetVector("_NoiseScale", new Vector3((float)renderTexture.width / (float)num2, (float)renderTexture.height / (float)num3, 0f));
-		m_SSAOMaterial.SetVector("_Params", new Vector4(m_Radius, m_MinZ, 1f / m_OcclusionAttenuation, m_OcclusionIntensity));
-		bool flag = m_Blur > 0;
-		Graphics.Blit((!flag) ? source : null, renderTexture, m_SSAOMaterial, (int)m_SampleCount);
-		if (flag)
-		{
-			RenderTexture temporary = RenderTexture.GetTemporary(source.width, source.height, 0);
-			m_SSAOMaterial.SetVector("_TexelOffsetScale", new Vector4((float)m_Blur / (float)source.width, 0f, 0f, 0f));
-			m_SSAOMaterial.SetTexture("_SSAO", renderTexture);
-			Graphics.Blit(null, temporary, m_SSAOMaterial, 3);
-			RenderTexture.ReleaseTemporary(renderTexture);
-			RenderTexture temporary2 = RenderTexture.GetTemporary(source.width, source.height, 0);
-			m_SSAOMaterial.SetVector("_TexelOffsetScale", new Vector4(0f, (float)m_Blur / (float)source.height, 0f, 0f));
-			m_SSAOMaterial.SetTexture("_SSAO", temporary);
-			Graphics.Blit(source, temporary2, m_SSAOMaterial, 3);
-			RenderTexture.ReleaseTemporary(temporary);
-			renderTexture = temporary2;
-		}
-		m_SSAOMaterial.SetTexture("_SSAO", renderTexture);
-		Graphics.Blit(source, destination, m_SSAOMaterial, 4);
-		RenderTexture.ReleaseTemporary(renderTexture);
+		this.m_Supported = false;
+		base.enabled = false;
+	}
+
+	public enum SSAOSamples
+	{
+		Low,
+		Medium,
+		High
 	}
 }

@@ -1,180 +1,17 @@
+using Rilisoft;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Rilisoft;
-using Rilisoft.NullExtensions;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class ClansGUIController : MonoBehaviour, IFriendsGUIController
 {
-	internal enum State
-	{
-		Default = 0,
-		Inbox = 1,
-		ProfileDetails = 2
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CStart_003Ec__AnonStorey1E2
-	{
-		internal FacebookController.StoryPriority priority;
-
-		internal void _003C_003Em__16()
-		{
-			FacebookController.PostOpenGraphStory("create", "clan", priority, new Dictionary<string, string> { { "mode", "create" } });
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CStart_003Ec__AnonStorey1E3
-	{
-		internal StringComparer nameComparer;
-
-		internal int _003C_003Em__18(Texture2D a, Texture2D b)
-		{
-			return nameComparer.Compare(a.name, b.name);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CChangeClanName_003Ec__AnonStorey1E4
-	{
-		internal string oldText;
-
-		internal ClansGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__1A()
-		{
-			FriendsController.sharedController.clanName = _003C_003Ef__this.nameClanLabel.text;
-			_003C_003Ef__this.BlockGUI = false;
-		}
-
-		internal void _003C_003Em__1B(string error)
-		{
-			_003C_003Ef__this.nameClanLabel.text = oldText;
-			Debug.Log("error " + error);
-			if (!string.IsNullOrEmpty(error))
-			{
-				if (error.Equals("fail"))
-				{
-					_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ShowThisNameInUse());
-				}
-				else
-				{
-					_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ShowCheckConnection());
-				}
-			}
-			else
-			{
-				_003C_003Ef__this.BlockGUI = false;
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003C_SortFriendPreviews_003Ec__AnonStorey1E5
-	{
-		internal StringComparer nameComparer;
-
-		internal int _003C_003Em__1C(FriendPreview fp1, FriendPreview fp2)
-		{
-			return nameComparer.Compare(fp1.name, fp2.name);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CGoToSM_003Ec__AnonStorey1E6
-	{
-		internal Action<string> backHandler;
-
-		internal ClansGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__21(string name)
-		{
-			MenuBackgroundMusic.sharedMusic.StopCustomMusicFrom(SkinEditorController.sharedController.gameObject);
-			SkinEditorController.ExitFromSkinEditor -= backHandler;
-			_003C_003Ef__this.logo.mainTexture = EditorTextures.CreateCopyTexture(SkinsController.logoClanUserTexture);
-			if (_003C_003Ef__this.InClan)
-			{
-				Debug.Log("InClan");
-				byte[] inArray = SkinsController.logoClanUserTexture.EncodeToPNG();
-				FriendsController.sharedController.clanLogo = Convert.ToBase64String(inArray);
-				FriendsController.sharedController.ChangeClanLogo();
-				_003C_003Ef__this.previewLogo.mainTexture = EditorTextures.CreateCopyTexture(SkinsController.logoClanUserTexture);
-			}
-			else if (!string.IsNullOrEmpty(name))
-			{
-				_003C_003Ef__this._logos.Add(_003C_003Ef__this.logo.mainTexture as Texture2D);
-				_003C_003Ef__this._currentLogoInd = _003C_003Ef__this._logos.Count - 1;
-			}
-			_003C_003Ef__this.gameObject.SetActive(true);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleCreateClanClicked_003Ec__AnonStorey1E8
-	{
-		private sealed class _003CHandleCreateClanClicked_003Ec__AnonStorey1E7
-		{
-			internal Action<string> showShop;
-
-			internal _003CHandleCreateClanClicked_003Ec__AnonStorey1E8 _003C_003Ef__ref_0024488;
-
-			internal void _003C_003Em__27(string pressedbutton)
-			{
-				EtceteraAndroidManager.alertButtonClickedEvent -= showShop;
-				if (!pressedbutton.Equals(Defs.CancelButtonTitle))
-				{
-					coinsShop.thisScript.notEnoughCurrency = "Coins";
-					coinsShop.thisScript.onReturnAction = _003C_003Ef__ref_0024488.act;
-					coinsShop.showCoinsShop();
-				}
-			}
-		}
-
-		internal Action act;
-
-		internal ClansGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__22()
-		{
-			_003CHandleCreateClanClicked_003Ec__AnonStorey1E7 _003CHandleCreateClanClicked_003Ec__AnonStorey1E = new _003CHandleCreateClanClicked_003Ec__AnonStorey1E7();
-			_003CHandleCreateClanClicked_003Ec__AnonStorey1E._003C_003Ef__ref_0024488 = this;
-			_003C_003Ef__this.CreateClanPanel.SetActive(true);
-			coinsShop.thisScript.notEnoughCurrency = null;
-			coinsShop.thisScript.onReturnAction = null;
-			int clansPrice = Defs.ClansPrice;
-			int @int = Storager.getInt("Coins", false);
-			int num = @int - clansPrice;
-			_003CHandleCreateClanClicked_003Ec__AnonStorey1E.showShop = null;
-			_003CHandleCreateClanClicked_003Ec__AnonStorey1E.showShop = _003CHandleCreateClanClicked_003Ec__AnonStorey1E._003C_003Em__27;
-			Texture2D texture2D = _003C_003Ef__this.logo.mainTexture as Texture2D;
-			byte[] inArray = texture2D.EncodeToPNG();
-			string skinClan = Convert.ToBase64String(inArray);
-			if (num >= 0)
-			{
-				if (_003C_003Ef__this.inputNameClanLabel.text.Equals(string.Empty))
-				{
-					_003C_003Ef__this.StartCoroutine(_003C_003Ef__this.ShowThisNameInUse());
-				}
-				else
-				{
-					FriendsController.sharedController.SendCreateClan(FriendsController.sharedController.id, _003C_003Ef__this.inputNameClanLabel.text, skinClan, _003C_003Ef__this.ErrorHandler);
-					FriendsController.sharedController.FailedSendNewClan += _003C_003Ef__this.FailedSendBuyClan;
-					FriendsController.sharedController.ReturnNewIDClan += _003C_003Ef__this.ReturnIDNewClan;
-				}
-				_003C_003Ef__this.BlockGUI = true;
-			}
-			else
-			{
-				_003CHandleCreateClanClicked_003Ec__AnonStorey1E.showShop("Yes!");
-			}
-		}
-	}
-
 	private const string ShownCreateClanRewardWindow = "ShownCreateClanRewardWindowKey";
 
 	public static ClansGUIController sharedController;
@@ -285,154 +122,769 @@ public sealed class ClansGUIController : MonoBehaviour, IFriendsGUIController
 
 	private float _defendTime;
 
-	[CompilerGenerated]
-	private static Func<string> _003C_003Ef__am_0024cache37;
+	internal ClansGUIController.State CurrentState
+	{
+		get;
+		set;
+	}
 
-	[CompilerGenerated]
-	private static Comparison<FriendPreview> _003C_003Ef__am_0024cache38;
-
-	[CompilerGenerated]
-	private static Func<ClanIncomingInvitesController, GameObject> _003C_003Ef__am_0024cache39;
-
-	[CompilerGenerated]
-	private static Func<GameObject, bool> _003C_003Ef__am_0024cache3A;
-
-	[CompilerGenerated]
-	private static Action<ClanIncomingInvitesController> _003C_003Ef__am_0024cache3B;
-
-	[CompilerGenerated]
-	private static Func<Task<List<object>>, bool> _003C_003Ef__am_0024cache3C;
-
-	[CompilerGenerated]
-	private static Func<GameObject, UISprite[]> _003C_003Ef__am_0024cache3D;
-
-	[CompilerGenerated]
-	private static Func<GameObject, UISprite[]> _003C_003Ef__am_0024cache3E;
-
-	[CompilerGenerated]
-	private static Func<UISprite, bool> _003C_003Ef__am_0024cache3F;
-
-	internal State CurrentState { get; set; }
+	static ClansGUIController()
+	{
+	}
 
 	public ClansGUIController()
 	{
-		_clanIncomingInvitesController = new Lazy<ClanIncomingInvitesController>(_003CClansGUIController_003Em__14);
-		_newMessagesOverlays = new Lazy<UISprite[]>(_003CClansGUIController_003Em__15);
+		this._clanIncomingInvitesController = new Lazy<ClanIncomingInvitesController>(() => base.gameObject.GetComponent<ClanIncomingInvitesController>());
+		this._newMessagesOverlays = new Lazy<UISprite[]>(() => (
+			from s in this.clanPanel.Map<GameObject, UISprite[]>((GameObject c) => c.GetComponentsInChildren<UISprite>(true), new UISprite[0]).Concat<UISprite>(this.NoClanPanel.Map<GameObject, UISprite[]>((GameObject c) => c.GetComponentsInChildren<UISprite>(true), new UISprite[0]))
+			where "NewMessages".Equals(s.name)
+			select s).ToArray<UISprite>());
 	}
 
-	void IFriendsGUIController.Hide(bool h)
+	[DebuggerHidden]
+	private IEnumerator __UpdateGUI()
 	{
-		topLevelObject.SetActive(!h);
-		ShowProfile = h;
+		ClansGUIController.u003c__UpdateGUIu003ec__Iterator12 variable = null;
+		return variable;
 	}
 
-	public void HideRewardWindow()
+	private void _SortFriendPreviews()
 	{
-		rewardCreateClanWindow.SetActive(false);
-	}
-
-	private IEnumerator SetName(string nm)
-	{
-		yield return null;
-		inputNameClanLabel.text = nm;
-		inputNameClanLabel.parent.GetComponent<UIInput>().value = nm;
-	}
-
-	private void OnChangeClanName(string newName)
-	{
-		if (!nameClanLabel.text.Equals(newName) && !changeClanNameInput.isSelected)
+		FriendPreview[] componentsInChildren = this.friendsGrid.GetComponentsInChildren<FriendPreview>(true);
+		FriendPreview[] friendPreviewArray = this.friendsGrid.GetComponentsInChildren<FriendPreview>(false) ?? new FriendPreview[0];
+		StringComparer ordinal = StringComparer.Ordinal;
+		Array.Sort<FriendPreview>(friendPreviewArray, (FriendPreview fp1, FriendPreview fp2) => ordinal.Compare(fp1.name, fp2.name));
+		string str2 = null;
+		float single = 0f;
+		if ((int)friendPreviewArray.Length > 0)
 		{
-			nameClanLabel.text = newName;
-		}
-	}
-
-	private void Start()
-	{
-		_003CStart_003Ec__AnonStorey1E2 _003CStart_003Ec__AnonStorey1E = new _003CStart_003Ec__AnonStorey1E2();
-		sharedController = this;
-		RewardWindowBase component = rewardCreateClanWindow.GetComponent<RewardWindowBase>();
-		_003CStart_003Ec__AnonStorey1E.priority = FacebookController.StoryPriority.Green;
-		component.shareAction = _003CStart_003Ec__AnonStorey1E._003C_003Em__16;
-		component.priority = _003CStart_003Ec__AnonStorey1E.priority;
-		if (_003C_003Ef__am_0024cache37 == null)
-		{
-			_003C_003Ef__am_0024cache37 = _003CStart_003Em__17;
-		}
-		component.twitterStatus = _003C_003Ef__am_0024cache37;
-		component.EventTitle = "Created Clan";
-		component.HasReward = false;
-		UIInputRilisoft uIInputRilisoft = ((!(ClanName != null)) ? null : ClanName.GetComponent<UIInputRilisoft>());
-		if (uIInputRilisoft != null)
-		{
-			uIInputRilisoft.value = LocalizationStore.Key_0589;
-			uIInputRilisoft.onFocus = (UIInputRilisoft.OnFocus)Delegate.Combine(uIInputRilisoft.onFocus, new UIInputRilisoft.OnFocus(OnFocusCreateClanName));
-			uIInputRilisoft.onFocusLost = (UIInputRilisoft.OnFocusLost)Delegate.Combine(uIInputRilisoft.onFocusLost, new UIInputRilisoft.OnFocusLost(onFocusLostCreateClanName));
-		}
-		_friendProfileController = new FriendProfileController(this);
-		InClan = !string.IsNullOrEmpty(FriendsController.sharedController.ClanID);
-		FriendsController friendsController = FriendsController.sharedController;
-		friendsController.onChangeClanName = (FriendsController.OnChangeClanName)Delegate.Combine(friendsController.onChangeClanName, new FriendsController.OnChangeClanName(OnChangeClanName));
-		if (InClan && !string.IsNullOrEmpty(FriendsController.sharedController.clanName))
-		{
-			nameClanLabel.text = FriendsController.sharedController.clanName;
-			changeClanNameInput.value = nameClanLabel.text;
-		}
-		AtAddPanel = false;
-		AtStatsPanel = false;
-		timeOfLastSort = Time.realtimeSinceStartup;
-		FriendsController.sharedController.StartRefreshingClanOnline();
-		startPanel.SetActive(!FriendsController.readyToOperate);
-		NoClanPanel.SetActive(FriendsController.readyToOperate && !InClan);
-		clanPanel.SetActive(FriendsController.readyToOperate && InClan);
-		if (GlobalGameController.Logos == null)
-		{
-			_003CStart_003Ec__AnonStorey1E3 _003CStart_003Ec__AnonStorey1E2 = new _003CStart_003Ec__AnonStorey1E3();
-			Texture2D[] array = Resources.LoadAll<Texture2D>("Clan_Previews/");
-			if (array == null)
+			str2 = friendPreviewArray[0].gameObject.name;
+			Transform transforms = this.friendsGrid.transform.parent;
+			if (transforms != null)
 			{
-				array = new Texture2D[0];
+				UIPanel component = transforms.GetComponent<UIPanel>();
+				if (component != null)
+				{
+					Vector3 vector3 = friendPreviewArray[0].transform.localPosition;
+					single = vector3.x - component.clipOffset.x;
+				}
 			}
-			_logos.AddRange(array);
-			_003CStart_003Ec__AnonStorey1E2.nameComparer = StringComparer.OrdinalIgnoreCase;
-			_logos.Sort(_003CStart_003Ec__AnonStorey1E2._003C_003Em__18);
-			_currentLogoInd = 0;
 		}
-		else if (InClan)
-		{
-			if (GlobalGameController.LogoToEdit != null)
+		Array.Sort<FriendPreview>(componentsInChildren, (FriendPreview fp1, FriendPreview fp2) => {
+			int num;
+			int num1;
+			int num2;
+			int num3;
+			if (fp1.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp1.id))
 			{
-				byte[] inArray = GlobalGameController.LogoToEdit.EncodeToPNG();
-				FriendsController.sharedController.clanLogo = Convert.ToBase64String(inArray);
-				FriendsController.sharedController.ChangeClanLogo();
+				return 1;
+			}
+			if (fp2.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp2.id))
+			{
+				return -1;
+			}
+			string item = FriendsController.sharedController.onlineInfo[fp1.id]["delta"];
+			string str = FriendsController.sharedController.onlineInfo[fp1.id]["game_mode"];
+			int num4 = int.Parse(item);
+			int num5 = int.Parse(str);
+			num = ((float)num4 > FriendsController.onlineDelta || num5 > 99 && num5 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num5 / 100 != 3 ? 2 : (num5 != -1 ? 0 : 1));
+			if (FriendsController.sharedController.clanLeaderID != null && fp1.id.Equals(FriendsController.sharedController.clanLeaderID))
+			{
+				num = -1;
+			}
+			string item1 = FriendsController.sharedController.onlineInfo[fp2.id]["delta"];
+			string str1 = FriendsController.sharedController.onlineInfo[fp2.id]["game_mode"];
+			int num6 = int.Parse(item1);
+			int num7 = int.Parse(str1);
+			num1 = ((float)num6 > FriendsController.onlineDelta || num7 > 99 && num7 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num7 / 100 != 3 ? 2 : (num7 <= -1 ? 1 : 0));
+			if (FriendsController.sharedController.clanLeaderID != null && fp2.id.Equals(FriendsController.sharedController.clanLeaderID))
+			{
+				num1 = -1;
+			}
+			if (num == num1 && int.TryParse(fp1.id, out num2) && int.TryParse(fp2.id, out num3))
+			{
+				return num2 - num3;
+			}
+			return num - num1;
+		});
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			componentsInChildren[i].gameObject.name = i.ToString("D7");
+		}
+		this.friendsGrid.SortAlphabetically();
+		this.friendsGrid.WrapContent();
+		Transform transforms1 = null;
+		if (str2 != null)
+		{
+			FriendPreview[] friendPreviewArray1 = componentsInChildren;
+			int num8 = 0;
+			while (num8 < (int)friendPreviewArray1.Length)
+			{
+				FriendPreview friendPreview = friendPreviewArray1[num8];
+				if (!friendPreview.name.Equals(str2))
+				{
+					num8++;
+				}
+				else
+				{
+					transforms1 = friendPreview.transform;
+					break;
+				}
+			}
+		}
+		if (transforms1 == null && (int)componentsInChildren.Length > 0 && this.friendsGrid.gameObject.activeInHierarchy)
+		{
+			transforms1 = componentsInChildren[0].transform;
+		}
+		if (transforms1 != null)
+		{
+			float single1 = transforms1.localPosition.x - single;
+			Transform vector31 = this.friendsGrid.transform.parent;
+			if (vector31 != null)
+			{
+				UIPanel vector2 = vector31.GetComponent<UIPanel>();
+				if (vector2 != null)
+				{
+					vector2.clipOffset = new Vector2(single1, vector2.clipOffset.y);
+					float single2 = vector31.localPosition.y;
+					Vector3 vector32 = vector31.localPosition;
+					vector31.localPosition = new Vector3(-single1, single2, vector32.z);
+				}
+			}
+		}
+		this.friendsGrid.WrapContent();
+	}
+
+	public void BuyNewClan()
+	{
+		int clansPrice = Defs.ClansPrice;
+		int num = Storager.getInt("Coins", false);
+		Storager.setInt("Coins", num - clansPrice, false);
+		if (Application.platform != RuntimePlatform.IPhonePlayer)
+		{
+			PlayerPrefs.Save();
+		}
+		this.CreateClanPanel.SetActive(false);
+		this.InClan = true;
+		this.ShowClanPanel();
+	}
+
+	public void ChangeClanName()
+	{
+		string empty = FriendsController.sharedController.clanName ?? string.Empty;
+		if (!string.IsNullOrEmpty(this.nameClanLabel.text))
+		{
+			FriendsController.sharedController.ChangeClanName(this.nameClanLabel.text, () => {
+				FriendsController.sharedController.clanName = this.nameClanLabel.text;
+				this.BlockGUI = false;
+			}, (string error) => {
+				this.nameClanLabel.text = empty;
+				UnityEngine.Debug.Log(string.Concat("error ", error));
+				if (string.IsNullOrEmpty(error))
+				{
+					this.BlockGUI = false;
+				}
+				else if (!error.Equals("fail"))
+				{
+					base.StartCoroutine(this.ShowCheckConnection());
+				}
+				else
+				{
+					base.StartCoroutine(this.ShowThisNameInUse());
+				}
+			});
+		}
+		else
+		{
+			this.nameClanLabel.text = empty;
+			base.StartCoroutine(this.ShowThisNameInUse());
+		}
+		this.BlockGUI = true;
+	}
+
+	private void DisableStatisticsPanel(bool disable)
+	{
+		this.BackBut.GetComponent<UIButton>().isEnabled = !disable;
+		this.deleteClanButton.GetComponent<UIButton>().isEnabled = !disable;
+	}
+
+	private void ErrorHandler(string error)
+	{
+		FriendsController.sharedController.FailedSendNewClan -= new Action(this.FailedSendBuyClan);
+		FriendsController.sharedController.ReturnNewIDClan -= new Action<int>(this.ReturnIDNewClan);
+		this.BlockGUI = false;
+	}
+
+	public void FailedSendBuyClan()
+	{
+		FriendsController.sharedController.FailedSendNewClan -= new Action(this.FailedSendBuyClan);
+		FriendsController.sharedController.ReturnNewIDClan -= new Action<int>(this.ReturnIDNewClan);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator FillAddMembers()
+	{
+		ClansGUIController.u003cFillAddMembersu003ec__Iterator15 variable = null;
+		return variable;
+	}
+
+	public void GoToSM()
+	{
+		GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("SkinEditorController"));
+		if (gameObject.GetComponent<SkinEditorController>() != null)
+		{
+			Action<string> action = null;
+			action = (string name) => {
+				MenuBackgroundMusic.sharedMusic.StopCustomMusicFrom(SkinEditorController.sharedController.gameObject);
+				SkinEditorController.ExitFromSkinEditor -= this.backHandler;
+				this.u003cu003ef__this.logo.mainTexture = EditorTextures.CreateCopyTexture(SkinsController.logoClanUserTexture);
+				if (this.u003cu003ef__this.InClan)
+				{
+					UnityEngine.Debug.Log("InClan");
+					byte[] pNG = SkinsController.logoClanUserTexture.EncodeToPNG();
+					FriendsController.sharedController.clanLogo = Convert.ToBase64String(pNG);
+					FriendsController.sharedController.ChangeClanLogo();
+					this.u003cu003ef__this.previewLogo.mainTexture = EditorTextures.CreateCopyTexture(SkinsController.logoClanUserTexture);
+				}
+				else if (!string.IsNullOrEmpty(name))
+				{
+					this.u003cu003ef__this._logos.Add(this.u003cu003ef__this.logo.mainTexture as Texture2D);
+					this.u003cu003ef__this._currentLogoInd = this.u003cu003ef__this._logos.Count - 1;
+				}
+				this.u003cu003ef__this.gameObject.SetActive(true);
+			};
+			SkinEditorController.ExitFromSkinEditor += action;
+			if (!this.InClan)
+			{
+				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)this.logo.mainTexture);
+			}
+			else
+			{
+				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)this.previewLogo.mainTexture);
+			}
+			SkinEditorController.modeEditor = SkinEditorController.ModeEditor.LogoClan;
+			SkinEditorController.currentSkin = EditorTextures.CreateCopyTexture((Texture2D)this.logo.mainTexture);
+			gameObject.transform.parent = null;
+			base.gameObject.SetActive(false);
+		}
+	}
+
+	private void HandleAddMembersClicked(object sender, EventArgs e)
+	{
+		this.ShowAddMembersScreen();
+	}
+
+	private void HandleArrowClicked(object sender, EventArgs e)
+	{
+		if ((sender as ButtonHandler).gameObject != this.Left)
+		{
+			this._currentLogoInd++;
+			if (this._currentLogoInd >= this._logos.Count)
+			{
+				this._currentLogoInd = 0;
 			}
 		}
 		else
 		{
-			CreateClanPanel.SetActive(FriendsController.readyToOperate);
-			_logos = GlobalGameController.Logos;
-			StartCoroutine(SetName(GlobalGameController.TempClanName));
-			if (GlobalGameController.LogoToEdit != null)
+			this._currentLogoInd--;
+			if (this._currentLogoInd < 0)
 			{
-				_logos.Add(GlobalGameController.LogoToEdit);
-				_currentLogoInd = _logos.Count - 1;
+				this._currentLogoInd = this._logos.Count - 1;
+				if (this._currentLogoInd < 0)
+				{
+					this._currentLogoInd = 0;
+				}
+			}
+		}
+		this.logo.mainTexture = this._logos[this._currentLogoInd];
+		SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(this.logo.mainTexture);
+	}
+
+	private void HandleBackClicked(object sender, EventArgs e)
+	{
+		this._isCancellationRequested = true;
+	}
+
+	private void HandleCancellation()
+	{
+		if (this._clanIncomingInvitesController.Value.Map<ClanIncomingInvitesController, GameObject>((ClanIncomingInvitesController c) => c.inboxPanel).Map<GameObject, bool>((GameObject p) => p.activeInHierarchy))
+		{
+			this._clanIncomingInvitesController.Value.Do<ClanIncomingInvitesController>((ClanIncomingInvitesController c) => c.HandleBackFromInboxPressed());
+			return;
+		}
+		if (this.deleteClanDialog.activeSelf)
+		{
+			this.deleteClanDialog.SetActive(false);
+			this.DisableStatisticsPanel(false);
+			return;
+		}
+		if (this._defendTime > 0f)
+		{
+			return;
+		}
+		if (this.CreateClanPanel.activeInHierarchy)
+		{
+			this.CreateClanPanel.SetActive(false);
+			this.NoClanPanel.SetActive(true);
+			return;
+		}
+		if (this.statisiticPanel.activeInHierarchy)
+		{
+			this.statisiticPanel.SetActive(false);
+			ClansGUIController.AtStatsPanel = false;
+			this.clanPanel.SetActive(true);
+			return;
+		}
+		if (this.addInClanPanel.activeInHierarchy)
+		{
+			this.HideAddPanel();
+			this.clanPanel.SetActive(true);
+			return;
+		}
+		MenuBackgroundMusic.keepPlaying = true;
+		LoadConnectScene.textureToShow = null;
+		LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
+		LoadConnectScene.noteToShow = null;
+		Singleton<SceneLoader>.Instance.LoadScene(Defs.PromSceneName, LoadSceneMode.Single);
+	}
+
+	private void HandleCreateClanClicked(object sender, EventArgs e)
+	{
+		Action action1 = null;
+		action1 = () => {
+			this.u003cu003ef__this.CreateClanPanel.SetActive(true);
+			coinsShop.thisScript.notEnoughCurrency = null;
+			coinsShop.thisScript.onReturnAction = null;
+			int clansPrice = Defs.ClansPrice;
+			int num = Storager.getInt("Coins", false) - clansPrice;
+			Action<string> action = null;
+			action = (string pressedbutton) => {
+				EtceteraAndroidManager.alertButtonClickedEvent -= action;
+				if (pressedbutton.Equals(Defs.CancelButtonTitle))
+				{
+					return;
+				}
+				coinsShop.thisScript.notEnoughCurrency = "Coins";
+				coinsShop.thisScript.onReturnAction = this.act;
+				coinsShop.showCoinsShop();
+			};
+			string base64String = Convert.ToBase64String((this.u003cu003ef__this.logo.mainTexture as Texture2D).EncodeToPNG());
+			if (num < 0)
+			{
+				action("Yes!");
 			}
 			else
 			{
-				_currentLogoInd = 0;
+				if (!this.u003cu003ef__this.inputNameClanLabel.text.Equals(string.Empty))
+				{
+					FriendsController.sharedController.SendCreateClan(FriendsController.sharedController.id, this.u003cu003ef__this.inputNameClanLabel.text, base64String, new Action<string>(this.u003cu003ef__this.ErrorHandler));
+					FriendsController.sharedController.FailedSendNewClan += new Action(this.u003cu003ef__this.FailedSendBuyClan);
+					FriendsController.sharedController.ReturnNewIDClan += new Action<int>(this.u003cu003ef__this.ReturnIDNewClan);
+				}
+				else
+				{
+					this.u003cu003ef__this.StartCoroutine(this.u003cu003ef__this.ShowThisNameInUse());
+				}
+				this.u003cu003ef__this.BlockGUI = true;
+			}
+		};
+		action1();
+	}
+
+	private void HandleDeleteClanClicked(object sender, EventArgs e)
+	{
+		this.deleteClanDialog.SetActive(true);
+		this.DisableStatisticsPanel(true);
+	}
+
+	private void HandleEditClicked(object sender, EventArgs e)
+	{
+		this.GoToSM();
+	}
+
+	private void HandleEditLogoInPreviewClicked(object sender, EventArgs e)
+	{
+		this.GoToSM();
+	}
+
+	private void HandleLeaveClicked(object sender, EventArgs e)
+	{
+		this.InClan = false;
+		this.NoClanPanel.SetActive(true);
+		FriendsController.sharedController.ExitClan(null);
+		FriendsController.sharedController.ClearClanData();
+	}
+
+	private void HandleNoDelClanClicked(object sender, EventArgs e)
+	{
+		this._isCancellationRequested = true;
+	}
+
+	private void HandleStatisticsButtonClicked(object sender, EventArgs e)
+	{
+		this.clanPanel.SetActive(false);
+		this.statisiticPanel.SetActive(true);
+		ClansGUIController.AtStatsPanel = true;
+	}
+
+	private void HandleYesDelClanClicked(object sender, EventArgs e)
+	{
+		this.deleteClanDialog.SetActive(false);
+		this.DisableStatisticsPanel(false);
+		this.InClan = false;
+		this.statisiticPanel.SetActive(false);
+		FriendsController.sharedController.DeleteClan();
+		FriendsController.sharedController.ClearClanData();
+	}
+
+	private void HideAddPanel()
+	{
+		this.addInClanPanel.SetActive(false);
+		FriendsController.sharedController.StopRefreshingOnlineWithClanInfo();
+		FriendsController.sharedController.StartRefreshingClanOnline();
+		ClansGUIController.AtAddPanel = false;
+		IEnumerator enumerator = this.addFriendsGrid.transform.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				Transform current = (Transform)enumerator.Current;
+				current.parent = null;
+				UnityEngine.Object.Destroy(current.gameObject);
 			}
 		}
-		if (InClan && !string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+	}
+
+	public void HideRewardWindow()
+	{
+		this.rewardCreateClanWindow.SetActive(false);
+	}
+
+	void IFriendsGUIController.Hide(bool h)
+	{
+		this.topLevelObject.SetActive(!h);
+		ClansGUIController.ShowProfile = h;
+	}
+
+	private void OnChangeClanName(string newName)
+	{
+		if (this.nameClanLabel.text.Equals(newName))
+		{
+			return;
+		}
+		if (this.changeClanNameInput.isSelected)
+		{
+			return;
+		}
+		this.nameClanLabel.text = newName;
+	}
+
+	private void OnDestroy()
+	{
+		UIInputRilisoft component;
+		ClansGUIController.sharedController = null;
+		this._friendProfileController.Dispose();
+		FriendsController.sharedController.StopRefreshingClanOnline();
+		FriendsController.sharedController.onChangeClanName -= new FriendsController.OnChangeClanName(this.OnChangeClanName);
+		ClansGUIController.AtAddPanel = false;
+		ClansGUIController.AtStatsPanel = false;
+		ClansGUIController.ShowProfile = false;
+		if (this.ClanName == null)
+		{
+			component = null;
+		}
+		else
+		{
+			component = this.ClanName.GetComponent<UIInputRilisoft>();
+		}
+		UIInputRilisoft onFocu = component;
+		if (onFocu != null)
+		{
+			onFocu.onFocus -= new UIInputRilisoft.OnFocus(this.OnFocusCreateClanName);
+			onFocu.onFocusLost -= new UIInputRilisoft.OnFocusLost(this.onFocusLostCreateClanName);
+		}
+		FriendsController.DisposeProfile();
+	}
+
+	private void OnDisable()
+	{
+		FriendsController.ClanUpdated -= new Action(this.UpdateGUI);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		FriendsController.ClanUpdated += new Action(this.UpdateGUI);
+		this.UpdateGUI();
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => this._isCancellationRequested = true, "Clans");
+	}
+
+	private void OnFocusCreateClanName()
+	{
+		if (this.ClanName != null)
+		{
+			this.ClanName.GetComponent<UIInputRilisoft>().@value = string.Empty;
+		}
+	}
+
+	private void onFocusLostCreateClanName()
+	{
+		if (this.ClanName != null)
+		{
+			UIInputRilisoft component = this.ClanName.GetComponent<UIInputRilisoft>();
+			if (string.IsNullOrEmpty(component.@value))
+			{
+				component.@value = LocalizationStore.Key_0589;
+			}
+		}
+	}
+
+	public void ReturnIDNewClan(int _idNewClan)
+	{
+		FriendsController.sharedController.FailedSendNewClan -= new Action(this.FailedSendBuyClan);
+		FriendsController.sharedController.ReturnNewIDClan -= new Action<int>(this.ReturnIDNewClan);
+		if (_idNewClan <= 0)
+		{
+			base.StartCoroutine(this.ShowThisNameInUse());
+		}
+		else
+		{
+			this.BlockGUI = false;
+			FriendsController.sharedController.ClanID = _idNewClan.ToString();
+			FriendsController.sharedController.clanLeaderID = FriendsController.sharedController.id;
+			Texture2D texture2D = this.logo.mainTexture as Texture2D;
+			string base64String = Convert.ToBase64String(texture2D.EncodeToPNG());
+			FriendsController.sharedController.clanLogo = base64String;
+			Texture texture = this.previewLogo.mainTexture;
+			this.previewLogo.mainTexture = this.logo.mainTexture;
+			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(this.previewLogo.mainTexture);
+			!(texture != null);
+			FriendsController.sharedController.clanName = this.inputNameClanLabel.text;
+			this.nameClanLabel.text = FriendsController.sharedController.clanName;
+			this.BuyNewClan();
+			string str = (ExperienceController.sharedController == null ? "Unknown" : ExperienceController.sharedController.currentLevel.ToString());
+			int num = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1);
+			string str1 = num.ToString();
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Rank", str },
+				{ "Session", str1 }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Clan Created", strs, true);
+			if ((FacebookController.FacebookSupported || TwitterController.TwitterSupported) && Storager.getInt("ShownCreateClanRewardWindowKey", false) == 0 && !Device.isPixelGunLow)
+			{
+				this.rewardCreateClanWindow.SetActive(true);
+				Storager.setInt("ShownCreateClanRewardWindowKey", 1, false);
+			}
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetName(string nm)
+	{
+		ClansGUIController.u003cSetNameu003ec__Iterator11 variable = null;
+		return variable;
+	}
+
+	private void SetScreenMessage()
+	{
+		if (this.receivingPlashka == null)
+		{
+			return;
+		}
+		string empty = string.Empty;
+		if (!FriendsController.ClanDataSettted && this.InClan)
+		{
+			empty = LocalizationStore.Key_0348;
+		}
+		else if (!(FriendsController.sharedController != null) || !this.InClan)
+		{
+			if ((!this.InClan || !FriendsController.readyToOperate) && !this.NoClanPanel.activeInHierarchy && !this.CreateClanPanel.activeInHierarchy && !this.clanPanel.activeInHierarchy && !this.statisiticPanel.activeInHierarchy && !this.addInClanPanel.activeInHierarchy)
+			{
+				if (this.CurrentState == ClansGUIController.State.Inbox)
+				{
+					if (this.CurrentState != ClansGUIController.State.Inbox)
+					{
+						if (string.IsNullOrEmpty(empty))
+						{
+							this.receivingPlashka.SetActive(false);
+						}
+						else
+						{
+							this.receivingPlashka.GetComponent<UILabel>().text = empty;
+							this.receivingPlashka.SetActive(true);
+						}
+						return;
+					}
+					else if (ClanIncomingInvitesController.CurrentRequest.Filter<Task<List<object>>>((Task<List<object>> t) => t.IsCompleted) != null)
+					{
+						if (string.IsNullOrEmpty(empty))
+						{
+							this.receivingPlashka.SetActive(false);
+						}
+						else
+						{
+							this.receivingPlashka.GetComponent<UILabel>().text = empty;
+							this.receivingPlashka.SetActive(true);
+						}
+						return;
+					}
+				}
+				empty = LocalizationStore.Key_0348;
+			}
+		}
+		else if (this._friendProfileController != null && this._friendProfileController.FriendProfileGo != null && this._friendProfileController.FriendProfileGo.activeInHierarchy)
+		{
+			if (FriendsController.sharedController.NumberOffFullInfoRequests > 0)
+			{
+				empty = LocalizationStore.Key_0348;
+			}
+		}
+		else if (this.CreateClanPanel.activeInHierarchy && FriendsController.sharedController.NumberOfCreateClanRequests > 0)
+		{
+			empty = LocalizationStore.Key_0348;
+		}
+		if (string.IsNullOrEmpty(empty))
+		{
+			this.receivingPlashka.SetActive(false);
+		}
+		else
+		{
+			this.receivingPlashka.GetComponent<UILabel>().text = empty;
+			this.receivingPlashka.SetActive(true);
+		}
+	}
+
+	internal void ShowAddMembersScreen()
+	{
+		this.clanPanel.SetActive(false);
+		this.addInClanPanel.SetActive(true);
+		FriendsController.sharedController.StartRefreshingOnlineWithClanInfo();
+		FriendsController.sharedController.StopRefreshingClanOnline();
+		ClansGUIController.AtAddPanel = true;
+		base.StartCoroutine(this.FillAddMembers());
+	}
+
+	[DebuggerHidden]
+	public IEnumerator ShowCheckConnection()
+	{
+		ClansGUIController.u003cShowCheckConnectionu003ec__Iterator14 variable = null;
+		return variable;
+	}
+
+	public void ShowClanPanel()
+	{
+		this.clanPanel.SetActive(true);
+	}
+
+	[DebuggerHidden]
+	public IEnumerator ShowThisNameInUse()
+	{
+		ClansGUIController.u003cShowThisNameInUseu003ec__Iterator13 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		UIInputRilisoft component;
+		ClansGUIController.sharedController = this;
+		RewardWindowBase rewardWindowBase = this.rewardCreateClanWindow.GetComponent<RewardWindowBase>();
+		FacebookController.StoryPriority storyPriority = FacebookController.StoryPriority.Green;
+		rewardWindowBase.shareAction = () => FacebookController.PostOpenGraphStory("create", "clan", storyPriority, new Dictionary<string, string>()
+		{
+			{ "mode", "create" }
+		});
+		rewardWindowBase.priority = storyPriority;
+		rewardWindowBase.twitterStatus = () => "I’ve created a CLAN in @PixelGun3D! Join my team and get ready to fight! #pixelgun3d #pixelgun #pg3d #mobile #fps http://goo.gl/8fzL9u";
+		rewardWindowBase.EventTitle = "Created Clan";
+		rewardWindowBase.HasReward = false;
+		if (this.ClanName == null)
+		{
+			component = null;
+		}
+		else
+		{
+			component = this.ClanName.GetComponent<UIInputRilisoft>();
+		}
+		UIInputRilisoft key0589 = component;
+		if (key0589 != null)
+		{
+			key0589.@value = LocalizationStore.Key_0589;
+			key0589.onFocus += new UIInputRilisoft.OnFocus(this.OnFocusCreateClanName);
+			key0589.onFocusLost += new UIInputRilisoft.OnFocusLost(this.onFocusLostCreateClanName);
+		}
+		this._friendProfileController = new FriendProfileController(this, true);
+		this.InClan = !string.IsNullOrEmpty(FriendsController.sharedController.ClanID);
+		FriendsController.sharedController.onChangeClanName += new FriendsController.OnChangeClanName(this.OnChangeClanName);
+		if (this.InClan && !string.IsNullOrEmpty(FriendsController.sharedController.clanName))
+		{
+			this.nameClanLabel.text = FriendsController.sharedController.clanName;
+			this.changeClanNameInput.@value = this.nameClanLabel.text;
+		}
+		ClansGUIController.AtAddPanel = false;
+		ClansGUIController.AtStatsPanel = false;
+		this.timeOfLastSort = Time.realtimeSinceStartup;
+		FriendsController.sharedController.StartRefreshingClanOnline();
+		this.startPanel.SetActive(!FriendsController.readyToOperate);
+		this.NoClanPanel.SetActive((!FriendsController.readyToOperate ? false : !this.InClan));
+		this.clanPanel.SetActive((!FriendsController.readyToOperate ? false : this.InClan));
+		if (GlobalGameController.Logos == null)
+		{
+			Texture2D[] texture2DArray = Resources.LoadAll<Texture2D>("Clan_Previews/") ?? new Texture2D[0];
+			this._logos.AddRange(texture2DArray);
+			StringComparer ordinalIgnoreCase = StringComparer.OrdinalIgnoreCase;
+			this._logos.Sort((Texture2D a, Texture2D b) => ordinalIgnoreCase.Compare(a.name, b.name));
+			this._currentLogoInd = 0;
+		}
+		else if (!this.InClan)
+		{
+			this.CreateClanPanel.SetActive(FriendsController.readyToOperate);
+			this._logos = GlobalGameController.Logos;
+			base.StartCoroutine(this.SetName(GlobalGameController.TempClanName));
+			if (GlobalGameController.LogoToEdit == null)
+			{
+				this._currentLogoInd = 0;
+			}
+			else
+			{
+				this._logos.Add(GlobalGameController.LogoToEdit);
+				this._currentLogoInd = this._logos.Count - 1;
+			}
+		}
+		else if (GlobalGameController.LogoToEdit != null)
+		{
+			byte[] pNG = GlobalGameController.LogoToEdit.EncodeToPNG();
+			FriendsController.sharedController.clanLogo = Convert.ToBase64String(pNG);
+			FriendsController.sharedController.ChangeClanLogo();
+		}
+		if (this.InClan && !string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
 		{
 			try
 			{
-				byte[] data = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
+				byte[] numArray = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
 				Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-				texture2D.LoadImage(data);
+				texture2D.LoadImage(numArray);
 				texture2D.filterMode = FilterMode.Point;
 				texture2D.Apply();
-				Texture mainTexture = previewLogo.mainTexture;
-				previewLogo.mainTexture = texture2D;
-				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(previewLogo.mainTexture);
+				Texture texture = this.previewLogo.mainTexture;
+				this.previewLogo.mainTexture = texture2D;
+				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(this.previewLogo.mainTexture);
 			}
 			catch
 			{
@@ -441,753 +893,221 @@ public sealed class ClansGUIController : MonoBehaviour, IFriendsGUIController
 		GlobalGameController.Logos = null;
 		GlobalGameController.LogoToEdit = null;
 		GlobalGameController.TempClanName = null;
-		if (_logos.Count > _currentLogoInd)
+		if (this._logos.Count > this._currentLogoInd)
 		{
-			logo.mainTexture = _logos[_currentLogoInd];
-			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(logo.mainTexture);
+			this.logo.mainTexture = this._logos[this._currentLogoInd];
+			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(this.logo.mainTexture);
 		}
-		if (CreateClanButton != null)
+		if (this.CreateClanButton != null)
 		{
-			ButtonHandler component2 = CreateClanButton.GetComponent<ButtonHandler>();
+			ButtonHandler buttonHandler = this.CreateClanButton.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
+			{
+				buttonHandler.Clicked += new EventHandler(this.HandleCreateClanClicked);
+			}
+		}
+		if (this.EditLogoBut != null)
+		{
+			ButtonHandler component1 = this.EditLogoBut.GetComponent<ButtonHandler>();
+			if (component1 != null)
+			{
+				component1.Clicked += new EventHandler(this.HandleEditClicked);
+			}
+		}
+		if (this.BackBut != null)
+		{
+			ButtonHandler buttonHandler1 = this.BackBut.GetComponent<ButtonHandler>();
+			if (buttonHandler1 != null)
+			{
+				buttonHandler1.Clicked += new EventHandler(this.HandleBackClicked);
+			}
+		}
+		if (this.Left != null)
+		{
+			ButtonHandler component2 = this.Left.GetComponent<ButtonHandler>();
 			if (component2 != null)
 			{
-				component2.Clicked += HandleCreateClanClicked;
+				component2.Clicked += new EventHandler(this.HandleArrowClicked);
 			}
 		}
-		if (EditLogoBut != null)
+		if (this.Right != null)
 		{
-			ButtonHandler component3 = EditLogoBut.GetComponent<ButtonHandler>();
+			ButtonHandler buttonHandler2 = this.Right.GetComponent<ButtonHandler>();
+			if (buttonHandler2 != null)
+			{
+				buttonHandler2.Clicked += new EventHandler(this.HandleArrowClicked);
+			}
+		}
+		if (this.addMembersButton != null)
+		{
+			ButtonHandler component3 = this.addMembersButton.GetComponent<ButtonHandler>();
 			if (component3 != null)
 			{
-				component3.Clicked += HandleEditClicked;
+				component3.Clicked += new EventHandler(this.HandleAddMembersClicked);
 			}
 		}
-		if (BackBut != null)
+		if (this.deleteClanButton != null)
 		{
-			ButtonHandler component4 = BackBut.GetComponent<ButtonHandler>();
+			ButtonHandler buttonHandler3 = this.deleteClanButton.GetComponent<ButtonHandler>();
+			if (buttonHandler3 != null)
+			{
+				buttonHandler3.Clicked += new EventHandler(this.HandleDeleteClanClicked);
+			}
+		}
+		if (this.leaveButton != null)
+		{
+			ButtonHandler component4 = this.leaveButton.GetComponent<ButtonHandler>();
 			if (component4 != null)
 			{
-				component4.Clicked += HandleBackClicked;
+				component4.Clicked += new EventHandler(this.HandleLeaveClicked);
 			}
 		}
-		if (Left != null)
+		if (this.editLogoInPreviewButton != null)
 		{
-			ButtonHandler component5 = Left.GetComponent<ButtonHandler>();
+			ButtonHandler buttonHandler4 = this.editLogoInPreviewButton.GetComponent<ButtonHandler>();
+			if (buttonHandler4 != null)
+			{
+				buttonHandler4.Clicked += new EventHandler(this.HandleEditLogoInPreviewClicked);
+			}
+		}
+		if (this.statisticsButton != null)
+		{
+			ButtonHandler component5 = this.statisticsButton.GetComponent<ButtonHandler>();
 			if (component5 != null)
 			{
-				component5.Clicked += HandleArrowClicked;
+				component5.Clicked += new EventHandler(this.HandleStatisticsButtonClicked);
 			}
 		}
-		if (Right != null)
+		if (this.yesDelteClan != null)
 		{
-			ButtonHandler component6 = Right.GetComponent<ButtonHandler>();
+			ButtonHandler buttonHandler5 = this.yesDelteClan.GetComponent<ButtonHandler>();
+			if (buttonHandler5 != null)
+			{
+				buttonHandler5.Clicked += new EventHandler(this.HandleYesDelClanClicked);
+			}
+		}
+		if (this.noDeleteClan != null)
+		{
+			ButtonHandler component6 = this.noDeleteClan.GetComponent<ButtonHandler>();
 			if (component6 != null)
 			{
-				component6.Clicked += HandleArrowClicked;
+				component6.Clicked += new EventHandler(this.HandleNoDelClanClicked);
 			}
 		}
-		if (addMembersButton != null)
-		{
-			ButtonHandler component7 = addMembersButton.GetComponent<ButtonHandler>();
-			if (component7 != null)
-			{
-				component7.Clicked += HandleAddMembersClicked;
-			}
-		}
-		if (deleteClanButton != null)
-		{
-			ButtonHandler component8 = deleteClanButton.GetComponent<ButtonHandler>();
-			if (component8 != null)
-			{
-				component8.Clicked += HandleDeleteClanClicked;
-			}
-		}
-		if (leaveButton != null)
-		{
-			ButtonHandler component9 = leaveButton.GetComponent<ButtonHandler>();
-			if (component9 != null)
-			{
-				component9.Clicked += HandleLeaveClicked;
-			}
-		}
-		if (editLogoInPreviewButton != null)
-		{
-			ButtonHandler component10 = editLogoInPreviewButton.GetComponent<ButtonHandler>();
-			if (component10 != null)
-			{
-				component10.Clicked += HandleEditLogoInPreviewClicked;
-			}
-		}
-		if (statisticsButton != null)
-		{
-			ButtonHandler component11 = statisticsButton.GetComponent<ButtonHandler>();
-			if (component11 != null)
-			{
-				component11.Clicked += HandleStatisticsButtonClicked;
-			}
-		}
-		if (yesDelteClan != null)
-		{
-			ButtonHandler component12 = yesDelteClan.GetComponent<ButtonHandler>();
-			if (component12 != null)
-			{
-				component12.Clicked += HandleYesDelClanClicked;
-			}
-		}
-		if (noDeleteClan != null)
-		{
-			ButtonHandler component13 = noDeleteClan.GetComponent<ButtonHandler>();
-			if (component13 != null)
-			{
-				component13.Clicked += HandleNoDelClanClicked;
-			}
-		}
-	}
-
-	private void OnEnable()
-	{
-		FriendsController.ClanUpdated += UpdateGUI;
-		UpdateGUI();
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(_003COnEnable_003Em__19, "Clans");
-	}
-
-	private void OnDisable()
-	{
-		FriendsController.ClanUpdated -= UpdateGUI;
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
-	}
-
-	public void UpdateGUI()
-	{
-		StartCoroutine(__UpdateGUI());
-	}
-
-	public void ChangeClanName()
-	{
-		_003CChangeClanName_003Ec__AnonStorey1E4 _003CChangeClanName_003Ec__AnonStorey1E = new _003CChangeClanName_003Ec__AnonStorey1E4();
-		_003CChangeClanName_003Ec__AnonStorey1E._003C_003Ef__this = this;
-		_003CChangeClanName_003Ec__AnonStorey1E.oldText = FriendsController.sharedController.clanName ?? string.Empty;
-		if (string.IsNullOrEmpty(nameClanLabel.text))
-		{
-			nameClanLabel.text = _003CChangeClanName_003Ec__AnonStorey1E.oldText;
-			StartCoroutine(ShowThisNameInUse());
-		}
-		else
-		{
-			FriendsController.sharedController.ChangeClanName(nameClanLabel.text, _003CChangeClanName_003Ec__AnonStorey1E._003C_003Em__1A, _003CChangeClanName_003Ec__AnonStorey1E._003C_003Em__1B);
-		}
-		BlockGUI = true;
-	}
-
-	private void _SortFriendPreviews()
-	{
-		_003C_SortFriendPreviews_003Ec__AnonStorey1E5 _003C_SortFriendPreviews_003Ec__AnonStorey1E = new _003C_SortFriendPreviews_003Ec__AnonStorey1E5();
-		FriendPreview[] componentsInChildren = friendsGrid.GetComponentsInChildren<FriendPreview>(true);
-		FriendPreview[] array = friendsGrid.GetComponentsInChildren<FriendPreview>(false);
-		if (array == null)
-		{
-			array = new FriendPreview[0];
-		}
-		_003C_SortFriendPreviews_003Ec__AnonStorey1E.nameComparer = StringComparer.Ordinal;
-		Array.Sort(array, _003C_SortFriendPreviews_003Ec__AnonStorey1E._003C_003Em__1C);
-		string text = null;
-		float num = 0f;
-		if (array.Length > 0)
-		{
-			text = array[0].gameObject.name;
-			Transform parent = friendsGrid.transform.parent;
-			if (parent != null)
-			{
-				UIPanel component = parent.GetComponent<UIPanel>();
-				if (component != null)
-				{
-					num = array[0].transform.localPosition.x - component.clipOffset.x;
-				}
-			}
-		}
-		if (_003C_003Ef__am_0024cache38 == null)
-		{
-			_003C_003Ef__am_0024cache38 = _003C_SortFriendPreviews_003Em__1D;
-		}
-		Array.Sort(componentsInChildren, _003C_003Ef__am_0024cache38);
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			componentsInChildren[i].gameObject.name = i.ToString("D7");
-		}
-		friendsGrid.SortAlphabetically();
-		friendsGrid.WrapContent();
-		Transform transform = null;
-		if (text != null)
-		{
-			FriendPreview[] array2 = componentsInChildren;
-			foreach (FriendPreview friendPreview in array2)
-			{
-				if (friendPreview.name.Equals(text))
-				{
-					transform = friendPreview.transform;
-					break;
-				}
-			}
-		}
-		if (transform == null && componentsInChildren.Length > 0 && friendsGrid.gameObject.activeInHierarchy)
-		{
-			transform = componentsInChildren[0].transform;
-		}
-		if (transform != null)
-		{
-			float num2 = transform.localPosition.x - num;
-			Transform parent2 = friendsGrid.transform.parent;
-			if (parent2 != null)
-			{
-				UIPanel component2 = parent2.GetComponent<UIPanel>();
-				if (component2 != null)
-				{
-					component2.clipOffset = new Vector2(num2, component2.clipOffset.y);
-					parent2.localPosition = new Vector3(0f - num2, parent2.localPosition.y, parent2.localPosition.z);
-				}
-			}
-		}
-		friendsGrid.WrapContent();
-	}
-
-	private IEnumerator __UpdateGUI()
-	{
-		try
-		{
-			byte[] _skinByte = Convert.FromBase64String(FriendsController.sharedController.clanLogo);
-			Texture2D _skinNew = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-			_skinNew.LoadImage(_skinByte);
-			_skinNew.filterMode = FilterMode.Point;
-			_skinNew.Apply();
-			Texture oldTexture = previewLogo.mainTexture;
-			previewLogo.mainTexture = _skinNew;
-			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(previewLogo.mainTexture);
-		}
-		catch (Exception ex)
-		{
-			Exception e = ex;
-			Debug.LogWarning(e);
-		}
-		FriendPreview[] fps = friendsGrid.GetComponentsInChildren<FriendPreview>(true);
-		List<FriendPreview> toRemove = new List<FriendPreview>();
-		List<string> existingPreviews = new List<string>();
-		FriendPreview[] array = fps;
-		foreach (FriendPreview fp in array)
-		{
-			bool found = false;
-			foreach (Dictionary<string, string> member in FriendsController.sharedController.clanMembers)
-			{
-				string _id;
-				if (!member.TryGetValue("id", out _id) || !_id.Equals(fp.id))
-				{
-					continue;
-				}
-				found = true;
-				fp.nm.text = member["nick"];
-				break;
-			}
-			if (!found)
-			{
-				toRemove.Add(fp);
-			}
-			else if (fp.id != null)
-			{
-				existingPreviews.Add(fp.id);
-			}
-		}
-		foreach (FriendPreview fp2 in toRemove)
-		{
-			fp2.transform.parent = null;
-			UnityEngine.Object.Destroy(fp2.gameObject);
-		}
-		foreach (Dictionary<string, string> member2 in FriendsController.sharedController.clanMembers)
-		{
-			if (member2.ContainsKey("id") && !existingPreviews.Contains(member2["id"]) && !member2["id"].Equals(FriendsController.sharedController.id))
-			{
-				GameObject f = UnityEngine.Object.Instantiate(Resources.Load("Friend")) as GameObject;
-				f.transform.parent = friendsGrid.transform;
-				f.transform.localScale = new Vector3(1f, 1f, 1f);
-				f.GetComponent<FriendPreview>().id = member2["id"];
-				f.GetComponent<FriendPreview>().ClanMember = true;
-				f.GetComponent<FriendPreview>().join.GetComponent<JoinRoomFromFrendsButton>().joinRoomFromFrends = joinRoomFromFrends;
-				if (member2.ContainsKey("nick"))
-				{
-					f.GetComponent<FriendPreview>().nm.text = member2["nick"];
-				}
-			}
-		}
-		yield return null;
-		timeOfLastSort = Time.realtimeSinceStartup;
-		_SortFriendPreviews();
-	}
-
-	private void HandleArrowClicked(object sender, EventArgs e)
-	{
-		if ((sender as ButtonHandler).gameObject == Left)
-		{
-			_currentLogoInd--;
-			if (_currentLogoInd < 0)
-			{
-				_currentLogoInd = _logos.Count - 1;
-				if (_currentLogoInd < 0)
-				{
-					_currentLogoInd = 0;
-				}
-			}
-		}
-		else
-		{
-			_currentLogoInd++;
-			if (_currentLogoInd >= _logos.Count)
-			{
-				_currentLogoInd = 0;
-			}
-		}
-		logo.mainTexture = _logos[_currentLogoInd];
-		SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(logo.mainTexture);
-	}
-
-	private void HandleBackClicked(object sender, EventArgs e)
-	{
-		_isCancellationRequested = true;
-	}
-
-	private void HandleCancellation()
-	{
-		ClanIncomingInvitesController value = _clanIncomingInvitesController.Value;
-		if (_003C_003Ef__am_0024cache39 == null)
-		{
-			_003C_003Ef__am_0024cache39 = _003CHandleCancellation_003Em__1E;
-		}
-		GameObject o = value.Map(_003C_003Ef__am_0024cache39);
-		if (_003C_003Ef__am_0024cache3A == null)
-		{
-			_003C_003Ef__am_0024cache3A = _003CHandleCancellation_003Em__1F;
-		}
-		if (o.Map(_003C_003Ef__am_0024cache3A))
-		{
-			ClanIncomingInvitesController value2 = _clanIncomingInvitesController.Value;
-			if (_003C_003Ef__am_0024cache3B == null)
-			{
-				_003C_003Ef__am_0024cache3B = _003CHandleCancellation_003Em__20;
-			}
-			value2.Do(_003C_003Ef__am_0024cache3B);
-		}
-		else if (deleteClanDialog.activeSelf)
-		{
-			deleteClanDialog.SetActive(false);
-			DisableStatisticsPanel(false);
-		}
-		else if (!(_defendTime > 0f))
-		{
-			if (CreateClanPanel.activeInHierarchy)
-			{
-				CreateClanPanel.SetActive(false);
-				NoClanPanel.SetActive(true);
-			}
-			else if (statisiticPanel.activeInHierarchy)
-			{
-				statisiticPanel.SetActive(false);
-				AtStatsPanel = false;
-				clanPanel.SetActive(true);
-			}
-			else if (addInClanPanel.activeInHierarchy)
-			{
-				HideAddPanel();
-				clanPanel.SetActive(true);
-			}
-			else
-			{
-				MenuBackgroundMusic.keepPlaying = true;
-				LoadConnectScene.textureToShow = null;
-				LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
-				LoadConnectScene.noteToShow = null;
-				Singleton<SceneLoader>.Instance.LoadScene(Defs.PromSceneName);
-			}
-		}
-	}
-
-	private void HideAddPanel()
-	{
-		addInClanPanel.SetActive(false);
-		FriendsController.sharedController.StopRefreshingOnlineWithClanInfo();
-		FriendsController.sharedController.StartRefreshingClanOnline();
-		AtAddPanel = false;
-		foreach (Transform item in addFriendsGrid.transform)
-		{
-			item.parent = null;
-			UnityEngine.Object.Destroy(item.gameObject);
-		}
-	}
-
-	private void HandleEditClicked(object sender, EventArgs e)
-	{
-		GoToSM();
-	}
-
-	public void GoToSM()
-	{
-		GameObject gameObject = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("SkinEditorController"));
-		SkinEditorController component = gameObject.GetComponent<SkinEditorController>();
-		if (component != null)
-		{
-			_003CGoToSM_003Ec__AnonStorey1E6 _003CGoToSM_003Ec__AnonStorey1E = new _003CGoToSM_003Ec__AnonStorey1E6();
-			_003CGoToSM_003Ec__AnonStorey1E._003C_003Ef__this = this;
-			_003CGoToSM_003Ec__AnonStorey1E.backHandler = null;
-			_003CGoToSM_003Ec__AnonStorey1E.backHandler = _003CGoToSM_003Ec__AnonStorey1E._003C_003Em__21;
-			SkinEditorController.ExitFromSkinEditor += _003CGoToSM_003Ec__AnonStorey1E.backHandler;
-			if (InClan)
-			{
-				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)previewLogo.mainTexture);
-			}
-			else
-			{
-				SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture((Texture2D)logo.mainTexture);
-			}
-			SkinEditorController.modeEditor = SkinEditorController.ModeEditor.LogoClan;
-			SkinEditorController.currentSkin = EditorTextures.CreateCopyTexture((Texture2D)logo.mainTexture);
-			gameObject.transform.parent = null;
-			base.gameObject.SetActive(false);
-		}
-	}
-
-	public void FailedSendBuyClan()
-	{
-		FriendsController.sharedController.FailedSendNewClan -= FailedSendBuyClan;
-		FriendsController.sharedController.ReturnNewIDClan -= ReturnIDNewClan;
-	}
-
-	public void ReturnIDNewClan(int _idNewClan)
-	{
-		FriendsController.sharedController.FailedSendNewClan -= FailedSendBuyClan;
-		FriendsController.sharedController.ReturnNewIDClan -= ReturnIDNewClan;
-		if (_idNewClan > 0)
-		{
-			BlockGUI = false;
-			FriendsController.sharedController.ClanID = _idNewClan.ToString();
-			FriendsController.sharedController.clanLeaderID = FriendsController.sharedController.id;
-			Texture2D texture2D = logo.mainTexture as Texture2D;
-			byte[] inArray = texture2D.EncodeToPNG();
-			string clanLogo = Convert.ToBase64String(inArray);
-			FriendsController.sharedController.clanLogo = clanLogo;
-			Texture mainTexture = previewLogo.mainTexture;
-			previewLogo.mainTexture = logo.mainTexture;
-			SkinsController.logoClanUserTexture = EditorTextures.CreateCopyTexture(previewLogo.mainTexture);
-			if (mainTexture != null)
-			{
-			}
-			FriendsController.sharedController.clanName = inputNameClanLabel.text;
-			nameClanLabel.text = FriendsController.sharedController.clanName;
-			BuyNewClan();
-			string value = ((!(ExperienceController.sharedController != null)) ? "Unknown" : ExperienceController.sharedController.currentLevel.ToString());
-			string value2 = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1).ToString();
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Rank", value);
-			dictionary.Add("Session", value2);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Clan Created", parameters);
-			if ((FacebookController.FacebookSupported || TwitterController.TwitterSupported) && Storager.getInt("ShownCreateClanRewardWindowKey", false) == 0 && !Device.isPixelGunLow)
-			{
-				rewardCreateClanWindow.SetActive(true);
-				Storager.setInt("ShownCreateClanRewardWindowKey", 1, false);
-			}
-		}
-		else
-		{
-			StartCoroutine(ShowThisNameInUse());
-		}
-	}
-
-	public IEnumerator ShowThisNameInUse()
-	{
-		NameIsUsedPanel.SetActive(true);
-		yield return new WaitForSeconds(3f);
-		NameIsUsedPanel.SetActive(false);
-		BlockGUI = false;
-	}
-
-	public IEnumerator ShowCheckConnection()
-	{
-		CheckConnectionPanel.SetActive(true);
-		yield return new WaitForSeconds(3f);
-		CheckConnectionPanel.SetActive(false);
-		BlockGUI = false;
-	}
-
-	public void BuyNewClan()
-	{
-		int clansPrice = Defs.ClansPrice;
-		int @int = Storager.getInt("Coins", false);
-		int val = @int - clansPrice;
-		Storager.setInt("Coins", val, false);
-		if (Application.platform != RuntimePlatform.IPhonePlayer)
-		{
-			PlayerPrefs.Save();
-		}
-		CreateClanPanel.SetActive(false);
-		InClan = true;
-		ShowClanPanel();
-	}
-
-	private void HandleCreateClanClicked(object sender, EventArgs e)
-	{
-		_003CHandleCreateClanClicked_003Ec__AnonStorey1E8 _003CHandleCreateClanClicked_003Ec__AnonStorey1E = new _003CHandleCreateClanClicked_003Ec__AnonStorey1E8();
-		_003CHandleCreateClanClicked_003Ec__AnonStorey1E._003C_003Ef__this = this;
-		_003CHandleCreateClanClicked_003Ec__AnonStorey1E.act = null;
-		_003CHandleCreateClanClicked_003Ec__AnonStorey1E.act = _003CHandleCreateClanClicked_003Ec__AnonStorey1E._003C_003Em__22;
-		_003CHandleCreateClanClicked_003Ec__AnonStorey1E.act();
-	}
-
-	private void ErrorHandler(string error)
-	{
-		FriendsController.sharedController.FailedSendNewClan -= FailedSendBuyClan;
-		FriendsController.sharedController.ReturnNewIDClan -= ReturnIDNewClan;
-		BlockGUI = false;
-	}
-
-	private void HandleEditLogoInPreviewClicked(object sender, EventArgs e)
-	{
-		GoToSM();
-	}
-
-	private void HandleLeaveClicked(object sender, EventArgs e)
-	{
-		InClan = false;
-		NoClanPanel.SetActive(true);
-		FriendsController.sharedController.ExitClan();
-		FriendsController.sharedController.ClearClanData();
-	}
-
-	private void HandleAddMembersClicked(object sender, EventArgs e)
-	{
-		ShowAddMembersScreen();
-	}
-
-	internal void ShowAddMembersScreen()
-	{
-		clanPanel.SetActive(false);
-		addInClanPanel.SetActive(true);
-		FriendsController.sharedController.StartRefreshingOnlineWithClanInfo();
-		FriendsController.sharedController.StopRefreshingClanOnline();
-		AtAddPanel = true;
-		StartCoroutine(FillAddMembers());
-	}
-
-	private void HandleDeleteClanClicked(object sender, EventArgs e)
-	{
-		deleteClanDialog.SetActive(true);
-		DisableStatisticsPanel(true);
-	}
-
-	private void HandleYesDelClanClicked(object sender, EventArgs e)
-	{
-		deleteClanDialog.SetActive(false);
-		DisableStatisticsPanel(false);
-		InClan = false;
-		statisiticPanel.SetActive(false);
-		FriendsController.sharedController.DeleteClan();
-		FriendsController.sharedController.ClearClanData();
-	}
-
-	private void HandleNoDelClanClicked(object sender, EventArgs e)
-	{
-		_isCancellationRequested = true;
-	}
-
-	private void DisableStatisticsPanel(bool disable)
-	{
-		BackBut.GetComponent<UIButton>().isEnabled = !disable;
-		deleteClanButton.GetComponent<UIButton>().isEnabled = !disable;
-	}
-
-	private void HandleStatisticsButtonClicked(object sender, EventArgs e)
-	{
-		clanPanel.SetActive(false);
-		statisiticPanel.SetActive(true);
-		AtStatsPanel = true;
-	}
-
-	public void ShowClanPanel()
-	{
-		clanPanel.SetActive(true);
-	}
-
-	private IEnumerator FillAddMembers()
-	{
-		foreach (Transform child in addFriendsGrid.transform)
-		{
-			child.parent = null;
-			UnityEngine.Object.Destroy(child.gameObject);
-		}
-		foreach (string friend in FriendsController.sharedController.friends)
-		{
-			Dictionary<string, object> playerInfo;
-			if (!FriendsController.sharedController.playersInfo.TryGetValue(friend, out playerInfo))
-			{
-				continue;
-			}
-			object playerNode;
-			if (playerInfo.TryGetValue("player", out playerNode))
-			{
-				Dictionary<string, object> o = playerNode as Dictionary<string, object>;
-				if (_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cacheF == null)
-				{
-					_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cacheF = _003CFillAddMembers_003Ec__Iterator15._003C_003Em__28;
-				}
-				Dictionary<string, string> playerDictionary = o.Map(_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cacheF);
-				string clanCreatorId;
-				if (playerDictionary.TryGetValue("clan_creator_id", out clanCreatorId) && clanCreatorId == FriendsController.sharedController.id)
-				{
-					continue;
-				}
-			}
-			GameObject f = UnityEngine.Object.Instantiate(Resources.Load("Friend")) as GameObject;
-			FriendPreview fp = f.GetComponent<FriendPreview>();
-			f.transform.parent = addFriendsGrid.transform;
-			f.transform.localScale = new Vector3(1f, 1f, 1f);
-			fp.ClanInvite = true;
-			fp.id = friend;
-			fp.join.GetComponent<JoinRoomFromFrendsButton>().joinRoomFromFrends = joinRoomFromFrends;
-			Dictionary<string, object> source = playerInfo;
-			if (_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache10 == null)
-			{
-				_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache10 = _003CFillAddMembers_003Ec__Iterator15._003C_003Em__29;
-			}
-			Func<KeyValuePair<string, object>, string> _003C_003Ef__am_0024cache = _003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache10;
-			if (_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache11 == null)
-			{
-				_003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache11 = _003CFillAddMembers_003Ec__Iterator15._003C_003Em__2A;
-			}
-			Dictionary<string, string> plDict = source.ToDictionary(_003C_003Ef__am_0024cache, _003CFillAddMembers_003Ec__Iterator15._003C_003Ef__am_0024cache11);
-			if (playerInfo.ContainsKey("nick"))
-			{
-				fp.nm.text = plDict["nick"];
-			}
-			if (playerInfo.ContainsKey("rank"))
-			{
-				string r = plDict["rank"];
-				if (r.Equals("0"))
-				{
-					r = "1";
-				}
-				fp.rank.spriteName = "Rank_" + r;
-			}
-			if (playerInfo.ContainsKey("skin"))
-			{
-				fp.SetSkin(plDict["skin"]);
-			}
-			fp.FillClanAttrs(plDict);
-		}
-		yield return null;
-		addFriendsGrid.Reposition();
 	}
 
 	private void Update()
 	{
-		if (startPanel.activeSelf != !FriendsController.readyToOperate)
+		if (this.startPanel.activeSelf != !FriendsController.readyToOperate)
 		{
-			startPanel.SetActive(!FriendsController.readyToOperate);
+			this.startPanel.SetActive(!FriendsController.readyToOperate);
 		}
-		if (_isCancellationRequested)
+		if (this._isCancellationRequested)
 		{
-			HandleCancellation();
-			_isCancellationRequested = false;
+			this.HandleCancellation();
+			this._isCancellationRequested = false;
 		}
-		addMembersButton.SetActive(!string.IsNullOrEmpty(FriendsController.sharedController.id) && FriendsController.sharedController.clanLeaderID != null && FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID) && !BlockGUI && FriendsController.ClanDataSettted);
-		previewLogo.transform.parent.GetComponent<UIButton>().isEnabled = addMembersButton.activeInHierarchy;
-		tapToEdit.gameObject.SetActive(addMembersButton.activeInHierarchy);
-		leaveButton.SetActive(!string.IsNullOrEmpty(FriendsController.sharedController.id) && FriendsController.sharedController.clanLeaderID != null && !FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID));
-		deleteClanButton.SetActive(!string.IsNullOrEmpty(FriendsController.sharedController.id) && FriendsController.sharedController.clanLeaderID != null && FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID));
-		changeClanNameInput.gameObject.SetActive(!string.IsNullOrEmpty(FriendsController.sharedController.id) && FriendsController.sharedController.clanLeaderID != null && FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID) && !BlockGUI);
-		InClan = !string.IsNullOrEmpty(FriendsController.sharedController.ClanID);
-		NoClanPanel.SetActive(FriendsController.readyToOperate && !InClan && !CreateClanPanel.activeInHierarchy && SkinEditorController.sharedController == null && CurrentState != State.Inbox && CurrentState != State.ProfileDetails);
-		clanPanel.SetActive(FriendsController.readyToOperate && InClan && !AtAddPanel && !AtStatsPanel && !ShowProfile && CurrentState != State.Inbox && CurrentState != State.ProfileDetails);
-		statisiticPanel.SetActive(FriendsController.readyToOperate && InClan && !AtAddPanel && AtStatsPanel);
-		bool activeInHierarchy = addInClanPanel.activeInHierarchy;
-		addInClanPanel.SetActive(FriendsController.readyToOperate && InClan && AtAddPanel && !AtStatsPanel && CurrentState != State.ProfileDetails);
-		if (!InClan)
+		this.addMembersButton.SetActive((string.IsNullOrEmpty(FriendsController.sharedController.id) || FriendsController.sharedController.clanLeaderID == null || !FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID) || this.BlockGUI ? false : FriendsController.ClanDataSettted));
+		this.previewLogo.transform.parent.GetComponent<UIButton>().isEnabled = this.addMembersButton.activeInHierarchy;
+		this.tapToEdit.gameObject.SetActive(this.addMembersButton.activeInHierarchy);
+		this.leaveButton.SetActive((string.IsNullOrEmpty(FriendsController.sharedController.id) || FriendsController.sharedController.clanLeaderID == null ? false : !FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID)));
+		this.deleteClanButton.SetActive((string.IsNullOrEmpty(FriendsController.sharedController.id) || FriendsController.sharedController.clanLeaderID == null ? false : FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID)));
+		this.changeClanNameInput.gameObject.SetActive((string.IsNullOrEmpty(FriendsController.sharedController.id) || FriendsController.sharedController.clanLeaderID == null || !FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID) ? false : !this.BlockGUI));
+		this.InClan = !string.IsNullOrEmpty(FriendsController.sharedController.ClanID);
+		this.NoClanPanel.SetActive((!FriendsController.readyToOperate || this.InClan || this.CreateClanPanel.activeInHierarchy || !(SkinEditorController.sharedController == null) || this.CurrentState == ClansGUIController.State.Inbox ? false : this.CurrentState != ClansGUIController.State.ProfileDetails));
+		this.clanPanel.SetActive((!FriendsController.readyToOperate || !this.InClan || ClansGUIController.AtAddPanel || ClansGUIController.AtStatsPanel || ClansGUIController.ShowProfile || this.CurrentState == ClansGUIController.State.Inbox ? false : this.CurrentState != ClansGUIController.State.ProfileDetails));
+		this.statisiticPanel.SetActive((!FriendsController.readyToOperate || !this.InClan || ClansGUIController.AtAddPanel ? false : ClansGUIController.AtStatsPanel));
+		bool flag = this.addInClanPanel.activeInHierarchy;
+		this.addInClanPanel.SetActive((!FriendsController.readyToOperate || !this.InClan || !ClansGUIController.AtAddPanel || ClansGUIController.AtStatsPanel ? false : this.CurrentState != ClansGUIController.State.ProfileDetails));
+		if (!this.InClan)
 		{
-			deleteClanDialog.SetActive(false);
-			DisableStatisticsPanel(false);
+			this.deleteClanDialog.SetActive(false);
+			this.DisableStatisticsPanel(false);
 		}
-		if (clanPanel.activeInHierarchy)
+		if (this.clanPanel.activeInHierarchy)
 		{
-			statisticsButton.SetActive(!BlockGUI);
-			friendsGrid.gameObject.SetActive(!BlockGUI);
+			this.statisticsButton.SetActive(!this.BlockGUI);
+			this.friendsGrid.gameObject.SetActive(!this.BlockGUI);
 		}
-		if (!addInClanPanel.activeInHierarchy && activeInHierarchy)
+		if (!this.addInClanPanel.activeInHierarchy && flag)
 		{
-			HideAddPanel();
+			this.HideAddPanel();
 		}
-		if (!statisiticPanel.activeInHierarchy)
+		if (!this.statisiticPanel.activeInHierarchy)
 		{
-			AtStatsPanel = false;
+			ClansGUIController.AtStatsPanel = false;
 		}
-		if (ShowProfile && (!InClan || !FriendsController.readyToOperate))
+		if (ClansGUIController.ShowProfile && (!this.InClan || !FriendsController.readyToOperate))
 		{
-			_friendProfileController.HandleBackClicked();
+			this._friendProfileController.HandleBackClicked();
 		}
-		if (AtAddPanel)
+		if (ClansGUIController.AtAddPanel)
 		{
-			clanIsFull.gameObject.SetActive(FriendsController.sharedController.ClanLimitReached);
+			this.clanIsFull.gameObject.SetActive(FriendsController.sharedController.ClanLimitReached);
 		}
-		SetScreenMessage();
-		if (InClan)
+		this.SetScreenMessage();
+		if (this.InClan)
 		{
-			countMembersLabel.text = string.Format("{0}\n{1}", LocalizationStore.Get("Key_0983"), FriendsController.sharedController.clanMembers.Count);
+			this.countMembersLabel.text = string.Format("{0}\n{1}", LocalizationStore.Get("Key_0983"), FriendsController.sharedController.clanMembers.Count);
 		}
-		noMembersLabel.SetActive(FriendsController.sharedController.clanMembers != null && FriendsController.sharedController.clanMembers.Count < 2);
-		ClanName.SetActive(!BlockGUI);
-		if (!statisiticPanel.activeInHierarchy)
+		this.noMembersLabel.SetActive((FriendsController.sharedController.clanMembers == null ? false : FriendsController.sharedController.clanMembers.Count < 2));
+		this.ClanName.SetActive(!this.BlockGUI);
+		if (!this.statisiticPanel.activeInHierarchy)
 		{
-			BackBut.GetComponent<UIButton>().isEnabled = !BlockGUI;
+			this.BackBut.GetComponent<UIButton>().isEnabled = !this.BlockGUI;
 		}
-		CreateClanButton.GetComponent<UIButton>().isEnabled = !BlockGUI;
-		Left.GetComponent<UIButton>().isEnabled = !BlockGUI;
-		Right.GetComponent<UIButton>().isEnabled = !BlockGUI;
-		EditLogoBut.GetComponent<UIButton>().isEnabled = !BlockGUI;
-		if (_defendTime > 0f)
+		this.CreateClanButton.GetComponent<UIButton>().isEnabled = !this.BlockGUI;
+		this.Left.GetComponent<UIButton>().isEnabled = !this.BlockGUI;
+		this.Right.GetComponent<UIButton>().isEnabled = !this.BlockGUI;
+		this.EditLogoBut.GetComponent<UIButton>().isEnabled = !this.BlockGUI;
+		if (this._defendTime > 0f)
 		{
-			_defendTime -= Time.deltaTime;
+			this._defendTime -= Time.deltaTime;
 		}
-		friendsGrid.transform.parent.GetComponent<UIScrollView>().enabled = friendsGrid.transform.childCount > 4;
-		if (friendsGrid.transform.childCount > 0 && friendsGrid.transform.childCount <= 4)
+		this.friendsGrid.transform.parent.GetComponent<UIScrollView>().enabled = this.friendsGrid.transform.childCount > 4;
+		if (this.friendsGrid.transform.childCount > 0 && this.friendsGrid.transform.childCount <= 4)
 		{
-			float num = 0f;
-			foreach (Transform item in friendsGrid.transform)
+			float current = 0f;
+			IEnumerator enumerator = this.friendsGrid.transform.GetEnumerator();
+			try
 			{
-				num += item.localPosition.x;
+				while (enumerator.MoveNext())
+				{
+					current += ((Transform)enumerator.Current).localPosition.x;
+				}
 			}
-			num /= (float)friendsGrid.transform.childCount;
-			Transform parent = friendsGrid.transform.parent;
-			if (parent != null)
+			finally
 			{
-				UIPanel component = parent.GetComponent<UIPanel>();
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
+				{
+				}
+				disposable.Dispose();
+			}
+			current /= (float)this.friendsGrid.transform.childCount;
+			Transform vector3 = this.friendsGrid.transform.parent;
+			if (vector3 != null)
+			{
+				UIPanel component = vector3.GetComponent<UIPanel>();
 				if (component != null)
 				{
-					component.clipOffset = new Vector2(num, component.clipOffset.y);
-					parent.localPosition = new Vector3(0f - num, parent.localPosition.y, parent.localPosition.z);
+					component.clipOffset = new Vector2(current, component.clipOffset.y);
+					float single = vector3.localPosition.y;
+					Vector3 vector31 = vector3.localPosition;
+					vector3.localPosition = new Vector3(-current, single, vector31.z);
 				}
 			}
 		}
-		if (Time.realtimeSinceStartup - timeOfLastSort > 10f)
+		if (Time.realtimeSinceStartup - this.timeOfLastSort > 10f)
 		{
 			FriendsGUIController.RaiseUpdaeOnlineEvent();
-			timeOfLastSort = Time.realtimeSinceStartup;
-			_SortFriendPreviews();
+			this.timeOfLastSort = Time.realtimeSinceStartup;
+			this._SortFriendPreviews();
 		}
-		UISprite[] value = _newMessagesOverlays.Value;
-		UISprite[] array = value;
-		foreach (UISprite uISprite in array)
+		UISprite[] value = this._newMessagesOverlays.Value;
+		for (int i = 0; i < (int)value.Length; i++)
 		{
+			UISprite uISprite = value[i];
 			if (ClanIncomingInvitesController.CurrentRequest == null || !ClanIncomingInvitesController.CurrentRequest.IsCompleted)
 			{
 				uISprite.gameObject.SetActive(false);
@@ -1203,224 +1123,15 @@ public sealed class ClansGUIController : MonoBehaviour, IFriendsGUIController
 		}
 	}
 
-	private void SetScreenMessage()
+	public void UpdateGUI()
 	{
-		if (receivingPlashka == null)
-		{
-			return;
-		}
-		string text = string.Empty;
-		if (!FriendsController.ClanDataSettted && InClan)
-		{
-			text = LocalizationStore.Key_0348;
-		}
-		else if (FriendsController.sharedController != null && InClan)
-		{
-			if (_friendProfileController != null && _friendProfileController.FriendProfileGo != null && _friendProfileController.FriendProfileGo.activeInHierarchy)
-			{
-				if (FriendsController.sharedController.NumberOffFullInfoRequests > 0)
-				{
-					text = LocalizationStore.Key_0348;
-				}
-			}
-			else if (CreateClanPanel.activeInHierarchy && FriendsController.sharedController.NumberOfCreateClanRequests > 0)
-			{
-				text = LocalizationStore.Key_0348;
-			}
-		}
-		else if ((!InClan || !FriendsController.readyToOperate) && !NoClanPanel.activeInHierarchy && !CreateClanPanel.activeInHierarchy && !clanPanel.activeInHierarchy && !statisiticPanel.activeInHierarchy && !addInClanPanel.activeInHierarchy)
-		{
-			if (CurrentState != State.Inbox)
-			{
-				goto IL_0178;
-			}
-			if (CurrentState == State.Inbox)
-			{
-				Task<List<object>> currentRequest = ClanIncomingInvitesController.CurrentRequest;
-				if (_003C_003Ef__am_0024cache3C == null)
-				{
-					_003C_003Ef__am_0024cache3C = _003CSetScreenMessage_003Em__23;
-				}
-				if (currentRequest.Filter(_003C_003Ef__am_0024cache3C) == null)
-				{
-					goto IL_0178;
-				}
-			}
-		}
-		goto IL_017e;
-		IL_0178:
-		text = LocalizationStore.Key_0348;
-		goto IL_017e;
-		IL_017e:
-		if (!string.IsNullOrEmpty(text))
-		{
-			receivingPlashka.GetComponent<UILabel>().text = text;
-			receivingPlashka.SetActive(true);
-		}
-		else
-		{
-			receivingPlashka.SetActive(false);
-		}
+		base.StartCoroutine(this.__UpdateGUI());
 	}
 
-	private void OnDestroy()
+	internal enum State
 	{
-		sharedController = null;
-		_friendProfileController.Dispose();
-		FriendsController.sharedController.StopRefreshingClanOnline();
-		FriendsController friendsController = FriendsController.sharedController;
-		friendsController.onChangeClanName = (FriendsController.OnChangeClanName)Delegate.Remove(friendsController.onChangeClanName, new FriendsController.OnChangeClanName(OnChangeClanName));
-		AtAddPanel = false;
-		AtStatsPanel = false;
-		ShowProfile = false;
-		UIInputRilisoft uIInputRilisoft = ((!(ClanName != null)) ? null : ClanName.GetComponent<UIInputRilisoft>());
-		if (uIInputRilisoft != null)
-		{
-			uIInputRilisoft.onFocus = (UIInputRilisoft.OnFocus)Delegate.Remove(uIInputRilisoft.onFocus, new UIInputRilisoft.OnFocus(OnFocusCreateClanName));
-			uIInputRilisoft.onFocusLost = (UIInputRilisoft.OnFocusLost)Delegate.Remove(uIInputRilisoft.onFocusLost, new UIInputRilisoft.OnFocusLost(onFocusLostCreateClanName));
-		}
-		FriendsController.DisposeProfile();
-	}
-
-	private void OnFocusCreateClanName()
-	{
-		if (ClanName != null)
-		{
-			ClanName.GetComponent<UIInputRilisoft>().value = string.Empty;
-		}
-	}
-
-	private void onFocusLostCreateClanName()
-	{
-		if (ClanName != null)
-		{
-			UIInputRilisoft component = ClanName.GetComponent<UIInputRilisoft>();
-			if (string.IsNullOrEmpty(component.value))
-			{
-				component.value = LocalizationStore.Key_0589;
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private ClanIncomingInvitesController _003CClansGUIController_003Em__14()
-	{
-		return base.gameObject.GetComponent<ClanIncomingInvitesController>();
-	}
-
-	[CompilerGenerated]
-	private UISprite[] _003CClansGUIController_003Em__15()
-	{
-		GameObject o = clanPanel;
-		if (_003C_003Ef__am_0024cache3D == null)
-		{
-			_003C_003Ef__am_0024cache3D = _003CClansGUIController_003Em__24;
-		}
-		UISprite[] first = o.Map(_003C_003Ef__am_0024cache3D, new UISprite[0]);
-		GameObject noClanPanel = NoClanPanel;
-		if (_003C_003Ef__am_0024cache3E == null)
-		{
-			_003C_003Ef__am_0024cache3E = _003CClansGUIController_003Em__25;
-		}
-		UISprite[] second = noClanPanel.Map(_003C_003Ef__am_0024cache3E, new UISprite[0]);
-		IEnumerable<UISprite> source = first.Concat(second);
-		if (_003C_003Ef__am_0024cache3F == null)
-		{
-			_003C_003Ef__am_0024cache3F = _003CClansGUIController_003Em__26;
-		}
-		IEnumerable<UISprite> source2 = source.Where(_003C_003Ef__am_0024cache3F);
-		return source2.ToArray();
-	}
-
-	[CompilerGenerated]
-	private static string _003CStart_003Em__17()
-	{
-		return "I’ve created a CLAN in @PixelGun3D! Join my team and get ready to fight! #pixelgun3d #pixelgun #pg3d #mobile #fps http://goo.gl/8fzL9u";
-	}
-
-	[CompilerGenerated]
-	private void _003COnEnable_003Em__19()
-	{
-		_isCancellationRequested = true;
-	}
-
-	[CompilerGenerated]
-	private static int _003C_SortFriendPreviews_003Em__1D(FriendPreview fp1, FriendPreview fp2)
-	{
-		if (fp1.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp1.id))
-		{
-			return 1;
-		}
-		if (fp2.id == null || !FriendsController.sharedController.onlineInfo.ContainsKey(fp2.id))
-		{
-			return -1;
-		}
-		string s = FriendsController.sharedController.onlineInfo[fp1.id]["delta"];
-		string s2 = FriendsController.sharedController.onlineInfo[fp1.id]["game_mode"];
-		int num = int.Parse(s);
-		int num2 = int.Parse(s2);
-		int num3 = (((float)num > FriendsController.onlineDelta || (num2 > 99 && num2 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num2 / 100 != 3)) ? 2 : ((num2 == -1) ? 1 : 0));
-		if (FriendsController.sharedController.clanLeaderID != null && fp1.id.Equals(FriendsController.sharedController.clanLeaderID))
-		{
-			num3 = -1;
-		}
-		string s3 = FriendsController.sharedController.onlineInfo[fp2.id]["delta"];
-		string s4 = FriendsController.sharedController.onlineInfo[fp2.id]["game_mode"];
-		int num4 = int.Parse(s3);
-		int num5 = int.Parse(s4);
-		int num6 = (((float)num4 > FriendsController.onlineDelta || (num5 > 99 && num5 / 100 != (int)ConnectSceneNGUIController.myPlatformConnect && num5 / 100 != 3)) ? 2 : ((num5 <= -1) ? 1 : 0));
-		if (FriendsController.sharedController.clanLeaderID != null && fp2.id.Equals(FriendsController.sharedController.clanLeaderID))
-		{
-			num6 = -1;
-		}
-		int result;
-		int result2;
-		if (num3 == num6 && int.TryParse(fp1.id, out result) && int.TryParse(fp2.id, out result2))
-		{
-			return result - result2;
-		}
-		return num3 - num6;
-	}
-
-	[CompilerGenerated]
-	private static GameObject _003CHandleCancellation_003Em__1E(ClanIncomingInvitesController c)
-	{
-		return c.inboxPanel;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CHandleCancellation_003Em__1F(GameObject p)
-	{
-		return p.activeInHierarchy;
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleCancellation_003Em__20(ClanIncomingInvitesController c)
-	{
-		c.HandleBackFromInboxPressed();
-	}
-
-	[CompilerGenerated]
-	private static bool _003CSetScreenMessage_003Em__23(Task<List<object>> t)
-	{
-		return t.IsCompleted;
-	}
-
-	[CompilerGenerated]
-	private static UISprite[] _003CClansGUIController_003Em__24(GameObject c)
-	{
-		return c.GetComponentsInChildren<UISprite>(true);
-	}
-
-	[CompilerGenerated]
-	private static UISprite[] _003CClansGUIController_003Em__25(GameObject c)
-	{
-		return c.GetComponentsInChildren<UISprite>(true);
-	}
-
-	[CompilerGenerated]
-	private static bool _003CClansGUIController_003Em__26(UISprite s)
-	{
-		return "NewMessages".Equals(s.name);
+		Default,
+		Inbox,
+		ProfileDetails
 	}
 }

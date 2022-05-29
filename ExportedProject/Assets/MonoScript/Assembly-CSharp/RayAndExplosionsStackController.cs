@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,68 +12,72 @@ public class RayAndExplosionsStackController : MonoBehaviour
 
 	public Transform mytranform;
 
+	public RayAndExplosionsStackController()
+	{
+	}
+
 	private void Awake()
 	{
-		sharedController = this;
-		mytranform = GetComponent<Transform>();
+		RayAndExplosionsStackController.sharedController = this;
+		this.mytranform = base.GetComponent<Transform>();
 	}
 
 	public GameObject GetObjectFromName(string _name)
 	{
-		GameObject gameObject = null;
-		bool flag = gameObjects.ContainsKey(_name);
+		GameObject item = null;
+		bool flag = this.gameObjects.ContainsKey(_name);
 		if (flag)
 		{
-			while (gameObjects[_name].Count > 0 && gameObjects[_name][0] == null)
+			while (this.gameObjects[_name].Count > 0 && this.gameObjects[_name][0] == null)
 			{
-				gameObjects[_name].RemoveAt(0);
+				this.gameObjects[_name].RemoveAt(0);
 			}
 		}
-		if (flag && gameObjects[_name].Count > 0)
+		if (!flag || this.gameObjects[_name].Count <= 0)
 		{
-			gameObject = gameObjects[_name][0];
-			gameObjects[_name].RemoveAt(0);
-			gameObject.SetActive(true);
+			GameObject gameObject = Resources.Load(_name) as GameObject;
+			if (gameObject != null)
+			{
+				item = UnityEngine.Object.Instantiate(gameObject, Vector3.down * 10000f, Quaternion.identity) as GameObject;
+				item.GetComponent<Transform>().parent = this.mytranform;
+				item.GetComponent<RayAndExplosionsStackItem>().myName = _name;
+			}
 		}
 		else
 		{
-			GameObject gameObject2 = Resources.Load(_name) as GameObject;
-			if (gameObject2 != null)
-			{
-				gameObject = Object.Instantiate(gameObject2, Vector3.down * 10000f, Quaternion.identity) as GameObject;
-				gameObject.GetComponent<Transform>().parent = mytranform;
-				gameObject.GetComponent<RayAndExplosionsStackItem>().myName = _name;
-			}
+			item = this.gameObjects[_name][0];
+			this.gameObjects[_name].RemoveAt(0);
+			item.SetActive(true);
 		}
-		if (gameObject == null && Application.isEditor)
+		if (item == null && Application.isEditor)
 		{
-			Debug.LogError("GameOblect " + _name + " in RayAndExplosionsStackController not create!!!");
+			Debug.LogError(string.Concat("GameOblect ", _name, " in RayAndExplosionsStackController not create!!!"));
 		}
-		return gameObject;
+		return item;
+	}
+
+	private void OnDestroy()
+	{
+		RayAndExplosionsStackController.sharedController = null;
 	}
 
 	public void ReturnObjectFromName(GameObject returnObject, string _name)
 	{
 		returnObject.GetComponent<Transform>().position = Vector3.down * 10000f;
 		returnObject.SetActive(false);
-		returnObject.transform.parent = mytranform;
-		if (!gameObjects.ContainsKey(_name))
+		returnObject.transform.parent = this.mytranform;
+		if (!this.gameObjects.ContainsKey(_name))
 		{
-			gameObjects.Add(_name, new List<GameObject>());
+			this.gameObjects.Add(_name, new List<GameObject>());
 		}
-		if (!timeUseGameObjects.ContainsKey(_name))
+		if (this.timeUseGameObjects.ContainsKey(_name))
 		{
-			timeUseGameObjects.Add(_name, Time.realtimeSinceStartup);
+			this.timeUseGameObjects[_name] = Time.realtimeSinceStartup;
 		}
 		else
 		{
-			timeUseGameObjects[_name] = Time.realtimeSinceStartup;
+			this.timeUseGameObjects.Add(_name, Time.realtimeSinceStartup);
 		}
-		gameObjects[_name].Add(returnObject);
-	}
-
-	private void OnDestroy()
-	{
-		sharedController = null;
+		this.gameObjects[_name].Add(returnObject);
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,34 +10,36 @@ public class ChestBonusData
 
 	public List<ChestBonusItemData> items;
 
-	public string GetItemCountOrTime()
+	public ChestBonusData()
 	{
-		if (items == null || items.Count == 0)
-		{
-			return string.Empty;
-		}
-		if (items.Count == 1)
-		{
-			ChestBonusItemData chestBonusItemData = items[0];
-			int num = chestBonusItemData.timeLife / 24;
-			return (chestBonusItemData.timeLife != -1) ? chestBonusItemData.GetTimeLabel(true) : chestBonusItemData.count.ToString();
-		}
-		return string.Empty;
 	}
 
 	public Texture GetImage()
 	{
-		if (items == null || items.Count == 0)
+		if (this.items == null || this.items.Count == 0)
 		{
 			return null;
 		}
 		string empty = string.Empty;
-		if (items.Count == 1)
+		if (this.items.Count != 1)
 		{
-			ChestBonusItemData chestBonusItemData = items[0];
-			return ItemDb.GetTextureForShopItem(chestBonusItemData.tag);
+			return Resources.Load<Texture>("Textures/Bank/StarterPack_Weapon");
 		}
-		empty = "Textures/Bank/StarterPack_Weapon";
-		return Resources.Load<Texture>(empty);
+		return ItemDb.GetTextureForShopItem(this.items[0].tag);
+	}
+
+	public string GetItemCountOrTime()
+	{
+		if (this.items == null || this.items.Count == 0)
+		{
+			return string.Empty;
+		}
+		if (this.items.Count != 1)
+		{
+			return string.Empty;
+		}
+		ChestBonusItemData item = this.items[0];
+		int num = item.timeLife / 24;
+		return (item.timeLife != -1 ? item.GetTimeLabel(true) : item.count.ToString());
 	}
 }

@@ -1,19 +1,17 @@
+using AnimationOrTween;
 using System;
 using System.Collections.Generic;
-using AnimationOrTween;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Toggle")]
 [ExecuteInEditMode]
 public class UIToggle : UIWidgetContainer
 {
-	public delegate bool Validate(bool choice);
-
-	public static BetterList<UIToggle> list = new BetterList<UIToggle>();
+	public static BetterList<UIToggle> list;
 
 	public static UIToggle current;
 
-	public int group;
+	public int @group;
 
 	public UIWidget activeSprite;
 
@@ -31,48 +29,42 @@ public class UIToggle : UIWidgetContainer
 
 	public List<EventDelegate> onChange = new List<EventDelegate>();
 
-	public Validate validator;
+	public UIToggle.Validate validator;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private UISprite checkSprite;
 
 	[HideInInspector]
 	[SerializeField]
 	private Animation checkAnimation;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private GameObject eventReceiver;
 
 	[HideInInspector]
 	[SerializeField]
 	private string functionName = "OnActivate";
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool startsChecked;
 
 	private bool mIsActive = true;
 
 	private bool mStarted;
 
-	public bool value
+	[Obsolete("Use 'value' instead")]
+	public bool isChecked
 	{
 		get
 		{
-			return (!mStarted) ? startsActive : mIsActive;
+			return this.@value;
 		}
 		set
 		{
-			if (!mStarted)
-			{
-				startsActive = value;
-			}
-			else if (group == 0 || value || optionCanBeNone || !mStarted)
-			{
-				Set(value);
-			}
+			this.@value = value;
 		}
 	}
 
@@ -80,218 +72,229 @@ public class UIToggle : UIWidgetContainer
 	{
 		get
 		{
-			Collider component = GetComponent<Collider>();
+			Collider component = base.GetComponent<Collider>();
 			if (component != null)
 			{
 				return component.enabled;
 			}
-			Collider2D component2 = GetComponent<Collider2D>();
-			return component2 != null && component2.enabled;
+			Collider2D collider2D = base.GetComponent<Collider2D>();
+			return (collider2D == null ? false : collider2D.enabled);
 		}
 	}
 
-	[Obsolete("Use 'value' instead")]
-	public bool isChecked
+	public bool @value
 	{
 		get
 		{
-			return value;
+			return (!this.mStarted ? this.startsActive : this.mIsActive);
 		}
 		set
 		{
-			this.value = value;
+			if (!this.mStarted)
+			{
+				this.startsActive = value;
+			}
+			else if (this.@group == 0 || value || this.optionCanBeNone || !this.mStarted)
+			{
+				this.Set(value);
+			}
 		}
+	}
+
+	static UIToggle()
+	{
+		UIToggle.list = new BetterList<UIToggle>();
+	}
+
+	public UIToggle()
+	{
 	}
 
 	public static UIToggle GetActiveToggle(int group)
 	{
-		for (int i = 0; i < list.size; i++)
+		for (int i = 0; i < UIToggle.list.size; i++)
 		{
-			UIToggle uIToggle = list[i];
-			if (uIToggle != null && uIToggle.group == group && uIToggle.mIsActive)
+			UIToggle item = UIToggle.list[i];
+			if (item != null && item.@group == group && item.mIsActive)
 			{
-				return uIToggle;
+				return item;
 			}
 		}
 		return null;
 	}
 
-	private void OnEnable()
+	private void OnClick()
 	{
-		list.Add(this);
+		if (base.enabled && this.isColliderEnabled && UICamera.currentTouchID != -2)
+		{
+			this.@value = !this.@value;
+		}
 	}
 
 	private void OnDisable()
 	{
-		list.Remove(this);
+		UIToggle.list.Remove(this);
 	}
 
-	private void Start()
+	private void OnEnable()
 	{
-		if (startsChecked)
-		{
-			startsChecked = false;
-			startsActive = true;
-		}
-		if (!Application.isPlaying)
-		{
-			if (checkSprite != null && activeSprite == null)
-			{
-				activeSprite = checkSprite;
-				checkSprite = null;
-			}
-			if (checkAnimation != null && activeAnimation == null)
-			{
-				activeAnimation = checkAnimation;
-				checkAnimation = null;
-			}
-			if (Application.isPlaying && activeSprite != null)
-			{
-				activeSprite.alpha = ((!startsActive) ? 0f : 1f);
-			}
-			if (EventDelegate.IsValid(onChange))
-			{
-				eventReceiver = null;
-				functionName = null;
-			}
-		}
-		else
-		{
-			mIsActive = !startsActive;
-			mStarted = true;
-			bool flag = instantTween;
-			instantTween = true;
-			Set(startsActive);
-			instantTween = flag;
-		}
-	}
-
-	private void OnClick()
-	{
-		if (base.enabled && isColliderEnabled && UICamera.currentTouchID != -2)
-		{
-			value = !value;
-		}
+		UIToggle.list.Add(this);
 	}
 
 	public void Set(bool state)
 	{
-		if (validator != null && !validator(state))
+		if (this.validator != null && !this.validator(state))
 		{
 			return;
 		}
-		if (!mStarted)
+		if (!this.mStarted)
 		{
-			mIsActive = state;
-			startsActive = state;
-			if (activeSprite != null)
+			this.mIsActive = state;
+			this.startsActive = state;
+			if (this.activeSprite != null)
 			{
-				activeSprite.alpha = ((!state) ? 0f : 1f);
+				this.activeSprite.alpha = (!state ? 0f : 1f);
 			}
 		}
-		else
+		else if (this.mIsActive != state)
 		{
-			if (mIsActive == state)
-			{
-				return;
-			}
-			if (group != 0 && state)
+			if (this.@group != 0 && state)
 			{
 				int num = 0;
-				int size = list.size;
-				while (num < size)
+				int num1 = UIToggle.list.size;
+				while (num < num1)
 				{
-					UIToggle uIToggle = list[num];
-					if (uIToggle != this && uIToggle.group == group)
+					UIToggle item = UIToggle.list[num];
+					if (item != this && item.@group == this.@group)
 					{
-						uIToggle.Set(false);
+						item.Set(false);
 					}
-					if (list.size != size)
-					{
-						size = list.size;
-						num = 0;
-					}
-					else
+					if (UIToggle.list.size == num1)
 					{
 						num++;
 					}
+					else
+					{
+						num1 = UIToggle.list.size;
+						num = 0;
+					}
 				}
 			}
-			mIsActive = state;
-			if (activeSprite != null)
+			this.mIsActive = state;
+			if (this.activeSprite != null)
 			{
-				if (instantTween || !NGUITools.GetActive(this))
+				if (this.instantTween || !NGUITools.GetActive(this))
 				{
-					activeSprite.alpha = ((!mIsActive) ? 0f : 1f);
+					this.activeSprite.alpha = (!this.mIsActive ? 0f : 1f);
 				}
 				else
 				{
-					TweenAlpha.Begin(activeSprite.gameObject, 0.15f, (!mIsActive) ? 0f : 1f);
+					TweenAlpha.Begin(this.activeSprite.gameObject, 0.15f, (!this.mIsActive ? 0f : 1f));
 				}
 			}
-			if (current == null)
+			if (UIToggle.current == null)
 			{
-				UIToggle uIToggle2 = current;
-				current = this;
-				if (EventDelegate.IsValid(onChange))
+				UIToggle uIToggle = UIToggle.current;
+				UIToggle.current = this;
+				if (EventDelegate.IsValid(this.onChange))
 				{
-					EventDelegate.Execute(onChange);
+					EventDelegate.Execute(this.onChange);
 				}
-				else if (eventReceiver != null && !string.IsNullOrEmpty(functionName))
+				else if (this.eventReceiver != null && !string.IsNullOrEmpty(this.functionName))
 				{
-					eventReceiver.SendMessage(functionName, mIsActive, SendMessageOptions.DontRequireReceiver);
+					this.eventReceiver.SendMessage(this.functionName, this.mIsActive, SendMessageOptions.DontRequireReceiver);
 				}
-				current = uIToggle2;
+				UIToggle.current = uIToggle;
 			}
-			if (animator != null)
+			if (this.animator != null)
 			{
-				ActiveAnimation activeAnimation = ActiveAnimation.Play(animator, null, state ? Direction.Forward : Direction.Reverse, EnableCondition.IgnoreDisabledState, DisableCondition.DoNotDisable);
-				if (activeAnimation != null && (instantTween || !NGUITools.GetActive(this)))
+				ActiveAnimation activeAnimation = ActiveAnimation.Play(this.animator, null, (!state ? Direction.Reverse : Direction.Forward), EnableCondition.IgnoreDisabledState, DisableCondition.DoNotDisable);
+				if (activeAnimation != null && (this.instantTween || !NGUITools.GetActive(this)))
 				{
 					activeAnimation.Finish();
 				}
 			}
 			else if (this.activeAnimation != null)
 			{
-				ActiveAnimation activeAnimation2 = ActiveAnimation.Play(this.activeAnimation, null, state ? Direction.Forward : Direction.Reverse, EnableCondition.IgnoreDisabledState, DisableCondition.DoNotDisable);
-				if (activeAnimation2 != null && (instantTween || !NGUITools.GetActive(this)))
+				ActiveAnimation activeAnimation1 = ActiveAnimation.Play(this.activeAnimation, null, (!state ? Direction.Reverse : Direction.Forward), EnableCondition.IgnoreDisabledState, DisableCondition.DoNotDisable);
+				if (activeAnimation1 != null && (this.instantTween || !NGUITools.GetActive(this)))
 				{
-					activeAnimation2.Finish();
+					activeAnimation1.Finish();
 				}
 			}
-			else
+			else if (this.tween != null)
 			{
-				if (!(tween != null))
-				{
-					return;
-				}
 				bool active = NGUITools.GetActive(this);
-				if (tween.tweenGroup != 0)
+				if (this.tween.tweenGroup == 0)
 				{
-					UITweener[] componentsInChildren = tween.GetComponentsInChildren<UITweener>();
-					int i = 0;
-					for (int num2 = componentsInChildren.Length; i < num2; i++)
+					this.tween.Play(state);
+					if (this.instantTween || !active)
 					{
-						UITweener uITweener = componentsInChildren[i];
-						if (uITweener.tweenGroup == tween.tweenGroup)
-						{
-							uITweener.Play(state);
-							if (instantTween || !active)
-							{
-								uITweener.tweenFactor = ((!state) ? 0f : 1f);
-							}
-						}
+						this.tween.tweenFactor = (!state ? 0f : 1f);
 					}
 				}
 				else
 				{
-					tween.Play(state);
-					if (instantTween || !active)
+					UITweener[] componentsInChildren = this.tween.GetComponentsInChildren<UITweener>();
+					int num2 = 0;
+					int length = (int)componentsInChildren.Length;
+					while (num2 < length)
 					{
-						tween.tweenFactor = ((!state) ? 0f : 1f);
+						UITweener uITweener = componentsInChildren[num2];
+						if (uITweener.tweenGroup == this.tween.tweenGroup)
+						{
+							uITweener.Play(state);
+							if (this.instantTween || !active)
+							{
+								uITweener.tweenFactor = (!state ? 0f : 1f);
+							}
+						}
+						num2++;
 					}
 				}
 			}
 		}
 	}
+
+	private void Start()
+	{
+		if (this.startsChecked)
+		{
+			this.startsChecked = false;
+			this.startsActive = true;
+		}
+		if (Application.isPlaying)
+		{
+			this.mIsActive = !this.startsActive;
+			this.mStarted = true;
+			bool flag = this.instantTween;
+			this.instantTween = true;
+			this.Set(this.startsActive);
+			this.instantTween = flag;
+		}
+		else
+		{
+			if (this.checkSprite != null && this.activeSprite == null)
+			{
+				this.activeSprite = this.checkSprite;
+				this.checkSprite = null;
+			}
+			if (this.checkAnimation != null && this.activeAnimation == null)
+			{
+				this.activeAnimation = this.checkAnimation;
+				this.checkAnimation = null;
+			}
+			if (Application.isPlaying && this.activeSprite != null)
+			{
+				this.activeSprite.alpha = (!this.startsActive ? 0f : 1f);
+			}
+			if (EventDelegate.IsValid(this.onChange))
+			{
+				this.eventReceiver = null;
+				this.functionName = null;
+			}
+		}
+	}
+
+	public delegate bool Validate(bool choice);
 }

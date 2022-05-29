@@ -1,8 +1,13 @@
+using System;
 using UnityEngine;
 
 public class SupportLogger : MonoBehaviour
 {
 	public bool LogTrafficStats = true;
+
+	public SupportLogger()
+	{
+	}
 
 	public void Start()
 	{
@@ -10,9 +15,8 @@ public class SupportLogger : MonoBehaviour
 		if (gameObject == null)
 		{
 			gameObject = new GameObject("PunSupportLogger");
-			Object.DontDestroyOnLoad(gameObject);
-			SupportLogging supportLogging = gameObject.AddComponent<SupportLogging>();
-			supportLogging.LogTrafficStats = LogTrafficStats;
+			UnityEngine.Object.DontDestroyOnLoad(gameObject);
+			gameObject.AddComponent<SupportLogging>().LogTrafficStats = this.LogTrafficStats;
 		}
 	}
 }

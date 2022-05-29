@@ -1,18 +1,29 @@
-using System.Collections.Generic;
 using Facebook.MiniJSON;
+using Facebook.Unity.Editor;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Facebook.Unity.Editor.Dialogs
 {
 	internal class EmptyMockDialog : EditorFacebookMockDialog
 	{
-		public string EmptyDialogTitle { get; set; }
-
 		protected override string DialogTitle
 		{
 			get
 			{
-				return EmptyDialogTitle;
+				return this.EmptyDialogTitle;
 			}
+		}
+
+		public string EmptyDialogTitle
+		{
+			get;
+			set;
+		}
+
+		public EmptyMockDialog()
+		{
 		}
 
 		protected override void DoGui()
@@ -21,15 +32,15 @@ namespace Facebook.Unity.Editor.Dialogs
 
 		protected override void SendSuccessResult()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary["did_complete"] = true;
+			Dictionary<string, object> strs = new Dictionary<string, object>();
+			strs["did_complete"] = true;
 			if (!string.IsNullOrEmpty(base.CallbackID))
 			{
-				dictionary["callback_id"] = base.CallbackID;
+				strs["callback_id"] = base.CallbackID;
 			}
 			if (base.Callback != null)
 			{
-				base.Callback(Json.Serialize(dictionary));
+				base.Callback(Json.Serialize(strs));
 			}
 		}
 	}

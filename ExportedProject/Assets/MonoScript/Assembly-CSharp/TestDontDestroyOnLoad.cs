@@ -1,9 +1,14 @@
+using System;
 using UnityEngine;
 
 public class TestDontDestroyOnLoad : MonoBehaviour
 {
+	public TestDontDestroyOnLoad()
+	{
+	}
+
 	private void Awake()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 }

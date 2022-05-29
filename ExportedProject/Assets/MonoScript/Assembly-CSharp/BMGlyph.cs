@@ -24,17 +24,23 @@ public class BMGlyph
 
 	public List<int> kerning;
 
+	public BMGlyph()
+	{
+	}
+
 	public int GetKerning(int previousChar)
 	{
-		if (kerning != null && previousChar != 0)
+		if (this.kerning != null && previousChar != 0)
 		{
-			int i = 0;
-			for (int count = kerning.Count; i < count; i += 2)
+			int num = 0;
+			int count = this.kerning.Count;
+			while (num < count)
 			{
-				if (kerning[i] == previousChar)
+				if (this.kerning[num] == previousChar)
 				{
-					return kerning[i + 1];
+					return this.kerning[num + 1];
 				}
+				num += 2;
 			}
 		}
 		return 0;
@@ -42,47 +48,49 @@ public class BMGlyph
 
 	public void SetKerning(int previousChar, int amount)
 	{
-		if (kerning == null)
+		if (this.kerning == null)
 		{
-			kerning = new List<int>();
+			this.kerning = new List<int>();
 		}
-		for (int i = 0; i < kerning.Count; i += 2)
+		for (int i = 0; i < this.kerning.Count; i += 2)
 		{
-			if (kerning[i] == previousChar)
+			if (this.kerning[i] == previousChar)
 			{
-				kerning[i + 1] = amount;
+				this.kerning[i + 1] = amount;
 				return;
 			}
 		}
-		kerning.Add(previousChar);
-		kerning.Add(amount);
+		this.kerning.Add(previousChar);
+		this.kerning.Add(amount);
 	}
 
 	public void Trim(int xMin, int yMin, int xMax, int yMax)
 	{
-		int num = x + width;
-		int num2 = y + height;
-		if (x < xMin)
+		int num = this.x + this.width;
+		int num1 = this.y + this.height;
+		if (this.x < xMin)
 		{
-			int num3 = xMin - x;
-			x += num3;
-			width -= num3;
-			offsetX += num3;
+			int num2 = xMin - this.x;
+			this.x += num2;
+			this.width -= num2;
+			this.offsetX += num2;
 		}
-		if (y < yMin)
+		if (this.y < yMin)
 		{
-			int num4 = yMin - y;
-			y += num4;
-			height -= num4;
-			offsetY += num4;
+			int num3 = yMin - this.y;
+			this.y += num3;
+			this.height -= num3;
+			this.offsetY += num3;
 		}
 		if (num > xMax)
 		{
-			width -= num - xMax;
+			BMGlyph bMGlyph = this;
+			bMGlyph.width = bMGlyph.width - (num - xMax);
 		}
-		if (num2 > yMax)
+		if (num1 > yMax)
 		{
-			height -= num2 - yMax;
+			BMGlyph bMGlyph1 = this;
+			bMGlyph1.height = bMGlyph1.height - (num1 - yMax);
 		}
 	}
 }

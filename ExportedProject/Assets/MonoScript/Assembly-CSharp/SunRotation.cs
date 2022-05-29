@@ -1,3 +1,6 @@
+using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SunRotation : MonoBehaviour
@@ -14,31 +17,36 @@ public class SunRotation : MonoBehaviour
 
 	private float matchTimeDelta;
 
+	public SunRotation()
+	{
+	}
+
 	private void LateUpdate()
 	{
-		if (!(TimeGameController.sharedController != null) || PhotonNetwork.room == null || string.IsNullOrEmpty(ConnectSceneNGUIController.maxKillProperty) || !PhotonNetwork.room.customProperties.ContainsKey(ConnectSceneNGUIController.maxKillProperty))
+		if (TimeGameController.sharedController != null && PhotonNetwork.room != null && !string.IsNullOrEmpty(ConnectSceneNGUIController.maxKillProperty) && PhotonNetwork.room.customProperties.ContainsKey(ConnectSceneNGUIController.maxKillProperty))
 		{
-			return;
-		}
-		int result = -1;
-		int.TryParse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString(), out result);
-		if (result < 0)
-		{
-			return;
-		}
-		matchTime = (float)result * 60f;
-		if ((float)TimeGameController.sharedController.timerToEndMatch < matchTime)
-		{
-			matchTimeDelta = matchTime - (float)TimeGameController.sharedController.timerToEndMatch;
-			if ((bool)Camera.main)
+			int num = -1;
+			int.TryParse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty].ToString(), out num);
+			if (num < 0)
 			{
-				sun.LookAt(Camera.main.transform);
+				return;
 			}
-			Quaternion localRotation = default(Quaternion);
-			localRotation.eulerAngles = new Vector3(xRotation.Evaluate(matchTimeDelta / matchTime), 0f, 0f);
-			base.transform.localRotation = localRotation;
-			localRotation.eulerAngles = new Vector3(0f, yRotation.Evaluate(matchTimeDelta / matchTime), 0f);
-			yAxis.localRotation = localRotation;
+			this.matchTime = (float)num * 60f;
+			if ((float)TimeGameController.sharedController.timerToEndMatch < this.matchTime)
+			{
+				this.matchTimeDelta = this.matchTime - (float)TimeGameController.sharedController.timerToEndMatch;
+				if (Camera.main)
+				{
+					this.sun.LookAt(Camera.main.transform);
+				}
+				Quaternion vector3 = new Quaternion()
+				{
+					eulerAngles = new Vector3(this.xRotation.Evaluate(this.matchTimeDelta / this.matchTime), 0f, 0f)
+				};
+				base.transform.localRotation = vector3;
+				vector3.eulerAngles = new Vector3(0f, this.yRotation.Evaluate(this.matchTimeDelta / this.matchTime), 0f);
+				this.yAxis.localRotation = vector3;
+			}
 		}
 	}
 }

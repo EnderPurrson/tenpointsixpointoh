@@ -1,4 +1,7 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Facebook.Unity
 {
@@ -8,44 +11,94 @@ namespace Facebook.Unity
 
 		public const string ToKey = "to";
 
-		public string RequestID { get; private set; }
-
-		public IEnumerable<string> To { get; private set; }
-
-		public AppRequestResult(string result)
-			: base(result)
+		public string RequestID
 		{
-			if (ResultDictionary == null)
+			get
 			{
-				return;
+				return JustDecompileGenerated_get_RequestID();
 			}
-			string value;
-			if (ResultDictionary.TryGetValue<string>("request", out value))
+			set
 			{
-				RequestID = value;
+				JustDecompileGenerated_set_RequestID(value);
 			}
-			string value2;
-			if (ResultDictionary.TryGetValue<string>("to", out value2))
+		}
+
+		private string JustDecompileGenerated_RequestID_k__BackingField;
+
+		public string JustDecompileGenerated_get_RequestID()
+		{
+			return this.JustDecompileGenerated_RequestID_k__BackingField;
+		}
+
+		private void JustDecompileGenerated_set_RequestID(string value)
+		{
+			this.JustDecompileGenerated_RequestID_k__BackingField = value;
+		}
+
+		public IEnumerable<string> To
+		{
+			get
 			{
-				To = value2.Split(',');
+				return JustDecompileGenerated_get_To();
 			}
-			else
+			set
 			{
-				IEnumerable<object> value3;
-				if (!ResultDictionary.TryGetValue<IEnumerable<object>>("to", out value3))
+				JustDecompileGenerated_set_To(value);
+			}
+		}
+
+		private IEnumerable<string> JustDecompileGenerated_To_k__BackingField;
+
+		public IEnumerable<string> JustDecompileGenerated_get_To()
+		{
+			return this.JustDecompileGenerated_To_k__BackingField;
+		}
+
+		private void JustDecompileGenerated_set_To(IEnumerable<string> value)
+		{
+			this.JustDecompileGenerated_To_k__BackingField = value;
+		}
+
+		public AppRequestResult(string result) : base(result)
+		{
+			string str;
+			string str1;
+			IEnumerable<object> objs;
+			if (this.ResultDictionary != null)
+			{
+				if (this.ResultDictionary.TryGetValue<string>("request", out str))
 				{
-					return;
+					this.RequestID = str;
 				}
-				List<string> list = new List<string>();
-				foreach (object item in value3)
+				if (this.ResultDictionary.TryGetValue<string>("to", out str1))
 				{
-					string text = item as string;
-					if (text != null)
+					this.To = str1.Split(new char[] { ',' });
+				}
+				else if (this.ResultDictionary.TryGetValue<IEnumerable<object>>("to", out objs))
+				{
+					List<string> strs = new List<string>();
+					IEnumerator<object> enumerator = objs.GetEnumerator();
+					try
 					{
-						list.Add(text);
+						while (enumerator.MoveNext())
+						{
+							string current = enumerator.Current as string;
+							if (current == null)
+							{
+								continue;
+							}
+							strs.Add(current);
+						}
 					}
+					finally
+					{
+						if (enumerator == null)
+						{
+						}
+						enumerator.Dispose();
+					}
+					this.To = strs;
 				}
-				To = list;
 			}
 		}
 	}

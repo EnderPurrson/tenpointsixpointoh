@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TargetDetectExplosion : MonoBehaviour
@@ -9,11 +10,15 @@ public class TargetDetectExplosion : MonoBehaviour
 
 	private bool _isEnter;
 
+	public TargetDetectExplosion()
+	{
+	}
+
 	private void Awake()
 	{
-		if (explosionScript == null)
+		if (this.explosionScript == null)
 		{
-			explosionScript = base.transform.parent.GetComponent<DamagedExplosionObject>();
+			this.explosionScript = base.transform.parent.GetComponent<DamagedExplosionObject>();
 		}
 	}
 
@@ -23,27 +28,32 @@ public class TargetDetectExplosion : MonoBehaviour
 		{
 			return false;
 		}
-		return targetTransform.CompareTag("Player") || targetTransform.CompareTag("Enemy") || targetTransform.CompareTag("Turret");
-	}
-
-	private void OnTriggerEnter(Collider collisionObj)
-	{
-		if (IsTargetAvailable(collisionObj.transform.root) && !_isEnter)
-		{
-			_isEnter = true;
-			if (durationBeforeExplosion != 0f)
-			{
-				Invoke("OnTargetEnter", durationBeforeExplosion);
-			}
-			else
-			{
-				OnTargetEnter();
-			}
-		}
+		return (targetTransform.CompareTag("Player") || targetTransform.CompareTag("Enemy") ? true : targetTransform.CompareTag("Turret"));
 	}
 
 	private void OnTargetEnter()
 	{
-		explosionScript.GetDamage(0f - explosionScript.healthPoints);
+		this.explosionScript.GetDamage(-this.explosionScript.healthPoints);
+	}
+
+	private void OnTriggerEnter(Collider collisionObj)
+	{
+		if (!this.IsTargetAvailable(collisionObj.transform.root))
+		{
+			return;
+		}
+		if (this._isEnter)
+		{
+			return;
+		}
+		this._isEnter = true;
+		if (this.durationBeforeExplosion == 0f)
+		{
+			this.OnTargetEnter();
+		}
+		else
+		{
+			base.Invoke("OnTargetEnter", this.durationBeforeExplosion);
+		}
 	}
 }

@@ -1,32 +1,26 @@
+using GooglePlayGames.BasicApi.Multiplayer;
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.BasicApi.Multiplayer;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativePlayer : BaseReferenceHolder
 	{
-		internal NativePlayer(IntPtr selfPointer)
-			: base(selfPointer)
+		internal NativePlayer(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
-		internal string Id()
+		internal GooglePlayGames.BasicApi.Multiplayer.Player AsPlayer()
 		{
-			return PInvokeUtilities.OutParamsToString(_003CId_003Em__141);
-		}
-
-		internal string Name()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CName_003Em__142);
+			return new GooglePlayGames.BasicApi.Multiplayer.Player(this.Name(), this.Id(), this.AvatarURL());
 		}
 
 		internal string AvatarURL()
 		{
-			return PInvokeUtilities.OutParamsToString(_003CAvatarURL_003Em__143);
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Player.Player_AvatarUrl(base.SelfPtr(), Types.ImageResolution.ICON, out_string, out_size));
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -34,27 +28,14 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.Player.Player_Dispose(selfPointer);
 		}
 
-		internal GooglePlayGames.BasicApi.Multiplayer.Player AsPlayer()
+		internal string Id()
 		{
-			return new GooglePlayGames.BasicApi.Multiplayer.Player(Name(), Id(), AvatarURL());
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Player.Player_Id(base.SelfPtr(), out_string, out_size));
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CId_003Em__141(StringBuilder out_string, UIntPtr out_size)
+		internal string Name()
 		{
-			return GooglePlayGames.Native.Cwrapper.Player.Player_Id(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003CName_003Em__142(StringBuilder out_string, UIntPtr out_size)
-		{
-			return GooglePlayGames.Native.Cwrapper.Player.Player_Name(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003CAvatarURL_003Em__143(StringBuilder out_string, UIntPtr out_size)
-		{
-			return GooglePlayGames.Native.Cwrapper.Player.Player_AvatarUrl(SelfPtr(), Types.ImageResolution.ICON, out_string, out_size);
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Player.Player_Name(base.SelfPtr(), out_string, out_size));
 		}
 	}
 }

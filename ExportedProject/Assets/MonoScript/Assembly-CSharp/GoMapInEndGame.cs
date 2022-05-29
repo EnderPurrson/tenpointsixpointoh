@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class GoMapInEndGame : MonoBehaviour
@@ -10,9 +11,45 @@ public class GoMapInEndGame : MonoBehaviour
 
 	private float enableTime;
 
+	public GoMapInEndGame()
+	{
+	}
+
+	public void OnClick()
+	{
+		if (Time.time - this.enableTime < 2f)
+		{
+			return;
+		}
+		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+		{
+			return;
+		}
+		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+		{
+			return;
+		}
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.mapIndex);
+		Defs.typeDisconnectGame = Defs.DisconectGameType.SelectNewMap;
+		Initializer.Instance.goMapName = infoScene.NameScene;
+		GlobalGameController.countKillsRed = 0;
+		GlobalGameController.countKillsBlue = 0;
+		PhotonNetwork.LeaveRoom();
+	}
+
 	private void OnEnable()
 	{
-		enableTime = Time.time;
+		this.enableTime = Time.time;
+	}
+
+	public void SetMap(SceneInfo scInfo)
+	{
+		this.mapIndex = scInfo.indexMap;
+		this.mapTexture.mainTexture = Resources.Load<Texture>(string.Concat("LevelLoadingsSmall/Loading_", scInfo.NameScene));
+		if (scInfo != null)
+		{
+			this.mapLabel.text = scInfo.TranslateName;
+		}
 	}
 
 	private void Start()
@@ -20,29 +57,6 @@ public class GoMapInEndGame : MonoBehaviour
 		if (!Defs.isInet || Defs.isDaterRegim)
 		{
 			base.gameObject.SetActive(false);
-		}
-	}
-
-	public void SetMap(SceneInfo scInfo)
-	{
-		mapIndex = scInfo.indexMap;
-		mapTexture.mainTexture = Resources.Load<Texture>("LevelLoadingsSmall/Loading_" + scInfo.NameScene);
-		if (scInfo != null)
-		{
-			mapLabel.text = scInfo.TranslateName;
-		}
-	}
-
-	public void OnClick()
-	{
-		if (!(Time.time - enableTime < 2f) && (!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled) && (!(ExpController.Instance != null) || !ExpController.Instance.IsLevelUpShown))
-		{
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(mapIndex);
-			Defs.typeDisconnectGame = Defs.DisconectGameType.SelectNewMap;
-			Initializer.Instance.goMapName = infoScene.NameScene;
-			GlobalGameController.countKillsRed = 0;
-			GlobalGameController.countKillsBlue = 0;
-			PhotonNetwork.LeaveRoom();
 		}
 	}
 }

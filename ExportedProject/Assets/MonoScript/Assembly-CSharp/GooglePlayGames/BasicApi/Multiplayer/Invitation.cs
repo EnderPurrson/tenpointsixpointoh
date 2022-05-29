@@ -1,15 +1,10 @@
+using System;
+
 namespace GooglePlayGames.BasicApi.Multiplayer
 {
 	public class Invitation
 	{
-		public enum InvType
-		{
-			RealTime = 0,
-			TurnBased = 1,
-			Unknown = 2
-		}
-
-		private InvType mInvitationType;
+		private Invitation.InvType mInvitationType;
 
 		private string mInvitationId;
 
@@ -17,19 +12,19 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 
 		private int mVariant;
 
-		public InvType InvitationType
-		{
-			get
-			{
-				return mInvitationType;
-			}
-		}
-
 		public string InvitationId
 		{
 			get
 			{
-				return mInvitationId;
+				return this.mInvitationId;
+			}
+		}
+
+		public Invitation.InvType InvitationType
+		{
+			get
+			{
+				return this.mInvitationType;
 			}
 		}
 
@@ -37,7 +32,7 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mInviter;
+				return this.mInviter;
 			}
 		}
 
@@ -45,21 +40,28 @@ namespace GooglePlayGames.BasicApi.Multiplayer
 		{
 			get
 			{
-				return mVariant;
+				return this.mVariant;
 			}
 		}
 
-		internal Invitation(InvType invType, string invId, Participant inviter, int variant)
+		internal Invitation(Invitation.InvType invType, string invId, Participant inviter, int variant)
 		{
-			mInvitationType = invType;
-			mInvitationId = invId;
-			mInviter = inviter;
-			mVariant = variant;
+			this.mInvitationType = invType;
+			this.mInvitationId = invId;
+			this.mInviter = inviter;
+			this.mVariant = variant;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("[Invitation: InvitationType={0}, InvitationId={1}, Inviter={2}, Variant={3}]", InvitationType, InvitationId, Inviter, Variant);
+			return string.Format("[Invitation: InvitationType={0}, InvitationId={1}, Inviter={2}, Variant={3}]", new object[] { this.InvitationType, this.InvitationId, this.Inviter, this.Variant });
+		}
+
+		public enum InvType
+		{
+			RealTime,
+			TurnBased,
+			Unknown
 		}
 	}
 }

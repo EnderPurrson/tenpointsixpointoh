@@ -1,93 +1,179 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.BasicApi.SavedGame;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	public struct SkinsSynchronizerGoogleSavedGameFacade
 	{
+		public const string Filename = "Skins";
+
+		private const string SavedGameClientIsNullMessage = "SavedGameClient is null.";
+
+		private static ISavedGameClient SavedGame
+		{
+			get
+			{
+				ISavedGameClient savedGame;
+				try
+				{
+					if (PlayGamesPlatform.Instance != null)
+					{
+						savedGame = PlayGamesPlatform.Instance.SavedGame;
+					}
+					else
+					{
+						savedGame = null;
+					}
+				}
+				catch (NullReferenceException nullReferenceException)
+				{
+					savedGame = null;
+				}
+				return savedGame;
+			}
+		}
+
+		public Task<GoogleSavedGameRequestResult<SkinsMemento>> Pull()
+		{
+			Task<GoogleSavedGameRequestResult<SkinsMemento>> task;
+			string str = string.Concat(this.GetType().Name, ".Pull()");
+			ScopeLogger scopeLogger = new ScopeLogger(str, (!Defs.IsDeveloperBuild ? false : !Application.isEditor));
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>>();
+				if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+				{
+					ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+					try
+					{
+						SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = new SkinsSynchronizerGoogleSavedGameFacade.PullCallback(taskCompletionSource);
+						SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = pullCallback;
+						SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, new ConflictCallback(pullCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+					}
+					finally
+					{
+						scopeLogger1.Dispose();
+					}
+					task = taskCompletionSource.Task;
+				}
+				else
+				{
+					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					task = taskCompletionSource.Task;
+				}
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
+		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(SkinsMemento skins)
+		{
+			Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> task;
+			string str = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", new object[] { this.GetType().Name, skins });
+			ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+			try
+			{
+				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
+				if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+				{
+					ScopeLogger scopeLogger1 = new ScopeLogger(str, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
+					try
+					{
+						SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = new SkinsSynchronizerGoogleSavedGameFacade.PushCallback(skins, taskCompletionSource);
+						SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = pushCallback;
+						SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, new ConflictCallback(pushCallback.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+					}
+					finally
+					{
+						scopeLogger1.Dispose();
+					}
+					task = taskCompletionSource.Task;
+				}
+				else
+				{
+					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					task = taskCompletionSource.Task;
+				}
+			}
+			finally
+			{
+				scopeLogger.Dispose();
+			}
+			return task;
+		}
+
 		private abstract class Callback
 		{
 			protected SkinsMemento? _resolved;
 
-			[CompilerGenerated]
-			private static Func<SkinMemento, string> _003C_003Ef__am_0024cache1;
+			protected abstract DataSource DefaultDataSource
+			{
+				get;
+			}
 
-			[CompilerGenerated]
-			private static Func<SkinMemento, string> _003C_003Ef__am_0024cache2;
-
-			protected abstract DataSource DefaultDataSource { get; }
-
-			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
+			protected Callback()
+			{
+			}
 
 			protected abstract void HandleAuthenticationCompleted(bool succeeded);
 
-			protected abstract void TrySetException(Exception ex);
+			internal abstract void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata);
 
 			internal void HandleOpenConflict(IConflictResolver resolver, ISavedGameMetadata original, byte[] originalData, ISavedGameMetadata unmerged, byte[] unmergedData)
 			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenConflict('{2}', '{3}')", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, original.Description, unmerged.Description);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenConflict('{2}', '{3}')", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, this.GetType().Name, original.Description, unmerged.Description });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
-					if (SavedGame == null)
+					if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					SkinsMemento skinsMemento = Parse(originalData);
-					SkinsMemento skinsMemento2 = Parse(unmergedData);
-					if (Defs.IsDeveloperBuild)
-					{
-						Debug.LogFormat("[Skins] Original: {0}, unmerged: {1}", skinsMemento, skinsMemento2);
-					}
-					List<SkinMemento> skins = skinsMemento.Skins;
-					if (_003C_003Ef__am_0024cache1 == null)
-					{
-						_003C_003Ef__am_0024cache1 = _003CHandleOpenConflict_003Em__584;
-					}
-					HashSet<string> hashSet = new HashSet<string>(skins.Select(_003C_003Ef__am_0024cache1));
-					List<SkinMemento> skins2 = skinsMemento2.Skins;
-					if (_003C_003Ef__am_0024cache2 == null)
-					{
-						_003C_003Ef__am_0024cache2 = _003CHandleOpenConflict_003Em__585;
-					}
-					HashSet<string> hashSet2 = new HashSet<string>(skins2.Select(_003C_003Ef__am_0024cache2));
-					if (hashSet.IsSupersetOf(hashSet2))
-					{
-						resolver.ChooseMetadata(original);
-						_resolved = MergeWithResolved(skinsMemento, false);
-					}
-					else if (hashSet.IsProperSubsetOf(hashSet2))
-					{
-						resolver.ChooseMetadata(unmerged);
-						_resolved = MergeWithResolved(skinsMemento2, false);
-					}
-					else
-					{
-						ISavedGameMetadata savedGameMetadata;
-						if (hashSet.Count >= hashSet2.Count)
+						SkinsMemento skinsMemento = SkinsSynchronizerGoogleSavedGameFacade.Callback.Parse(originalData);
+						SkinsMemento skinsMemento1 = SkinsSynchronizerGoogleSavedGameFacade.Callback.Parse(unmergedData);
+						if (Defs.IsDeveloperBuild)
 						{
-							savedGameMetadata = original;
+							Debug.LogFormat("[Skins] Original: {0}, unmerged: {1}", new object[] { skinsMemento, skinsMemento1 });
+						}
+						HashSet<string> strs = new HashSet<string>(
+							from s in skinsMemento.Skins
+							select s.Id);
+						HashSet<string> strs1 = new HashSet<string>(
+							from s in skinsMemento1.Skins
+							select s.Id);
+						if (strs.IsSupersetOf(strs1))
+						{
+							resolver.ChooseMetadata(original);
+							this._resolved = new SkinsMemento?(this.MergeWithResolved(skinsMemento, false));
+						}
+						else if (!strs.IsProperSubsetOf(strs1))
+						{
+							resolver.ChooseMetadata((strs.Count < strs1.Count ? unmerged : original));
+							SkinsMemento skinsMemento2 = SkinsMemento.Merge(skinsMemento, skinsMemento1);
+							this._resolved = new SkinsMemento?(this.MergeWithResolved(skinsMemento2, true));
 						}
 						else
 						{
-							savedGameMetadata = unmerged;
+							resolver.ChooseMetadata(unmerged);
+							this._resolved = new SkinsMemento?(this.MergeWithResolved(skinsMemento1, false));
 						}
-						ISavedGameMetadata chosenMetadata = savedGameMetadata;
-						resolver.ChooseMetadata(chosenMetadata);
-						SkinsMemento skins3 = SkinsMemento.Merge(skinsMemento, skinsMemento2);
-						_resolved = MergeWithResolved(skins3, true);
+						SkinsSynchronizerGoogleSavedGameFacade.Callback callback = this;
+						SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(callback.HandleOpenCompleted));
 					}
-					SavedGame.OpenWithManualConflictResolution("Skins", DefaultDataSource, true, HandleOpenConflict, HandleOpenCompleted);
+					else
+					{
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					}
 				}
 				finally
 				{
@@ -97,52 +183,212 @@ namespace Rilisoft
 
 			protected SkinsMemento MergeWithResolved(SkinsMemento skins, bool forceConflicted)
 			{
-				SkinsMemento result = ((!_resolved.HasValue) ? skins : SkinsMemento.Merge(_resolved.Value, skins));
-				if (forceConflicted)
+				SkinsMemento skinsMemento = (!this._resolved.HasValue ? skins : SkinsMemento.Merge(this._resolved.Value, skins));
+				if (!forceConflicted)
 				{
-					return new SkinsMemento(result.Skins, result.DeletedSkins, result.Cape, true);
+					return skinsMemento;
 				}
-				return result;
+				return new SkinsMemento(skinsMemento.Skins, skinsMemento.DeletedSkins, skinsMemento.Cape, true);
 			}
 
 			protected static SkinsMemento Parse(byte[] data)
 			{
-				//Discarded unreachable code: IL_004e, IL_0091
-				if (data == null || data.Length <= 0)
+				SkinsMemento skinsMemento;
+				if (data == null || (int)data.Length <= 0)
 				{
-					return default(SkinsMemento);
+					return new SkinsMemento();
 				}
-				string @string = Encoding.UTF8.GetString(data, 0, data.Length);
-				if (string.IsNullOrEmpty(@string))
+				string str = Encoding.UTF8.GetString(data, 0, (int)data.Length);
+				if (string.IsNullOrEmpty(str))
 				{
-					return default(SkinsMemento);
+					return new SkinsMemento();
 				}
 				try
 				{
-					return JsonUtility.FromJson<SkinsMemento>(@string);
+					skinsMemento = JsonUtility.FromJson<SkinsMemento>(str);
 				}
-				catch (ArgumentException exception)
+				catch (ArgumentException argumentException1)
 				{
-					Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", typeof(SkinsMemento).Name, @string);
-					Debug.LogException(exception);
-					return default(SkinsMemento);
+					ArgumentException argumentException = argumentException1;
+					Debug.LogErrorFormat("Failed to deserialize {0}: \"{1}\"", new object[] { typeof(SkinsMemento).Name, str });
+					Debug.LogException(argumentException);
+					skinsMemento = new SkinsMemento();
+				}
+				return skinsMemento;
+			}
+
+			protected abstract void TrySetException(Exception ex);
+		}
+
+		private sealed class PullCallback : SkinsSynchronizerGoogleSavedGameFacade.Callback
+		{
+			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> _promise;
+
+			protected override DataSource DefaultDataSource
+			{
+				get
+				{
+					return DataSource.ReadNetworkOnly;
 				}
 			}
 
-			[CompilerGenerated]
-			private static string _003CHandleOpenConflict_003Em__584(SkinMemento s)
+			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> promise)
 			{
-				return s.Id;
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>>();
 			}
 
-			[CompilerGenerated]
-			private static string _003CHandleOpenConflict_003Em__585(SkinMemento s)
+			protected override void HandleAuthenticationCompleted(bool succeeded)
 			{
-				return s.Id;
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					if (!succeeded)
+					{
+						TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> taskCompletionSource = this._promise;
+						SkinsMemento skinsMemento = new SkinsMemento();
+						taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(SavedGameRequestStatus.AuthenticationError, skinsMemento));
+					}
+					else if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+					{
+						SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+						SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback.HandleOpenCompleted));
+					}
+					else
+					{
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
+			{
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
+				try
+				{
+					if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+					{
+						switch (requestStatus)
+						{
+							case SavedGameRequestStatus.AuthenticationError:
+							{
+								GpgFacade instance = GpgFacade.Instance;
+								SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+								instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+								break;
+							}
+							case SavedGameRequestStatus.InternalError:
+							case 0:
+							{
+								TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> taskCompletionSource = this._promise;
+								SkinsMemento skinsMemento = new SkinsMemento();
+								taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, skinsMemento));
+								break;
+							}
+							case SavedGameRequestStatus.TimeoutError:
+							{
+								SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = this;
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+								break;
+							}
+							case SavedGameRequestStatus.Success:
+							{
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.ReadBinaryData(metadata, new Action<SavedGameRequestStatus, byte[]>(this.HandleReadCompleted));
+								break;
+							}
+							default:
+							{
+								goto case 0;
+							}
+						}
+					}
+					else
+					{
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
+			{
+				CultureInfo invariantCulture = CultureInfo.InvariantCulture;
+				object[] name = new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, requestStatus, null };
+				name[3] = (data == null ? 0 : (int)data.Length);
+				string str = string.Format(invariantCulture, "{0}.{1}.HandleReadCompleted('{2}', {3})", name);
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
+				try
+				{
+					switch (requestStatus)
+					{
+						case SavedGameRequestStatus.AuthenticationError:
+						{
+							GpgFacade instance = GpgFacade.Instance;
+							SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback = this;
+							instance.Authenticate(new Action<bool>(pullCallback.HandleAuthenticationCompleted), true);
+							break;
+						}
+						case SavedGameRequestStatus.InternalError:
+						case 0:
+						{
+							TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> taskCompletionSource = this._promise;
+							SkinsMemento skinsMemento = new SkinsMemento();
+							taskCompletionSource.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, skinsMemento));
+							break;
+						}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+							{
+								SkinsSynchronizerGoogleSavedGameFacade.PullCallback pullCallback1 = this;
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pullCallback1.HandleOpenCompleted));
+								break;
+							}
+							else
+							{
+								this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+								return;
+							}
+						}
+						case SavedGameRequestStatus.Success:
+						{
+							SkinsMemento skinsMemento1 = SkinsSynchronizerGoogleSavedGameFacade.Callback.Parse(data);
+							if (Defs.IsDeveloperBuild)
+							{
+								Debug.LogFormat("[Skins] Incoming: {0}", new object[] { skinsMemento1 });
+							}
+							SkinsMemento skinsMemento2 = base.MergeWithResolved(skinsMemento1, false);
+							this._promise.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, skinsMemento2));
+							break;
+						}
+						default:
+						{
+							goto case 0;
+						}
+					}
+				}
+				finally
+				{
+					scopeLogger.Dispose();
+				}
+			}
+
+			protected override void TrySetException(Exception ex)
+			{
+				this._promise.TrySetException(ex);
 			}
 		}
 
-		private sealed class PushCallback : Callback
+		private sealed class PushCallback : SkinsSynchronizerGoogleSavedGameFacade.Callback
 		{
 			private readonly SkinsMemento _skins;
 
@@ -158,74 +404,28 @@ namespace Rilisoft
 
 			public PushCallback(SkinsMemento skins, TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> promise)
 			{
-				_skins = skins;
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
+				this._skins = skins;
+				this._promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
 			}
 
 			protected override void HandleAuthenticationCompleted(bool succeeded)
 			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, succeeded });
+				ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 				try
 				{
 					if (!succeeded)
 					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
+						this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(SavedGameRequestStatus.AuthenticationError, null));
 					}
-					else if (SavedGame == null)
+					else if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
+						SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+						SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback.HandleOpenCompleted));
 					}
 					else
 					{
-						SavedGame.OpenWithManualConflictResolution("Skins", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-
-			protected override void TrySetException(Exception ex)
-			{
-				_promise.TrySetException(ex);
-			}
-
-			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
-			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					if (SavedGame == null)
-					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						SkinsMemento skinsMemento = MergeWithResolved(_skins, false);
-						string text2 = (skinsMemento.Conflicted ? "resolved" : ((!_resolved.HasValue) ? "none" : "trivial"));
-						string description = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", SystemInfo.deviceModel, text2);
-						SavedGameMetadataUpdate updateForMetadata = default(SavedGameMetadataUpdate.Builder).WithUpdatedDescription(description).Build();
-						string s = JsonUtility.ToJson(skinsMemento);
-						byte[] bytes = Encoding.UTF8.GetBytes(s);
-						SavedGame.CommitUpdate(metadata, updateForMetadata, bytes, HandleCommitCompleted);
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("Skins", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
-						break;
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
 					}
 				}
 				finally
@@ -236,32 +436,44 @@ namespace Rilisoft
 
 			private void HandleCommitCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleCommitCompleted('{2}', '{3}')", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str = (metadata == null ? string.Empty : metadata.Description);
+				string str1 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleCommitCompleted('{2}', '{3}')", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, requestStatus, str });
+				ScopeLogger scopeLogger = new ScopeLogger(str1, Defs.IsDeveloperBuild);
 				try
 				{
 					switch (requestStatus)
 					{
-					case SavedGameRequestStatus.TimeoutError:
-						if (SavedGame == null)
+						case SavedGameRequestStatus.AuthenticationError:
 						{
-							TrySetException(new InvalidOperationException("SavedGameClient is null."));
+							GpgFacade instance = GpgFacade.Instance;
+							SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+							instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+							break;
 						}
-						else
+						case SavedGameRequestStatus.InternalError:
 						{
-							SavedGame.OpenWithManualConflictResolution("Skins", DefaultDataSource, true, base.HandleOpenConflict, HandleOpenCompleted);
+							GoogleSavedGameRequestResult<ISavedGameMetadata> googleSavedGameRequestResult = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
+							this._promise.TrySetResult(googleSavedGameRequestResult);
+							break;
 						}
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-					{
-						GoogleSavedGameRequestResult<ISavedGameMetadata> result = new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata);
-						_promise.TrySetResult(result);
-						break;
-					}
+						case SavedGameRequestStatus.TimeoutError:
+						{
+							if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
+							{
+								SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = this;
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+								break;
+							}
+							else
+							{
+								this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
+								return;
+							}
+						}
+						default:
+						{
+							goto case SavedGameRequestStatus.InternalError;
+						}
 					}
 				}
 				finally
@@ -269,42 +481,66 @@ namespace Rilisoft
 					scopeLogger.Dispose();
 				}
 			}
-		}
 
-		private sealed class PullCallback : Callback
-		{
-			private readonly TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> _promise;
-
-			protected override DataSource DefaultDataSource
+			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
 			{
-				get
-				{
-					return DataSource.ReadNetworkOnly;
-				}
-			}
-
-			public PullCallback(TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> promise)
-			{
-				_promise = promise ?? new TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>>();
-			}
-
-			protected override void HandleAuthenticationCompleted(bool succeeded)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleAuthenticationCompleted({2})", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, succeeded);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+				string str;
+				string str1 = (metadata == null ? string.Empty : metadata.Description);
+				string str2 = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", new object[] { typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, base.GetType().Name, requestStatus, str1 });
+				ScopeLogger scopeLogger = new ScopeLogger(str2, Defs.IsDeveloperBuild);
 				try
 				{
-					if (!succeeded)
+					if (SkinsSynchronizerGoogleSavedGameFacade.SavedGame != null)
 					{
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(SavedGameRequestStatus.AuthenticationError, default(SkinsMemento)));
-					}
-					else if (SavedGame == null)
-					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
+						switch (requestStatus)
+						{
+							case SavedGameRequestStatus.AuthenticationError:
+							{
+								GpgFacade instance = GpgFacade.Instance;
+								SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback = this;
+								instance.Authenticate(new Action<bool>(pushCallback.HandleAuthenticationCompleted), true);
+								break;
+							}
+							case SavedGameRequestStatus.InternalError:
+							case 0:
+							{
+								this._promise.TrySetResult(new GoogleSavedGameRequestResult<ISavedGameMetadata>(requestStatus, metadata));
+								break;
+							}
+							case SavedGameRequestStatus.TimeoutError:
+							{
+								SkinsSynchronizerGoogleSavedGameFacade.PushCallback pushCallback1 = this;
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.OpenWithManualConflictResolution("Skins", this.DefaultDataSource, true, new ConflictCallback(this.HandleOpenConflict), new Action<SavedGameRequestStatus, ISavedGameMetadata>(pushCallback1.HandleOpenCompleted));
+								break;
+							}
+							case SavedGameRequestStatus.Success:
+							{
+								SkinsMemento skinsMemento = base.MergeWithResolved(this._skins, false);
+								if (!skinsMemento.Conflicted)
+								{
+									str = (!this._resolved.HasValue ? "none" : "trivial");
+								}
+								else
+								{
+									str = "resolved";
+								}
+								string str3 = str;
+								string str4 = string.Format(CultureInfo.InvariantCulture, "device:'{0}', conflict:'{1}'", new object[] { SystemInfo.deviceModel, str3 });
+								SavedGameMetadataUpdate savedGameMetadataUpdate = (new SavedGameMetadataUpdate.Builder()).WithUpdatedDescription(str4).Build();
+								string json = JsonUtility.ToJson(skinsMemento);
+								byte[] bytes = Encoding.UTF8.GetBytes(json);
+								SkinsSynchronizerGoogleSavedGameFacade.SavedGame.CommitUpdate(metadata, savedGameMetadataUpdate, bytes, new Action<SavedGameRequestStatus, ISavedGameMetadata>(this.HandleCommitCompleted));
+								break;
+							}
+							default:
+							{
+								goto case 0;
+							}
+						}
 					}
 					else
 					{
-						SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
+						this.TrySetException(new InvalidOperationException("SavedGameClient is null."));
 					}
 				}
 				finally
@@ -315,170 +551,7 @@ namespace Rilisoft
 
 			protected override void TrySetException(Exception ex)
 			{
-				_promise.TrySetException(ex);
-			}
-
-			internal override void HandleOpenCompleted(SavedGameRequestStatus requestStatus, ISavedGameMetadata metadata)
-			{
-				string text = ((metadata == null) ? string.Empty : metadata.Description);
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleOpenCompleted('{2}', '{3}')", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, requestStatus, text);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					if (SavedGame == null)
-					{
-						TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						return;
-					}
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-						SavedGame.ReadBinaryData(metadata, HandleReadCompleted);
-						break;
-					case SavedGameRequestStatus.TimeoutError:
-						SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, default(SkinsMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-
-			private void HandleReadCompleted(SavedGameRequestStatus requestStatus, byte[] data)
-			{
-				string callee = string.Format(CultureInfo.InvariantCulture, "{0}.{1}.HandleReadCompleted('{2}', {3})", typeof(SkinsSynchronizerGoogleSavedGameFacade).Name, GetType().Name, requestStatus, (data != null) ? data.Length : 0);
-				ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
-				try
-				{
-					switch (requestStatus)
-					{
-					case SavedGameRequestStatus.Success:
-					{
-						SkinsMemento skinsMemento = Callback.Parse(data);
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.LogFormat("[Skins] Incoming: {0}", skinsMemento);
-						}
-						SkinsMemento value = MergeWithResolved(skinsMemento, false);
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, value));
-						break;
-					}
-					case SavedGameRequestStatus.TimeoutError:
-						if (SavedGame == null)
-						{
-							TrySetException(new InvalidOperationException("SavedGameClient is null."));
-						}
-						else
-						{
-							SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, base.HandleOpenConflict, HandleOpenCompleted);
-						}
-						break;
-					case SavedGameRequestStatus.AuthenticationError:
-						GpgFacade.Instance.Authenticate(HandleAuthenticationCompleted, true);
-						break;
-					default:
-						_promise.TrySetResult(new GoogleSavedGameRequestResult<SkinsMemento>(requestStatus, default(SkinsMemento)));
-						break;
-					}
-				}
-				finally
-				{
-					scopeLogger.Dispose();
-				}
-			}
-		}
-
-		public const string Filename = "Skins";
-
-		private const string SavedGameClientIsNullMessage = "SavedGameClient is null.";
-
-		private static ISavedGameClient SavedGame
-		{
-			get
-			{
-				//Discarded unreachable code: IL_0021, IL_002e
-				try
-				{
-					if (PlayGamesPlatform.Instance == null)
-					{
-						return null;
-					}
-					return PlayGamesPlatform.Instance.SavedGame;
-				}
-				catch (NullReferenceException)
-				{
-					return null;
-				}
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<ISavedGameMetadata>> Push(SkinsMemento skins)
-		{
-			//Discarded unreachable code: IL_00d3
-			string text = string.Format(CultureInfo.InvariantCulture, "{0}.Push({1})", GetType().Name, skins);
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<ISavedGameMetadata>>();
-				if (SavedGame == null)
-				{
-					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
-					return taskCompletionSource.Task;
-				}
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					PushCallback pushCallback = new PushCallback(skins, taskCompletionSource);
-					SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, pushCallback.HandleOpenConflict, pushCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
-			}
-		}
-
-		public Task<GoogleSavedGameRequestResult<SkinsMemento>> Pull()
-		{
-			//Discarded unreachable code: IL_00cb
-			string text = GetType().Name + ".Pull()";
-			ScopeLogger scopeLogger = new ScopeLogger(text, Defs.IsDeveloperBuild && !Application.isEditor);
-			try
-			{
-				TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>> taskCompletionSource = new TaskCompletionSource<GoogleSavedGameRequestResult<SkinsMemento>>();
-				if (SavedGame == null)
-				{
-					taskCompletionSource.TrySetException(new InvalidOperationException("SavedGameClient is null."));
-					return taskCompletionSource.Task;
-				}
-				ScopeLogger scopeLogger2 = new ScopeLogger(text, "OpenWithManualConflictResolution", Defs.IsDeveloperBuild);
-				try
-				{
-					PullCallback pullCallback = new PullCallback(taskCompletionSource);
-					SavedGame.OpenWithManualConflictResolution("Skins", DataSource.ReadNetworkOnly, true, pullCallback.HandleOpenConflict, pullCallback.HandleOpenCompleted);
-				}
-				finally
-				{
-					scopeLogger2.Dispose();
-				}
-				return taskCompletionSource.Task;
-			}
-			finally
-			{
-				scopeLogger.Dispose();
+				this._promise.TrySetException(ex);
 			}
 		}
 	}

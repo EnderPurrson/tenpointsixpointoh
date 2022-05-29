@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DamageCollider : MonoBehaviour
@@ -12,47 +13,50 @@ public class DamageCollider : MonoBehaviour
 
 	private Transform cachedTransform;
 
-	public void RegisterPlayer()
+	public DamageCollider()
 	{
-		_playerRegistered = true;
-		_remainsTimeToHit = frequency;
-		CauseDamage();
-	}
-
-	public void UnregisterPlayer()
-	{
-		_playerRegistered = false;
-	}
-
-	private void Start()
-	{
-		cachedTransform = base.transform;
 	}
 
 	private void CauseDamage()
 	{
 		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.GetDamageFromEnv(damage, Vector3.zero);
+			WeaponManager.sharedManager.myPlayerMoveC.GetDamageFromEnv(this.damage, Vector3.zero);
 		}
+	}
+
+	public void RegisterPlayer()
+	{
+		this._playerRegistered = true;
+		this._remainsTimeToHit = this.frequency;
+		this.CauseDamage();
+	}
+
+	private void Start()
+	{
+		this.cachedTransform = base.transform;
+	}
+
+	public void UnregisterPlayer()
+	{
+		this._playerRegistered = false;
 	}
 
 	private void Update()
 	{
-		if (!_playerRegistered)
+		if (this._playerRegistered)
 		{
-			return;
-		}
-		if (WeaponManager.sharedManager.myPlayerMoveC == null)
-		{
-			_playerRegistered = false;
-			return;
-		}
-		_remainsTimeToHit -= Time.deltaTime;
-		if (_remainsTimeToHit <= 0f)
-		{
-			_remainsTimeToHit = frequency;
-			CauseDamage();
+			if (WeaponManager.sharedManager.myPlayerMoveC == null)
+			{
+				this._playerRegistered = false;
+				return;
+			}
+			this._remainsTimeToHit -= Time.deltaTime;
+			if (this._remainsTimeToHit <= 0f)
+			{
+				this._remainsTimeToHit = this.frequency;
+				this.CauseDamage();
+			}
 		}
 	}
 }

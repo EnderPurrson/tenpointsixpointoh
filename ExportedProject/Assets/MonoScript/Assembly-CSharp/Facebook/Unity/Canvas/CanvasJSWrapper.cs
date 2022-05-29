@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Facebook.Unity.Canvas
@@ -11,17 +12,24 @@ namespace Facebook.Unity.Canvas
 			get
 			{
 				TextAsset textAsset = Resources.Load("JSSDKBindings") as TextAsset;
-				if ((bool)textAsset)
+				if (!textAsset)
 				{
-					return textAsset.text;
+					return null;
 				}
-				return null;
+				return textAsset.text;
 			}
 		}
 
-		public string GetSDKVersion()
+		public CanvasJSWrapper()
 		{
-			return "v2.5";
+		}
+
+		public void DisableFullScreen()
+		{
+			if (Screen.fullScreen)
+			{
+				Screen.fullScreen = false;
+			}
 		}
 
 		public void ExternalCall(string functionName, params object[] args)
@@ -34,12 +42,9 @@ namespace Facebook.Unity.Canvas
 			Application.ExternalEval(script);
 		}
 
-		public void DisableFullScreen()
+		public string GetSDKVersion()
 		{
-			if (Screen.fullScreen)
-			{
-				Screen.fullScreen = false;
-			}
+			return "v2.5";
 		}
 	}
 }

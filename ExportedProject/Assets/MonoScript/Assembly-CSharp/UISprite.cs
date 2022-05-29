@@ -1,20 +1,21 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/UI/NGUI Sprite")]
 [ExecuteInEditMode]
 public class UISprite : UIBasicSprite
 {
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private UIAtlas mAtlas;
 
 	[HideInInspector]
 	[SerializeField]
 	private string mSpriteName;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool mFillCenter = true;
 
 	[NonSerialized]
@@ -23,93 +24,32 @@ public class UISprite : UIBasicSprite
 	[NonSerialized]
 	private bool mSpriteSet;
 
-	public override Material material
-	{
-		get
-		{
-			return (!(mAtlas != null)) ? null : mAtlas.spriteMaterial;
-		}
-	}
-
 	public UIAtlas atlas
 	{
 		get
 		{
-			return mAtlas;
+			return this.mAtlas;
 		}
 		set
 		{
-			if (mAtlas != value)
+			if (this.mAtlas != value)
 			{
-				RemoveFromPanel();
-				mAtlas = value;
-				mSpriteSet = false;
-				mSprite = null;
-				if (string.IsNullOrEmpty(mSpriteName) && mAtlas != null && mAtlas.spriteList.Count > 0)
+				base.RemoveFromPanel();
+				this.mAtlas = value;
+				this.mSpriteSet = false;
+				this.mSprite = null;
+				if (string.IsNullOrEmpty(this.mSpriteName) && this.mAtlas != null && this.mAtlas.spriteList.Count > 0)
 				{
-					SetAtlasSprite(mAtlas.spriteList[0]);
-					mSpriteName = mSprite.name;
+					this.SetAtlasSprite(this.mAtlas.spriteList[0]);
+					this.mSpriteName = this.mSprite.name;
 				}
-				if (!string.IsNullOrEmpty(mSpriteName))
+				if (!string.IsNullOrEmpty(this.mSpriteName))
 				{
-					string text = mSpriteName;
-					mSpriteName = string.Empty;
-					spriteName = text;
-					MarkAsChanged();
+					string str = this.mSpriteName;
+					this.mSpriteName = string.Empty;
+					this.spriteName = str;
+					this.MarkAsChanged();
 				}
-			}
-		}
-	}
-
-	public string spriteName
-	{
-		get
-		{
-			return mSpriteName;
-		}
-		set
-		{
-			if (string.IsNullOrEmpty(value))
-			{
-				if (!string.IsNullOrEmpty(mSpriteName))
-				{
-					mSpriteName = string.Empty;
-					mSprite = null;
-					mChanged = true;
-					mSpriteSet = false;
-				}
-			}
-			else if (mSpriteName != value)
-			{
-				mSpriteName = value;
-				mSprite = null;
-				mChanged = true;
-				mSpriteSet = false;
-			}
-		}
-	}
-
-	public bool isValid
-	{
-		get
-		{
-			return GetAtlasSprite() != null;
-		}
-	}
-
-	[Obsolete("Use 'centerType' instead")]
-	public bool fillCenter
-	{
-		get
-		{
-			return centerType != AdvancedType.Invisible;
-		}
-		set
-		{
-			if (value != (centerType != AdvancedType.Invisible))
-			{
-				centerType = (value ? AdvancedType.Sliced : AdvancedType.Invisible);
-				MarkAsChanged();
 			}
 		}
 	}
@@ -118,60 +58,12 @@ public class UISprite : UIBasicSprite
 	{
 		get
 		{
-			UISpriteData atlasSprite = GetAtlasSprite();
+			UISpriteData atlasSprite = this.GetAtlasSprite();
 			if (atlasSprite == null)
 			{
 				return base.border;
 			}
-			return new Vector4(atlasSprite.borderLeft, atlasSprite.borderBottom, atlasSprite.borderRight, atlasSprite.borderTop);
-		}
-	}
-
-	public override float pixelSize
-	{
-		get
-		{
-			return (!(mAtlas != null)) ? 1f : mAtlas.pixelSize;
-		}
-	}
-
-	public override int minWidth
-	{
-		get
-		{
-			if (type == Type.Sliced || type == Type.Advanced)
-			{
-				float num = pixelSize;
-				Vector4 vector = border * pixelSize;
-				int num2 = Mathf.RoundToInt(vector.x + vector.z);
-				UISpriteData atlasSprite = GetAtlasSprite();
-				if (atlasSprite != null)
-				{
-					num2 += Mathf.RoundToInt(num * (float)(atlasSprite.paddingLeft + atlasSprite.paddingRight));
-				}
-				return Mathf.Max(base.minWidth, ((num2 & 1) != 1) ? num2 : (num2 + 1));
-			}
-			return base.minWidth;
-		}
-	}
-
-	public override int minHeight
-	{
-		get
-		{
-			if (type == Type.Sliced || type == Type.Advanced)
-			{
-				float num = pixelSize;
-				Vector4 vector = border * pixelSize;
-				int num2 = Mathf.RoundToInt(vector.y + vector.w);
-				UISpriteData atlasSprite = GetAtlasSprite();
-				if (atlasSprite != null)
-				{
-					num2 += Mathf.RoundToInt(num * (float)(atlasSprite.paddingTop + atlasSprite.paddingBottom));
-				}
-				return Mathf.Max(base.minHeight, ((num2 & 1) != 1) ? num2 : (num2 + 1));
-			}
-			return base.minHeight;
+			return new Vector4((float)atlasSprite.borderLeft, (float)atlasSprite.borderBottom, (float)atlasSprite.borderRight, (float)atlasSprite.borderTop);
 		}
 	}
 
@@ -179,74 +71,164 @@ public class UISprite : UIBasicSprite
 	{
 		get
 		{
-			Vector2 vector = base.pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float num3 = num + (float)mWidth;
-			float num4 = num2 + (float)mHeight;
-			if (GetAtlasSprite() != null && mType != Type.Tiled)
+			Vector2 vector2 = base.pivotOffset;
+			float single = -vector2.x * (float)this.mWidth;
+			float single1 = -vector2.y * (float)this.mHeight;
+			float single2 = single + (float)this.mWidth;
+			float single3 = single1 + (float)this.mHeight;
+			if (this.GetAtlasSprite() != null && this.mType != UIBasicSprite.Type.Tiled)
 			{
-				int num5 = mSprite.paddingLeft;
-				int num6 = mSprite.paddingBottom;
-				int num7 = mSprite.paddingRight;
-				int num8 = mSprite.paddingTop;
-				if (mType != 0)
+				int num = this.mSprite.paddingLeft;
+				int num1 = this.mSprite.paddingBottom;
+				int num2 = this.mSprite.paddingRight;
+				int num3 = this.mSprite.paddingTop;
+				if (this.mType != UIBasicSprite.Type.Simple)
 				{
-					float num9 = pixelSize;
-					if (num9 != 1f)
+					float single4 = this.pixelSize;
+					if (single4 != 1f)
 					{
-						num5 = Mathf.RoundToInt(num9 * (float)num5);
-						num6 = Mathf.RoundToInt(num9 * (float)num6);
-						num7 = Mathf.RoundToInt(num9 * (float)num7);
-						num8 = Mathf.RoundToInt(num9 * (float)num8);
+						num = Mathf.RoundToInt(single4 * (float)num);
+						num1 = Mathf.RoundToInt(single4 * (float)num1);
+						num2 = Mathf.RoundToInt(single4 * (float)num2);
+						num3 = Mathf.RoundToInt(single4 * (float)num3);
 					}
 				}
-				int num10 = mSprite.width + num5 + num7;
-				int num11 = mSprite.height + num6 + num8;
-				float num12 = 1f;
-				float num13 = 1f;
-				if (num10 > 0 && num11 > 0 && (mType == Type.Simple || mType == Type.Filled))
+				int num4 = this.mSprite.width + num + num2;
+				int num5 = this.mSprite.height + num1 + num3;
+				float single5 = 1f;
+				float single6 = 1f;
+				if (num4 > 0 && num5 > 0 && (this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled))
 				{
-					if (((uint)num10 & (true ? 1u : 0u)) != 0)
+					if ((num4 & 1) != 0)
 					{
-						num7++;
+						num2++;
 					}
-					if (((uint)num11 & (true ? 1u : 0u)) != 0)
+					if ((num5 & 1) != 0)
 					{
-						num8++;
+						num3++;
 					}
-					num12 = 1f / (float)num10 * (float)mWidth;
-					num13 = 1f / (float)num11 * (float)mHeight;
+					single5 = 1f / (float)num4 * (float)this.mWidth;
+					single6 = 1f / (float)num5 * (float)this.mHeight;
 				}
-				if (mFlip == Flip.Horizontally || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Horizontally || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num += (float)num7 * num12;
-					num3 -= (float)num5 * num12;
+					single = single + (float)num2 * single5;
+					single2 = single2 - (float)num * single5;
 				}
 				else
 				{
-					num += (float)num5 * num12;
-					num3 -= (float)num7 * num12;
+					single = single + (float)num * single5;
+					single2 = single2 - (float)num2 * single5;
 				}
-				if (mFlip == Flip.Vertically || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Vertically || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num2 += (float)num8 * num13;
-					num4 -= (float)num6 * num13;
+					single1 = single1 + (float)num3 * single6;
+					single3 = single3 - (float)num1 * single6;
 				}
 				else
 				{
-					num2 += (float)num6 * num13;
-					num4 -= (float)num8 * num13;
+					single1 = single1 + (float)num1 * single6;
+					single3 = single3 - (float)num3 * single6;
 				}
 			}
-			Vector4 vector2 = ((!(mAtlas != null)) ? Vector4.zero : (border * pixelSize));
-			float num14 = vector2.x + vector2.z;
-			float num15 = vector2.y + vector2.w;
-			float x = Mathf.Lerp(num, num3 - num14, mDrawRegion.x);
-			float y = Mathf.Lerp(num2, num4 - num15, mDrawRegion.y);
-			float z = Mathf.Lerp(num + num14, num3, mDrawRegion.z);
-			float w = Mathf.Lerp(num2 + num15, num4, mDrawRegion.w);
-			return new Vector4(x, y, z, w);
+			Vector4 vector4 = (this.mAtlas == null ? Vector4.zero : this.border * this.pixelSize);
+			float single7 = vector4.x + vector4.z;
+			float single8 = vector4.y + vector4.w;
+			float single9 = Mathf.Lerp(single, single2 - single7, this.mDrawRegion.x);
+			float single10 = Mathf.Lerp(single1, single3 - single8, this.mDrawRegion.y);
+			float single11 = Mathf.Lerp(single + single7, single2, this.mDrawRegion.z);
+			float single12 = Mathf.Lerp(single1 + single8, single3, this.mDrawRegion.w);
+			return new Vector4(single9, single10, single11, single12);
+		}
+	}
+
+	[Obsolete("Use 'centerType' instead")]
+	public bool fillCenter
+	{
+		get
+		{
+			return this.centerType != UIBasicSprite.AdvancedType.Invisible;
+		}
+		set
+		{
+			if (value != this.centerType != UIBasicSprite.AdvancedType.Invisible)
+			{
+				this.centerType = (!value ? UIBasicSprite.AdvancedType.Invisible : UIBasicSprite.AdvancedType.Sliced);
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public bool isValid
+	{
+		get
+		{
+			return this.GetAtlasSprite() != null;
+		}
+	}
+
+	public override Material material
+	{
+		get
+		{
+			Material material;
+			if (this.mAtlas == null)
+			{
+				material = null;
+			}
+			else
+			{
+				material = this.mAtlas.spriteMaterial;
+			}
+			return material;
+		}
+	}
+
+	public override int minHeight
+	{
+		get
+		{
+			if (this.type != UIBasicSprite.Type.Sliced && this.type != UIBasicSprite.Type.Advanced)
+			{
+				return base.minHeight;
+			}
+			float single = this.pixelSize;
+			Vector4 vector4 = this.border * this.pixelSize;
+			int num = Mathf.RoundToInt(vector4.y + vector4.w);
+			UISpriteData atlasSprite = this.GetAtlasSprite();
+			if (atlasSprite != null)
+			{
+				num += Mathf.RoundToInt(single * (float)(atlasSprite.paddingTop + atlasSprite.paddingBottom));
+			}
+			return Mathf.Max(base.minHeight, ((num & 1) != 1 ? num : num + 1));
+		}
+	}
+
+	public override int minWidth
+	{
+		get
+		{
+			if (this.type != UIBasicSprite.Type.Sliced && this.type != UIBasicSprite.Type.Advanced)
+			{
+				return base.minWidth;
+			}
+			float single = this.pixelSize;
+			Vector4 vector4 = this.border * this.pixelSize;
+			int num = Mathf.RoundToInt(vector4.x + vector4.z);
+			UISpriteData atlasSprite = this.GetAtlasSprite();
+			if (atlasSprite != null)
+			{
+				num += Mathf.RoundToInt(single * (float)(atlasSprite.paddingLeft + atlasSprite.paddingRight));
+			}
+			return Mathf.Max(base.minWidth, ((num & 1) != 1 ? num : num + 1));
+		}
+	}
+
+	public override float pixelSize
+	{
+		get
+		{
+			return (this.mAtlas == null ? 1f : this.mAtlas.pixelSize);
 		}
 	}
 
@@ -254,102 +236,150 @@ public class UISprite : UIBasicSprite
 	{
 		get
 		{
-			return mAtlas != null && mAtlas.premultipliedAlpha;
+			return (this.mAtlas == null ? false : this.mAtlas.premultipliedAlpha);
 		}
+	}
+
+	public string spriteName
+	{
+		get
+		{
+			return this.mSpriteName;
+		}
+		set
+		{
+			if (string.IsNullOrEmpty(value))
+			{
+				if (string.IsNullOrEmpty(this.mSpriteName))
+				{
+					return;
+				}
+				this.mSpriteName = string.Empty;
+				this.mSprite = null;
+				this.mChanged = true;
+				this.mSpriteSet = false;
+			}
+			else if (this.mSpriteName != value)
+			{
+				this.mSpriteName = value;
+				this.mSprite = null;
+				this.mChanged = true;
+				this.mSpriteSet = false;
+			}
+		}
+	}
+
+	public UISprite()
+	{
 	}
 
 	public UISpriteData GetAtlasSprite()
 	{
-		if (!mSpriteSet)
+		if (!this.mSpriteSet)
 		{
-			mSprite = null;
+			this.mSprite = null;
 		}
-		if (mSprite == null && mAtlas != null)
+		if (this.mSprite == null && this.mAtlas != null)
 		{
-			if (!string.IsNullOrEmpty(mSpriteName))
+			if (!string.IsNullOrEmpty(this.mSpriteName))
 			{
-				UISpriteData sprite = mAtlas.GetSprite(mSpriteName);
+				UISpriteData sprite = this.mAtlas.GetSprite(this.mSpriteName);
 				if (sprite == null)
 				{
 					return null;
 				}
-				SetAtlasSprite(sprite);
+				this.SetAtlasSprite(sprite);
 			}
-			if (mSprite == null && mAtlas.spriteList.Count > 0)
+			if (this.mSprite == null && this.mAtlas.spriteList.Count > 0)
 			{
-				UISpriteData uISpriteData = mAtlas.spriteList[0];
-				if (uISpriteData == null)
+				UISpriteData item = this.mAtlas.spriteList[0];
+				if (item == null)
 				{
 					return null;
 				}
-				SetAtlasSprite(uISpriteData);
-				if (mSprite == null)
+				this.SetAtlasSprite(item);
+				if (this.mSprite == null)
 				{
-					Debug.LogError(mAtlas.name + " seems to have a null sprite!");
+					Debug.LogError(string.Concat(this.mAtlas.name, " seems to have a null sprite!"));
 					return null;
 				}
-				mSpriteName = mSprite.name;
+				this.mSpriteName = this.mSprite.name;
 			}
 		}
-		return mSprite;
-	}
-
-	protected void SetAtlasSprite(UISpriteData sp)
-	{
-		mChanged = true;
-		mSpriteSet = true;
-		if (sp != null)
-		{
-			mSprite = sp;
-			mSpriteName = mSprite.name;
-		}
-		else
-		{
-			mSpriteName = ((mSprite == null) ? string.Empty : mSprite.name);
-			mSprite = sp;
-		}
+		return this.mSprite;
 	}
 
 	public override void MakePixelPerfect()
 	{
-		if (!isValid)
+		if (!this.isValid)
 		{
 			return;
 		}
 		base.MakePixelPerfect();
-		if (mType == Type.Tiled)
+		if (this.mType == UIBasicSprite.Type.Tiled)
 		{
 			return;
 		}
-		UISpriteData atlasSprite = GetAtlasSprite();
+		UISpriteData atlasSprite = this.GetAtlasSprite();
 		if (atlasSprite == null)
 		{
 			return;
 		}
-		Texture texture = mainTexture;
-		if (!(texture == null) && (mType == Type.Simple || mType == Type.Filled || !atlasSprite.hasBorder) && texture != null)
+		Texture texture = this.mainTexture;
+		if (texture == null)
 		{
-			int num = Mathf.RoundToInt(pixelSize * (float)(atlasSprite.width + atlasSprite.paddingLeft + atlasSprite.paddingRight));
-			int num2 = Mathf.RoundToInt(pixelSize * (float)(atlasSprite.height + atlasSprite.paddingTop + atlasSprite.paddingBottom));
+			return;
+		}
+		if ((this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled || !atlasSprite.hasBorder) && texture != null)
+		{
+			int num = Mathf.RoundToInt(this.pixelSize * (float)(atlasSprite.width + atlasSprite.paddingLeft + atlasSprite.paddingRight));
+			int num1 = Mathf.RoundToInt(this.pixelSize * (float)(atlasSprite.height + atlasSprite.paddingTop + atlasSprite.paddingBottom));
 			if ((num & 1) == 1)
 			{
 				num++;
 			}
-			if ((num2 & 1) == 1)
+			if ((num1 & 1) == 1)
 			{
-				num2++;
+				num1++;
 			}
 			base.width = num;
-			base.height = num2;
+			base.height = num1;
+		}
+	}
+
+	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+		Texture texture = this.mainTexture;
+		if (texture == null)
+		{
+			return;
+		}
+		if (this.mSprite == null)
+		{
+			this.mSprite = this.atlas.GetSprite(this.spriteName);
+		}
+		if (this.mSprite == null)
+		{
+			return;
+		}
+		Rect rect = new Rect((float)this.mSprite.x, (float)this.mSprite.y, (float)this.mSprite.width, (float)this.mSprite.height);
+		Rect texCoords = new Rect((float)(this.mSprite.x + this.mSprite.borderLeft), (float)(this.mSprite.y + this.mSprite.borderTop), (float)(this.mSprite.width - this.mSprite.borderLeft - this.mSprite.borderRight), (float)(this.mSprite.height - this.mSprite.borderBottom - this.mSprite.borderTop));
+		rect = NGUIMath.ConvertToTexCoords(rect, texture.width, texture.height);
+		texCoords = NGUIMath.ConvertToTexCoords(texCoords, texture.width, texture.height);
+		int num = verts.size;
+		base.Fill(verts, uvs, cols, rect, texCoords);
+		if (this.onPostFill != null)
+		{
+			this.onPostFill(this, num, verts, uvs, cols);
 		}
 	}
 
 	protected override void OnInit()
 	{
-		if (!mFillCenter)
+		if (!this.mFillCenter)
 		{
-			mFillCenter = true;
-			centerType = AdvancedType.Invisible;
+			this.mFillCenter = true;
+			this.centerType = UIBasicSprite.AdvancedType.Invisible;
 		}
 		base.OnInit();
 	}
@@ -357,37 +387,27 @@ public class UISprite : UIBasicSprite
 	protected override void OnUpdate()
 	{
 		base.OnUpdate();
-		if (mChanged || !mSpriteSet)
+		if (this.mChanged || !this.mSpriteSet)
 		{
-			mSpriteSet = true;
-			mSprite = null;
-			mChanged = true;
+			this.mSpriteSet = true;
+			this.mSprite = null;
+			this.mChanged = true;
 		}
 	}
 
-	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	protected void SetAtlasSprite(UISpriteData sp)
 	{
-		Texture texture = mainTexture;
-		if (texture == null)
+		this.mChanged = true;
+		this.mSpriteSet = true;
+		if (sp == null)
 		{
-			return;
+			this.mSpriteName = (this.mSprite == null ? string.Empty : this.mSprite.name);
+			this.mSprite = sp;
 		}
-		if (mSprite == null)
+		else
 		{
-			mSprite = atlas.GetSprite(spriteName);
-		}
-		if (mSprite != null)
-		{
-			Rect rect = new Rect(mSprite.x, mSprite.y, mSprite.width, mSprite.height);
-			Rect rect2 = new Rect(mSprite.x + mSprite.borderLeft, mSprite.y + mSprite.borderTop, mSprite.width - mSprite.borderLeft - mSprite.borderRight, mSprite.height - mSprite.borderBottom - mSprite.borderTop);
-			rect = NGUIMath.ConvertToTexCoords(rect, texture.width, texture.height);
-			rect2 = NGUIMath.ConvertToTexCoords(rect2, texture.width, texture.height);
-			int size = verts.size;
-			Fill(verts, uvs, cols, rect, rect2);
-			if (onPostFill != null)
-			{
-				onPostFill(this, size, verts, uvs, cols);
-			}
+			this.mSprite = sp;
+			this.mSpriteName = this.mSprite.name;
 		}
 	}
 }

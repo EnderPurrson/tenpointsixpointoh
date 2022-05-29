@@ -1,5 +1,6 @@
-using System;
 using Rilisoft;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class UnlockPremiumMapView : MonoBehaviour
@@ -14,64 +15,39 @@ internal sealed class UnlockPremiumMapView : MonoBehaviour
 
 	private int _price = 15;
 
+	private EventHandler ClosePressed;
+
+	private EventHandler UnlockPressed;
+
 	public int Price
 	{
 		get
 		{
-			return _price;
+			return this._price;
 		}
 		set
 		{
-			_price = value;
-			if (priceSprite != null)
+			this._price = value;
+			if (this.priceSprite != null)
 			{
-				priceSprite.spriteName = string.Format("premium_baner_{0}", value);
+				this.priceSprite.spriteName = string.Format("premium_baner_{0}", value);
 			}
 		}
 	}
 
-	public event EventHandler ClosePressed;
-
-	public event EventHandler UnlockPressed;
+	public UnlockPremiumMapView()
+	{
+	}
 
 	private void OnDestroy()
 	{
-		if (closeButton != null)
+		if (this.closeButton != null)
 		{
-			closeButton.Clicked -= RaiseClosePressed;
+			this.closeButton.Clicked -= new EventHandler(this.RaiseClosePressed);
 		}
-		if (unlockButton != null)
+		if (this.unlockButton != null)
 		{
-			unlockButton.Clicked -= RaiseUnlockPressed;
-		}
-	}
-
-	private void Start()
-	{
-		if (closeButton != null)
-		{
-			closeButton.Clicked += RaiseClosePressed;
-		}
-		if (unlockButton != null)
-		{
-			unlockButton.Clicked += RaiseUnlockPressed;
-		}
-		if (priceSprite != null)
-		{
-			priceSprite.spriteName = string.Format("premium_baner_{0}", _price);
-		}
-		SetLabelPrice();
-	}
-
-	private void SetLabelPrice()
-	{
-		if (priceLabel != null && priceLabel.Length != 0)
-		{
-			string text = string.Format("{0} {1}", _price, LocalizationStore.Get("Key_1041"));
-			for (int i = 0; i < priceLabel.Length; i++)
-			{
-				priceLabel[i].text = text;
-			}
+			this.unlockButton.Clicked -= new EventHandler(this.RaiseUnlockPressed);
 		}
 	}
 
@@ -98,6 +74,64 @@ internal sealed class UnlockPremiumMapView : MonoBehaviour
 		if (unlockPressed != null)
 		{
 			unlockPressed(sender, e);
+		}
+	}
+
+	private void SetLabelPrice()
+	{
+		if (this.priceLabel == null || (int)this.priceLabel.Length == 0)
+		{
+			return;
+		}
+		string str = string.Format("{0} {1}", this._price, LocalizationStore.Get("Key_1041"));
+		for (int i = 0; i < (int)this.priceLabel.Length; i++)
+		{
+			this.priceLabel[i].text = str;
+		}
+	}
+
+	private void Start()
+	{
+		if (this.closeButton != null)
+		{
+			this.closeButton.Clicked += new EventHandler(this.RaiseClosePressed);
+		}
+		if (this.unlockButton != null)
+		{
+			this.unlockButton.Clicked += new EventHandler(this.RaiseUnlockPressed);
+		}
+		if (this.priceSprite != null)
+		{
+			this.priceSprite.spriteName = string.Format("premium_baner_{0}", this._price);
+		}
+		this.SetLabelPrice();
+	}
+
+	public event EventHandler ClosePressed
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.ClosePressed += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.ClosePressed -= value;
+		}
+	}
+
+	public event EventHandler UnlockPressed
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.UnlockPressed += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.UnlockPressed -= value;
 		}
 	}
 }

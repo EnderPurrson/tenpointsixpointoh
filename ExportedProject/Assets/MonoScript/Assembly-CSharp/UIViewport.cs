@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("NGUI/UI/Viewport Camera")]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Camera))]
 public class UIViewport : MonoBehaviour
 {
 	public Camera sourceCamera;
@@ -15,40 +16,43 @@ public class UIViewport : MonoBehaviour
 
 	private Camera mCam;
 
-	private void Start()
+	public UIViewport()
 	{
-		mCam = GetComponent<Camera>();
-		if (sourceCamera == null)
-		{
-			sourceCamera = Camera.main;
-		}
 	}
 
 	private void LateUpdate()
 	{
-		if (!(topLeft != null) || !(bottomRight != null))
+		if (this.topLeft != null && this.bottomRight != null)
 		{
-			return;
-		}
-		if (topLeft.gameObject.activeInHierarchy)
-		{
-			Vector3 vector = sourceCamera.WorldToScreenPoint(topLeft.position);
-			Vector3 vector2 = sourceCamera.WorldToScreenPoint(bottomRight.position);
-			Rect rect = new Rect(vector.x / (float)Screen.width, vector2.y / (float)Screen.height, (vector2.x - vector.x) / (float)Screen.width, (vector.y - vector2.y) / (float)Screen.height);
-			float num = fullSize * rect.height;
-			if (rect != mCam.rect)
+			if (!this.topLeft.gameObject.activeInHierarchy)
 			{
-				mCam.rect = rect;
+				this.mCam.enabled = false;
 			}
-			if (mCam.orthographicSize != num)
+			else
 			{
-				mCam.orthographicSize = num;
+				Vector3 screenPoint = this.sourceCamera.WorldToScreenPoint(this.topLeft.position);
+				Vector3 vector3 = this.sourceCamera.WorldToScreenPoint(this.bottomRight.position);
+				Rect rect = new Rect(screenPoint.x / (float)Screen.width, vector3.y / (float)Screen.height, (vector3.x - screenPoint.x) / (float)Screen.width, (screenPoint.y - vector3.y) / (float)Screen.height);
+				float single = this.fullSize * rect.height;
+				if (rect != this.mCam.rect)
+				{
+					this.mCam.rect = rect;
+				}
+				if (this.mCam.orthographicSize != single)
+				{
+					this.mCam.orthographicSize = single;
+				}
+				this.mCam.enabled = true;
 			}
-			mCam.enabled = true;
 		}
-		else
+	}
+
+	private void Start()
+	{
+		this.mCam = base.GetComponent<Camera>();
+		if (this.sourceCamera == null)
 		{
-			mCam.enabled = false;
+			this.sourceCamera = Camera.main;
 		}
 	}
 }

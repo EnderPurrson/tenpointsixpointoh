@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,43 +14,43 @@ namespace Rilisoft
 
 		private readonly Func<IList<QuestBase>> _skipMethod;
 
-		public QuestBase Quest
-		{
-			get
-			{
-				return _quests.FirstOrDefault();
-			}
-		}
-
 		public bool CanSkip
 		{
 			get
 			{
-				if (_skipMethod == null)
+				if (this._skipMethod == null)
 				{
 					return false;
 				}
-				if (_quests.Count == 0)
+				if (this._quests.Count == 0)
 				{
-					return _forcedSkip;
+					return this._forcedSkip;
 				}
-				if (_quests[0].Rewarded)
-				{
-					return false;
-				}
-				if (_quests[0].CalculateProgress() >= 1m)
+				if (this._quests[0].Rewarded)
 				{
 					return false;
 				}
-				if (_quests.Count < 2)
+				if (this._quests[0].CalculateProgress() >= new decimal(1))
 				{
-					if (Defs.IsDeveloperBuild)
-					{
-						Debug.LogFormat("_quests.Count < 2: {0}", _quests.Count);
-					}
-					return _forcedSkip;
+					return false;
 				}
-				return true;
+				if (this._quests.Count >= 2)
+				{
+					return true;
+				}
+				if (Defs.IsDeveloperBuild)
+				{
+					Debug.LogFormat("_quests.Count < 2: {0}", new object[] { this._quests.Count });
+				}
+				return this._forcedSkip;
+			}
+		}
+
+		public QuestBase Quest
+		{
+			get
+			{
+				return this._quests.FirstOrDefault<QuestBase>();
 			}
 		}
 
@@ -59,26 +60,37 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("quests");
 			}
-			_forcedSkip = forcedSkip;
-			_quests = quests.ToList();
-			_skipMethod = skipMethod;
+			this._forcedSkip = forcedSkip;
+			this._quests = quests.ToList<QuestBase>();
+			this._skipMethod = skipMethod;
 		}
 
 		public void Skip()
 		{
-			if (!CanSkip)
+			if (!this.CanSkip)
 			{
 				return;
 			}
-			IList<QuestBase> list = _skipMethod();
-			_quests.Clear();
-			if (list == null)
+			IList<QuestBase> questBases = this._skipMethod();
+			this._quests.Clear();
+			if (questBases != null)
 			{
-				return;
-			}
-			foreach (QuestBase item in list)
-			{
-				_quests.Add(item);
+				IEnumerator<QuestBase> enumerator = questBases.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						QuestBase current = enumerator.Current;
+						this._quests.Add(current);
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
 			}
 		}
 	}

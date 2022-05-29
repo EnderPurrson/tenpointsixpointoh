@@ -1,9 +1,11 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class TouchPadController : MonoBehaviour
@@ -38,7 +40,7 @@ public class TouchPadController : MonoBehaviour
 
 	public GameObject jumpIcon;
 
-	private Rect grenadeRect = default(Rect);
+	private Rect grenadeRect = new Rect();
 
 	private bool isInvokeGrenadePress;
 
@@ -54,9 +56,9 @@ public class TouchPadController : MonoBehaviour
 
 	private HungerGameController hungerGameController;
 
-	private Rect fireRect = default(Rect);
+	private Rect fireRect = new Rect();
 
-	private Rect jumpRect = default(Rect);
+	private Rect jumpRect = new Rect();
 
 	private Rect reloadRect;
 
@@ -86,360 +88,173 @@ public class TouchPadController : MonoBehaviour
 	{
 		get
 		{
-			return _touchControlScheme;
+			return this._touchControlScheme;
 		}
 		set
 		{
-			_touchControlScheme = value;
-			_touchControlScheme.Reset();
+			this._touchControlScheme = value;
+			this._touchControlScheme.Reset();
 		}
 	}
 
-	public void MakeInactive()
+	public TouchPadController()
 	{
-		jumpPressed = false;
-		isShooting = false;
-		isShootingPressure = false;
-		Reset();
-		HasAmmo();
-		_joyActive = false;
 	}
 
-	public void MakeActive()
+	[DebuggerHidden]
+	private IEnumerator _SetIsFirstFrame()
 	{
-		_joyActive = true;
+		TouchPadController.u003c_SetIsFirstFrameu003ec__Iterator1C2 variable = null;
+		return variable;
+	}
+
+	public void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
+	{
+		if (this._touchControlScheme != null)
+		{
+			this._touchControlScheme.ApplyDeltaTo(deltaPosition, yawTransform, pitchTransform, sensitivity, invert);
+		}
 	}
 
 	private void Awake()
 	{
-		reloadUISprite = reloadSpirte.GetComponent<UISprite>();
-		isHunger = Defs.isHunger;
+		this.reloadUISprite = this.reloadSpirte.GetComponent<UISprite>();
+		this.isHunger = Defs.isHunger;
 		if (!Device.isPixelGunLow)
 		{
-			_touchControlScheme = new CameraTouchControlScheme_CleanNGUI();
+			this._touchControlScheme = new CameraTouchControlScheme_CleanNGUI();
 		}
-		else if (Defs.isTouchControlSmoothDump)
+		else if (!Defs.isTouchControlSmoothDump)
 		{
-			_touchControlScheme = new CameraTouchControlScheme_SmoothDump();
+			this._touchControlScheme = new CameraTouchControlScheme_CleanNGUI();
 		}
 		else
 		{
-			_touchControlScheme = new CameraTouchControlScheme_CleanNGUI();
+			this._touchControlScheme = new CameraTouchControlScheme_SmoothDump();
 		}
 	}
 
-	private void OnEnable()
+	[DebuggerHidden]
+	[Obfuscation(Exclude=true)]
+	private IEnumerator BlinkReload()
 	{
-		isShooting = false;
-		isShootingPressure = false;
-		if (_shouldRecalcRects)
-		{
-			Invoke("ReCalcRects", 0.1f);
-		}
-		_shouldRecalcRects = false;
-		StartCoroutine(_SetIsFirstFrame());
+		TouchPadController.u003cBlinkReloadu003ec__Iterator1C3 variable = null;
+		return variable;
 	}
 
-	public static int GetGrenadeCount()
+	[Obfuscation(Exclude=true)]
+	private void BuyGrenadePressInvoke()
 	{
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-		{
-			return WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount;
-		}
-		return 0;
-	}
-
-	private static bool IsButtonGrenadeVisible()
-	{
-		return ((InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive && !Defs.isTurretWeapon) || InGameGUI.sharedInGameGUI.playerMoveC == null) && !Defs.isZooming;
-	}
-
-	private bool IsUseGrenadeActive()
-	{
-		return IsButtonGrenadeVisible() && Defs.isGrenateFireEnable && (!isHunger || hungerGameController.isGo) && GetGrenadeCount() > 0 && WeaponManager.sharedManager._currentFilterMap != 1 && WeaponManager.sharedManager._currentFilterMap != 2;
-	}
-
-	public static bool IsBuyGrenadeActive()
-	{
-		if (IsButtonGrenadeVisible() && Defs.isDaterRegim && WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount <= 0)
-		{
-			return true;
-		}
-		return false;
-	}
-
-	private void SetSpritesState()
-	{
-		SetGrenadeUISpriteState();
-		if (!(WeaponManager.sharedManager != null) || (!WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Equals("WeaponGrenade(Clone)") && !WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Equals("WeaponLike(Clone)")))
-		{
-			jumpSprite.gameObject.SetActive((Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0 || TrainingController.stepTraining >= TrainingState.GetTheGun));
-			bool flag = TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled;
-			fireSprite.gameObject.SetActive((Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch) && !Defs.isTurretWeapon && flag && (!isHunger || hungerGameController.isGo) && !WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon);
-			reloadSpirte.gameObject.SetActive(((InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) || InGameGUI.sharedInGameGUI.playerMoveC == null) && !Defs.isTurretWeapon && flag && WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && !WeaponManager.sharedManager.currentWeaponSounds.isMelee && !WeaponManager.sharedManager.currentWeaponSounds.isShotMelee);
-			zoomSprite.gameObject.SetActive(((InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) || InGameGUI.sharedInGameGUI.playerMoveC == null) && !Defs.isTurretWeapon && flag && WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && WeaponManager.sharedManager.currentWeaponSounds.isZooming);
-			if (jumpIcon.activeSelf == Defs.isJetpackEnabled)
-			{
-				jumpIcon.SetActive(!Defs.isJetpackEnabled);
-			}
-			if (jetPackIcon.activeSelf != Defs.isJetpackEnabled)
-			{
-				jetPackIcon.SetActive(Defs.isJetpackEnabled);
-			}
-		}
-	}
-
-	private void SetGrenadeUISpriteState()
-	{
-		bool flag = IsBuyGrenadeActive();
-		bool flag2 = IsUseGrenadeActive();
-		SetActiveChecked(grenadeButton.gameObject, flag || flag2);
-		if (!grenadeButton.gameObject.activeSelf)
-		{
-			return;
-		}
-		grenadeButton.grenadeSprite.spriteName = (((grenadePressed || _isBuyGrenadePressed) && grenadeRect.Contains(UICamera.lastTouchPosition)) ? ((!Defs.isDaterRegim) ? "grenade_btn_n" : "grenade_like_btn_n") : ((!Defs.isDaterRegim) ? "grenade_btn" : "grenade_like_btn"));
-		if (flag)
-		{
-			if (Defs.isDaterRegim)
-			{
-				SetActiveChecked(grenadeButton.priceLabel.gameObject, true);
-				SetActiveChecked(grenadeButton.countLabel.gameObject, false);
-				SetActiveChecked(grenadeButton.fullLabel.gameObject, false);
-			}
-			else
-			{
-				grenadeButton.gameObject.SetActive(false);
-			}
-		}
-		else
-		{
-			grenadeButton.gameObject.SetActive(true);
-			SetActiveChecked(grenadeButton.priceLabel.gameObject, false);
-			int grenadeCount = GetGrenadeCount();
-			SetActiveChecked(grenadeButton.countLabel.gameObject, true);
-			grenadeButton.countLabel.text = grenadeCount.ToString();
-			SetActiveChecked(grenadeButton.fullLabel.gameObject, false);
-		}
-	}
-
-	private void SetActiveChecked(GameObject obj, bool active)
-	{
-		if (active && !obj.activeSelf)
-		{
-			obj.SetActive(true);
-		}
-		else if (!active && obj.activeSelf)
-		{
-			obj.SetActive(false);
-		}
-	}
-
-	private void SetSide()
-	{
-		bool flag = (GetComponent<UIAnchor>().side == UIAnchor.Side.BottomRight && GlobalGameController.LeftHanded) || (GetComponent<UIAnchor>().side == UIAnchor.Side.BottomLeft && !GlobalGameController.LeftHanded);
-		GetComponent<UIAnchor>().side = (GlobalGameController.LeftHanded ? UIAnchor.Side.BottomRight : UIAnchor.Side.BottomLeft);
-		Vector3 center = GetComponent<BoxCollider>().center;
-		center.x *= ((!flag) ? (-1f) : 1f);
-		GetComponent<BoxCollider>().center = center;
-	}
-
-	private void SetSideAndCalcRects()
-	{
-		SetSide();
-		SetShouldRecalcRects();
-	}
-
-	private void SetShouldRecalcRects()
-	{
-		_shouldRecalcRects = true;
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void ReCalcRects()
-	{
-		CalcRects();
-	}
-
-	private IEnumerator Start()
-	{
-		SetSide();
-		PauseNGUIController.PlayerHandUpdated += SetSideAndCalcRects;
-		ControlsSettingsBase.ControlsChanged += SetShouldRecalcRects;
-		if (isHunger)
-		{
-			hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
-		}
-		SetSpritesState();
-		yield return null;
-		CalcRects();
-		Reset();
-	}
-
-	public void Reset()
-	{
-		_touchControlScheme.Reset();
+		this._isBuyGrenadePressed = true;
+		this.grenadeButton.grenadeSprite.spriteName = "grenade_btn_n";
 	}
 
 	private void CalcRects()
 	{
-		Transform transform = NGUITools.GetRoot(base.gameObject).transform;
-		Camera component = transform.GetChild(0).GetChild(0).GetComponent<Camera>();
-		Transform relativeTo = component.transform;
-		float num = 768f;
-		float num2 = num * ((float)Screen.width / (float)Screen.height);
-		List<object> list = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]")) as List<object>;
-		if (list == null)
+		Transform root = NGUITools.GetRoot(base.gameObject).transform;
+		Camera component = root.GetChild(0).GetChild(0).GetComponent<Camera>();
+		Transform transforms = component.transform;
+		float single = 768f;
+		float single1 = single * ((float)Screen.width / (float)Screen.height);
+		List<object> objs = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]")) as List<object>;
+		if (objs == null)
 		{
-			list = new List<object>();
-			Debug.LogWarning(list.GetType().FullName);
+			objs = new List<object>();
+			UnityEngine.Debug.LogWarning(objs.GetType().FullName);
 		}
-		int[] array = list.Select(Convert.ToInt32).ToArray();
-		Bounds bounds = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, fireSprite, true);
-		float num3 = 62f;
-		if (array.Length > 3)
+		int[] array = objs.Select<object, int>(new Func<object, int>(Convert.ToInt32)).ToArray<int>();
+		Bounds vector3 = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.fireSprite, true, true);
+		float single2 = 62f;
+		if ((int)array.Length > 3)
 		{
-			num3 = (float)array[3] * 0.5f;
+			single2 = (float)array[3] * 0.5f;
 		}
-		bounds.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		fireRect = new Rect((bounds.center.x - num3) * Defs.Coef, (bounds.center.y - num3) * Defs.Coef, 2f * num3 * Defs.Coef, 2f * num3 * Defs.Coef);
-		Bounds bounds2 = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, jumpSprite, true);
-		bounds2.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		float num4 = 62f;
-		if (array.Length > 2)
+		vector3.center = vector3.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		Vector3 vector31 = vector3.center;
+		float coef = (vector31.x - single2) * Defs.Coef;
+		Vector3 vector32 = vector3.center;
+		this.fireRect = new Rect(coef, (vector32.y - single2) * Defs.Coef, 2f * single2 * Defs.Coef, 2f * single2 * Defs.Coef);
+		Bounds bound = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.jumpSprite, true, true);
+		bound.center = bound.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		float single3 = 62f;
+		if ((int)array.Length > 2)
 		{
-			num4 = (float)array[2] * 0.5f;
+			single3 = (float)array[2] * 0.5f;
 		}
-		jumpRect = new Rect((bounds2.center.x - num4 * 0.7f) * Defs.Coef, (bounds2.center.y - num4) * Defs.Coef, 2f * num4 * Defs.Coef, 2f * num4 * Defs.Coef);
-		Bounds bounds3 = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, reloadSpirte, true);
-		float num5 = 55f;
-		if (array.Length > 1)
+		Vector3 vector33 = bound.center;
+		float coef1 = (vector33.x - single3 * 0.7f) * Defs.Coef;
+		Vector3 vector34 = bound.center;
+		this.jumpRect = new Rect(coef1, (vector34.y - single3) * Defs.Coef, 2f * single3 * Defs.Coef, 2f * single3 * Defs.Coef);
+		Bounds bound1 = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.reloadSpirte, true, true);
+		float single4 = 55f;
+		if ((int)array.Length > 1)
 		{
-			num5 = (float)array[1] * 0.5f;
+			single4 = (float)array[1] * 0.5f;
 		}
-		bounds3.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		reloadRect = new Rect((bounds3.center.x - num5) * Defs.Coef, (bounds3.center.y - num5) * Defs.Coef, 2f * num5 * Defs.Coef, 2f * num5 * Defs.Coef);
-		float num6 = 55f;
-		if (array.Length > 0)
+		bound1.center = bound1.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		Vector3 vector35 = bound1.center;
+		float coef2 = (vector35.x - single4) * Defs.Coef;
+		Vector3 vector36 = bound1.center;
+		this.reloadRect = new Rect(coef2, (vector36.y - single4) * Defs.Coef, 2f * single4 * Defs.Coef, 2f * single4 * Defs.Coef);
+		float single5 = 55f;
+		if ((int)array.Length > 0)
 		{
-			num6 = (float)array[0] * 0.5f;
+			single5 = (float)array[0] * 0.5f;
 		}
-		Bounds bounds4 = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, zoomSprite, true);
-		bounds4.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		zoomRect = new Rect((bounds4.center.x - num6) * Defs.Coef, (bounds4.center.y - num6) * Defs.Coef, 2f * num6 * Defs.Coef, 2f * num6 * Defs.Coef);
-		float num7 = 55f;
-		if (array.Length > 5)
+		Bounds bound2 = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.zoomSprite, true, true);
+		bound2.center = bound2.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		Vector3 vector37 = bound2.center;
+		float coef3 = (vector37.x - single5) * Defs.Coef;
+		Vector3 vector38 = bound2.center;
+		this.zoomRect = new Rect(coef3, (vector38.y - single5) * Defs.Coef, 2f * single5 * Defs.Coef, 2f * single5 * Defs.Coef);
+		float single6 = 55f;
+		if ((int)array.Length > 5)
 		{
-			num7 = (float)array[5] * 0.5f;
+			single6 = (float)array[5] * 0.5f;
 		}
-		Bounds bounds5 = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, grenadeButton.grenadeSprite.transform, true);
-		bounds5.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		grenadeRect = new Rect((bounds5.center.x - num7) * Defs.Coef, (bounds5.center.y - num7) * Defs.Coef, 2f * num7 * Defs.Coef, 2f * num7 * Defs.Coef);
-		float num8 = (float)Screen.height * 0.81f;
-		if (!GlobalGameController.LeftHanded)
+		Bounds bound3 = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.grenadeButton.grenadeSprite.transform, true, true);
+		bound3.center = bound3.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		Vector3 vector39 = bound3.center;
+		float coef4 = (vector39.x - single6) * Defs.Coef;
+		Vector3 vector310 = bound3.center;
+		this.grenadeRect = new Rect(coef4, (vector310.y - single6) * Defs.Coef, 2f * single6 * Defs.Coef, 2f * single6 * Defs.Coef);
+		float single7 = (float)Screen.height * 0.81f;
+		if (GlobalGameController.LeftHanded)
 		{
-			moveRect = new Rect(0f, 0f, num8, (float)Screen.height * 0.65f);
-		}
-		else
-		{
-			moveRect = new Rect((float)Screen.width - num8, 0f, num8, (float)Screen.height * 0.65f);
-		}
-	}
-
-	private IEnumerator _SetIsFirstFrame()
-	{
-		float tm = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - tm < 0.1f);
-		_isFirstFrame = false;
-	}
-
-	private void Update()
-	{
-		framesCount++;
-		if (fireRect.width.Equals(0f))
-		{
-			CalcRects();
-		}
-		SetSpritesState();
-		_isFirstFrame = false;
-		if (!_joyActive)
-		{
-			jumpPressed = false;
-			isShooting = false;
-			isShootingPressure = false;
-			_touchControlScheme.Reset();
-			return;
-		}
-		if (isInvokeGrenadePress && !grenadeRect.Contains(UICamera.lastTouchPosition))
-		{
-			isInvokeGrenadePress = false;
-			CancelInvoke("GrenadePressInvoke");
-		}
-		_touchControlScheme.OnUpdate();
-		if (Input.touchCount > 0)
-		{
-			if (MoveTouchID == -1)
-			{
-				for (int i = 0; i < Input.touches.Length; i++)
-				{
-					if (Input.touches[i].phase == TouchPhase.Began && moveRect.Contains(Input.touches[i].position))
-					{
-						MoveTouchID = Input.touches[i].fingerId;
-					}
-				}
-			}
-			UpdateMoveTouch();
+			this.moveRect = new Rect((float)Screen.width - single7, 0f, single7, (float)Screen.height * 0.65f);
 		}
 		else
 		{
-			MoveTouchID = -1;
-			pastPos = Vector2.zero;
-			pastDelta = Vector2.zero;
+			this.moveRect = new Rect(0f, 0f, single7, (float)Screen.height * 0.65f);
 		}
 	}
 
-	private void UpdateMoveTouch()
+	public static int GetGrenadeCount()
 	{
-		for (int i = 0; i < Input.touches.Length; i++)
+		if (!(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.myPlayerMoveC != null))
 		{
-			if (Input.touches[i].fingerId == MoveTouchID)
-			{
-				Touch touch = Input.touches[i];
-				if (pastPos == Vector2.zero)
-				{
-					pastPos = touch.position;
-				}
-				Vector2 vector = touch.position - pastPos;
-				if (vector == Vector2.zero && pastDelta != Vector2.zero && IsDifferendDirections(pastDelta, JoystickController.leftJoystick.value) && pastDelta.sqrMagnitude > 15f)
-				{
-					vector = pastDelta / 2f;
-					compDeltas += vector;
-				}
-				else
-				{
-					vector -= compDeltas;
-					compDeltas = Vector2.zero;
-				}
-				OnDragTouch(vector);
-				pastPos = touch.position;
-				pastDelta = vector;
-				if (touch.phase == TouchPhase.Ended)
-				{
-					MoveTouchID = -1;
-					pastPos = Vector2.zero;
-					pastDelta = Vector2.zero;
-				}
-			}
+			return 0;
 		}
+		return WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount;
 	}
 
-	private bool IsDifferendDirections(Vector2 delta1, Vector2 delta2)
+	public Vector2 GrabDeltaPosition()
 	{
-		return JoystickController.leftJoystick.value != Vector2.zero && Mathf.Sign(delta1.x) != Mathf.Sign(delta2.x);
+		Vector2 deltaPosition = Vector2.zero;
+		if (this._touchControlScheme != null)
+		{
+			deltaPosition = this._touchControlScheme.DeltaPosition;
+			this._touchControlScheme.ResetDelta();
+		}
+		return deltaPosition;
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void GrenadePressInvoke()
+	{
+		this.grenadePressed = true;
+		this.grenadeButton.grenadeSprite.spriteName = "grenade_btn_n";
+		this.move.GrenadePress();
 	}
 
 	public void HasAmmo()
@@ -447,169 +262,399 @@ public class TouchPadController : MonoBehaviour
 		BlinkReloadButton.isBlink = false;
 	}
 
+	private static bool IsButtonGrenadeVisible()
+	{
+		return ((!(InGameGUI.sharedInGameGUI.playerMoveC != null) || InGameGUI.sharedInGameGUI.playerMoveC.isMechActive || Defs.isTurretWeapon) && !(InGameGUI.sharedInGameGUI.playerMoveC == null) ? false : !Defs.isZooming);
+	}
+
+	public static bool IsBuyGrenadeActive()
+	{
+		if (TouchPadController.IsButtonGrenadeVisible() && Defs.isDaterRegim && WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null && WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount <= 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool IsDifferendDirections(Vector2 delta1, Vector2 delta2)
+	{
+		return (JoystickController.leftJoystick.@value == Vector2.zero ? false : Mathf.Sign(delta1.x) != Mathf.Sign(delta2.x));
+	}
+
+	private bool IsUseGrenadeActive()
+	{
+		return (!TouchPadController.IsButtonGrenadeVisible() || !Defs.isGrenateFireEnable || this.isHunger && !this.hungerGameController.isGo || TouchPadController.GetGrenadeCount() <= 0 || WeaponManager.sharedManager._currentFilterMap == 1 ? false : WeaponManager.sharedManager._currentFilterMap != 2);
+	}
+
+	public void MakeActive()
+	{
+		this._joyActive = true;
+	}
+
+	public void MakeInactive()
+	{
+		this.jumpPressed = false;
+		this.isShooting = false;
+		this.isShootingPressure = false;
+		this.Reset();
+		this.HasAmmo();
+		this._joyActive = false;
+	}
+
 	public void NoAmmo()
 	{
 		BlinkReloadButton.isBlink = true;
 	}
 
-	[Obfuscation(Exclude = true)]
-	private IEnumerator BlinkReload()
+	private void OnDestroy()
 	{
-		while (true)
+		PauseNGUIController.PlayerHandUpdated -= new Action(this.SetSideAndCalcRects);
+		ControlsSettingsBase.ControlsChanged -= new Action(this.SetShouldRecalcRects);
+	}
+
+	private void OnDragTouch(Vector2 delta)
+	{
+		if (this._joyActive)
 		{
-			yield return new WaitForSeconds(0.5f);
-			reloadUISprite.spriteName = "Reload_0";
-			yield return new WaitForSeconds(0.5f);
-			reloadUISprite.spriteName = "Reload_1";
+			this.framesCount = 0;
+			this._touchControlScheme.OnDrag(delta);
+			return;
 		}
+		this.jumpPressed = false;
+		this.isShooting = false;
+		this._touchControlScheme.ResetDelta();
+	}
+
+	private void OnEnable()
+	{
+		this.isShooting = false;
+		this.isShootingPressure = false;
+		if (this._shouldRecalcRects)
+		{
+			base.Invoke("ReCalcRects", 0.1f);
+		}
+		this._shouldRecalcRects = false;
+		base.StartCoroutine(this._SetIsFirstFrame());
 	}
 
 	private void OnPress(bool isDown)
 	{
-		_touchControlScheme.OnPress(isDown);
-		if (!move)
+		this._touchControlScheme.OnPress(isDown);
+		if (!this.move)
 		{
-			if (!Defs.isMulti)
+			if (Defs.isMulti)
 			{
-				move = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
+				this.move = WeaponManager.sharedManager.myPlayerMoveC;
 			}
 			else
 			{
-				move = WeaponManager.sharedManager.myPlayerMoveC;
+				this.move = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
 			}
 		}
-		if (fireRect.width.Equals(0f))
+		if (this.fireRect.width.Equals(0f))
 		{
-			CalcRects();
+			this.CalcRects();
 		}
-		if (!_joyActive || _isFirstFrame)
+		if (!this._joyActive)
 		{
 			return;
 		}
-		if (isDown && fireRect.Contains(UICamera.lastTouchPosition) && (Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch))
-		{
-			isShooting = true;
-		}
-		if (isDown && grenadeRect.Contains(UICamera.lastTouchPosition))
-		{
-			if (IsBuyGrenadeActive())
-			{
-				BuyGrenadePressInvoke();
-			}
-			else if (IsUseGrenadeActive() && (!(InGameGUI.sharedInGameGUI != null) || !(InGameGUI.sharedInGameGUI.changeWeaponScroll != null) || !InGameGUI.sharedInGameGUI.changeWeaponScroll.isDragging))
-			{
-				isInvokeGrenadePress = true;
-				GrenadePressInvoke();
-			}
-		}
-		if (isDown && jumpRect.Contains(UICamera.lastTouchPosition) && (Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0 || TrainingController.stepTraining >= TrainingState.GetTheGun))
-		{
-			jumpPressed = true;
-		}
-		if (isDown && ((InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) || InGameGUI.sharedInGameGUI.playerMoveC == null) && reloadRect.Contains(UICamera.lastTouchPosition) && (bool)move && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled))
-		{
-			move.ReloadPressed();
-		}
-		bool flag = zoomSprite != null && zoomSprite.gameObject.activeInHierarchy;
-		if (isDown && ((InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) || InGameGUI.sharedInGameGUI.playerMoveC == null) && flag && zoomRect.Contains(UICamera.lastTouchPosition) && (bool)move && WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && WeaponManager.sharedManager.currentWeaponSounds.isZooming)
-		{
-			move.ZoomPress();
-		}
-		if (isDown)
+		if (this._isFirstFrame)
 		{
 			return;
 		}
-		if (isInvokeGrenadePress)
+		if (isDown && this.fireRect.Contains(UICamera.lastTouchPosition) && (Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch))
 		{
-			isInvokeGrenadePress = false;
-			CancelInvoke("GrenadePressInvoke");
+			this.isShooting = true;
 		}
-		if (_isBuyGrenadePressed)
+		if (isDown && this.grenadeRect.Contains(UICamera.lastTouchPosition))
 		{
-			_isBuyGrenadePressed = false;
-			grenadeButton.grenadeSprite.spriteName = ((!Defs.isDaterRegim) ? "grenade_btn" : "grenade_like_btn");
-			if (grenadeRect.Contains(UICamera.lastTouchPosition))
+			if (TouchPadController.IsBuyGrenadeActive())
 			{
-				InGameGUI.sharedInGameGUI.HandleBuyGrenadeClicked(null, EventArgs.Empty);
+				this.BuyGrenadePressInvoke();
+			}
+			else if (this.IsUseGrenadeActive() && (!(InGameGUI.sharedInGameGUI != null) || !(InGameGUI.sharedInGameGUI.changeWeaponScroll != null) || !InGameGUI.sharedInGameGUI.changeWeaponScroll.isDragging))
+			{
+				this.isInvokeGrenadePress = true;
+				this.GrenadePressInvoke();
 			}
 		}
-		isShooting = false;
-		jumpPressed = false;
-		if (grenadePressed)
+		if (isDown && this.jumpRect.Contains(UICamera.lastTouchPosition) && (Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch) && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.None || TrainingController.stepTraining >= TrainingState.GetTheGun))
 		{
-			grenadePressed = false;
-			grenadeButton.grenadeSprite.spriteName = ((!Defs.isDaterRegim) ? "grenade_btn" : "grenade_like_btn");
-			move.GrenadeFire();
+			this.jumpPressed = true;
 		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void GrenadePressInvoke()
-	{
-		grenadePressed = true;
-		grenadeButton.grenadeSprite.spriteName = "grenade_btn_n";
-		move.GrenadePress();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void BuyGrenadePressInvoke()
-	{
-		_isBuyGrenadePressed = true;
-		grenadeButton.grenadeSprite.spriteName = "grenade_btn_n";
+		if (isDown && (InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive || InGameGUI.sharedInGameGUI.playerMoveC == null) && this.reloadRect.Contains(UICamera.lastTouchPosition) && this.move && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled))
+		{
+			this.move.ReloadPressed();
+		}
+		bool flag = (this.zoomSprite == null ? false : this.zoomSprite.gameObject.activeInHierarchy);
+		if (isDown && (InGameGUI.sharedInGameGUI.playerMoveC != null && !InGameGUI.sharedInGameGUI.playerMoveC.isMechActive || InGameGUI.sharedInGameGUI.playerMoveC == null) && flag && this.zoomRect.Contains(UICamera.lastTouchPosition) && this.move && WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && WeaponManager.sharedManager.currentWeaponSounds.isZooming)
+		{
+			this.move.ZoomPress();
+		}
+		if (!isDown)
+		{
+			if (this.isInvokeGrenadePress)
+			{
+				this.isInvokeGrenadePress = false;
+				base.CancelInvoke("GrenadePressInvoke");
+			}
+			if (this._isBuyGrenadePressed)
+			{
+				this._isBuyGrenadePressed = false;
+				this.grenadeButton.grenadeSprite.spriteName = (!Defs.isDaterRegim ? "grenade_btn" : "grenade_like_btn");
+				if (this.grenadeRect.Contains(UICamera.lastTouchPosition))
+				{
+					InGameGUI.sharedInGameGUI.HandleBuyGrenadeClicked(null, EventArgs.Empty);
+				}
+			}
+			this.isShooting = false;
+			this.jumpPressed = false;
+			if (this.grenadePressed)
+			{
+				this.grenadePressed = false;
+				this.grenadeButton.grenadeSprite.spriteName = (!Defs.isDaterRegim ? "grenade_btn" : "grenade_like_btn");
+				this.move.GrenadeFire();
+			}
+		}
 	}
 
 	private void OnPressure(float pressure)
 	{
 		if (Defs.touchPressureSupported && Defs.isUse3DTouch && WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			if ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled) && (!isHunger || hungerGameController.isGo) && hasAmmo && !WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon && pressure > 0.8f)
+			if (((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None || TrainingController.FireButtonEnabled) && (!this.isHunger || this.hungerGameController.isGo) && this.hasAmmo ? WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon : true) || pressure <= 0.8f)
 			{
-				isShootingPressure = true;
+				this.isShootingPressure = false;
 			}
 			else
 			{
-				isShootingPressure = false;
+				this.isShootingPressure = true;
 			}
 		}
 	}
 
-	private void OnDragTouch(Vector2 delta)
+	[Obfuscation(Exclude=true)]
+	private void ReCalcRects()
 	{
-		if (!_joyActive)
+		this.CalcRects();
+	}
+
+	public void Reset()
+	{
+		this._touchControlScheme.Reset();
+	}
+
+	private void SetActiveChecked(GameObject obj, bool active)
+	{
+		if (active && !obj.activeSelf)
 		{
-			jumpPressed = false;
-			isShooting = false;
-			_touchControlScheme.ResetDelta();
+			obj.SetActive(true);
+			return;
+		}
+		if (active || !obj.activeSelf)
+		{
+			return;
+		}
+		obj.SetActive(false);
+	}
+
+	private void SetGrenadeUISpriteState()
+	{
+		string str;
+		bool flag = TouchPadController.IsBuyGrenadeActive();
+		bool flag1 = this.IsUseGrenadeActive();
+		this.SetActiveChecked(this.grenadeButton.gameObject, (flag ? true : flag1));
+		if (!this.grenadeButton.gameObject.activeSelf)
+		{
+			return;
+		}
+		UISprite uISprite = this.grenadeButton.grenadeSprite;
+		if ((this.grenadePressed || this._isBuyGrenadePressed) && this.grenadeRect.Contains(UICamera.lastTouchPosition))
+		{
+			str = (!Defs.isDaterRegim ? "grenade_btn_n" : "grenade_like_btn_n");
 		}
 		else
 		{
-			framesCount = 0;
-			_touchControlScheme.OnDrag(delta);
+			str = (!Defs.isDaterRegim ? "grenade_btn" : "grenade_like_btn");
+		}
+		uISprite.spriteName = str;
+		if (!flag)
+		{
+			this.grenadeButton.gameObject.SetActive(true);
+			this.SetActiveChecked(this.grenadeButton.priceLabel.gameObject, false);
+			int grenadeCount = TouchPadController.GetGrenadeCount();
+			this.SetActiveChecked(this.grenadeButton.countLabel.gameObject, true);
+			this.grenadeButton.countLabel.text = grenadeCount.ToString();
+			this.SetActiveChecked(this.grenadeButton.fullLabel.gameObject, false);
+		}
+		else if (!Defs.isDaterRegim)
+		{
+			this.grenadeButton.gameObject.SetActive(false);
+		}
+		else
+		{
+			this.SetActiveChecked(this.grenadeButton.priceLabel.gameObject, true);
+			this.SetActiveChecked(this.grenadeButton.countLabel.gameObject, false);
+			this.SetActiveChecked(this.grenadeButton.fullLabel.gameObject, false);
 		}
 	}
 
-	private void OnDestroy()
+	private void SetShouldRecalcRects()
 	{
-		PauseNGUIController.PlayerHandUpdated -= SetSideAndCalcRects;
-		ControlsSettingsBase.ControlsChanged -= SetShouldRecalcRects;
+		this._shouldRecalcRects = true;
 	}
 
-	public Vector2 GrabDeltaPosition()
+	private void SetSide()
 	{
-		Vector2 result = Vector2.zero;
-		if (_touchControlScheme != null)
+		bool flag;
+		if (base.GetComponent<UIAnchor>().side != UIAnchor.Side.BottomRight || !GlobalGameController.LeftHanded)
 		{
-			result = _touchControlScheme.DeltaPosition;
-			_touchControlScheme.ResetDelta();
+			flag = (base.GetComponent<UIAnchor>().side != UIAnchor.Side.BottomLeft ? false : !GlobalGameController.LeftHanded);
 		}
-		return result;
+		else
+		{
+			flag = true;
+		}
+		bool flag1 = flag;
+		base.GetComponent<UIAnchor>().side = (!GlobalGameController.LeftHanded ? UIAnchor.Side.BottomLeft : UIAnchor.Side.BottomRight);
+		Vector3 component = base.GetComponent<BoxCollider>().center;
+		component.x = component.x * (!flag1 ? -1f : 1f);
+		base.GetComponent<BoxCollider>().center = component;
 	}
 
-	public void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
+	private void SetSideAndCalcRects()
 	{
-		if (_touchControlScheme != null)
+		this.SetSide();
+		this.SetShouldRecalcRects();
+	}
+
+	private void SetSpritesState()
+	{
+		bool flag;
+		bool flag1;
+		this.SetGrenadeUISpriteState();
+		if (WeaponManager.sharedManager != null && (WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Equals("WeaponGrenade(Clone)") || WeaponManager.sharedManager.currentWeaponSounds.gameObject.name.Equals("WeaponLike(Clone)")))
 		{
-			_touchControlScheme.ApplyDeltaTo(deltaPosition, yawTransform, pitchTransform, sensitivity, invert);
+			return;
+		}
+		this.jumpSprite.gameObject.SetActive((Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch ? (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.None ? 0 : (int)(TrainingController.stepTraining < TrainingState.GetTheGun)) == 0 : false));
+		bool flag2 = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None ? true : TrainingController.FireButtonEnabled);
+		this.fireSprite.gameObject.SetActive(((Defs.isJumpAndShootButtonOn || !Defs.isUse3DTouch) && !Defs.isTurretWeapon && flag2 && (!this.isHunger || this.hungerGameController.isGo) ? !WeaponManager.sharedManager.currentWeaponSounds.isGrenadeWeapon : false));
+		GameObject gameObject = this.reloadSpirte.gameObject;
+		if ((!(InGameGUI.sharedInGameGUI.playerMoveC != null) || InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) && !(InGameGUI.sharedInGameGUI.playerMoveC == null) || Defs.isTurretWeapon || !flag2)
+		{
+			flag = false;
+		}
+		else
+		{
+			flag = (!(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.currentWeaponSounds != null) || WeaponManager.sharedManager.currentWeaponSounds.isMelee ? false : !WeaponManager.sharedManager.currentWeaponSounds.isShotMelee);
+		}
+		gameObject.SetActive(flag);
+		GameObject gameObject1 = this.zoomSprite.gameObject;
+		if ((!(InGameGUI.sharedInGameGUI.playerMoveC != null) || InGameGUI.sharedInGameGUI.playerMoveC.isMechActive) && !(InGameGUI.sharedInGameGUI.playerMoveC == null) || Defs.isTurretWeapon || !flag2)
+		{
+			flag1 = false;
+		}
+		else
+		{
+			flag1 = (!(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.currentWeaponSounds != null) ? false : WeaponManager.sharedManager.currentWeaponSounds.isZooming);
+		}
+		gameObject1.SetActive(flag1);
+		if (this.jumpIcon.activeSelf == Defs.isJetpackEnabled)
+		{
+			this.jumpIcon.SetActive(!Defs.isJetpackEnabled);
+		}
+		if (this.jetPackIcon.activeSelf != Defs.isJetpackEnabled)
+		{
+			this.jetPackIcon.SetActive(Defs.isJetpackEnabled);
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		TouchPadController.u003cStartu003ec__Iterator1C1 variable = null;
+		return variable;
+	}
+
+	private void Update()
+	{
+		this.framesCount++;
+		if (this.fireRect.width.Equals(0f))
+		{
+			this.CalcRects();
+		}
+		this.SetSpritesState();
+		this._isFirstFrame = false;
+		if (!this._joyActive)
+		{
+			this.jumpPressed = false;
+			this.isShooting = false;
+			this.isShootingPressure = false;
+			this._touchControlScheme.Reset();
+			return;
+		}
+		if (this.isInvokeGrenadePress && !this.grenadeRect.Contains(UICamera.lastTouchPosition))
+		{
+			this.isInvokeGrenadePress = false;
+			base.CancelInvoke("GrenadePressInvoke");
+		}
+		this._touchControlScheme.OnUpdate();
+		if (Input.touchCount <= 0)
+		{
+			this.MoveTouchID = -1;
+			this.pastPos = Vector2.zero;
+			this.pastDelta = Vector2.zero;
+		}
+		else
+		{
+			if (this.MoveTouchID == -1)
+			{
+				for (int i = 0; i < (int)Input.touches.Length; i++)
+				{
+					if (Input.touches[i].phase == TouchPhase.Began && this.moveRect.Contains(Input.touches[i].position))
+					{
+						this.MoveTouchID = Input.touches[i].fingerId;
+					}
+				}
+			}
+			this.UpdateMoveTouch();
+		}
+	}
+
+	private void UpdateMoveTouch()
+	{
+		for (int i = 0; i < (int)Input.touches.Length; i++)
+		{
+			if (Input.touches[i].fingerId == this.MoveTouchID)
+			{
+				Touch touch = Input.touches[i];
+				if (this.pastPos == Vector2.zero)
+				{
+					this.pastPos = touch.position;
+				}
+				Vector2 vector2 = touch.position - this.pastPos;
+				if (!(vector2 == Vector2.zero) || !(this.pastDelta != Vector2.zero) || !this.IsDifferendDirections(this.pastDelta, JoystickController.leftJoystick.@value) || this.pastDelta.sqrMagnitude <= 15f)
+				{
+					vector2 -= this.compDeltas;
+					this.compDeltas = Vector2.zero;
+				}
+				else
+				{
+					vector2 = this.pastDelta / 2f;
+					this.compDeltas += vector2;
+				}
+				this.OnDragTouch(vector2);
+				this.pastPos = touch.position;
+				this.pastDelta = vector2;
+				if (touch.phase == TouchPhase.Ended)
+				{
+					this.MoveTouchID = -1;
+					this.pastPos = Vector2.zero;
+					this.pastDelta = Vector2.zero;
+				}
+			}
 		}
 	}
 }

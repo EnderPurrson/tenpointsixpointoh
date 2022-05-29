@@ -1,3 +1,5 @@
+using System;
+
 internal class PunEvent
 {
 	public const byte RPC = 200;
@@ -23,4 +25,8 @@ internal class PunEvent
 	public const byte OwnershipTransfer = 210;
 
 	public const byte VacantViewIds = 211;
+
+	public PunEvent()
+	{
+	}
 }

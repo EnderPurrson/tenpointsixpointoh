@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class FlagController : MonoBehaviour
@@ -44,231 +46,136 @@ public class FlagController : MonoBehaviour
 
 	private int currentColor = -1;
 
+	public FlagController()
+	{
+	}
+
 	private void Awake()
 	{
-		GameObject original = Resources.Load("FlagPedestal") as GameObject;
-		if (isBlue)
+		GameObject gameObject = Resources.Load("FlagPedestal") as GameObject;
+		if (!this.isBlue)
 		{
-			myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand1");
-			Initializer.flag1 = this;
-		}
-		else
-		{
-			myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand2");
+			this.myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand2");
 			Initializer.flag2 = this;
 		}
-		GameObject gameObject = Object.Instantiate(original, myBaza.transform.position, myBaza.transform.rotation) as GameObject;
-		pedistal = gameObject.GetComponent<FlagPedestalController>();
-		_objBazaTexture = Object.Instantiate(Resources.Load("ObjectPictFlag") as GameObject, myBaza.transform.position, myBaza.transform.rotation) as GameObject;
-		_objFlagTexture = Object.Instantiate(Resources.Load("ObjectPictFlag") as GameObject, myBaza.transform.position, myBaza.transform.rotation) as GameObject;
-		_objBazaTexture.GetComponent<ObjectPictFlag>().target = gameObject.transform.GetChild(0);
-		_objBazaTexture.GetComponent<ObjectPictFlag>().isBaza = true;
-		_objBazaTexture.GetComponent<ObjectPictFlag>().myFlagController = this;
-		_objFlagTexture.GetComponent<ObjectPictFlag>().target = pointObjTexture.transform;
-		SetColor(0);
-		PhotonObjectCacher.AddObject(base.gameObject);
-	}
-
-	private void Start()
-	{
-		photonView = GetComponent<PhotonView>();
-		photonView.RPC("SetMasterSeverIDRPC", PhotonTargets.AllBuffered, photonView.viewID);
-	}
-
-	public void SetColor(int _color)
-	{
-		if (_color != currentColor)
-		{
-			currentColor = _color;
-			pedistal.SetColor(_color);
-			flagModelRed.SetActive(_color == 2);
-			flagModelBlue.SetActive(_color == 1);
-			rayRed.SetActive(_color == 2);
-			rayBlue.SetActive(_color == 1);
-			if (_color > 0)
-			{
-				_objBazaTexture.GetComponent<ObjectPictFlag>().SetTexture(Resources.Load((_color != 1) ? "red_base" : "blue_base") as Texture2D);
-				_objFlagTexture.GetComponent<ObjectPictFlag>().SetTexture(Resources.Load((_color != 1) ? "red_flag" : "blue_flag") as Texture2D);
-			}
-			else
-			{
-				_objBazaTexture.GetComponent<ObjectPictFlag>().SetTexture(null);
-				_objFlagTexture.GetComponent<ObjectPictFlag>().SetTexture(null);
-			}
-		}
-	}
-
-	private void Update()
-	{
-		if (inGameGui == null)
-		{
-			inGameGui = InGameGUI.sharedInGameGUI;
-		}
-		SetColor((!(WeaponManager.sharedManager.myPlayerMoveC == null)) ? (((WeaponManager.sharedManager.myPlayerMoveC.myCommand == 1 && isBlue) || (WeaponManager.sharedManager.myPlayerMoveC.myCommand == 2 && !isBlue)) ? 1 : 2) : 0);
-		if (rayBlue.activeInHierarchy == isCapture)
-		{
-			rayBlue.SetActive(!isCapture);
-		}
-		if (rayRed.activeInHierarchy == isCapture)
-		{
-			rayRed.SetActive(!isCapture);
-		}
-		if (targetTrasform != null)
-		{
-			base.transform.position = targetTrasform.position;
-			base.transform.rotation = targetTrasform.rotation;
-		}
 		else
 		{
-			isCapture = false;
+			this.myBaza = GameObject.FindGameObjectWithTag("BazaZoneCommand1");
+			Initializer.flag1 = this;
 		}
-		int num = 0;
-		int num2 = 0;
-		foreach (Player_move_c player in Initializer.players)
-		{
-			if (player != null)
-			{
-				int myCommand = player.myCommand;
-				if (myCommand == 1)
-				{
-					num++;
-				}
-				if (myCommand == 2)
-				{
-					num2++;
-				}
-			}
-		}
-		if ((num == 0 || num2 == 0) && flagModel.activeSelf)
-		{
-			flagModel.SetActive(false);
-		}
-		if (inGameGui != null && (num == 0 || num2 == 0) && !inGameGui.message_wait.activeSelf)
-		{
-			inGameGui.message_wait.SetActive(true);
-			inGameGui.timerShowNow = 0f;
-		}
-		if (inGameGui != null && num != 0 && num2 != 0 && inGameGui.message_wait.activeSelf)
-		{
-			inGameGui.message_wait.SetActive(false);
-			inGameGui.timerShowNow = 3f;
-		}
-		if (num != 0 && num2 != 0 && !flagModel.activeSelf)
-		{
-			flagModel.SetActive(true);
-		}
-		if ((num == 0 || num2 == 0) && isCapture)
-		{
-			foreach (Player_move_c player2 in Initializer.players)
-			{
-				if (idCapturePlayer == player2.mySkinName.photonView.ownerId)
-				{
-					player2.isCaptureFlag = false;
-				}
-				GoBaza();
-			}
-		}
-		if (!PhotonNetwork.isMasterClient || isCapture || isBaza)
-		{
-			return;
-		}
-		timerToBaza -= Time.deltaTime;
-		if (timerToBaza < 0f)
-		{
-			GoBaza();
-			if (WeaponManager.sharedManager.myPlayer != null)
-			{
-				WeaponManager.sharedManager.myPlayerMoveC.SendSystemMessegeFromFlagReturned(isBlue);
-			}
-		}
+		GameObject gameObject1 = UnityEngine.Object.Instantiate(gameObject, this.myBaza.transform.position, this.myBaza.transform.rotation) as GameObject;
+		this.pedistal = gameObject1.GetComponent<FlagPedestalController>();
+		this._objBazaTexture = UnityEngine.Object.Instantiate(Resources.Load("ObjectPictFlag") as GameObject, this.myBaza.transform.position, this.myBaza.transform.rotation) as GameObject;
+		this._objFlagTexture = UnityEngine.Object.Instantiate(Resources.Load("ObjectPictFlag") as GameObject, this.myBaza.transform.position, this.myBaza.transform.rotation) as GameObject;
+		this._objBazaTexture.GetComponent<ObjectPictFlag>().target = gameObject1.transform.GetChild(0);
+		this._objBazaTexture.GetComponent<ObjectPictFlag>().isBaza = true;
+		this._objBazaTexture.GetComponent<ObjectPictFlag>().myFlagController = this;
+		this._objFlagTexture.GetComponent<ObjectPictFlag>().target = this.pointObjTexture.transform;
+		this.SetColor(0);
+		PhotonObjectCacher.AddObject(base.gameObject);
 	}
 
 	public void GoBaza()
 	{
-		timerToBaza = maxTimerToBaza;
-		photonView.RPC("GoBazaRPC", PhotonTargets.All);
+		this.timerToBaza = this.maxTimerToBaza;
+		this.photonView.RPC("GoBazaRPC", PhotonTargets.All, new object[0]);
 	}
 
-	[RPC]
 	[PunRPC]
+	[RPC]
 	public void GoBazaRPC()
 	{
 		Debug.Log("GoBazaRPC");
-		isBaza = true;
-		isCapture = false;
-		idCapturePlayer = -1;
-		targetTrasform = null;
-		base.transform.position = myBaza.transform.position;
-		base.transform.rotation = myBaza.transform.rotation;
+		this.isBaza = true;
+		this.isCapture = false;
+		this.idCapturePlayer = -1;
+		this.targetTrasform = null;
+		base.transform.position = this.myBaza.transform.position;
+		base.transform.rotation = this.myBaza.transform.rotation;
+	}
+
+	private void OnDestroy()
+	{
+		UnityEngine.Object.Destroy(this._objBazaTexture);
+		UnityEngine.Object.Destroy(this._objFlagTexture);
+		PhotonObjectCacher.RemoveObject(base.gameObject);
+	}
+
+	public void OnPhotonPlayerConnected(PhotonPlayer player)
+	{
+		if (this.photonView == null)
+		{
+			Debug.Log("FlagController.OnPhotonPlayerConnected():    photonView == null");
+			return;
+		}
+		if (!this.isCapture)
+		{
+			this.photonView.RPC("SetNOCaptureRPCNewPlayer", player, new object[] { player.ID, base.transform.position, base.transform.rotation, this.isBaza });
+		}
+		else
+		{
+			this.photonView.RPC("SetCaptureRPCNewPlayer", player, new object[] { player.ID, this.idCapturePlayer });
+		}
 	}
 
 	public void SetCapture(int _viewIdCapture)
 	{
-		photonView.RPC("SetCaptureRPC", PhotonTargets.All, _viewIdCapture);
+		this.photonView.RPC("SetCaptureRPC", PhotonTargets.All, new object[] { _viewIdCapture });
 	}
 
 	[PunRPC]
 	[RPC]
 	public void SetCaptureRPC(int _viewIdCapture)
 	{
-		isBaza = false;
-		idCapturePlayer = _viewIdCapture;
-		isCapture = true;
+		this.isBaza = false;
+		this.idCapturePlayer = _viewIdCapture;
+		this.isCapture = true;
 		foreach (Player_move_c player in Initializer.players)
 		{
-			if (player.mySkinName.photonView.ownerId == _viewIdCapture)
+			if (player.mySkinName.photonView.ownerId != _viewIdCapture)
 			{
-				targetTrasform = player.flagPoint.transform;
-				player.isCaptureFlag = true;
+				continue;
 			}
+			this.targetTrasform = player.flagPoint.transform;
+			player.isCaptureFlag = true;
 		}
-	}
-
-	public void SetNOCapture(Vector3 pos, Quaternion rot)
-	{
-		photonView.RPC("SetNOCaptureRPC", PhotonTargets.All, pos, rot);
-		timerToBaza = maxTimerToBaza;
 	}
 
 	[PunRPC]
 	[RPC]
-	public void SetNOCaptureRPC(Vector3 pos, Quaternion rot)
-	{
-		isCapture = false;
-		idCapturePlayer = -1;
-		if (targetTrasform != null)
-		{
-			targetTrasform.parent.GetComponent<SkinName>().playerMoveC.isCaptureFlag = false;
-		}
-		targetTrasform = null;
-	}
-
-	[RPC]
-	[PunRPC]
-	public void SetNOCaptureRPCNewPlayer(int idNewPlayer, Vector3 pos, Quaternion rot, bool _isBaza)
-	{
-		if (photonView == null)
-		{
-			photonView = GetComponent<PhotonView>();
-		}
-		if (photonView != null && photonView.ownerId == idNewPlayer)
-		{
-			isBaza = _isBaza;
-			SetNOCaptureRPC(pos, rot);
-		}
-	}
-
-	[RPC]
-	[PunRPC]
 	public void SetCaptureRPCNewPlayer(int idNewPlayer, int _viewIdCapture)
 	{
-		if (photonView == null)
+		if (this.photonView == null)
 		{
-			photonView = GetComponent<PhotonView>();
+			this.photonView = base.GetComponent<PhotonView>();
 		}
 		if (PhotonNetwork.player.ID == idNewPlayer)
 		{
-			SetCaptureRPC(_viewIdCapture);
+			this.SetCaptureRPC(_viewIdCapture);
+		}
+	}
+
+	public void SetColor(int _color)
+	{
+		if (_color == this.currentColor)
+		{
+			return;
+		}
+		this.currentColor = _color;
+		this.pedistal.SetColor(_color);
+		this.flagModelRed.SetActive(_color == 2);
+		this.flagModelBlue.SetActive(_color == 1);
+		this.rayRed.SetActive(_color == 2);
+		this.rayBlue.SetActive(_color == 1);
+		if (_color <= 0)
+		{
+			this._objBazaTexture.GetComponent<ObjectPictFlag>().SetTexture(null);
+			this._objFlagTexture.GetComponent<ObjectPictFlag>().SetTexture(null);
+		}
+		else
+		{
+			this._objBazaTexture.GetComponent<ObjectPictFlag>().SetTexture(Resources.Load((_color != 1 ? "red_base" : "blue_base")) as Texture2D);
+			this._objFlagTexture.GetComponent<ObjectPictFlag>().SetTexture(Resources.Load((_color != 1 ? "red_flag" : "blue_flag")) as Texture2D);
 		}
 	}
 
@@ -276,29 +183,141 @@ public class FlagController : MonoBehaviour
 	[RPC]
 	public void SetMasterSeverIDRPC(int _id)
 	{
-		masterServerID = _id;
+		this.masterServerID = _id;
 	}
 
-	public void OnPhotonPlayerConnected(PhotonPlayer player)
+	public void SetNOCapture(Vector3 pos, Quaternion rot)
 	{
-		if (photonView == null)
+		this.photonView.RPC("SetNOCaptureRPC", PhotonTargets.All, new object[] { pos, rot });
+		this.timerToBaza = this.maxTimerToBaza;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SetNOCaptureRPC(Vector3 pos, Quaternion rot)
+	{
+		this.isCapture = false;
+		this.idCapturePlayer = -1;
+		if (this.targetTrasform != null)
 		{
-			Debug.Log("FlagController.OnPhotonPlayerConnected():    photonView == null");
+			this.targetTrasform.parent.GetComponent<SkinName>().playerMoveC.isCaptureFlag = false;
 		}
-		else if (isCapture)
+		this.targetTrasform = null;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SetNOCaptureRPCNewPlayer(int idNewPlayer, Vector3 pos, Quaternion rot, bool _isBaza)
+	{
+		if (this.photonView == null)
 		{
-			photonView.RPC("SetCaptureRPCNewPlayer", player, player.ID, idCapturePlayer);
+			this.photonView = base.GetComponent<PhotonView>();
+		}
+		if (this.photonView != null && this.photonView.ownerId == idNewPlayer)
+		{
+			this.isBaza = _isBaza;
+			this.SetNOCaptureRPC(pos, rot);
+		}
+	}
+
+	private void Start()
+	{
+		this.photonView = base.GetComponent<PhotonView>();
+		this.photonView.RPC("SetMasterSeverIDRPC", PhotonTargets.AllBuffered, new object[] { this.photonView.viewID });
+	}
+
+	private void Update()
+	{
+		int num;
+		if (this.inGameGui == null)
+		{
+			this.inGameGui = InGameGUI.sharedInGameGUI;
+		}
+		if (WeaponManager.sharedManager.myPlayerMoveC != null)
+		{
+			num = ((WeaponManager.sharedManager.myPlayerMoveC.myCommand != 1 || !this.isBlue) && (WeaponManager.sharedManager.myPlayerMoveC.myCommand != 2 || this.isBlue) ? 2 : 1);
 		}
 		else
 		{
-			photonView.RPC("SetNOCaptureRPCNewPlayer", player, player.ID, base.transform.position, base.transform.rotation, isBaza);
+			num = 0;
 		}
-	}
-
-	private void OnDestroy()
-	{
-		Object.Destroy(_objBazaTexture);
-		Object.Destroy(_objFlagTexture);
-		PhotonObjectCacher.RemoveObject(base.gameObject);
+		this.SetColor(num);
+		if (this.rayBlue.activeInHierarchy == this.isCapture)
+		{
+			this.rayBlue.SetActive(!this.isCapture);
+		}
+		if (this.rayRed.activeInHierarchy == this.isCapture)
+		{
+			this.rayRed.SetActive(!this.isCapture);
+		}
+		if (this.targetTrasform == null)
+		{
+			this.isCapture = false;
+		}
+		else
+		{
+			base.transform.position = this.targetTrasform.position;
+			base.transform.rotation = this.targetTrasform.rotation;
+		}
+		int num1 = 0;
+		int num2 = 0;
+		foreach (Player_move_c player in Initializer.players)
+		{
+			if (player == null)
+			{
+				continue;
+			}
+			int num3 = player.myCommand;
+			if (num3 == 1)
+			{
+				num1++;
+			}
+			if (num3 != 2)
+			{
+				continue;
+			}
+			num2++;
+		}
+		if ((num1 == 0 || num2 == 0) && this.flagModel.activeSelf)
+		{
+			this.flagModel.SetActive(false);
+		}
+		if (this.inGameGui != null && (num1 == 0 || num2 == 0) && !this.inGameGui.message_wait.activeSelf)
+		{
+			this.inGameGui.message_wait.SetActive(true);
+			this.inGameGui.timerShowNow = 0f;
+		}
+		if (this.inGameGui != null && num1 != 0 && num2 != 0 && this.inGameGui.message_wait.activeSelf)
+		{
+			this.inGameGui.message_wait.SetActive(false);
+			this.inGameGui.timerShowNow = 3f;
+		}
+		if (num1 != 0 && num2 != 0 && !this.flagModel.activeSelf)
+		{
+			this.flagModel.SetActive(true);
+		}
+		if ((num1 == 0 || num2 == 0) && this.isCapture)
+		{
+			foreach (Player_move_c playerMoveC in Initializer.players)
+			{
+				if (this.idCapturePlayer == playerMoveC.mySkinName.photonView.ownerId)
+				{
+					playerMoveC.isCaptureFlag = false;
+				}
+				this.GoBaza();
+			}
+		}
+		if (PhotonNetwork.isMasterClient && !this.isCapture && !this.isBaza)
+		{
+			this.timerToBaza -= Time.deltaTime;
+			if (this.timerToBaza < 0f)
+			{
+				this.GoBaza();
+				if (WeaponManager.sharedManager.myPlayer != null)
+				{
+					WeaponManager.sharedManager.myPlayerMoveC.SendSystemMessegeFromFlagReturned(this.isBlue);
+				}
+			}
+		}
 	}
 }

@@ -5,9 +5,13 @@ internal sealed class PressDetector : MonoBehaviour
 {
 	public static EventHandler<EventArgs> PressedDown;
 
+	public PressDetector()
+	{
+	}
+
 	private void OnPress(bool isDown)
 	{
-		EventHandler<EventArgs> pressedDown = PressedDown;
+		EventHandler<EventArgs> pressedDown = PressDetector.PressedDown;
 		if (pressedDown != null)
 		{
 			pressedDown(base.gameObject, EventArgs.Empty);

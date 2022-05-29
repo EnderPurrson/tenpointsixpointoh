@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -41,24 +42,11 @@ public class SceneInfo : MonoBehaviour
 
 	public Vector3 rotationCam;
 
-	public bool IsLoaded
+	public Sounds GetBackgroundSound
 	{
 		get
 		{
-			if (_isLoaded)
-			{
-				return true;
-			}
-			UpdateKeyLoaded();
-			return _isLoaded;
-		}
-	}
-
-	public string NameScene
-	{
-		get
-		{
-			return base.gameObject.name;
+			return null;
 		}
 	}
 
@@ -70,35 +58,16 @@ public class SceneInfo : MonoBehaviour
 		}
 	}
 
-	public Sounds GetBackgroundSound
+	public bool IsLoaded
 	{
 		get
 		{
-			return null;
-		}
-	}
-
-	public string TranslateName
-	{
-		get
-		{
-			return transName;
-		}
-	}
-
-	public string TranslatePreviewName
-	{
-		get
-		{
-			return transShortName;
-		}
-	}
-
-	public string TranslateEngShortName
-	{
-		get
-		{
-			return transShortName;
+			if (this._isLoaded)
+			{
+				return true;
+			}
+			this.UpdateKeyLoaded();
+			return this._isLoaded;
 		}
 	}
 
@@ -106,19 +75,58 @@ public class SceneInfo : MonoBehaviour
 	{
 		get
 		{
-			switch (sizeMap)
+			switch (this.sizeMap)
 			{
-			case InfoSizeMap.big:
-				return "Key_0538";
-			case InfoSizeMap.normal:
-				return "Key_0539";
-			case InfoSizeMap.veryBig:
-				return "Key_0540";
-			case InfoSizeMap.small:
-				return "Key_0541";
-			default:
-				return string.Empty;
+				case InfoSizeMap.small:
+				{
+					return "Key_0541";
+				}
+				case InfoSizeMap.normal:
+				{
+					return "Key_0539";
+				}
+				case InfoSizeMap.big:
+				{
+					return "Key_0538";
+				}
+				case InfoSizeMap.veryBig:
+				{
+					return "Key_0540";
+				}
 			}
+			return string.Empty;
+		}
+	}
+
+	public string NameScene
+	{
+		get
+		{
+			return base.gameObject.name;
+		}
+	}
+
+	public string TranslateEngShortName
+	{
+		get
+		{
+			return this.transShortName;
+		}
+	}
+
+	public string TranslateName
+	{
+		get
+		{
+			return this.transName;
+		}
+	}
+
+	public string TranslatePreviewName
+	{
+		get
+		{
+			return this.transShortName;
 		}
 	}
 
@@ -126,29 +134,49 @@ public class SceneInfo : MonoBehaviour
 	{
 		get
 		{
-			return transSizeMap;
+			return this.transSizeMap;
 		}
 	}
 
-	public void UpdateKeyLoaded()
+	public SceneInfo()
 	{
-		if (isPreloading)
+	}
+
+	public void AddMode(TypeModeGame curMode)
+	{
+		for (int i = 0; i < this.avaliableInModes.Count; i++)
 		{
-			_isLoaded = false;
+			if (curMode == this.avaliableInModes[i])
+			{
+				return;
+			}
 		}
-		else
+		this.avaliableInModes.Add(curMode);
+	}
+
+	[ContextMenu("Set Next Index")]
+	private void DoSomething()
+	{
+		int num = 0;
+		UnityEngine.Object[] objArray = Resources.LoadAll("SceneInfo");
+		for (int i = 0; i < (int)objArray.Length; i++)
 		{
-			_isLoaded = true;
+			SceneInfo component = (objArray[i] as GameObject).GetComponent<SceneInfo>();
+			if (component.indexMap > num)
+			{
+				num = component.indexMap;
+			}
 		}
+		this.indexMap = num + 1;
 	}
 
 	public bool IsAvaliableForMode(TypeModeGame curMode)
 	{
-		if (IsAvaliableVersion && avaliableInModes != null && avaliableInModes.Count > 0)
+		if (this.IsAvaliableVersion && this.avaliableInModes != null && this.avaliableInModes.Count > 0)
 		{
-			for (int i = 0; i < avaliableInModes.Count; i++)
+			for (int i = 0; i < this.avaliableInModes.Count; i++)
 			{
-				if (curMode == avaliableInModes[i])
+				if (curMode == this.avaliableInModes[i])
 				{
 					return true;
 				}
@@ -157,49 +185,32 @@ public class SceneInfo : MonoBehaviour
 		return false;
 	}
 
-	public void AddMode(TypeModeGame curMode)
-	{
-		for (int i = 0; i < avaliableInModes.Count; i++)
-		{
-			if (curMode == avaliableInModes[i])
-			{
-				return;
-			}
-		}
-		avaliableInModes.Add(curMode);
-	}
-
-	public void UpdateLocalize()
-	{
-		transName = LocalizationStore.Get(keyTranslateName);
-		transShortName = LocalizationStore.Get(keyTranslateShortName);
-		transSizeMap = LocalizationStore.Get(KeyTranslateSizeMap);
-		transEngShortName = LocalizationStore.GetByDefault(keyTranslateShortName);
-	}
-
 	public void SetStartPositionCamera(GameObject curCamObj)
 	{
 		if (curCamObj != null)
 		{
-			curCamObj.transform.position = positionCam;
-			curCamObj.transform.eulerAngles = rotationCam;
+			curCamObj.transform.position = this.positionCam;
+			curCamObj.transform.eulerAngles = this.rotationCam;
 		}
 	}
 
-	[ContextMenu("Set Next Index")]
-	private void DoSomething()
+	public void UpdateKeyLoaded()
 	{
-		int num = 0;
-		Object[] array = Resources.LoadAll("SceneInfo");
-		Object[] array2 = array;
-		foreach (Object @object in array2)
+		if (!this.isPreloading)
 		{
-			SceneInfo component = (@object as GameObject).GetComponent<SceneInfo>();
-			if (component.indexMap > num)
-			{
-				num = component.indexMap;
-			}
+			this._isLoaded = true;
 		}
-		indexMap = num + 1;
+		else
+		{
+			this._isLoaded = false;
+		}
+	}
+
+	public void UpdateLocalize()
+	{
+		this.transName = LocalizationStore.Get(this.keyTranslateName);
+		this.transShortName = LocalizationStore.Get(this.keyTranslateShortName);
+		this.transSizeMap = LocalizationStore.Get(this.KeyTranslateSizeMap);
+		this.transEngShortName = LocalizationStore.GetByDefault(this.keyTranslateShortName);
 	}
 }

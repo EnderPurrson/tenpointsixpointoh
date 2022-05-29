@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class KillsLabel : MonoBehaviour
@@ -6,24 +7,28 @@ public class KillsLabel : MonoBehaviour
 
 	private InGameGUI _inGameGUI;
 
+	public KillsLabel()
+	{
+	}
+
 	private void Start()
 	{
-		base.gameObject.SetActive((Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch) || Defs.isDaterRegim);
-		_label = GetComponent<UILabel>();
-		_inGameGUI = InGameGUI.sharedInGameGUI;
+		base.gameObject.SetActive((!Defs.isMulti || ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.Deathmatch ? Defs.isDaterRegim : true));
+		this._label = base.GetComponent<UILabel>();
+		this._inGameGUI = InGameGUI.sharedInGameGUI;
 	}
 
 	private void Update()
 	{
-		if ((bool)_inGameGUI && (bool)_label)
+		if (this._inGameGUI && this._label)
 		{
 			if (Defs.isDaterRegim)
 			{
-				_label.text = GlobalGameController.CountKills.ToString();
+				this._label.text = GlobalGameController.CountKills.ToString();
 			}
-			else if (_inGameGUI != null)
+			else if (this._inGameGUI != null)
 			{
-				_label.text = _inGameGUI.killsToMaxKills();
+				this._label.text = this._inGameGUI.killsToMaxKills();
 			}
 		}
 	}

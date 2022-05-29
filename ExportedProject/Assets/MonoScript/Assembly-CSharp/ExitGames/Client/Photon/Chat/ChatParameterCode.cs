@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public class ChatParameterCode
@@ -33,5 +35,9 @@ namespace ExitGames.Client.Photon.Chat
 		public const byte SkipMessage = 12;
 
 		public const byte HistoryLength = 14;
+
+		public ChatParameterCode()
+		{
+		}
 	}
 }

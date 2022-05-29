@@ -1,37 +1,18 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public sealed class FlurryPluginWrapper : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CDoWithResponse_003Ec__AnonStorey2A1
-	{
-		internal HttpWebRequest request;
-
-		internal Action<HttpWebResponse> responseAction;
-
-		internal void _003C_003Em__291()
-		{
-			request.BeginGetResponse(_003C_003Em__293, request);
-		}
-
-		internal void _003C_003Em__293(IAsyncResult iar)
-		{
-			HttpWebResponse obj = (HttpWebResponse)((HttpWebRequest)iar.AsyncState).EndGetResponse(iar);
-			responseAction(obj);
-		}
-	}
-
 	public const string BackToMainMenu = "Back to Main Menu";
 
 	public const string UnlockHungerMoney = "Enable_Deadly Games";
@@ -42,67 +23,58 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 
 	private const string DeathmatchForPurchasesAnalytics = "Deathmatch";
 
-	public static string ModeEnteredEvent = "ModeEnteredEvent";
+	public static string ModeEnteredEvent;
 
-	public static string MapEnteredEvent = "MapEnteredEvent";
+	public static string MapEnteredEvent;
 
-	public static string MapNameParameter = "MapName";
+	public static string MapNameParameter;
 
-	public static string ModeParameter = "Mode";
+	public static string ModeParameter;
 
-	public static string ModePressedEvent = "ModePressed";
+	public static string ModePressedEvent;
 
-	public static string SocialEventName = "Post to Social";
+	public static string SocialEventName;
 
-	public static string SocialParName = "Service";
+	public static string SocialParName;
 
-	public static string AppVersionParameter = "App_version";
+	public static string AppVersionParameter;
 
-	public static string MultiplayeLocalEvent = "Local Button Pressed";
+	public static string MultiplayeLocalEvent;
 
-	public static string MultiplayerWayDeaathmatchEvent = "Way_to_start_multiplayer_DEATHMATCH";
+	public static string MultiplayerWayDeaathmatchEvent;
 
-	public static string MultiplayerWayCOOPEvent = "Way_to_start_multiplayer_COOP";
+	public static string MultiplayerWayCOOPEvent;
 
-	public static string MultiplayerWayCompanyEvent = "Way_to_start_multiplayer_Company";
+	public static string MultiplayerWayCompanyEvent;
 
-	public static string WayName = "Button";
+	public static string WayName;
 
-	public static readonly string HatsCapesShopPressedEvent = "Hats_Capes_Shop";
+	public readonly static string HatsCapesShopPressedEvent;
 
-	public static string FreeCoinsEv = "FreeCoins";
+	public static string FreeCoinsEv;
 
-	public static string FreeCoinsParName = "type";
+	public static string FreeCoinsParName;
 
-	public static string RateUsEv = "Rate_Us";
+	public static string RateUsEv;
 
 	private float _startSession;
 
-	private static bool _sessionStarted = false;
+	private static bool _sessionStarted;
 
-	private static Dictionary<string, int> antiCheatLimitsPaying = new Dictionary<string, int>
-	{
-		{ "Coins", 14000 },
-		{ "GemsCurrency", 11000 }
-	};
+	private static Dictionary<string, int> antiCheatLimitsPaying;
 
-	private static Dictionary<string, int> antiCheatLimitsNonPaying = new Dictionary<string, int>
-	{
-		{ "Coins", 50000 },
-		{ "GemsCurrency", 900 }
-	};
-
-	[CompilerGenerated]
-	private static AsyncCallback _003C_003Ef__am_0024cache15;
+	private static Dictionary<string, int> antiCheatLimitsNonPaying;
 
 	public static Dictionary<string, string> LevelAndTierParameters
 	{
 		get
 		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Levels", ((ExperienceController.sharedController != null) ? ExperienceController.sharedController.currentLevel : 0).ToString());
-			dictionary.Add("Tiers", (((ExpController.Instance != null) ? ExpController.Instance.OurTier : 0) + 1).ToString());
-			return dictionary;
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Levels", ((ExperienceController.sharedController == null ? 0 : ExperienceController.sharedController.currentLevel)).ToString() },
+				{ "Tiers", ((ExpController.Instance == null ? 0 : ExpController.Instance.OurTier) + 1).ToString() }
+			};
+			return strs;
 		}
 	}
 
@@ -110,24 +82,65 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 	{
 		get
 		{
-			return Defs.isCOOP ? MultiplayerWayCOOPEvent : ((!Defs.isCompany) ? MultiplayerWayDeaathmatchEvent : MultiplayerWayCompanyEvent);
+			string multiplayerWayCOOPEvent;
+			if (!Defs.isCOOP)
+			{
+				multiplayerWayCOOPEvent = (!Defs.isCompany ? FlurryPluginWrapper.MultiplayerWayDeaathmatchEvent : FlurryPluginWrapper.MultiplayerWayCompanyEvent);
+			}
+			else
+			{
+				multiplayerWayCOOPEvent = FlurryPluginWrapper.MultiplayerWayCOOPEvent;
+			}
+			return multiplayerWayCOOPEvent;
 		}
 	}
 
-	private static bool UserIsCheaterByCurrenciesCount()
+	static FlurryPluginWrapper()
 	{
-		Dictionary<string, int> dictionary = ((!IsPayingUser()) ? antiCheatLimitsNonPaying : antiCheatLimitsPaying);
-		return Storager.getInt("Coins", false) >= dictionary["Coins"] || Storager.getInt("GemsCurrency", false) >= dictionary["GemsCurrency"];
+		FlurryPluginWrapper.ModeEnteredEvent = "ModeEnteredEvent";
+		FlurryPluginWrapper.MapEnteredEvent = "MapEnteredEvent";
+		FlurryPluginWrapper.MapNameParameter = "MapName";
+		FlurryPluginWrapper.ModeParameter = "Mode";
+		FlurryPluginWrapper.ModePressedEvent = "ModePressed";
+		FlurryPluginWrapper.SocialEventName = "Post to Social";
+		FlurryPluginWrapper.SocialParName = "Service";
+		FlurryPluginWrapper.AppVersionParameter = "App_version";
+		FlurryPluginWrapper.MultiplayeLocalEvent = "Local Button Pressed";
+		FlurryPluginWrapper.MultiplayerWayDeaathmatchEvent = "Way_to_start_multiplayer_DEATHMATCH";
+		FlurryPluginWrapper.MultiplayerWayCOOPEvent = "Way_to_start_multiplayer_COOP";
+		FlurryPluginWrapper.MultiplayerWayCompanyEvent = "Way_to_start_multiplayer_Company";
+		FlurryPluginWrapper.WayName = "Button";
+		FlurryPluginWrapper.HatsCapesShopPressedEvent = "Hats_Capes_Shop";
+		FlurryPluginWrapper.FreeCoinsEv = "FreeCoins";
+		FlurryPluginWrapper.FreeCoinsParName = "type";
+		FlurryPluginWrapper.RateUsEv = "Rate_Us";
+		FlurryPluginWrapper._sessionStarted = false;
+		Dictionary<string, int> strs = new Dictionary<string, int>()
+		{
+			{ "Coins", 14000 },
+			{ "GemsCurrency", 11000 }
+		};
+		FlurryPluginWrapper.antiCheatLimitsPaying = strs;
+		strs = new Dictionary<string, int>()
+		{
+			{ "Coins", 50000 },
+			{ "GemsCurrency", 900 }
+		};
+		FlurryPluginWrapper.antiCheatLimitsNonPaying = strs;
 	}
 
-	private static void FlurryLogEventCore(string eventName, bool isTimed = false)
+	public FlurryPluginWrapper()
+	{
+	}
+
+	private void CheckForEdnermanApp()
 	{
 	}
 
 	public static string ConvertFromBase64(string s)
 	{
-		byte[] array = Convert.FromBase64String(s);
-		return Encoding.UTF8.GetString(array, 0, array.Length);
+		byte[] numArray = Convert.FromBase64String(s);
+		return Encoding.UTF8.GetString(numArray, 0, (int)numArray.Length);
 	}
 
 	public static string ConvertToBase64(string s)
@@ -135,369 +148,140 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 		return Convert.ToBase64String(Encoding.UTF8.GetBytes(s));
 	}
 
-	public static bool IsAdditionalLoggingAvailable()
+	public static void DoWithResponse(HttpWebRequest request, Action<HttpWebResponse> responseAction)
 	{
-		//Discarded unreachable code: IL_008e, IL_00ab
-		try
+		Action action = () => request.BeginGetResponse((IAsyncResult iar) => {
+			HttpWebResponse httpWebResponse = (HttpWebResponse)((HttpWebRequest)iar.AsyncState).EndGetResponse(iar);
+			responseAction(httpWebResponse);
+		}, request);
+		action.BeginInvoke((IAsyncResult iar) => ((Action)iar.AsyncState).EndInvoke(iar), action);
+	}
+
+	private void EndSession()
+	{
+		float single = Time.realtimeSinceStartup - this._startSession;
+		this._startSession += single;
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer)
-			{
-				return false;
-			}
-			return File.Exists(ConvertFromBase64("L0FwcGxpY2F0aW9ucy9DeWRpYS5hcHA=")) || File.Exists(ConvertFromBase64("L0xpYnJhcnkvTW9iaWxlU3Vic3RyYXRlL01vYmlsZVN1YnN0cmF0ZS5keWxpYg==")) || File.Exists(ConvertFromBase64("L2Jpbi9iYXNo")) || File.Exists(ConvertFromBase64("L3Vzci9zYmluL3NzaGQ=")) || File.Exists(ConvertFromBase64("L2V0Yy9hcHQ=")) || Directory.Exists(ConvertFromBase64("L3ByaXZhdGUvdmFyL2xpYi9hcHQv"));
-		}
-		catch (Exception ex)
-		{
-			Debug.LogWarning("Exception in IsAdditionalLoggingAvailable: " + ex);
-			return false;
-		}
-	}
-
-	public static bool IsLoggingFlurryAnalyticsSupported()
-	{
-		//Discarded unreachable code: IL_00d9, IL_00f6
-		try
-		{
-			if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer)
-			{
-				return false;
-			}
-			string path = ConvertFromBase64("L0xpYnJhcnkvTW9iaWxlU3Vic3RyYXRlL0R5bmFtaWNMaWJyYXJpZXM=");
-			if (File.Exists(Path.Combine(path, ConvertFromBase64("TG9jYWxJQVBTdG9yZS5keWxpYg=="))) || File.Exists(Path.Combine(path, ConvertFromBase64("TG9jYWxsQVBTdG9yZS5keWxpYg=="))))
-			{
-				Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging supported");
-				return true;
-			}
-			if (File.Exists(Path.Combine(path, ConvertFromBase64("aWFwLmR5bGli"))))
-			{
-				Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging_supported");
-				return true;
-			}
-			if (File.Exists(Path.Combine(path, ConvertFromBase64("aWFwZnJlZS5jb3JlLmR5bGli"))) || File.Exists(Path.Combine(path, ConvertFromBase64("SUFQRnJlZVNlcnZpY2UuZHlsaWI="))))
-			{
-				Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging__supported");
-				return true;
-			}
-			return false;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogWarning("Exception in IsLoggingFlurryAnalyticsSupported: " + ex);
-			return false;
-		}
-	}
-
-	public static void LogLevelPressed(string n)
-	{
-		FlurryLogEventCore(n + "_Pressed");
-	}
-
-	public static void LogBoxOpened(string nm)
-	{
-		LogEvent(nm + "_Box_Opened");
-	}
-
-	private static void FlurryLogEventWithParametersCore(string ev, Dictionary<string, string> parameters, bool isTimed = false)
-	{
-	}
-
-	public static void LogEventWithParameterAndValue(string ev, string pat, string val)
-	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add(pat, val);
-		dictionary.Add("Paying User", IsPayingUser().ToString());
-		Dictionary<string, string> parameters = dictionary;
-		FlurryLogEventWithParametersCore(ev, parameters);
-	}
-
-	public static void LogEvent(string eventName)
-	{
-		FlurryLogEventCore(eventName);
-	}
-
-	public static void LogTimedEvent(string eventName)
-	{
-		FlurryLogEventCore(eventName, true);
-	}
-
-	public static void LogEvent(string eventName, Dictionary<string, string> parameters, bool addPaying = true)
-	{
-		if (addPaying && !parameters.ContainsKey("Paying User"))
-		{
-			parameters.Add("Paying User", IsPayingUser().ToString());
-		}
-		FlurryLogEventWithParametersCore(eventName, parameters);
-	}
-
-	public static void LogTimedEvent(string eventName, Dictionary<string, string> parameters)
-	{
-		if (!parameters.ContainsKey("Paying User"))
-		{
-			parameters.Add("Paying User", IsPayingUser().ToString());
-		}
-		FlurryLogEventWithParametersCore(eventName, parameters, true);
+			{ "Duration (s)", single.ToString("F1", CultureInfo.InvariantCulture) },
+			{ "Timestamp (UTC)", DateTime.UtcNow.ToString("s") }
+		};
+		FlurryPluginWrapper.LogEventToAppsFlyer("End session", strs);
 	}
 
 	public static void EndTimedEvent(string eventName)
 	{
 	}
 
-	public static void LogEventAndDublicateToConsole(string eventName, Dictionary<string, string> parameters, bool addPaying = true)
+	private static void FlurryLogEventCore(string eventName, bool isTimed = false)
 	{
-		LogEvent(eventName, parameters, addPaying);
-		if (Defs.IsDeveloperBuild)
+	}
+
+	private static void FlurryLogEventWithParametersCore(string ev, Dictionary<string, string> parameters, bool isTimed = false)
+	{
+	}
+
+	private void FriendsController_NewCheaterDetectParametersAvailable(int coinsLimitPaying, int gemsLimitPaying, int coinsLimitNonPaying, int gemsLimitNonPaying)
+	{
+		FlurryPluginWrapper.antiCheatLimitsPaying["Coins"] = coinsLimitPaying;
+		FlurryPluginWrapper.antiCheatLimitsPaying["GemsCurrency"] = gemsLimitPaying;
+		FlurryPluginWrapper.antiCheatLimitsNonPaying["Coins"] = coinsLimitNonPaying;
+		FlurryPluginWrapper.antiCheatLimitsNonPaying["GemsCurrency"] = gemsLimitNonPaying;
+	}
+
+	public static string GetEventName(string eventName)
+	{
+		return string.Concat(eventName, FlurryPluginWrapper.GetPayingSuffix());
+	}
+
+	public static string GetEventX3State()
+	{
+		if (!PromoActionsManager.sharedManager.IsEventX3Active)
 		{
-			string text = ((parameters == null) ? "{}" : Json.Serialize(parameters));
-			if (Application.isEditor)
+			return "None";
+		}
+		if (PromoActionsManager.sharedManager.IsNewbieEventX3Active)
+		{
+			return "Newbie";
+		}
+		return "Common";
+	}
+
+	public static string GetPayingSuffix()
+	{
+		return FlurryPluginWrapper.GetPayingSuffixNo10();
+	}
+
+	public static string GetPayingSuffixNo10()
+	{
+		if (!FlurryPluginWrapper.IsPayingUser())
+		{
+			return " (Non Paying)";
+		}
+		return " (Paying)";
+	}
+
+	public static bool IsAdditionalLoggingAvailable()
+	{
+		bool flag;
+		try
+		{
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
 			{
-				Debug.LogFormat("<color=lightblue>{0}: {1}</color>", eventName, text);
+				flag = (File.Exists(FlurryPluginWrapper.ConvertFromBase64("L0FwcGxpY2F0aW9ucy9DeWRpYS5hcHA=")) || File.Exists(FlurryPluginWrapper.ConvertFromBase64("L0xpYnJhcnkvTW9iaWxlU3Vic3RyYXRlL01vYmlsZVN1YnN0cmF0ZS5keWxpYg==")) || File.Exists(FlurryPluginWrapper.ConvertFromBase64("L2Jpbi9iYXNo")) || File.Exists(FlurryPluginWrapper.ConvertFromBase64("L3Vzci9zYmluL3NzaGQ=")) || File.Exists(FlurryPluginWrapper.ConvertFromBase64("L2V0Yy9hcHQ=")) ? true : Directory.Exists(FlurryPluginWrapper.ConvertFromBase64("L3ByaXZhdGUvdmFyL2xpYi9hcHQv")));
 			}
 			else
 			{
-				Debug.LogFormat("{0}: {1}", eventName, text);
+				flag = false;
 			}
 		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("Exception in IsAdditionalLoggingAvailable: ", exception));
+			flag = false;
+		}
+		return flag;
 	}
 
-	public static void LogEventAndDublicateToEditor(string eventName, Dictionary<string, string> parameters, Color32 color = default(Color32))
+	public static bool IsLoggingFlurryAnalyticsSupported()
 	{
-		LogEvent(eventName, parameters);
-		if (Application.isEditor)
+		bool flag;
+		try
 		{
-			string text = ((parameters == null) ? "{ }" : Json.Serialize(parameters));
-			string message = ((!(color == default(Color))) ? string.Format("<color=#{2:X2}{3:X2}{4:X2}>{0}: {1}</color>", eventName, text, color.r, color.g, color.b) : (eventName + ": " + text));
-			Debug.Log(message);
-		}
-	}
-
-	public static void LogFastPurchase(string purchaseKind)
-	{
-		if (ExperienceController.sharedController != null)
-		{
-			int currentLevel = ExperienceController.sharedController.currentLevel;
-			int num = (currentLevel - 1) / 9;
-			string arg = string.Format("[{0}, {1})", num * 9 + 1, (num + 1) * 9 + 1);
-			string eventName = string.Format("Shop Purchases On Level {0} ({1}){2}", arg, (!IsPayingUser()) ? "Non Paying" : "Paying", string.Empty);
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Level " + currentLevel, purchaseKind);
-			Dictionary<string, string> parameters = dictionary;
-			LogEventAndDublicateToConsole(eventName, parameters);
-		}
-		else
-		{
-			Debug.LogWarning("ExperienceController.sharedController == null");
-		}
-	}
-
-	public static void LogMatchCompleted(string mode)
-	{
-		if (ExperienceController.sharedController != null)
-		{
-			string eventName = string.Format("Match Completed ({0})", (!IsPayingUser()) ? "Non Paying" : "Paying");
-			LogEventAndDublicateToConsole(eventName, new Dictionary<string, string>
+			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
 			{
+				string str = FlurryPluginWrapper.ConvertFromBase64("L0xpYnJhcnkvTW9iaWxlU3Vic3RyYXRlL0R5bmFtaWNMaWJyYXJpZXM=");
+				if (File.Exists(Path.Combine(str, FlurryPluginWrapper.ConvertFromBase64("TG9jYWxJQVBTdG9yZS5keWxpYg=="))) || File.Exists(Path.Combine(str, FlurryPluginWrapper.ConvertFromBase64("TG9jYWxsQVBTdG9yZS5keWxpYg=="))))
 				{
-					"Rank",
-					ExperienceController.sharedController.currentLevel.ToString()
-				},
-				{ "Mode", mode }
-			});
-		}
-	}
-
-	public static void LogWinInMatch(string mode)
-	{
-		if (ExperienceController.sharedController != null)
-		{
-			string eventName = string.Format("Win In Match ({0})", (!IsPayingUser()) ? "Non Paying" : "Paying");
-			LogEventAndDublicateToConsole(eventName, new Dictionary<string, string>
+					UnityEngine.Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging supported");
+					flag = true;
+				}
+				else if (File.Exists(Path.Combine(str, FlurryPluginWrapper.ConvertFromBase64("aWFwLmR5bGli"))))
+				{
+					UnityEngine.Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging_supported");
+					flag = true;
+				}
+				else if (File.Exists(Path.Combine(str, FlurryPluginWrapper.ConvertFromBase64("aWFwZnJlZS5jb3JlLmR5bGli"))) || File.Exists(Path.Combine(str, FlurryPluginWrapper.ConvertFromBase64("SUFQRnJlZVNlcnZpY2UuZHlsaWI="))))
+				{
+					UnityEngine.Debug.LogWarning("IsLoggingFlurryAnalyticsSupported: logging__supported");
+					flag = true;
+				}
+				else
+				{
+					flag = false;
+				}
+			}
+			else
 			{
-				{
-					"Rank",
-					ExperienceController.sharedController.currentLevel.ToString()
-				},
-				{ "Mode", mode }
-			});
+				flag = false;
+			}
 		}
-	}
-
-	public static void LogTimedEventAndDublicateToConsole(string eventName)
-	{
-		LogTimedEvent(eventName);
-		if (Defs.IsDeveloperBuild)
+		catch (Exception exception)
 		{
-			Debug.Log(eventName);
+			UnityEngine.Debug.LogWarning(string.Concat("Exception in IsLoggingFlurryAnalyticsSupported: ", exception));
+			flag = false;
 		}
-	}
-
-	public static void LogModeEventWithValue(string val)
-	{
-		if (!PlayerPrefs.HasKey("Mode Pressed First Time"))
-		{
-			PlayerPrefs.SetInt("Mode Pressed First Time", 0);
-			LogEventWithParameterAndValue("Mode Pressed First Time", ModeParameter, val);
-		}
-		else
-		{
-			LogEventWithParameterAndValue(ModePressedEvent, ModeParameter, val);
-		}
-	}
-
-	public static void LogMultiplayerWayStart()
-	{
-		LogEventWithParameterAndValue(MultiplayerWayEvent, WayName, "Start");
-		LogEvent("Start");
-	}
-
-	public static void LogMultiplayerWayQuckRandGame()
-	{
-		LogEventWithParameterAndValue(MultiplayerWayEvent, WayName, "Quick_rand_game");
-		LogEvent("Random");
-	}
-
-	public static void LogMultiplayerWayCustom()
-	{
-		LogEventWithParameterAndValue(MultiplayerWayEvent, WayName, "Custom");
-		LogEvent("Custom");
-	}
-
-	public static void LogDeathmatchModePress()
-	{
-		LogModeEventWithValue("Deathmatch");
-		LogEvent("Deathmatch");
-	}
-
-	public static void LogCampaignModePress()
-	{
-		LogModeEventWithValue("Survival");
-		LogEvent("Campaign");
-	}
-
-	public static void LogTrueSurvivalModePress()
-	{
-		LogModeEventWithValue("Arena_Survival");
-		LogEvent("Survival");
-	}
-
-	public static void LogCooperativeModePress()
-	{
-		LogModeEventWithValue("COOP");
-		LogEvent("Cooperative");
-	}
-
-	public static void LogSkinsMakerModePress()
-	{
-		LogEvent("Skins Maker");
-	}
-
-	public static void LogTwitter()
-	{
-		LogEventWithParameterAndValue(SocialEventName, SocialParName, "Twitter");
-	}
-
-	public static void LogFacebook()
-	{
-		LogEventWithParameterAndValue(SocialEventName, SocialParName, "Facebook");
-	}
-
-	public static void LogGamecenter()
-	{
-		LogEvent("Game Center");
-	}
-
-	public static void LogFreeCoinsFacebook()
-	{
-		LogEventWithParameterAndValue(FreeCoinsEv, FreeCoinsParName, "Facebook");
-		LogEvent("Facebook");
-	}
-
-	public static void LogFreeCoinsTwitter()
-	{
-		LogEventWithParameterAndValue(FreeCoinsEv, FreeCoinsParName, "Twitter");
-		LogEvent("Twitter");
-	}
-
-	public static void LogFreeCoinsYoutube()
-	{
-		LogEventWithParameterAndValue(FreeCoinsEv, FreeCoinsParName, "Youtube");
-		LogEvent("YouTube");
-	}
-
-	public static void LogCoinEarned()
-	{
-		LogEvent("Earned Coin Survival");
-	}
-
-	public static void LogCoinEarned_COOP()
-	{
-		LogEvent("Earned Coin COOP");
-	}
-
-	public static void LogCoinEarned_Deathmatch()
-	{
-		LogEvent("Earned Coin Deathmatch");
-	}
-
-	public static void LogFreeCoinsRateUs()
-	{
-		LogEvent(RateUsEv);
-	}
-
-	public static void LogSkinsMakerEnteredEvent()
-	{
-		LogEvent("SkinsMaker");
-	}
-
-	public static void LogAddYourSkinTriedToBoughtEvent()
-	{
-		LogEvent("AddYourSkin_TriedToBought");
-	}
-
-	public static void LogAddYourSkinUsedEvent()
-	{
-		LogEvent("AddYourSkin_Used");
-	}
-
-	public static void LogMultiplayeLocalEvent()
-	{
-		LogEvent(MultiplayeLocalEvent);
-	}
-
-	public static void LogMultiplayeWorldwideEvent()
-	{
-		LogEvent("Worldwide");
-	}
-
-	public static void LogCategoryEnteredEvent(string catName)
-	{
-		LogEventWithParameterAndValue("Dhop_Category", "Category_name", catName);
-	}
-
-	public static void LogEnteringMap(int typeConnect, string mapName)
-	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add(MapNameParameter, mapName);
-		Dictionary<string, string> parameters = dictionary;
-		string ev = (Defs.isCOOP ? "COOP" : "Deathmatch_WorldWide");
-		FlurryLogEventWithParametersCore(ev, parameters);
-	}
-
-	public static void DoWithResponse(HttpWebRequest request, Action<HttpWebResponse> responseAction)
-	{
-		_003CDoWithResponse_003Ec__AnonStorey2A1 _003CDoWithResponse_003Ec__AnonStorey2A = new _003CDoWithResponse_003Ec__AnonStorey2A1();
-		_003CDoWithResponse_003Ec__AnonStorey2A.request = request;
-		_003CDoWithResponse_003Ec__AnonStorey2A.responseAction = responseAction;
-		Action action = _003CDoWithResponse_003Ec__AnonStorey2A._003C_003Em__291;
-		if (_003C_003Ef__am_0024cache15 == null)
-		{
-			_003C_003Ef__am_0024cache15 = _003CDoWithResponse_003Em__292;
-		}
-		action.BeginInvoke(_003C_003Ef__am_0024cache15, action);
-	}
-
-	public static HttpWebRequest RequestAppWithID(string _id)
-	{
-		return (HttpWebRequest)WebRequest.Create("http://itunes.apple.com/lookup?id=" + _id);
+		return flag;
 	}
 
 	public static bool IsPayingUser()
@@ -505,109 +289,121 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 		return Storager.getInt("PayingUser", true) > 0;
 	}
 
-	public static string GetEventX3State()
+	public static void LogAddYourSkinTriedToBoughtEvent()
 	{
-		if (PromoActionsManager.sharedManager.IsEventX3Active)
+		FlurryPluginWrapper.LogEvent("AddYourSkin_TriedToBought");
+	}
+
+	public static void LogAddYourSkinUsedEvent()
+	{
+		FlurryPluginWrapper.LogEvent("AddYourSkin_Used");
+	}
+
+	public static void LogBoxOpened(string nm)
+	{
+		FlurryPluginWrapper.LogEvent(string.Concat(nm, "_Box_Opened"));
+	}
+
+	public static void LogCampaignModePress()
+	{
+		FlurryPluginWrapper.LogModeEventWithValue("Survival");
+		FlurryPluginWrapper.LogEvent("Campaign");
+	}
+
+	public static void LogCategoryEnteredEvent(string catName)
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue("Dhop_Category", "Category_name", catName);
+	}
+
+	public static void LogCoinEarned()
+	{
+		FlurryPluginWrapper.LogEvent("Earned Coin Survival");
+	}
+
+	public static void LogCoinEarned_COOP()
+	{
+		FlurryPluginWrapper.LogEvent("Earned Coin COOP");
+	}
+
+	public static void LogCoinEarned_Deathmatch()
+	{
+		FlurryPluginWrapper.LogEvent("Earned Coin Deathmatch");
+	}
+
+	public static void LogCooperativeModePress()
+	{
+		FlurryPluginWrapper.LogModeEventWithValue("COOP");
+		FlurryPluginWrapper.LogEvent("Cooperative");
+	}
+
+	public static void LogDeathmatchModePress()
+	{
+		FlurryPluginWrapper.LogModeEventWithValue("Deathmatch");
+		FlurryPluginWrapper.LogEvent("Deathmatch");
+	}
+
+	public static void LogEnteringMap(int typeConnect, string mapName)
+	{
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			if (PromoActionsManager.sharedManager.IsNewbieEventX3Active)
+			{ FlurryPluginWrapper.MapNameParameter, mapName }
+		};
+		FlurryPluginWrapper.FlurryLogEventWithParametersCore((Defs.isCOOP ? "COOP" : "Deathmatch_WorldWide"), strs, false);
+	}
+
+	public static void LogEvent(string eventName)
+	{
+		FlurryPluginWrapper.FlurryLogEventCore(eventName, false);
+	}
+
+	public static void LogEvent(string eventName, Dictionary<string, string> parameters, bool addPaying = true)
+	{
+		if (addPaying && !parameters.ContainsKey("Paying User"))
+		{
+			parameters.Add("Paying User", FlurryPluginWrapper.IsPayingUser().ToString());
+		}
+		FlurryPluginWrapper.FlurryLogEventWithParametersCore(eventName, parameters, false);
+	}
+
+	public static void LogEventAndDublicateToConsole(string eventName, Dictionary<string, string> parameters, bool addPaying = true)
+	{
+		FlurryPluginWrapper.LogEvent(eventName, parameters, addPaying);
+		if (Defs.IsDeveloperBuild)
+		{
+			string str = (parameters == null ? "{}" : Json.Serialize(parameters));
+			if (!Application.isEditor)
 			{
-				return "Newbie";
+				UnityEngine.Debug.LogFormat("{0}: {1}", new object[] { eventName, str });
 			}
-			return "Common";
-		}
-		return "None";
-	}
-
-	private void CheckForEdnermanApp()
-	{
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		if (pause)
-		{
-			EndSession();
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+			else
 			{
-				FlurryLogEventCore("Application Paused", true);
+				UnityEngine.Debug.LogFormat("<color=lightblue>{0}: {1}</color>", new object[] { eventName, str });
 			}
-			yield break;
 		}
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
+	}
+
+	public static void LogEventAndDublicateToEditor(string eventName, Dictionary<string, string> parameters, Color32 color = default(Color32))
+	{
+		FlurryPluginWrapper.LogEvent(eventName, parameters, true);
+		if (Application.isEditor)
 		{
-			EndTimedEvent("Application Paused");
+			string str = (parameters == null ? "{ }" : Json.Serialize(parameters));
+			Color color1 = color;
+			Color color2 = new Color();
+			UnityEngine.Debug.Log((color1 != color2 ? string.Format("<color=#{2:X2}{3:X2}{4:X2}>{0}: {1}</color>", new object[] { eventName, str, color.r, color.g, color.b }) : string.Concat(eventName, ": ", str)));
 		}
-		yield return null;
-		yield return null;
-		yield return null;
-		yield return null;
-		yield return null;
-		yield return null;
-		CheckForEdnermanApp();
-		StartSession();
-	}
-
-	private void StartSession()
-	{
-		_startSession = Time.realtimeSinceStartup;
-		int @int = PlayerPrefs.GetInt("AppsFlyer.SessionIndex", 0);
-		int value = @int + 1;
-		PlayerPrefs.SetInt("AppsFlyer.SessionIndex", value);
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Session count", value.ToString(CultureInfo.InvariantCulture));
-		dictionary.Add("Timestamp (UTC)", DateTime.UtcNow.ToString("s"));
-		Dictionary<string, string> attributes = dictionary;
-		LogEventToAppsFlyer("Start session", attributes);
-	}
-
-	private void EndSession()
-	{
-		float num = Time.realtimeSinceStartup - _startSession;
-		_startSession += num;
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Duration (s)", num.ToString("F1", CultureInfo.InvariantCulture));
-		dictionary.Add("Timestamp (UTC)", DateTime.UtcNow.ToString("s"));
-		Dictionary<string, string> attributes = dictionary;
-		LogEventToAppsFlyer("End session", attributes);
-	}
-
-	private void Start()
-	{
-		FriendsController.NewCheaterDetectParametersAvailable += FriendsController_NewCheaterDetectParametersAvailable;
-		StartSession();
-		CheckForEdnermanApp();
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		_sessionStarted = true;
-	}
-
-	private void FriendsController_NewCheaterDetectParametersAvailable(int coinsLimitPaying, int gemsLimitPaying, int coinsLimitNonPaying, int gemsLimitNonPaying)
-	{
-		antiCheatLimitsPaying["Coins"] = coinsLimitPaying;
-		antiCheatLimitsPaying["GemsCurrency"] = gemsLimitPaying;
-		antiCheatLimitsNonPaying["Coins"] = coinsLimitNonPaying;
-		antiCheatLimitsNonPaying["GemsCurrency"] = gemsLimitNonPaying;
-	}
-
-	private void OnApplicationQuit()
-	{
-		EndSession();
-	}
-
-	private void OnDestroy()
-	{
-		FriendsController.NewCheaterDetectParametersAvailable -= FriendsController_NewCheaterDetectParametersAvailable;
 	}
 
 	internal static void LogEventToAppsFlyer(string eventName, Dictionary<string, string> attributes)
 	{
 		if (string.IsNullOrEmpty(eventName))
 		{
-			Debug.LogError("Event name should not be empty.");
+			UnityEngine.Debug.LogError("Event name should not be empty.");
 			return;
 		}
 		if (attributes == null)
 		{
-			Debug.LogError("Event values should not be null.");
+			UnityEngine.Debug.LogError("Event values should not be null.");
 			return;
 		}
 		if (!attributes.ContainsKey("deviceModel"))
@@ -624,215 +420,217 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 		}
 		if (Defs.IsDeveloperBuild)
 		{
-			Debug.LogFormat("{0}: {1}", eventName, Json.Serialize(attributes));
+			UnityEngine.Debug.LogFormat("{0}: {1}", new object[] { eventName, Json.Serialize(attributes) });
 		}
 	}
 
-	public static string PlaceForPurchasesAnalytics(bool fromBottomPanel = false)
+	public static void LogEventWithParameterAndValue(string ev, string pat, string val)
 	{
-		string result = "None";
-		try
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			if (fromBottomPanel)
-			{
-				if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-				{
-					if (!Defs.isMulti)
-					{
-						result = "Single Bottom Panel";
-						return result;
-					}
-					result = "Bottom Panel";
-					return result;
-				}
-				result = "Bottom Panel";
-				return result;
-			}
-			if (Application.loadedLevelName == Defs.MainMenuScene)
-			{
-				result = "Lobby";
-				return result;
-			}
-			if (Defs.inRespawnWindow)
-			{
-				result = "Killcam";
-				return result;
-			}
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-			{
-				if (!Defs.isMulti)
-				{
-					result = "Single Battle";
-					return result;
-				}
-				result = "Battle";
-				return result;
-			}
-			if (Application.loadedLevelName == "LevelComplete")
-			{
-				result = "Single Score (End)";
-				return result;
-			}
-			if (NetworkStartTableNGUIController.IsEndInterfaceShown())
-			{
-				result = "Score (End)";
-				return result;
-			}
-			if (Application.loadedLevelName == "ChooseLevel")
-			{
-				result = "Single Score (Start)";
-				return result;
-			}
-			if (NetworkStartTableNGUIController.IsStartInterfaceShown())
-			{
-				result = "Score (Start)";
-				return result;
-			}
-			return result;
+			{ pat, val },
+			{ "Paying User", FlurryPluginWrapper.IsPayingUser().ToString() }
+		};
+		FlurryPluginWrapper.FlurryLogEventWithParametersCore(ev, strs, false);
+	}
+
+	public static void LogFacebook()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.SocialEventName, FlurryPluginWrapper.SocialParName, "Facebook");
+	}
+
+	public static void LogFastPurchase(string purchaseKind)
+	{
+		if (ExperienceController.sharedController == null)
+		{
+			UnityEngine.Debug.LogWarning("ExperienceController.sharedController == null");
 		}
-		catch (Exception ex)
+		else
 		{
-			Debug.LogError("Exception in PlaceForPurchasesAnalytics: " + ex);
-			return result;
+			int num = ExperienceController.sharedController.currentLevel;
+			int num1 = (num - 1) / 9;
+			string str = string.Format("[{0}, {1})", num1 * 9 + 1, (num1 + 1) * 9 + 1);
+			string str1 = string.Format("Shop Purchases On Level {0} ({1}){2}", str, (!FlurryPluginWrapper.IsPayingUser() ? "Non Paying" : "Paying"), string.Empty);
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ string.Concat("Level ", num), purchaseKind }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs, true);
 		}
 	}
 
-	public static string ModeNameForPurchasesAnalytics(bool forNormalMultyModesUseMultyplayer = false)
+	public static void LogFreeCoinsFacebook()
 	{
-		string result = null;
-		try
-		{
-			if (!Defs.IsSurvival && !Defs.isMulti)
-			{
-				result = "Campaign";
-				return result;
-			}
-			if (Defs.IsSurvival && !Defs.isMulti)
-			{
-				result = "Arena";
-				return result;
-			}
-			if (Defs.isMulti)
-			{
-				if (Application.loadedLevelName != Defs.MainMenuScene)
-				{
-					if (Application.loadedLevelName != "Clans")
-					{
-						if (Defs.isDaterRegim)
-						{
-							result = "Sandbox";
-							return result;
-						}
-						if (forNormalMultyModesUseMultyplayer)
-						{
-							result = "Multiplayer";
-							return result;
-						}
-						if (Defs.isCompany)
-						{
-							result = "Team Battle";
-							return result;
-						}
-						if (Defs.isCapturePoints)
-						{
-							result = "Point Capture";
-							return result;
-						}
-						if (Defs.isCOOP)
-						{
-							result = "COOP Survival";
-							return result;
-						}
-						if (Defs.isFlag)
-						{
-							result = "Flag Capture";
-							return result;
-						}
-						if (Defs.isHunger)
-						{
-							result = "Deadly Games";
-							return result;
-						}
-						result = "Deathmatch";
-						return result;
-					}
-					return result;
-				}
-				return result;
-			}
-			return result;
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ModeNameForPurchasesAnalytics: " + ex);
-			return result;
-		}
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.FreeCoinsEv, FlurryPluginWrapper.FreeCoinsParName, "Facebook");
+		FlurryPluginWrapper.LogEvent("Facebook");
+	}
+
+	public static void LogFreeCoinsRateUs()
+	{
+		FlurryPluginWrapper.LogEvent(FlurryPluginWrapper.RateUsEv);
+	}
+
+	public static void LogFreeCoinsTwitter()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.FreeCoinsEv, FlurryPluginWrapper.FreeCoinsParName, "Twitter");
+		FlurryPluginWrapper.LogEvent("Twitter");
+	}
+
+	public static void LogFreeCoinsYoutube()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.FreeCoinsEv, FlurryPluginWrapper.FreeCoinsParName, "Youtube");
+		FlurryPluginWrapper.LogEvent("YouTube");
+	}
+
+	public static void LogGamecenter()
+	{
+		FlurryPluginWrapper.LogEvent("Game Center");
 	}
 
 	public static void LogGearPurchases(string gearId, int gearCount, bool fromBottomPanel)
 	{
 		try
 		{
-			if (gearId == null)
+			if (gearId != null)
 			{
-				Debug.LogError("LogGearPurchases: gearId = null");
-				return;
-			}
-			string text = string.Format("Gear Purchases{0}", GetPayingSuffixNo10());
-			string text2 = PlaceForPurchasesAnalytics(fromBottomPanel);
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Total", gearId);
-			Dictionary<string, string> dictionary2 = dictionary;
-			if (!string.IsNullOrEmpty(text2))
-			{
-				dictionary2.Add(text2, gearId);
-			}
-			for (int i = 0; i < gearCount; i++)
-			{
-				if (Debug.isDebugBuild)
+				string str = string.Format("Gear Purchases{0}", FlurryPluginWrapper.GetPayingSuffixNo10());
+				string str1 = FlurryPluginWrapper.PlaceForPurchasesAnalytics(fromBottomPanel);
+				Dictionary<string, string> strs = new Dictionary<string, string>()
 				{
-					Debug.Log("<color=green>GearPurchasesEventName = " + text + "</color>\n<color=white>parameters = " + dictionary2.ToStringFull() + "</color>");
+					{ "Total", gearId }
+				};
+				if (!string.IsNullOrEmpty(str1))
+				{
+					strs.Add(str1, gearId);
+				}
+				for (int i = 0; i < gearCount; i++)
+				{
+					if (UnityEngine.Debug.isDebugBuild)
+					{
+						UnityEngine.Debug.Log(string.Concat(new string[] { "<color=green>GearPurchasesEventName = ", str, "</color>\n<color=white>parameters = ", strs.ToStringFull(), "</color>" }));
+					}
+				}
+				for (int j = 0; j < gearCount; j++)
+				{
+					FlurryPluginWrapper.LogEventAndDublicateToConsole(str, strs, true);
 				}
 			}
-			for (int j = 0; j < gearCount; j++)
+			else
 			{
-				LogEventAndDublicateToConsole(text, dictionary2);
+				UnityEngine.Debug.LogError("LogGearPurchases: gearId = null");
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in LogGearPurchases: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in LogGearPurchases: ", exception));
 		}
 	}
 
-	public static void LogPurchasesPoints(bool isWeaponEvent)
+	public static void LogLevelPressed(string n)
+	{
+		FlurryPluginWrapper.FlurryLogEventCore(string.Concat(n, "_Pressed"), false);
+	}
+
+	public static void LogMatchCompleted(string mode)
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			string str = string.Format("Match Completed ({0})", (!FlurryPluginWrapper.IsPayingUser() ? "Non Paying" : "Paying"));
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Rank", ExperienceController.sharedController.currentLevel.ToString() },
+				{ "Mode", mode }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str, strs, true);
+		}
+	}
+
+	public static void LogModeEventWithValue(string val)
+	{
+		if (PlayerPrefs.HasKey("Mode Pressed First Time"))
+		{
+			FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.ModePressedEvent, FlurryPluginWrapper.ModeParameter, val);
+		}
+		else
+		{
+			PlayerPrefs.SetInt("Mode Pressed First Time", 0);
+			FlurryPluginWrapper.LogEventWithParameterAndValue("Mode Pressed First Time", FlurryPluginWrapper.ModeParameter, val);
+		}
+	}
+
+	public static void LogMultiplayeLocalEvent()
+	{
+		FlurryPluginWrapper.LogEvent(FlurryPluginWrapper.MultiplayeLocalEvent);
+	}
+
+	public static void LogMultiplayerWayCustom()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.MultiplayerWayEvent, FlurryPluginWrapper.WayName, "Custom");
+		FlurryPluginWrapper.LogEvent("Custom");
+	}
+
+	public static void LogMultiplayerWayQuckRandGame()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.MultiplayerWayEvent, FlurryPluginWrapper.WayName, "Quick_rand_game");
+		FlurryPluginWrapper.LogEvent("Random");
+	}
+
+	public static void LogMultiplayerWayStart()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.MultiplayerWayEvent, FlurryPluginWrapper.WayName, "Start");
+		FlurryPluginWrapper.LogEvent("Start");
+	}
+
+	public static void LogMultiplayeWorldwideEvent()
+	{
+		FlurryPluginWrapper.LogEvent("Worldwide");
+	}
+
+	public static void LogPurchaseByModes(ShopNGUIController.CategoryNames category, string itemId, int count, bool UNUSED_fromBottomPanel)
 	{
 		try
 		{
-			string value = PlaceForPurchasesAnalytics();
-			string text = PurchasesPointsEventName();
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Total", value);
-			Dictionary<string, string> dictionary2 = dictionary;
-			if (isWeaponEvent)
+			string str = FlurryPluginWrapper.ModeNameForPurchasesAnalytics(false);
+			if (str != null && !(Application.loadedLevelName == Defs.MainMenuScene))
 			{
-				dictionary2.Add("Total Weapons", value);
+				string str1 = string.Format("Purchases {0}{1}", str, FlurryPluginWrapper.GetPayingSuffixNo10());
+				Dictionary<string, string> strs = new Dictionary<string, string>()
+				{
+					{ "All Categories", category.ToString() },
+					{ category.ToString(), itemId }
+				};
+				Dictionary<string, string> strs1 = strs;
+				for (int i = 0; i < count; i++)
+				{
+					if (UnityEngine.Debug.isDebugBuild)
+					{
+						UnityEngine.Debug.Log(string.Concat(new string[] { "<color=green>EventName = ", str1, "</color>\n<color=white>parameters = ", strs1.ToStringFull(), "</color>" }));
+					}
+				}
+				for (int j = 0; j < count; j++)
+				{
+					FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs1, true);
+				}
+				if (!Defs.isInet && (str == "Team Battle" || str == "Deathmatch"))
+				{
+					string str2 = string.Format("Purchases Local{0}", FlurryPluginWrapper.GetPayingSuffixNo10());
+					for (int k = 0; k < count; k++)
+					{
+						if (UnityEngine.Debug.isDebugBuild)
+						{
+							UnityEngine.Debug.Log(string.Concat(new string[] { "<color=green>EventName = ", str2, "</color>\n<color=white>parameters = ", strs1.ToStringFull(), "</color>" }));
+						}
+					}
+					for (int l = 0; l < count; l++)
+					{
+						FlurryPluginWrapper.LogEventAndDublicateToConsole(str2, strs1, true);
+					}
+				}
 			}
-			string text2 = null;
-			text2 = ModeNameForPurchasesAnalytics();
-			if (text2 != null)
-			{
-				dictionary2.Add(text2, value);
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("<color=green>PurchasesPointsEventName = " + text + "</color>\n<color=white>parameters = " + dictionary2.ToStringFull() + "</color>");
-			}
-			LogEventAndDublicateToConsole(text, dictionary2);
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in LogPurchasesPoints: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in LogPurchaseByModes: ", exception));
 		}
 	}
 
@@ -840,107 +638,278 @@ public sealed class FlurryPluginWrapper : MonoBehaviour
 	{
 		try
 		{
-			string arg = PlaceForPurchasesAnalytics().Replace("Single ", string.Empty);
-			string text = ModeNameForPurchasesAnalytics(true);
-			string text2 = string.Format("Purchases {0} {1}{2}", text ?? string.Empty, arg, GetPayingSuffixNo10()).Replace("Multiplayer Lobby", "Lobby");
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("All Categories", category.ToString());
-			dictionary.Add(category.ToString(), itemId);
-			Dictionary<string, string> dictionary2 = dictionary;
+			string str = FlurryPluginWrapper.PlaceForPurchasesAnalytics(false).Replace("Single ", string.Empty);
+			string str1 = string.Format("Purchases {0} {1}{2}", FlurryPluginWrapper.ModeNameForPurchasesAnalytics(true) ?? string.Empty, str, FlurryPluginWrapper.GetPayingSuffixNo10()).Replace("Multiplayer Lobby", "Lobby");
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "All Categories", category.ToString() },
+				{ category.ToString(), itemId }
+			};
+			Dictionary<string, string> strs1 = strs;
 			for (int i = 0; i < count; i++)
 			{
-				if (Debug.isDebugBuild)
+				if (UnityEngine.Debug.isDebugBuild)
 				{
-					Debug.Log("<color=green>PurchaseInModeEventName = " + text2 + "</color>\n<color=white>parameters = " + dictionary2.ToStringFull() + "</color>");
+					UnityEngine.Debug.Log(string.Concat(new string[] { "<color=green>PurchaseInModeEventName = ", str1, "</color>\n<color=white>parameters = ", strs1.ToStringFull(), "</color>" }));
 				}
 			}
 			for (int j = 0; j < count; j++)
 			{
-				LogEventAndDublicateToConsole(text2, dictionary2);
+				FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs1, true);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in LogPurchaseByPoints: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in LogPurchaseByPoints: ", exception));
 		}
 	}
 
-	public static void LogPurchaseByModes(ShopNGUIController.CategoryNames category, string itemId, int count, bool UNUSED_fromBottomPanel)
+	public static void LogPurchasesPoints(bool isWeaponEvent)
 	{
 		try
 		{
-			string text = ModeNameForPurchasesAnalytics();
-			if (text == null || Application.loadedLevelName == Defs.MainMenuScene)
+			string str = FlurryPluginWrapper.PlaceForPurchasesAnalytics(false);
+			string str1 = FlurryPluginWrapper.PurchasesPointsEventName();
+			Dictionary<string, string> strs = new Dictionary<string, string>()
 			{
-				return;
-			}
-			string text2 = string.Format("Purchases {0}{1}", text, GetPayingSuffixNo10());
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("All Categories", category.ToString());
-			dictionary.Add(category.ToString(), itemId);
-			Dictionary<string, string> dictionary2 = dictionary;
-			for (int i = 0; i < count; i++)
+				{ "Total", str }
+			};
+			if (isWeaponEvent)
 			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.Log("<color=green>EventName = " + text2 + "</color>\n<color=white>parameters = " + dictionary2.ToStringFull() + "</color>");
-				}
+				strs.Add("Total Weapons", str);
 			}
-			for (int j = 0; j < count; j++)
+			string str2 = null;
+			str2 = FlurryPluginWrapper.ModeNameForPurchasesAnalytics(false);
+			if (str2 != null)
 			{
-				LogEventAndDublicateToConsole(text2, dictionary2);
+				strs.Add(str2, str);
 			}
-			if (Defs.isInet || (!(text == "Team Battle") && !(text == "Deathmatch")))
+			if (UnityEngine.Debug.isDebugBuild)
 			{
-				return;
+				UnityEngine.Debug.Log(string.Concat(new string[] { "<color=green>PurchasesPointsEventName = ", str1, "</color>\n<color=white>parameters = ", strs.ToStringFull(), "</color>" }));
 			}
-			string text3 = string.Format("Purchases Local{0}", GetPayingSuffixNo10());
-			for (int k = 0; k < count; k++)
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.Log("<color=green>EventName = " + text3 + "</color>\n<color=white>parameters = " + dictionary2.ToStringFull() + "</color>");
-				}
-			}
-			for (int l = 0; l < count; l++)
-			{
-				LogEventAndDublicateToConsole(text3, dictionary2);
-			}
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs, true);
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("Exception in LogPurchaseByModes: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("Exception in LogPurchasesPoints: ", exception));
 		}
 	}
 
-	public static string GetEventName(string eventName)
+	public static void LogSkinsMakerEnteredEvent()
 	{
-		return eventName + GetPayingSuffix();
+		FlurryPluginWrapper.LogEvent("SkinsMaker");
 	}
 
-	public static string GetPayingSuffix()
+	public static void LogSkinsMakerModePress()
 	{
-		return GetPayingSuffixNo10();
+		FlurryPluginWrapper.LogEvent("Skins Maker");
+	}
+
+	public static void LogTimedEvent(string eventName)
+	{
+		FlurryPluginWrapper.FlurryLogEventCore(eventName, true);
+	}
+
+	public static void LogTimedEvent(string eventName, Dictionary<string, string> parameters)
+	{
+		if (!parameters.ContainsKey("Paying User"))
+		{
+			parameters.Add("Paying User", FlurryPluginWrapper.IsPayingUser().ToString());
+		}
+		FlurryPluginWrapper.FlurryLogEventWithParametersCore(eventName, parameters, true);
+	}
+
+	public static void LogTimedEventAndDublicateToConsole(string eventName)
+	{
+		FlurryPluginWrapper.LogTimedEvent(eventName);
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.Log(eventName);
+		}
+	}
+
+	public static void LogTrueSurvivalModePress()
+	{
+		FlurryPluginWrapper.LogModeEventWithValue("Arena_Survival");
+		FlurryPluginWrapper.LogEvent("Survival");
+	}
+
+	public static void LogTwitter()
+	{
+		FlurryPluginWrapper.LogEventWithParameterAndValue(FlurryPluginWrapper.SocialEventName, FlurryPluginWrapper.SocialParName, "Twitter");
+	}
+
+	public static void LogWinInMatch(string mode)
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			string str = string.Format("Win In Match ({0})", (!FlurryPluginWrapper.IsPayingUser() ? "Non Paying" : "Paying"));
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Rank", ExperienceController.sharedController.currentLevel.ToString() },
+				{ "Mode", mode }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str, strs, true);
+		}
+	}
+
+	public static string ModeNameForPurchasesAnalytics(bool forNormalMultyModesUseMultyplayer = false)
+	{
+		string str = null;
+		try
+		{
+			if ((Defs.IsSurvival ? false : !Defs.isMulti))
+			{
+				str = "Campaign";
+			}
+			else if (Defs.IsSurvival && !Defs.isMulti)
+			{
+				str = "Arena";
+			}
+			else if (Defs.isMulti && Application.loadedLevelName != Defs.MainMenuScene && Application.loadedLevelName != "Clans")
+			{
+				if (Defs.isDaterRegim)
+				{
+					str = "Sandbox";
+				}
+				else if (forNormalMultyModesUseMultyplayer)
+				{
+					str = "Multiplayer";
+				}
+				else if (Defs.isCompany)
+				{
+					str = "Team Battle";
+				}
+				else if (Defs.isCapturePoints)
+				{
+					str = "Point Capture";
+				}
+				else if (Defs.isCOOP)
+				{
+					str = "COOP Survival";
+				}
+				else if (!Defs.isFlag)
+				{
+					str = (!Defs.isHunger ? "Deathmatch" : "Deadly Games");
+				}
+				else
+				{
+					str = "Flag Capture";
+				}
+			}
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ModeNameForPurchasesAnalytics: ", exception));
+		}
+		return str;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		FlurryPluginWrapper.u003cOnApplicationPauseu003ec__Iterator139 variable = null;
+		return variable;
+	}
+
+	private void OnApplicationQuit()
+	{
+		this.EndSession();
+	}
+
+	private void OnDestroy()
+	{
+		FriendsController.NewCheaterDetectParametersAvailable -= new Action<int, int, int, int>(this.FriendsController_NewCheaterDetectParametersAvailable);
+	}
+
+	public static string PlaceForPurchasesAnalytics(bool fromBottomPanel = false)
+	{
+		string str = "None";
+		try
+		{
+			if (fromBottomPanel)
+			{
+				if (!(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.myPlayerMoveC != null))
+				{
+					str = "Bottom Panel";
+				}
+				else
+				{
+					str = (Defs.isMulti ? "Bottom Panel" : "Single Bottom Panel");
+				}
+			}
+			else if (Application.loadedLevelName == Defs.MainMenuScene)
+			{
+				str = "Lobby";
+			}
+			else if (Defs.inRespawnWindow)
+			{
+				str = "Killcam";
+			}
+			else if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
+			{
+				str = (Defs.isMulti ? "Battle" : "Single Battle");
+			}
+			else if (Application.loadedLevelName == "LevelComplete")
+			{
+				str = "Single Score (End)";
+			}
+			else if (NetworkStartTableNGUIController.IsEndInterfaceShown())
+			{
+				str = "Score (End)";
+			}
+			else if (Application.loadedLevelName == "ChooseLevel")
+			{
+				str = "Single Score (Start)";
+			}
+			else if (NetworkStartTableNGUIController.IsStartInterfaceShown())
+			{
+				str = "Score (Start)";
+			}
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in PlaceForPurchasesAnalytics: ", exception));
+		}
+		return str;
 	}
 
 	public static string PurchasesPointsEventName()
 	{
-		return string.Format("{0}{1}", "Purchases Points", GetPayingSuffixNo10());
+		return string.Format("{0}{1}", "Purchases Points", FlurryPluginWrapper.GetPayingSuffixNo10());
 	}
 
-	public static string GetPayingSuffixNo10()
+	public static HttpWebRequest RequestAppWithID(string _id)
 	{
-		if (!IsPayingUser())
+		return (HttpWebRequest)WebRequest.Create(string.Concat("http://itunes.apple.com/lookup?id=", _id));
+	}
+
+	private void Start()
+	{
+		FriendsController.NewCheaterDetectParametersAvailable += new Action<int, int, int, int>(this.FriendsController_NewCheaterDetectParametersAvailable);
+		this.StartSession();
+		this.CheckForEdnermanApp();
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		FlurryPluginWrapper._sessionStarted = true;
+	}
+
+	private void StartSession()
+	{
+		this._startSession = Time.realtimeSinceStartup;
+		int num = PlayerPrefs.GetInt("AppsFlyer.SessionIndex", 0) + 1;
+		PlayerPrefs.SetInt("AppsFlyer.SessionIndex", num);
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			return " (Non Paying)";
-		}
-		return " (Paying)";
+			{ "Session count", num.ToString(CultureInfo.InvariantCulture) },
+			{ "Timestamp (UTC)", DateTime.UtcNow.ToString("s") }
+		};
+		FlurryPluginWrapper.LogEventToAppsFlyer("Start session", strs);
 	}
 
-	[CompilerGenerated]
-	private static void _003CDoWithResponse_003Em__292(IAsyncResult iar)
+	private static bool UserIsCheaterByCurrenciesCount()
 	{
-		Action action = (Action)iar.AsyncState;
-		action.EndInvoke(iar);
+		Dictionary<string, int> strs = (!FlurryPluginWrapper.IsPayingUser() ? FlurryPluginWrapper.antiCheatLimitsNonPaying : FlurryPluginWrapper.antiCheatLimitsPaying);
+		return (Storager.getInt("Coins", false) >= strs["Coins"] ? true : Storager.getInt("GemsCurrency", false) >= strs["GemsCurrency"]);
 	}
 }

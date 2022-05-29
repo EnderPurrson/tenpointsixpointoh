@@ -11,14 +11,18 @@ namespace Rilisoft
 
 		public string body;
 
+		public MailUrlBuilder()
+		{
+		}
+
 		public string GetUrl()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendFormat("mailto:{0}", to);
-			string arg = Uri.EscapeUriString(subject);
-			stringBuilder.AppendFormat("?subject={0}", arg);
-			string arg2 = Uri.EscapeUriString(body);
-			stringBuilder.AppendFormat("&body={0}", arg2);
+			stringBuilder.AppendFormat("mailto:{0}", this.to);
+			string str = Uri.EscapeUriString(this.subject);
+			stringBuilder.AppendFormat("?subject={0}", str);
+			string str1 = Uri.EscapeUriString(this.body);
+			stringBuilder.AppendFormat("&body={0}", str1);
 			return stringBuilder.ToString();
 		}
 	}

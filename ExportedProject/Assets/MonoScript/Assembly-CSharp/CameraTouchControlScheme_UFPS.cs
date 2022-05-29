@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 public sealed class CameraTouchControlScheme_UFPS : CameraTouchControlScheme
@@ -52,76 +52,28 @@ public sealed class CameraTouchControlScheme_UFPS : CameraTouchControlScheme
 		}
 	}
 
-	public override void OnPress(bool isDown)
+	public CameraTouchControlScheme_UFPS()
 	{
-		if ((isDown && _touchId == -100) || (!isDown && _touchId != -100))
-		{
-			_grabTouches = isDown;
-			_touchId = ((!isDown) ? (-100) : UICamera.currentTouchID);
-			_firstTouchPosition = UICamera.currentTouch.pos;
-			_previousTouchPosition = _firstTouchPosition;
-			_currentTouchPosition = _firstTouchPosition;
-			_isTouchMoving = false;
-		}
-	}
-
-	public override void OnUpdate()
-	{
-		_isTouchInputValid = false;
-		Touch? touch = null;
-		if (_grabTouches)
-		{
-			Touch[] touches = Input.touches;
-			for (int i = 0; i < touches.Length; i++)
-			{
-				Touch value = touches[i];
-				if (value.fingerId == _touchId && (value.phase == TouchPhase.Moved || value.phase == TouchPhase.Stationary))
-				{
-					_isTouchInputValid = true;
-					_previousTouchPosition = _currentTouchPosition;
-					_currentTouchPosition = value.position;
-					touch = value;
-					break;
-				}
-			}
-		}
-		_deltaPosition = Vector2.zero;
-		if (_isTouchInputValid && (_isTouchMoving || !((_currentTouchPosition - _firstTouchPosition).sqrMagnitude < startMovingThresholdSq)))
-		{
-			if (!_isTouchMoving)
-			{
-				_isTouchMoving = true;
-			}
-			else
-			{
-				_deltaPosition = _currentTouchPosition - _previousTouchPosition;
-			}
-		}
-	}
-
-	public override void Reset()
-	{
-		_deltaPosition = Vector2.zero;
-		_grabTouches = false;
-		_touchId = -100;
-		_isTouchInputValid = false;
-		_isTouchMoving = false;
 	}
 
 	public override void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
 	{
-		deltaPosition *= sensitivity * 0.01f;
+		deltaPosition = deltaPosition * (sensitivity * 0.01f);
 		deltaPosition = new Vector2(deltaPosition.x, deltaPosition.y);
-		Vector2 mouseLook = GetMouseLook(deltaPosition);
-		if (_isTouchInputValid)
+		Vector2 mouseLook = this.GetMouseLook(deltaPosition);
+		if (!this._isTouchInputValid)
 		{
-			if (!_pitchYaw.HasValue)
+			this._pitchYaw = null;
+		}
+		else
+		{
+			if (!this._pitchYaw.HasValue)
 			{
-				_originalRotationPitch = pitchTransform.localRotation;
-				_originalRotationYaw = yawTransform.rotation;
-				_pitchYaw = Vector2.zero;
+				this._originalRotationPitch = pitchTransform.localRotation;
+				this._originalRotationYaw = yawTransform.rotation;
+				this._pitchYaw = new Vector2?(Vector2.zero);
 			}
-			Vector2 value = _pitchYaw.Value;
+			Vector2 value = this._pitchYaw.Value;
 			value.x += mouseLook.y;
 			value.y += mouseLook.x;
 			if (value.x > 180f)
@@ -142,62 +94,129 @@ public sealed class CameraTouchControlScheme_UFPS : CameraTouchControlScheme
 			}
 			value.x = Mathf.Clamp(value.x, -89.5f, 89.5f);
 			value.y = Mathf.Clamp(value.y, -360f, 360f);
-			_pitchYaw = value;
-			yawTransform.rotation = _originalRotationYaw;
-			pitchTransform.localRotation = _originalRotationPitch;
-			yawTransform.rotation = _originalRotationYaw * Quaternion.Euler(0f, _pitchYaw.Value.y, 0f);
-			pitchTransform.localRotation = _originalRotationPitch * Quaternion.Euler(_pitchYaw.Value.x * ((!invert) ? (-1f) : 1f), 0f, 0f);
-		}
-		else
-		{
-			_pitchYaw = null;
+			this._pitchYaw = new Vector2?(value);
+			yawTransform.rotation = this._originalRotationYaw;
+			pitchTransform.localRotation = this._originalRotationPitch;
+			Quaternion quaternion = this._originalRotationYaw;
+			Vector2 vector2 = this._pitchYaw.Value;
+			yawTransform.rotation = quaternion * Quaternion.Euler(0f, vector2.y, 0f);
+			Transform transforms = pitchTransform;
+			Quaternion quaternion1 = this._originalRotationPitch;
+			Vector2 value1 = this._pitchYaw.Value;
+			transforms.localRotation = quaternion1 * Quaternion.Euler(value1.x * (!invert ? -1f : 1f), 0f, 0f);
 		}
 	}
 
 	public Vector2 GetMouseLook(Vector2 touchDeltaPosition)
 	{
-		if (m_LastMouseLookFrame == Time.frameCount)
+		if (this.m_LastMouseLookFrame == Time.frameCount)
 		{
-			return m_CurrentMouseLook;
+			return this.m_CurrentMouseLook;
 		}
-		m_LastMouseLookFrame = Time.frameCount;
-		m_MouseLookSmoothMove.x = touchDeltaPosition.x * Time.timeScale;
-		m_MouseLookSmoothMove.y = touchDeltaPosition.y * Time.timeScale;
-		mouseLookSmoothSteps = Mathf.Clamp(mouseLookSmoothSteps, 1, 20);
-		mouseLookSmoothWeight = Mathf.Clamp01(mouseLookSmoothWeight);
-		while (m_MouseLookSmoothBuffer.Count > mouseLookSmoothSteps)
+		this.m_LastMouseLookFrame = Time.frameCount;
+		this.m_MouseLookSmoothMove.x = touchDeltaPosition.x * Time.timeScale;
+		this.m_MouseLookSmoothMove.y = touchDeltaPosition.y * Time.timeScale;
+		this.mouseLookSmoothSteps = Mathf.Clamp(this.mouseLookSmoothSteps, 1, 20);
+		this.mouseLookSmoothWeight = Mathf.Clamp01(this.mouseLookSmoothWeight);
+		while (this.m_MouseLookSmoothBuffer.Count > this.mouseLookSmoothSteps)
 		{
-			m_MouseLookSmoothBuffer.RemoveAt(0);
+			this.m_MouseLookSmoothBuffer.RemoveAt(0);
 		}
-		m_MouseLookSmoothBuffer.Add(m_MouseLookSmoothMove);
-		float num = 1f;
-		Vector2 zero = Vector2.zero;
-		float num2 = 0f;
-		for (int num3 = m_MouseLookSmoothBuffer.Count - 1; num3 > 0; num3--)
+		this.m_MouseLookSmoothBuffer.Add(this.m_MouseLookSmoothMove);
+		float delta = 1f;
+		Vector2 item = Vector2.zero;
+		float single = 0f;
+		for (int i = this.m_MouseLookSmoothBuffer.Count - 1; i > 0; i--)
 		{
-			zero += m_MouseLookSmoothBuffer[num3] * num;
-			num2 += 1f * num;
-			num *= mouseLookSmoothWeight / Delta;
+			item = item + (this.m_MouseLookSmoothBuffer[i] * delta);
+			single = single + 1f * delta;
+			delta = delta * (this.mouseLookSmoothWeight / this.Delta);
 		}
-		num2 = Mathf.Max(1f, num2);
-		m_CurrentMouseLook = NaNSafeVector2(zero / num2);
-		float num4 = 0f;
-		float num5 = Mathf.Abs(m_CurrentMouseLook.x);
-		float num6 = Mathf.Abs(m_CurrentMouseLook.y);
-		if (mouseLookAcceleration)
+		single = Mathf.Max(1f, single);
+		this.m_CurrentMouseLook = CameraTouchControlScheme_UFPS.NaNSafeVector2(item / single, new Vector2());
+		float single1 = 0f;
+		float single2 = Mathf.Abs(this.m_CurrentMouseLook.x);
+		float single3 = Mathf.Abs(this.m_CurrentMouseLook.y);
+		if (this.mouseLookAcceleration)
 		{
-			num4 = Mathf.Sqrt(num5 * num5 + num6 * num6) / Delta;
-			num4 = ((!(num4 <= mouseLookAccelerationThreshold)) ? num4 : 0f);
+			single1 = Mathf.Sqrt(single2 * single2 + single3 * single3) / this.Delta;
+			single1 = (single1 > this.mouseLookAccelerationThreshold ? single1 : 0f);
 		}
-		m_CurrentMouseLook.x *= mouseLookSensitivity.x + num4;
-		m_CurrentMouseLook.y *= mouseLookSensitivity.y + num4;
-		return m_CurrentMouseLook;
+		ref Vector2 mCurrentMouseLook = ref this.m_CurrentMouseLook;
+		mCurrentMouseLook.x = mCurrentMouseLook.x * (this.mouseLookSensitivity.x + single1);
+		ref Vector2 vector2Pointer = ref this.m_CurrentMouseLook;
+		vector2Pointer.y = vector2Pointer.y * (this.mouseLookSensitivity.y + single1);
+		return this.m_CurrentMouseLook;
 	}
 
 	private static Vector2 NaNSafeVector2(Vector2 vector, Vector2 prevVector = default(Vector2))
 	{
-		vector.x = ((!double.IsNaN(vector.x)) ? vector.x : prevVector.x);
-		vector.y = ((!double.IsNaN(vector.y)) ? vector.y : prevVector.y);
+		vector.x = (!double.IsNaN((double)vector.x) ? vector.x : prevVector.x);
+		vector.y = (!double.IsNaN((double)vector.y) ? vector.y : prevVector.y);
 		return vector;
+	}
+
+	public override void OnPress(bool isDown)
+	{
+		if (isDown && this._touchId == -100 || !isDown && this._touchId != -100)
+		{
+			this._grabTouches = isDown;
+			this._touchId = (!isDown ? -100 : UICamera.currentTouchID);
+			this._firstTouchPosition = UICamera.currentTouch.pos;
+			this._previousTouchPosition = this._firstTouchPosition;
+			this._currentTouchPosition = this._firstTouchPosition;
+			this._isTouchMoving = false;
+		}
+	}
+
+	public override void OnUpdate()
+	{
+		this._isTouchInputValid = false;
+		Touch? nullable = null;
+		if (this._grabTouches)
+		{
+			Touch[] touchArray = Input.touches;
+			int num = 0;
+			while (num < (int)touchArray.Length)
+			{
+				Touch touch = touchArray[num];
+				if (touch.fingerId != this._touchId || touch.phase != TouchPhase.Moved && touch.phase != TouchPhase.Stationary)
+				{
+					num++;
+				}
+				else
+				{
+					this._isTouchInputValid = true;
+					this._previousTouchPosition = this._currentTouchPosition;
+					this._currentTouchPosition = touch.position;
+					nullable = new Touch?(touch);
+					break;
+				}
+			}
+		}
+		this._deltaPosition = Vector2.zero;
+		if (this._isTouchInputValid)
+		{
+			if (this._isTouchMoving || (this._currentTouchPosition - this._firstTouchPosition).sqrMagnitude >= this.startMovingThresholdSq)
+			{
+				if (this._isTouchMoving)
+				{
+					this._deltaPosition = this._currentTouchPosition - this._previousTouchPosition;
+				}
+				else
+				{
+					this._isTouchMoving = true;
+				}
+			}
+		}
+	}
+
+	public override void Reset()
+	{
+		this._deltaPosition = Vector2.zero;
+		this._grabTouches = false;
+		this._touchId = -100;
+		this._isTouchInputValid = false;
+		this._isTouchMoving = false;
 	}
 }

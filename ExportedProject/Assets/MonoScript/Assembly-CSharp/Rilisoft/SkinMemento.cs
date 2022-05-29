@@ -22,7 +22,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return id ?? string.Empty;
+				return this.id ?? string.Empty;
 			}
 		}
 
@@ -30,7 +30,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return name ?? string.Empty;
+				return this.name ?? string.Empty;
 			}
 		}
 
@@ -38,7 +38,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return skin ?? string.Empty;
+				return this.skin ?? string.Empty;
 			}
 		}
 
@@ -47,24 +47,24 @@ namespace Rilisoft
 			this.id = id ?? string.Empty;
 			this.name = name ?? string.Empty;
 			this.skin = skin ?? string.Empty;
-			_skinHashCode = null;
+			this._skinHashCode = null;
 		}
 
 		public bool Equals(SkinMemento other)
 		{
-			if (Id != other.Id)
+			if (this.Id != other.Id)
 			{
 				return false;
 			}
-			if (Name != other.Name)
+			if (this.Name != other.Name)
 			{
 				return false;
 			}
-			if (GetSkinHashCode() != other.GetSkinHashCode())
+			if (this.GetSkinHashCode() != other.GetSkinHashCode())
 			{
 				return false;
 			}
-			if (Skin != other.Skin)
+			if (this.Skin != other.Skin)
 			{
 				return false;
 			}
@@ -77,27 +77,26 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			SkinMemento other = (SkinMemento)obj;
-			return Equals(other);
+			return this.Equals((SkinMemento)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return Id.GetHashCode() ^ Name.GetHashCode() ^ GetSkinHashCode();
-		}
-
-		public override string ToString()
-		{
-			return string.Format(CultureInfo.InvariantCulture, "{{ \"id\":{0},\"name\":{1},\"skin\":{2} }}", Id, Name, Skin);
+			return this.Id.GetHashCode() ^ this.Name.GetHashCode() ^ this.GetSkinHashCode();
 		}
 
 		private int GetSkinHashCode()
 		{
-			if (!_skinHashCode.HasValue)
+			if (!this._skinHashCode.HasValue)
 			{
-				_skinHashCode = Skin.GetHashCode();
+				this._skinHashCode = new int?(this.Skin.GetHashCode());
 			}
-			return _skinHashCode.Value;
+			return this._skinHashCode.Value;
+		}
+
+		public override string ToString()
+		{
+			return string.Format(CultureInfo.InvariantCulture, "{{ \"id\":{0},\"name\":{1},\"skin\":{2} }}", new object[] { this.Id, this.Name, this.Skin });
 		}
 	}
 }

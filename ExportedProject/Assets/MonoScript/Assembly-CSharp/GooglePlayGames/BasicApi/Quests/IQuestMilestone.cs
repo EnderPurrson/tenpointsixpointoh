@@ -1,19 +1,42 @@
+using System;
+
 namespace GooglePlayGames.BasicApi.Quests
 {
 	public interface IQuestMilestone
 	{
-		string Id { get; }
+		byte[] CompletionRewardData
+		{
+			get;
+		}
 
-		string EventId { get; }
+		ulong CurrentCount
+		{
+			get;
+		}
 
-		string QuestId { get; }
+		string EventId
+		{
+			get;
+		}
 
-		ulong CurrentCount { get; }
+		string Id
+		{
+			get;
+		}
 
-		ulong TargetCount { get; }
+		string QuestId
+		{
+			get;
+		}
 
-		byte[] CompletionRewardData { get; }
+		MilestoneState State
+		{
+			get;
+		}
 
-		MilestoneState State { get; }
+		ulong TargetCount
+		{
+			get;
+		}
 	}
 }

@@ -1,4 +1,5 @@
 using Photon;
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -10,24 +11,28 @@ public class HighlightOwnedGameObj : Photon.MonoBehaviour
 
 	private Transform markerTransform;
 
+	public HighlightOwnedGameObj()
+	{
+	}
+
 	private void Update()
 	{
 		if (base.photonView.isMine)
 		{
-			if (markerTransform == null)
+			if (this.markerTransform == null)
 			{
-				GameObject gameObject = Object.Instantiate(PointerPrefab);
+				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.PointerPrefab);
 				gameObject.transform.parent = base.gameObject.transform;
-				markerTransform = gameObject.transform;
+				this.markerTransform = gameObject.transform;
 			}
-			Vector3 position = base.gameObject.transform.position;
-			markerTransform.position = new Vector3(position.x, position.y + Offset, position.z);
-			markerTransform.rotation = Quaternion.identity;
+			Vector3 vector3 = base.gameObject.transform.position;
+			this.markerTransform.position = new Vector3(vector3.x, vector3.y + this.Offset, vector3.z);
+			this.markerTransform.rotation = Quaternion.identity;
 		}
-		else if (markerTransform != null)
+		else if (this.markerTransform != null)
 		{
-			Object.Destroy(markerTransform.gameObject);
-			markerTransform = null;
+			UnityEngine.Object.Destroy(this.markerTransform.gameObject);
+			this.markerTransform = null;
 		}
 	}
 }

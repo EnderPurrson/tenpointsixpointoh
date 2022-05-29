@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class FreezerRay : MonoBehaviour
@@ -16,56 +17,60 @@ public class FreezerRay : MonoBehaviour
 		}
 	}
 
-	private void OnEnable()
+	public FreezerRay()
 	{
-		timeLeft += lifetime;
-	}
-
-	private void Update()
-	{
-		timeLeft -= Time.deltaTime;
-		if (timeLeft <= 0f)
-		{
-			GetComponent<RayAndExplosionsStackItem>().Deactivate();
-			return;
-		}
-		Transform transform = null;
-		if (mc != null && mc.transform.childCount > 0)
-		{
-			Transform child = mc.transform.GetChild(0);
-			FlashFire component = child.GetComponent<FlashFire>();
-			if (component != null && component.gunFlashObj != null)
-			{
-				transform = component.gunFlashObj.transform;
-			}
-		}
-		if (mc != null && transform != null && transform.parent != null && transform.parent.parent != null)
-		{
-			base.transform.position = transform.parent.position;
-			base.transform.forward = transform.parent.parent.forward;
-		}
-	}
-
-	public void SetParentMoveC(Player_move_c move_c)
-	{
-		mc = move_c;
-		if (mc != null)
-		{
-			mc.FreezerFired += HandleFreezerFired;
-		}
 	}
 
 	private void HandleFreezerFired(float length)
 	{
-		timeLeft += lifetime;
-		Length = length;
+		this.timeLeft += this.lifetime;
+		this.Length = length;
 	}
 
 	private void OnDisable()
 	{
-		if (mc != null)
+		if (this.mc != null)
 		{
-			mc.FreezerFired -= HandleFreezerFired;
+			this.mc.FreezerFired -= new Action<float>(this.HandleFreezerFired);
+		}
+	}
+
+	private void OnEnable()
+	{
+		this.timeLeft += this.lifetime;
+	}
+
+	public void SetParentMoveC(Player_move_c move_c)
+	{
+		this.mc = move_c;
+		if (this.mc != null)
+		{
+			this.mc.FreezerFired += new Action<float>(this.HandleFreezerFired);
+		}
+	}
+
+	private void Update()
+	{
+		this.timeLeft -= Time.deltaTime;
+		if (this.timeLeft <= 0f)
+		{
+			base.GetComponent<RayAndExplosionsStackItem>().Deactivate();
+			return;
+		}
+		Transform transforms = null;
+		if (this.mc != null && this.mc.transform.childCount > 0)
+		{
+			Transform child = this.mc.transform.GetChild(0);
+			FlashFire component = child.GetComponent<FlashFire>();
+			if (component != null && component.gunFlashObj != null)
+			{
+				transforms = component.gunFlashObj.transform;
+			}
+		}
+		if (this.mc != null && transforms != null && transforms.parent != null && transforms.parent.parent != null)
+		{
+			base.transform.position = transforms.parent.position;
+			base.transform.forward = transforms.parent.parent.forward;
 		}
 	}
 }

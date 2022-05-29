@@ -19,23 +19,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _conflicted;
-			}
-		}
-
-		public int TrophiesNegative
-		{
-			get
-			{
-				return trophiesNegative;
-			}
-		}
-
-		public int TrophiesPositive
-		{
-			get
-			{
-				return trophiesPositive;
+				return this._conflicted;
 			}
 		}
 
@@ -43,37 +27,44 @@ namespace Rilisoft
 		{
 			get
 			{
-				return trophiesPositive - trophiesNegative;
+				return this.trophiesPositive - this.trophiesNegative;
 			}
 		}
 
-		public TrophiesMemento(int trophiesNegative, int trophiesPositive)
-			: this(trophiesNegative, trophiesPositive, false)
+		public int TrophiesNegative
+		{
+			get
+			{
+				return this.trophiesNegative;
+			}
+		}
+
+		public int TrophiesPositive
+		{
+			get
+			{
+				return this.trophiesPositive;
+			}
+		}
+
+		public TrophiesMemento(int trophiesNegative, int trophiesPositive) : this(trophiesNegative, trophiesPositive, false)
 		{
 		}
 
 		public TrophiesMemento(int trophiesNegative, int trophiesPositive, bool conflicted)
 		{
-			_conflicted = conflicted;
+			this._conflicted = conflicted;
 			this.trophiesNegative = trophiesNegative;
 			this.trophiesPositive = trophiesPositive;
 		}
 
-		internal static TrophiesMemento Merge(TrophiesMemento left, TrophiesMemento right)
-		{
-			int num = Math.Max(left.TrophiesNegative, right.TrophiesNegative);
-			int num2 = Math.Max(left.TrophiesPositive, right.TrophiesPositive);
-			bool conflicted = left.Conflicted || right.Conflicted;
-			return new TrophiesMemento(num, num2, conflicted);
-		}
-
 		public bool Equals(TrophiesMemento other)
 		{
-			if (TrophiesNegative != other.TrophiesNegative)
+			if (this.TrophiesNegative != other.TrophiesNegative)
 			{
 				return false;
 			}
-			if (TrophiesPositive != other.TrophiesPositive)
+			if (this.TrophiesPositive != other.TrophiesPositive)
 			{
 				return false;
 			}
@@ -86,18 +77,24 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			TrophiesMemento other = (TrophiesMemento)obj;
-			return Equals(other);
+			return this.Equals((TrophiesMemento)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return TrophiesNegative.GetHashCode() ^ TrophiesPositive.GetHashCode();
+			return this.TrophiesNegative.GetHashCode() ^ this.TrophiesPositive.GetHashCode();
+		}
+
+		internal static TrophiesMemento Merge(TrophiesMemento left, TrophiesMemento right)
+		{
+			int num = Math.Max(left.TrophiesNegative, right.TrophiesNegative);
+			int num1 = Math.Max(left.TrophiesPositive, right.TrophiesPositive);
+			return new TrophiesMemento(num, num1, (left.Conflicted ? true : right.Conflicted));
 		}
 
 		public override string ToString()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "{{ \"negative\":{0},\"positive\":{1} }}", trophiesNegative, trophiesPositive);
+			return string.Format(CultureInfo.InvariantCulture, "{{ \"negative\":{0},\"positive\":{1} }}", new object[] { this.trophiesNegative, this.trophiesPositive });
 		}
 	}
 }

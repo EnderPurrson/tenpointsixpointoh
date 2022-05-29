@@ -1,19 +1,40 @@
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RilisoftBot
 {
 	public class BotAnimationEventHandler : MonoBehaviour
 	{
-		public delegate void OnDamageEventDelegate();
+		private BotAnimationEventHandler.OnDamageEventDelegate OnDamageEvent;
 
-		public event OnDamageEventDelegate OnDamageEvent;
+		public BotAnimationEventHandler()
+		{
+		}
 
 		private void OnApplyShootEffect()
 		{
-			if (this.OnDamageEvent != null)
+			if (this.OnDamageEvent == null)
 			{
-				this.OnDamageEvent();
+				return;
+			}
+			this.OnDamageEvent();
+		}
+
+		public event BotAnimationEventHandler.OnDamageEventDelegate OnDamageEvent
+		{
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			add
+			{
+				this.OnDamageEvent += value;
+			}
+			[MethodImpl(MethodImplOptions.Synchronized)]
+			remove
+			{
+				this.OnDamageEvent -= value;
 			}
 		}
+
+		public delegate void OnDamageEventDelegate();
 	}
 }

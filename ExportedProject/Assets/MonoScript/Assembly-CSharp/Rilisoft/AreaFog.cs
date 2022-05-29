@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -12,51 +16,42 @@ namespace Rilisoft
 		[SerializeField]
 		private FogSettings _settings;
 
-		[SerializeField]
 		[ReadOnly]
+		[SerializeField]
 		private FogSettings _prevSettings;
 
 		private CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
+		public AreaFog()
+		{
+		}
+
 		private new void Awake()
 		{
-			_prevSettings = new FogSettings().FromCurrent();
+			this._prevSettings = (new FogSettings()).FromCurrent();
+		}
+
+		[DebuggerHidden]
+		private IEnumerator Change(FogSettings to, float time, CancellationToken token)
+		{
+			AreaFog.u003cChangeu003ec__Iterator105 variable = null;
+			return variable;
 		}
 
 		public override void CheckIn(GameObject to)
 		{
 			base.CheckIn(to);
-			_tokenSource.Cancel();
-			_tokenSource = new CancellationTokenSource();
-			StartCoroutine(Change(_settings, animationTime, _tokenSource.Token));
+			this._tokenSource.Cancel();
+			this._tokenSource = new CancellationTokenSource();
+			base.StartCoroutine(this.Change(this._settings, this.animationTime, this._tokenSource.Token));
 		}
 
 		public override void CheckOut(GameObject from)
 		{
 			base.CheckOut(from);
-			_tokenSource.Cancel();
-			_tokenSource = new CancellationTokenSource();
-			StartCoroutine(Change(_prevSettings, animationTime, _tokenSource.Token));
-		}
-
-		private IEnumerator Change(FogSettings to, float time, CancellationToken token)
-		{
-			RenderSettings.fog = to.Active;
-			if (RenderSettings.fog)
-			{
-				FogSettings fr = new FogSettings().FromCurrent();
-				RenderSettings.fogMode = to.Mode;
-				float elapsed = 0f;
-				while (elapsed < time && !token.IsCancellationRequested)
-				{
-					elapsed += Time.deltaTime;
-					float rate = elapsed / time;
-					RenderSettings.fogStartDistance = Mathf.Lerp(fr.Start, to.Start, rate);
-					RenderSettings.fogEndDistance = Mathf.Lerp(fr.End, to.End, rate);
-					RenderSettings.fogColor = Color.Lerp(fr.Color, to.Color, rate);
-					yield return null;
-				}
-			}
+			this._tokenSource.Cancel();
+			this._tokenSource = new CancellationTokenSource();
+			base.StartCoroutine(this.Change(this._prevSettings, this.animationTime, this._tokenSource.Token));
 		}
 	}
 }

@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CleanUpAndDoAction : MonoBehaviour
@@ -10,44 +13,19 @@ public class CleanUpAndDoAction : MonoBehaviour
 
 	public static Action action;
 
-	private IEnumerator Start()
+	public CleanUpAndDoAction()
 	{
-		Action handler = action;
-		if (ShopNGUIController.GuiActive)
-		{
-			ShopNGUIController.GuiActive = false;
-		}
-		PhotonNetwork.Disconnect();
-		yield return null;
-		yield return null;
-		WeaponManager.sharedManager.UnloadAll();
-		yield return null;
-		yield return null;
-		if (handler != null)
-		{
-			handler();
-		}
-		action = null;
-		while (FacebookController.LoggingIn)
-		{
-			yield return null;
-		}
-		int i = 0;
-		while (i < 60)
-		{
-			i++;
-			yield return null;
-		}
-		while (FacebookController.LoggingIn)
-		{
-			yield return null;
-		}
-		Application.LoadLevel(Defs.MainMenuScene);
 	}
 
 	private void OnGUI()
 	{
-		GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), blackPixel, ScaleMode.StretchToFill);
-		GUI.DrawTexture(AppsMenu.RiliFonRect(), riliFon, ScaleMode.StretchToFill);
+		GUI.DrawTexture(new Rect(0f, 0f, (float)Screen.width, (float)Screen.height), this.blackPixel, ScaleMode.StretchToFill);
+		GUI.DrawTexture(AppsMenu.RiliFonRect(), this.riliFon, ScaleMode.StretchToFill);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		return new CleanUpAndDoAction.u003cStartu003ec__Iterator16();
 	}
 }

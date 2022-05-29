@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class FlashFire : MonoBehaviour
@@ -11,88 +15,95 @@ public class FlashFire : MonoBehaviour
 
 	private WeaponSounds ws;
 
+	public FlashFire()
+	{
+	}
+
 	private void Awake()
 	{
-		ws = GetComponent<WeaponSounds>();
-	}
-
-	private void Start()
-	{
-		if (gunFlashObj == null)
-		{
-			foreach (Transform item in base.transform)
-			{
-				bool flag = false;
-				if (item.gameObject.name.Equals("BulletSpawnPoint"))
-				{
-					foreach (Transform item2 in item)
-					{
-						if (item2.gameObject.name.Equals("GunFlash"))
-						{
-							flag = true;
-							gunFlashObj = item2.gameObject;
-							break;
-						}
-					}
-				}
-				if (flag)
-				{
-					break;
-				}
-			}
-		}
-		WeaponManager.SetGunFlashActive(gunFlashObj, false);
-	}
-
-	private void Update()
-	{
-		if (activeTime > 0f)
-		{
-			activeTime -= Time.deltaTime;
-			if (activeTime <= 0f)
-			{
-				WeaponManager.SetGunFlashActive(gunFlashObj, false);
-			}
-		}
+		this.ws = base.GetComponent<WeaponSounds>();
 	}
 
 	public void fire(Player_move_c moveC)
 	{
 		if (base.gameObject.activeInHierarchy)
 		{
-			StartCoroutine(fireCourotine(moveC));
+			base.StartCoroutine(this.fireCourotine(moveC));
 		}
 	}
 
+	[DebuggerHidden]
 	public IEnumerator fireCourotine(Player_move_c moveC)
 	{
-		WeaponManager.SetGunFlashActive(gunFlashObj, true);
-		activeTime = timeFireAction;
-		if (!(ws != null) || !ws.railgun || !(gunFlashObj != null))
+		FlashFire.u003cfireCourotineu003ec__Iterator29 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		if (this.gunFlashObj == null)
 		{
-			yield break;
-		}
-		Ray ray = new Ray(gunFlashObj.transform.parent.position, gunFlashObj.transform.parent.parent.forward);
-		bool isReflection = false;
-		int _countReflection = 0;
-		if (ws.countReflectionRay == 1)
-		{
-			WeaponManager.AddRay(ray.origin, ray.direction, ws.railName);
-			yield break;
-		}
-		do
-		{
-			Player_move_c.RayHitsInfo rayHitsInfo = moveC.GetHitsFromRay(ray, false);
-			bool isOneRayOrFirstNoReflection = _countReflection == 0 && !rayHitsInfo.obstacleFound;
-			WeaponManager.AddRay(forw: ray.direction, len: (!isOneRayOrFirstNoReflection) ? rayHitsInfo.lenRay : 150f, pos: ray.origin, nm: ws.railName);
-			if (rayHitsInfo.obstacleFound)
+			IEnumerator enumerator = base.transform.GetEnumerator();
+			try
 			{
-				ray = rayHitsInfo.rayReflect;
-				isReflection = true;
+				while (enumerator.MoveNext())
+				{
+					Transform current = (Transform)enumerator.Current;
+					bool flag = false;
+					if (current.gameObject.name.Equals("BulletSpawnPoint"))
+					{
+						IEnumerator enumerator1 = current.GetEnumerator();
+						try
+						{
+							while (enumerator1.MoveNext())
+							{
+								Transform transforms = (Transform)enumerator1.Current;
+								if (!transforms.gameObject.name.Equals("GunFlash"))
+								{
+									continue;
+								}
+								flag = true;
+								this.gunFlashObj = transforms.gameObject;
+								break;
+							}
+						}
+						finally
+						{
+							IDisposable disposable = enumerator1 as IDisposable;
+							if (disposable == null)
+							{
+							}
+							disposable.Dispose();
+						}
+					}
+					if (!flag)
+					{
+						continue;
+					}
+					break;
+				}
 			}
-			yield return new WaitForSeconds((float)_countReflection * 0.05f);
-			_countReflection++;
+			finally
+			{
+				IDisposable disposable1 = enumerator as IDisposable;
+				if (disposable1 == null)
+				{
+				}
+				disposable1.Dispose();
+			}
 		}
-		while (isReflection && _countReflection < ws.countReflectionRay);
+		WeaponManager.SetGunFlashActive(this.gunFlashObj, false);
+	}
+
+	private void Update()
+	{
+		if (this.activeTime > 0f)
+		{
+			this.activeTime -= Time.deltaTime;
+			if (this.activeTime <= 0f)
+			{
+				WeaponManager.SetGunFlashActive(this.gunFlashObj, false);
+			}
+		}
 	}
 }

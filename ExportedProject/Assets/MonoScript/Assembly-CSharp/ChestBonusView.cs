@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ChestBonusView : MonoBehaviour
@@ -12,12 +14,40 @@ public class ChestBonusView : MonoBehaviour
 
 	public float startXPos;
 
-	private void SetTitleText(string text)
+	public ChestBonusView()
 	{
-		for (int i = 0; i < title.Length; i++)
+	}
+
+	private void CenterItems(int countHideElements)
+	{
+		float single = (float)countHideElements / 2f;
+		float single1 = this.cellWidth * single;
+		int length = (int)this.bonusItems.Length - countHideElements;
+		for (int i = 0; i < length; i++)
 		{
-			title[i].text = text;
+			Vector3 vector3 = this.bonusItems[i].transform.localPosition;
+			float single2 = this.startXPos + single1 + this.cellWidth * (float)i;
+			this.bonusItems[i].transform.localPosition = new Vector3(single2, vector3.y, vector3.z);
 		}
+	}
+
+	private void CreateBonusesItemsAndAlign(ChestBonusData bonus)
+	{
+		int num = 0;
+		for (int i = 0; i < (int)this.bonusItems.Length; i++)
+		{
+			if (i < bonus.items.Count)
+			{
+				this.bonusItems[i].SetVisible(true);
+				this.bonusItems[i].SetData(bonus.items[i]);
+			}
+			else
+			{
+				this.bonusItems[i].SetVisible(false);
+				num++;
+			}
+		}
+		this.CenterItems(num);
 	}
 
 	public void OnButtonOkClick()
@@ -25,46 +55,23 @@ public class ChestBonusView : MonoBehaviour
 		base.gameObject.SetActive(false);
 	}
 
+	private void SetTitleText(string text)
+	{
+		for (int i = 0; i < (int)this.title.Length; i++)
+		{
+			this.title[i].text = text;
+		}
+	}
+
 	public void Show(ChestBonusData bonus)
 	{
-		if (bonus.items != null && bonus.items.Count != 0)
+		if (bonus.items == null || bonus.items.Count == 0)
 		{
-			base.gameObject.SetActive(true);
-			SetTitleText(LocalizationStore.Get("Key_1057"));
-			description.text = LocalizationStore.Get("Key_1058");
-			CreateBonusesItemsAndAlign(bonus);
+			return;
 		}
-	}
-
-	private void CreateBonusesItemsAndAlign(ChestBonusData bonus)
-	{
-		int num = 0;
-		for (int i = 0; i < bonusItems.Length; i++)
-		{
-			if (i >= bonus.items.Count)
-			{
-				bonusItems[i].SetVisible(false);
-				num++;
-			}
-			else
-			{
-				bonusItems[i].SetVisible(true);
-				bonusItems[i].SetData(bonus.items[i]);
-			}
-		}
-		CenterItems(num);
-	}
-
-	private void CenterItems(int countHideElements)
-	{
-		float num = (float)countHideElements / 2f;
-		float num2 = cellWidth * num;
-		int num3 = bonusItems.Length - countHideElements;
-		for (int i = 0; i < num3; i++)
-		{
-			Vector3 localPosition = bonusItems[i].transform.localPosition;
-			float x = startXPos + num2 + cellWidth * (float)i;
-			bonusItems[i].transform.localPosition = new Vector3(x, localPosition.y, localPosition.z);
-		}
+		base.gameObject.SetActive(true);
+		this.SetTitleText(LocalizationStore.Get("Key_1057"));
+		this.description.text = LocalizationStore.Get("Key_1058");
+		this.CreateBonusesItemsAndAlign(bonus);
 	}
 }

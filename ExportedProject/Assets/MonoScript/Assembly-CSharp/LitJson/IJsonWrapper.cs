@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Specialized;
 
@@ -5,19 +6,40 @@ namespace LitJson
 {
 	public interface IJsonWrapper : IEnumerable, IList, IDictionary, ICollection, IOrderedDictionary
 	{
-		bool IsArray { get; }
+		bool IsArray
+		{
+			get;
+		}
 
-		bool IsBoolean { get; }
+		bool IsBoolean
+		{
+			get;
+		}
 
-		bool IsDouble { get; }
+		bool IsDouble
+		{
+			get;
+		}
 
-		bool IsInt { get; }
+		bool IsInt
+		{
+			get;
+		}
 
-		bool IsLong { get; }
+		bool IsLong
+		{
+			get;
+		}
 
-		bool IsObject { get; }
+		bool IsObject
+		{
+			get;
+		}
 
-		bool IsString { get; }
+		bool IsString
+		{
+			get;
+		}
 
 		bool GetBoolean();
 

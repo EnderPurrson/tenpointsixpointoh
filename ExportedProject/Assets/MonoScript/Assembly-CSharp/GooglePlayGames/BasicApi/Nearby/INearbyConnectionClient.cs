@@ -5,9 +5,25 @@ namespace GooglePlayGames.BasicApi.Nearby
 {
 	public interface INearbyConnectionClient
 	{
-		int MaxUnreliableMessagePayloadLength();
+		void AcceptConnectionRequest(string remoteEndpointId, byte[] payload, IMessageListener listener);
+
+		void DisconnectFromEndpoint(string remoteEndpointId);
+
+		string GetAppBundleId();
+
+		string GetServiceId();
+
+		string LocalDeviceId();
+
+		string LocalEndpointId();
 
 		int MaxReliableMessagePayloadLength();
+
+		int MaxUnreliableMessagePayloadLength();
+
+		void RejectConnectionRequest(string requestingEndpointId);
+
+		void SendConnectionRequest(string name, string remoteEndpointId, byte[] payload, Action<ConnectionResponse> responseCallback, IMessageListener listener);
 
 		void SendReliable(List<string> recipientEndpointIds, byte[] payload);
 
@@ -15,28 +31,12 @@ namespace GooglePlayGames.BasicApi.Nearby
 
 		void StartAdvertising(string name, List<string> appIdentifiers, TimeSpan? advertisingDuration, Action<AdvertisingResult> resultCallback, Action<ConnectionRequest> connectionRequestCallback);
 
-		void StopAdvertising();
-
-		void SendConnectionRequest(string name, string remoteEndpointId, byte[] payload, Action<ConnectionResponse> responseCallback, IMessageListener listener);
-
-		void AcceptConnectionRequest(string remoteEndpointId, byte[] payload, IMessageListener listener);
-
 		void StartDiscovery(string serviceId, TimeSpan? advertisingTimeout, IDiscoveryListener listener);
 
-		void StopDiscovery(string serviceId);
-
-		void RejectConnectionRequest(string requestingEndpointId);
-
-		void DisconnectFromEndpoint(string remoteEndpointId);
+		void StopAdvertising();
 
 		void StopAllConnections();
 
-		string LocalEndpointId();
-
-		string LocalDeviceId();
-
-		string GetAppBundleId();
-
-		string GetServiceId();
+		void StopDiscovery(string serviceId);
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MenuHintObject : MonoBehaviour
@@ -31,4 +32,8 @@ public class MenuHintObject : MonoBehaviour
 	public UITweener tween;
 
 	public GameObject body;
+
+	public MenuHintObject()
+	{
+	}
 }

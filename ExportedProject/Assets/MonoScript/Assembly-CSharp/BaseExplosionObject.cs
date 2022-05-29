@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using Rilisoft;
 using RilisoftBot;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BaseExplosionObject : MonoBehaviour
@@ -18,7 +19,7 @@ public class BaseExplosionObject : MonoBehaviour
 
 	public float damageZombie = 2f;
 
-	public float[] damageByTier = new float[ExpController.LevelsForTiers.Length];
+	public float[] damageByTier = new float[(int)ExpController.LevelsForTiers.Length];
 
 	[Header("Common Effect settings")]
 	public GameObject explosionEffect;
@@ -29,10 +30,170 @@ public class BaseExplosionObject : MonoBehaviour
 
 	private ExplosionObjectRespawnController _respawnController;
 
-	private void Start()
+	public BaseExplosionObject()
 	{
-		InitializeData();
-		Initializer.damagedObj.Add(base.gameObject);
+	}
+
+	private void ApplyDamage(Transform target, float distanceToTarget, float diameterExplosion, float diameterMaxExplosion)
+	{
+		int num;
+		float single = 0f;
+		if (target.CompareTag("Player"))
+		{
+			Player_move_c component = target.GetComponent<SkinName>().playerMoveC;
+			if (!this.isMultiplayerMode)
+			{
+				num = ExpController.OurTierForAnyPlace();
+			}
+			else
+			{
+				num = (component.myTable == null ? 0 : ExpController.TierForLevel(component.myTable.GetComponent<NetworkStartTable>().myRanks));
+			}
+			int num1 = num;
+			single = (distanceToTarget <= diameterMaxExplosion ? this.damageByTier[num1] : this.damageByTier[num1] * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion));
+			if (!this.isMultiplayerMode)
+			{
+				component.GetDamageFromEnv(single, base.transform.position);
+			}
+			else
+			{
+				component.SendDamageFromEnv(single, base.transform.position);
+			}
+		}
+		else if (target.CompareTag("Turret"))
+		{
+			TurretController turretController = target.GetComponent<TurretController>();
+			single = (distanceToTarget <= diameterMaxExplosion ? this.damageByTier[turretController.numUpdate] : this.damageByTier[turretController.numUpdate] * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion));
+			turretController.MinusLive(single, 0, new NetworkViewID());
+		}
+		else if (target.CompareTag("Enemy"))
+		{
+			BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(target);
+			single = (distanceToTarget <= diameterMaxExplosion ? this.damageZombie : this.damageZombie * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion));
+			if (!this.isMultiplayerMode)
+			{
+				botScriptForObject.GetDamage(-single, null, false, false);
+			}
+			else
+			{
+				botScriptForObject.GetDamageForMultiplayer(-single, null, false);
+			}
+		}
+		else if (target.childCount > 0 && target.GetChild(0).CompareTag("DamagedExplosion"))
+		{
+			DamagedExplosionObject damagedExplosionObject = target.GetChild(0).GetComponent<DamagedExplosionObject>();
+			if (damagedExplosionObject != null && damagedExplosionObject.healthPoints > 0f)
+			{
+				damagedExplosionObject.healthPoints = 0f;
+				damagedExplosionObject.Invoke("RunExplosion", 0.1f);
+			}
+		}
+	}
+
+	private void CheckTakeDamage()
+	{
+		Collider[] colliderArray = Physics.OverlapSphere(base.transform.position, this.radiusExplosion, Tools.AllWithoutDamageCollidersMask);
+		if ((int)colliderArray.Length == 0)
+		{
+			return;
+		}
+		List<Transform> transforms = new List<Transform>();
+		float single = this.radiusExplosion * this.radiusExplosion;
+		float single1 = this.radiusMaxExplosion * this.radiusMaxExplosion;
+		for (int i = 0; i < (int)colliderArray.Length; i++)
+		{
+			if (colliderArray[i].gameObject != null)
+			{
+				Transform transforms1 = colliderArray[i].transform.root;
+				if (!(transforms1.gameObject == null) && !(base.transform.gameObject == null))
+				{
+					if (!transforms.Contains(transforms1))
+					{
+						if (this.IsTargetAvailable(transforms1))
+						{
+							float single2 = (transforms1.position - base.transform.position).sqrMagnitude;
+							if (single2 <= single)
+							{
+								this.ApplyDamage(transforms1, single2, single, single1);
+								transforms.Add(transforms1);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void DestroyObjectByNetworkRpc()
+	{
+		if (!PhotonNetwork.isMasterClient)
+		{
+			this.explosionObject.SetActive(false);
+		}
+		else
+		{
+			PhotonNetwork.Destroy(base.gameObject);
+		}
+	}
+
+	protected virtual void InitializeData()
+	{
+		this.isMultiplayerMode = Defs.isMulti;
+		this.photonView = PhotonView.Get(this);
+		this.InitializeRespawnPoint();
+	}
+
+	private void InitializeRespawnPoint()
+	{
+		if (!this.isMultiplayerMode || PhotonNetwork.isMasterClient)
+		{
+			this._respawnController = base.transform.parent.GetComponent<ExplosionObjectRespawnController>();
+			return;
+		}
+		GameObject item = null;
+		float single = Single.MaxValue;
+		for (int i = 0; i < ExplosionObjectRespawnController.respawnList.Count; i++)
+		{
+			if (ExplosionObjectRespawnController.respawnList[i] != null)
+			{
+				Vector3 vector3 = ExplosionObjectRespawnController.respawnList[i].transform.position - base.transform.position;
+				float single1 = vector3.sqrMagnitude;
+				if (single1 < single)
+				{
+					single = single1;
+					item = ExplosionObjectRespawnController.respawnList[i];
+				}
+			}
+		}
+		if (item == null)
+		{
+			this._respawnController = null;
+		}
+		else
+		{
+			base.transform.parent = item.transform;
+			this._respawnController = item.GetComponent<ExplosionObjectRespawnController>();
+		}
+	}
+
+	protected bool IsTargetAvailable(Transform targetTransform)
+	{
+		bool flag;
+		if (targetTransform.Equals(base.transform))
+		{
+			return false;
+		}
+		if (targetTransform.CompareTag("Player") || targetTransform.CompareTag("Enemy") || targetTransform.CompareTag("Turret"))
+		{
+			flag = true;
+		}
+		else
+		{
+			flag = (targetTransform.childCount <= 0 ? false : targetTransform.GetChild(0).CompareTag("DamagedExplosion"));
+		}
+		return flag;
 	}
 
 	private void OnDestroy()
@@ -40,203 +201,69 @@ public class BaseExplosionObject : MonoBehaviour
 		Initializer.damagedObj.Remove(base.gameObject);
 	}
 
-	protected virtual void InitializeData()
-	{
-		isMultiplayerMode = Defs.isMulti;
-		photonView = PhotonView.Get(this);
-		InitializeRespawnPoint();
-	}
-
-	private void InitializeRespawnPoint()
-	{
-		if (isMultiplayerMode && !PhotonNetwork.isMasterClient)
-		{
-			GameObject gameObject = null;
-			float num = float.MaxValue;
-			for (int i = 0; i < ExplosionObjectRespawnController.respawnList.Count; i++)
-			{
-				if (ExplosionObjectRespawnController.respawnList[i] != null)
-				{
-					float sqrMagnitude = (ExplosionObjectRespawnController.respawnList[i].transform.position - base.transform.position).sqrMagnitude;
-					if (sqrMagnitude < num)
-					{
-						num = sqrMagnitude;
-						gameObject = ExplosionObjectRespawnController.respawnList[i];
-					}
-				}
-			}
-			if (gameObject != null)
-			{
-				base.transform.parent = gameObject.transform;
-				_respawnController = gameObject.GetComponent<ExplosionObjectRespawnController>();
-			}
-			else
-			{
-				_respawnController = null;
-			}
-		}
-		else
-		{
-			_respawnController = base.transform.parent.GetComponent<ExplosionObjectRespawnController>();
-		}
-	}
-
 	private void PlayDestroyEffect()
 	{
-		Object.Instantiate(explosionEffect, base.transform.position, Quaternion.identity);
-		GetComponent<Animation>().Play("Broken");
+		UnityEngine.Object.Instantiate(this.explosionEffect, base.transform.position, Quaternion.identity);
+		base.GetComponent<Animation>().Play("Broken");
 	}
 
-	protected bool IsTargetAvailable(Transform targetTransform)
+	[PunRPC]
+	[RPC]
+	public void PlayDestroyEffectRpc()
 	{
-		if (targetTransform.Equals(base.transform))
-		{
-			return false;
-		}
-		return targetTransform.CompareTag("Player") || targetTransform.CompareTag("Enemy") || targetTransform.CompareTag("Turret") || (targetTransform.childCount > 0 && targetTransform.GetChild(0).CompareTag("DamagedExplosion"));
-	}
-
-	private void CheckTakeDamage()
-	{
-		Collider[] array = Physics.OverlapSphere(base.transform.position, radiusExplosion, Tools.AllWithoutDamageCollidersMask);
-		if (array.Length == 0)
-		{
-			return;
-		}
-		List<Transform> list = new List<Transform>();
-		float num = radiusExplosion * radiusExplosion;
-		float diameterMaxExplosion = radiusMaxExplosion * radiusMaxExplosion;
-		for (int i = 0; i < array.Length; i++)
-		{
-			if (array[i].gameObject == null)
-			{
-				continue;
-			}
-			Transform root = array[i].transform.root;
-			if (!(root.gameObject == null) && !(base.transform.gameObject == null) && !list.Contains(root) && IsTargetAvailable(root))
-			{
-				float sqrMagnitude = (root.position - base.transform.position).sqrMagnitude;
-				if (!(sqrMagnitude > num))
-				{
-					ApplyDamage(root, sqrMagnitude, num, diameterMaxExplosion);
-					list.Add(root);
-				}
-			}
-		}
-	}
-
-	private void ApplyDamage(Transform target, float distanceToTarget, float diameterExplosion, float diameterMaxExplosion)
-	{
-		float num = 0f;
-		if (target.CompareTag("Player"))
-		{
-			Player_move_c playerMoveC = target.GetComponent<SkinName>().playerMoveC;
-			int num2 = ((!isMultiplayerMode) ? ExpController.OurTierForAnyPlace() : ((playerMoveC.myTable != null) ? ExpController.TierForLevel(playerMoveC.myTable.GetComponent<NetworkStartTable>().myRanks) : 0));
-			num = ((!(distanceToTarget > diameterMaxExplosion)) ? damageByTier[num2] : (damageByTier[num2] * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion)));
-			if (isMultiplayerMode)
-			{
-				playerMoveC.SendDamageFromEnv(num, base.transform.position);
-			}
-			else
-			{
-				playerMoveC.GetDamageFromEnv(num, base.transform.position);
-			}
-		}
-		else if (target.CompareTag("Turret"))
-		{
-			TurretController component = target.GetComponent<TurretController>();
-			num = ((!(distanceToTarget > diameterMaxExplosion)) ? damageByTier[component.numUpdate] : (damageByTier[component.numUpdate] * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion)));
-			component.MinusLive(num);
-		}
-		else if (target.CompareTag("Enemy"))
-		{
-			BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(target);
-			num = ((!(distanceToTarget > diameterMaxExplosion)) ? damageZombie : (damageZombie * ((diameterExplosion - (distanceToTarget - diameterMaxExplosion)) / diameterExplosion)));
-			if (isMultiplayerMode)
-			{
-				botScriptForObject.GetDamageForMultiplayer(0f - num, null);
-			}
-			else
-			{
-				botScriptForObject.GetDamage(0f - num, null, false);
-			}
-		}
-		else if (target.childCount > 0 && target.GetChild(0).CompareTag("DamagedExplosion"))
-		{
-			DamagedExplosionObject component2 = target.GetChild(0).GetComponent<DamagedExplosionObject>();
-			if (component2 != null && component2.healthPoints > 0f)
-			{
-				component2.healthPoints = 0f;
-				component2.Invoke("RunExplosion", 0.1f);
-			}
-		}
+		this.PlayDestroyEffect();
 	}
 
 	private void RecreateObject()
 	{
-		if (isMultiplayerMode)
+		if (!this.isMultiplayerMode)
 		{
-			DestroyObjectByNetworkRpc();
-			photonView.RPC("DestroyObjectByNetworkRpc", PhotonTargets.Others);
+			UnityEngine.Object.Destroy(base.gameObject);
 		}
 		else
 		{
-			Object.Destroy(base.gameObject);
+			this.DestroyObjectByNetworkRpc();
+			this.photonView.RPC("DestroyObjectByNetworkRpc", PhotonTargets.Others, new object[0]);
 		}
-		if (isMultiplayerMode)
+		if (this.isMultiplayerMode)
 		{
-			StartNewRespanObjectRpc();
-			photonView.RPC("StartNewRespanObjectRpc", PhotonTargets.Others);
+			this.StartNewRespanObjectRpc();
+			this.photonView.RPC("StartNewRespanObjectRpc", PhotonTargets.Others, new object[0]);
 		}
-		else if (_respawnController != null)
+		else if (this._respawnController != null)
 		{
-			_respawnController.StartProcessNewRespawn();
+			this._respawnController.StartProcessNewRespawn();
 		}
 	}
 
 	public void RunExplosion()
 	{
-		if (isMultiplayerMode)
+		if (!this.isMultiplayerMode)
 		{
-			PlayDestroyEffect();
-			photonView.RPC("PlayDestroyEffectRpc", PhotonTargets.Others);
+			this.PlayDestroyEffect();
 		}
 		else
 		{
-			PlayDestroyEffect();
+			this.PlayDestroyEffect();
+			this.photonView.RPC("PlayDestroyEffectRpc", PhotonTargets.Others, new object[0]);
 		}
-		CheckTakeDamage();
-		RecreateObject();
+		this.CheckTakeDamage();
+		this.RecreateObject();
 	}
 
-	[PunRPC]
-	[RPC]
-	public void DestroyObjectByNetworkRpc()
+	private void Start()
 	{
-		if (PhotonNetwork.isMasterClient)
-		{
-			PhotonNetwork.Destroy(base.gameObject);
-		}
-		else
-		{
-			explosionObject.SetActive(false);
-		}
+		this.InitializeData();
+		Initializer.damagedObj.Add(base.gameObject);
 	}
 
-	[RPC]
 	[PunRPC]
+	[RPC]
 	public void StartNewRespanObjectRpc()
 	{
-		if (_respawnController != null)
+		if (this._respawnController != null)
 		{
-			_respawnController.StartProcessNewRespawn();
+			this._respawnController.StartProcessNewRespawn();
 		}
-	}
-
-	[RPC]
-	[PunRPC]
-	public void PlayDestroyEffectRpc()
-	{
-		PlayDestroyEffect();
 	}
 }

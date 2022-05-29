@@ -1,6 +1,9 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class DeveloperConsoleController : MonoBehaviour
@@ -29,32 +32,36 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 
 	private bool _needsRestart;
 
-	public void HandleInvalidateQuestConfig(UILabel label)
+	static DeveloperConsoleController()
 	{
 	}
 
-	public void HandleFacebookLoginReward(UIToggle toggle)
+	public DeveloperConsoleController()
 	{
 	}
 
-	public void HandleBackButton()
+	private void Awake()
 	{
-		_backRequested = true;
+		DeveloperConsoleController.instance = this;
 	}
 
-	public void HandleClearKeychainAndPlayerPrefs()
-	{
-	}
-
-	public void HandleLevelMinusButton()
+	public void ChangePremiumAccountLiveTime(UIInput input)
 	{
 	}
 
-	public void HandleTipsShownButton()
+	public void ClearAllPremiumAccounts()
 	{
 	}
 
-	public void HandleAddGemsButton()
+	public void ClearCurrentPremiumAccont()
+	{
+	}
+
+	public void ClearStarterPackData()
+	{
+	}
+
+	public void FillAll()
 	{
 	}
 
@@ -62,27 +69,45 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
-	public void HandleLevelPlusButton()
+	public void HandleAddGemsButton()
 	{
 	}
 
-	public void HandleLevelChanged()
+	public void HandleAdIdCanged(UIToggle toggle)
 	{
 	}
 
-	public void HandleLevelSliderChanged()
+	public void HandleBackButton()
+	{
+		this._backRequested = true;
+	}
+
+	public void HandleClearCloud()
+	{
+	}
+
+	public void HandleClearKeychainAndPlayerPrefs()
+	{
+	}
+
+	public void HandleClearProgressButton()
+	{
+	}
+
+	public void HandleClearPurchasesButton()
+	{
+	}
+
+	public void HandleClearX3()
 	{
 	}
 
 	public void HandleCoinsInputSubmit(UIInput input)
 	{
-		if (input.isActiveAndEnabled)
+		if (!input.isActiveAndEnabled)
 		{
+			return;
 		}
-	}
-
-	public void HandleEnemyCountInSurvivalWaveInput(UIInput input)
-	{
 	}
 
 	public void HandleEnemiesInCampaignChange()
@@ -93,55 +118,20 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
-	public void HandleTrainingCompleteChanged(UIToggle toggle)
+	public void HandleEnemyCountInSurvivalWaveInput(UIInput input)
 	{
 	}
 
-	public void HandleStrongDeviceChanged(UIToggle toggle)
+	private void HandleEscape()
+	{
+		this._backRequested = true;
+	}
+
+	public void HandleExperienceSliderChanged()
 	{
 	}
 
-	public void HandleSet60FpsChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleMouseControlChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleSpectatorMode(UIToggle toggle)
-	{
-	}
-
-	public void HandleTempGunChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleIpadMiniRetinaChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleIsPayingChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleIsDebugGuiVisibleChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleIsPixelGunLowChanged(UIToggle toggle)
-	{
-	}
-
-	public void HandleForcedEventX3Changed(UIToggle toggle)
-	{
-	}
-
-	public void HandleAdIdCanged(UIToggle toggle)
-	{
-	}
-
-	private static void SetItemsBought(bool bought, bool onlyGuns = true)
+	public void HandleFacebookLoginReward(UIToggle toggle)
 	{
 	}
 
@@ -149,19 +139,91 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
-	public void HandleClearPurchasesButton()
-	{
-	}
-
-	public void HandleClearProgressButton()
-	{
-	}
-
 	public void HandleFillProgressButton()
 	{
 	}
 
-	public void HandleClearCloud()
+	public void HandleForcedEventX3Changed(UIToggle toggle)
+	{
+	}
+
+	private void HandleGemsInputSubmit(UIInput input)
+	{
+		if (!input.isActiveAndEnabled)
+		{
+			return;
+		}
+	}
+
+	public void HandleInvalidateQuestConfig(UILabel label)
+	{
+	}
+
+	public void HandleIpadMiniRetinaChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleIsDebugGuiVisibleChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleIsPayingChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleIsPixelGunLowChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleLevelChanged()
+	{
+	}
+
+	public void HandleLevelMinusButton()
+	{
+	}
+
+	public void HandleLevelPlusButton()
+	{
+	}
+
+	public void HandleLevelSliderChanged()
+	{
+	}
+
+	public void HandleMouseControlChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleRatingSliderChanged()
+	{
+	}
+
+	public void HandleSet60FpsChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleSignInOuButton(UILabel socialUsernameLabel)
+	{
+	}
+
+	public void HandleSpectatorMode(UIToggle toggle)
+	{
+	}
+
+	public void HandleStrongDeviceChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleTempGunChanged(UIToggle toggle)
+	{
+	}
+
+	public void HandleTipsShownButton()
+	{
+	}
+
+	public void HandleTrainingCompleteChanged(UIToggle toggle)
 	{
 	}
 
@@ -169,11 +231,54 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
-	public void HandleClearX3()
+	public void OnChangeReviewActive()
 	{
 	}
 
-	private void RefreshRating(bool current)
+	public void OnChangeStarterPackCooldown(UIInput inputField)
+	{
+	}
+
+	public void OnChangeStarterPackLive(UIInput inputField)
+	{
+	}
+
+	public void OnChangeStateMemoryInfo()
+	{
+	}
+
+	public void OnClickRating()
+	{
+	}
+
+	public void OnClickSystemBuff()
+	{
+	}
+
+	private void OnDestroy()
+	{
+		DeveloperConsoleController.instance = null;
+	}
+
+	private void OnDisable()
+	{
+		if (this._escapeSubscription != null)
+		{
+			this._escapeSubscription.Dispose();
+			this._escapeSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._escapeSubscription != null)
+		{
+			this._escapeSubscription.Dispose();
+		}
+		this._escapeSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "DevConsole");
+	}
+
+	private void Refresh()
 	{
 	}
 
@@ -189,19 +294,11 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
-	public void HandleExperienceSliderChanged()
+	private void RefreshRating(bool current)
 	{
 	}
 
-	public void HandleRatingSliderChanged()
-	{
-	}
-
-	public void HandleSignInOuButton(UILabel socialUsernameLabel)
-	{
-	}
-
-	public void SetMarathonTestMode(UIToggle toggle)
+	private static void SetItemsBought(bool bought, bool onlyGuns = true)
 	{
 	}
 
@@ -209,108 +306,25 @@ internal sealed class DeveloperConsoleController : MonoBehaviour
 	{
 	}
 
+	public void SetMarathonTestMode(UIToggle toggle)
+	{
+	}
+
 	public void SetOffGameGUIMode(UIToggle toggle)
 	{
 	}
 
-	public void ClearStarterPackData()
-	{
-	}
-
-	private void Refresh()
-	{
-	}
-
-	private void Awake()
-	{
-		instance = this;
-	}
-
-	private void OnDestroy()
-	{
-		instance = null;
-	}
-
+	[DebuggerHidden]
 	private IEnumerator Start()
 	{
-		yield break;
-	}
-
-	public void ChangePremiumAccountLiveTime(UIInput input)
-	{
-	}
-
-	public void ClearAllPremiumAccounts()
-	{
-	}
-
-	public void ClearCurrentPremiumAccont()
-	{
-	}
-
-	private void HandleGemsInputSubmit(UIInput input)
-	{
-		if (input.isActiveAndEnabled)
-		{
-		}
+		return new DeveloperConsoleController.u003cStartu003ec__Iterator1B5();
 	}
 
 	private void Update()
 	{
 	}
 
-	private void OnEnable()
-	{
-		if (_escapeSubscription != null)
-		{
-			_escapeSubscription.Dispose();
-		}
-		_escapeSubscription = BackSystem.Instance.Register(HandleEscape, "DevConsole");
-	}
-
-	private void OnDisable()
-	{
-		if (_escapeSubscription != null)
-		{
-			_escapeSubscription.Dispose();
-			_escapeSubscription = null;
-		}
-	}
-
-	private void HandleEscape()
-	{
-		_backRequested = true;
-	}
-
-	public void OnChangeStarterPackLive(UIInput inputField)
-	{
-	}
-
-	public void OnChangeStarterPackCooldown(UIInput inputField)
-	{
-	}
-
 	public void UpdateStateActiveMemoryInfo()
-	{
-	}
-
-	public void OnChangeStateMemoryInfo()
-	{
-	}
-
-	public void OnChangeReviewActive()
-	{
-	}
-
-	public void OnClickSystemBuff()
-	{
-	}
-
-	public void OnClickRating()
-	{
-	}
-
-	public void FillAll()
 	{
 	}
 }

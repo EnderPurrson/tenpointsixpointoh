@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CoroutineRunner : MonoBehaviour
@@ -10,30 +13,35 @@ public class CoroutineRunner : MonoBehaviour
 	{
 		get
 		{
-			if (_instance == null)
+			if (CoroutineRunner._instance == null)
 			{
 				try
 				{
 					GameObject gameObject = new GameObject("CoroutineRunner");
-					_instance = gameObject.AddComponent<CoroutineRunner>();
+					CoroutineRunner._instance = gameObject.AddComponent<CoroutineRunner>();
 					UnityEngine.Object.DontDestroyOnLoad(gameObject);
 				}
-				catch (Exception ex)
+				catch (Exception exception)
 				{
-					Debug.LogError("[Rilisoft] CoroutineRunner: Instance exception: " + ex);
+					UnityEngine.Debug.LogError(string.Concat("[Rilisoft] CoroutineRunner: Instance exception: ", exception));
 				}
 			}
-			return _instance;
+			return CoroutineRunner._instance;
 		}
 	}
 
+	static CoroutineRunner()
+	{
+	}
+
+	public CoroutineRunner()
+	{
+	}
+
+	[DebuggerHidden]
 	public static IEnumerator WaitForSeconds(float tm)
 	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
+		CoroutineRunner.u003cWaitForSecondsu003ec__Iterator130 variable = null;
+		return variable;
 	}
 }

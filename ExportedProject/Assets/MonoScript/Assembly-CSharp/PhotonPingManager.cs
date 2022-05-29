@@ -1,19 +1,21 @@
+using ExitGames.Client.Photon;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using ExitGames.Client.Photon;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PhotonPingManager
 {
 	public bool UseNative;
 
-	public static int Attempts = 5;
+	public static int Attempts;
 
-	public static bool IgnoreInitialAttempt = true;
+	public static bool IgnoreInitialAttempt;
 
-	public static int MaxMilliseconsPerPing = 800;
+	public static int MaxMilliseconsPerPing;
 
 	private int PingsRunning;
 
@@ -21,18 +23,19 @@ public class PhotonPingManager
 	{
 		get
 		{
-			Region result = null;
-			int num = int.MaxValue;
+			Region region = null;
+			int ping = 2147483647;
 			foreach (Region availableRegion in PhotonNetwork.networkingPeer.AvailableRegions)
 			{
-				UnityEngine.Debug.Log("BestRegion checks region: " + availableRegion);
-				if (availableRegion.Ping != 0 && availableRegion.Ping < num)
+				UnityEngine.Debug.Log(string.Concat("BestRegion checks region: ", availableRegion));
+				if (availableRegion.Ping == 0 || availableRegion.Ping >= ping)
 				{
-					num = availableRegion.Ping;
-					result = availableRegion;
+					continue;
 				}
+				ping = availableRegion.Ping;
+				region = availableRegion;
 			}
-			return result;
+			return region;
 		}
 	}
 
@@ -40,100 +43,66 @@ public class PhotonPingManager
 	{
 		get
 		{
-			return PingsRunning == 0;
+			return this.PingsRunning == 0;
 		}
 	}
 
+	static PhotonPingManager()
+	{
+		PhotonPingManager.Attempts = 5;
+		PhotonPingManager.IgnoreInitialAttempt = true;
+		PhotonPingManager.MaxMilliseconsPerPing = 800;
+	}
+
+	public PhotonPingManager()
+	{
+	}
+
+	[DebuggerHidden]
 	public IEnumerator PingSocket(Region region)
 	{
-		region.Ping = Attempts * MaxMilliseconsPerPing;
-		PingsRunning++;
-		PhotonPing ping;
-		if (PhotonHandler.PingImplementation != typeof(PingNativeDynamic))
-		{
-			ping = ((PhotonHandler.PingImplementation != typeof(PingMono)) ? ((PhotonPing)Activator.CreateInstance(PhotonHandler.PingImplementation)) : new PingMono());
-		}
-		else
-		{
-			UnityEngine.Debug.Log("Using constructor for new PingNativeDynamic()");
-			ping = new PingNativeDynamic();
-		}
-		float rttSum = 0f;
-		int replyCount = 0;
-		string cleanIpOfRegion = region.HostAndPort;
-		int indexOfColon = cleanIpOfRegion.LastIndexOf(':');
-		if (indexOfColon > 1)
-		{
-			cleanIpOfRegion = cleanIpOfRegion.Substring(0, indexOfColon);
-		}
-		cleanIpOfRegion = ResolveHost(cleanIpOfRegion);
-		for (int i = 0; i < Attempts; i++)
-		{
-			bool overtime = false;
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			try
-			{
-				ping.StartPing(cleanIpOfRegion);
-			}
-			catch (Exception e)
-			{
-				UnityEngine.Debug.Log("catched: " + e);
-				PingsRunning--;
-				break;
-			}
-			while (!ping.Done())
-			{
-				if (sw.ElapsedMilliseconds >= MaxMilliseconsPerPing)
-				{
-					overtime = true;
-					break;
-				}
-				yield return 0;
-			}
-			int rtt = (int)sw.ElapsedMilliseconds;
-			if ((!IgnoreInitialAttempt || i != 0) && ping.Successful && !overtime)
-			{
-				rttSum += (float)rtt;
-				replyCount++;
-				region.Ping = (int)(rttSum / (float)replyCount);
-			}
-			yield return new WaitForSeconds(0.1f);
-		}
-		PingsRunning--;
-		yield return null;
+		PhotonPingManager.u003cPingSocketu003ec__IteratorD3 variable = null;
+		return variable;
 	}
 
 	public static string ResolveHost(string hostName)
 	{
-		string text = string.Empty;
+		string str;
+		string empty = string.Empty;
 		try
 		{
 			IPAddress[] hostAddresses = Dns.GetHostAddresses(hostName);
-			if (hostAddresses.Length == 1)
+			if ((int)hostAddresses.Length != 1)
 			{
-				return hostAddresses[0].ToString();
-			}
-			foreach (IPAddress iPAddress in hostAddresses)
-			{
-				if (iPAddress != null)
+				for (int i = 0; i < (int)hostAddresses.Length; i++)
 				{
-					if (iPAddress.AddressFamily.ToString().Contains("6"))
+					IPAddress pAddress = hostAddresses[i];
+					if (pAddress != null)
 					{
-						return iPAddress.ToString();
-					}
-					if (string.IsNullOrEmpty(text))
-					{
-						text = hostAddresses.ToString();
+						if (pAddress.AddressFamily.ToString().Contains("6"))
+						{
+							str = pAddress.ToString();
+							return str;
+						}
+						else if (string.IsNullOrEmpty(empty))
+						{
+							empty = hostAddresses.ToString();
+						}
 					}
 				}
+				return empty;
 			}
-			return text;
+			else
+			{
+				str = hostAddresses[0].ToString();
+			}
 		}
-		catch (Exception ex)
+		catch (Exception exception1)
 		{
-			UnityEngine.Debug.Log("Exception caught! " + ex.Source + " Message: " + ex.Message);
-			return text;
+			Exception exception = exception1;
+			UnityEngine.Debug.Log(string.Concat("Exception caught! ", exception.Source, " Message: ", exception.Message));
+			return empty;
 		}
+		return str;
 	}
 }

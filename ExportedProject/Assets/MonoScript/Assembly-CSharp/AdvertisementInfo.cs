@@ -1,6 +1,8 @@
+using System;
+
 internal sealed class AdvertisementInfo
 {
-	private static readonly AdvertisementInfo _default = new AdvertisementInfo(-1, -1, -1);
+	private readonly static AdvertisementInfo _default;
 
 	private readonly int _round;
 
@@ -10,27 +12,11 @@ internal sealed class AdvertisementInfo
 
 	private readonly string _details;
 
-	public int Round
+	public static AdvertisementInfo Default
 	{
 		get
 		{
-			return _round;
-		}
-	}
-
-	public int Slot
-	{
-		get
-		{
-			return _slot;
-		}
-	}
-
-	public int Unit
-	{
-		get
-		{
-			return _unit;
+			return AdvertisementInfo._default;
 		}
 	}
 
@@ -38,23 +24,44 @@ internal sealed class AdvertisementInfo
 	{
 		get
 		{
-			return _details;
+			return this._details;
 		}
 	}
 
-	public static AdvertisementInfo Default
+	public int Round
 	{
 		get
 		{
-			return _default;
+			return this._round;
 		}
+	}
+
+	public int Slot
+	{
+		get
+		{
+			return this._slot;
+		}
+	}
+
+	public int Unit
+	{
+		get
+		{
+			return this._unit;
+		}
+	}
+
+	static AdvertisementInfo()
+	{
+		AdvertisementInfo._default = new AdvertisementInfo(-1, -1, -1, null);
 	}
 
 	public AdvertisementInfo(int round, int slot, int unit = 0, string details = null)
 	{
-		_round = round;
-		_slot = slot;
-		_unit = unit;
-		_details = details ?? string.Empty;
+		this._round = round;
+		this._slot = slot;
+		this._unit = unit;
+		this._details = details ?? string.Empty;
 	}
 }

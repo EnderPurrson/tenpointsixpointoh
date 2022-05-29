@@ -5,36 +5,43 @@ public class AGSSubmitScoreResponse : AGSRequestResponse
 {
 	public string leaderboardId;
 
+	public AGSSubmitScoreResponse()
+	{
+	}
+
 	public static AGSSubmitScoreResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00a5, IL_00cc
+		AGSSubmitScoreResponse blankResponseWithError;
 		try
 		{
 			AGSSubmitScoreResponse aGSSubmitScoreResponse = new AGSSubmitScoreResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSSubmitScoreResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSSubmitScoreResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
-			aGSSubmitScoreResponse.leaderboardId = ((!hashtable.ContainsKey("leaderboardId")) ? string.Empty : hashtable["leaderboardId"].ToString());
-			return aGSSubmitScoreResponse;
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSSubmitScoreResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSSubmitScoreResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
+			aGSSubmitScoreResponse.leaderboardId = (!hashtables.ContainsKey("leaderboardId") ? string.Empty : hashtables["leaderboardId"].ToString());
+			blankResponseWithError = aGSSubmitScoreResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty);
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSSubmitScoreResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSSubmitScoreResponse GetBlankResponseWithError(string error, string leaderboardId = "", int userData = 0)
 	{
-		AGSSubmitScoreResponse aGSSubmitScoreResponse = new AGSSubmitScoreResponse();
-		aGSSubmitScoreResponse.error = error;
-		aGSSubmitScoreResponse.userData = userData;
-		aGSSubmitScoreResponse.leaderboardId = leaderboardId;
+		AGSSubmitScoreResponse aGSSubmitScoreResponse = new AGSSubmitScoreResponse()
+		{
+			error = error,
+			userData = userData,
+			leaderboardId = leaderboardId
+		};
 		return aGSSubmitScoreResponse;
 	}
 
 	public static AGSSubmitScoreResponse GetPlatformNotSupportedResponse(string leaderboardId, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, userData);
+		return AGSSubmitScoreResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, userData);
 	}
 }

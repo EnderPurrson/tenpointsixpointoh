@@ -7,17 +7,17 @@ namespace GooglePlayGames.OurUtils
 	{
 		private static bool debugLogEnabled;
 
-		private static bool warningLogEnabled = true;
+		private static bool warningLogEnabled;
 
 		public static bool DebugLogEnabled
 		{
 			get
 			{
-				return debugLogEnabled;
+				return GooglePlayGames.OurUtils.Logger.debugLogEnabled;
 			}
 			set
 			{
-				debugLogEnabled = value;
+				GooglePlayGames.OurUtils.Logger.debugLogEnabled = value;
 			}
 		}
 
@@ -25,46 +25,59 @@ namespace GooglePlayGames.OurUtils
 		{
 			get
 			{
-				return warningLogEnabled;
+				return GooglePlayGames.OurUtils.Logger.warningLogEnabled;
 			}
 			set
 			{
-				warningLogEnabled = value;
+				GooglePlayGames.OurUtils.Logger.warningLogEnabled = value;
 			}
+		}
+
+		static Logger()
+		{
+			GooglePlayGames.OurUtils.Logger.warningLogEnabled = true;
+		}
+
+		public Logger()
+		{
 		}
 
 		public static void d(string msg)
 		{
-			if (debugLogEnabled)
+			if (GooglePlayGames.OurUtils.Logger.debugLogEnabled)
 			{
-				Debug.Log(ToLogMessage(string.Empty, "DEBUG", msg));
-			}
-		}
-
-		public static void w(string msg)
-		{
-			if (warningLogEnabled)
-			{
-				Debug.LogWarning(ToLogMessage("!!!", "WARNING", msg));
-			}
-		}
-
-		public static void e(string msg)
-		{
-			if (warningLogEnabled)
-			{
-				Debug.LogWarning(ToLogMessage("***", "ERROR", msg));
+				Debug.Log(GooglePlayGames.OurUtils.Logger.ToLogMessage(string.Empty, "DEBUG", msg));
 			}
 		}
 
 		public static string describe(byte[] b)
 		{
-			return (b != null) ? ("byte[" + b.Length + "]") : "(null)";
+			return (b != null ? string.Concat("byte[", (int)b.Length, "]") : "(null)");
+		}
+
+		public static void e(string msg)
+		{
+			if (GooglePlayGames.OurUtils.Logger.warningLogEnabled)
+			{
+				Debug.LogWarning(GooglePlayGames.OurUtils.Logger.ToLogMessage("***", "ERROR", msg));
+			}
 		}
 
 		private static string ToLogMessage(string prefix, string logType, string msg)
 		{
-			return string.Format("{0} [Play Games Plugin DLL] {1} {2}: {3}", prefix, DateTime.Now.ToString("MM/dd/yy H:mm:ss zzz"), logType, msg);
+			object[] str = new object[] { prefix, null, null, null };
+			str[1] = DateTime.Now.ToString("MM/dd/yy H:mm:ss zzz");
+			str[2] = logType;
+			str[3] = msg;
+			return string.Format("{0} [Play Games Plugin DLL] {1} {2}: {3}", str);
+		}
+
+		public static void w(string msg)
+		{
+			if (GooglePlayGames.OurUtils.Logger.warningLogEnabled)
+			{
+				Debug.LogWarning(GooglePlayGames.OurUtils.Logger.ToLogMessage("!!!", "WARNING", msg));
+			}
 		}
 	}
 }

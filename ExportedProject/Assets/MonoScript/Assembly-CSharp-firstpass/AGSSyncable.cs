@@ -4,74 +4,34 @@ using UnityEngine;
 
 public class AGSSyncable : IDisposable
 {
-	public enum SyncableMethod
-	{
-		getDeveloperString = 0,
-		getHighestNumber = 1,
-		getLowestNumber = 2,
-		getLatestNumber = 3,
-		getHighNumberList = 4,
-		getLowNumberList = 5,
-		getLatestNumberList = 6,
-		getAccumulatingNumber = 7,
-		getLatestString = 8,
-		getLatestStringList = 9,
-		getStringSet = 10,
-		getMap = 11
-	}
-
-	public enum HashSetMethod
-	{
-		getDeveloperStringKeys = 0,
-		getHighestNumberKeys = 1,
-		getLowestNumberKeys = 2,
-		getLatestNumberKeys = 3,
-		getHighNumberListKeys = 4,
-		getLowNumberListKeys = 5,
-		getLatestNumberListKeys = 6,
-		getAccumulatingNumberKeys = 7,
-		getLatestStringKeys = 8,
-		getLatestStringListKeys = 9,
-		getStringSetKeys = 10,
-		getMapKeys = 11
-	}
-
 	protected AmazonJavaWrapper javaObject;
 
 	public AGSSyncable(AmazonJavaWrapper jo)
 	{
-		javaObject = jo;
+		this.javaObject = jo;
 	}
 
 	public AGSSyncable(AndroidJavaObject jo)
 	{
-		javaObject = new AmazonJavaWrapper(jo);
-	}
-
-	public void Dispose()
-	{
-		if (javaObject != null)
-		{
-			javaObject.Dispose();
-		}
+		this.javaObject = new AmazonJavaWrapper(jo);
 	}
 
 	protected AmazonJavaWrapper DictionaryToAndroidHashMap(Dictionary<string, string> dictionary)
 	{
 		AndroidJNI.PushLocalFrame(10);
-		AndroidJavaObject androidJavaObject = new AndroidJavaObject("java.util.HashMap");
+		AndroidJavaObject androidJavaObject = new AndroidJavaObject("java.util.HashMap", new object[0]);
 		IntPtr methodID = AndroidJNIHelper.GetMethodID(androidJavaObject.GetRawClass(), "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-		object[] array = new object[2];
-		foreach (KeyValuePair<string, string> item in dictionary)
+		object[] objArray = new object[2];
+		foreach (KeyValuePair<string, string> keyValuePair in dictionary)
 		{
-			using (AndroidJavaObject androidJavaObject2 = new AndroidJavaObject("java.lang.String", item.Key))
+			using (AndroidJavaObject androidJavaObject1 = new AndroidJavaObject("java.lang.String", new object[] { keyValuePair.Key }))
 			{
-				using (AndroidJavaObject androidJavaObject3 = new AndroidJavaObject("java.lang.String", item.Value))
+				using (AndroidJavaObject androidJavaObject2 = new AndroidJavaObject("java.lang.String", new object[] { keyValuePair.Value }))
 				{
-					array[0] = androidJavaObject2;
-					array[1] = androidJavaObject3;
-					jvalue[] args = AndroidJNIHelper.CreateJNIArgArray(array);
-					AndroidJNI.CallObjectMethod(androidJavaObject.GetRawObject(), methodID, args);
+					objArray[0] = androidJavaObject1;
+					objArray[1] = androidJavaObject2;
+					jvalue[] jvalueArray = AndroidJNIHelper.CreateJNIArgArray(objArray);
+					AndroidJNI.CallObjectMethod(androidJavaObject.GetRawObject(), methodID, jvalueArray);
 				}
 			}
 		}
@@ -79,41 +39,82 @@ public class AGSSyncable : IDisposable
 		return new AmazonJavaWrapper(androidJavaObject);
 	}
 
-	protected T GetAGSSyncable<T>(SyncableMethod method)
+	public void Dispose()
 	{
-		return GetAGSSyncable<T>(method, null);
-	}
-
-	protected T GetAGSSyncable<T>(SyncableMethod method, string key)
-	{
-		AndroidJavaObject androidJavaObject = ((key == null) ? javaObject.Call<AndroidJavaObject>(method.ToString(), new object[0]) : javaObject.Call<AndroidJavaObject>(method.ToString(), new object[1] { key }));
-		if (androidJavaObject != null)
+		if (this.javaObject != null)
 		{
-			return (T)Activator.CreateInstance(typeof(T), androidJavaObject);
+			this.javaObject.Dispose();
 		}
-		return default(T);
 	}
 
-	protected HashSet<string> GetHashSet(HashSetMethod method)
+	protected T GetAGSSyncable<T>(AGSSyncable.SyncableMethod method)
 	{
-		AndroidJNI.PushLocalFrame(10);
-		HashSet<string> hashSet = new HashSet<string>();
-		AndroidJavaObject androidJavaObject = javaObject.Call<AndroidJavaObject>(method.ToString(), new object[0]);
+		return this.GetAGSSyncable<T>(method, null);
+	}
+
+	protected T GetAGSSyncable<T>(AGSSyncable.SyncableMethod method, string key)
+	{
+		AndroidJavaObject androidJavaObject;
+		androidJavaObject = (key == null ? this.javaObject.Call<AndroidJavaObject>(method.ToString(), new object[0]) : this.javaObject.Call<AndroidJavaObject>(method.ToString(), new object[] { key }));
 		if (androidJavaObject == null)
 		{
-			return hashSet;
+			return default(T);
 		}
-		AndroidJavaObject androidJavaObject2 = androidJavaObject.Call<AndroidJavaObject>("iterator", new object[0]);
-		if (androidJavaObject2 == null)
+		return (T)Activator.CreateInstance(typeof(T), new object[] { androidJavaObject });
+	}
+
+	protected HashSet<string> GetHashSet(AGSSyncable.HashSetMethod method)
+	{
+		AndroidJNI.PushLocalFrame(10);
+		HashSet<string> strs = new HashSet<string>();
+		AndroidJavaObject androidJavaObject = this.javaObject.Call<AndroidJavaObject>(method.ToString(), new object[0]);
+		if (androidJavaObject == null)
 		{
-			return hashSet;
+			return strs;
 		}
-		while (androidJavaObject2.Call<bool>("hasNext", new object[0]))
+		AndroidJavaObject androidJavaObject1 = androidJavaObject.Call<AndroidJavaObject>("iterator", new object[0]);
+		if (androidJavaObject1 == null)
 		{
-			string item = androidJavaObject2.Call<string>("next", new object[0]);
-			hashSet.Add(item);
+			return strs;
+		}
+		while (androidJavaObject1.Call<bool>("hasNext", new object[0]))
+		{
+			string str = androidJavaObject1.Call<string>("next", new object[0]);
+			strs.Add(str);
 		}
 		AndroidJNI.PopLocalFrame(IntPtr.Zero);
-		return hashSet;
+		return strs;
+	}
+
+	public enum HashSetMethod
+	{
+		getDeveloperStringKeys,
+		getHighestNumberKeys,
+		getLowestNumberKeys,
+		getLatestNumberKeys,
+		getHighNumberListKeys,
+		getLowNumberListKeys,
+		getLatestNumberListKeys,
+		getAccumulatingNumberKeys,
+		getLatestStringKeys,
+		getLatestStringListKeys,
+		getStringSetKeys,
+		getMapKeys
+	}
+
+	public enum SyncableMethod
+	{
+		getDeveloperString,
+		getHighestNumber,
+		getLowestNumber,
+		getLatestNumber,
+		getHighNumberList,
+		getLowNumberList,
+		getLatestNumberList,
+		getAccumulatingNumber,
+		getLatestString,
+		getLatestStringList,
+		getStringSet,
+		getMap
 	}
 }

@@ -1,55 +1,24 @@
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.InteropServices;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class TurnBasedMatchConfigBuilder : BaseReferenceHolder
 	{
-		private TurnBasedMatchConfigBuilder(IntPtr selfPointer)
-			: base(selfPointer)
+		private TurnBasedMatchConfigBuilder(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
-		internal TurnBasedMatchConfigBuilder PopulateFromUIResponse(PlayerSelectUIResponse response)
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder AddInvitedPlayer(string playerId)
 		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_PopulateFromPlayerSelectUIResponse(SelfPtr(), response.AsPointer());
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_AddPlayerToInvite(base.SelfPtr(), playerId);
 			return this;
 		}
 
-		internal TurnBasedMatchConfigBuilder SetVariant(uint variant)
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfig Build()
 		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetVariant(SelfPtr(), variant);
-			return this;
-		}
-
-		internal TurnBasedMatchConfigBuilder AddInvitedPlayer(string playerId)
-		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_AddPlayerToInvite(SelfPtr(), playerId);
-			return this;
-		}
-
-		internal TurnBasedMatchConfigBuilder SetExclusiveBitMask(ulong bitmask)
-		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetExclusiveBitMask(SelfPtr(), bitmask);
-			return this;
-		}
-
-		internal TurnBasedMatchConfigBuilder SetMinimumAutomatchingPlayers(uint minimum)
-		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetMinimumAutomatchingPlayers(SelfPtr(), minimum);
-			return this;
-		}
-
-		internal TurnBasedMatchConfigBuilder SetMaximumAutomatchingPlayers(uint maximum)
-		{
-			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetMaximumAutomatchingPlayers(SelfPtr(), maximum);
-			return this;
-		}
-
-		internal TurnBasedMatchConfig Build()
-		{
-			return new TurnBasedMatchConfig(GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_Create(SelfPtr()));
+			return new GooglePlayGames.Native.PInvoke.TurnBasedMatchConfig(GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_Create(base.SelfPtr()));
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -57,9 +26,39 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_Dispose(selfPointer);
 		}
 
-		internal static TurnBasedMatchConfigBuilder Create()
+		internal static GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder Create()
 		{
-			return new TurnBasedMatchConfigBuilder(GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_Construct());
+			return new GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder(GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_Construct());
+		}
+
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder PopulateFromUIResponse(PlayerSelectUIResponse response)
+		{
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_PopulateFromPlayerSelectUIResponse(base.SelfPtr(), response.AsPointer());
+			return this;
+		}
+
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder SetExclusiveBitMask(ulong bitmask)
+		{
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetExclusiveBitMask(base.SelfPtr(), bitmask);
+			return this;
+		}
+
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder SetMaximumAutomatchingPlayers(uint maximum)
+		{
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetMaximumAutomatchingPlayers(base.SelfPtr(), maximum);
+			return this;
+		}
+
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder SetMinimumAutomatchingPlayers(uint minimum)
+		{
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetMinimumAutomatchingPlayers(base.SelfPtr(), minimum);
+			return this;
+		}
+
+		internal GooglePlayGames.Native.PInvoke.TurnBasedMatchConfigBuilder SetVariant(uint variant)
+		{
+			GooglePlayGames.Native.Cwrapper.TurnBasedMatchConfigBuilder.TurnBasedMatchConfig_Builder_SetVariant(base.SelfPtr(), variant);
+			return this;
 		}
 	}
 }

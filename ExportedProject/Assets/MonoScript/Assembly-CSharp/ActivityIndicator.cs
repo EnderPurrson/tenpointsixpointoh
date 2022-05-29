@@ -1,7 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using I2.Loc;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
 
 public sealed class ActivityIndicator : MonoBehaviour
@@ -38,34 +42,33 @@ public sealed class ActivityIndicator : MonoBehaviour
 
 	private bool canClearMemory = true;
 
-	public static float LoadingProgress
+	public static bool IsActiveIndicator
 	{
 		get
 		{
-			return curPers;
+			if (ActivityIndicator.instance == null || ActivityIndicator.instance.panelIndicator == null)
+			{
+				return false;
+			}
+			return ActivityIndicator.instance.panelIndicator.activeSelf;
 		}
 		set
 		{
-			if (instance != null)
+			if (ActivityIndicator.instance == null)
 			{
-				curPers = value;
-				curPers = Mathf.Clamp01(curPers);
-				if (curPers < 0f)
-				{
-					curPers = 0f;
-				}
-				if (curPers > 1f)
-				{
-					curPers = 1f;
-				}
-				if (instance.txProgressBar != null)
-				{
-					instance.txProgressBar.fillAmount = curPers;
-				}
-				if ((bool)instance.lbPercentLoading)
-				{
-					instance.lbPercentLoading.text = string.Format("{0}%", Mathf.RoundToInt(curPers * 100f));
-				}
+				return;
+			}
+			if (ActivityIndicator.instance.panelIndicator != null)
+			{
+				ActivityIndicator.instance.panelIndicator.SetActive(value);
+			}
+			if (ActivityIndicator.instance.needCam != null)
+			{
+				ActivityIndicator.instance.needCam.Render();
+			}
+			if (!value)
+			{
+				ActivityIndicator.instance.HandleLocalizationChanged();
 			}
 		}
 	}
@@ -74,66 +77,140 @@ public sealed class ActivityIndicator : MonoBehaviour
 	{
 		set
 		{
-			if (instance != null)
+			if (ActivityIndicator.instance != null)
 			{
-				if (!value && instance.txFon != null)
+				if (!value && ActivityIndicator.instance.txFon != null)
 				{
-					instance.txFon[0].mainTexture = null;
+					ActivityIndicator.instance.txFon[0].mainTexture = null;
 				}
-				if (instance.panelWindowLoading != null)
+				if (ActivityIndicator.instance.panelWindowLoading != null)
 				{
-					instance.panelWindowLoading.SetActive(value);
+					ActivityIndicator.instance.panelWindowLoading.SetActive(value);
 				}
 			}
 		}
 	}
 
-	public static bool IsActiveIndicator
+	public static float LoadingProgress
 	{
 		get
 		{
-			if (instance == null || instance.panelIndicator == null)
-			{
-				return false;
-			}
-			return instance.panelIndicator.activeSelf;
+			return ActivityIndicator.curPers;
 		}
 		set
 		{
-			if (!(instance == null))
+			if (ActivityIndicator.instance != null)
 			{
-				if (instance.panelIndicator != null)
+				ActivityIndicator.curPers = value;
+				ActivityIndicator.curPers = Mathf.Clamp01(ActivityIndicator.curPers);
+				if (ActivityIndicator.curPers < 0f)
 				{
-					instance.panelIndicator.SetActive(value);
+					ActivityIndicator.curPers = 0f;
 				}
-				if (instance.needCam != null)
+				if (ActivityIndicator.curPers > 1f)
 				{
-					instance.needCam.Render();
+					ActivityIndicator.curPers = 1f;
 				}
-				if (!value)
+				if (ActivityIndicator.instance.txProgressBar != null)
 				{
-					instance.HandleLocalizationChanged();
+					ActivityIndicator.instance.txProgressBar.fillAmount = ActivityIndicator.curPers;
+				}
+				if (ActivityIndicator.instance.lbPercentLoading)
+				{
+					ActivityIndicator.instance.lbPercentLoading.text = string.Format("{0}%", Mathf.RoundToInt(ActivityIndicator.curPers * 100f));
 				}
 			}
 		}
+	}
+
+	static ActivityIndicator()
+	{
+	}
+
+	public ActivityIndicator()
+	{
 	}
 
 	public void Awake()
 	{
-		instance = this;
-		Object.DontDestroyOnLoad(base.gameObject);
-		vectRotateSpeed = new Vector3(0f, rotSpeed, 0f);
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
+		ActivityIndicator.instance = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		this.vectRotateSpeed = new Vector3(0f, this.rotSpeed, 0f);
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
 		{
 			base.gameObject.AddComponent<PurchasesSynchronizerListener>();
 		}
 	}
 
+	public static void ClearMemory()
+	{
+		if (ActivityIndicator.instance != null && ActivityIndicator.instance.canClearMemory)
+		{
+			ActivityIndicator.instance.StartCoroutine(ActivityIndicator.instance.Crt_ClearMemory());
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Crt_ClearMemory()
+	{
+		ActivityIndicator.u003cCrt_ClearMemoryu003ec__Iterator1 variable = null;
+		return variable;
+	}
+
+	private void HandleLocalizationChanged()
+	{
+		if (this.lbLoading != null)
+		{
+			this.text = LocalizationStore.Get("Key_0853");
+			this.lbLoading.text = this.text;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		ActivityIndicator.instance = null;
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	private void OnEnable()
+	{
+		this.HandleLocalizationChanged();
+	}
+
+	[DebuggerHidden]
+	public IEnumerable<float> ReplaceLoadingFon(Texture needFon, float duration)
+	{
+		ActivityIndicator.u003cReplaceLoadingFonu003ec__Iterator0 variable = null;
+		return variable;
+	}
+
+	public static void SetActiveWithCaption(string caption)
+	{
+		if (ActivityIndicator.instance != null && ActivityIndicator.instance.lbLoading != null)
+		{
+			ActivityIndicator.instance.lbLoading.text = caption ?? string.Empty;
+		}
+		ActivityIndicator.IsActiveIndicator = true;
+	}
+
+	public static void SetLoadingFon(Texture needFon)
+	{
+		if (ActivityIndicator.instance == null)
+		{
+			return;
+		}
+		if (ActivityIndicator.instance.txFon[0] == null)
+		{
+			return;
+		}
+		ActivityIndicator.instance.txFon[0].mainTexture = needFon;
+	}
+
 	private void Start()
 	{
-		OnEnable();
-		lbLoading.GetComponent<Localize>().enabled = true;
+		this.OnEnable();
+		this.lbLoading.GetComponent<Localize>().enabled = true;
 		if (Launcher.UsingNewLauncher)
 		{
 			base.gameObject.SetActive(false);
@@ -142,86 +219,9 @@ public sealed class ActivityIndicator : MonoBehaviour
 
 	private void Update()
 	{
-		if (objIndicator != null)
+		if (this.objIndicator != null)
 		{
-			objIndicator.transform.Rotate(vectRotateSpeed * Time.deltaTime);
-		}
-	}
-
-	private void OnDestroy()
-	{
-		instance = null;
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void HandleLocalizationChanged()
-	{
-		if (lbLoading != null)
-		{
-			text = LocalizationStore.Get("Key_0853");
-			lbLoading.text = text;
-		}
-	}
-
-	private void OnEnable()
-	{
-		HandleLocalizationChanged();
-	}
-
-	public static void SetLoadingFon(Texture needFon)
-	{
-		if (!(instance == null) && !(instance.txFon[0] == null))
-		{
-			instance.txFon[0].mainTexture = needFon;
-		}
-	}
-
-	public IEnumerable<float> ReplaceLoadingFon(Texture needFon, float duration)
-	{
-		txFon[1].mainTexture = needFon;
-		txFon[1].alpha = 0f;
-		float _curDuration = 0f;
-		yield return 0f;
-		while (_curDuration < duration)
-		{
-			_curDuration += Time.deltaTime;
-			float _alpha = _curDuration / duration;
-			Mathf.Min(_alpha, 1f);
-			txFon[1].alpha = _alpha;
-			yield return _alpha;
-		}
-		txFon[1].mainTexture = null;
-		txFon[0].mainTexture = needFon;
-	}
-
-	public static void SetActiveWithCaption(string caption)
-	{
-		if (instance != null && instance.lbLoading != null)
-		{
-			instance.lbLoading.text = caption ?? string.Empty;
-		}
-		IsActiveIndicator = true;
-	}
-
-	public static void ClearMemory()
-	{
-		if (instance != null && instance.canClearMemory)
-		{
-			instance.StartCoroutine(instance.Crt_ClearMemory());
-		}
-	}
-
-	private IEnumerator Crt_ClearMemory()
-	{
-		if (canClearMemory)
-		{
-			canClearMemory = false;
-			yield return null;
-			meminfo.gc_Collect();
-			yield return null;
-			Resources.UnloadUnusedAssets();
-			yield return null;
-			canClearMemory = true;
+			this.objIndicator.transform.Rotate(this.vectRotateSpeed * Time.deltaTime);
 		}
 	}
 }

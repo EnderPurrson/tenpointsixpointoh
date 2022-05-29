@@ -10,39 +10,160 @@ public class ByteReader
 
 	private int mOffset;
 
-	private static BetterList<string> mTemp = new BetterList<string>();
+	private static BetterList<string> mTemp;
 
 	public bool canRead
 	{
 		get
 		{
-			return mBuffer != null && mOffset < mBuffer.Length;
+			return (this.mBuffer == null ? false : this.mOffset < (int)this.mBuffer.Length);
 		}
+	}
+
+	static ByteReader()
+	{
+		ByteReader.mTemp = new BetterList<string>();
 	}
 
 	public ByteReader(byte[] bytes)
 	{
-		mBuffer = bytes;
+		this.mBuffer = bytes;
 	}
 
 	public ByteReader(TextAsset asset)
 	{
-		mBuffer = asset.bytes;
+		this.mBuffer = asset.bytes;
 	}
 
 	public static ByteReader Open(string path)
 	{
 		FileStream fileStream = File.OpenRead(path);
-		if (fileStream != null)
+		if (fileStream == null)
 		{
-			fileStream.Seek(0L, SeekOrigin.End);
-			byte[] array = new byte[fileStream.Position];
-			fileStream.Seek(0L, SeekOrigin.Begin);
-			fileStream.Read(array, 0, array.Length);
-			fileStream.Close();
-			return new ByteReader(array);
+			return null;
 		}
-		return null;
+		fileStream.Seek((long)0, SeekOrigin.End);
+		byte[] numArray = new byte[checked((IntPtr)fileStream.Position)];
+		fileStream.Seek((long)0, SeekOrigin.Begin);
+		fileStream.Read(numArray, 0, (int)numArray.Length);
+		fileStream.Close();
+		return new ByteReader(numArray);
+	}
+
+	public BetterList<string> ReadCSV()
+	{
+		ByteReader.mTemp.Clear();
+		string empty = string.Empty;
+		bool flag = false;
+		int num = 0;
+		while (true)
+		{
+			if (!this.canRead)
+			{
+				return null;
+			}
+			if (!flag)
+			{
+				empty = this.ReadLine(true);
+				if (empty == null)
+				{
+					return null;
+				}
+				empty = empty.Replace("\\n", "\n");
+				num = 0;
+			}
+			else
+			{
+				string str = this.ReadLine(false);
+				if (str == null)
+				{
+					return null;
+				}
+				str = str.Replace("\\n", "\n");
+				empty = string.Concat(empty, "\n", str);
+			}
+			int num1 = num;
+			int length = empty.Length;
+			while (num1 < length)
+			{
+				char chr = empty[num1];
+				if (chr == ',')
+				{
+					if (!flag)
+					{
+						ByteReader.mTemp.Add(empty.Substring(num, num1 - num));
+						num = num1 + 1;
+					}
+				}
+				else if (chr == '\"')
+				{
+					if (!flag)
+					{
+						num = num1 + 1;
+						flag = true;
+					}
+					else
+					{
+						if (num1 + 1 >= length)
+						{
+							ByteReader.mTemp.Add(empty.Substring(num, num1 - num).Replace("\"\"", "\""));
+							return ByteReader.mTemp;
+						}
+						if (empty[num1 + 1] == '\"')
+						{
+							num1++;
+						}
+						else
+						{
+							ByteReader.mTemp.Add(empty.Substring(num, num1 - num).Replace("\"\"", "\""));
+							flag = false;
+							if (empty[num1 + 1] == ',')
+							{
+								num1++;
+								num = num1 + 1;
+							}
+						}
+					}
+				}
+				num1++;
+			}
+			if (num >= empty.Length)
+			{
+				break;
+			}
+			if (!flag)
+			{
+				ByteReader.mTemp.Add(empty.Substring(num, empty.Length - num));
+				break;
+			}
+		}
+		return ByteReader.mTemp;
+	}
+
+	public Dictionary<string, string> ReadDictionary()
+	{
+		Dictionary<string, string> strs = new Dictionary<string, string>();
+		char[] chrArray = new char[] { '=' };
+		while (this.canRead)
+		{
+			string str = this.ReadLine();
+			if (str == null)
+			{
+				break;
+			}
+			else if (!str.StartsWith("//"))
+			{
+				string[] strArrays = str.Split(chrArray, 2, StringSplitOptions.RemoveEmptyEntries);
+				if ((int)strArrays.Length != 2)
+				{
+					continue;
+				}
+				string str1 = strArrays[0].Trim();
+				string str2 = strArrays[1].Trim().Replace("\\n", "\n");
+				strs[str1] = str2;
+			}
+		}
+		return strs;
 	}
 
 	private static string ReadLine(byte[] buffer, int start, int count)
@@ -52,147 +173,45 @@ public class ByteReader
 
 	public string ReadLine()
 	{
-		return ReadLine(true);
+		return this.ReadLine(true);
 	}
 
 	public string ReadLine(bool skipEmptyLines)
 	{
-		int num = mBuffer.Length;
+		int length = (int)this.mBuffer.Length;
 		if (skipEmptyLines)
 		{
-			while (mOffset < num && mBuffer[mOffset] < 32)
+			while (this.mOffset < length && this.mBuffer[this.mOffset] < 32)
 			{
-				mOffset++;
+				this.mOffset++;
 			}
 		}
-		int num2 = mOffset;
-		if (num2 < num)
+		int num = this.mOffset;
+		if (num >= length)
 		{
-			int num3;
-			do
+			this.mOffset = length;
+			return null;
+		}
+		while (true)
+		{
+			if (num >= length)
 			{
-				if (num2 < num)
-				{
-					num3 = mBuffer[num2++];
-					continue;
-				}
-				num2++;
+				num++;
 				break;
-			}
-			while (num3 != 10 && num3 != 13);
-			string result = ReadLine(mBuffer, mOffset, num2 - mOffset - 1);
-			mOffset = num2;
-			return result;
-		}
-		mOffset = num;
-		return null;
-	}
-
-	public Dictionary<string, string> ReadDictionary()
-	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		char[] separator = new char[1] { '=' };
-		while (canRead)
-		{
-			string text = ReadLine();
-			if (text == null)
-			{
-				break;
-			}
-			if (!text.StartsWith("//"))
-			{
-				string[] array = text.Split(separator, 2, StringSplitOptions.RemoveEmptyEntries);
-				if (array.Length == 2)
-				{
-					string key = array[0].Trim();
-					string text3 = (dictionary[key] = array[1].Trim().Replace("\\n", "\n"));
-				}
-			}
-		}
-		return dictionary;
-	}
-
-	public BetterList<string> ReadCSV()
-	{
-		mTemp.Clear();
-		string text = string.Empty;
-		bool flag = false;
-		int num = 0;
-		while (canRead)
-		{
-			if (flag)
-			{
-				string text2 = ReadLine(false);
-				if (text2 == null)
-				{
-					return null;
-				}
-				text2 = text2.Replace("\\n", "\n");
-				text = text + "\n" + text2;
 			}
 			else
 			{
-				text = ReadLine(true);
-				if (text == null)
+				int num1 = num;
+				num = num1 + 1;
+				int num2 = this.mBuffer[num1];
+				if (num2 == 10 || num2 == 13)
 				{
-					return null;
-				}
-				text = text.Replace("\\n", "\n");
-				num = 0;
-			}
-			int i = num;
-			for (int length = text.Length; i < length; i++)
-			{
-				switch (text[i])
-				{
-				case ',':
-					if (!flag)
-					{
-						mTemp.Add(text.Substring(num, i - num));
-						num = i + 1;
-					}
-					break;
-				case '"':
-					if (flag)
-					{
-						if (i + 1 >= length)
-						{
-							mTemp.Add(text.Substring(num, i - num).Replace("\"\"", "\""));
-							return mTemp;
-						}
-						if (text[i + 1] != '"')
-						{
-							mTemp.Add(text.Substring(num, i - num).Replace("\"\"", "\""));
-							flag = false;
-							if (text[i + 1] == ',')
-							{
-								i++;
-								num = i + 1;
-							}
-						}
-						else
-						{
-							i++;
-						}
-					}
-					else
-					{
-						num = i + 1;
-						flag = true;
-					}
 					break;
 				}
 			}
-			if (num < text.Length)
-			{
-				if (flag)
-				{
-					continue;
-				}
-				mTemp.Add(text.Substring(num, text.Length - num));
-			}
-			return mTemp;
 		}
-		return null;
+		string str = ByteReader.ReadLine(this.mBuffer, this.mOffset, num - this.mOffset - 1);
+		this.mOffset = num;
+		return str;
 	}
 }

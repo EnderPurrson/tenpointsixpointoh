@@ -1,38 +1,44 @@
+using Rilisoft;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.NullExtensions;
+using UnityEngine;
 
 public sealed class BuySmileBannerController : BannerWindow
 {
-	[CompilerGenerated]
-	private sealed class _003CBuyStickersPack_003Ec__AnonStorey1DE
+	public static bool openedFromPromoActions;
+
+	private IDisposable _backSubscription;
+
+	static BuySmileBannerController()
 	{
-		internal StickersPackItem curStickPack;
+	}
 
-		internal int priceAmount;
+	public BuySmileBannerController()
+	{
+	}
 
-		internal string priceCurrency;
-
-		internal BuySmileBannerController _003C_003Ef__this;
-
-		internal void _003C_003Em__9()
-		{
+	public void BuyStickersPack(StickersPackItem curStickPack)
+	{
+		ItemPrice itemPrice = VirtualCurrencyHelper.Price(curStickPack.KeyForBuy);
+		int price = itemPrice.Price;
+		string currency = itemPrice.Currency;
+		ShopNGUIController.TryToBuy(base.transform.root.gameObject, itemPrice, () => {
 			Storager.setInt(curStickPack.KeyForBuy, 1, true);
 			try
 			{
 				FlurryEvents.LogPurchaseStickers(curStickPack.KeyForBuy);
-				string text = "Stickers";
-				AnalyticsStuff.LogSales(curStickPack.KeyForBuy, text);
-				AnalyticsFacade.InAppPurchase(curStickPack.KeyForBuy, text, 1, priceAmount, priceCurrency);
-				if (openedFromPromoActions)
+				string str = "Stickers";
+				AnalyticsStuff.LogSales(curStickPack.KeyForBuy, str, false);
+				AnalyticsFacade.InAppPurchase(curStickPack.KeyForBuy, str, 1, price, currency);
+				if (BuySmileBannerController.openedFromPromoActions)
 				{
 					AnalyticsStuff.LogSpecialOffersPanel("Efficiency", "Buy", "Stickers", curStickPack.KeyForBuy);
 				}
-				openedFromPromoActions = false;
+				BuySmileBannerController.openedFromPromoActions = false;
 			}
-			catch (Exception)
+			catch (Exception exception)
 			{
 			}
 			if (PrivateChatController.sharedController != null && PrivateChatController.sharedController.gameObject.activeInHierarchy)
@@ -43,7 +49,7 @@ public sealed class BuySmileBannerController : BannerWindow
 					PrivateChatController.sharedController.showSmileButton.SetActive(true);
 				}
 				PrivateChatController.sharedController.buySmileButton.SetActive(false);
-				_003C_003Ef__this.OnCloseClick();
+				this.OnCloseClick();
 			}
 			if (ChatViewrController.sharedController != null && ChatViewrController.sharedController.gameObject.activeInHierarchy)
 			{
@@ -52,75 +58,47 @@ public sealed class BuySmileBannerController : BannerWindow
 				{
 					ChatViewrController.sharedController.showSmileButton.SetActive(true);
 				}
-				_003C_003Ef__this.OnCloseClick();
+				this.OnCloseClick();
 			}
-			string currentBuySmileContextName = GetCurrentBuySmileContextName();
-			Dictionary<string, string> dictionary = new Dictionary<string, string> { { "Succeeded", currentBuySmileContextName } };
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Succeeded", BuySmileBannerController.GetCurrentBuySmileContextName() }
+			};
 			if (ExperienceController.sharedController != null)
 			{
-				dictionary.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
+				strs.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
 			}
 			if (ExpController.Instance != null)
 			{
-				dictionary.Add("Tier", ExpController.Instance.OurTier.ToString());
+				strs.Add("Tier", ExpController.Instance.OurTier.ToString());
 			}
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Smile purchase", dictionary);
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Smile purchase", strs, true);
 			curStickPack.OnBuy();
 			ButtonBannerHUD.OnUpdateBanners();
-		}
+		}, null, null, null, null, null);
 	}
-
-	public static bool openedFromPromoActions;
-
-	private IDisposable _backSubscription;
-
-	[CompilerGenerated]
-	private static Func<FriendsWindowGUI, bool> _003C_003Ef__am_0024cache2;
-
-	[CompilerGenerated]
-	private static Func<BannerWindowController, bool> _003C_003Ef__am_0024cache3;
 
 	public static string GetCurrentBuySmileContextName()
 	{
-		return (FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled) ? "Friends" : ((!(ChatViewrController.sharedController != null)) ? "Lobby" : "Sandbox");
-	}
-
-	private void OnEnable()
-	{
-		if (_backSubscription != null)
+		string str;
+		if (!(FriendsWindowGUI.Instance != null) || !FriendsWindowGUI.Instance.InterfaceEnabled)
 		{
-			_backSubscription.Dispose();
+			str = (ChatViewrController.sharedController == null ? "Lobby" : "Sandbox");
 		}
-		_backSubscription = BackSystem.Instance.Register(HandleEscape, "Buy Smiley Banner");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
+		else
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			str = "Friends";
 		}
+		return str;
 	}
 
 	private void HandleEscape()
 	{
-		FriendsWindowGUI instance = FriendsWindowGUI.Instance;
-		if (_003C_003Ef__am_0024cache2 == null)
+		if (FriendsWindowGUI.Instance.Map<FriendsWindowGUI, bool>((FriendsWindowGUI f) => f.InterfaceEnabled) || ChatViewrController.sharedController != null)
 		{
-			_003C_003Ef__am_0024cache2 = _003CHandleEscape_003Em__7;
+			this.OnCloseClick();
 		}
-		if (instance.Map(_003C_003Ef__am_0024cache2) || ChatViewrController.sharedController != null)
-		{
-			OnCloseClick();
-			return;
-		}
-		BannerWindowController sharedController = BannerWindowController.SharedController;
-		if (_003C_003Ef__am_0024cache3 == null)
-		{
-			_003C_003Ef__am_0024cache3 = _003CHandleEscape_003Em__8;
-		}
-		if (sharedController.Map(_003C_003Ef__am_0024cache3))
+		else if (BannerWindowController.SharedController.Map<BannerWindowController, bool>((BannerWindowController b) => b.IsBannerShow(BannerWindowType.buySmiles)))
 		{
 			BannerWindowController.SharedController.HideBannerWindow();
 		}
@@ -129,30 +107,25 @@ public sealed class BuySmileBannerController : BannerWindow
 	public void OnCloseClick()
 	{
 		ButtonClickSound.TryPlayClick();
-		openedFromPromoActions = false;
+		BuySmileBannerController.openedFromPromoActions = false;
 		base.gameObject.SetActive(false);
 	}
 
-	public void BuyStickersPack(StickersPackItem curStickPack)
+	private void OnDisable()
 	{
-		_003CBuyStickersPack_003Ec__AnonStorey1DE _003CBuyStickersPack_003Ec__AnonStorey1DE = new _003CBuyStickersPack_003Ec__AnonStorey1DE();
-		_003CBuyStickersPack_003Ec__AnonStorey1DE.curStickPack = curStickPack;
-		_003CBuyStickersPack_003Ec__AnonStorey1DE._003C_003Ef__this = this;
-		ItemPrice itemPrice = VirtualCurrencyHelper.Price(_003CBuyStickersPack_003Ec__AnonStorey1DE.curStickPack.KeyForBuy);
-		_003CBuyStickersPack_003Ec__AnonStorey1DE.priceAmount = itemPrice.Price;
-		_003CBuyStickersPack_003Ec__AnonStorey1DE.priceCurrency = itemPrice.Currency;
-		ShopNGUIController.TryToBuy(base.transform.root.gameObject, itemPrice, _003CBuyStickersPack_003Ec__AnonStorey1DE._003C_003Em__9);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CHandleEscape_003Em__7(FriendsWindowGUI f)
+	private void OnEnable()
 	{
-		return f.InterfaceEnabled;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CHandleEscape_003Em__8(BannerWindowController b)
-	{
-		return b.IsBannerShow(BannerWindowType.buySmiles);
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Buy Smiley Banner");
 	}
 }

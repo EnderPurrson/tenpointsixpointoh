@@ -1,6 +1,7 @@
+using Prime31;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using Prime31;
 using UnityEngine;
 
 public class P31Prefs
@@ -11,19 +12,12 @@ public class P31Prefs
 	{
 		get
 		{
-			return _iCloudDocumentStoreAvailable;
+			return P31Prefs._iCloudDocumentStoreAvailable;
 		}
 	}
 
-	public static bool synchronize()
+	public P31Prefs()
 	{
-		PlayerPrefs.Save();
-		return true;
-	}
-
-	public static bool hasKey(string key)
-	{
-		return PlayerPrefs.HasKey(key);
 	}
 
 	public static List<object> allKeys()
@@ -31,29 +25,14 @@ public class P31Prefs
 		return new List<object>();
 	}
 
-	public static void removeObjectForKey(string key)
+	public static bool getBool(string key)
 	{
-		PlayerPrefs.DeleteKey(key);
+		return PlayerPrefs.GetInt(key, 0) == 1;
 	}
 
-	public static void removeAll()
+	public static IDictionary getDictionary(string key)
 	{
-		PlayerPrefs.DeleteAll();
-	}
-
-	public static void setInt(string key, int val)
-	{
-		PlayerPrefs.SetInt(key, val);
-	}
-
-	public static int getInt(string key)
-	{
-		return PlayerPrefs.GetInt(key);
-	}
-
-	public static void setFloat(string key, float val)
-	{
-		PlayerPrefs.SetFloat(key, val);
+		return PlayerPrefs.GetString(key).dictionaryFromJson();
 	}
 
 	public static float getFloat(string key)
@@ -61,9 +40,9 @@ public class P31Prefs
 		return PlayerPrefs.GetFloat(key);
 	}
 
-	public static void setString(string key, string val)
+	public static int getInt(string key)
 	{
-		PlayerPrefs.SetString(key, val);
+		return PlayerPrefs.GetInt(key);
 	}
 
 	public static string getString(string key)
@@ -71,25 +50,49 @@ public class P31Prefs
 		return PlayerPrefs.GetString(key);
 	}
 
-	public static void setBool(string key, bool val)
+	public static bool hasKey(string key)
 	{
-		PlayerPrefs.SetInt(key, val ? 1 : 0);
+		return PlayerPrefs.HasKey(key);
 	}
 
-	public static bool getBool(string key)
+	public static void removeAll()
 	{
-		return PlayerPrefs.GetInt(key, 0) == 1;
+		PlayerPrefs.DeleteAll();
+	}
+
+	public static void removeObjectForKey(string key)
+	{
+		PlayerPrefs.DeleteKey(key);
+	}
+
+	public static void setBool(string key, bool val)
+	{
+		PlayerPrefs.SetInt(key, (!val ? 0 : 1));
 	}
 
 	public static void setDictionary(string key, Hashtable val)
 	{
-		string value = Json.encode(val);
-		PlayerPrefs.SetString(key, value);
+		PlayerPrefs.SetString(key, Json.encode(val));
 	}
 
-	public static IDictionary getDictionary(string key)
+	public static void setFloat(string key, float val)
 	{
-		string @string = PlayerPrefs.GetString(key);
-		return @string.dictionaryFromJson();
+		PlayerPrefs.SetFloat(key, val);
+	}
+
+	public static void setInt(string key, int val)
+	{
+		PlayerPrefs.SetInt(key, val);
+	}
+
+	public static void setString(string key, string val)
+	{
+		PlayerPrefs.SetString(key, val);
+	}
+
+	public static bool synchronize()
+	{
+		PlayerPrefs.Save();
+		return true;
 	}
 }

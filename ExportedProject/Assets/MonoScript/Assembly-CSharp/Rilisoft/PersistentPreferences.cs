@@ -10,50 +10,6 @@ namespace Rilisoft
 {
 	internal sealed class PersistentPreferences : Preferences
 	{
-		[CompilerGenerated]
-		private sealed class _003CAddCore_003Ec__AnonStorey285
-		{
-			internal string key;
-
-			internal bool _003C_003Em__1EF(XElement e)
-			{
-				return e.Element("Key") != null && e.Element("Key").Value.Equals(key);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CContainsKeyCore_003Ec__AnonStorey286
-		{
-			internal string key;
-
-			internal bool _003C_003Em__1F0(XElement e)
-			{
-				return e.Element("Key") != null && e.Element("Key").Value.Equals(key);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CRemoveCore_003Ec__AnonStorey287
-		{
-			internal string key;
-
-			internal bool _003C_003Em__1F1(XElement e)
-			{
-				return e.Element("Key") != null && e.Element("Key").Value.Equals(key);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CTryGetValueCore_003Ec__AnonStorey288
-		{
-			internal string key;
-
-			internal bool _003C_003Em__1F2(XElement e)
-			{
-				return e.Element("Key") != null && e.Element("Key").Value.Equals(key);
-			}
-		}
-
 		private const string KeyElement = "Key";
 
 		private const string PreferenceElement = "Preference";
@@ -64,29 +20,13 @@ namespace Rilisoft
 
 		private readonly XDocument _doc;
 
-		private static readonly string _path;
-
-		public override ICollection<string> Keys
-		{
-			get
-			{
-				throw new NotSupportedException();
-			}
-		}
-
-		public override ICollection<string> Values
-		{
-			get
-			{
-				throw new NotSupportedException();
-			}
-		}
+		private readonly static string _path;
 
 		public override int Count
 		{
 			get
 			{
-				return _doc.Root.Elements().Count();
+				return this._doc.Root.Elements().Count<XElement>();
 			}
 		}
 
@@ -98,51 +38,69 @@ namespace Rilisoft
 			}
 		}
 
+		public override ICollection<string> Keys
+		{
+			get
+			{
+				throw new NotSupportedException();
+			}
+		}
+
 		internal static string Path
 		{
 			get
 			{
-				return _path;
+				return PersistentPreferences._path;
 			}
+		}
+
+		public override ICollection<string> Values
+		{
+			get
+			{
+				throw new NotSupportedException();
+			}
+		}
+
+		static PersistentPreferences()
+		{
+			PersistentPreferences._path = System.IO.Path.Combine(Application.persistentDataPath, "com.P3D.Pixlgun.Settings.xml");
 		}
 
 		public PersistentPreferences()
 		{
 			try
 			{
-				_doc = XDocument.Load(_path);
+				this._doc = XDocument.Load(PersistentPreferences._path);
 			}
-			catch (Exception)
+			catch (Exception exception)
 			{
-				_doc = new XDocument(new XElement("Preferences"));
-				_doc.Save(_path);
+				this._doc = new XDocument(new object[] { new XElement("Preferences") });
+				this._doc.Save(PersistentPreferences._path);
 			}
-		}
-
-		static PersistentPreferences()
-		{
-			_path = System.IO.Path.Combine(Application.persistentDataPath, "com.P3D.Pixlgun.Settings.xml");
 		}
 
 		protected override void AddCore(string key, string value)
 		{
-			_003CAddCore_003Ec__AnonStorey285 _003CAddCore_003Ec__AnonStorey = new _003CAddCore_003Ec__AnonStorey285();
-			_003CAddCore_003Ec__AnonStorey.key = key;
-			XElement xElement = _doc.Root.Elements("Preference").FirstOrDefault(_003CAddCore_003Ec__AnonStorey._003C_003Em__1EF);
+			XElement xElement = this._doc.Root.Elements("Preference").FirstOrDefault<XElement>((XElement e) => (e.Element("Key") == null ? false : e.Element("Key").Value.Equals(key)));
 			if (xElement != null)
 			{
 				xElement.Remove();
 			}
-			XElement content = new XElement("Preference", new XElement("Key", _003CAddCore_003Ec__AnonStorey.key), new XElement("Value", value));
-			_doc.Root.Add(content);
-			_doc.Save(_path);
+			XElement xElement1 = new XElement("Preference", new object[] { new XElement("Key", key), new XElement("Value", value) });
+			this._doc.Root.Add(xElement1);
+			this._doc.Save(PersistentPreferences._path);
+		}
+
+		public override void Clear()
+		{
+			this._doc.Root.RemoveNodes();
+			this._doc.Save(PersistentPreferences._path);
 		}
 
 		protected override bool ContainsKeyCore(string key)
 		{
-			_003CContainsKeyCore_003Ec__AnonStorey286 _003CContainsKeyCore_003Ec__AnonStorey = new _003CContainsKeyCore_003Ec__AnonStorey286();
-			_003CContainsKeyCore_003Ec__AnonStorey.key = key;
-			return _doc.Root.Elements("Preference").Any(_003CContainsKeyCore_003Ec__AnonStorey._003C_003Em__1F0);
+			return this._doc.Root.Elements("Preference").Any<XElement>((XElement e) => (e.Element("Key") == null ? false : e.Element("Key").Value.Equals(key)));
 		}
 
 		protected override void CopyToCore(KeyValuePair<string, string>[] array, int arrayIndex)
@@ -150,52 +108,42 @@ namespace Rilisoft
 			throw new NotSupportedException();
 		}
 
+		public override IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+		{
+			throw new NotSupportedException();
+		}
+
 		protected override bool RemoveCore(string key)
 		{
-			_003CRemoveCore_003Ec__AnonStorey287 _003CRemoveCore_003Ec__AnonStorey = new _003CRemoveCore_003Ec__AnonStorey287();
-			_003CRemoveCore_003Ec__AnonStorey.key = key;
-			XElement xElement = _doc.Root.Elements("Preference").FirstOrDefault(_003CRemoveCore_003Ec__AnonStorey._003C_003Em__1F1);
-			if (xElement != null)
+			XElement xElement = this._doc.Root.Elements("Preference").FirstOrDefault<XElement>((XElement e) => (e.Element("Key") == null ? false : e.Element("Key").Value.Equals(key)));
+			if (xElement == null)
 			{
-				xElement.Remove();
-				_doc.Save(_path);
-				return true;
+				return false;
 			}
-			return false;
+			xElement.Remove();
+			this._doc.Save(PersistentPreferences._path);
+			return true;
+		}
+
+		public override void Save()
+		{
+			this._doc.Save(PersistentPreferences._path);
 		}
 
 		protected override bool TryGetValueCore(string key, out string value)
 		{
-			_003CTryGetValueCore_003Ec__AnonStorey288 _003CTryGetValueCore_003Ec__AnonStorey = new _003CTryGetValueCore_003Ec__AnonStorey288();
-			_003CTryGetValueCore_003Ec__AnonStorey.key = key;
-			XElement xElement = _doc.Root.Elements("Preference").FirstOrDefault(_003CTryGetValueCore_003Ec__AnonStorey._003C_003Em__1F2);
+			XElement xElement = this._doc.Root.Elements("Preference").FirstOrDefault<XElement>((XElement e) => (e.Element("Key") == null ? false : e.Element("Key").Value.Equals(key)));
 			if (xElement != null)
 			{
-				XElement xElement2 = xElement.Element("Value");
-				if (xElement2 != null)
+				XElement xElement1 = xElement.Element("Value");
+				if (xElement1 != null)
 				{
-					value = xElement2.Value;
+					value = xElement1.Value;
 					return true;
 				}
 			}
 			value = null;
 			return false;
-		}
-
-		public override void Save()
-		{
-			_doc.Save(_path);
-		}
-
-		public override void Clear()
-		{
-			_doc.Root.RemoveNodes();
-			_doc.Save(_path);
-		}
-
-		public override IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-		{
-			throw new NotSupportedException();
 		}
 	}
 }

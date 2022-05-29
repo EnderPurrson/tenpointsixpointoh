@@ -1,326 +1,534 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using com.amazon.device.iap.cpt.json;
+using System.Threading;
 using UnityEngine;
 
 namespace com.amazon.device.iap.cpt
 {
 	public abstract class AmazonIapV2Impl : MonoBehaviour, IAmazonIapV2
 	{
+		private static AmazonLogger logger;
+
+		private readonly static Dictionary<string, IDelegator> callbackDictionary;
+
+		private readonly static object callbackLock;
+
+		private readonly static Dictionary<string, List<IDelegator>> eventListeners;
+
+		private readonly static object eventLock;
+
+		public static IAmazonIapV2 Instance
+		{
+			get
+			{
+				return AmazonIapV2Impl.Builder.instance;
+			}
+		}
+
+		static AmazonIapV2Impl()
+		{
+			AmazonIapV2Impl.callbackDictionary = new Dictionary<string, IDelegator>();
+			AmazonIapV2Impl.callbackLock = new object();
+			AmazonIapV2Impl.eventListeners = new Dictionary<string, List<IDelegator>>();
+			AmazonIapV2Impl.eventLock = new object();
+		}
+
+		private AmazonIapV2Impl()
+		{
+		}
+
+		public abstract void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
+
+		public abstract void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
+
+		public abstract void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
+
+		public abstract void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
+
+		public static void callback(string jsonMessage)
+		{
+			Dictionary<string, object> strs = null;
+			try
+			{
+				AmazonIapV2Impl.logger.Debug("Executing callback");
+				strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				string item = strs["callerId"] as string;
+				AmazonIapV2Impl.callbackCaller(strs["response"] as Dictionary<string, object>, item);
+			}
+			catch (KeyNotFoundException keyNotFoundException1)
+			{
+				KeyNotFoundException keyNotFoundException = keyNotFoundException1;
+				AmazonIapV2Impl.logger.Debug("callerId not found in callback");
+				throw new AmazonException("Internal Error: Unknown callback id", keyNotFoundException);
+			}
+			catch (AmazonException amazonException1)
+			{
+				AmazonException amazonException = amazonException1;
+				AmazonIapV2Impl.logger.Debug(string.Concat("Async call threw exception: ", amazonException.ToString()));
+			}
+		}
+
+		private static void callbackCaller(Dictionary<string, object> response, string callerId)
+		{
+			IDelegator item = null;
+			try
+			{
+				Jsonable.CheckForErrors(response);
+				object obj = AmazonIapV2Impl.callbackLock;
+				Monitor.Enter(obj);
+				try
+				{
+					item = AmazonIapV2Impl.callbackDictionary[callerId];
+					AmazonIapV2Impl.callbackDictionary.Remove(callerId);
+					item.ExecuteSuccess(response);
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+			catch (AmazonException amazonException1)
+			{
+				AmazonException amazonException = amazonException1;
+				object obj1 = AmazonIapV2Impl.callbackLock;
+				Monitor.Enter(obj1);
+				try
+				{
+					if (item == null)
+					{
+						item = AmazonIapV2Impl.callbackDictionary[callerId];
+					}
+					AmazonIapV2Impl.callbackDictionary.Remove(callerId);
+					item.ExecuteError(amazonException);
+				}
+				finally
+				{
+					Monitor.Exit(obj1);
+				}
+			}
+		}
+
+		public static void FireEvent(string jsonMessage)
+		{
+			// 
+			// Current member / type: System.Void com.amazon.device.iap.cpt.AmazonIapV2Impl::FireEvent(System.String)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void FireEvent(System.String)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.VisitTryStatement(TryStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 507
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 120
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(IEnumerable collection) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 383
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
+		}
+
+		public abstract RequestOutput GetProductData(SkusInput skusInput);
+
+		public abstract RequestOutput GetPurchaseUpdates(ResetInput resetInput);
+
+		public abstract RequestOutput GetUserData();
+
+		public abstract void NotifyFulfillment(NotifyFulfillmentInput notifyFulfillmentInput);
+
+		public abstract RequestOutput Purchase(SkuInput skuInput);
+
+		public abstract void RemoveGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
+
+		public abstract void RemoveGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
+
+		public abstract void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
+
+		public abstract void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
+
+		public abstract void UnityFireEvent(string jsonMessage);
+
 		private abstract class AmazonIapV2Base : AmazonIapV2Impl
 		{
-			private static readonly object startLock = new object();
+			private readonly static object startLock;
 
-			private static volatile bool startCalled = false;
+			private static volatile bool startCalled;
+
+			static AmazonIapV2Base()
+			{
+				AmazonIapV2Impl.AmazonIapV2Base.startLock = new object();
+				AmazonIapV2Impl.AmazonIapV2Base.startCalled = false;
+			}
 
 			public AmazonIapV2Base()
 			{
-				logger = new AmazonLogger(GetType().Name);
+				AmazonIapV2Impl.logger = new AmazonLogger(base.GetType().Name);
 			}
 
-			protected void Start()
+			public override void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate)
 			{
-				if (startCalled)
+				this.Start();
+				string str = "getProductDataResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					return;
-				}
-				lock (startLock)
-				{
-					if (!startCalled)
+					if (!AmazonIapV2Impl.eventListeners.ContainsKey(str))
 					{
-						Init();
-						RegisterCallback();
-						RegisterEventListener();
-						RegisterCrossPlatformTool();
-						startCalled = true;
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new GetProductDataResponseDelegator(responseDelegate)
+						};
+						AmazonIapV2Impl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonIapV2Impl.eventListeners[str].Add(new GetProductDataResponseDelegator(responseDelegate));
 					}
 				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			protected abstract void Init();
-
-			protected abstract void RegisterCallback();
-
-			protected abstract void RegisterEventListener();
-
-			protected abstract void RegisterCrossPlatformTool();
-
-			public override void UnityFireEvent(string jsonMessage)
+			public override void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate)
 			{
-				FireEvent(jsonMessage);
+				this.Start();
+				string str = "getPurchaseUpdatesResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonIapV2Impl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new GetPurchaseUpdatesResponseDelegator(responseDelegate)
+						};
+						AmazonIapV2Impl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonIapV2Impl.eventListeners[str].Add(new GetPurchaseUpdatesResponseDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			public override RequestOutput GetUserData()
+			public override void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate)
 			{
-				Start();
-				return RequestOutput.CreateFromJson(GetUserDataJson("{}"));
+				this.Start();
+				string str = "getUserDataResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonIapV2Impl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new GetUserDataResponseDelegator(responseDelegate)
+						};
+						AmazonIapV2Impl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonIapV2Impl.eventListeners[str].Add(new GetUserDataResponseDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			private string GetUserDataJson(string jsonMessage)
+			public override void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate)
 			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeGetUserDataJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				this.Start();
+				string str = "purchaseResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonIapV2Impl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new PurchaseResponseDelegator(responseDelegate)
+						};
+						AmazonIapV2Impl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonIapV2Impl.eventListeners[str].Add(new PurchaseResponseDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
-
-			protected abstract string NativeGetUserDataJson(string jsonMessage);
-
-			public override RequestOutput Purchase(SkuInput skuInput)
-			{
-				Start();
-				return RequestOutput.CreateFromJson(PurchaseJson(skuInput.ToJson()));
-			}
-
-			private string PurchaseJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativePurchaseJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativePurchaseJson(string jsonMessage);
 
 			public override RequestOutput GetProductData(SkusInput skusInput)
 			{
-				Start();
-				return RequestOutput.CreateFromJson(GetProductDataJson(skusInput.ToJson()));
+				this.Start();
+				return RequestOutput.CreateFromJson(this.GetProductDataJson(skusInput.ToJson()));
 			}
 
 			private string GetProductDataJson(string jsonMessage)
 			{
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
-				string result = NativeGetProductDataJson(jsonMessage);
+				string str = this.NativeGetProductDataJson(jsonMessage);
 				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				AmazonIapV2Impl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
 			}
-
-			protected abstract string NativeGetProductDataJson(string jsonMessage);
 
 			public override RequestOutput GetPurchaseUpdates(ResetInput resetInput)
 			{
-				Start();
-				return RequestOutput.CreateFromJson(GetPurchaseUpdatesJson(resetInput.ToJson()));
+				this.Start();
+				return RequestOutput.CreateFromJson(this.GetPurchaseUpdatesJson(resetInput.ToJson()));
 			}
 
 			private string GetPurchaseUpdatesJson(string jsonMessage)
 			{
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
-				string result = NativeGetPurchaseUpdatesJson(jsonMessage);
+				string str = this.NativeGetPurchaseUpdatesJson(jsonMessage);
 				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				AmazonIapV2Impl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
 			}
+
+			public override RequestOutput GetUserData()
+			{
+				this.Start();
+				return RequestOutput.CreateFromJson(this.GetUserDataJson("{}"));
+			}
+
+			private string GetUserDataJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeGetUserDataJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonIapV2Impl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			protected abstract void Init();
+
+			protected abstract string NativeGetProductDataJson(string jsonMessage);
 
 			protected abstract string NativeGetPurchaseUpdatesJson(string jsonMessage);
 
+			protected abstract string NativeGetUserDataJson(string jsonMessage);
+
+			protected abstract string NativeNotifyFulfillmentJson(string jsonMessage);
+
+			protected abstract string NativePurchaseJson(string jsonMessage);
+
 			public override void NotifyFulfillment(NotifyFulfillmentInput notifyFulfillmentInput)
 			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(NotifyFulfillmentJson(notifyFulfillmentInput.ToJson())) as Dictionary<string, object>);
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.NotifyFulfillmentJson(notifyFulfillmentInput.ToJson())) as Dictionary<string, object>);
 			}
 
 			private string NotifyFulfillmentJson(string jsonMessage)
 			{
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
-				string result = NativeNotifyFulfillmentJson(jsonMessage);
+				string str = this.NativeNotifyFulfillmentJson(jsonMessage);
 				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				AmazonIapV2Impl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
 			}
 
-			protected abstract string NativeNotifyFulfillmentJson(string jsonMessage);
-
-			public override void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate)
+			public override RequestOutput Purchase(SkuInput skuInput)
 			{
-				Start();
-				string key = "getUserDataResponse";
-				lock (eventLock)
-				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new GetUserDataResponseDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new GetUserDataResponseDelegator(responseDelegate));
-					eventListeners.Add(key, list);
-				}
+				this.Start();
+				return RequestOutput.CreateFromJson(this.PurchaseJson(skuInput.ToJson()));
 			}
 
-			public override void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate)
+			private string PurchaseJson(string jsonMessage)
 			{
-				Start();
-				string key = "getUserDataResponse";
-				lock (eventLock)
-				{
-					if (!eventListeners.ContainsKey(key))
-					{
-						return;
-					}
-					foreach (GetUserDataResponseDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
-						{
-							eventListeners[key].Remove(item);
-							break;
-						}
-					}
-				}
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativePurchaseJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonIapV2Impl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
 			}
 
-			public override void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate)
-			{
-				Start();
-				string key = "purchaseResponse";
-				lock (eventLock)
-				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new PurchaseResponseDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new PurchaseResponseDelegator(responseDelegate));
-					eventListeners.Add(key, list);
-				}
-			}
+			protected abstract void RegisterCallback();
 
-			public override void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate)
-			{
-				Start();
-				string key = "purchaseResponse";
-				lock (eventLock)
-				{
-					if (!eventListeners.ContainsKey(key))
-					{
-						return;
-					}
-					foreach (PurchaseResponseDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
-						{
-							eventListeners[key].Remove(item);
-							break;
-						}
-					}
-				}
-			}
+			protected abstract void RegisterCrossPlatformTool();
 
-			public override void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate)
-			{
-				Start();
-				string key = "getProductDataResponse";
-				lock (eventLock)
-				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new GetProductDataResponseDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new GetProductDataResponseDelegator(responseDelegate));
-					eventListeners.Add(key, list);
-				}
-			}
+			protected abstract void RegisterEventListener();
 
 			public override void RemoveGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate)
 			{
-				Start();
-				string key = "getProductDataResponse";
-				lock (eventLock)
+				this.Start();
+				string str = "getProductDataResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonIapV2Impl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (GetProductDataResponseDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (GetProductDataResponseDelegator item in AmazonIapV2Impl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonIapV2Impl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate)
-			{
-				Start();
-				string key = "getPurchaseUpdatesResponse";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new GetPurchaseUpdatesResponseDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new GetPurchaseUpdatesResponseDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate)
 			{
-				Start();
-				string key = "getPurchaseUpdatesResponse";
-				lock (eventLock)
+				this.Start();
+				string str = "getPurchaseUpdatesResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonIapV2Impl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (GetPurchaseUpdatesResponseDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (GetPurchaseUpdatesResponseDelegator item in AmazonIapV2Impl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonIapV2Impl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+
+			public override void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate)
+			{
+				this.Start();
+				string str = "getUserDataResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (AmazonIapV2Impl.eventListeners.ContainsKey(str))
+					{
+						foreach (GetUserDataResponseDelegator item in AmazonIapV2Impl.eventListeners[str])
+						{
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonIapV2Impl.eventListeners[str].Remove(item);
+							return;
+						}
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+
+			public override void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate)
+			{
+				this.Start();
+				string str = "purchaseResponse";
+				object obj = AmazonIapV2Impl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (AmazonIapV2Impl.eventListeners.ContainsKey(str))
+					{
+						foreach (PurchaseResponseDelegator item in AmazonIapV2Impl.eventListeners[str])
+						{
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonIapV2Impl.eventListeners[str].Remove(item);
+							return;
+						}
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+
+			protected void Start()
+			{
+				// 
+				// Current member / type: System.Void com.amazon.device.iap.cpt.AmazonIapV2Impl/AmazonIapV2Base::Start()
+				// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+				// 
+				// Product version: 0.9.2.0
+				// Exception in: System.Void Start()
+				// 
+				// Object reference not set to an instance of an object.
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+				//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+				//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+				// 
+				// mailto: JustDecompilePublicFeedback@telerik.com
+
+			}
+
+			public override void UnityFireEvent(string jsonMessage)
+			{
+				AmazonIapV2Impl.FireEvent(jsonMessage);
 			}
 		}
 
-		private class AmazonIapV2Default : AmazonIapV2Base
+		private class AmazonIapV2Default : AmazonIapV2Impl.AmazonIapV2Base
 		{
+			public AmazonIapV2Default()
+			{
+			}
+
 			protected override void Init()
 			{
-			}
-
-			protected override void RegisterCallback()
-			{
-			}
-
-			protected override void RegisterEventListener()
-			{
-			}
-
-			protected override void RegisterCrossPlatformTool()
-			{
-			}
-
-			protected override string NativeGetUserDataJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativePurchaseJson(string jsonMessage)
-			{
-				return "{}";
 			}
 
 			protected override string NativeGetProductDataJson(string jsonMessage)
@@ -333,147 +541,167 @@ namespace com.amazon.device.iap.cpt
 				return "{}";
 			}
 
+			protected override string NativeGetUserDataJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
 			protected override string NativeNotifyFulfillmentJson(string jsonMessage)
 			{
 				return "{}";
 			}
-		}
 
-		private abstract class AmazonIapV2DelegatesBase : AmazonIapV2Base
-		{
-			private const string CrossPlatformTool = "XAMARIN";
-
-			protected CallbackDelegate callbackDelegate;
-
-			protected CallbackDelegate eventDelegate;
-
-			protected override void Init()
+			protected override string NativePurchaseJson(string jsonMessage)
 			{
-				NativeInit();
+				return "{}";
 			}
 
 			protected override void RegisterCallback()
 			{
-				callbackDelegate = callback;
-				NativeRegisterCallback(callbackDelegate);
-			}
-
-			protected override void RegisterEventListener()
-			{
-				eventDelegate = FireEvent;
-				NativeRegisterEventListener(eventDelegate);
 			}
 
 			protected override void RegisterCrossPlatformTool()
 			{
-				NativeRegisterCrossPlatformTool("XAMARIN");
+			}
+
+			protected override void RegisterEventListener()
+			{
+			}
+		}
+
+		private abstract class AmazonIapV2DelegatesBase : AmazonIapV2Impl.AmazonIapV2Base
+		{
+			private const string CrossPlatformTool = "XAMARIN";
+
+			protected AmazonIapV2Impl.CallbackDelegate callbackDelegate;
+
+			protected AmazonIapV2Impl.CallbackDelegate eventDelegate;
+
+			protected AmazonIapV2DelegatesBase()
+			{
+			}
+
+			protected override void Init()
+			{
+				this.NativeInit();
+			}
+
+			protected abstract void NativeInit();
+
+			protected abstract void NativeRegisterCallback(AmazonIapV2Impl.CallbackDelegate callback);
+
+			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
+
+			protected abstract void NativeRegisterEventListener(AmazonIapV2Impl.CallbackDelegate callback);
+
+			protected override void RegisterCallback()
+			{
+				this.callbackDelegate = new AmazonIapV2Impl.CallbackDelegate(AmazonIapV2Impl.callback);
+				this.NativeRegisterCallback(this.callbackDelegate);
+			}
+
+			protected override void RegisterCrossPlatformTool()
+			{
+				this.NativeRegisterCrossPlatformTool("XAMARIN");
+			}
+
+			protected override void RegisterEventListener()
+			{
+				this.eventDelegate = new AmazonIapV2Impl.CallbackDelegate(AmazonIapV2Impl.FireEvent);
+				this.NativeRegisterEventListener(this.eventDelegate);
 			}
 
 			public override void UnityFireEvent(string jsonMessage)
 			{
 				throw new NotSupportedException("UnityFireEvent is not supported");
 			}
-
-			protected abstract void NativeInit();
-
-			protected abstract void NativeRegisterCallback(CallbackDelegate callback);
-
-			protected abstract void NativeRegisterEventListener(CallbackDelegate callback);
-
-			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
 		}
 
-		private class Builder
+		private class AmazonIapV2UnityAndroid : AmazonIapV2Impl.AmazonIapV2UnityBase
 		{
-			internal static readonly IAmazonIapV2 instance;
-
-			static Builder()
-			{
-				instance = AmazonIapV2UnityAndroid.Instance;
-			}
-		}
-
-		private class AmazonIapV2UnityAndroid : AmazonIapV2UnityBase
-		{
-			public new static AmazonIapV2UnityAndroid Instance
+			public new static AmazonIapV2Impl.AmazonIapV2UnityAndroid Instance
 			{
 				get
 				{
-					return AmazonIapV2UnityBase.getInstance<AmazonIapV2UnityAndroid>();
+					return AmazonIapV2Impl.AmazonIapV2UnityBase.getInstance<AmazonIapV2Impl.AmazonIapV2UnityAndroid>();
 				}
 			}
 
-			[DllImport("AmazonIapV2Bridge")]
-			private static extern string nativeRegisterCallbackGameObject(string name);
+			public AmazonIapV2UnityAndroid()
+			{
+			}
 
-			[DllImport("AmazonIapV2Bridge")]
-			private static extern string nativeInit();
-
-			[DllImport("AmazonIapV2Bridge")]
-			private static extern string nativeGetUserDataJson(string jsonMessage);
-
-			[DllImport("AmazonIapV2Bridge")]
-			private static extern string nativePurchaseJson(string jsonMessage);
-
-			[DllImport("AmazonIapV2Bridge")]
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
 			private static extern string nativeGetProductDataJson(string jsonMessage);
 
-			[DllImport("AmazonIapV2Bridge")]
+			protected override string NativeGetProductDataJson(string jsonMessage)
+			{
+				return AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeGetProductDataJson(jsonMessage);
+			}
+
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
 			private static extern string nativeGetPurchaseUpdatesJson(string jsonMessage);
 
-			[DllImport("AmazonIapV2Bridge")]
-			private static extern string nativeNotifyFulfillmentJson(string jsonMessage);
+			protected override string NativeGetPurchaseUpdatesJson(string jsonMessage)
+			{
+				return AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeGetPurchaseUpdatesJson(jsonMessage);
+			}
+
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeGetUserDataJson(string jsonMessage);
+
+			protected override string NativeGetUserDataJson(string jsonMessage)
+			{
+				return AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeGetUserDataJson(jsonMessage);
+			}
+
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeInit();
 
 			protected override void NativeInit()
 			{
-				nativeInit();
+				AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeInit();
 			}
 
-			protected override void RegisterCallback()
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeNotifyFulfillmentJson(string jsonMessage);
+
+			protected override string NativeNotifyFulfillmentJson(string jsonMessage)
 			{
-				nativeRegisterCallbackGameObject(base.gameObject.name);
+				return AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeNotifyFulfillmentJson(jsonMessage);
 			}
 
-			protected override void RegisterEventListener()
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativePurchaseJson(string jsonMessage);
+
+			protected override string NativePurchaseJson(string jsonMessage)
 			{
-				nativeRegisterCallbackGameObject(base.gameObject.name);
+				return AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativePurchaseJson(jsonMessage);
 			}
+
+			[DllImport("AmazonIapV2Bridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeRegisterCallbackGameObject(string name);
 
 			protected override void NativeRegisterCrossPlatformTool(string crossPlatformTool)
 			{
 			}
 
-			protected override string NativeGetUserDataJson(string jsonMessage)
+			protected override void RegisterCallback()
 			{
-				return nativeGetUserDataJson(jsonMessage);
+				AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeRegisterCallbackGameObject(base.gameObject.name);
 			}
 
-			protected override string NativePurchaseJson(string jsonMessage)
+			protected override void RegisterEventListener()
 			{
-				return nativePurchaseJson(jsonMessage);
-			}
-
-			protected override string NativeGetProductDataJson(string jsonMessage)
-			{
-				return nativeGetProductDataJson(jsonMessage);
-			}
-
-			protected override string NativeGetPurchaseUpdatesJson(string jsonMessage)
-			{
-				return nativeGetPurchaseUpdatesJson(jsonMessage);
-			}
-
-			protected override string NativeNotifyFulfillmentJson(string jsonMessage)
-			{
-				return nativeNotifyFulfillmentJson(jsonMessage);
+				AmazonIapV2Impl.AmazonIapV2UnityAndroid.nativeRegisterCallbackGameObject(base.gameObject.name);
 			}
 		}
 
-		private abstract class AmazonIapV2UnityBase : AmazonIapV2Base
+		private abstract class AmazonIapV2UnityBase : AmazonIapV2Impl.AmazonIapV2Base
 		{
 			private const string CrossPlatformTool = "UNITY";
 
-			private static AmazonIapV2UnityBase instance;
+			private static AmazonIapV2Impl.AmazonIapV2UnityBase instance;
 
 			private static Type instanceType;
 
@@ -483,40 +711,12 @@ namespace com.amazon.device.iap.cpt
 
 			static AmazonIapV2UnityBase()
 			{
-				quit = false;
-				initLock = new object();
+				AmazonIapV2Impl.AmazonIapV2UnityBase.quit = false;
+				AmazonIapV2Impl.AmazonIapV2UnityBase.initLock = new object();
 			}
 
-			public static T getInstance<T>() where T : AmazonIapV2UnityBase
+			protected AmazonIapV2UnityBase()
 			{
-				//Discarded unreachable code: IL_00d5
-				if (quit)
-				{
-					return (T)default(T);
-				}
-				if (instance != null)
-				{
-					return (T)instance;
-				}
-				lock (initLock)
-				{
-					Type typeFromHandle = typeof(T);
-					assertTrue(instance == null || (instance != null && instanceType == typeFromHandle), "Only 1 instance of 1 subtype of AmazonIapV2UnityBase can exist.");
-					if (instance == null)
-					{
-						instanceType = typeFromHandle;
-						GameObject gameObject = new GameObject();
-						instance = gameObject.AddComponent<T>();
-						gameObject.name = typeFromHandle.ToString() + "_Singleton";
-						UnityEngine.Object.DontDestroyOnLoad(gameObject);
-					}
-					return (T)instance;
-				}
-			}
-
-			public void OnDestroy()
-			{
-				quit = true;
 			}
 
 			private static void assertTrue(bool statement, string errorMessage)
@@ -527,155 +727,65 @@ namespace com.amazon.device.iap.cpt
 				}
 			}
 
-			protected override void Init()
+			public static T getInstance<T>()
+			where T : AmazonIapV2Impl.AmazonIapV2UnityBase
 			{
-				NativeInit();
+				// 
+				// Current member / type: T com.amazon.device.iap.cpt.AmazonIapV2Impl/AmazonIapV2UnityBase::getInstance()
+				// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+				// 
+				// Product version: 0.9.2.0
+				// Exception in: T getInstance()
+				// 
+				// Object reference not set to an instance of an object.
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+				//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+				//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+				// 
+				// mailto: JustDecompilePublicFeedback@telerik.com
+
 			}
 
-			protected override void RegisterCrossPlatformTool()
+			protected override void Init()
 			{
-				NativeRegisterCrossPlatformTool("UNITY");
+				this.NativeInit();
 			}
 
 			protected abstract void NativeInit();
 
 			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
+
+			public void OnDestroy()
+			{
+				AmazonIapV2Impl.AmazonIapV2UnityBase.quit = true;
+			}
+
+			protected override void RegisterCrossPlatformTool()
+			{
+				this.NativeRegisterCrossPlatformTool("UNITY");
+			}
+		}
+
+		private class Builder
+		{
+			internal readonly static IAmazonIapV2 instance;
+
+			static Builder()
+			{
+				AmazonIapV2Impl.Builder.instance = AmazonIapV2Impl.AmazonIapV2UnityAndroid.Instance;
+			}
+
+			public Builder()
+			{
+			}
 		}
 
 		protected delegate void CallbackDelegate(string jsonMessage);
-
-		private static AmazonLogger logger;
-
-		private static readonly Dictionary<string, IDelegator> callbackDictionary = new Dictionary<string, IDelegator>();
-
-		private static readonly object callbackLock = new object();
-
-		private static readonly Dictionary<string, List<IDelegator>> eventListeners = new Dictionary<string, List<IDelegator>>();
-
-		private static readonly object eventLock = new object();
-
-		public static IAmazonIapV2 Instance
-		{
-			get
-			{
-				return Builder.instance;
-			}
-		}
-
-		private AmazonIapV2Impl()
-		{
-		}
-
-		public static void callback(string jsonMessage)
-		{
-			//Discarded unreachable code: IL_0067
-			Dictionary<string, object> dictionary = null;
-			try
-			{
-				logger.Debug("Executing callback");
-				dictionary = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				string callerId = dictionary["callerId"] as string;
-				Dictionary<string, object> response = dictionary["response"] as Dictionary<string, object>;
-				callbackCaller(response, callerId);
-			}
-			catch (KeyNotFoundException inner)
-			{
-				logger.Debug("callerId not found in callback");
-				throw new AmazonException("Internal Error: Unknown callback id", inner);
-			}
-			catch (AmazonException ex)
-			{
-				logger.Debug("Async call threw exception: " + ex.ToString());
-			}
-		}
-
-		private static void callbackCaller(Dictionary<string, object> response, string callerId)
-		{
-			IDelegator delegator = null;
-			try
-			{
-				Jsonable.CheckForErrors(response);
-				lock (callbackLock)
-				{
-					delegator = callbackDictionary[callerId];
-					callbackDictionary.Remove(callerId);
-					delegator.ExecuteSuccess(response);
-				}
-			}
-			catch (AmazonException e)
-			{
-				lock (callbackLock)
-				{
-					if (delegator == null)
-					{
-						delegator = callbackDictionary[callerId];
-					}
-					callbackDictionary.Remove(callerId);
-					delegator.ExecuteError(e);
-				}
-			}
-		}
-
-		public static void FireEvent(string jsonMessage)
-		{
-			try
-			{
-				logger.Debug("eventReceived");
-				Dictionary<string, object> dictionary = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				string key = dictionary["eventId"] as string;
-				Dictionary<string, object> dictionary2 = null;
-				if (dictionary.ContainsKey("response"))
-				{
-					dictionary2 = dictionary["response"] as Dictionary<string, object>;
-					Jsonable.CheckForErrors(dictionary2);
-				}
-				lock (eventLock)
-				{
-					foreach (IDelegator item in eventListeners[key])
-					{
-						if (dictionary2 != null)
-						{
-							item.ExecuteSuccess(dictionary2);
-						}
-						else
-						{
-							item.ExecuteSuccess();
-						}
-					}
-				}
-			}
-			catch (AmazonException ex)
-			{
-				logger.Debug("Event call threw exception: " + ex.ToString());
-			}
-		}
-
-		public abstract RequestOutput GetUserData();
-
-		public abstract RequestOutput Purchase(SkuInput skuInput);
-
-		public abstract RequestOutput GetProductData(SkusInput skusInput);
-
-		public abstract RequestOutput GetPurchaseUpdates(ResetInput resetInput);
-
-		public abstract void NotifyFulfillment(NotifyFulfillmentInput notifyFulfillmentInput);
-
-		public abstract void UnityFireEvent(string jsonMessage);
-
-		public abstract void AddGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
-
-		public abstract void RemoveGetUserDataResponseListener(GetUserDataResponseDelegate responseDelegate);
-
-		public abstract void AddPurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
-
-		public abstract void RemovePurchaseResponseListener(PurchaseResponseDelegate responseDelegate);
-
-		public abstract void AddGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
-
-		public abstract void RemoveGetProductDataResponseListener(GetProductDataResponseDelegate responseDelegate);
-
-		public abstract void AddGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
-
-		public abstract void RemoveGetPurchaseUpdatesResponseListener(GetPurchaseUpdatesResponseDelegate responseDelegate);
 	}
 }

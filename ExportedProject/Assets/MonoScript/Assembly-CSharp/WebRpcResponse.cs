@@ -1,31 +1,49 @@
-using System.Collections.Generic;
 using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public class WebRpcResponse
 {
-	public string Name { get; private set; }
+	public string DebugMessage
+	{
+		get;
+		private set;
+	}
 
-	public int ReturnCode { get; private set; }
+	public string Name
+	{
+		get;
+		private set;
+	}
 
-	public string DebugMessage { get; private set; }
+	public Dictionary<string, object> Parameters
+	{
+		get;
+		private set;
+	}
 
-	public Dictionary<string, object> Parameters { get; private set; }
+	public int ReturnCode
+	{
+		get;
+		private set;
+	}
 
 	public WebRpcResponse(OperationResponse response)
 	{
-		object value;
-		response.Parameters.TryGetValue(209, out value);
-		Name = value as string;
-		response.Parameters.TryGetValue(207, out value);
-		ReturnCode = ((value == null) ? (-1) : ((byte)value));
-		response.Parameters.TryGetValue(208, out value);
-		Parameters = value as Dictionary<string, object>;
-		response.Parameters.TryGetValue(206, out value);
-		DebugMessage = value as string;
+		object obj;
+		response.Parameters.TryGetValue(209, out obj);
+		this.Name = obj as string;
+		response.Parameters.TryGetValue(207, out obj);
+		this.ReturnCode = (obj == null ? -1 : (int)((byte)obj));
+		response.Parameters.TryGetValue(208, out obj);
+		this.Parameters = obj as Dictionary<string, object>;
+		response.Parameters.TryGetValue(206, out obj);
+		this.DebugMessage = obj as string;
 	}
 
 	public string ToStringFull()
 	{
-		return string.Format("{0}={2}: {1} \"{3}\"", Name, SupportClass.DictionaryToString(Parameters), ReturnCode, DebugMessage);
+		return string.Format("{0}={2}: {1} \"{3}\"", new object[] { this.Name, SupportClass.DictionaryToString(this.Parameters), this.ReturnCode, this.DebugMessage });
 	}
 }

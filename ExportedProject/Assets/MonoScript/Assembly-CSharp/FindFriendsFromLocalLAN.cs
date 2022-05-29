@@ -1,21 +1,23 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public class FindFriendsFromLocalLAN : MonoBehaviour
 {
-	public static bool isFindLocalFriends = false;
+	public static bool isFindLocalFriends;
 
 	private string ipaddress;
 
-	public static List<string> lanPlayerInfo = new List<string>();
+	public static List<string> lanPlayerInfo;
 
-	public static Action lanPlayerInfoUpdate = null;
+	public static Action lanPlayerInfoUpdate;
 
 	private UdpClient objUDPClient;
 
@@ -29,78 +31,61 @@ public class FindFriendsFromLocalLAN : MonoBehaviour
 
 	private List<string> idsForInfo = new List<string>();
 
-	private void Start()
+	static FindFriendsFromLocalLAN()
 	{
-		ipaddress = Network.player.ipAddress.ToString();
-		StartBroadcastingSession();
+		FindFriendsFromLocalLAN.isFindLocalFriends = false;
+		FindFriendsFromLocalLAN.lanPlayerInfo = new List<string>();
+		FindFriendsFromLocalLAN.lanPlayerInfoUpdate = null;
 	}
 
-	private void StartBroadcastingSession()
+	public FindFriendsFromLocalLAN()
 	{
-		objUDPClient = new UdpClient(22044);
-		objUDPClient.EnableBroadcast = true;
-		BeginAsyncReceive();
-	}
-
-	public void StopBroadCasting()
-	{
-		if (objUDPClient != null)
-		{
-			UdpClient udpClient = objUDPClient;
-			objUDPClient = null;
-			udpClient.Close();
-		}
 	}
 
 	private void BeginAsyncReceive()
 	{
-		if (objUDPClient != null)
+		if (this.objUDPClient == null)
 		{
-			objUDPClient.BeginReceive(GetAsyncReceive, null);
+			return;
 		}
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		if (pause)
-		{
-			StopBroadCasting();
-			yield break;
-		}
-		yield return null;
-		yield return null;
-		yield return null;
-		StartBroadcastingSession();
+		this.objUDPClient.BeginReceive(new AsyncCallback(this.GetAsyncReceive), null);
 	}
 
 	private void GetAsyncReceive(IAsyncResult objResult)
 	{
-		if (objUDPClient == null)
+		if (this.objUDPClient == null)
 		{
 			return;
 		}
-		IPEndPoint remoteEP = new IPEndPoint(IPAddress.Any, 0);
-		byte[] array = objUDPClient.EndReceive(objResult, ref remoteEP);
-		if (array.Length > 0 && !remoteEP.Address.ToString().Equals(ipaddress))
+		IPEndPoint pEndPoint = new IPEndPoint(IPAddress.Any, 0);
+		byte[] numArray = this.objUDPClient.EndReceive(objResult, ref pEndPoint);
+		if ((int)numArray.Length > 0 && !pEndPoint.Address.ToString().Equals(this.ipaddress))
 		{
-			string @string = Encoding.Unicode.GetString(array);
-			List<object> list = Json.Deserialize(@string) as List<object>;
-			string text = string.Empty;
-			if (list != null && list.Count == 1)
+			string str = Encoding.Unicode.GetString(numArray);
+			List<object> objs = Json.Deserialize(str) as List<object>;
+			string empty = string.Empty;
+			if (objs != null && objs.Count == 1)
 			{
-				text = Convert.ToString(list[0]);
+				empty = Convert.ToString(objs[0]);
 			}
-			if (!string.IsNullOrEmpty(text) && !lanPlayerInfo.Contains(text) && !FriendsController.sharedController.friends.Contains(text))
+			if (!string.IsNullOrEmpty(empty) && !FindFriendsFromLocalLAN.lanPlayerInfo.Contains(empty) && !FriendsController.sharedController.friends.Contains(empty))
 			{
-				lanPlayerInfo.Add(text);
-				if (isActiveFriends)
+				FindFriendsFromLocalLAN.lanPlayerInfo.Add(empty);
+				if (this.isActiveFriends)
 				{
-					idsForInfo.Add(text);
+					this.idsForInfo.Add(empty);
 				}
 			}
-			isGetMessage = true;
+			this.isGetMessage = true;
 		}
-		BeginAsyncReceive();
+		this.BeginAsyncReceive();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		FindFriendsFromLocalLAN.u003cOnApplicationPauseu003ec__Iterator28 variable = null;
+		return variable;
 	}
 
 	private void SendMyInfo()
@@ -109,39 +94,67 @@ public class FindFriendsFromLocalLAN : MonoBehaviour
 		{
 			return;
 		}
-		timeSendMyInfo = Time.time;
-		List<string> list = new List<string>();
-		list.Add(FriendsController.sharedController.id);
-		string s = Json.Serialize(list);
-		byte[] bytes = Encoding.Unicode.GetBytes(s);
-		if (objUDPClient != null)
+		this.timeSendMyInfo = Time.time;
+		List<string> strs = new List<string>()
+		{
+			FriendsController.sharedController.id
+		};
+		string str = Json.Serialize(strs);
+		byte[] bytes = Encoding.Unicode.GetBytes(str);
+		if (this.objUDPClient == null)
+		{
+			UnityEngine.Debug.Log("objUDPClient=NULL");
+		}
+		else
 		{
 			try
 			{
-				objUDPClient.Send(bytes, bytes.Length, new IPEndPoint(IPAddress.Broadcast, 22044));
-				return;
+				this.objUDPClient.Send(bytes, (int)bytes.Length, new IPEndPoint(IPAddress.Broadcast, 22044));
 			}
-			catch (Exception ex)
+			catch (Exception exception)
 			{
-				Debug.Log("soccet close " + ex);
-				return;
+				UnityEngine.Debug.Log(string.Concat("soccet close ", exception));
 			}
 		}
-		Debug.Log("objUDPClient=NULL");
+	}
+
+	private void Start()
+	{
+		this.ipaddress = Network.player.ipAddress.ToString();
+		this.StartBroadcastingSession();
+	}
+
+	private void StartBroadcastingSession()
+	{
+		this.objUDPClient = new UdpClient(22044)
+		{
+			EnableBroadcast = true
+		};
+		this.BeginAsyncReceive();
+	}
+
+	public void StopBroadCasting()
+	{
+		if (this.objUDPClient != null)
+		{
+			UdpClient udpClient = this.objUDPClient;
+			this.objUDPClient = null;
+			udpClient.Close();
+		}
 	}
 
 	private void Update()
 	{
-		isActiveFriends = FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled;
-		if (idsForInfo.Count > 0)
+		this.isActiveFriends = (FriendsWindowGUI.Instance == null ? false : FriendsWindowGUI.Instance.InterfaceEnabled);
+		if (this.idsForInfo.Count > 0)
 		{
-			FriendsController.sharedController.GetInfoAboutPlayers(idsForInfo);
-			idsForInfo.Clear();
+			FriendsController.sharedController.GetInfoAboutPlayers(this.idsForInfo);
+			this.idsForInfo.Clear();
 		}
-		if ((isActiveFriends || isGetMessage) && Time.time - timeSendMyInfo > periodSendMyInfo)
+		if ((this.isActiveFriends || this.isGetMessage) && Time.time - this.timeSendMyInfo > this.periodSendMyInfo)
 		{
-			isGetMessage = false;
-			SendMyInfo();
+			this.isGetMessage = false;
+			this.SendMyInfo();
 		}
 	}
 }

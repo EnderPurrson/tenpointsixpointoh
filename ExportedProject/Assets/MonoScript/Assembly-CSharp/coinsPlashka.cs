@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 public sealed class coinsPlashka : MonoBehaviour
 {
@@ -24,85 +25,73 @@ public sealed class coinsPlashka : MonoBehaviour
 
 	private Font f;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cacheA;
-
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cacheB;
-
 	public static Rect symmetricRect
 	{
 		get
 		{
-			Rect result = new Rect(thisScript.rectLabelCoins.x, thisScript.rectButCoins.y, thisScript.rectButCoins.width, thisScript.rectButCoins.height);
-			result.x = (float)Screen.width - result.x - result.width;
-			return result;
+			Rect rect = new Rect(coinsPlashka.thisScript.rectLabelCoins.x, coinsPlashka.thisScript.rectButCoins.y, coinsPlashka.thisScript.rectButCoins.width, coinsPlashka.thisScript.rectButCoins.height)
+			{
+				x = (float)Screen.width - rect.x - rect.width
+			};
+			return rect;
 		}
+	}
+
+	static coinsPlashka()
+	{
+	}
+
+	public coinsPlashka()
+	{
 	}
 
 	private void Awake()
 	{
-		thisScript = base.gameObject.GetComponent<coinsPlashka>();
-		hidePlashka();
-		tekKolCoins = Storager.getInt("Coins", false);
-		lastTImeFetchedeychain = Time.realtimeSinceStartup;
-		isHasKeyAchived500 = PlayerPrefs.HasKey("Achieved500");
-		isHasKeyAchived1000 = PlayerPrefs.HasKey("Achieved1000");
-	}
-
-	public static void showPlashka()
-	{
-		if (thisScript != null)
-		{
-			thisScript.enabled = true;
-		}
+		coinsPlashka.thisScript = base.gameObject.GetComponent<coinsPlashka>();
+		coinsPlashka.hidePlashka();
+		this.tekKolCoins = Storager.getInt("Coins", false);
+		this.lastTImeFetchedeychain = Time.realtimeSinceStartup;
+		this.isHasKeyAchived500 = PlayerPrefs.HasKey("Achieved500");
+		this.isHasKeyAchived1000 = PlayerPrefs.HasKey("Achieved1000");
 	}
 
 	public static void hidePlashka()
 	{
-		if (thisScript != null)
+		if (coinsPlashka.thisScript != null)
 		{
-			thisScript.enabled = false;
+			coinsPlashka.thisScript.enabled = false;
+		}
+	}
+
+	public static void showPlashka()
+	{
+		if (coinsPlashka.thisScript != null)
+		{
+			coinsPlashka.thisScript.enabled = true;
 		}
 	}
 
 	private void Update()
 	{
-		if (!Social.localUser.authenticated || Time.frameCount % 60 != 23)
+		if (!Social.localUser.authenticated)
 		{
 			return;
 		}
-		if (tekKolCoins >= 500 && !isHasKeyAchived500)
+		if (Time.frameCount % 60 != 23)
 		{
-			if (_003C_003Ef__am_0024cacheA == null)
-			{
-				_003C_003Ef__am_0024cacheA = _003CUpdate_003Em__4BC;
-			}
-			Social.ReportProgress("CgkIr8rGkPIJEAIQBA", 100.0, _003C_003Ef__am_0024cacheA);
+			return;
+		}
+		if (this.tekKolCoins >= 500 && !this.isHasKeyAchived500)
+		{
+			Social.ReportProgress("CgkIr8rGkPIJEAIQBA", 100, (bool success) => Debug.Log(string.Format("Achievement Ekonomist completed: {0}", success)));
 			PlayerPrefs.SetInt("Achieved500", 1);
-			isHasKeyAchived500 = true;
+			this.isHasKeyAchived500 = true;
 		}
-		if (tekKolCoins >= 1000 && !isHasKeyAchived1000)
+		if (this.tekKolCoins >= 1000 && !this.isHasKeyAchived1000)
 		{
-			if (_003C_003Ef__am_0024cacheB == null)
-			{
-				_003C_003Ef__am_0024cacheB = _003CUpdate_003Em__4BD;
-			}
-			Social.ReportProgress("CgkIr8rGkPIJEAIQBQ", 100.0, _003C_003Ef__am_0024cacheB);
+			Social.ReportProgress("CgkIr8rGkPIJEAIQBQ", 100, (bool success) => Debug.Log(string.Format("Achievement Rich Man completed: {0}", success)));
 			PlayerPrefs.SetInt("Achieved1000", 1);
-			isHasKeyAchived1000 = true;
+			this.isHasKeyAchived1000 = true;
 		}
-	}
-
-	[CompilerGenerated]
-	private static void _003CUpdate_003Em__4BC(bool success)
-	{
-		Debug.Log(string.Format("Achievement Ekonomist completed: {0}", success));
-	}
-
-	[CompilerGenerated]
-	private static void _003CUpdate_003Em__4BD(bool success)
-	{
-		Debug.Log(string.Format("Achievement Rich Man completed: {0}", success));
 	}
 }

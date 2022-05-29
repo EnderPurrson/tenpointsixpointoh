@@ -4,7 +4,7 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Tween/Tween Color")]
 public class TweenColor : UITweener
 {
-	public Color from = Color.white;
+	public Color @from = Color.white;
 
 	public Color to = Color.white;
 
@@ -23,101 +23,74 @@ public class TweenColor : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public Color value
+	public Color @value
 	{
 		get
 		{
-			if (!mCached)
+			if (!this.mCached)
 			{
-				Cache();
+				this.Cache();
 			}
-			if (mWidget != null)
+			if (this.mWidget != null)
 			{
-				return mWidget.color;
+				return this.mWidget.color;
 			}
-			if (mMat != null)
+			if (this.mMat != null)
 			{
-				return mMat.color;
+				return this.mMat.color;
 			}
-			if (mSr != null)
+			if (this.mSr != null)
 			{
-				return mSr.color;
+				return this.mSr.color;
 			}
-			if (mLight != null)
+			if (this.mLight == null)
 			{
-				return mLight.color;
+				return Color.black;
 			}
-			return Color.black;
+			return this.mLight.color;
 		}
 		set
 		{
-			if (!mCached)
+			if (!this.mCached)
 			{
-				Cache();
+				this.Cache();
 			}
-			if (mWidget != null)
+			if (this.mWidget != null)
 			{
-				mWidget.color = value;
+				this.mWidget.color = value;
 			}
-			else if (mMat != null)
+			else if (this.mMat != null)
 			{
-				mMat.color = value;
+				this.mMat.color = value;
 			}
-			else if (mSr != null)
+			else if (this.mSr != null)
 			{
-				mSr.color = value;
+				this.mSr.color = value;
 			}
-			else if (mLight != null)
+			else if (this.mLight != null)
 			{
-				mLight.color = value;
-				mLight.enabled = value.r + value.g + value.b > 0.01f;
+				this.mLight.color = value;
+				this.mLight.enabled = value.r + value.g + value.b > 0.01f;
 			}
 		}
 	}
 
-	private void Cache()
+	public TweenColor()
 	{
-		mCached = true;
-		mWidget = GetComponent<UIWidget>();
-		if (mWidget != null)
-		{
-			return;
-		}
-		mSr = GetComponent<SpriteRenderer>();
-		if (mSr != null)
-		{
-			return;
-		}
-		Renderer component = GetComponent<Renderer>();
-		if (component != null)
-		{
-			mMat = component.material;
-			return;
-		}
-		mLight = GetComponent<Light>();
-		if (mLight == null)
-		{
-			mWidget = GetComponentInChildren<UIWidget>();
-		}
-	}
-
-	protected override void OnUpdate(float factor, bool isFinished)
-	{
-		value = Color.Lerp(from, to, factor);
 	}
 
 	public static TweenColor Begin(GameObject go, float duration, Color color)
 	{
 		TweenColor tweenColor = UITweener.Begin<TweenColor>(go, duration);
-		tweenColor.from = tweenColor.value;
+		tweenColor.@from = tweenColor.@value;
 		tweenColor.to = color;
 		if (duration <= 0f)
 		{
@@ -127,27 +100,58 @@ public class TweenColor : UITweener
 		return tweenColor;
 	}
 
-	[ContextMenu("Set 'From' to current value")]
-	public override void SetStartToCurrentValue()
+	private void Cache()
 	{
-		from = value;
+		this.mCached = true;
+		this.mWidget = base.GetComponent<UIWidget>();
+		if (this.mWidget != null)
+		{
+			return;
+		}
+		this.mSr = base.GetComponent<SpriteRenderer>();
+		if (this.mSr != null)
+		{
+			return;
+		}
+		Renderer component = base.GetComponent<Renderer>();
+		if (component != null)
+		{
+			this.mMat = component.material;
+			return;
+		}
+		this.mLight = base.GetComponent<Light>();
+		if (this.mLight == null)
+		{
+			this.mWidget = base.GetComponentInChildren<UIWidget>();
+		}
 	}
 
-	[ContextMenu("Set 'To' to current value")]
-	public override void SetEndToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		to = value;
-	}
-
-	[ContextMenu("Assume value of 'From'")]
-	private void SetCurrentValueToStart()
-	{
-		value = from;
+		this.@value = Color.Lerp(this.@from, this.to, factor);
 	}
 
 	[ContextMenu("Assume value of 'To'")]
 	private void SetCurrentValueToEnd()
 	{
-		value = to;
+		this.@value = this.to;
+	}
+
+	[ContextMenu("Assume value of 'From'")]
+	private void SetCurrentValueToStart()
+	{
+		this.@value = this.@from;
+	}
+
+	[ContextMenu("Set 'To' to current value")]
+	public override void SetEndToCurrentValue()
+	{
+		this.to = this.@value;
+	}
+
+	[ContextMenu("Set 'From' to current value")]
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

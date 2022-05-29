@@ -5,11 +5,15 @@ internal sealed class PauseONGuiDrawer : MonoBehaviour
 {
 	public Action act;
 
+	public PauseONGuiDrawer()
+	{
+	}
+
 	private void OnGUI()
 	{
-		if (act != null)
+		if (this.act != null)
 		{
-			act();
+			this.act();
 		}
 	}
 }

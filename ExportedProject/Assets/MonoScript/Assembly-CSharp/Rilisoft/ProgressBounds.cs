@@ -13,7 +13,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _lowerBound;
+				return this._lowerBound;
 			}
 		}
 
@@ -21,18 +21,22 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _upperBound;
+				return this._upperBound;
 			}
+		}
+
+		public ProgressBounds()
+		{
 		}
 
 		public float Clamp(float progress)
 		{
-			return Mathf.Clamp(progress, _lowerBound, _upperBound);
+			return Mathf.Clamp(progress, this._lowerBound, this._upperBound);
 		}
 
 		public float Lerp(float progress, float time)
 		{
-			return Mathf.Lerp(Clamp(progress), UpperBound, time);
+			return Mathf.Lerp(this.Clamp(progress), this.UpperBound, time);
 		}
 
 		public void SetBounds(float lowerBound, float upperBound)
@@ -43,8 +47,8 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Bounds are not ordered.");
 			}
-			_lowerBound = lowerBound;
-			_upperBound = upperBound;
+			this._lowerBound = lowerBound;
+			this._upperBound = upperBound;
 		}
 	}
 }

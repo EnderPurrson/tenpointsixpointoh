@@ -1,3 +1,4 @@
+using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -9,36 +10,40 @@ public class RayAndExplosionsStackItem : MonoBehaviour
 
 	private bool isNotAutoEnd;
 
-	private void Start()
+	public RayAndExplosionsStackItem()
 	{
-		isNotAutoEnd = GetComponent<FreezerRay>() == null;
-		if (isNotAutoEnd)
+	}
+
+	[Obfuscation(Exclude=true)]
+	public void Deactivate()
+	{
+		base.CancelInvoke("Deactivate");
+		if (RayAndExplosionsStackController.sharedController != null)
 		{
-			Invoke("Deactivate", timeDeactivate);
+			if (base.GetComponent<AudioSource>())
+			{
+				base.GetComponent<AudioSource>().Stop();
+			}
+			RayAndExplosionsStackController.sharedController.ReturnObjectFromName(base.gameObject, this.myName);
 		}
 	}
 
 	private void OnEnable()
 	{
-		isNotAutoEnd = GetComponent<FreezerRay>() == null;
-		if ((bool)GetComponent<AudioSource>() && Defs.isSoundFX)
+		this.isNotAutoEnd = base.GetComponent<FreezerRay>() == null;
+		if (base.GetComponent<AudioSource>() && Defs.isSoundFX)
 		{
-			GetComponent<AudioSource>().Play();
+			base.GetComponent<AudioSource>().Play();
 		}
-		Invoke("Deactivate", timeDeactivate);
+		base.Invoke("Deactivate", this.timeDeactivate);
 	}
 
-	[Obfuscation(Exclude = true)]
-	public void Deactivate()
+	private void Start()
 	{
-		CancelInvoke("Deactivate");
-		if (RayAndExplosionsStackController.sharedController != null)
+		this.isNotAutoEnd = base.GetComponent<FreezerRay>() == null;
+		if (this.isNotAutoEnd)
 		{
-			if ((bool)GetComponent<AudioSource>())
-			{
-				GetComponent<AudioSource>().Stop();
-			}
-			RayAndExplosionsStackController.sharedController.ReturnObjectFromName(base.gameObject, myName);
+			base.Invoke("Deactivate", this.timeDeactivate);
 		}
 	}
 }

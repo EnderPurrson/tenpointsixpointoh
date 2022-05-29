@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,52 +7,59 @@ namespace Rilisoft
 {
 	internal sealed class DictionaryLoadedListener
 	{
+		public DictionaryLoadedListener()
+		{
+		}
+
 		internal static string MergeProgress(string localDataString, string serverDataString)
 		{
-			Dictionary<string, Dictionary<string, int>> dictionary = CampaignProgress.DeserializeProgress(localDataString);
-			if (dictionary == null)
+			Dictionary<string, int> strs;
+			Dictionary<string, int> strs1;
+			int num;
+			Dictionary<string, Dictionary<string, int>> strs2 = CampaignProgress.DeserializeProgress(localDataString) ?? new Dictionary<string, Dictionary<string, int>>();
+			Dictionary<string, Dictionary<string, int>> strs3 = CampaignProgress.DeserializeProgress(serverDataString) ?? new Dictionary<string, Dictionary<string, int>>();
+			Dictionary<string, Dictionary<string, int>> strs4 = new Dictionary<string, Dictionary<string, int>>();
+			IEnumerator<string> enumerator = strs2.Keys.Concat<string>(strs3.Keys).Distinct<string>().GetEnumerator();
+			try
 			{
-				dictionary = new Dictionary<string, Dictionary<string, int>>();
-			}
-			Dictionary<string, Dictionary<string, int>> dictionary2 = CampaignProgress.DeserializeProgress(serverDataString);
-			if (dictionary2 == null)
-			{
-				dictionary2 = new Dictionary<string, Dictionary<string, int>>();
-			}
-			Dictionary<string, Dictionary<string, int>> dictionary3 = new Dictionary<string, Dictionary<string, int>>();
-			foreach (string item in dictionary.Keys.Concat(dictionary2.Keys).Distinct())
-			{
-				dictionary3.Add(item, new Dictionary<string, int>());
-			}
-			foreach (KeyValuePair<string, Dictionary<string, int>> item2 in dictionary3)
-			{
-				Dictionary<string, int> value;
-				if (dictionary.TryGetValue(item2.Key, out value))
+				while (enumerator.MoveNext())
 				{
-					foreach (KeyValuePair<string, int> item3 in value)
+					strs4.Add(enumerator.Current, new Dictionary<string, int>());
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			foreach (KeyValuePair<string, Dictionary<string, int>> str in strs4)
+			{
+				if (strs2.TryGetValue(str.Key, out strs))
+				{
+					foreach (KeyValuePair<string, int> keyValuePair in strs)
 					{
-						item2.Value.Add(item3.Key, item3.Value);
+						str.Value.Add(keyValuePair.Key, keyValuePair.Value);
 					}
 				}
-				Dictionary<string, int> value2;
-				if (!dictionary2.TryGetValue(item2.Key, out value2))
+				if (!strs3.TryGetValue(str.Key, out strs1))
 				{
 					continue;
 				}
-				foreach (KeyValuePair<string, int> item4 in value2)
+				foreach (KeyValuePair<string, int> keyValuePair1 in strs1)
 				{
-					int value3;
-					if (item2.Value.TryGetValue(item4.Key, out value3))
+					if (!str.Value.TryGetValue(keyValuePair1.Key, out num))
 					{
-						item2.Value[item4.Key] = Math.Max(value3, item4.Value);
+						str.Value.Add(keyValuePair1.Key, keyValuePair1.Value);
 					}
 					else
 					{
-						item2.Value.Add(item4.Key, item4.Value);
+						str.Value[keyValuePair1.Key] = Math.Max(num, keyValuePair1.Value);
 					}
 				}
 			}
-			return CampaignProgress.SerializeProgress(dictionary3);
+			return CampaignProgress.SerializeProgress(strs4);
 		}
 	}
 }

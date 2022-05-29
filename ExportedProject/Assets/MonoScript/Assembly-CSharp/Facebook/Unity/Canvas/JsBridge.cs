@@ -1,3 +1,5 @@
+using Facebook.Unity;
+using System;
 using UnityEngine;
 
 namespace Facebook.Unity.Canvas
@@ -6,59 +8,63 @@ namespace Facebook.Unity.Canvas
 	{
 		private ICanvasFacebookCallbackHandler facebook;
 
-		public void Start()
+		public JsBridge()
 		{
-			facebook = ComponentFactory.GetComponent<CanvasFacebookGameObject>(ComponentFactory.IfNotExist.ReturnNull);
-		}
-
-		public void OnLoginComplete(string responseJsonData = "")
-		{
-			facebook.OnLoginComplete(responseJsonData);
-		}
-
-		public void OnFacebookAuthResponseChange(string responseJsonData = "")
-		{
-			facebook.OnFacebookAuthResponseChange(responseJsonData);
-		}
-
-		public void OnPayComplete(string responseJsonData = "")
-		{
-			facebook.OnPayComplete(responseJsonData);
 		}
 
 		public void OnAppRequestsComplete(string responseJsonData = "")
 		{
-			facebook.OnAppRequestsComplete(responseJsonData);
+			this.facebook.OnAppRequestsComplete(responseJsonData);
 		}
 
-		public void OnShareLinkComplete(string responseJsonData = "")
+		public void OnFacebookAuthResponseChange(string responseJsonData = "")
 		{
-			facebook.OnShareLinkComplete(responseJsonData);
-		}
-
-		public void OnGroupCreateComplete(string responseJsonData = "")
-		{
-			facebook.OnGroupCreateComplete(responseJsonData);
-		}
-
-		public void OnJoinGroupComplete(string responseJsonData = "")
-		{
-			facebook.OnGroupJoinComplete(responseJsonData);
+			this.facebook.OnFacebookAuthResponseChange(responseJsonData);
 		}
 
 		public void OnFacebookFocus(string state)
 		{
-			facebook.OnHideUnity(state != "hide");
+			this.facebook.OnHideUnity(state != "hide");
+		}
+
+		public void OnGroupCreateComplete(string responseJsonData = "")
+		{
+			this.facebook.OnGroupCreateComplete(responseJsonData);
 		}
 
 		public void OnInitComplete(string responseJsonData = "")
 		{
-			facebook.OnInitComplete(responseJsonData);
+			this.facebook.OnInitComplete(responseJsonData);
+		}
+
+		public void OnJoinGroupComplete(string responseJsonData = "")
+		{
+			this.facebook.OnGroupJoinComplete(responseJsonData);
+		}
+
+		public void OnLoginComplete(string responseJsonData = "")
+		{
+			this.facebook.OnLoginComplete(responseJsonData);
+		}
+
+		public void OnPayComplete(string responseJsonData = "")
+		{
+			this.facebook.OnPayComplete(responseJsonData);
+		}
+
+		public void OnShareLinkComplete(string responseJsonData = "")
+		{
+			this.facebook.OnShareLinkComplete(responseJsonData);
 		}
 
 		public void OnUrlResponse(string url = "")
 		{
-			facebook.OnUrlResponse(url);
+			this.facebook.OnUrlResponse(url);
+		}
+
+		public void Start()
+		{
+			this.facebook = ComponentFactory.GetComponent<CanvasFacebookGameObject>(ComponentFactory.IfNotExist.ReturnNull);
 		}
 	}
 }

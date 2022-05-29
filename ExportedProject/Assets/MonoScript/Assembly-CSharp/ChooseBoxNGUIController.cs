@@ -1,4 +1,9 @@
+using Rilisoft;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ChooseBoxNGUIController : MonoBehaviour
@@ -21,40 +26,37 @@ public class ChooseBoxNGUIController : MonoBehaviour
 
 	public float widthCell = 824f;
 
+	public ChooseBoxNGUIController()
+	{
+	}
+
+	[DebuggerHidden]
 	private IEnumerator Start()
 	{
-		ScrollTransform.GetComponent<UIPanel>().baseClipRegion = new Vector4(0f, 0f, 760 * Screen.width / Screen.height, 736f);
-		countMap = grid.transform.childCount;
-		yield return null;
-		Defs.diffGame = PlayerPrefs.GetInt(Defs.DiffSett, 1);
-		if (difficultyToggle != null)
-		{
-			difficultyToggle.buttons[Defs.diffGame].IsChecked = true;
-			MultipleToggleButton multipleToggleButton = difficultyToggle;
-			if (_003CStart_003Ec__Iterator10._003C_003Ef__am_0024cache3 == null)
-			{
-				_003CStart_003Ec__Iterator10._003C_003Ef__am_0024cache3 = _003CStart_003Ec__Iterator10._003C_003Em__C;
-			}
-			multipleToggleButton.Clicked += _003CStart_003Ec__Iterator10._003C_003Ef__am_0024cache3;
-		}
+		ChooseBoxNGUIController.u003cStartu003ec__Iterator10 variable = null;
+		return variable;
 	}
 
 	private void Update()
 	{
-		if (SelectMapPanel.activeInHierarchy)
+		if (this.SelectMapPanel.activeInHierarchy)
 		{
-			if (ScrollTransform.localPosition.x > 0f)
+			if (this.ScrollTransform.localPosition.x <= 0f)
 			{
-				selectIndexMap = Mathf.RoundToInt((ScrollTransform.localPosition.x - (float)Mathf.FloorToInt(ScrollTransform.localPosition.x / widthCell / (float)countMap) * widthCell * (float)countMap) / widthCell);
-				selectIndexMap = countMap - selectIndexMap;
+				float scrollTransform = this.ScrollTransform.localPosition.x;
+				Vector3 vector3 = this.ScrollTransform.localPosition;
+				this.selectIndexMap = -1 * Mathf.RoundToInt((scrollTransform - (float)Mathf.CeilToInt(vector3.x / this.widthCell / (float)this.countMap) * this.widthCell * (float)this.countMap) / this.widthCell);
 			}
 			else
 			{
-				selectIndexMap = -1 * Mathf.RoundToInt((ScrollTransform.localPosition.x - (float)Mathf.CeilToInt(ScrollTransform.localPosition.x / widthCell / (float)countMap) * widthCell * (float)countMap) / widthCell);
+				float single = this.ScrollTransform.localPosition.x;
+				Vector3 scrollTransform1 = this.ScrollTransform.localPosition;
+				this.selectIndexMap = Mathf.RoundToInt((single - (float)Mathf.FloorToInt(scrollTransform1.x / this.widthCell / (float)this.countMap) * this.widthCell * (float)this.countMap) / this.widthCell);
+				this.selectIndexMap = this.countMap - this.selectIndexMap;
 			}
-			if (selectIndexMap == countMap)
+			if (this.selectIndexMap == this.countMap)
 			{
-				selectIndexMap = 0;
+				this.selectIndexMap = 0;
 			}
 		}
 	}

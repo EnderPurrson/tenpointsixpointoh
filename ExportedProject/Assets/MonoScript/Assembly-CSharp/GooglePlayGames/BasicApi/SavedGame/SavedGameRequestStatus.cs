@@ -1,11 +1,13 @@
+using System;
+
 namespace GooglePlayGames.BasicApi.SavedGame
 {
 	public enum SavedGameRequestStatus
 	{
-		Success = 1,
-		TimeoutError = -1,
-		InternalError = -2,
+		BadInputError = -4,
 		AuthenticationError = -3,
-		BadInputError = -4
+		InternalError = -2,
+		TimeoutError = -1,
+		Success = 1
 	}
 }

@@ -1,12 +1,9 @@
+using System;
 using UnityEngine;
 
 public class MouseHandler : MonoBehaviour
 {
-	private void Start()
-	{
-	}
-
-	private void Update()
+	public MouseHandler()
 	{
 	}
 
@@ -18,5 +15,13 @@ public class MouseHandler : MonoBehaviour
 	private void OnMouseOver()
 	{
 		Debug.Log("OnMouseOver");
+	}
+
+	private void Start()
+	{
+	}
+
+	private void Update()
+	{
 	}
 }

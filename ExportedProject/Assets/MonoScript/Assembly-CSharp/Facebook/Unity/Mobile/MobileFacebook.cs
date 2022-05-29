@@ -1,6 +1,7 @@
+using Facebook.MiniJSON;
+using Facebook.Unity;
 using System;
 using System.Collections.Generic;
-using Facebook.MiniJSON;
 
 namespace Facebook.Unity.Mobile
 {
@@ -8,78 +9,73 @@ namespace Facebook.Unity.Mobile
 	{
 		private const string CallbackIdKey = "callback_id";
 
-		private ShareDialogMode shareDialogMode;
+		private Facebook.Unity.ShareDialogMode shareDialogMode;
 
-		public ShareDialogMode ShareDialogMode
+		public Facebook.Unity.ShareDialogMode ShareDialogMode
 		{
 			get
 			{
-				return shareDialogMode;
+				return this.shareDialogMode;
 			}
 			set
 			{
-				shareDialogMode = value;
-				SetShareDialogMode(shareDialogMode);
+				this.shareDialogMode = value;
+				this.SetShareDialogMode(this.shareDialogMode);
 			}
 		}
 
-		protected MobileFacebook(CallbackManager callbackManager)
-			: base(callbackManager)
+		protected MobileFacebook(Facebook.Unity.CallbackManager callbackManager) : base(callbackManager)
 		{
 		}
 
 		public abstract void AppInvite(Uri appLinkUrl, Uri previewImageUrl, FacebookDelegate<IAppInviteResult> callback);
 
+		private static IDictionary<string, object> DeserializeMessage(string message)
+		{
+			return (Dictionary<string, object>)Json.Deserialize(message);
+		}
+
 		public abstract void FetchDeferredAppLink(FacebookDelegate<IAppLinkResult> callback);
 
-		public abstract void RefreshCurrentAccessToken(FacebookDelegate<IAccessTokenRefreshResult> callback);
-
-		public override void OnLoginComplete(string message)
+		public void OnAppInviteComplete(string message)
 		{
-			LoginResult result = new LoginResult(message);
-			OnAuthResponse(result);
-		}
-
-		public override void OnGetAppLinkComplete(string message)
-		{
-			AppLinkResult result = new AppLinkResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
-		}
-
-		public override void OnGroupCreateComplete(string message)
-		{
-			GroupCreateResult result = new GroupCreateResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
-		}
-
-		public override void OnGroupJoinComplete(string message)
-		{
-			GroupJoinResult result = new GroupJoinResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
+			AppInviteResult appInviteResult = new AppInviteResult(message);
+			base.CallbackManager.OnFacebookResponse(appInviteResult);
 		}
 
 		public override void OnAppRequestsComplete(string message)
 		{
-			AppRequestResult result = new AppRequestResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
-		}
-
-		public void OnAppInviteComplete(string message)
-		{
-			AppInviteResult result = new AppInviteResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
+			AppRequestResult appRequestResult = new AppRequestResult(message);
+			base.CallbackManager.OnFacebookResponse(appRequestResult);
 		}
 
 		public void OnFetchDeferredAppLinkComplete(string message)
 		{
-			AppLinkResult result = new AppLinkResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
+			AppLinkResult appLinkResult = new AppLinkResult(message);
+			base.CallbackManager.OnFacebookResponse(appLinkResult);
 		}
 
-		public override void OnShareLinkComplete(string message)
+		public override void OnGetAppLinkComplete(string message)
 		{
-			ShareResult result = new ShareResult(message);
-			base.CallbackManager.OnFacebookResponse(result);
+			AppLinkResult appLinkResult = new AppLinkResult(message);
+			base.CallbackManager.OnFacebookResponse(appLinkResult);
+		}
+
+		public override void OnGroupCreateComplete(string message)
+		{
+			GroupCreateResult groupCreateResult = new GroupCreateResult(message);
+			base.CallbackManager.OnFacebookResponse(groupCreateResult);
+		}
+
+		public override void OnGroupJoinComplete(string message)
+		{
+			GroupJoinResult groupJoinResult = new GroupJoinResult(message);
+			base.CallbackManager.OnFacebookResponse(groupJoinResult);
+		}
+
+		public override void OnLoginComplete(string message)
+		{
+			base.OnAuthResponse(new LoginResult(message));
 		}
 
 		public void OnRefreshCurrentAccessTokenComplete(string message)
@@ -92,40 +88,43 @@ namespace Facebook.Unity.Mobile
 			base.CallbackManager.OnFacebookResponse(accessTokenRefreshResult);
 		}
 
-		protected abstract void SetShareDialogMode(ShareDialogMode mode);
-
-		private static IDictionary<string, object> DeserializeMessage(string message)
+		public override void OnShareLinkComplete(string message)
 		{
-			return (Dictionary<string, object>)Json.Deserialize(message);
+			ShareResult shareResult = new ShareResult(message);
+			base.CallbackManager.OnFacebookResponse(shareResult);
 		}
+
+		public abstract void RefreshCurrentAccessToken(FacebookDelegate<IAccessTokenRefreshResult> callback);
 
 		private static string SerializeDictionary(IDictionary<string, object> dict)
 		{
 			return Json.Serialize(dict);
 		}
 
+		protected abstract void SetShareDialogMode(Facebook.Unity.ShareDialogMode mode);
+
 		private static bool TryGetCallbackId(IDictionary<string, object> result, out string callbackId)
 		{
+			object obj;
 			callbackId = null;
-			object value;
-			if (result.TryGetValue("callback_id", out value))
+			if (!result.TryGetValue("callback_id", out obj))
 			{
-				callbackId = value as string;
-				return true;
+				return false;
 			}
-			return false;
+			callbackId = obj as string;
+			return true;
 		}
 
 		private static bool TryGetError(IDictionary<string, object> result, out string errorMessage)
 		{
+			object obj;
 			errorMessage = null;
-			object value;
-			if (result.TryGetValue("error", out value))
+			if (!result.TryGetValue("error", out obj))
 			{
-				errorMessage = value as string;
-				return true;
+				return false;
 			}
-			return false;
+			errorMessage = obj as string;
+			return true;
 		}
 	}
 }

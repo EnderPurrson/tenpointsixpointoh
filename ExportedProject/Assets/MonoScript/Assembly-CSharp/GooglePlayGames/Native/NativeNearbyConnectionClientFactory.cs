@@ -1,9 +1,9 @@
-using System;
 using GooglePlayGames.Android;
 using GooglePlayGames.BasicApi.Nearby;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.Native.PInvoke;
 using GooglePlayGames.OurUtils;
+using System;
 using UnityEngine;
 
 namespace GooglePlayGames.Native
@@ -14,22 +14,26 @@ namespace GooglePlayGames.Native
 
 		private static Action<INearbyConnectionClient> sCreationCallback;
 
-		internal static NearbyConnectionsManager GetManager()
+		public NativeNearbyConnectionClientFactory()
 		{
-			return sManager;
 		}
 
 		public static void Create(Action<INearbyConnectionClient> callback)
 		{
-			if (sManager == null)
+			if (NativeNearbyConnectionClientFactory.sManager != null)
 			{
-				sCreationCallback = callback;
-				InitializeFactory();
+				callback(new NativeNearbyConnectionsClient(NativeNearbyConnectionClientFactory.GetManager()));
 			}
 			else
 			{
-				callback(new NativeNearbyConnectionsClient(GetManager()));
+				NativeNearbyConnectionClientFactory.sCreationCallback = callback;
+				NativeNearbyConnectionClientFactory.InitializeFactory();
 			}
+		}
+
+		internal static NearbyConnectionsManager GetManager()
+		{
+			return NativeNearbyConnectionClientFactory.sManager;
 		}
 
 		internal static void InitializeFactory()
@@ -37,26 +41,23 @@ namespace GooglePlayGames.Native
 			PlayGamesHelperObject.CreateObject();
 			NearbyConnectionsManager.ReadServiceId();
 			NearbyConnectionsManagerBuilder nearbyConnectionsManagerBuilder = new NearbyConnectionsManagerBuilder();
-			nearbyConnectionsManagerBuilder.SetOnInitializationFinished(OnManagerInitialized);
-			PlatformConfiguration configuration = new AndroidClient().CreatePlatformConfiguration();
+			nearbyConnectionsManagerBuilder.SetOnInitializationFinished(new Action<NearbyConnectionsStatus.InitializationStatus>(NativeNearbyConnectionClientFactory.OnManagerInitialized));
+			PlatformConfiguration platformConfiguration = (new AndroidClient()).CreatePlatformConfiguration();
 			Debug.Log("Building manager Now");
-			sManager = nearbyConnectionsManagerBuilder.Build(configuration);
+			NativeNearbyConnectionClientFactory.sManager = nearbyConnectionsManagerBuilder.Build(platformConfiguration);
 		}
 
 		internal static void OnManagerInitialized(NearbyConnectionsStatus.InitializationStatus status)
 		{
-			Debug.Log(string.Concat("Nearby Init Complete: ", status, " sManager = ", sManager));
-			if (status == NearbyConnectionsStatus.InitializationStatus.VALID)
+			Debug.Log(string.Concat(new object[] { "Nearby Init Complete: ", status, " sManager = ", NativeNearbyConnectionClientFactory.sManager }));
+			if (status != NearbyConnectionsStatus.InitializationStatus.VALID)
 			{
-				if (sCreationCallback != null)
-				{
-					sCreationCallback(new NativeNearbyConnectionsClient(GetManager()));
-					sCreationCallback = null;
-				}
+				Debug.LogError(string.Concat("ERROR: NearbyConnectionManager not initialized: ", status));
 			}
-			else
+			else if (NativeNearbyConnectionClientFactory.sCreationCallback != null)
 			{
-				Debug.LogError("ERROR: NearbyConnectionManager not initialized: " + status);
+				NativeNearbyConnectionClientFactory.sCreationCallback(new NativeNearbyConnectionsClient(NativeNearbyConnectionClientFactory.GetManager()));
+				NativeNearbyConnectionClientFactory.sCreationCallback = null;
 			}
 		}
 	}

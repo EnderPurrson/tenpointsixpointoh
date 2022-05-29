@@ -1,23 +1,29 @@
+using System;
+
 public class UIInputRilisoft : UIInput
 {
-	public delegate void OnFocus();
+	public UIInputRilisoft.OnFocus onFocus;
 
-	public delegate void OnFocusLost();
+	public UIInputRilisoft.OnFocusLost onFocusLost;
 
-	public OnFocus onFocus;
-
-	public OnFocusLost onFocusLost;
+	public UIInputRilisoft()
+	{
+	}
 
 	protected override void OnSelect(bool isSelected)
 	{
 		base.OnSelect(isSelected);
-		if (isSelected && onFocus != null)
+		if (isSelected && this.onFocus != null)
 		{
-			onFocus();
+			this.onFocus();
 		}
-		else if (!isSelected && onFocusLost != null)
+		else if (!isSelected && this.onFocusLost != null)
 		{
-			onFocusLost();
+			this.onFocusLost();
 		}
 	}
+
+	public delegate void OnFocus();
+
+	public delegate void OnFocusLost();
 }

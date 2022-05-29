@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class SetChatLabelController : MonoBehaviour
@@ -10,62 +11,62 @@ public class SetChatLabelController : MonoBehaviour
 
 	public UISprite reasonSprite2;
 
+	public SetChatLabelController()
+	{
+	}
+
 	public void SetChatLabelText(Player_move_c.SystemMessage message)
 	{
-		SetChatLabelText(message.nick1, message.message2, message.nick2, message.message, message.textColor);
+		this.SetChatLabelText(message.nick1, message.message2, message.nick2, message.message, message.textColor);
 	}
 
 	public void SetChatLabelText(string _nameKiller, string _reasonSpriteName2, string _nameKilled, string _reasonSpriteName, Color color)
 	{
-		killerLabel.text = _nameKiller;
-		killerLabel.color = color;
-		int num = killerLabel.width;
-		if (reasonSprite != null && !string.IsNullOrEmpty(_reasonSpriteName))
+		this.killerLabel.text = _nameKiller;
+		this.killerLabel.color = color;
+		int num = this.killerLabel.width;
+		if (this.reasonSprite != null && !string.IsNullOrEmpty(_reasonSpriteName))
 		{
-			if (!reasonSprite.gameObject.activeSelf)
+			if (!this.reasonSprite.gameObject.activeSelf)
 			{
-				reasonSprite.gameObject.SetActive(true);
+				this.reasonSprite.gameObject.SetActive(true);
 			}
-			reasonSprite.transform.localPosition = new Vector3((float)num + 33f, 0f, 0f);
+			this.reasonSprite.transform.localPosition = new Vector3((float)num + 33f, 0f, 0f);
 			num += 66;
-			reasonSprite.spriteName = SubstituteWeaponImageIfNeeded(_reasonSpriteName);
+			this.reasonSprite.spriteName = this.SubstituteWeaponImageIfNeeded(_reasonSpriteName);
 		}
-		else if (reasonSprite != null && reasonSprite.gameObject.activeSelf)
+		else if (this.reasonSprite != null && this.reasonSprite.gameObject.activeSelf)
 		{
-			reasonSprite.gameObject.SetActive(false);
+			this.reasonSprite.gameObject.SetActive(false);
 		}
-		if (string.IsNullOrEmpty(_reasonSpriteName2))
+		if (!string.IsNullOrEmpty(_reasonSpriteName2))
 		{
-			if (reasonSprite2.gameObject.activeSelf)
+			if (!this.reasonSprite2.gameObject.activeSelf)
 			{
-				reasonSprite2.gameObject.SetActive(false);
+				this.reasonSprite2.gameObject.SetActive(true);
 			}
-		}
-		else
-		{
-			if (!reasonSprite2.gameObject.activeSelf)
-			{
-				reasonSprite2.gameObject.SetActive(true);
-			}
-			reasonSprite2.transform.localPosition = new Vector3((float)num + 23f, 0f, 0f);
+			this.reasonSprite2.transform.localPosition = new Vector3((float)num + 23f, 0f, 0f);
 			num += 46;
-			reasonSprite2.spriteName = SubstituteWeaponImageIfNeeded(_reasonSpriteName2);
+			this.reasonSprite2.spriteName = this.SubstituteWeaponImageIfNeeded(_reasonSpriteName2);
 		}
-		if (string.IsNullOrEmpty(_nameKilled))
+		else if (this.reasonSprite2.gameObject.activeSelf)
 		{
-			if (killedLabel.gameObject.activeSelf)
+			this.reasonSprite2.gameObject.SetActive(false);
+		}
+		if (!string.IsNullOrEmpty(_nameKilled))
+		{
+			if (!this.killedLabel.gameObject.activeSelf)
 			{
-				killedLabel.gameObject.SetActive(false);
+				this.killedLabel.gameObject.SetActive(true);
 			}
-			return;
+			this.killedLabel.transform.localPosition = new Vector3((float)num, 0f, 0f);
+			this.killedLabel.text = _nameKilled;
+			this.killedLabel.color = color;
 		}
-		if (!killedLabel.gameObject.activeSelf)
+		else if (this.killedLabel.gameObject.activeSelf)
 		{
-			killedLabel.gameObject.SetActive(true);
+			this.killedLabel.gameObject.SetActive(false);
 		}
-		killedLabel.transform.localPosition = new Vector3(num, 0f, 0f);
-		killedLabel.text = _nameKilled;
-		killedLabel.color = color;
 	}
 
 	private string SubstituteWeaponImageIfNeeded(string source)
@@ -77,10 +78,10 @@ public class SetChatLabelController : MonoBehaviour
 		ItemRecord byPrefabName = ItemDb.GetByPrefabName(source);
 		if (byPrefabName != null && byPrefabName.UseImagesFromFirstUpgrade && byPrefabName.Tag != null)
 		{
-			string text = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
-			if (text != null && !text.Equals(byPrefabName.Tag))
+			string str = WeaponUpgrades.TagOfFirstUpgrade(byPrefabName.Tag);
+			if (str != null && !str.Equals(byPrefabName.Tag))
 			{
-				ItemRecord byTag = ItemDb.GetByTag(text);
+				ItemRecord byTag = ItemDb.GetByTag(str);
 				if (byTag != null && byTag.PrefabName != null)
 				{
 					return byTag.PrefabName;

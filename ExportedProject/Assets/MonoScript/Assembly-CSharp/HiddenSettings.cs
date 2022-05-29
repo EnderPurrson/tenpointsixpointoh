@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class HiddenSettings : ScriptableObject
@@ -19,4 +20,8 @@ public sealed class HiddenSettings : ScriptableObject
 	public string devtodevSecretWsa;
 
 	public string appsFlyerAppKey;
+
+	public HiddenSettings()
+	{
+	}
 }

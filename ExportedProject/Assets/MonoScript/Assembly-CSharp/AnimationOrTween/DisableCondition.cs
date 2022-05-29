@@ -1,3 +1,5 @@
+using System;
+
 namespace AnimationOrTween
 {
 	public enum DisableCondition

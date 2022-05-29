@@ -1,91 +1,19 @@
+using com.amazon.device.iap.cpt;
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using com.amazon.device.iap.cpt;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public sealed class StoreKitEventListener : MonoBehaviour
 {
-	private enum ContentType
-	{
-		Unknown = 0,
-		Coins = 1,
-		Gems = 2,
-		StarterPack = 3
-	}
-
-	internal sealed class StoreKitEventListenerState
-	{
-		public string Mode { get; set; }
-
-		public string PurchaseKey { get; set; }
-
-		public IDictionary<string, string> Parameters { get; private set; }
-
-		public StoreKitEventListenerState()
-		{
-			Mode = string.Empty;
-			PurchaseKey = string.Empty;
-			Parameters = new Dictionary<string, string>();
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003COnEnable_003Ec__AnonStorey2FB
-	{
-		internal Action<string, int> googlePurchaseFailedHandler;
-
-		internal void _003C_003Em__457()
-		{
-			GoogleIABManager.purchaseFailedEvent -= googlePurchaseFailedHandler;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC
-	{
-		internal string[] productIds;
-
-		internal bool _003C_003Em__45D(GoogleSkuInfo s)
-		{
-			return productIds.Contains(s.productId);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CLogRealPayment_003Ec__AnonStorey2FD
-	{
-		internal GooglePurchase purchase;
-
-		internal bool _003C_003Em__45F(IMarketProduct p)
-		{
-			return (p.PlatformProduct as GoogleSkuInfo).productId == purchase.productId;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE
-	{
-		internal GooglePurchase purchase;
-
-		internal bool _003C_003Em__461(GooglePurchase p)
-		{
-			return p.productId == purchase.productId;
-		}
-
-		internal bool _003C_003Em__462(GooglePurchase p)
-		{
-			return p.productId == purchase.productId;
-		}
-	}
-
 	public const string coin1 = "coin1";
 
 	public const string coin2 = "coin2";
@@ -132,7 +60,7 @@ public sealed class StoreKitEventListener : MonoBehaviour
 	public static bool billingSupported;
 
 	[NonSerialized]
-	public static readonly string[] coinIds;
+	public readonly static string[] coinIds;
 
 	private static string[] _productIds;
 
@@ -146,9 +74,9 @@ public sealed class StoreKitEventListener : MonoBehaviour
 
 	private static List<string> listOfIdsForWhichX3WaitingCoroutinesRun;
 
-	private readonly Lazy<SHA1Managed> _sha1;
+	private readonly Lazy<SHA1Managed> _sha1 = new Lazy<SHA1Managed>(new Func<SHA1Managed>(() => new SHA1Managed()));
 
-	private readonly Lazy<RSACryptoServiceProvider> _rsa;
+	private readonly Lazy<RSACryptoServiceProvider> _rsa = new Lazy<RSACryptoServiceProvider>(new Func<RSACryptoServiceProvider>(StoreKitEventListener.InitializeRsa));
 
 	public static StoreKitEventListener Instance;
 
@@ -180,11 +108,11 @@ public sealed class StoreKitEventListener : MonoBehaviour
 
 	private static string starterPack8;
 
-	public static readonly int[] realValue;
+	public readonly static int[] realValue;
 
-	public static readonly string[] gemsIds;
+	public readonly static string[] gemsIds;
 
-	public static readonly string[] starterPackIds;
+	public readonly static string[] starterPackIds;
 
 	public static Dictionary<string, string> inAppsReadableNames;
 
@@ -306,17 +234,17 @@ public sealed class StoreKitEventListener : MonoBehaviour
 
 	public static string armor3;
 
-	public static readonly string[] skinIDs;
+	public readonly static string[] skinIDs;
 
-	public static readonly string[] idsForSingle;
+	public readonly static string[] idsForSingle;
 
-	public static readonly string[] idsForMulti;
+	public readonly static string[] idsForMulti;
 
-	public static readonly string[] idsForFull;
+	public readonly static string[] idsForFull;
 
-	public static readonly string[][] categoriesSingle;
+	public readonly static string[][] categoriesSingle;
 
-	public static readonly string[][] categoriesMulti;
+	public readonly static string[][] categoriesMulti;
 
 	public GameObject messagePrefab;
 
@@ -329,48 +257,21 @@ public sealed class StoreKitEventListener : MonoBehaviour
 	[NonSerialized]
 	public static List<string> buyStarterPack;
 
-	private static readonly StoreKitEventListenerState _state;
-
-	[CompilerGenerated]
-	private static Func<SHA1Managed> _003C_003Ef__am_0024cache66;
-
-	[CompilerGenerated]
-	private static Action<string, int> _003C_003Ef__am_0024cache67;
-
-	[CompilerGenerated]
-	private static Func<GooglePurchase, bool> _003C_003Ef__am_0024cache68;
-
-	[CompilerGenerated]
-	private static Func<GooglePurchase, bool> _003C_003Ef__am_0024cache69;
-
-	[CompilerGenerated]
-	private static Func<GoogleSkuInfo, bool> _003C_003Ef__am_0024cache6A;
-
-	[CompilerGenerated]
-	private static Func<GoogleSkuInfo, string> _003C_003Ef__am_0024cache6B;
-
-	[CompilerGenerated]
-	private static Func<GooglePurchase, string> _003C_003Ef__am_0024cache6C;
-
-	[CompilerGenerated]
-	private static Func<ProductData, bool> _003C_003Ef__am_0024cache6D;
-
-	[CompilerGenerated]
-	private static Func<IMarketProduct, object> _003C_003Ef__am_0024cache6E;
-
-	internal ICollection<IMarketProduct> Products
-	{
-		get
-		{
-			return _products;
-		}
-	}
+	private readonly static StoreKitEventListener.StoreKitEventListenerState _state;
 
 	public Task<AmazonUserData> AmazonUser
 	{
 		get
 		{
-			return _amazonUserPromise.Task;
+			return this._amazonUserPromise.Task;
+		}
+	}
+
+	internal ICollection<IMarketProduct> Products
+	{
+		get
+		{
+			return this._products;
 		}
 	}
 
@@ -386,46 +287,36 @@ public sealed class StoreKitEventListener : MonoBehaviour
 		}
 	}
 
-	internal static StoreKitEventListenerState State
+	internal static StoreKitEventListener.StoreKitEventListenerState State
 	{
 		get
 		{
-			return _state;
+			return StoreKitEventListener._state;
 		}
-	}
-
-	public StoreKitEventListener()
-	{
-		if (_003C_003Ef__am_0024cache66 == null)
-		{
-			_003C_003Ef__am_0024cache66 = _003C_sha1_003Em__455;
-		}
-		_sha1 = new Lazy<SHA1Managed>(_003C_003Ef__am_0024cache66);
-		_rsa = new Lazy<RSACryptoServiceProvider>(InitializeRsa);
-		base._002Ector();
 	}
 
 	static StoreKitEventListener()
 	{
-		Instance = null;
-		gem1 = "gem1";
-		gem2 = "gem2";
-		gem3 = "gem3";
-		gem4 = "gem4";
-		gem5 = "gem5";
-		gem6 = "gem6";
-		gem7 = "gem7";
-		starterPack2 = "starterpack2";
-		starterPack4 = "starterpack4";
-		starterPack6 = "starterpack6";
-		starterPack3 = "starterpack3";
-		starterPack5 = "starterpack5";
-		starterPack7 = "starterpack7";
-		starterPack8 = "starterpack8";
-		realValue = new int[7] { 1, 3, 5, 10, 20, 50, 100 };
-		gemsIds = new string[7] { gem1, gem2, gem3, gem4, gem5, gem6, gem7 };
-		starterPackIds = new string[8] { starterPack1, starterPack2, starterPack3, starterPack4, starterPack5, starterPack6, starterPack7, starterPack8 };
-		inAppsReadableNames = new Dictionary<string, string>
+		int j;
+		StoreKitEventListener.Instance = null;
+		StoreKitEventListener.gem1 = "gem1";
+		StoreKitEventListener.gem2 = "gem2";
+		StoreKitEventListener.gem3 = "gem3";
+		StoreKitEventListener.gem4 = "gem4";
+		StoreKitEventListener.gem5 = "gem5";
+		StoreKitEventListener.gem6 = "gem6";
+		StoreKitEventListener.gem7 = "gem7";
+		StoreKitEventListener.starterPack2 = "starterpack2";
+		StoreKitEventListener.starterPack4 = "starterpack4";
+		StoreKitEventListener.starterPack6 = "starterpack6";
+		StoreKitEventListener.starterPack3 = "starterpack3";
+		StoreKitEventListener.starterPack5 = "starterpack5";
+		StoreKitEventListener.starterPack7 = "starterpack7";
+		StoreKitEventListener.starterPack8 = "starterpack8";
+		StoreKitEventListener.realValue = new int[] { 1, 3, 5, 10, 20, 50, 100 };
+		StoreKitEventListener.gemsIds = new string[] { StoreKitEventListener.gem1, StoreKitEventListener.gem2, StoreKitEventListener.gem3, StoreKitEventListener.gem4, StoreKitEventListener.gem5, StoreKitEventListener.gem6, StoreKitEventListener.gem7 };
+		StoreKitEventListener.starterPackIds = new string[] { StoreKitEventListener.starterPack1, StoreKitEventListener.starterPack2, StoreKitEventListener.starterPack3, StoreKitEventListener.starterPack4, StoreKitEventListener.starterPack5, StoreKitEventListener.starterPack6, StoreKitEventListener.starterPack7, StoreKitEventListener.starterPack8 };
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
 			{ "coin1", "Small Stack of Coins" },
 			{ "coin7", "Medium Stack of Coins" },
@@ -434,415 +325,156 @@ public sealed class StoreKitEventListener : MonoBehaviour
 			{ "coin4", "Chest with Coins" },
 			{ "coin5", "Golden Chest with Coins" },
 			{ "coin8", "Holy Grail" },
-			{ gem1, "Few Gems" },
-			{ gem2, "Handful of Gems" },
-			{ gem3, "Pile of Gems" },
-			{ gem4, "Chest with Gems" },
-			{ gem5, "Treasure with Gems" },
-			{ gem6, "Expensive Relic" },
-			{ gem7, "Safe with Gems" },
-			{ starterPack1, "Newbie Set" },
+			{ StoreKitEventListener.gem1, "Few Gems" },
+			{ StoreKitEventListener.gem2, "Handful of Gems" },
+			{ StoreKitEventListener.gem3, "Pile of Gems" },
+			{ StoreKitEventListener.gem4, "Chest with Gems" },
+			{ StoreKitEventListener.gem5, "Treasure with Gems" },
+			{ StoreKitEventListener.gem6, "Expensive Relic" },
+			{ StoreKitEventListener.gem7, "Safe with Gems" },
+			{ StoreKitEventListener.starterPack1, "Newbie Set" },
 			{ "starterpack2", "Golden Coins Extra Pack" },
-			{ starterPack3, "Trooper Set" },
+			{ StoreKitEventListener.starterPack3, "Trooper Set" },
 			{ "starterpack4", "Gems Extra Pack" },
-			{ starterPack5, "Veteran Set" },
+			{ StoreKitEventListener.starterPack5, "Veteran Set" },
 			{ "starterpack6", "Mega Gems Pack" },
-			{ starterPack7, "Hero Set" },
-			{ starterPack8, "Winner Set" }
+			{ StoreKitEventListener.starterPack7, "Hero Set" },
+			{ StoreKitEventListener.starterPack8, "Winner Set" }
 		};
-		elixirSettName = Defs.NumberOfElixirsSett;
-		purchaseInProcess = false;
-		restoreInProcess = false;
-		elixirID = ((!GlobalGameController.isFullVersion) ? "elixirlite" : "elixir");
-		endmanskin = ((!GlobalGameController.isFullVersion) ? "endmanskinlite" : "endmanskin");
-		chief = ((!GlobalGameController.isFullVersion) ? "chiefskinlite" : "chief");
-		spaceengineer = ((!GlobalGameController.isFullVersion) ? "spaceengineerskinlite" : "spaceengineer");
-		nanosoldier = ((!GlobalGameController.isFullVersion) ? "nanosoldierlite" : "nanosoldier");
-		steelman = ((!GlobalGameController.isFullVersion) ? "steelmanlite" : "steelman");
-		CaptainSkin = "captainskin";
-		HawkSkin = "hawkskin";
-		GreenGuySkin = "greenguyskin";
-		TunderGodSkin = "thundergodskin";
-		GordonSkin = "gordonskin";
-		animeGirl = "animeGirl";
-		EMOGirl = "EMOGirl";
-		Nurse = "Nurse";
-		magicGirl = "magicGirl";
-		braveGirl = "braveGirl";
-		glamDoll = "glamDoll";
-		kittyGirl = "kittyGirl";
-		famosBoy = "famosBoy";
-		skin810_1 = "skin810_1";
-		skin810_2 = "skin810_2";
-		skin810_3 = "skin810_3";
-		skin810_4 = "skin810_4";
-		skin810_5 = "skin810_5";
-		skin810_6 = "skin810_6";
-		skin931_1 = "skin931_1";
-		skin931_2 = "skin931_2";
-		skin_may1 = "skin_may1";
-		skin_may2 = "skin_may2";
-		skin_may3 = "skin_may3";
-		skin_may4 = "skin_may4";
-		easter_skin1 = "easter_skin1";
-		easter_skin2 = "easter_skin2";
-		Skins_11_040915 = new string[6] { "skin_fiance", "skin_bride", "skin_bigalien", "skin_minialien", "skin_hippo", "skin_alligator" };
-		skin_tiger = "skin_tiger";
-		skin_pitbull = "skin_pitbull";
-		skin_santa = "skin_santa";
-		skin_elf_new_year = "skin_elf_new_year";
-		skin_girl_new_year = "skin_girl_new_year";
-		skin_cookie_new_year = "skin_cookie_new_year";
-		skin_snowman_new_year = "skin_snowman_new_year";
-		skin_jetti_hnight = "skin_jetti_hnight";
-		skin_startrooper = "skin_startrooper";
-		skin_rapid_girl = "skin_rapid_girl";
-		skin_silent_killer = "skin_silent_killer";
-		skin_daemon_fighter = "skin_daemon_fighter";
-		skin_scary_demon = "skin_scary_demon";
-		skin_orc_warrior = "skin_orc_warrior";
-		skin_kung_fu_master = "skin_kung_fu_master";
-		skin_fire_wizard = "skin_fire_wizard";
-		skin_ice_wizard = "skin_ice_wizard";
-		skin_storm_wizard = "skin_storm_wizard";
-		fullVersion = "extendedversion";
-		armor = "armor";
-		armor2 = "armor2";
-		armor3 = "armor3";
-		categoryNames = new string[5] { "Armory", "Guns", "Melee", "Special", "Gear" };
-		buyStarterPack = new List<string>();
-		_state = new StoreKitEventListenerState();
-		billingSupported = false;
-		coinIds = new string[8] { "coin1", "coin7", "coin2", "coin3.", "coin4", "coin5", "coin8", "coin9" };
-		_productIds = new string[5] { "bigammopack", "Fullhealth", "crystalsword", "MinerWeapon", elixirID };
-		listOfIdsForWhichX3WaitingCoroutinesRun = new List<string>();
-		skinIDs = new string[18]
+		StoreKitEventListener.inAppsReadableNames = strs;
+		StoreKitEventListener.elixirSettName = Defs.NumberOfElixirsSett;
+		StoreKitEventListener.purchaseInProcess = false;
+		StoreKitEventListener.restoreInProcess = false;
+		StoreKitEventListener.elixirID = (!GlobalGameController.isFullVersion ? "elixirlite" : "elixir");
+		StoreKitEventListener.endmanskin = (!GlobalGameController.isFullVersion ? "endmanskinlite" : "endmanskin");
+		StoreKitEventListener.chief = (!GlobalGameController.isFullVersion ? "chiefskinlite" : "chief");
+		StoreKitEventListener.spaceengineer = (!GlobalGameController.isFullVersion ? "spaceengineerskinlite" : "spaceengineer");
+		StoreKitEventListener.nanosoldier = (!GlobalGameController.isFullVersion ? "nanosoldierlite" : "nanosoldier");
+		StoreKitEventListener.steelman = (!GlobalGameController.isFullVersion ? "steelmanlite" : "steelman");
+		StoreKitEventListener.CaptainSkin = "captainskin";
+		StoreKitEventListener.HawkSkin = "hawkskin";
+		StoreKitEventListener.GreenGuySkin = "greenguyskin";
+		StoreKitEventListener.TunderGodSkin = "thundergodskin";
+		StoreKitEventListener.GordonSkin = "gordonskin";
+		StoreKitEventListener.animeGirl = "animeGirl";
+		StoreKitEventListener.EMOGirl = "EMOGirl";
+		StoreKitEventListener.Nurse = "Nurse";
+		StoreKitEventListener.magicGirl = "magicGirl";
+		StoreKitEventListener.braveGirl = "braveGirl";
+		StoreKitEventListener.glamDoll = "glamDoll";
+		StoreKitEventListener.kittyGirl = "kittyGirl";
+		StoreKitEventListener.famosBoy = "famosBoy";
+		StoreKitEventListener.skin810_1 = "skin810_1";
+		StoreKitEventListener.skin810_2 = "skin810_2";
+		StoreKitEventListener.skin810_3 = "skin810_3";
+		StoreKitEventListener.skin810_4 = "skin810_4";
+		StoreKitEventListener.skin810_5 = "skin810_5";
+		StoreKitEventListener.skin810_6 = "skin810_6";
+		StoreKitEventListener.skin931_1 = "skin931_1";
+		StoreKitEventListener.skin931_2 = "skin931_2";
+		StoreKitEventListener.skin_may1 = "skin_may1";
+		StoreKitEventListener.skin_may2 = "skin_may2";
+		StoreKitEventListener.skin_may3 = "skin_may3";
+		StoreKitEventListener.skin_may4 = "skin_may4";
+		StoreKitEventListener.easter_skin1 = "easter_skin1";
+		StoreKitEventListener.easter_skin2 = "easter_skin2";
+		StoreKitEventListener.Skins_11_040915 = new string[] { "skin_fiance", "skin_bride", "skin_bigalien", "skin_minialien", "skin_hippo", "skin_alligator" };
+		StoreKitEventListener.skin_tiger = "skin_tiger";
+		StoreKitEventListener.skin_pitbull = "skin_pitbull";
+		StoreKitEventListener.skin_santa = "skin_santa";
+		StoreKitEventListener.skin_elf_new_year = "skin_elf_new_year";
+		StoreKitEventListener.skin_girl_new_year = "skin_girl_new_year";
+		StoreKitEventListener.skin_cookie_new_year = "skin_cookie_new_year";
+		StoreKitEventListener.skin_snowman_new_year = "skin_snowman_new_year";
+		StoreKitEventListener.skin_jetti_hnight = "skin_jetti_hnight";
+		StoreKitEventListener.skin_startrooper = "skin_startrooper";
+		StoreKitEventListener.skin_rapid_girl = "skin_rapid_girl";
+		StoreKitEventListener.skin_silent_killer = "skin_silent_killer";
+		StoreKitEventListener.skin_daemon_fighter = "skin_daemon_fighter";
+		StoreKitEventListener.skin_scary_demon = "skin_scary_demon";
+		StoreKitEventListener.skin_orc_warrior = "skin_orc_warrior";
+		StoreKitEventListener.skin_kung_fu_master = "skin_kung_fu_master";
+		StoreKitEventListener.skin_fire_wizard = "skin_fire_wizard";
+		StoreKitEventListener.skin_ice_wizard = "skin_ice_wizard";
+		StoreKitEventListener.skin_storm_wizard = "skin_storm_wizard";
+		StoreKitEventListener.fullVersion = "extendedversion";
+		StoreKitEventListener.armor = "armor";
+		StoreKitEventListener.armor2 = "armor2";
+		StoreKitEventListener.armor3 = "armor3";
+		StoreKitEventListener.categoryNames = new string[] { "Armory", "Guns", "Melee", "Special", "Gear" };
+		StoreKitEventListener.buyStarterPack = new List<string>();
+		StoreKitEventListener._state = new StoreKitEventListener.StoreKitEventListenerState();
+		StoreKitEventListener.billingSupported = false;
+		StoreKitEventListener.coinIds = new string[] { "coin1", "coin7", "coin2", "coin3.", "coin4", "coin5", "coin8", "coin9" };
+		StoreKitEventListener._productIds = new string[] { "bigammopack", "Fullhealth", "crystalsword", "MinerWeapon", StoreKitEventListener.elixirID };
+		StoreKitEventListener.listOfIdsForWhichX3WaitingCoroutinesRun = new List<string>();
+		StoreKitEventListener.skinIDs = new string[] { StoreKitEventListener.endmanskin, StoreKitEventListener.chief, StoreKitEventListener.spaceengineer, StoreKitEventListener.nanosoldier, StoreKitEventListener.steelman, StoreKitEventListener.CaptainSkin, StoreKitEventListener.HawkSkin, StoreKitEventListener.GreenGuySkin, StoreKitEventListener.TunderGodSkin, StoreKitEventListener.GordonSkin, StoreKitEventListener.animeGirl, StoreKitEventListener.EMOGirl, StoreKitEventListener.Nurse, StoreKitEventListener.magicGirl, StoreKitEventListener.braveGirl, StoreKitEventListener.glamDoll, StoreKitEventListener.kittyGirl, StoreKitEventListener.famosBoy };
+		List<string> strs1 = new List<string>();
+		string[] strArrays = StoreKitEventListener.skinIDs;
+		for (int i = 0; i < (int)strArrays.Length; i++)
 		{
-			endmanskin, chief, spaceengineer, nanosoldier, steelman, CaptainSkin, HawkSkin, GreenGuySkin, TunderGodSkin, GordonSkin,
-			animeGirl, EMOGirl, Nurse, magicGirl, braveGirl, glamDoll, kittyGirl, famosBoy
-		};
-		List<string> list = new List<string>();
-		string[] array = skinIDs;
-		foreach (string item in array)
-		{
-			list.Add(item);
+			strs1.Add(strArrays[i]);
 		}
-		int j;
 		for (j = 0; j < 11; j++)
 		{
-			list.Add("newskin_" + j);
+			strs1.Add(string.Concat("newskin_", j));
 		}
-		for (; j < 19; j++)
+		while (j < 19)
 		{
-			list.Add("newskin_" + j);
+			strs1.Add(string.Concat("newskin_", j));
+			j++;
 		}
-		list.Add(skin810_1);
-		list.Add(skin810_2);
-		list.Add(skin810_3);
-		list.Add(skin810_4);
-		list.Add(skin810_5);
-		list.Add(skin810_6);
-		list.Add(skin931_1);
-		list.Add(skin931_2);
-		for (int k = 0; k < Skins_11_040915.Length; k++)
+		strs1.Add(StoreKitEventListener.skin810_1);
+		strs1.Add(StoreKitEventListener.skin810_2);
+		strs1.Add(StoreKitEventListener.skin810_3);
+		strs1.Add(StoreKitEventListener.skin810_4);
+		strs1.Add(StoreKitEventListener.skin810_5);
+		strs1.Add(StoreKitEventListener.skin810_6);
+		strs1.Add(StoreKitEventListener.skin931_1);
+		strs1.Add(StoreKitEventListener.skin931_2);
+		for (int k = 0; k < (int)StoreKitEventListener.Skins_11_040915.Length; k++)
 		{
-			list.Add(Skins_11_040915[k]);
+			strs1.Add(StoreKitEventListener.Skins_11_040915[k]);
 		}
-		list.Add("super_socialman");
-		list.Add(skin_tiger);
-		list.Add(skin_pitbull);
-		list.Add(skin_santa);
-		list.Add(skin_elf_new_year);
-		list.Add(skin_girl_new_year);
-		list.Add(skin_cookie_new_year);
-		list.Add(skin_snowman_new_year);
-		list.Add(skin_jetti_hnight);
-		list.Add(skin_startrooper);
-		list.Add(easter_skin1);
-		list.Add(easter_skin2);
-		list.Add(skin_rapid_girl);
-		list.Add(skin_silent_killer);
-		list.Add(skin_daemon_fighter);
-		list.Add(skin_scary_demon);
-		list.Add(skin_orc_warrior);
-		list.Add(skin_kung_fu_master);
-		list.Add(skin_fire_wizard);
-		list.Add(skin_ice_wizard);
-		list.Add(skin_storm_wizard);
-		list.Add(skin_may1);
-		list.Add(skin_may2);
-		list.Add(skin_may3);
-		list.Add(skin_may4);
-		list.Add("skin_july1");
-		list.Add("skin_july2");
-		list.Add("skin_july3");
-		list.Add("skin_july4");
-		skinIDs = list.ToArray();
-		idsForSingle = new string[11]
-		{
-			"bigammopack", "Fullhealth", "ironSword", "MinerWeapon", "steelAxe", "spas", elixirID, "glock", "chainsaw", "scythe",
-			"shovel"
-		};
-		idsForMulti = new string[10]
-		{
-			idsForSingle[2],
-			idsForSingle[3],
-			"steelAxe",
-			"woodenBow",
-			"combatrifle",
-			"spas",
-			"goldeneagle",
-			idsForSingle[7],
-			idsForSingle[8],
-			"famas"
-		};
-		idsForFull = new string[1] { fullVersion };
-		categoriesMulti = new string[2][]
-		{
-			new string[5]
-			{
-				idsForSingle[0],
-				idsForSingle[1],
-				armor,
-				armor2,
-				armor3
-			},
-			PotionsController.potions
-		};
-		categoriesSingle = categoriesMulti;
+		strs1.Add("super_socialman");
+		strs1.Add(StoreKitEventListener.skin_tiger);
+		strs1.Add(StoreKitEventListener.skin_pitbull);
+		strs1.Add(StoreKitEventListener.skin_santa);
+		strs1.Add(StoreKitEventListener.skin_elf_new_year);
+		strs1.Add(StoreKitEventListener.skin_girl_new_year);
+		strs1.Add(StoreKitEventListener.skin_cookie_new_year);
+		strs1.Add(StoreKitEventListener.skin_snowman_new_year);
+		strs1.Add(StoreKitEventListener.skin_jetti_hnight);
+		strs1.Add(StoreKitEventListener.skin_startrooper);
+		strs1.Add(StoreKitEventListener.easter_skin1);
+		strs1.Add(StoreKitEventListener.easter_skin2);
+		strs1.Add(StoreKitEventListener.skin_rapid_girl);
+		strs1.Add(StoreKitEventListener.skin_silent_killer);
+		strs1.Add(StoreKitEventListener.skin_daemon_fighter);
+		strs1.Add(StoreKitEventListener.skin_scary_demon);
+		strs1.Add(StoreKitEventListener.skin_orc_warrior);
+		strs1.Add(StoreKitEventListener.skin_kung_fu_master);
+		strs1.Add(StoreKitEventListener.skin_fire_wizard);
+		strs1.Add(StoreKitEventListener.skin_ice_wizard);
+		strs1.Add(StoreKitEventListener.skin_storm_wizard);
+		strs1.Add(StoreKitEventListener.skin_may1);
+		strs1.Add(StoreKitEventListener.skin_may2);
+		strs1.Add(StoreKitEventListener.skin_may3);
+		strs1.Add(StoreKitEventListener.skin_may4);
+		strs1.Add("skin_july1");
+		strs1.Add("skin_july2");
+		strs1.Add("skin_july3");
+		strs1.Add("skin_july4");
+		StoreKitEventListener.skinIDs = strs1.ToArray();
+		StoreKitEventListener.idsForSingle = new string[] { "bigammopack", "Fullhealth", "ironSword", "MinerWeapon", "steelAxe", "spas", StoreKitEventListener.elixirID, "glock", "chainsaw", "scythe", "shovel" };
+		StoreKitEventListener.idsForMulti = new string[] { StoreKitEventListener.idsForSingle[2], StoreKitEventListener.idsForSingle[3], "steelAxe", "woodenBow", "combatrifle", "spas", "goldeneagle", StoreKitEventListener.idsForSingle[7], StoreKitEventListener.idsForSingle[8], "famas" };
+		StoreKitEventListener.idsForFull = new string[] { StoreKitEventListener.fullVersion };
+		StoreKitEventListener.categoriesMulti = new string[][] { new string[] { StoreKitEventListener.idsForSingle[0], StoreKitEventListener.idsForSingle[1], StoreKitEventListener.armor, StoreKitEventListener.armor2, StoreKitEventListener.armor3 }, PotionsController.potions };
+		StoreKitEventListener.categoriesSingle = StoreKitEventListener.categoriesMulti;
 	}
 
-	private void Start()
+	public StoreKitEventListener()
 	{
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			if (Application.isEditor && !_products.Any())
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("description", "Test coin product for editor in Amazon edition");
-				dictionary.Add("productType", "Not defined");
-				dictionary.Add("price", "33\u00a0руб.");
-				dictionary.Add("sku", "coin1");
-				dictionary.Add("smallIconUrl", "http://example.com");
-				dictionary.Add("title", "Small pack of coins");
-				Dictionary<string, object> jsonMap = dictionary;
-				_products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(jsonMap)));
-				dictionary = new Dictionary<string, object>();
-				dictionary.Add("description", "Test gem product for editor in Amazon edition");
-				dictionary.Add("productType", "Not defined");
-				dictionary.Add("price", "99\u00a0руб.");
-				dictionary.Add("sku", "gem7");
-				dictionary.Add("smallIconUrl", "http://example.com");
-				dictionary.Add("title", "Small pack of gems");
-				Dictionary<string, object> jsonMap2 = dictionary;
-				_products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(jsonMap2)));
-				dictionary = new Dictionary<string, object>();
-				dictionary.Add("description", "Test starter pack product for editor in Amazon edition");
-				dictionary.Add("productType", "Not defined");
-				dictionary.Add("price", "33 руб.");
-				dictionary.Add("sku", starterPack1);
-				dictionary.Add("smallIconUrl", "http://example.com");
-				dictionary.Add("title", "First starter pack(amazon)");
-				Dictionary<string, object> jsonMap3 = dictionary;
-				_products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(jsonMap3)));
-			}
-			else
-			{
-				List<string> skus = coinIds.Concat(gemsIds).ToList();
-				SkusInput skusInput = new SkusInput();
-				skusInput.Skus = skus;
-				SkusInput skusInput2 = skusInput;
-				Debug.Log("Amazon GetProductData (StoreKitEventListener.Start): " + skusInput2.ToJson());
-				AmazonIapV2Impl.Instance.GetProductData(skusInput2);
-			}
-		}
-		else if (Application.isEditor)
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("description", "Test coin product for editor in Google edition");
-			dictionary.Add("type", "Not defined");
-			dictionary.Add("price", "99\u00a0руб.");
-			dictionary.Add("productId", "coin7");
-			dictionary.Add("title", "Average pack of coins");
-			Dictionary<string, object> dict = dictionary;
-			_products.Add(new GoogleMarketProduct(new GoogleSkuInfo(dict)));
-			dictionary = new Dictionary<string, object>();
-			dictionary.Add("description", "Test gem product for editor in Google edition");
-			dictionary.Add("type", "Not defined");
-			dictionary.Add("price", "33\u00a0руб.");
-			dictionary.Add("productId", "gem1");
-			dictionary.Add("title", "Average pack of gems");
-			Dictionary<string, object> dict2 = dictionary;
-			_products.Add(new GoogleMarketProduct(new GoogleSkuInfo(dict2)));
-			dictionary = new Dictionary<string, object>();
-			dictionary.Add("description", "Test starter pack product for editor in Google edition");
-			dictionary.Add("type", "Not defined");
-			dictionary.Add("price", "33 руб.");
-			dictionary.Add("productId", starterPack1);
-			dictionary.Add("title", "First starter pack(android)");
-			Dictionary<string, object> dict3 = dictionary;
-			_products.Add(new GoogleMarketProduct(new GoogleSkuInfo(dict3)));
-		}
-		else
-		{
-			string publicKey = ((Defs.AndroidEdition != Defs.RuntimeAndroidEdition.GoogleLite) ? string.Empty : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoTzMTaqsFhaywvCFKawFwL5KM+djLJfOCT/rbGQRfHmHYmOY2sBMgDWsA/67Szx6EVTZPVlFzHMgkAq1TwdL/A5aYGpGzaCX7o96cyp8R6wSF+xCuj++LAkTaDnLW0veI2bke3EVHu3At9xgM46e+VDucRUqQLvf6SQRb15nuflY5i08xKnewgX7I4U2H0RvAZDyoip+qZPmI4ZvaufAfc0jwZbw7XGiV41zibY3LU0N57mYKk51Wx+tOaJ7Tkc9Rl1qVCTjb+bwXshTqhVXVP6r4kabLWw/8OJUh0Sm69lbps6amP7vPy571XjscCTMLfXQan1959rHbNgkb2mLLQIDAQAB");
-			GoogleIAB.init(publicKey);
-			GoogleIAB.setAutoVerifySignatures(false);
-			if (Defs.IsDeveloperBuild)
-			{
-				GoogleIAB.enableLogging(true);
-			}
-		}
-	}
-
-	private void OnEnable()
-	{
-		_003COnEnable_003Ec__AnonStorey2FB _003COnEnable_003Ec__AnonStorey2FB = new _003COnEnable_003Ec__AnonStorey2FB();
-		_purchaseFailedSubscription.Dispose();
-		if (_003C_003Ef__am_0024cache67 == null)
-		{
-			_003C_003Ef__am_0024cache67 = _003COnEnable_003Em__456;
-		}
-		_003COnEnable_003Ec__AnonStorey2FB.googlePurchaseFailedHandler = _003C_003Ef__am_0024cache67;
-		_purchaseFailedSubscription = new ActionDisposable(_003COnEnable_003Ec__AnonStorey2FB._003C_003Em__457);
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.AddGetUserDataResponseListener(HandleGetUserIdResponseEvent);
-			AmazonIapV2Impl.Instance.AddGetProductDataResponseListener(HandleItemDataRequestFinishedEvent);
-			AmazonIapV2Impl.Instance.AddPurchaseResponseListener(HandlePurchaseSuccessfulEventAmazon);
-			AmazonIapV2Impl.Instance.AddGetPurchaseUpdatesResponseListener(HandlePurchaseUpdatesRequestSuccessfulEvent);
-			HandleAmazonSdkAvailableEvent(false);
-			Debug.Log("Amazon GetUserData (StoreKitEventListener.OnEnable)");
-			AmazonIapV2Impl.Instance.GetUserData();
-		}
-		else
-		{
-			GoogleIABManager.billingSupportedEvent += billingSupportedEvent;
-			GoogleIABManager.billingNotSupportedEvent += billingNotSupportedEvent;
-			GoogleIABManager.queryInventorySucceededEvent += queryInventorySucceededEvent;
-			GoogleIABManager.queryInventoryFailedEvent += queryInventoryFailedEvent;
-			GoogleIABManager.purchaseCompleteAwaitingVerificationEvent += purchaseCompleteAwaitingVerificationEvent;
-			GoogleIABManager.purchaseSucceededEvent += HandleGooglePurchaseSucceeded;
-			GoogleIABManager.purchaseFailedEvent += _003COnEnable_003Ec__AnonStorey2FB.googlePurchaseFailedHandler;
-			GoogleIABManager.consumePurchaseSucceededEvent += consumePurchaseSucceededEvent;
-			GoogleIABManager.consumePurchaseFailedEvent += consumePurchaseFailedEvent;
-		}
-	}
-
-	private void OnDisable()
-	{
-		_purchaseFailedSubscription.Dispose();
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.RemoveGetUserDataResponseListener(HandleGetUserIdResponseEvent);
-			AmazonIapV2Impl.Instance.RemoveGetProductDataResponseListener(HandleItemDataRequestFinishedEvent);
-			AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(HandlePurchaseSuccessfulEventAmazon);
-			AmazonIapV2Impl.Instance.AddGetPurchaseUpdatesResponseListener(HandlePurchaseUpdatesRequestSuccessfulEvent);
-			return;
-		}
-		GoogleIABManager.billingSupportedEvent -= billingSupportedEvent;
-		GoogleIABManager.billingNotSupportedEvent -= billingNotSupportedEvent;
-		GoogleIABManager.queryInventorySucceededEvent -= queryInventorySucceededEvent;
-		GoogleIABManager.queryInventoryFailedEvent -= queryInventoryFailedEvent;
-		GoogleIABManager.purchaseCompleteAwaitingVerificationEvent -= purchaseCompleteAwaitingVerificationEvent;
-		GoogleIABManager.purchaseSucceededEvent -= HandleGooglePurchaseSucceeded;
-		GoogleIABManager.consumePurchaseSucceededEvent -= consumePurchaseSucceededEvent;
-		GoogleIABManager.consumePurchaseFailedEvent -= consumePurchaseFailedEvent;
-	}
-
-	private void billingSupportedEvent()
-	{
-		billingSupported = true;
-		Debug.Log("billingSupportedEvent");
-		RefreshProducts();
-	}
-
-	public static void RefreshProducts()
-	{
-		if (billingSupported || Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			IEnumerable<string> source = _productIds.Concat(coinIds).Concat(gemsIds).Concat(starterPackIds);
-			if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-			{
-				SkusInput skusInput = new SkusInput();
-				skusInput.Skus = source.ToList();
-				SkusInput skusInput2 = skusInput;
-				Debug.Log("Amazon GetProductData (RefreshProducts): " + skusInput2.ToJson());
-				AmazonIapV2Impl.Instance.GetProductData(skusInput2);
-			}
-			else
-			{
-				GoogleIAB.queryInventory(source.ToArray());
-			}
-		}
-	}
-
-	private void billingNotSupportedEvent(string error)
-	{
-		billingSupported = false;
-		Debug.LogWarning("billingNotSupportedEvent: " + error);
-	}
-
-	private void HandleAmazonSdkAvailableEvent(bool isSandboxMode)
-	{
-		Debug.Log("Amazon SDK available in sandbox mode: " + isSandboxMode);
-		billingSupported = true;
-		RefreshProducts();
-	}
-
-	private void HandleGetUserIdResponseEvent(GetUserDataResponse response)
-	{
-		string message = "Amazon GetUserDataResponse: " + response.Status;
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning(message);
-			_amazonUserPromise.TrySetException(new InvalidOperationException(message));
-		}
-		else
-		{
-			Debug.Log(message);
-			_amazonUserPromise.TrySetResult(response.AmazonUserData);
-		}
-	}
-
-	private void AndroidAddCurrencyAndConsume(GooglePurchase purchase)
-	{
-		TryAddVirtualCrrency(purchase.productId);
-		Debug.Log("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase " + purchase.ToString());
-		GooglePlayConsumeAndSave(purchase);
-		if (IsSinglePurchase(purchase))
-		{
-			SendFirstTimePayment(purchase);
-		}
-		LogRealPayment(purchase);
-	}
-
-	private static bool IsSinglePurchase(GooglePurchase purchase)
-	{
-		if (!Storager.hasKey("Android.GooglePlayOrderIdsKey"))
-		{
-			return false;
-		}
-		string @string = Storager.getString("Android.GooglePlayOrderIdsKey", false);
-		if (string.IsNullOrEmpty(@string))
-		{
-			return false;
-		}
-		List<object> list = Json.Deserialize(@string) as List<object>;
-		if (list == null)
-		{
-			return false;
-		}
-		if (list.Count != 1)
-		{
-			return false;
-		}
-		string text = list.OfType<string>().FirstOrDefault(purchase.productId.Equals);
-		if (text == null)
-		{
-			return false;
-		}
-		return true;
 	}
 
 	private void AddCurrencyAndConsumeNextGooglePlayPurchase()
@@ -850,754 +482,53 @@ public sealed class StoreKitEventListener : MonoBehaviour
 		try
 		{
 			GooglePurchase googlePurchase = null;
-			if (_cheatedPurchasesToConsume.Count > 0)
+			if (this._cheatedPurchasesToConsume.Count <= 0)
 			{
-				HashSet<GooglePurchase> cheatedPurchasesToConsume = _cheatedPurchasesToConsume;
-				if (_003C_003Ef__am_0024cache68 == null)
-				{
-					_003C_003Ef__am_0024cache68 = _003CAddCurrencyAndConsumeNextGooglePlayPurchase_003Em__458;
-				}
-				googlePurchase = cheatedPurchasesToConsume.FirstOrDefault(_003C_003Ef__am_0024cache68);
+				googlePurchase = this._purchasesToConsume.FirstOrDefault<GooglePurchase>((GooglePurchase p) => StoreKitEventListener.IsVirtualCurrency(p.productId));
 				if (googlePurchase != null)
 				{
-					Debug.Log("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase " + googlePurchase.ToString());
-					GooglePlayConsumeAndSave(googlePurchase);
-				}
-				return;
-			}
-			HashSet<GooglePurchase> purchasesToConsume = _purchasesToConsume;
-			if (_003C_003Ef__am_0024cache69 == null)
-			{
-				_003C_003Ef__am_0024cache69 = _003CAddCurrencyAndConsumeNextGooglePlayPurchase_003Em__459;
-			}
-			googlePurchase = purchasesToConsume.FirstOrDefault(_003C_003Ef__am_0024cache69);
-			if (googlePurchase == null)
-			{
-				return;
-			}
-			string text = string.Empty;
-			if (Storager.hasKey("Android.GooglePlayOrderIdsKey"))
-			{
-				text = Storager.getString("Android.GooglePlayOrderIdsKey", false);
-			}
-			if (string.IsNullOrEmpty(text))
-			{
-				text = "[]";
-			}
-			List<object> source = (Json.Deserialize(text) as List<object>) ?? new List<object>();
-			HashSet<string> hashSet = new HashSet<string>(source.OfType<string>());
-			if (!hashSet.Contains(googlePurchase.orderId))
-			{
-				if (!listOfIdsForWhichX3WaitingCoroutinesRun.Contains(googlePurchase.orderId))
-				{
-					if (CoroutineRunner.Instance != null)
+					string empty = string.Empty;
+					if (Storager.hasKey("Android.GooglePlayOrderIdsKey"))
 					{
-						CoroutineRunner.Instance.StartCoroutine(WaitForX3AndGiveCurrency(googlePurchase, null));
-						return;
+						empty = Storager.getString("Android.GooglePlayOrderIdsKey", false);
 					}
-					Debug.LogError("AddCurrencyAndConsumeNextGooglePlayPurchase CoroutineRunner.Instance == null ");
-					AndroidAddCurrencyAndConsume(googlePurchase);
+					if (string.IsNullOrEmpty(empty))
+					{
+						empty = "[]";
+					}
+					if ((new HashSet<string>((Json.Deserialize(empty) as List<object> ?? new List<object>()).OfType<string>())).Contains(googlePurchase.orderId))
+					{
+						UnityEngine.Debug.Log(string.Concat("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase ", googlePurchase.ToString()));
+						StoreKitEventListener.GooglePlayConsumeAndSave(googlePurchase);
+					}
+					else if (!StoreKitEventListener.listOfIdsForWhichX3WaitingCoroutinesRun.Contains(googlePurchase.orderId))
+					{
+						if (CoroutineRunner.Instance == null)
+						{
+							UnityEngine.Debug.LogError("AddCurrencyAndConsumeNextGooglePlayPurchase CoroutineRunner.Instance == null ");
+							this.AndroidAddCurrencyAndConsume(googlePurchase);
+						}
+						else
+						{
+							CoroutineRunner.Instance.StartCoroutine(this.WaitForX3AndGiveCurrency(googlePurchase, null));
+						}
+					}
 				}
 			}
 			else
 			{
-				Debug.Log("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase " + googlePurchase.ToString());
-				GooglePlayConsumeAndSave(googlePurchase);
-			}
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError(string.Concat("AddCurrencyAndConsumeNextGooglePlayPurchase exception: ", ex, "\nstacktrace:\n", Environment.StackTrace));
-		}
-	}
-
-	private void queryInventorySucceededEvent(List<GooglePurchase> purchases, List<GoogleSkuInfo> skus)
-	{
-		_products.Clear();
-		_purchasesToConsume.Clear();
-		_cheatedPurchasesToConsume.Clear();
-		try
-		{
-			_003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC _003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC = new _003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC();
-			if (_003C_003Ef__am_0024cache6A == null)
-			{
-				_003C_003Ef__am_0024cache6A = _003CqueryInventorySucceededEvent_003Em__45A;
-			}
-			if (skus.Any(_003C_003Ef__am_0024cache6A))
-			{
-				return;
-			}
-			if (_003C_003Ef__am_0024cache6B == null)
-			{
-				_003C_003Ef__am_0024cache6B = _003CqueryInventorySucceededEvent_003Em__45B;
-			}
-			_003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC.productIds = skus.Select(_003C_003Ef__am_0024cache6B).ToArray();
-			string arg = string.Join(", ", _003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC.productIds);
-			if (_003C_003Ef__am_0024cache6C == null)
-			{
-				_003C_003Ef__am_0024cache6C = _003CqueryInventorySucceededEvent_003Em__45C;
-			}
-			string[] value = purchases.Select(_003C_003Ef__am_0024cache6C).ToArray();
-			string arg2 = string.Join(", ", value);
-			string message = string.Format("Google billing. Query inventory succeeded, purchases: [{0}], skus: [{1}]", arg2, arg);
-			Debug.Log(message);
-			IEnumerable<GoogleMarketProduct> enumerable = skus.Where(_003CqueryInventorySucceededEvent_003Ec__AnonStorey2FC._003C_003Em__45D).Select(MarketProductFactory.CreateGoogleMarketProduct);
-			foreach (GoogleMarketProduct item in enumerable)
-			{
-				if (item.Price.Contains("$0.0"))
+				googlePurchase = this._cheatedPurchasesToConsume.FirstOrDefault<GooglePurchase>((GooglePurchase p) => StoreKitEventListener.IsVirtualCurrency(p.productId));
+				if (googlePurchase != null)
 				{
-					Debug.LogWarningFormat("Unexpected price '{0}': '{1}' ('{2}')", item.Price, item.Id, item.Title);
-					coinsShop.HasTamperedProducts = true;
-				}
-				if (!_products.Contains(item))
-				{
-					_products.Add(item);
-				}
-			}
-			foreach (GooglePurchase purchase in purchases)
-			{
-				if (purchase.productId == "MinerWeapon" || purchase.productId == "MinerWeapon".ToLower())
-				{
-					GameObject gameObject = GameObject.FindGameObjectWithTag("WeaponManager");
-					if ((bool)gameObject)
-					{
-						gameObject.SendMessage("AddMinerWeaponToInventoryAndSaveInApp");
-					}
-				}
-				else if (purchase.productId == "crystalsword")
-				{
-					GameObject gameObject2 = GameObject.FindGameObjectWithTag("WeaponManager");
-					if ((bool)gameObject2)
-					{
-						gameObject2.SendMessage("AddSwordToInventoryAndSaveInApp");
-					}
-				}
-				else if (starterPackIds.Contains(purchase.productId))
-				{
-					StarterPackController.Get.AddBuyAndroidStarterPack(purchase.productId);
-					StarterPackController.Get.TryRestoreStarterPack(purchase.productId);
-				}
-				else if (VerifyPurchase(purchase.originalJson, purchase.signature))
-				{
-					_purchasesToConsume.Add(purchase);
-				}
-				else
-				{
-					_cheatedPurchasesToConsume.Add(purchase);
-				}
-			}
-			AddCurrencyAndConsumeNextGooglePlayPurchase();
-		}
-		finally
-		{
-			purchaseInProcess = false;
-			restoreInProcess = false;
-		}
-	}
-
-	private void queryInventoryFailedEvent(string error)
-	{
-		Debug.LogWarning("Google: queryInventoryFailedEvent: " + error);
-		StartCoroutine(WaitAndQueryInventory());
-	}
-
-	private IEnumerator WaitAndQueryInventory()
-	{
-		Debug.LogWarning(string.Format("Waiting {0}s before requering inventory...", 10f));
-		yield return new WaitForSeconds(10f);
-		Debug.LogWarning(string.Format("Trying to repeat query inventory..."));
-		string[] products = _productIds.Concat(coinIds).Concat(gemsIds).Concat(starterPackIds)
-			.ToArray();
-		GoogleIAB.queryInventory(products);
-	}
-
-	private void HandleItemDataRequestFinishedEvent(GetProductDataResponse response)
-	{
-		string message = "Amazon: GetProductDataResponse: " + response.Status;
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning(message);
-			return;
-		}
-		Debug.Log(message);
-		_products.Clear();
-		try
-		{
-			List<string> obj = response.ProductDataMap.Keys.ToList();
-			string arg = Json.Serialize(obj);
-			string arg2 = Json.Serialize(response.UnavailableSkus);
-			string message2 = string.Format("Item data request finished;    Unavailable skus: {0}, Available skus: {1}", arg2, arg);
-			Debug.Log(message2);
-			Dictionary<string, ProductData>.ValueCollection values = response.ProductDataMap.Values;
-			if (_003C_003Ef__am_0024cache6D == null)
-			{
-				_003C_003Ef__am_0024cache6D = _003CHandleItemDataRequestFinishedEvent_003Em__45E;
-			}
-			IEnumerable<ProductData> enumerable = values.Where(_003C_003Ef__am_0024cache6D);
-			IEnumerable<AmazonMarketProduct> enumerable2 = response.ProductDataMap.Values.Select(MarketProductFactory.CreateAmazonMarketProduct);
-			foreach (AmazonMarketProduct item in enumerable2)
-			{
-				if (!_products.Contains(item))
-				{
-					_products.Add(item);
+					UnityEngine.Debug.Log(string.Concat("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase ", googlePurchase.ToString()));
+					StoreKitEventListener.GooglePlayConsumeAndSave(googlePurchase);
 				}
 			}
 		}
-		finally
+		catch (Exception exception1)
 		{
-			purchaseInProcess = false;
-			restoreInProcess = false;
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("[Rilisoft] Amazon: calling GetPurchaseUpdates()");
-			}
-			AmazonIapV2Impl.Instance.GetPurchaseUpdates(new ResetInput
-			{
-				Reset = true
-			});
-		}
-	}
-
-	private void HandleItemDataRequestFailedEvent()
-	{
-		Debug.LogWarning("Amamzon: Item data request failed.");
-	}
-
-	private void purchaseCompleteAwaitingVerificationEvent(string purchaseData, string signature)
-	{
-		Debug.Log("purchaseCompleteAwaitingVerificationEvent. purchaseData: " + purchaseData + ", signature: " + signature);
-	}
-
-	private static bool IsVirtualCurrency(string productId)
-	{
-		if (productId == null)
-		{
-			return false;
-		}
-		int num = Array.IndexOf(coinIds, productId);
-		int num2 = Array.IndexOf(gemsIds, productId);
-		return num >= coinIds.GetLowerBound(0) || num2 >= gemsIds.GetLowerBound(0);
-	}
-
-	private bool TryAddVirtualCrrency(string productId)
-	{
-		if (string.IsNullOrEmpty(productId))
-		{
-			Debug.LogError("TryAddVirtualCrrency string.IsNullOrEmpty(productId)");
-			return false;
-		}
-		int? num = null;
-		int num2 = Array.IndexOf(coinIds, productId);
-		int num3 = Array.IndexOf(gemsIds, productId);
-		if (num2 >= coinIds.GetLowerBound(0))
-		{
-			num = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num2) * PremiumAccountController.VirtualCurrencyMultiplier);
-			int val = Storager.getInt("Coins", false) + num.Value;
-			Storager.setInt("Coins", val, false);
-			AnalyticsFacade.CurrencyAccrual(num.Value, "Coins", AnalyticsConstants.AccrualType.Purchased);
-			coinsShop.TryToFireCurrenciesAddEvent("Coins");
-			try
-			{
-				ChestBonusController.TryTakeChestBonus(false, num2);
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("TryAddVirtualCrrency ChestBonusController.TryTakeChestBonus exception: " + ex);
-			}
-		}
-		else if (num3 >= gemsIds.GetLowerBound(0))
-		{
-			num = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num3) * PremiumAccountController.VirtualCurrencyMultiplier);
-			int val2 = Storager.getInt("GemsCurrency", false) + num.Value;
-			Storager.setInt("GemsCurrency", val2, false);
-			AnalyticsFacade.CurrencyAccrual(num.Value, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
-			coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
-			try
-			{
-				ChestBonusController.TryTakeChestBonus(true, num3);
-			}
-			catch (Exception ex2)
-			{
-				Debug.LogError("TryAddVirtualCrrency ChestBonusController.TryTakeChestBonus exception: " + ex2);
-			}
-		}
-		if (num.HasValue)
-		{
-			try
-			{
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				LogVirtualCurrencyPurchased(productId, num.Value, num3 >= gemsIds.GetLowerBound(0));
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-			}
-			catch (Exception ex3)
-			{
-				Debug.LogWarningFormat("TryAddVirtualCrrency ANALYTICS, LogVirtualCurrencyPurchased({0}, {1}) threw exception: {2}", productId, num.Value, ex3);
-			}
-		}
-		try
-		{
-			if (FriendsController.sharedController != null)
-			{
-				FriendsController.sharedController.SendOurData();
-			}
-		}
-		catch (Exception ex4)
-		{
-			Debug.LogWarning("FriendsController.sharedController.SendOurData " + ex4);
-		}
-		return num.HasValue;
-	}
-
-	private bool TryAddStarterPackItem(string productId)
-	{
-		if (starterPackIds.Contains(productId))
-		{
-			bool flag = StarterPackController.Get.TryTakePurchasesForCurrentPack(productId);
-			if (flag)
-			{
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-			}
-			FriendsController.sharedController.SendOurData();
-			return flag;
-		}
-		return false;
-	}
-
-	private void ConsumeProductIfCheating(GooglePurchase purchase)
-	{
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.LogError("Consuming cheated purchase: " + purchase.ToString());
-		}
-		GooglePlayConsumeAndSave(purchase);
-	}
-
-	private void LogRealPayment(GooglePurchase purchase)
-	{
-		_003CLogRealPayment_003Ec__AnonStorey2FD _003CLogRealPayment_003Ec__AnonStorey2FD = new _003CLogRealPayment_003Ec__AnonStorey2FD();
-		_003CLogRealPayment_003Ec__AnonStorey2FD.purchase = purchase;
-		if (_003CLogRealPayment_003Ec__AnonStorey2FD.purchase.purchaseState != 0)
-		{
-			return;
-		}
-		try
-		{
-			GoogleSkuInfo googleSkuInfo = Products.FirstOrDefault(_003CLogRealPayment_003Ec__AnonStorey2FD._003C_003Em__45F).PlatformProduct as GoogleSkuInfo;
-			decimal d = googleSkuInfo.priceAmountMicros;
-			decimal d2 = 1000000m;
-			decimal num = decimal.Divide(d, d2);
-			AnalyticsFacade.RealPayment(_003CLogRealPayment_003Ec__AnonStorey2FD.purchase.orderId, (float)num, AnalyticsStuff.ReadableNameForInApp(googleSkuInfo.productId), googleSkuInfo.priceCurrencyCode);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in RealPayment: " + ex);
-		}
-	}
-
-	private void SendFirstTimePayment(GooglePurchase purchase)
-	{
-		//Discarded unreachable code: IL_0040
-		if (purchase.purchaseState != 0)
-		{
-			return;
-		}
-		try
-		{
-			Version version = new Version(Switcher.InitialAppVersion);
-			if (version <= new Version(10, 3, 2, 891))
-			{
-				return;
-			}
-		}
-		catch
-		{
-			return;
-		}
-		ICollection<IMarketProduct> products = Products;
-		if (_003C_003Ef__am_0024cache6E == null)
-		{
-			_003C_003Ef__am_0024cache6E = _003CSendFirstTimePayment_003Em__460;
-		}
-		GoogleSkuInfo googleSkuInfo = products.Select(_003C_003Ef__am_0024cache6E).OfType<GoogleSkuInfo>().FirstOrDefault(purchase.productId.Equals);
-		if (googleSkuInfo != null)
-		{
-			decimal num = decimal.Divide(googleSkuInfo.priceAmountMicros, 1000000m);
-			AnalyticsFacade.SendFirstTimeRealPayment(purchase.orderId, (float)num, AnalyticsStuff.ReadableNameForInApp(googleSkuInfo.productId), googleSkuInfo.priceCurrencyCode);
-		}
-	}
-
-	private void HandleGooglePurchaseSucceeded(GooglePurchase purchase)
-	{
-		Debug.Log("HandleGooglePurchaseSucceeded: " + purchase);
-		if (coinsShop.IsWideLayoutAvailable)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("Cheating attempt.");
-			}
-			ConsumeProductIfCheating(purchase);
-			return;
-		}
-		if (!coinsShop.CheckHostsTimestamp())
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("Hosts tampering attempt.");
-			}
-			ConsumeProductIfCheating(purchase);
-			return;
-		}
-		if (!VerifyPurchase(purchase.originalJson, purchase.signature))
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.LogError("Purchase verification failed.");
-			}
-			ConsumeProductIfCheating(purchase);
-			return;
-		}
-		ContentType contentType = ContentType.Unknown;
-		try
-		{
-			if (TryAddVirtualCrrency(purchase.productId))
-			{
-				if (Array.IndexOf(coinIds, purchase.productId) >= 0)
-				{
-					contentType = ContentType.Coins;
-				}
-				else if (Array.IndexOf(gemsIds, purchase.productId) >= 0)
-				{
-					contentType = ContentType.Gems;
-				}
-				Debug.Log("StoreKitEventListener.HandleGooglePurchaseSucceeded(): Consuming Goole product " + purchase.productId);
-				GooglePlayConsumeAndSave(purchase);
-			}
-			else if (TryAddStarterPackItem(purchase.productId))
-			{
-				contentType = ContentType.StarterPack;
-			}
-			if (IsSinglePurchase(purchase))
-			{
-				SendFirstTimePayment(purchase);
-			}
-			LogRealPayment(purchase);
-		}
-		finally
-		{
-			purchaseInProcess = false;
-			restoreInProcess = false;
-			if (purchase.purchaseState == GooglePurchase.GooglePurchaseState.Purchased)
-			{
-				decimal value;
-				if (VirtualCurrencyHelper.ReferencePricesInUsd.TryGetValue(purchase.productId, out value))
-				{
-					decimal num = Math.Round(value, 0, MidpointRounding.AwayFromZero);
-					Dictionary<string, string> dictionary = new Dictionary<string, string>();
-					dictionary.Add("af_revenue", num.ToString("F2"));
-					dictionary.Add("af_content_type", contentType.ToString());
-					dictionary.Add("af_content_id", purchase.productId);
-					dictionary.Add("af_currency", "USD");
-					dictionary.Add("af_validated", "true");
-					dictionary.Add("af_receipt_id", purchase.orderId);
-					Dictionary<string, string> attributes = dictionary;
-					FlurryPluginWrapper.LogEventToAppsFlyer("af_purchase", attributes);
-				}
-				else
-				{
-					Debug.LogErrorFormat("Cannot find price for product {0}", purchase.productId);
-				}
-			}
-		}
-	}
-
-	private bool VerifyPurchase(string purchaseJson, string base64Signature)
-	{
-		//Discarded unreachable code: IL_0036
-		try
-		{
-			byte[] signature = Convert.FromBase64String(base64Signature);
-			byte[] bytes = Encoding.UTF8.GetBytes(purchaseJson);
-			return _rsa.Value.VerifyData(bytes, _sha1.Value, signature);
-		}
-		catch (Exception exception)
-		{
-			Debug.LogException(exception);
-		}
-		return false;
-	}
-
-	private void HandlePurchaseSuccessfulEventAmazon(PurchaseResponse response)
-	{
-		string message = "Amazon PurchaseResponse (StoreKitEventListener): " + response.Status;
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning(message);
-			purchaseInProcess = false;
-			return;
-		}
-		Debug.Log(message);
-		PurchaseReceipt purchaseReceipt = response.PurchaseReceipt;
-		Debug.Log("Amazon PurchaseResponse.PurchaseReceipt: " + purchaseReceipt.ToJson());
-		try
-		{
-			NotifyFulfillmentInput notifyFulfillmentInput = new NotifyFulfillmentInput();
-			notifyFulfillmentInput.ReceiptId = purchaseReceipt.ReceiptId;
-			notifyFulfillmentInput.FulfillmentResult = "FULFILLED";
-			NotifyFulfillmentInput notifyFulfillmentInput2 = notifyFulfillmentInput;
-			int num = Array.IndexOf(coinIds, purchaseReceipt.Sku);
-			if (num >= coinIds.GetLowerBound(0))
-			{
-				int num2 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
-				string message2 = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetCoinInappsQuantity({1})", purchaseReceipt.Sku, num);
-				Debug.Log(message2);
-				int val = Storager.getInt("Coins", false) + num2;
-				Storager.setInt("Coins", val, false);
-				AnalyticsFacade.CurrencyAccrual(num2, "Coins", AnalyticsConstants.AccrualType.Purchased);
-				Debug.Log("Amazon NotifyFulfillment (HandlePurchaseSuccessfulEvent): " + notifyFulfillmentInput2.ToJson());
-				AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput2);
-				ChestBonusController.TryTakeChestBonus(false, num);
-				coinsShop.TryToFireCurrenciesAddEvent("Coins");
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-				LogVirtualCurrencyPurchased(purchaseReceipt.Sku, num2, false);
-			}
-			num = Array.IndexOf(gemsIds, purchaseReceipt.Sku);
-			if (num >= gemsIds.GetLowerBound(0))
-			{
-				int num3 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
-				string message3 = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetGemsInappsQuantity({1})", purchaseReceipt.Sku, num);
-				Debug.Log(message3);
-				int val2 = Storager.getInt("GemsCurrency", false) + num3;
-				Storager.setInt("GemsCurrency", val2, false);
-				AnalyticsFacade.CurrencyAccrual(num3, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
-				Debug.Log("Amazon NotifyFulfillment (HandlePurchaseSuccessfulEvent): " + notifyFulfillmentInput2.ToJson());
-				AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput2);
-				ChestBonusController.TryTakeChestBonus(true, num);
-				coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-				LogVirtualCurrencyPurchased(purchaseReceipt.Sku, num3, true);
-			}
-			if (TryAddStarterPackItem(purchaseReceipt.Sku))
-			{
-				string message4 = string.Format("Process purchase {0}. Starter pack.", purchaseReceipt.Sku, num);
-				Debug.Log(message4);
-			}
-			FriendsController.sharedController.SendOurData();
-		}
-		finally
-		{
-			purchaseInProcess = false;
-			restoreInProcess = false;
-		}
-	}
-
-	private void consumePurchaseSucceededEvent(GooglePurchase purchase)
-	{
-		_003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE _003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE = new _003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE();
-		_003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE.purchase = purchase;
-		Debug.Log("consumePurchaseSucceededEvent: " + _003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE.purchase);
-		if (_cheatedPurchasesToConsume.RemoveWhere(_003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE._003C_003Em__461) == 0)
-		{
-			_purchasesToConsume.RemoveWhere(_003CconsumePurchaseSucceededEvent_003Ec__AnonStorey2FE._003C_003Em__462);
-		}
-		AddCurrencyAndConsumeNextGooglePlayPurchase();
-	}
-
-	private void consumePurchaseFailedEvent(string error)
-	{
-		Debug.LogWarning("consumePurchaseFailedEvent: " + error);
-	}
-
-	private static NotifyFulfillmentInput FulfillmentInputForReceipt(PurchaseReceipt receipt)
-	{
-		NotifyFulfillmentInput notifyFulfillmentInput = new NotifyFulfillmentInput();
-		notifyFulfillmentInput.ReceiptId = receipt.ReceiptId;
-		notifyFulfillmentInput.FulfillmentResult = "FULFILLED";
-		return notifyFulfillmentInput;
-	}
-
-	public IEnumerator MyWaitForSeconds(float tm)
-	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
-	}
-
-	private IEnumerator WaitForX3AndGiveCurrency(GooglePurchase purchase, PurchaseReceipt receipt)
-	{
-		string idToList = ((purchase == null) ? receipt.ReceiptId : purchase.orderId);
-		listOfIdsForWhichX3WaitingCoroutinesRun.Add(idToList);
-		try
-		{
-			while (ShouldDelayCompletingTransactions())
-			{
-				if (CoroutineRunner.Instance != null)
-				{
-					yield return CoroutineRunner.Instance.StartCoroutine(MyWaitForSeconds(1f));
-				}
-				else
-				{
-					Debug.LogError("Amazon/Android WaitForX3AndGiveCurrency CoroutineRunner.Instance == null ");
-				}
-			}
-		}
-		finally
-		{
-			listOfIdsForWhichX3WaitingCoroutinesRun.Remove(idToList);
-		}
-		try
-		{
-			if (PromoActionsManager.sharedManager != null)
-			{
-				PromoActionsManager.sharedManager.ForceCheckEventX3Active();
-			}
-		}
-		catch (Exception e)
-		{
-			Debug.LogError("Amazon WaitForX3AndGiveCurrency PromoActionsManager.sharedManager.ForceCheckEventX3Active() exception: " + e);
-		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			GiveCoinsOrGemsOnAmazon(receipt);
-		}
-		else
-		{
-			AndroidAddCurrencyAndConsume(purchase);
-		}
-	}
-
-	private static void GiveCoinsOrGemsOnAmazon(PurchaseReceipt receipt)
-	{
-		try
-		{
-			Debug.Log("[Rilisoft] Amazon: restoring purchase: " + receipt.Sku);
-			int num = Array.IndexOf(coinIds, receipt.Sku);
-			if (num >= coinIds.GetLowerBound(0))
-			{
-				int num2 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
-				int val = Storager.getInt("Coins", false) + num2;
-				Storager.setInt("Coins", val, false);
-				AnalyticsFacade.CurrencyAccrual(num2, "Coins", AnalyticsConstants.AccrualType.Purchased);
-				try
-				{
-					ChestBonusController.TryTakeChestBonus(false, num);
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError("[Rilisoft] Amazon: TryTakeChestBonus exception: " + ex);
-				}
-				coinsShop.TryToFireCurrenciesAddEvent("Coins");
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-				LogVirtualCurrencyPurchased(receipt.Sku, num2, false);
-			}
-			num = Array.IndexOf(gemsIds, receipt.Sku);
-			if (num >= gemsIds.GetLowerBound(0))
-			{
-				int num3 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
-				string message = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetGemsInappsQuantity({1})", receipt.Sku, num);
-				Debug.Log(message);
-				int val2 = Storager.getInt("GemsCurrency", false) + num3;
-				Storager.setInt("GemsCurrency", val2, false);
-				AnalyticsFacade.CurrencyAccrual(num3, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
-				try
-				{
-					ChestBonusController.TryTakeChestBonus(true, num);
-				}
-				catch (Exception ex2)
-				{
-					Debug.LogError("[Rilisoft] Amazon: TryTakeChestBonus exception: " + ex2);
-				}
-				coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
-				FlurryEvents.PaymentTime = Time.realtimeSinceStartup;
-				CheckIfFirstTimePayment();
-				SetLastPaymentTime();
-				LogVirtualCurrencyPurchased(receipt.Sku, num3, true);
-			}
-			NotifyFulfillmentInput notifyFulfillmentInput = FulfillmentInputForReceipt(receipt);
-			Debug.Log("Amazon NotifyFulfillment (HandlePurchaseUpdatesRequestSuccessfulEvent): " + notifyFulfillmentInput.ToJson());
-			AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput);
-		}
-		catch (Exception ex3)
-		{
-			Debug.LogError("Exception GiveCoinsOrGemsOnAmazon: " + ex3);
-		}
-	}
-
-	private void HandlePurchaseUpdatesRequestSuccessfulEvent(GetPurchaseUpdatesResponse response)
-	{
-		string message = "[Rilisoft] Amazon GetPurchaseUpdatesResponse: " + response.ToJson();
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning(message);
-			return;
-		}
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log(message);
-		}
-		string text = string.Empty;
-		if (Storager.hasKey("Amazon.FulfilledReceipts"))
-		{
-			text = Storager.getString("Amazon.FulfilledReceipts", false);
-		}
-		if (string.IsNullOrEmpty(text))
-		{
-			text = "[]";
-		}
-		List<object> source = (Json.Deserialize(text) as List<object>) ?? new List<object>();
-		HashSet<string> hashSet = new HashSet<string>(source.OfType<string>());
-		List<PurchaseReceipt> receipts = response.Receipts;
-		for (int i = 0; i != receipts.Count; i++)
-		{
-			PurchaseReceipt purchaseReceipt = receipts[i];
-			string sku = purchaseReceipt.Sku;
-			if (starterPackIds.Contains(sku))
-			{
-				StarterPackController.Get.AddBuyAndroidStarterPack(sku);
-				StarterPackController.Get.TryRestoreStarterPack(sku);
-				continue;
-			}
-			try
-			{
-				if (!coinIds.Contains(sku) && !gemsIds.Contains(sku))
-				{
-					continue;
-				}
-				if (!hashSet.Contains(purchaseReceipt.ReceiptId))
-				{
-					if (!listOfIdsForWhichX3WaitingCoroutinesRun.Contains(purchaseReceipt.ReceiptId))
-					{
-						if (CoroutineRunner.Instance != null)
-						{
-							CoroutineRunner.Instance.StartCoroutine(WaitForX3AndGiveCurrency(null, purchaseReceipt));
-							continue;
-						}
-						Debug.LogError("Amazon NotifyFulfillment CoroutineRunner.Instance == null ");
-						GiveCoinsOrGemsOnAmazon(purchaseReceipt);
-					}
-				}
-				else
-				{
-					NotifyFulfillmentInput notifyFulfillmentInput = FulfillmentInputForReceipt(purchaseReceipt);
-					Debug.Log("Amazon NotifyFulfillment (HandlePurchaseUpdatesRequestSuccessfulEvent): " + notifyFulfillmentInput.ToJson());
-					AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput);
-				}
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError("Exception HandlePurchaseUpdatesRequestSuccessfulEvent: " + ex);
-			}
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError(string.Concat(new object[] { "AddCurrencyAndConsumeNextGooglePlayPurchase exception: ", exception, "\nstacktrace:\n", Environment.StackTrace }));
 		}
 	}
 
@@ -1607,65 +538,514 @@ public sealed class StoreKitEventListener : MonoBehaviour
 		{
 			throw new ArgumentNullException("notifyFulfillmentInput");
 		}
-		string text = string.Empty;
+		string empty = string.Empty;
 		if (Storager.hasKey("Amazon.FulfilledReceipts"))
 		{
-			text = Storager.getString("Amazon.FulfilledReceipts", false);
+			empty = Storager.getString("Amazon.FulfilledReceipts", false);
 		}
-		if (string.IsNullOrEmpty(text))
+		if (string.IsNullOrEmpty(empty))
 		{
-			text = "[]";
+			empty = "[]";
 		}
-		List<object> source = (Json.Deserialize(text) as List<object>) ?? new List<object>();
+		List<object> objs = Json.Deserialize(empty) as List<object> ?? new List<object>();
 		AmazonIapV2Impl.Instance.NotifyFulfillment(notifyFulfillmentInput);
-		HashSet<string> hashSet = new HashSet<string>(source.OfType<string>());
-		hashSet.Add(notifyFulfillmentInput.ReceiptId);
-		text = Json.Serialize(hashSet.ToList());
+		HashSet<string> strs = new HashSet<string>(objs.OfType<string>());
+		strs.Add(notifyFulfillmentInput.ReceiptId);
+		empty = Json.Serialize(strs.ToList<string>());
 		if (Defs.IsDeveloperBuild)
 		{
-			Debug.Log("[Rilisoft] Saving fulfillments: " + text);
+			UnityEngine.Debug.Log(string.Concat("[Rilisoft] Saving fulfillments: ", empty));
 		}
-		Storager.setString("Amazon.FulfilledReceipts", text, false);
+		Storager.setString("Amazon.FulfilledReceipts", empty, false);
+	}
+
+	private void AndroidAddCurrencyAndConsume(GooglePurchase purchase)
+	{
+		this.TryAddVirtualCrrency(purchase.productId);
+		UnityEngine.Debug.Log(string.Concat("StoreKitEventListener.AddCurrencyAndConsumeNextGooglePlayPurchase(): Consuming Goole purchase ", purchase.ToString()));
+		StoreKitEventListener.GooglePlayConsumeAndSave(purchase);
+		if (StoreKitEventListener.IsSinglePurchase(purchase))
+		{
+			this.SendFirstTimePayment(purchase);
+		}
+		this.LogRealPayment(purchase);
+	}
+
+	private void Awake()
+	{
+		StoreKitEventListener.Instance = this;
+	}
+
+	private void billingNotSupportedEvent(string error)
+	{
+		StoreKitEventListener.billingSupported = false;
+		UnityEngine.Debug.LogWarning(string.Concat("billingNotSupportedEvent: ", error));
+	}
+
+	private void billingSupportedEvent()
+	{
+		StoreKitEventListener.billingSupported = true;
+		UnityEngine.Debug.Log("billingSupportedEvent");
+		StoreKitEventListener.RefreshProducts();
+	}
+
+	internal static void CheckIfFirstTimePayment()
+	{
+		if (!Storager.hasKey("PayingUser") || Storager.getInt("PayingUser", true) != 1)
+		{
+			Storager.setInt("PayingUser", 1, true);
+			if (CoroutineRunner.Instance == null)
+			{
+				UnityEngine.Debug.LogError("CheckIfFirstTimePayment CoroutineRunner.Instance == null");
+			}
+			else
+			{
+				CoroutineRunner.Instance.StartCoroutine(StoreKitEventListener.WaitForFyberAndSetIsPaying());
+			}
+			FlurryPluginWrapper.LogEvent("USER FirstTimePayment");
+		}
+	}
+
+	private void ConsumeProductIfCheating(GooglePurchase purchase)
+	{
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Consuming cheated purchase: ", purchase.ToString()));
+		}
+		StoreKitEventListener.GooglePlayConsumeAndSave(purchase);
+	}
+
+	private void consumePurchaseFailedEvent(string error)
+	{
+		UnityEngine.Debug.LogWarning(string.Concat("consumePurchaseFailedEvent: ", error));
+	}
+
+	private void consumePurchaseSucceededEvent(GooglePurchase purchase)
+	{
+		UnityEngine.Debug.Log(string.Concat("consumePurchaseSucceededEvent: ", purchase));
+		if (this._cheatedPurchasesToConsume.RemoveWhere((GooglePurchase p) => p.productId == purchase.productId) == 0)
+		{
+			this._purchasesToConsume.RemoveWhere((GooglePurchase p) => p.productId == purchase.productId);
+		}
+		this.AddCurrencyAndConsumeNextGooglePlayPurchase();
+	}
+
+	private static NotifyFulfillmentInput FulfillmentInputForReceipt(PurchaseReceipt receipt)
+	{
+		NotifyFulfillmentInput notifyFulfillmentInput = new NotifyFulfillmentInput()
+		{
+			ReceiptId = receipt.ReceiptId,
+			FulfillmentResult = "FULFILLED"
+		};
+		return notifyFulfillmentInput;
+	}
+
+	public static int GetDollarsSpent()
+	{
+		return PlayerPrefs.GetInt("ALLCoins", 0) + PlayerPrefs.GetInt("ALLGems", 0);
+	}
+
+	private static void GiveCoinsOrGemsOnAmazon(PurchaseReceipt receipt)
+	{
+		try
+		{
+			UnityEngine.Debug.Log(string.Concat("[Rilisoft] Amazon: restoring purchase: ", receipt.Sku));
+			int num = Array.IndexOf<string>(StoreKitEventListener.coinIds, receipt.Sku);
+			if (num >= StoreKitEventListener.coinIds.GetLowerBound(0))
+			{
+				int num1 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
+				int num2 = Storager.getInt("Coins", false) + num1;
+				Storager.setInt("Coins", num2, false);
+				AnalyticsFacade.CurrencyAccrual(num1, "Coins", AnalyticsConstants.AccrualType.Purchased);
+				try
+				{
+					ChestBonusController.TryTakeChestBonus(false, num);
+				}
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogError(string.Concat("[Rilisoft] Amazon: TryTakeChestBonus exception: ", exception));
+				}
+				coinsShop.TryToFireCurrenciesAddEvent("Coins");
+				FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+				StoreKitEventListener.CheckIfFirstTimePayment();
+				StoreKitEventListener.SetLastPaymentTime();
+				StoreKitEventListener.LogVirtualCurrencyPurchased(receipt.Sku, num1, false);
+			}
+			num = Array.IndexOf<string>(StoreKitEventListener.gemsIds, receipt.Sku);
+			if (num >= StoreKitEventListener.gemsIds.GetLowerBound(0))
+			{
+				int num3 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
+				string str = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetGemsInappsQuantity({1})", receipt.Sku, num);
+				UnityEngine.Debug.Log(str);
+				int num4 = Storager.getInt("GemsCurrency", false) + num3;
+				Storager.setInt("GemsCurrency", num4, false);
+				AnalyticsFacade.CurrencyAccrual(num3, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
+				try
+				{
+					ChestBonusController.TryTakeChestBonus(true, num);
+				}
+				catch (Exception exception1)
+				{
+					UnityEngine.Debug.LogError(string.Concat("[Rilisoft] Amazon: TryTakeChestBonus exception: ", exception1));
+				}
+				coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
+				FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+				StoreKitEventListener.CheckIfFirstTimePayment();
+				StoreKitEventListener.SetLastPaymentTime();
+				StoreKitEventListener.LogVirtualCurrencyPurchased(receipt.Sku, num3, true);
+			}
+			NotifyFulfillmentInput notifyFulfillmentInput = StoreKitEventListener.FulfillmentInputForReceipt(receipt);
+			UnityEngine.Debug.Log(string.Concat("Amazon NotifyFulfillment (HandlePurchaseUpdatesRequestSuccessfulEvent): ", notifyFulfillmentInput.ToJson()));
+			StoreKitEventListener.AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput);
+		}
+		catch (Exception exception2)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception GiveCoinsOrGemsOnAmazon: ", exception2));
+		}
 	}
 
 	private static void GooglePlayConsumeAndSave(GooglePurchase purchase)
 	{
 		try
 		{
-			if (purchase == null)
+			if (purchase != null)
 			{
-				Debug.LogWarning("GooglePlayConsumeAndSave: purchase == null");
-				return;
+				string empty = string.Empty;
+				if (Storager.hasKey("Android.GooglePlayOrderIdsKey"))
+				{
+					empty = Storager.getString("Android.GooglePlayOrderIdsKey", false);
+				}
+				if (string.IsNullOrEmpty(empty))
+				{
+					empty = "[]";
+				}
+				List<object> objs = Json.Deserialize(empty) as List<object> ?? new List<object>();
+				GoogleIAB.consumeProduct(purchase.productId);
+				HashSet<string> strs = new HashSet<string>(objs.OfType<string>());
+				strs.Add(purchase.orderId);
+				empty = Json.Serialize(strs.ToList<string>());
+				if (Defs.IsDeveloperBuild)
+				{
+					UnityEngine.Debug.Log(string.Concat("[Rilisoft] Saving consumed order ids: ", empty));
+				}
+				Storager.setString("Android.GooglePlayOrderIdsKey", empty, false);
 			}
-			string text = string.Empty;
-			if (Storager.hasKey("Android.GooglePlayOrderIdsKey"))
+			else
 			{
-				text = Storager.getString("Android.GooglePlayOrderIdsKey", false);
+				UnityEngine.Debug.LogWarning("GooglePlayConsumeAndSave: purchase == null");
 			}
-			if (string.IsNullOrEmpty(text))
-			{
-				text = "[]";
-			}
-			List<object> source = (Json.Deserialize(text) as List<object>) ?? new List<object>();
-			GoogleIAB.consumeProduct(purchase.productId);
-			HashSet<string> hashSet = new HashSet<string>(source.OfType<string>());
-			hashSet.Add(purchase.orderId);
-			text = Json.Serialize(hashSet.ToList());
+		}
+		catch (Exception exception1)
+		{
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError(string.Concat(new object[] { "GooglePlayConsumeAndSave exception: ", exception, "\nstacktrace:\n", Environment.StackTrace }));
+		}
+	}
+
+	private void HandleAmazonSdkAvailableEvent(bool isSandboxMode)
+	{
+		UnityEngine.Debug.Log(string.Concat("Amazon SDK available in sandbox mode: ", isSandboxMode));
+		StoreKitEventListener.billingSupported = true;
+		StoreKitEventListener.RefreshProducts();
+	}
+
+	private void HandleGetUserIdResponseEvent(GetUserDataResponse response)
+	{
+		string str = string.Concat("Amazon GetUserDataResponse: ", response.Status);
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			UnityEngine.Debug.LogWarning(str);
+			this._amazonUserPromise.TrySetException(new InvalidOperationException(str));
+			return;
+		}
+		UnityEngine.Debug.Log(str);
+		this._amazonUserPromise.TrySetResult(response.AmazonUserData);
+	}
+
+	private void HandleGooglePurchaseSucceeded(GooglePurchase purchase)
+	{
+		decimal num;
+		UnityEngine.Debug.Log(string.Concat("HandleGooglePurchaseSucceeded: ", purchase));
+		if (coinsShop.IsWideLayoutAvailable)
+		{
 			if (Defs.IsDeveloperBuild)
 			{
-				Debug.Log("[Rilisoft] Saving consumed order ids: " + text);
+				UnityEngine.Debug.LogError("Cheating attempt.");
 			}
-			Storager.setString("Android.GooglePlayOrderIdsKey", text, false);
+			this.ConsumeProductIfCheating(purchase);
+			return;
 		}
-		catch (Exception ex)
+		if (!coinsShop.CheckHostsTimestamp())
 		{
-			Debug.LogError(string.Concat("GooglePlayConsumeAndSave exception: ", ex, "\nstacktrace:\n", Environment.StackTrace));
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.LogError("Hosts tampering attempt.");
+			}
+			this.ConsumeProductIfCheating(purchase);
+			return;
+		}
+		if (!this.VerifyPurchase(purchase.originalJson, purchase.signature))
+		{
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.LogError("Purchase verification failed.");
+			}
+			this.ConsumeProductIfCheating(purchase);
+			return;
+		}
+		StoreKitEventListener.ContentType contentType = StoreKitEventListener.ContentType.Unknown;
+		try
+		{
+			if (this.TryAddVirtualCrrency(purchase.productId))
+			{
+				if (Array.IndexOf<string>(StoreKitEventListener.coinIds, purchase.productId) >= 0)
+				{
+					contentType = StoreKitEventListener.ContentType.Coins;
+				}
+				else if (Array.IndexOf<string>(StoreKitEventListener.gemsIds, purchase.productId) >= 0)
+				{
+					contentType = StoreKitEventListener.ContentType.Gems;
+				}
+				UnityEngine.Debug.Log(string.Concat("StoreKitEventListener.HandleGooglePurchaseSucceeded(): Consuming Goole product ", purchase.productId));
+				StoreKitEventListener.GooglePlayConsumeAndSave(purchase);
+			}
+			else if (this.TryAddStarterPackItem(purchase.productId))
+			{
+				contentType = StoreKitEventListener.ContentType.StarterPack;
+			}
+			if (StoreKitEventListener.IsSinglePurchase(purchase))
+			{
+				this.SendFirstTimePayment(purchase);
+			}
+			this.LogRealPayment(purchase);
+		}
+		finally
+		{
+			StoreKitEventListener.purchaseInProcess = false;
+			StoreKitEventListener.restoreInProcess = false;
+			if (purchase.purchaseState == GooglePurchase.GooglePurchaseState.Purchased)
+			{
+				if (!VirtualCurrencyHelper.ReferencePricesInUsd.TryGetValue(purchase.productId, out num))
+				{
+					UnityEngine.Debug.LogErrorFormat("Cannot find price for product {0}", new object[] { purchase.productId });
+				}
+				else
+				{
+					decimal num1 = Math.Round(num, 0, MidpointRounding.AwayFromZero);
+					Dictionary<string, string> strs = new Dictionary<string, string>()
+					{
+						{ "af_revenue", num1.ToString("F2") },
+						{ "af_content_type", contentType.ToString() },
+						{ "af_content_id", purchase.productId },
+						{ "af_currency", "USD" },
+						{ "af_validated", "true" },
+						{ "af_receipt_id", purchase.orderId }
+					};
+					FlurryPluginWrapper.LogEventToAppsFlyer("af_purchase", strs);
+				}
+			}
+		}
+	}
+
+	private void HandleItemDataRequestFailedEvent()
+	{
+		UnityEngine.Debug.LogWarning("Amamzon: Item data request failed.");
+	}
+
+	private void HandleItemDataRequestFinishedEvent(GetProductDataResponse response)
+	{
+		string str = string.Concat("Amazon: GetProductDataResponse: ", response.Status);
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			UnityEngine.Debug.LogWarning(str);
+			return;
+		}
+		UnityEngine.Debug.Log(str);
+		this._products.Clear();
+		try
+		{
+			List<string> list = response.ProductDataMap.Keys.ToList<string>();
+			string str1 = Json.Serialize(list);
+			string str2 = Json.Serialize(response.UnavailableSkus);
+			UnityEngine.Debug.Log(string.Format("Item data request finished;    Unavailable skus: {0}, Available skus: {1}", str2, str1));
+			IEnumerable<AmazonMarketProduct> amazonMarketProducts = response.ProductDataMap.Values.Select<ProductData, AmazonMarketProduct>(new Func<ProductData, AmazonMarketProduct>(MarketProductFactory.CreateAmazonMarketProduct));
+			IEnumerator<AmazonMarketProduct> enumerator = amazonMarketProducts.GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					AmazonMarketProduct current = enumerator.Current;
+					if (this._products.Contains(current))
+					{
+						continue;
+					}
+					this._products.Add(current);
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+		}
+		finally
+		{
+			StoreKitEventListener.purchaseInProcess = false;
+			StoreKitEventListener.restoreInProcess = false;
+			if (Defs.IsDeveloperBuild)
+			{
+				UnityEngine.Debug.Log("[Rilisoft] Amazon: calling GetPurchaseUpdates()");
+			}
+			IAmazonIapV2 instance = AmazonIapV2Impl.Instance;
+			ResetInput resetInput = new ResetInput()
+			{
+				Reset = true
+			};
+			instance.GetPurchaseUpdates(resetInput);
+		}
+	}
+
+	private void HandlePurchaseSuccessfulEventAmazon(PurchaseResponse response)
+	{
+		string str = string.Concat("Amazon PurchaseResponse (StoreKitEventListener): ", response.Status);
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			UnityEngine.Debug.LogWarning(str);
+			StoreKitEventListener.purchaseInProcess = false;
+			return;
+		}
+		UnityEngine.Debug.Log(str);
+		PurchaseReceipt purchaseReceipt = response.PurchaseReceipt;
+		UnityEngine.Debug.Log(string.Concat("Amazon PurchaseResponse.PurchaseReceipt: ", purchaseReceipt.ToJson()));
+		try
+		{
+			NotifyFulfillmentInput notifyFulfillmentInput = new NotifyFulfillmentInput()
+			{
+				ReceiptId = purchaseReceipt.ReceiptId,
+				FulfillmentResult = "FULFILLED"
+			};
+			NotifyFulfillmentInput notifyFulfillmentInput1 = notifyFulfillmentInput;
+			int num = Array.IndexOf<string>(StoreKitEventListener.coinIds, purchaseReceipt.Sku);
+			if (num >= StoreKitEventListener.coinIds.GetLowerBound(0))
+			{
+				int num1 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
+				string str1 = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetCoinInappsQuantity({1})", purchaseReceipt.Sku, num);
+				UnityEngine.Debug.Log(str1);
+				int num2 = Storager.getInt("Coins", false) + num1;
+				Storager.setInt("Coins", num2, false);
+				AnalyticsFacade.CurrencyAccrual(num1, "Coins", AnalyticsConstants.AccrualType.Purchased);
+				UnityEngine.Debug.Log(string.Concat("Amazon NotifyFulfillment (HandlePurchaseSuccessfulEvent): ", notifyFulfillmentInput1.ToJson()));
+				StoreKitEventListener.AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput1);
+				ChestBonusController.TryTakeChestBonus(false, num);
+				coinsShop.TryToFireCurrenciesAddEvent("Coins");
+				FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+				StoreKitEventListener.CheckIfFirstTimePayment();
+				StoreKitEventListener.SetLastPaymentTime();
+				StoreKitEventListener.LogVirtualCurrencyPurchased(purchaseReceipt.Sku, num1, false);
+			}
+			num = Array.IndexOf<string>(StoreKitEventListener.gemsIds, purchaseReceipt.Sku);
+			if (num >= StoreKitEventListener.gemsIds.GetLowerBound(0))
+			{
+				int num3 = Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier);
+				string str2 = string.Format("Process purchase {0}, VirtualCurrencyHelper.GetGemsInappsQuantity({1})", purchaseReceipt.Sku, num);
+				UnityEngine.Debug.Log(str2);
+				int num4 = Storager.getInt("GemsCurrency", false) + num3;
+				Storager.setInt("GemsCurrency", num4, false);
+				AnalyticsFacade.CurrencyAccrual(num3, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
+				UnityEngine.Debug.Log(string.Concat("Amazon NotifyFulfillment (HandlePurchaseSuccessfulEvent): ", notifyFulfillmentInput1.ToJson()));
+				StoreKitEventListener.AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput1);
+				ChestBonusController.TryTakeChestBonus(true, num);
+				coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
+				FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+				StoreKitEventListener.CheckIfFirstTimePayment();
+				StoreKitEventListener.SetLastPaymentTime();
+				StoreKitEventListener.LogVirtualCurrencyPurchased(purchaseReceipt.Sku, num3, true);
+			}
+			if (this.TryAddStarterPackItem(purchaseReceipt.Sku))
+			{
+				string str3 = string.Format("Process purchase {0}. Starter pack.", purchaseReceipt.Sku, num);
+				UnityEngine.Debug.Log(str3);
+			}
+			FriendsController.sharedController.SendOurData(false);
+		}
+		finally
+		{
+			StoreKitEventListener.purchaseInProcess = false;
+			StoreKitEventListener.restoreInProcess = false;
 		}
 	}
 
 	private void HandlePurchaseUpdatesRequestFailedEvent()
 	{
-		Debug.LogWarning("Amazon: Purchase updates request failed.");
+		UnityEngine.Debug.LogWarning("Amazon: Purchase updates request failed.");
+	}
+
+	private void HandlePurchaseUpdatesRequestSuccessfulEvent(GetPurchaseUpdatesResponse response)
+	{
+		string str = string.Concat("[Rilisoft] Amazon GetPurchaseUpdatesResponse: ", response.ToJson());
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			UnityEngine.Debug.LogWarning(str);
+			return;
+		}
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.Log(str);
+		}
+		string empty = string.Empty;
+		if (Storager.hasKey("Amazon.FulfilledReceipts"))
+		{
+			empty = Storager.getString("Amazon.FulfilledReceipts", false);
+		}
+		if (string.IsNullOrEmpty(empty))
+		{
+			empty = "[]";
+		}
+		HashSet<string> strs = new HashSet<string>((Json.Deserialize(empty) as List<object> ?? new List<object>()).OfType<string>());
+		List<PurchaseReceipt> receipts = response.Receipts;
+		for (int i = 0; i != receipts.Count; i++)
+		{
+			PurchaseReceipt item = receipts[i];
+			string sku = item.Sku;
+			if (!StoreKitEventListener.starterPackIds.Contains<string>(sku))
+			{
+				try
+				{
+					if (StoreKitEventListener.coinIds.Contains<string>(sku) || StoreKitEventListener.gemsIds.Contains<string>(sku))
+					{
+						if (strs.Contains(item.ReceiptId))
+						{
+							NotifyFulfillmentInput notifyFulfillmentInput = StoreKitEventListener.FulfillmentInputForReceipt(item);
+							UnityEngine.Debug.Log(string.Concat("Amazon NotifyFulfillment (HandlePurchaseUpdatesRequestSuccessfulEvent): ", notifyFulfillmentInput.ToJson()));
+							StoreKitEventListener.AmazonNotifyFulfillmentAndSave(notifyFulfillmentInput);
+						}
+						else if (!StoreKitEventListener.listOfIdsForWhichX3WaitingCoroutinesRun.Contains(item.ReceiptId))
+						{
+							if (CoroutineRunner.Instance == null)
+							{
+								UnityEngine.Debug.LogError("Amazon NotifyFulfillment CoroutineRunner.Instance == null ");
+								StoreKitEventListener.GiveCoinsOrGemsOnAmazon(item);
+							}
+							else
+							{
+								CoroutineRunner.Instance.StartCoroutine(this.WaitForX3AndGiveCurrency(null, item));
+							}
+						}
+					}
+				}
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogError(string.Concat("Exception HandlePurchaseUpdatesRequestSuccessfulEvent: ", exception));
+				}
+			}
+			else
+			{
+				StarterPackController.Get.AddBuyAndroidStarterPack(sku);
+				StarterPackController.Get.TryRestoreStarterPack(sku);
+			}
+		}
 	}
 
 	private static RSACryptoServiceProvider InitializeRsa()
@@ -1675,75 +1055,65 @@ public sealed class StoreKitEventListener : MonoBehaviour
 		return rSACryptoServiceProvider;
 	}
 
-	public static bool ShouldDelayCompletingTransactions()
+	private static bool IsSinglePurchase(GooglePurchase purchase)
 	{
-		//Discarded unreachable code: IL_003d, IL_005a
-		try
+		if (!Storager.hasKey("Android.GooglePlayOrderIdsKey"))
 		{
-			return Time.realtimeSinceStartup - PromoActionsManager.startupTime < 45f && (!PromoActionsManager.x3InfoDownloadaedOnceDuringCurrentRun || !ChestBonusController.chestBonusesObtainedOnceInCurrentRun || !coinsShop.IsStoreAvailable);
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("Exception in ShouldDelayCompletingTransactions: " + ex);
 			return false;
 		}
-	}
-
-	private void Awake()
-	{
-		Instance = this;
-	}
-
-	private void OnDestroy()
-	{
-		Instance = null;
-	}
-
-	public void ProvideContent()
-	{
-	}
-
-	private static IEnumerator WaitForFyberAndSetIsPaying()
-	{
-		while (FyberFacade.Instance == null)
+		string str = Storager.getString("Android.GooglePlayOrderIdsKey", false);
+		if (string.IsNullOrEmpty(str))
 		{
-			yield return null;
+			return false;
 		}
-		FyberFacade.Instance.SetUserPaying("1");
-	}
-
-	internal static void CheckIfFirstTimePayment()
-	{
-		if (!Storager.hasKey("PayingUser") || Storager.getInt("PayingUser", true) != 1)
+		List<object> objs = Json.Deserialize(str) as List<object>;
+		if (objs == null)
 		{
-			Storager.setInt("PayingUser", 1, true);
-			if (CoroutineRunner.Instance != null)
-			{
-				CoroutineRunner.Instance.StartCoroutine(WaitForFyberAndSetIsPaying());
-			}
-			else
-			{
-				Debug.LogError("CheckIfFirstTimePayment CoroutineRunner.Instance == null");
-			}
-			FlurryPluginWrapper.LogEvent("USER FirstTimePayment");
+			return false;
 		}
+		if (objs.Count != 1)
+		{
+			return false;
+		}
+		if (objs.OfType<string>().FirstOrDefault<string>(new Func<string, bool>(purchase.productId.Equals)) == null)
+		{
+			return false;
+		}
+		return true;
 	}
 
-	public static int GetDollarsSpent()
+	private static bool IsVirtualCurrency(string productId)
 	{
-		return PlayerPrefs.GetInt("ALLCoins", 0) + PlayerPrefs.GetInt("ALLGems", 0);
+		if (productId == null)
+		{
+			return false;
+		}
+		int num = Array.IndexOf<string>(StoreKitEventListener.coinIds, productId);
+		int num1 = Array.IndexOf<string>(StoreKitEventListener.gemsIds, productId);
+		return (num >= StoreKitEventListener.coinIds.GetLowerBound(0) ? true : num1 >= StoreKitEventListener.gemsIds.GetLowerBound(0));
 	}
 
-	internal static void SetLastPaymentTime()
+	private void LogRealPayment(GooglePurchase purchase)
 	{
-		string value = DateTime.UtcNow.ToString("s");
-		PlayerPrefs.SetString("Last Payment Time", value);
-		Storager.setInt("PayingUser", 1, true);
-		PlayerPrefs.SetString("Last Payment Time (Advertisement)", value);
+		if (purchase.purchaseState != GooglePurchase.GooglePurchaseState.Purchased)
+		{
+			return;
+		}
+		try
+		{
+			GoogleSkuInfo platformProduct = this.Products.FirstOrDefault<IMarketProduct>((IMarketProduct p) => (p.PlatformProduct as GoogleSkuInfo).productId == purchase.productId).PlatformProduct as GoogleSkuInfo;
+			decimal num = decimal.Divide(platformProduct.priceAmountMicros, new decimal(1000000));
+			AnalyticsFacade.RealPayment(purchase.orderId, (float)num, AnalyticsStuff.ReadableNameForInApp(platformProduct.productId), platformProduct.priceCurrencyCode);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in RealPayment: ", exception));
+		}
 	}
 
 	public static void LogVirtualCurrencyPurchased(string purchaseId, int virtualCurrencyCount, bool isGems)
 	{
+		int num;
 		try
 		{
 			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.AnyDiscountForTryGuns)
@@ -1751,9 +1121,9 @@ public sealed class StoreKitEventListener : MonoBehaviour
 				AnalyticsStuff.LogWEaponsSpecialOffers_MoneySpended(purchaseId);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("LogVirtualCurrencyPurchased exception (Weapons Special Offers): " + ex);
+			UnityEngine.Debug.LogError(string.Concat("LogVirtualCurrencyPurchased exception (Weapons Special Offers): ", exception));
 		}
 		try
 		{
@@ -1762,197 +1132,654 @@ public sealed class StoreKitEventListener : MonoBehaviour
 			{
 				AnalyticsStuff.LogDailyGiftPurchases(purchaseId);
 			}
-			if (BuySmileBannerController.openedFromPromoActions || (ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.IsFromPromoActions))
+			if (BuySmileBannerController.openedFromPromoActions || ShopNGUIController.sharedShop != null && ShopNGUIController.sharedShop.IsFromPromoActions)
 			{
-				AnalyticsStuff.LogSpecialOffersPanel((!isGems) ? "Buy Coins" : "Buy Gems", AnalyticsStuff.ReadableNameForInApp(purchaseId));
+				AnalyticsStuff.LogSpecialOffersPanel((!isGems ? "Buy Coins" : "Buy Gems"), AnalyticsStuff.ReadableNameForInApp(purchaseId), null, null);
 			}
 		}
-		catch (Exception ex2)
+		catch (Exception exception1)
 		{
-			Debug.LogError("LogVirtualCurrencyPurchased exception: " + ex2);
+			UnityEngine.Debug.LogError(string.Concat("LogVirtualCurrencyPurchased exception: ", exception1));
 		}
-		string deviceModel = SystemInfo.deviceModel;
-		ShopNGUIController.AddBoughtCurrency((!isGems) ? "Coins" : "GemsCurrency", virtualCurrencyCount);
-		string value = string.Format("{0} ({1})", purchaseId, virtualCurrencyCount);
-		string value2 = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1).ToString();
-		string eventName = ((!isGems) ? "Coins Purchased Total" : "Gems Purchased Total");
-		string value3 = ((!(ExperienceController.sharedController != null)) ? "Unknown" : ExperienceController.sharedController.currentLevel.ToString());
+		string str = SystemInfo.deviceModel;
+		ShopNGUIController.AddBoughtCurrency((!isGems ? "Coins" : "GemsCurrency"), virtualCurrencyCount);
+		string str1 = string.Format("{0} ({1})", purchaseId, virtualCurrencyCount);
+		int num1 = PlayerPrefs.GetInt(Defs.SessionNumberKey, 1);
+		string str2 = num1.ToString();
+		string str3 = (!isGems ? "Coins Purchased Total" : "Gems Purchased Total");
+		string str4 = (ExperienceController.sharedController == null ? "Unknown" : ExperienceController.sharedController.currentLevel.ToString());
 		string eventX3State = FlurryPluginWrapper.GetEventX3State();
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Mode", State.Mode ?? string.Empty);
-		dictionary.Add("Rank", value3);
-		dictionary.Add("Session number", value2);
-		dictionary.Add("SKU", value);
-		dictionary.Add("Device model", deviceModel);
-		dictionary.Add("X3", eventX3State);
-		Dictionary<string, string> parameters = dictionary;
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		string eventName2 = (((!isGems) ? "Coins Purchased " : "Gems Purchased ") + State.Mode) ?? string.Empty;
-		dictionary = new Dictionary<string, string>(State.Parameters);
-		dictionary.Add(State.PurchaseKey, purchaseId);
-		dictionary.Add("Rank", value3);
-		dictionary.Add("Session number", value2);
-		dictionary.Add("SKU", value);
-		dictionary.Add("Device model", deviceModel);
-		Dictionary<string, string> dictionary2 = dictionary;
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName2, dictionary2);
-		FlurryPluginWrapper.LogEventToAppsFlyer(eventName2, dictionary2);
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ "Mode", StoreKitEventListener.State.Mode ?? string.Empty },
+			{ "Rank", str4 },
+			{ "Session number", str2 },
+			{ "SKU", str1 },
+			{ "Device model", str },
+			{ "X3", eventX3State }
+		};
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(str3, strs, true);
+		string str5 = string.Concat((!isGems ? "Coins Purchased " : "Gems Purchased "), StoreKitEventListener.State.Mode) ?? string.Empty;
+		strs = new Dictionary<string, string>(StoreKitEventListener.State.Parameters)
+		{
+			{ StoreKitEventListener.State.PurchaseKey, purchaseId },
+			{ "Rank", str4 },
+			{ "Session number", str2 },
+			{ "SKU", str1 },
+			{ "Device model", str }
+		};
+		Dictionary<string, string> strs1 = strs;
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(str5, strs1, true);
+		FlurryPluginWrapper.LogEventToAppsFlyer(str5, strs1);
 		if (ExperienceController.sharedController != null)
 		{
-			int currentLevel = ExperienceController.sharedController.currentLevel;
-			int num = (currentLevel - 1) / 9;
-			string arg = string.Format("[{0}, {1})", num * 9 + 1, (num + 1) * 9 + 1);
-			string eventName3 = string.Format((!isGems) ? "Coins Payment On Level {0}{1}" : "Gems Payment On Level {0}{1}", arg, string.Empty);
-			dictionary = new Dictionary<string, string>();
-			dictionary.Add("Level " + currentLevel, value);
-			Dictionary<string, string> parameters2 = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName3, parameters2);
+			int num2 = ExperienceController.sharedController.currentLevel;
+			int num3 = (num2 - 1) / 9;
+			string str6 = string.Format("[{0}, {1})", num3 * 9 + 1, (num3 + 1) * 9 + 1);
+			string str7 = string.Format((!isGems ? "Coins Payment On Level {0}{1}" : "Gems Payment On Level {0}{1}"), str6, string.Empty);
+			strs = new Dictionary<string, string>()
+			{
+				{ string.Concat("Level ", num2), str1 }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str7, strs, true);
 		}
 		int ourTier = ExpController.GetOurTier();
-		int num2 = ((!(ExperienceController.sharedController != null)) ? 1000 : ExperienceController.sharedController.currentLevel);
-		dictionary = new Dictionary<string, string>();
-		dictionary.Add("Lev" + num2, value);
-		dictionary.Add("TOTAL", value);
-		Dictionary<string, string> parameters3 = dictionary;
-		string text = string.Format(" (Tier {0}){1}{2}", ourTier, FlurryPluginWrapper.GetPayingSuffix(), string.Empty);
-		string eventName4 = ((!isGems) ? "Coins Purchase Total" : "Gems Purchase Total") + text;
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName4, parameters3);
-		string eventName5 = "IAP Purchase Total" + text;
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName5, parameters3);
-		int @int = PlayerPrefs.GetInt("CountPaying", 0);
-		int num3 = Array.IndexOf(coinIds, purchaseId);
-		bool flag = false;
-		if (num3 == -1)
+		int num4 = (ExperienceController.sharedController == null ? 1000 : ExperienceController.sharedController.currentLevel);
+		strs = new Dictionary<string, string>()
 		{
-			num3 = Array.IndexOf(gemsIds, purchaseId);
-			if (num3 == -1)
+			{ string.Concat("Lev", num4), str1 },
+			{ "TOTAL", str1 }
+		};
+		Dictionary<string, string> strs2 = strs;
+		string str8 = string.Format(" (Tier {0}){1}{2}", ourTier, FlurryPluginWrapper.GetPayingSuffix(), string.Empty);
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(string.Concat((!isGems ? "Coins Purchase Total" : "Gems Purchase Total"), str8), strs2, true);
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(string.Concat("IAP Purchase Total", str8), strs2, true);
+		int num5 = PlayerPrefs.GetInt("CountPaying", 0);
+		int num6 = Array.IndexOf<string>(StoreKitEventListener.coinIds, purchaseId);
+		bool flag = false;
+		if (num6 == -1)
+		{
+			num6 = Array.IndexOf<string>(StoreKitEventListener.gemsIds, purchaseId);
+			if (num6 == -1)
 			{
-				num3 = Array.IndexOf(starterPackIds, purchaseId);
+				num6 = Array.IndexOf<string>(StoreKitEventListener.starterPackIds, purchaseId);
 				flag = true;
 			}
 		}
 		if (FriendsController.sharedController != null)
 		{
-			FriendsController.sharedController.SendAddPurchaseEvent((num3 != -1 && !flag) ? ((!isGems) ? VirtualCurrencyHelper.coinPriceIds[num3] : VirtualCurrencyHelper.gemsPriceIds[num3]) : 0, purchaseId);
+			FriendsController friendsController = FriendsController.sharedController;
+			if (num6 == -1 || flag)
+			{
+				num = 0;
+			}
+			else
+			{
+				num = (!isGems ? VirtualCurrencyHelper.coinPriceIds[num6] : VirtualCurrencyHelper.gemsPriceIds[num6]);
+			}
+			friendsController.SendAddPurchaseEvent(num, purchaseId);
 		}
-		if (num3 == -1)
+		if (num6 != -1)
 		{
-			string message = string.Format("Could not find “{0}” value in coinIds array.", purchaseId);
-			Debug.Log(message);
-			return;
-		}
-		if (FriendsController.useBuffSystem)
-		{
-			BuffSystem.instance.OnCurrencyBuyed(isGems, num3);
-		}
-		int num4 = 0;
-		if (isGems)
-		{
-			num4 = PlayerPrefs.GetInt("ALLGems", 0);
-			num4 += ((!flag) ? VirtualCurrencyHelper.gemsPriceIds[num3] : VirtualCurrencyHelper.starterPackFakePrice[num3]);
-			PlayerPrefs.SetInt("ALLGems", num4);
+			if (FriendsController.useBuffSystem)
+			{
+				BuffSystem.instance.OnCurrencyBuyed(isGems, num6);
+			}
+			int num7 = 0;
+			if (!isGems)
+			{
+				num7 = PlayerPrefs.GetInt("ALLCoins", 0);
+				num7 = num7 + (!flag ? VirtualCurrencyHelper.coinPriceIds[num6] : VirtualCurrencyHelper.starterPackFakePrice[num6]);
+				PlayerPrefs.SetInt("ALLCoins", num7);
+			}
+			else
+			{
+				num7 = PlayerPrefs.GetInt("ALLGems", 0);
+				num7 = num7 + (!flag ? VirtualCurrencyHelper.gemsPriceIds[num6] : VirtualCurrencyHelper.starterPackFakePrice[num6]);
+				PlayerPrefs.SetInt("ALLGems", num7);
+			}
+			if (!flag)
+			{
+				Storager.setInt(string.Concat(Defs.AllCurrencyBought, (!isGems ? "Coins" : "GemsCurrency")), Storager.getInt(string.Concat(Defs.AllCurrencyBought, (!isGems ? "Coins" : "GemsCurrency")), false) + virtualCurrencyCount, false);
+			}
+			num5++;
+			PlayerPrefs.SetInt("CountPaying", num5);
+			if (num5 >= 1 && PlayerPrefs.GetInt("Paying_User", 0) == 0)
+			{
+				PlayerPrefs.SetInt("Paying_User", 1);
+				FacebookController.LogEvent("Paying_User", null);
+				UnityEngine.Debug.Log("Paying_User detected.");
+			}
+			if (num5 > 1 && PlayerPrefs.GetInt("Paying_User_Dolphin", 0) == 0)
+			{
+				PlayerPrefs.SetInt("Paying_User_Dolphin", 1);
+				FacebookController.LogEvent("Paying_User_Dolphin", null);
+				UnityEngine.Debug.Log("Paying_User_Dolphin detected.");
+			}
+			if (num5 > 3 && PlayerPrefs.GetInt("Paying_User_Whale", 0) == 0)
+			{
+				PlayerPrefs.SetInt("Paying_User_Whale", 1);
+				FacebookController.LogEvent("Paying_User_Whale", null);
+				UnityEngine.Debug.Log("Paying_User_Whale detected.");
+			}
+			if (num7 >= 100 && PlayerPrefs.GetInt("SendKit", 0) == 0)
+			{
+				PlayerPrefs.SetInt("SendKit", 1);
+				FacebookController.LogEvent("Whale_detected", null);
+				UnityEngine.Debug.Log("Whale detected.");
+			}
+			if (PlayerPrefs.GetInt("confirmed_1st_time", 0) == 0)
+			{
+				PlayerPrefs.SetInt("confirmed_1st_time", 1);
+				FacebookController.LogEvent("Purchase_confirmed_1st_time", null);
+				UnityEngine.Debug.Log("Purchase confirmed first time.");
+			}
+			if (PlayerPrefs.GetInt("Active_loyal_users_payed_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2 && PlayerPrefs.GetInt("PostVideo", 0) > 0)
+			{
+				FacebookController.LogEvent("Active_loyal_users_payed", null);
+				PlayerPrefs.SetInt("Active_loyal_users_payed_send", 1);
+			}
 		}
 		else
 		{
-			num4 = PlayerPrefs.GetInt("ALLCoins", 0);
-			num4 += ((!flag) ? VirtualCurrencyHelper.coinPriceIds[num3] : VirtualCurrencyHelper.starterPackFakePrice[num3]);
-			PlayerPrefs.SetInt("ALLCoins", num4);
+			UnityEngine.Debug.Log(string.Format("Could not find “{0}” value in coinIds array.", purchaseId));
 		}
-		if (!flag)
+	}
+
+	[DebuggerHidden]
+	public IEnumerator MyWaitForSeconds(float tm)
+	{
+		StoreKitEventListener.u003cMyWaitForSecondsu003ec__Iterator194 variable = null;
+		return variable;
+	}
+
+	private void OnDestroy()
+	{
+		StoreKitEventListener.Instance = null;
+	}
+
+	private void OnDisable()
+	{
+		this._purchaseFailedSubscription.Dispose();
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 		{
-			Storager.setInt(Defs.AllCurrencyBought + ((!isGems) ? "Coins" : "GemsCurrency"), Storager.getInt(Defs.AllCurrencyBought + ((!isGems) ? "Coins" : "GemsCurrency"), false) + virtualCurrencyCount, false);
+			GoogleIABManager.billingSupportedEvent -= new Action(this.billingSupportedEvent);
+			GoogleIABManager.billingNotSupportedEvent -= new Action<string>(this.billingNotSupportedEvent);
+			GoogleIABManager.queryInventorySucceededEvent -= new Action<List<GooglePurchase>, List<GoogleSkuInfo>>(this.queryInventorySucceededEvent);
+			GoogleIABManager.queryInventoryFailedEvent -= new Action<string>(this.queryInventoryFailedEvent);
+			GoogleIABManager.purchaseCompleteAwaitingVerificationEvent -= new Action<string, string>(this.purchaseCompleteAwaitingVerificationEvent);
+			GoogleIABManager.purchaseSucceededEvent -= new Action<GooglePurchase>(this.HandleGooglePurchaseSucceeded);
+			GoogleIABManager.consumePurchaseSucceededEvent -= new Action<GooglePurchase>(this.consumePurchaseSucceededEvent);
+			GoogleIABManager.consumePurchaseFailedEvent -= new Action<string>(this.consumePurchaseFailedEvent);
 		}
-		@int++;
-		PlayerPrefs.SetInt("CountPaying", @int);
-		if (@int >= 1 && PlayerPrefs.GetInt("Paying_User", 0) == 0)
+		else
 		{
-			PlayerPrefs.SetInt("Paying_User", 1);
-			FacebookController.LogEvent("Paying_User");
-			Debug.Log("Paying_User detected.");
+			AmazonIapV2Impl.Instance.RemoveGetUserDataResponseListener(new GetUserDataResponseDelegate(this.HandleGetUserIdResponseEvent));
+			AmazonIapV2Impl.Instance.RemoveGetProductDataResponseListener(new GetProductDataResponseDelegate(this.HandleItemDataRequestFinishedEvent));
+			AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(new PurchaseResponseDelegate(this.HandlePurchaseSuccessfulEventAmazon));
+			AmazonIapV2Impl.Instance.AddGetPurchaseUpdatesResponseListener(new GetPurchaseUpdatesResponseDelegate(this.HandlePurchaseUpdatesRequestSuccessfulEvent));
 		}
-		if (@int > 1 && PlayerPrefs.GetInt("Paying_User_Dolphin", 0) == 0)
+	}
+
+	private void OnEnable()
+	{
+		this._purchaseFailedSubscription.Dispose();
+		Action<string, int> action = (string error, int response) => {
+			StoreKitEventListener.purchaseInProcess = false;
+			UnityEngine.Debug.LogWarning(string.Format("googlePurchaseFailedHandler({0}): {1}", response, error));
+		};
+		this._purchaseFailedSubscription = new ActionDisposable(() => GoogleIABManager.purchaseFailedEvent -= action);
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 		{
-			PlayerPrefs.SetInt("Paying_User_Dolphin", 1);
-			FacebookController.LogEvent("Paying_User_Dolphin");
-			Debug.Log("Paying_User_Dolphin detected.");
+			GoogleIABManager.billingSupportedEvent += new Action(this.billingSupportedEvent);
+			GoogleIABManager.billingNotSupportedEvent += new Action<string>(this.billingNotSupportedEvent);
+			GoogleIABManager.queryInventorySucceededEvent += new Action<List<GooglePurchase>, List<GoogleSkuInfo>>(this.queryInventorySucceededEvent);
+			GoogleIABManager.queryInventoryFailedEvent += new Action<string>(this.queryInventoryFailedEvent);
+			GoogleIABManager.purchaseCompleteAwaitingVerificationEvent += new Action<string, string>(this.purchaseCompleteAwaitingVerificationEvent);
+			GoogleIABManager.purchaseSucceededEvent += new Action<GooglePurchase>(this.HandleGooglePurchaseSucceeded);
+			GoogleIABManager.purchaseFailedEvent += action;
+			GoogleIABManager.consumePurchaseSucceededEvent += new Action<GooglePurchase>(this.consumePurchaseSucceededEvent);
+			GoogleIABManager.consumePurchaseFailedEvent += new Action<string>(this.consumePurchaseFailedEvent);
 		}
-		if (@int > 3 && PlayerPrefs.GetInt("Paying_User_Whale", 0) == 0)
+		else
 		{
-			PlayerPrefs.SetInt("Paying_User_Whale", 1);
-			FacebookController.LogEvent("Paying_User_Whale");
-			Debug.Log("Paying_User_Whale detected.");
+			AmazonIapV2Impl.Instance.AddGetUserDataResponseListener(new GetUserDataResponseDelegate(this.HandleGetUserIdResponseEvent));
+			AmazonIapV2Impl.Instance.AddGetProductDataResponseListener(new GetProductDataResponseDelegate(this.HandleItemDataRequestFinishedEvent));
+			AmazonIapV2Impl.Instance.AddPurchaseResponseListener(new PurchaseResponseDelegate(this.HandlePurchaseSuccessfulEventAmazon));
+			AmazonIapV2Impl.Instance.AddGetPurchaseUpdatesResponseListener(new GetPurchaseUpdatesResponseDelegate(this.HandlePurchaseUpdatesRequestSuccessfulEvent));
+			this.HandleAmazonSdkAvailableEvent(false);
+			UnityEngine.Debug.Log("Amazon GetUserData (StoreKitEventListener.OnEnable)");
+			AmazonIapV2Impl.Instance.GetUserData();
 		}
-		if (num4 >= 100 && PlayerPrefs.GetInt("SendKit", 0) == 0)
+	}
+
+	public void ProvideContent()
+	{
+	}
+
+	private void purchaseCompleteAwaitingVerificationEvent(string purchaseData, string signature)
+	{
+		UnityEngine.Debug.Log(string.Concat("purchaseCompleteAwaitingVerificationEvent. purchaseData: ", purchaseData, ", signature: ", signature));
+	}
+
+	private void queryInventoryFailedEvent(string error)
+	{
+		UnityEngine.Debug.LogWarning(string.Concat("Google: queryInventoryFailedEvent: ", error));
+		base.StartCoroutine(this.WaitAndQueryInventory());
+	}
+
+	private void queryInventorySucceededEvent(List<GooglePurchase> purchases, List<GoogleSkuInfo> skus)
+	{
+		this._products.Clear();
+		this._purchasesToConsume.Clear();
+		this._cheatedPurchasesToConsume.Clear();
+		try
 		{
-			PlayerPrefs.SetInt("SendKit", 1);
-			FacebookController.LogEvent("Whale_detected");
-			Debug.Log("Whale detected.");
+			if (!skus.Any<GoogleSkuInfo>((GoogleSkuInfo s) => s.productId == "skinsmaker"))
+			{
+				string[] array = (
+					from sku in skus
+					select sku.productId).ToArray<string>();
+				string str = string.Join(", ", array);
+				string[] strArrays = (
+					from p in purchases
+					select string.Format("<{0}, {1}>", p.productId, p.purchaseState)).ToArray<string>();
+				string str1 = string.Join(", ", strArrays);
+				UnityEngine.Debug.Log(string.Format("Google billing. Query inventory succeeded, purchases: [{0}], skus: [{1}]", str1, str));
+				IEnumerable<GoogleMarketProduct> googleMarketProducts = (
+					from s in skus
+					where array.Contains<string>(s.productId)
+					select s).Select<GoogleSkuInfo, GoogleMarketProduct>(new Func<GoogleSkuInfo, GoogleMarketProduct>(MarketProductFactory.CreateGoogleMarketProduct));
+				IEnumerator<GoogleMarketProduct> enumerator = googleMarketProducts.GetEnumerator();
+				try
+				{
+					while (enumerator.MoveNext())
+					{
+						GoogleMarketProduct current = enumerator.Current;
+						if (current.Price.Contains("$0.0"))
+						{
+							UnityEngine.Debug.LogWarningFormat("Unexpected price '{0}': '{1}' ('{2}')", new object[] { current.Price, current.Id, current.Title });
+							coinsShop.HasTamperedProducts = true;
+						}
+						if (this._products.Contains(current))
+						{
+							continue;
+						}
+						this._products.Add(current);
+					}
+				}
+				finally
+				{
+					if (enumerator == null)
+					{
+					}
+					enumerator.Dispose();
+				}
+				foreach (GooglePurchase purchase in purchases)
+				{
+					if (purchase.productId == "MinerWeapon" || purchase.productId == "MinerWeapon".ToLower())
+					{
+						GameObject gameObject = GameObject.FindGameObjectWithTag("WeaponManager");
+						if (gameObject)
+						{
+							gameObject.SendMessage("AddMinerWeaponToInventoryAndSaveInApp");
+						}
+					}
+					else if (purchase.productId == "crystalsword")
+					{
+						GameObject gameObject1 = GameObject.FindGameObjectWithTag("WeaponManager");
+						if (gameObject1)
+						{
+							gameObject1.SendMessage("AddSwordToInventoryAndSaveInApp");
+						}
+					}
+					else if (StoreKitEventListener.starterPackIds.Contains<string>(purchase.productId))
+					{
+						StarterPackController.Get.AddBuyAndroidStarterPack(purchase.productId);
+						StarterPackController.Get.TryRestoreStarterPack(purchase.productId);
+					}
+					else if (!this.VerifyPurchase(purchase.originalJson, purchase.signature))
+					{
+						this._cheatedPurchasesToConsume.Add(purchase);
+					}
+					else
+					{
+						this._purchasesToConsume.Add(purchase);
+					}
+				}
+				this.AddCurrencyAndConsumeNextGooglePlayPurchase();
+			}
 		}
-		if (PlayerPrefs.GetInt("confirmed_1st_time", 0) == 0)
+		finally
 		{
-			PlayerPrefs.SetInt("confirmed_1st_time", 1);
-			FacebookController.LogEvent("Purchase_confirmed_1st_time");
-			Debug.Log("Purchase confirmed first time.");
+			StoreKitEventListener.purchaseInProcess = false;
+			StoreKitEventListener.restoreInProcess = false;
 		}
-		if (PlayerPrefs.GetInt("Active_loyal_users_payed_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2 && PlayerPrefs.GetInt("PostVideo", 0) > 0)
+	}
+
+	public static void RefreshProducts()
+	{
+		if (!StoreKitEventListener.billingSupported && Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 		{
-			FacebookController.LogEvent("Active_loyal_users_payed");
-			PlayerPrefs.SetInt("Active_loyal_users_payed_send", 1);
+			return;
+		}
+		IEnumerable<string> strs = StoreKitEventListener._productIds.Concat<string>(StoreKitEventListener.coinIds).Concat<string>(StoreKitEventListener.gemsIds).Concat<string>(StoreKitEventListener.starterPackIds);
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+		{
+			GoogleIAB.queryInventory(strs.ToArray<string>());
+		}
+		else
+		{
+			SkusInput skusInput = new SkusInput()
+			{
+				Skus = strs.ToList<string>()
+			};
+			SkusInput skusInput1 = skusInput;
+			UnityEngine.Debug.Log(string.Concat("Amazon GetProductData (RefreshProducts): ", skusInput1.ToJson()));
+			AmazonIapV2Impl.Instance.GetProductData(skusInput1);
 		}
 	}
 
-	[CompilerGenerated]
-	private static SHA1Managed _003C_sha1_003Em__455()
+	private void SendFirstTimePayment(GooglePurchase purchase)
 	{
-		return new SHA1Managed();
+		if (purchase.purchaseState != GooglePurchase.GooglePurchaseState.Purchased)
+		{
+			return;
+		}
+		try
+		{
+			if (new Version(Switcher.InitialAppVersion) <= new Version(10, 3, 2, 891))
+			{
+				return;
+			}
+		}
+		catch
+		{
+			return;
+		}
+		IEnumerable<GoogleSkuInfo> googleSkuInfos = (
+			from p in this.Products
+			select p.PlatformProduct).OfType<GoogleSkuInfo>();
+		string str = purchase.productId;
+		GoogleSkuInfo googleSkuInfo = googleSkuInfos.FirstOrDefault<GoogleSkuInfo>(new Func<GoogleSkuInfo, bool>(str.Equals));
+		if (googleSkuInfo == null)
+		{
+			return;
+		}
+		decimal num = decimal.Divide(googleSkuInfo.priceAmountMicros, new decimal(1000000));
+		AnalyticsFacade.SendFirstTimeRealPayment(purchase.orderId, (float)num, AnalyticsStuff.ReadableNameForInApp(googleSkuInfo.productId), googleSkuInfo.priceCurrencyCode);
 	}
 
-	[CompilerGenerated]
-	private static void _003COnEnable_003Em__456(string error, int response)
+	internal static void SetLastPaymentTime()
 	{
-		purchaseInProcess = false;
-		Debug.LogWarning(string.Format("googlePurchaseFailedHandler({0}): {1}", response, error));
+		string str = DateTime.UtcNow.ToString("s");
+		PlayerPrefs.SetString("Last Payment Time", str);
+		Storager.setInt("PayingUser", 1, true);
+		PlayerPrefs.SetString("Last Payment Time (Advertisement)", str);
 	}
 
-	[CompilerGenerated]
-	private static bool _003CAddCurrencyAndConsumeNextGooglePlayPurchase_003Em__458(GooglePurchase p)
+	public static bool ShouldDelayCompletingTransactions()
 	{
-		return IsVirtualCurrency(p.productId);
+		bool flag;
+		try
+		{
+			flag = (Time.realtimeSinceStartup - PromoActionsManager.startupTime >= 45f ? false : (!PromoActionsManager.x3InfoDownloadaedOnceDuringCurrentRun || !ChestBonusController.chestBonusesObtainedOnceInCurrentRun ? 0 : (int)coinsShop.IsStoreAvailable) == 0);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogError(string.Concat("Exception in ShouldDelayCompletingTransactions: ", exception));
+			flag = false;
+		}
+		return flag;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CAddCurrencyAndConsumeNextGooglePlayPurchase_003Em__459(GooglePurchase p)
+	private void Start()
 	{
-		return IsVirtualCurrency(p.productId);
+		Dictionary<string, object> strs;
+		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+		{
+			if (!Application.isEditor || this._products.Any<IMarketProduct>())
+			{
+				List<string> list = StoreKitEventListener.coinIds.Concat<string>(StoreKitEventListener.gemsIds).ToList<string>();
+				SkusInput skusInput = new SkusInput()
+				{
+					Skus = list
+				};
+				UnityEngine.Debug.Log(string.Concat("Amazon GetProductData (StoreKitEventListener.Start): ", skusInput.ToJson()));
+				AmazonIapV2Impl.Instance.GetProductData(skusInput);
+			}
+			else
+			{
+				strs = new Dictionary<string, object>()
+				{
+					{ "description", "Test coin product for editor in Amazon edition" },
+					{ "productType", "Not defined" },
+					{ "price", "33\u00a0руб." },
+					{ "sku", "coin1" },
+					{ "smallIconUrl", "http://example.com" },
+					{ "title", "Small pack of coins" }
+				};
+				this._products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(strs)));
+				strs = new Dictionary<string, object>()
+				{
+					{ "description", "Test gem product for editor in Amazon edition" },
+					{ "productType", "Not defined" },
+					{ "price", "99\u00a0руб." },
+					{ "sku", "gem7" },
+					{ "smallIconUrl", "http://example.com" },
+					{ "title", "Small pack of gems" }
+				};
+				this._products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(strs)));
+				strs = new Dictionary<string, object>()
+				{
+					{ "description", "Test starter pack product for editor in Amazon edition" },
+					{ "productType", "Not defined" },
+					{ "price", "33 руб." },
+					{ "sku", StoreKitEventListener.starterPack1 },
+					{ "smallIconUrl", "http://example.com" },
+					{ "title", "First starter pack(amazon)" }
+				};
+				this._products.Add(new AmazonMarketProduct(ProductData.CreateFromDictionary(strs)));
+			}
+		}
+		else if (!Application.isEditor)
+		{
+			GoogleIAB.init((Defs.AndroidEdition != Defs.RuntimeAndroidEdition.GoogleLite ? string.Empty : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoTzMTaqsFhaywvCFKawFwL5KM+djLJfOCT/rbGQRfHmHYmOY2sBMgDWsA/67Szx6EVTZPVlFzHMgkAq1TwdL/A5aYGpGzaCX7o96cyp8R6wSF+xCuj++LAkTaDnLW0veI2bke3EVHu3At9xgM46e+VDucRUqQLvf6SQRb15nuflY5i08xKnewgX7I4U2H0RvAZDyoip+qZPmI4ZvaufAfc0jwZbw7XGiV41zibY3LU0N57mYKk51Wx+tOaJ7Tkc9Rl1qVCTjb+bwXshTqhVXVP6r4kabLWw/8OJUh0Sm69lbps6amP7vPy571XjscCTMLfXQan1959rHbNgkb2mLLQIDAQAB"));
+			GoogleIAB.setAutoVerifySignatures(false);
+			if (Defs.IsDeveloperBuild)
+			{
+				GoogleIAB.enableLogging(true);
+			}
+		}
+		else
+		{
+			strs = new Dictionary<string, object>()
+			{
+				{ "description", "Test coin product for editor in Google edition" },
+				{ "type", "Not defined" },
+				{ "price", "99\u00a0руб." },
+				{ "productId", "coin7" },
+				{ "title", "Average pack of coins" }
+			};
+			this._products.Add(new GoogleMarketProduct(new GoogleSkuInfo(strs)));
+			strs = new Dictionary<string, object>()
+			{
+				{ "description", "Test gem product for editor in Google edition" },
+				{ "type", "Not defined" },
+				{ "price", "33\u00a0руб." },
+				{ "productId", "gem1" },
+				{ "title", "Average pack of gems" }
+			};
+			this._products.Add(new GoogleMarketProduct(new GoogleSkuInfo(strs)));
+			strs = new Dictionary<string, object>()
+			{
+				{ "description", "Test starter pack product for editor in Google edition" },
+				{ "type", "Not defined" },
+				{ "price", "33 руб." },
+				{ "productId", StoreKitEventListener.starterPack1 },
+				{ "title", "First starter pack(android)" }
+			};
+			this._products.Add(new GoogleMarketProduct(new GoogleSkuInfo(strs)));
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CqueryInventorySucceededEvent_003Em__45A(GoogleSkuInfo s)
+	private bool TryAddStarterPackItem(string productId)
 	{
-		return s.productId == "skinsmaker";
+		if (!StoreKitEventListener.starterPackIds.Contains<string>(productId))
+		{
+			return false;
+		}
+		bool flag = StarterPackController.Get.TryTakePurchasesForCurrentPack(productId, false);
+		if (flag)
+		{
+			FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+			StoreKitEventListener.CheckIfFirstTimePayment();
+			StoreKitEventListener.SetLastPaymentTime();
+		}
+		FriendsController.sharedController.SendOurData(false);
+		return flag;
 	}
 
-	[CompilerGenerated]
-	private static string _003CqueryInventorySucceededEvent_003Em__45B(GoogleSkuInfo sku)
+	private bool TryAddVirtualCrrency(string productId)
 	{
-		return sku.productId;
+		if (string.IsNullOrEmpty(productId))
+		{
+			UnityEngine.Debug.LogError("TryAddVirtualCrrency string.IsNullOrEmpty(productId)");
+			return false;
+		}
+		int? nullable = null;
+		int num = Array.IndexOf<string>(StoreKitEventListener.coinIds, productId);
+		int num1 = Array.IndexOf<string>(StoreKitEventListener.gemsIds, productId);
+		if (num >= StoreKitEventListener.coinIds.GetLowerBound(0))
+		{
+			nullable = new int?(Mathf.RoundToInt((float)VirtualCurrencyHelper.GetCoinInappsQuantity(num) * PremiumAccountController.VirtualCurrencyMultiplier));
+			int num2 = Storager.getInt("Coins", false) + nullable.Value;
+			Storager.setInt("Coins", num2, false);
+			AnalyticsFacade.CurrencyAccrual(nullable.Value, "Coins", AnalyticsConstants.AccrualType.Purchased);
+			coinsShop.TryToFireCurrenciesAddEvent("Coins");
+			try
+			{
+				ChestBonusController.TryTakeChestBonus(false, num);
+			}
+			catch (Exception exception)
+			{
+				UnityEngine.Debug.LogError(string.Concat("TryAddVirtualCrrency ChestBonusController.TryTakeChestBonus exception: ", exception));
+			}
+		}
+		else if (num1 >= StoreKitEventListener.gemsIds.GetLowerBound(0))
+		{
+			nullable = new int?(Mathf.RoundToInt((float)VirtualCurrencyHelper.GetGemsInappsQuantity(num1) * PremiumAccountController.VirtualCurrencyMultiplier));
+			int num3 = Storager.getInt("GemsCurrency", false) + nullable.Value;
+			Storager.setInt("GemsCurrency", num3, false);
+			AnalyticsFacade.CurrencyAccrual(nullable.Value, "GemsCurrency", AnalyticsConstants.AccrualType.Purchased);
+			coinsShop.TryToFireCurrenciesAddEvent("GemsCurrency");
+			try
+			{
+				ChestBonusController.TryTakeChestBonus(true, num1);
+			}
+			catch (Exception exception1)
+			{
+				UnityEngine.Debug.LogError(string.Concat("TryAddVirtualCrrency ChestBonusController.TryTakeChestBonus exception: ", exception1));
+			}
+		}
+		if (nullable.HasValue)
+		{
+			try
+			{
+				FlurryEvents.PaymentTime = new float?(Time.realtimeSinceStartup);
+				StoreKitEventListener.LogVirtualCurrencyPurchased(productId, nullable.Value, num1 >= StoreKitEventListener.gemsIds.GetLowerBound(0));
+				StoreKitEventListener.CheckIfFirstTimePayment();
+				StoreKitEventListener.SetLastPaymentTime();
+			}
+			catch (Exception exception3)
+			{
+				Exception exception2 = exception3;
+				UnityEngine.Debug.LogWarningFormat("TryAddVirtualCrrency ANALYTICS, LogVirtualCurrencyPurchased({0}, {1}) threw exception: {2}", new object[] { productId, nullable.Value, exception2 });
+			}
+		}
+		try
+		{
+			if (FriendsController.sharedController != null)
+			{
+				FriendsController.sharedController.SendOurData(false);
+			}
+		}
+		catch (Exception exception4)
+		{
+			UnityEngine.Debug.LogWarning(string.Concat("FriendsController.sharedController.SendOurData ", exception4));
+		}
+		return nullable.HasValue;
 	}
 
-	[CompilerGenerated]
-	private static string _003CqueryInventorySucceededEvent_003Em__45C(GooglePurchase p)
+	private bool VerifyPurchase(string purchaseJson, string base64Signature)
 	{
-		return string.Format("<{0}, {1}>", p.productId, p.purchaseState);
+		bool flag;
+		try
+		{
+			byte[] numArray = Convert.FromBase64String(base64Signature);
+			byte[] bytes = Encoding.UTF8.GetBytes(purchaseJson);
+			flag = this._rsa.Value.VerifyData(bytes, this._sha1.Value, numArray);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogException(exception);
+			return false;
+		}
+		return flag;
 	}
 
-	[CompilerGenerated]
-	private static bool _003CHandleItemDataRequestFinishedEvent_003Em__45E(ProductData item)
+	[DebuggerHidden]
+	private IEnumerator WaitAndQueryInventory()
 	{
-		return coinIds.Contains(item.Sku) || gemsIds.Contains(item.Sku);
+		return new StoreKitEventListener.u003cWaitAndQueryInventoryu003ec__Iterator193();
 	}
 
-	[CompilerGenerated]
-	private static object _003CSendFirstTimePayment_003Em__460(IMarketProduct p)
+	[DebuggerHidden]
+	private static IEnumerator WaitForFyberAndSetIsPaying()
 	{
-		return p.PlatformProduct;
+		return new StoreKitEventListener.u003cWaitForFyberAndSetIsPayingu003ec__Iterator196();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitForX3AndGiveCurrency(GooglePurchase purchase, PurchaseReceipt receipt)
+	{
+		StoreKitEventListener.u003cWaitForX3AndGiveCurrencyu003ec__Iterator195 variable = null;
+		return variable;
+	}
+
+	private enum ContentType
+	{
+		Unknown,
+		Coins,
+		Gems,
+		StarterPack
+	}
+
+	internal sealed class StoreKitEventListenerState
+	{
+		public string Mode
+		{
+			get;
+			set;
+		}
+
+		public IDictionary<string, string> Parameters
+		{
+			get;
+			private set;
+		}
+
+		public string PurchaseKey
+		{
+			get;
+			set;
+		}
+
+		public StoreKitEventListenerState()
+		{
+			this.Mode = string.Empty;
+			this.PurchaseKey = string.Empty;
+			this.Parameters = new Dictionary<string, string>();
+		}
 	}
 }

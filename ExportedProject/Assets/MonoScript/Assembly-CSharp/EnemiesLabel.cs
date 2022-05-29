@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class EnemiesLabel : MonoBehaviour
@@ -6,19 +7,24 @@ public class EnemiesLabel : MonoBehaviour
 
 	private ZombieCreator _zombieCreator;
 
+	public EnemiesLabel()
+	{
+	}
+
 	private void Start()
 	{
 		bool flag = !Defs.isMulti;
 		base.gameObject.SetActive(flag);
-		if (flag)
+		if (!flag)
 		{
-			_label = GetComponent<UILabel>();
-			_zombieCreator = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>();
+			return;
 		}
+		this._label = base.GetComponent<UILabel>();
+		this._zombieCreator = GameObject.FindGameObjectWithTag("GameController").GetComponent<ZombieCreator>();
 	}
 
 	private void Update()
 	{
-		_label.text = string.Format("{0}", ZombieCreator.NumOfEnemisesToKill - _zombieCreator.NumOfDeadZombies);
+		this._label.text = string.Format("{0}", ZombieCreator.NumOfEnemisesToKill - this._zombieCreator.NumOfDeadZombies);
 	}
 }

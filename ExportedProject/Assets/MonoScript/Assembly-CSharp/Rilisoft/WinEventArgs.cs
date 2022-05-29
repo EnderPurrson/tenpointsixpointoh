@@ -1,26 +1,41 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public sealed class WinEventArgs : EventArgs
 	{
-		public ConnectSceneNGUIController.RegimGame Mode { get; set; }
+		public string Map
+		{
+			get;
+			set;
+		}
 
-		public string Map { get; set; }
+		public ConnectSceneNGUIController.RegimGame Mode
+		{
+			get;
+			set;
+		}
+
+		public WinEventArgs()
+		{
+		}
 
 		public Dictionary<string, object> ToJson()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("mode", Mode);
-			dictionary.Add("map", Map);
-			return dictionary;
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "mode", this.Mode },
+				{ "map", this.Map }
+			};
+			return strs;
 		}
 
 		public override string ToString()
 		{
-			return Json.Serialize(ToJson());
+			return Json.Serialize(this.ToJson());
 		}
 	}
 }

@@ -1,21 +1,13 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(Renderer))]
-[ExecuteInEditMode]
 [AddComponentMenu("Tasharen/Water")]
+[ExecuteInEditMode]
+[RequireComponent(typeof(Renderer))]
 public class TasharenWater : MonoBehaviour
 {
-	public enum Quality
-	{
-		Fastest = 0,
-		Low = 1,
-		Medium = 2,
-		High = 3,
-		Uber = 4
-	}
-
-	public Quality quality = Quality.High;
+	public TasharenWater.Quality quality = TasharenWater.Quality.High;
 
 	public LayerMask highReflectionMask = -1;
 
@@ -35,37 +27,43 @@ public class TasharenWater : MonoBehaviour
 
 	private static bool mIsRendering;
 
-	public int reflectionTextureSize
-	{
-		get
-		{
-			switch (quality)
-			{
-			case Quality.Uber:
-				return 1024;
-			case Quality.Medium:
-			case Quality.High:
-				return 512;
-			default:
-				return 0;
-			}
-		}
-	}
-
 	public LayerMask reflectionMask
 	{
 		get
 		{
-			switch (quality)
+			switch (this.quality)
 			{
-			case Quality.High:
-			case Quality.Uber:
-				return highReflectionMask;
-			case Quality.Medium:
-				return mediumReflectionMask;
-			default:
-				return 0;
+				case TasharenWater.Quality.Medium:
+				{
+					return this.mediumReflectionMask;
+				}
+				case TasharenWater.Quality.High:
+				case TasharenWater.Quality.Uber:
+				{
+					return this.highReflectionMask;
+				}
 			}
+			return 0;
+		}
+	}
+
+	public int reflectionTextureSize
+	{
+		get
+		{
+			switch (this.quality)
+			{
+				case TasharenWater.Quality.Medium:
+				case TasharenWater.Quality.High:
+				{
+					return 512;
+				}
+				case TasharenWater.Quality.Uber:
+				{
+					return 1024;
+				}
+			}
+			return 0;
 		}
 	}
 
@@ -73,31 +71,33 @@ public class TasharenWater : MonoBehaviour
 	{
 		get
 		{
-			return quality > Quality.Fastest;
+			return this.quality > TasharenWater.Quality.Fastest;
 		}
 	}
 
-	private static float SignExt(float a)
+	static TasharenWater()
 	{
-		if (a > 0f)
-		{
-			return 1f;
-		}
-		if (a < 0f)
-		{
-			return -1f;
-		}
-		return 0f;
+	}
+
+	public TasharenWater()
+	{
+	}
+
+	private void Awake()
+	{
+		this.mTrans = base.transform;
+		this.mRen = base.GetComponent<Renderer>();
+		this.quality = TasharenWater.GetQuality();
 	}
 
 	private static void CalculateObliqueMatrix(ref Matrix4x4 projection, Vector4 clipPlane)
 	{
-		Vector4 b = projection.inverse * new Vector4(SignExt(clipPlane.x), SignExt(clipPlane.y), 1f, 1f);
-		Vector4 vector = clipPlane * (2f / Vector4.Dot(clipPlane, b));
-		projection[2] = vector.x - projection[3];
-		projection[6] = vector.y - projection[7];
-		projection[10] = vector.z - projection[11];
-		projection[14] = vector.w - projection[15];
+		Vector4 vector4 = projection.inverse * new Vector4(TasharenWater.SignExt(clipPlane.x), TasharenWater.SignExt(clipPlane.y), 1f, 1f);
+		Vector4 vector41 = clipPlane * (2f / Vector4.Dot(clipPlane, vector4));
+		projection[2] = vector41.x - projection[3];
+		projection[6] = vector41.y - projection[7];
+		projection[10] = vector41.z - projection[11];
+		projection[14] = vector41.w - projection[15];
 	}
 
 	private static void CalculateReflectionMatrix(ref Matrix4x4 reflectionMat, Vector4 plane)
@@ -120,51 +120,20 @@ public class TasharenWater : MonoBehaviour
 		reflectionMat.m33 = 1f;
 	}
 
-	public static Quality GetQuality()
+	private Vector4 CameraSpacePlane(Camera cam, Vector3 pos, Vector3 normal, float sideSign)
 	{
-		return (Quality)PlayerPrefs.GetInt("Water", 3);
-	}
-
-	public static void SetQuality(Quality q)
-	{
-		TasharenWater[] array = Object.FindObjectsOfType(typeof(TasharenWater)) as TasharenWater[];
-		if (array.Length > 0)
-		{
-			TasharenWater[] array2 = array;
-			foreach (TasharenWater tasharenWater in array2)
-			{
-				tasharenWater.quality = q;
-			}
-		}
-		else
-		{
-			PlayerPrefs.SetInt("Water", (int)q);
-		}
-	}
-
-	private void Awake()
-	{
-		mTrans = base.transform;
-		mRen = GetComponent<Renderer>();
-		quality = GetQuality();
-	}
-
-	private void OnDisable()
-	{
-		Clear();
-		foreach (DictionaryEntry mCamera in mCameras)
-		{
-			Object.DestroyImmediate(((Camera)mCamera.Value).gameObject);
-		}
-		mCameras.Clear();
+		Matrix4x4 matrix4x4 = cam.worldToCameraMatrix;
+		Vector3 vector3 = matrix4x4.MultiplyPoint(pos);
+		Vector3 vector31 = matrix4x4.MultiplyVector(normal).normalized * sideSign;
+		return new Vector4(vector31.x, vector31.y, vector31.z, -Vector3.Dot(vector3, vector31));
 	}
 
 	private void Clear()
 	{
-		if ((bool)mTex)
+		if (this.mTex)
 		{
-			Object.DestroyImmediate(mTex);
-			mTex = null;
+			UnityEngine.Object.DestroyImmediate(this.mTex);
+			this.mTex = null;
 		}
 	}
 
@@ -173,15 +142,15 @@ public class TasharenWater : MonoBehaviour
 		if (src.clearFlags == CameraClearFlags.Skybox)
 		{
 			Skybox component = src.GetComponent<Skybox>();
-			Skybox component2 = dest.GetComponent<Skybox>();
+			Skybox skybox = dest.GetComponent<Skybox>();
 			if (!component || !component.material)
 			{
-				component2.enabled = false;
+				skybox.enabled = false;
 			}
 			else
 			{
-				component2.enabled = true;
-				component2.material = component.material;
+				skybox.enabled = true;
+				skybox.material = component.material;
 			}
 		}
 		dest.clearFlags = src.clearFlags;
@@ -196,78 +165,140 @@ public class TasharenWater : MonoBehaviour
 		dest.renderingPath = RenderingPath.Forward;
 	}
 
+	public static TasharenWater.Quality GetQuality()
+	{
+		return (TasharenWater.Quality)PlayerPrefs.GetInt("Water", 3);
+	}
+
 	private Camera GetReflectionCamera(Camera current, Material mat, int textureSize)
 	{
-		if (!mTex || mTexSize != textureSize)
+		if (!this.mTex || this.mTexSize != textureSize)
 		{
-			if ((bool)mTex)
+			if (this.mTex)
 			{
-				Object.DestroyImmediate(mTex);
+				UnityEngine.Object.DestroyImmediate(this.mTex);
 			}
-			mTex = new RenderTexture(textureSize, textureSize, 16);
-			mTex.name = "__MirrorReflection" + GetInstanceID();
-			mTex.isPowerOfTwo = true;
-			mTex.hideFlags = HideFlags.DontSave;
-			mTexSize = textureSize;
+			this.mTex = new RenderTexture(textureSize, textureSize, 16)
+			{
+				name = string.Concat("__MirrorReflection", base.GetInstanceID()),
+				isPowerOfTwo = true,
+				hideFlags = HideFlags.DontSave
+			};
+			this.mTexSize = textureSize;
 		}
-		Camera camera = mCameras[current] as Camera;
-		if (!camera)
+		Camera item = this.mCameras[current] as Camera;
+		if (!item)
 		{
-			GameObject gameObject = new GameObject("Mirror Refl Camera id" + GetInstanceID() + " for " + current.GetInstanceID(), typeof(Camera), typeof(Skybox));
-			gameObject.hideFlags = HideFlags.HideAndDontSave;
-			camera = gameObject.GetComponent<Camera>();
-			camera.enabled = false;
-			Transform transform = camera.transform;
-			transform.position = mTrans.position;
-			transform.rotation = mTrans.rotation;
-			camera.gameObject.AddComponent<FlareLayer>();
-			mCameras[current] = camera;
+			GameObject gameObject = new GameObject(string.Concat(new object[] { "Mirror Refl Camera id", base.GetInstanceID(), " for ", current.GetInstanceID() }), new Type[] { typeof(Camera), typeof(Skybox) })
+			{
+				hideFlags = HideFlags.HideAndDontSave
+			};
+			item = gameObject.GetComponent<Camera>();
+			item.enabled = false;
+			Transform transforms = item.transform;
+			transforms.position = this.mTrans.position;
+			transforms.rotation = this.mTrans.rotation;
+			item.gameObject.AddComponent<FlareLayer>();
+			this.mCameras[current] = item;
 		}
 		if (mat.HasProperty("_ReflectionTex"))
 		{
-			mat.SetTexture("_ReflectionTex", mTex);
+			mat.SetTexture("_ReflectionTex", this.mTex);
 		}
-		return camera;
-	}
-
-	private Vector4 CameraSpacePlane(Camera cam, Vector3 pos, Vector3 normal, float sideSign)
-	{
-		Matrix4x4 worldToCameraMatrix = cam.worldToCameraMatrix;
-		Vector3 lhs = worldToCameraMatrix.MultiplyPoint(pos);
-		Vector3 rhs = worldToCameraMatrix.MultiplyVector(normal).normalized * sideSign;
-		return new Vector4(rhs.x, rhs.y, rhs.z, 0f - Vector3.Dot(lhs, rhs));
+		return item;
 	}
 
 	private void LateUpdate()
 	{
-		if (keepUnderCamera)
+		if (this.keepUnderCamera)
 		{
-			Transform transform = Camera.main.transform;
-			Vector3 position = transform.position;
-			position.y = mTrans.position.y;
-			if (mTrans.position != position)
+			Vector3 vector3 = Camera.main.transform.position;
+			vector3.y = this.mTrans.position.y;
+			if (this.mTrans.position != vector3)
 			{
-				mTrans.position = position;
+				this.mTrans.position = vector3;
 			}
 		}
 	}
 
+	private void OnDisable()
+	{
+		this.Clear();
+		IDictionaryEnumerator enumerator = this.mCameras.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				UnityEngine.Object.DestroyImmediate(((Camera)((DictionaryEntry)enumerator.Current).Value).gameObject);
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		this.mCameras.Clear();
+	}
+
 	private void OnWillRenderObject()
 	{
-		if (mIsRendering)
+		if (TasharenWater.mIsRendering)
 		{
 			return;
 		}
-		if (!base.enabled || !mRen || !mRen.enabled)
+		if (!base.enabled || !this.mRen || !this.mRen.enabled)
 		{
-			Clear();
+			this.Clear();
 			return;
 		}
-		Material sharedMaterial = mRen.sharedMaterial;
-		if ((bool)sharedMaterial)
+		Material material = this.mRen.sharedMaterial;
+		if (!material)
 		{
-			quality = Quality.Fastest;
-			sharedMaterial.shader.maximumLOD = 100;
+			return;
 		}
+		this.quality = TasharenWater.Quality.Fastest;
+		material.shader.maximumLOD = 100;
+	}
+
+	public static void SetQuality(TasharenWater.Quality q)
+	{
+		TasharenWater[] tasharenWaterArray = UnityEngine.Object.FindObjectsOfType(typeof(TasharenWater)) as TasharenWater[];
+		if ((int)tasharenWaterArray.Length <= 0)
+		{
+			PlayerPrefs.SetInt("Water", (int)q);
+		}
+		else
+		{
+			TasharenWater[] tasharenWaterArray1 = tasharenWaterArray;
+			for (int i = 0; i < (int)tasharenWaterArray1.Length; i++)
+			{
+				tasharenWaterArray1[i].quality = q;
+			}
+		}
+	}
+
+	private static float SignExt(float a)
+	{
+		if (a > 0f)
+		{
+			return 1f;
+		}
+		if (a < 0f)
+		{
+			return -1f;
+		}
+		return 0f;
+	}
+
+	public enum Quality
+	{
+		Fastest,
+		Low,
+		Medium,
+		High,
+		Uber
 	}
 }

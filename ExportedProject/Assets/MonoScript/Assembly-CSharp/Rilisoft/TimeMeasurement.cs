@@ -22,7 +22,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _context;
+				return this._context;
 			}
 		}
 
@@ -30,7 +30,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _frameCount;
+				return this._frameCount;
 			}
 		}
 
@@ -38,7 +38,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _timeBrutto;
+				return this._timeBrutto;
 			}
 		}
 
@@ -46,7 +46,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _timeNetto.Elapsed;
+				return this._timeNetto.Elapsed;
 			}
 		}
 
@@ -56,22 +56,22 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("context");
 			}
-			_context = context;
-			_startFrame = Time.frameCount;
-			_startTime = Time.realtimeSinceStartup;
-			_timeNetto = new Stopwatch();
+			this._context = context;
+			this._startFrame = Time.frameCount;
+			this._startTime = Time.realtimeSinceStartup;
+			this._timeNetto = new Stopwatch();
 		}
 
 		public void Start()
 		{
-			_timeNetto.Start();
+			this._timeNetto.Start();
 		}
 
 		public void Stop()
 		{
-			_timeNetto.Stop();
-			_frameCount = Time.frameCount - _startFrame;
-			_timeBrutto = Time.realtimeSinceStartup - _startTime;
+			this._timeNetto.Stop();
+			this._frameCount = Time.frameCount - this._startFrame;
+			this._timeBrutto = Time.realtimeSinceStartup - this._startTime;
 		}
 	}
 }

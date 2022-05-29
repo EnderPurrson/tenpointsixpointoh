@@ -1,114 +1,144 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.mas.cpt.ads.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public sealed class Placement : Jsonable
 	{
-		private static AmazonLogger logger = new AmazonLogger("Pi");
+		private static AmazonLogger logger;
 
-		public Dock Dock { get; set; }
-
-		public HorizontalAlign HorizontalAlign { get; set; }
-
-		public AdFit AdFit { get; set; }
-
-		public string ToJson()
+		public com.amazon.mas.cpt.ads.AdFit AdFit
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public com.amazon.mas.cpt.ads.Dock Dock
 		{
-			//Discarded unreachable code: IL_004f, IL_0061
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("dock", Dock);
-				dictionary.Add("horizontalAlign", HorizontalAlign);
-				dictionary.Add("adFit", AdFit);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		public com.amazon.mas.cpt.ads.HorizontalAlign HorizontalAlign
+		{
+			get;
+			set;
+		}
+
+		static Placement()
+		{
+			Placement.logger = new AmazonLogger("Pi");
+		}
+
+		public Placement()
+		{
 		}
 
 		public static Placement CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_00c8, IL_00da
+			Placement placement;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					Placement placement1 = new Placement();
+					if (jsonMap.ContainsKey("dock"))
+					{
+						placement1.Dock = (com.amazon.mas.cpt.ads.Dock)((int)Enum.Parse(typeof(com.amazon.mas.cpt.ads.Dock), (string)jsonMap["dock"]));
+					}
+					if (jsonMap.ContainsKey("horizontalAlign"))
+					{
+						placement1.HorizontalAlign = (com.amazon.mas.cpt.ads.HorizontalAlign)((int)Enum.Parse(typeof(com.amazon.mas.cpt.ads.HorizontalAlign), (string)jsonMap["horizontalAlign"]));
+					}
+					if (jsonMap.ContainsKey("adFit"))
+					{
+						placement1.AdFit = (com.amazon.mas.cpt.ads.AdFit)((int)Enum.Parse(typeof(com.amazon.mas.cpt.ads.AdFit), (string)jsonMap["adFit"]));
+					}
+					placement = placement1;
 				}
-				Placement placement = new Placement();
-				if (jsonMap.ContainsKey("dock"))
+				else
 				{
-					placement.Dock = (Dock)(int)Enum.Parse(typeof(Dock), (string)jsonMap["dock"]);
+					placement = null;
 				}
-				if (jsonMap.ContainsKey("horizontalAlign"))
-				{
-					placement.HorizontalAlign = (HorizontalAlign)(int)Enum.Parse(typeof(HorizontalAlign), (string)jsonMap["horizontalAlign"]);
-				}
-				if (jsonMap.ContainsKey("adFit"))
-				{
-					placement.AdFit = (AdFit)(int)Enum.Parse(typeof(AdFit), (string)jsonMap["adFit"]);
-				}
-				return placement;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return placement;
 		}
 
 		public static Placement CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			Placement placement;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				placement = Placement.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return placement;
 		}
 
-		public static Dictionary<string, Placement> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, Placement> dictionary = new Dictionary<string, Placement>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				Placement value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>()
+				{
+					{ "dock", this.Dock },
+					{ "horizontalAlign", this.HorizontalAlign },
+					{ "adFit", this.AdFit }
+				};
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<Placement> ListFromJson(List<object> array)
 		{
-			List<Placement> list = new List<Placement>();
-			foreach (object item in array)
+			List<Placement> placements = new List<Placement>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				placements.Add(Placement.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return placements;
+		}
+
+		public static Dictionary<string, Placement> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, Placement> strs = new Dictionary<string, Placement>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				Placement placement = Placement.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, placement);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

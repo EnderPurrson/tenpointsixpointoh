@@ -1,47 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class VideoRecordingController : MonoBehaviour, IDisposable
 {
-	[CompilerGenerated]
-	private sealed class _003CStart_003Ec__AnonStorey301
-	{
-		internal Everyplay.UploadDidCompleteDelegate uploadHadler;
-
-		internal VideoRecordingController _003C_003Ef__this;
-
-		internal void _003C_003Em__470()
-		{
-			Everyplay.UploadDidComplete -= uploadHadler;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CStart_003Ec__AnonStorey300
-	{
-		internal EventHandler startedHandler;
-
-		internal VideoRecordingController _003C_003Ef__this;
-
-		internal void _003C_003Em__46D(object sender, EventArgs e)
-		{
-			Dictionary<string, object> metadata = new Dictionary<string, object> { 
-			{
-				"Best Score",
-				PlayerPrefs.GetInt(Defs.BestScoreSett, 0)
-			} };
-			_003C_003Ef__this._everyplayWrapper.SetMetadata(metadata);
-		}
-
-		internal void _003C_003Em__46E()
-		{
-			_003C_003Ef__this._view.Started -= startedHandler;
-		}
-	}
-
 	public bool isHud;
 
 	public UIButton resumeButton;
@@ -62,47 +27,27 @@ internal sealed class VideoRecordingController : MonoBehaviour, IDisposable
 
 	private bool _shouldChangeSideOnEnable;
 
-	[CompilerGenerated]
-	private static Func<Action, bool> _003C_003Ef__am_0024cacheA;
-
-	[CompilerGenerated]
-	private static Everyplay.UploadDidCompleteDelegate _003C_003Ef__am_0024cacheB;
-
-	public void Dispose()
+	public VideoRecordingController()
 	{
-		if (_disposed)
-		{
-			return;
-		}
-		List<Action> disposeActions = _disposeActions;
-		if (_003C_003Ef__am_0024cacheA == null)
-		{
-			_003C_003Ef__am_0024cacheA = _003CDispose_003Em__46C;
-		}
-		foreach (Action item in disposeActions.Where(_003C_003Ef__am_0024cacheA))
-		{
-			item();
-		}
-		_disposed = true;
 	}
 
 	private void Awake()
 	{
-		_view = base.gameObject.GetComponent<VideoRecordingView>();
-		if (_view != null)
+		this._view = base.gameObject.GetComponent<VideoRecordingView>();
+		if (this._view != null)
 		{
 			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 			{
-				_view.InterfaceEnabled = false;
+				this._view.InterfaceEnabled = false;
 			}
 			if (!Defs.isMulti && !Defs.IsSurvival)
 			{
-				_view.InterfaceEnabled = false;
-				SafeStop();
+				this._view.InterfaceEnabled = false;
+				this.SafeStop();
 			}
 			if (!GlobalGameController.ShowRec)
 			{
-				_view.InterfaceEnabled = false;
+				this._view.InterfaceEnabled = false;
 			}
 		}
 	}
@@ -110,178 +55,198 @@ internal sealed class VideoRecordingController : MonoBehaviour, IDisposable
 	private void ChangeSide()
 	{
 		Debug.Log(" ChangeSide()");
-		ChangeSideCoroutine();
+		this.ChangeSideCoroutine();
 	}
 
 	private void ChangeSideCoroutine()
 	{
-		if (isHud)
+		object obj;
+		if (this.isHud)
 		{
-			base.transform.localPosition = new Vector3((float)((!GlobalGameController.LeftHanded) ? 1 : (-1)) * ((float)Screen.width * 768f / (float)Screen.height / 2f - 30f), base.transform.localPosition.y, base.transform.localPosition.z);
+			Transform vector3 = base.transform;
+			obj = (!GlobalGameController.LeftHanded ? 1 : -1);
+			float single = base.transform.localPosition.y;
+			Vector3 vector31 = base.transform.localPosition;
+			vector3.localPosition = new Vector3((float)obj * ((float)Screen.width * 768f / (float)Screen.height / 2f - 30f), single, vector31.z);
+		}
+	}
+
+	public void Dispose()
+	{
+		if (this._disposed)
+		{
+			return;
+		}
+		IEnumerator<Action> enumerator = (
+			from a in this._disposeActions
+			where a != null
+			select a).GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				enumerator.Current();
+			}
+		}
+		finally
+		{
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
+		}
+		this._disposed = true;
+	}
+
+	private void OnDestroy()
+	{
+		PauseNGUIController.PlayerHandUpdated -= new Action(this.ChangeSide);
+		this.Dispose();
+	}
+
+	private void OnEnable()
+	{
+		this.ChangeSideCoroutine();
+		this._shouldChangeSideOnEnable = false;
+	}
+
+	private void SafeStop()
+	{
+		if (this._everyplayWrapper.CurrentState == EveryplayWrapper.State.Paused || this._everyplayWrapper.CurrentState == EveryplayWrapper.State.Recording)
+		{
+			this._everyplayWrapper.Stop();
 		}
 	}
 
 	private void Start()
 	{
-		_003CStart_003Ec__AnonStorey301 _003CStart_003Ec__AnonStorey = new _003CStart_003Ec__AnonStorey301();
-		_003CStart_003Ec__AnonStorey._003C_003Ef__this = this;
-		if (_view != null)
+		if (this._view != null)
 		{
-			_003CStart_003Ec__AnonStorey300 _003CStart_003Ec__AnonStorey2 = new _003CStart_003Ec__AnonStorey300();
-			_003CStart_003Ec__AnonStorey2._003C_003Ef__this = this;
-			_003CStart_003Ec__AnonStorey2.startedHandler = _003CStart_003Ec__AnonStorey2._003C_003Em__46D;
-			_view.Started += _003CStart_003Ec__AnonStorey2.startedHandler;
-			_disposeActions.Add(_003CStart_003Ec__AnonStorey2._003C_003Em__46E);
+			EventHandler eventHandler = (object sender, EventArgs e) => {
+				Dictionary<string, object> strs = new Dictionary<string, object>()
+				{
+					{ "Best Score", PlayerPrefs.GetInt(Defs.BestScoreSett, 0) }
+				};
+				this.u003cu003ef__this._everyplayWrapper.SetMetadata(strs);
+			};
+			this._view.Started += eventHandler;
+			this._disposeActions.Add(new Action(() => this._view.Started -= eventHandler));
 		}
-		if (resumeButton != null)
+		if (this.resumeButton == null)
 		{
-			_normalSpriteName = resumeButton.normalSprite ?? string.Empty;
-			_pressedSpriteName = resumeButton.pressedSprite ?? string.Empty;
+			Debug.LogError("resumeButton == null");
 		}
 		else
 		{
-			Debug.LogError("resumeButton == null");
+			this._normalSpriteName = this.resumeButton.normalSprite ?? string.Empty;
+			this._pressedSpriteName = this.resumeButton.pressedSprite ?? string.Empty;
 		}
 		GameObject gameObject = GameObject.FindGameObjectWithTag("GameController");
 		if (gameObject != null)
 		{
-			_pauser = gameObject.GetComponent<Pauser>();
+			this._pauser = gameObject.GetComponent<Pauser>();
 		}
-		if (_003C_003Ef__am_0024cacheB == null)
-		{
-			_003C_003Ef__am_0024cacheB = _003CStart_003Em__46F;
-		}
-		_003CStart_003Ec__AnonStorey.uploadHadler = _003C_003Ef__am_0024cacheB;
-		Everyplay.UploadDidComplete += _003CStart_003Ec__AnonStorey.uploadHadler;
-		_disposeActions.Add(_003CStart_003Ec__AnonStorey._003C_003Em__470);
-		PauseNGUIController.PlayerHandUpdated += ChangeSide;
-		ChangeSideCoroutine();
+		Everyplay.UploadDidCompleteDelegate num = (int videoId) => {
+			PlayerPrefs.GetInt("PostVideo", 0);
+			PlayerPrefs.SetInt("PostVideo", PlayerPrefs.GetInt("PostVideo", 0) + 1);
+			if (PlayerPrefs.GetInt("Active_loyal_users_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2)
+			{
+				FacebookController.LogEvent("Active_loyal_users", null);
+				PlayerPrefs.SetInt("Active_loyal_users_send", 1);
+			}
+			if (PlayerPrefs.GetInt("Active_loyal_users_payed_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2 && StoreKitEventListener.GetDollarsSpent() > 0)
+			{
+				FacebookController.LogEvent("Active_loyal_users_payed", null);
+				PlayerPrefs.SetInt("Active_loyal_users_payed_send", 1);
+			}
+		};
+		Everyplay.UploadDidComplete += num;
+		this._disposeActions.Add(new Action(() => Everyplay.UploadDidComplete -= num));
+		PauseNGUIController.PlayerHandUpdated += new Action(this.ChangeSide);
+		this.ChangeSideCoroutine();
 	}
 
 	private void Update()
 	{
-		if (_disposed)
+		if (this._disposed)
 		{
 			if (Time.frameCount % 300 == 17)
 			{
-				Debug.LogWarning(GetType().Name + " is disposed.");
+				Debug.LogWarning(string.Concat(base.GetType().Name, " is disposed."));
 			}
 			return;
 		}
-		if (_view != null)
+		if (this._view != null)
 		{
 			if (!GlobalGameController.ShowRec)
 			{
-				SafeStop();
+				this.SafeStop();
 			}
-			_view.InterfaceEnabled = GlobalGameController.ShowRec;
-			_view.InterfaceEnabled = _view.InterfaceEnabled && !ShopNGUIController.GuiActive;
-			if (_pauser != null)
+			this._view.InterfaceEnabled = GlobalGameController.ShowRec;
+			this._view.InterfaceEnabled = (!this._view.InterfaceEnabled ? false : !ShopNGUIController.GuiActive);
+			if (this._pauser != null)
 			{
-				_view.InterfaceEnabled = _view.InterfaceEnabled && !_pauser.paused;
+				this._view.InterfaceEnabled = (!this._view.InterfaceEnabled ? false : !this._pauser.paused);
 			}
 			if (ExperienceController.sharedController != null)
 			{
-				_view.InterfaceEnabled = _view.InterfaceEnabled && !ExperienceController.sharedController.isShowNextPlashka;
+				this._view.InterfaceEnabled = (!this._view.InterfaceEnabled ? false : !ExperienceController.sharedController.isShowNextPlashka);
 			}
 			if (Defs.isHunger)
 			{
-				if (isHud)
+				if (!this.isHud)
 				{
-					WeaponManager sharedManager = WeaponManager.sharedManager;
-					if (sharedManager != null && sharedManager.myTable != null)
+					NetworkStartTableNGUIController networkStartTableNGUIController = NetworkStartTableNGUIController.sharedController;
+					bool flag = (!(networkStartTableNGUIController != null) || !(networkStartTableNGUIController.spectratorModePnl != null) ? false : networkStartTableNGUIController.spectratorModePnl.activeInHierarchy);
+					if (flag)
 					{
-						NetworkStartTable component = sharedManager.myTable.GetComponent<NetworkStartTable>();
+						this.SafeStop();
+					}
+					this._view.InterfaceEnabled = (!this._view.InterfaceEnabled ? false : !flag);
+				}
+				else
+				{
+					WeaponManager weaponManager = WeaponManager.sharedManager;
+					if (weaponManager != null && weaponManager.myTable != null)
+					{
+						NetworkStartTable component = weaponManager.myTable.GetComponent<NetworkStartTable>();
 						if (component != null)
 						{
-							_view.InterfaceEnabled = _view.InterfaceEnabled && !component.isDeadInHungerGame;
+							this._view.InterfaceEnabled = (!this._view.InterfaceEnabled ? false : !component.isDeadInHungerGame);
 						}
 					}
 					if (HungerGameController.Instance != null && HungerGameController.Instance.isGo && Initializer.players.Count == 0)
 					{
-						_view.InterfaceEnabled = false;
+						this._view.InterfaceEnabled = false;
 					}
-				}
-				else
-				{
-					NetworkStartTableNGUIController sharedController = NetworkStartTableNGUIController.sharedController;
-					bool flag = sharedController != null && sharedController.spectratorModePnl != null && sharedController.spectratorModePnl.activeInHierarchy;
-					if (flag)
-					{
-						SafeStop();
-					}
-					_view.InterfaceEnabled = _view.InterfaceEnabled && !flag;
 				}
 			}
 			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 			{
-				_view.InterfaceEnabled = false;
-				SafeStop();
+				this._view.InterfaceEnabled = false;
+				this.SafeStop();
 			}
 			if (!Defs.isMulti && !Defs.IsSurvival)
 			{
-				_view.InterfaceEnabled = false;
-				SafeStop();
+				this._view.InterfaceEnabled = false;
+				this.SafeStop();
 			}
 		}
 		else if (Time.frameCount % 300 == 57)
 		{
 			Debug.LogWarning("_view == null");
 		}
-		if (_everyplayWrapper.Elapsed.TotalMinutes >= 20.0)
+		if (this._everyplayWrapper.Elapsed.TotalMinutes >= 20)
 		{
-			SafeStop();
+			this.SafeStop();
 		}
-		if (resumeButton != null && _everyplayWrapper.CurrentState == EveryplayWrapper.State.Paused)
+		if (this.resumeButton != null && this._everyplayWrapper.CurrentState == EveryplayWrapper.State.Paused)
 		{
-			string text = (((int)Time.time % 2 != 0) ? _normalSpriteName : _pressedSpriteName);
-			if (resumeButton.normalSprite != text)
+			string str = ((int)Time.time % 2 != 0 ? this._normalSpriteName : this._pressedSpriteName);
+			if (this.resumeButton.normalSprite != str)
 			{
-				resumeButton.normalSprite = text;
+				this.resumeButton.normalSprite = str;
 			}
-		}
-	}
-
-	private void OnDestroy()
-	{
-		PauseNGUIController.PlayerHandUpdated -= ChangeSide;
-		Dispose();
-	}
-
-	private void OnEnable()
-	{
-		ChangeSideCoroutine();
-		_shouldChangeSideOnEnable = false;
-	}
-
-	private void SafeStop()
-	{
-		if (_everyplayWrapper.CurrentState == EveryplayWrapper.State.Paused || _everyplayWrapper.CurrentState == EveryplayWrapper.State.Recording)
-		{
-			_everyplayWrapper.Stop();
-		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003CDispose_003Em__46C(Action a)
-	{
-		return a != null;
-	}
-
-	[CompilerGenerated]
-	private static void _003CStart_003Em__46F(int videoId)
-	{
-		int @int = PlayerPrefs.GetInt("PostVideo", 0);
-		PlayerPrefs.SetInt("PostVideo", PlayerPrefs.GetInt("PostVideo", 0) + 1);
-		if (PlayerPrefs.GetInt("Active_loyal_users_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2)
-		{
-			FacebookController.LogEvent("Active_loyal_users");
-			PlayerPrefs.SetInt("Active_loyal_users_send", 1);
-		}
-		if (PlayerPrefs.GetInt("Active_loyal_users_payed_send", 0) == 0 && PlayerPrefs.GetInt("PostFacebookCount", 0) > 2 && StoreKitEventListener.GetDollarsSpent() > 0)
-		{
-			FacebookController.LogEvent("Active_loyal_users_payed");
-			PlayerPrefs.SetInt("Active_loyal_users_payed_send", 1);
 		}
 	}
 }

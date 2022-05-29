@@ -1,18 +1,23 @@
+using System;
 using UnityEngine;
 
 public class KeybordHolder : MonoBehaviour
 {
 	public KeybordShow _tk;
 
+	public KeybordHolder()
+	{
+	}
+
 	private void OnClick()
 	{
-		if (_tk.mKeybordHold)
+		if (!this._tk.mKeybordHold)
 		{
-			_tk.mKeybordHold = false;
+			this._tk.mKeybordHold = true;
 		}
 		else
 		{
-			_tk.mKeybordHold = true;
+			this._tk.mKeybordHold = false;
 		}
 	}
 }

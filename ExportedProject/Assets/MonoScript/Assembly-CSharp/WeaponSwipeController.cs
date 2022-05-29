@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class WeaponSwipeController : MonoBehaviour
@@ -15,198 +17,211 @@ public sealed class WeaponSwipeController : MonoBehaviour
 
 	private bool _disabled;
 
-	private void Start()
+	public WeaponSwipeController()
 	{
-		_wrapContent = GetComponentInChildren<UIWrapContent>();
-		_center = GetComponentInChildren<MyCenterOnChild>();
-		_scrollView = GetComponent<UIScrollView>();
-		MyCenterOnChild center = _center;
-		center.onFinished = (SpringPanel.OnFinished)Delegate.Combine(center.onFinished, new SpringPanel.OnFinished(HandleCenteringFinished));
-		UpdateContent();
 	}
 
-	private void HandleWeaponEquipped()
-	{
-		UpdateContent();
-	}
-
-	private void OnEnable()
-	{
-		StartCoroutine(_DisableSwiping(0.5f));
-	}
-
+	[DebuggerHidden]
 	private IEnumerator _DisableSwiping(float tm)
 	{
-		int bef;
-		if (_center == null || !int.TryParse(_center.centeredObject.name.Replace("preview_", string.Empty), out bef))
-		{
-			yield break;
-		}
-		_disabled = true;
-		yield return new WaitForSeconds(tm);
-		_disabled = false;
-		if (_center.centeredObject.name.Equals("preview_" + bef))
-		{
-			yield break;
-		}
-		Transform goToCent = null;
-		foreach (Transform t in _center.transform)
-		{
-			if (t.gameObject.name.Equals("preview_" + bef))
-			{
-				goToCent = t;
-				break;
-			}
-		}
-		if (goToCent != null)
-		{
-			_center.CenterOn(goToCent);
-		}
+		WeaponSwipeController.u003c_DisableSwipingu003ec__Iterator1DD variable = null;
+		return variable;
 	}
 
 	private void HandleCenteringFinished()
 	{
-		if (_disabled)
+		int num;
+		TrainingState trainingState;
+		if (this._disabled)
 		{
 			return;
 		}
-		int result;
-		if (!int.TryParse(_center.centeredObject.name.Replace("preview_", string.Empty), out result))
+		if (!int.TryParse(this._center.centeredObject.name.Replace("preview_", string.Empty), out num))
 		{
-			if (Debug.isDebugBuild)
+			if (UnityEngine.Debug.isDebugBuild)
 			{
-				Debug.Log("HandleCenteringFinished: error parse");
+				UnityEngine.Debug.Log("HandleCenteringFinished: error parse");
 			}
 			return;
 		}
-		result--;
-		if (!move)
+		num--;
+		if (!this.move)
 		{
-			if (!Defs.isMulti)
+			if (Defs.isMulti)
 			{
-				move = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
+				this.move = WeaponManager.sharedManager.myPlayerMoveC;
 			}
 			else
 			{
-				move = WeaponManager.sharedManager.myPlayerMoveC;
+				this.move = GameObject.FindGameObjectWithTag("Player").GetComponent<SkinName>().playerMoveC;
 			}
 		}
-		if (result != WeaponManager.sharedManager.CurrentWeaponIndex)
+		if (num != WeaponManager.sharedManager.CurrentWeaponIndex)
 		{
-			TrainingState value;
-			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTrainingList.TryGetValue("SwipeWeapon", out value) && TrainingController.stepTraining == value)
+			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 			{
-				TrainingController.isNextStep = value;
+				if ((!TrainingController.stepTrainingList.TryGetValue("SwipeWeapon", out trainingState) ? false : TrainingController.stepTraining == trainingState))
+				{
+					TrainingController.isNextStep = trainingState;
+				}
 			}
-			WeaponManager.sharedManager.CurrentWeaponIndex = result % WeaponManager.sharedManager.playerWeapons.Count;
+			WeaponManager.sharedManager.CurrentWeaponIndex = num % WeaponManager.sharedManager.playerWeapons.Count;
 			WeaponManager.sharedManager.SaveWeaponAsLastUsed(WeaponManager.sharedManager.CurrentWeaponIndex);
-			if (move != null)
+			if (this.move != null)
 			{
-				move.ChangeWeapon(WeaponManager.sharedManager.CurrentWeaponIndex, false);
+				this.move.ChangeWeapon(WeaponManager.sharedManager.CurrentWeaponIndex, false);
 			}
 		}
+	}
+
+	private void HandleWeaponEquipped()
+	{
+		this.UpdateContent();
 	}
 
 	private void OnDestroy()
 	{
-		MyCenterOnChild center = _center;
-		center.onFinished = (SpringPanel.OnFinished)Delegate.Remove(center.onFinished, new SpringPanel.OnFinished(HandleCenteringFinished));
+		this._center.onFinished -= new SpringPanel.OnFinished(this.HandleCenteringFinished);
+	}
+
+	private void OnEnable()
+	{
+		base.StartCoroutine(this._DisableSwiping(0.5f));
+	}
+
+	private void Start()
+	{
+		this._wrapContent = base.GetComponentInChildren<UIWrapContent>();
+		this._center = base.GetComponentInChildren<MyCenterOnChild>();
+		this._scrollView = base.GetComponent<UIScrollView>();
+		this._center.onFinished += new SpringPanel.OnFinished(this.HandleCenteringFinished);
+		this.UpdateContent();
 	}
 
 	public void UpdateContent()
 	{
-		List<string> list = new List<string>();
-		foreach (Weapon playerWeapon in WeaponManager.sharedManager.playerWeapons)
+		List<string> strs = new List<string>();
+		IEnumerator enumerator = WeaponManager.sharedManager.playerWeapons.GetEnumerator();
+		try
 		{
-			list.Add(playerWeapon.weaponPrefab.name + "_InGamePreview");
-		}
-		UITexture[] componentsInChildren = GetComponentsInChildren<UITexture>();
-		List<Texture> list2 = new List<Texture>();
-		UITexture[] array = componentsInChildren;
-		foreach (UITexture uITexture in array)
-		{
-			if ((bool)uITexture.mainTexture)
+			while (enumerator.MoveNext())
 			{
-				list2.Add(uITexture.mainTexture);
+				Weapon current = (Weapon)enumerator.Current;
+				strs.Add(string.Concat(current.weaponPrefab.name, "_InGamePreview"));
 			}
 		}
-		List<string> list3 = new List<string>();
-		foreach (string item in list)
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		UITexture[] componentsInChildren = base.GetComponentsInChildren<UITexture>();
+		List<Texture> textures = new List<Texture>();
+		UITexture[] uITextureArray = componentsInChildren;
+		for (int i = 0; i < (int)uITextureArray.Length; i++)
+		{
+			UITexture uITexture = uITextureArray[i];
+			if (uITexture.mainTexture)
+			{
+				textures.Add(uITexture.mainTexture);
+			}
+		}
+		List<string> strs1 = new List<string>();
+		foreach (string str in strs)
 		{
 			bool flag = false;
-			foreach (Texture item2 in list2)
+			foreach (Texture texture in textures)
 			{
-				if (item2.name.Equals(item))
+				if (!texture.name.Equals(str))
 				{
-					flag = true;
-					break;
+					continue;
 				}
+				flag = true;
+				break;
 			}
-			if (!flag)
-			{
-				list3.Add(item);
-			}
-		}
-		foreach (string item3 in list3)
-		{
-			Texture texture = Resources.Load(WeaponManager.WeaponPreviewsPath + "/" + item3) as Texture;
-			texture.name = item3;
-			if (texture != null)
-			{
-				list2.Add(texture);
-			}
-		}
-		Transform child = base.transform.GetChild(0);
-		int childCount = child.childCount;
-		if (childCount > list.Count)
-		{
-			for (int j = list.Count; j < childCount; j++)
-			{
-				Transform child2 = child.GetChild(j);
-				child2.parent = null;
-				UnityEngine.Object.Destroy(child2.gameObject);
-			}
-		}
-		else if (childCount < list.Count)
-		{
-			for (int k = childCount; k < list.Count; k++)
-			{
-				if (k >= childCount)
-				{
-					GameObject original = Resources.Load("WeaponPreviewPrefab") as GameObject;
-					GameObject gameObject = UnityEngine.Object.Instantiate(original);
-					gameObject.transform.parent = child;
-					gameObject.name = "preview_" + (k + 1);
-					gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-				}
-			}
-		}
-		for (int l = 0; l < list.Count; l++)
-		{
-			Transform child3 = child.GetChild(l);
-			if (!child3)
+			if (flag)
 			{
 				continue;
 			}
-			foreach (Texture item4 in list2)
+			strs1.Add(str);
+		}
+		foreach (string str1 in strs1)
+		{
+			Texture texture1 = Resources.Load(string.Concat(WeaponManager.WeaponPreviewsPath, "/", str1)) as Texture;
+			texture1.name = str1;
+			if (texture1 == null)
 			{
-				if (item4.name.Equals(list[l]))
+				continue;
+			}
+			textures.Add(texture1);
+		}
+		Transform child = base.transform.GetChild(0);
+		int num = child.childCount;
+		if (num > strs.Count)
+		{
+			for (int j = strs.Count; j < num; j++)
+			{
+				Transform transforms = child.GetChild(j);
+				transforms.parent = null;
+				UnityEngine.Object.Destroy(transforms.gameObject);
+			}
+		}
+		else if (num < strs.Count)
+		{
+			for (int k = num; k < strs.Count; k++)
+			{
+				if (k >= num)
 				{
-					child3.GetComponent<UITexture>().mainTexture = item4;
+					GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("WeaponPreviewPrefab") as GameObject);
+					vector3.transform.parent = child;
+					vector3.name = string.Concat("preview_", k + 1);
+					vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+				}
+			}
+		}
+		for (int l = 0; l < strs.Count; l++)
+		{
+			Transform child1 = child.GetChild(l);
+			if (child1)
+			{
+				foreach (Texture texture2 in textures)
+				{
+					if (!texture2.name.Equals(strs[l]))
+					{
+						continue;
+					}
+					child1.GetComponent<UITexture>().mainTexture = texture2;
 					break;
 				}
 			}
 		}
-		_wrapContent.SortAlphabetically();
-		Transform target = _center.transform.GetChild(0);
-		foreach (Transform item5 in _wrapContent.transform)
+		this._wrapContent.SortAlphabetically();
+		Transform transforms1 = this._center.transform.GetChild(0);
+		IEnumerator enumerator1 = this._wrapContent.transform.GetEnumerator();
+		try
 		{
-			if (item5.gameObject.name.Equals("preview_" + (WeaponManager.sharedManager.CurrentWeaponIndex + 1)))
+			while (enumerator1.MoveNext())
 			{
-				target = item5;
+				Transform current1 = (Transform)enumerator1.Current;
+				if (!current1.gameObject.name.Equals(string.Concat("preview_", WeaponManager.sharedManager.CurrentWeaponIndex + 1)))
+				{
+					continue;
+				}
+				transforms1 = current1;
 				break;
 			}
 		}
-		_center.CenterOn(target);
+		finally
+		{
+			IDisposable disposable1 = enumerator1 as IDisposable;
+			if (disposable1 == null)
+			{
+			}
+			disposable1.Dispose();
+		}
+		this._center.CenterOn(transforms1);
 	}
 }

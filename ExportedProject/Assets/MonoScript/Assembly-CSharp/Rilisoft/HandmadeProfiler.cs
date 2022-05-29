@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,8 +11,76 @@ namespace Rilisoft
 {
 	public class HandmadeProfiler : MonoBehaviour
 	{
+		private float _dtThreshold = 1f;
+
+		public HandmadeProfiler()
+		{
+		}
+
+		private void Awake()
+		{
+			this._dtThreshold = (!Application.isEditor ? 2f : 1f);
+		}
+
+		private void LateUpdate()
+		{
+			if (!Defs.IsDeveloperBuild)
+			{
+				return;
+			}
+			float single = Time.realtimeSinceStartup - Time.unscaledTime;
+			if (single > this._dtThreshold)
+			{
+				List<string> list = (
+					from s in (
+						from c in (IEnumerable<MonoBehaviour>)UnityEngine.Object.FindObjectsOfType<MonoBehaviour>()
+						where c.gameObject.activeInHierarchy
+						select c.GetType().Name).Distinct<string>()
+					orderby s
+					select s).ToList<string>();
+				HandmadeProfiler.SampleMemento sampleMemento = new HandmadeProfiler.SampleMemento();
+				HandmadeProfiler.SampleMemento activeScene = sampleMemento;
+				activeScene.Dt = Math.Round((double)single, 3);
+				activeScene.Frame = Time.frameCount;
+				activeScene.Scene = SceneManager.GetActiveScene().name;
+				sampleMemento = activeScene;
+				if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android || list.Count <= 32767)
+				{
+					sampleMemento.Components = list;
+					this.LogSample(sampleMemento);
+				}
+				else
+				{
+					int num = 0;
+					while (list.Count > 0)
+					{
+						List<string> strs = new List<string>(32769);
+						if (num > 0)
+						{
+							strs.Add("...");
+						}
+						strs.AddRange(list.Take<string>(32767));
+						list.RemoveRange(0, Math.Min(32767, list.Count));
+						if (list.Count > 0)
+						{
+							strs.Add("...");
+						}
+						sampleMemento.Components = strs;
+						this.LogSample(sampleMemento);
+						num++;
+					}
+				}
+			}
+		}
+
+		private void LogSample(HandmadeProfiler.SampleMemento sample)
+		{
+			string str = string.Format(CultureInfo.InvariantCulture, "Frame rate drop: {0}", new object[] { sample });
+			Debug.LogWarning((!Application.isEditor ? str : string.Concat("<color=orange><b>", str, "</b></color>")));
+		}
+
 		[Serializable]
-		private struct SampleMemento : IEquatable<SampleMemento>
+		private struct SampleMemento : IEquatable<HandmadeProfiler.SampleMemento>
 		{
 			[SerializeField]
 			private int frame;
@@ -24,15 +93,15 @@ namespace Rilisoft
 
 			private List<string> components;
 
-			public int Frame
+			public List<string> Components
 			{
 				get
 				{
-					return frame;
+					return this.components ?? new List<string>();
 				}
 				set
 				{
-					frame = value;
+					this.components = value ?? new List<string>();
 				}
 			}
 
@@ -40,11 +109,23 @@ namespace Rilisoft
 			{
 				get
 				{
-					return dt;
+					return this.dt;
 				}
 				set
 				{
-					dt = value;
+					this.dt = value;
+				}
+			}
+
+			public int Frame
+			{
+				get
+				{
+					return this.frame;
+				}
+				set
+				{
+					this.frame = value;
 				}
 			}
 
@@ -52,41 +133,29 @@ namespace Rilisoft
 			{
 				get
 				{
-					return scene ?? string.Empty;
+					return this.scene ?? string.Empty;
 				}
 				set
 				{
-					scene = value ?? string.Empty;
+					this.scene = value ?? string.Empty;
 				}
 			}
 
-			public List<string> Components
+			public bool Equals(HandmadeProfiler.SampleMemento other)
 			{
-				get
-				{
-					return components ?? new List<string>();
-				}
-				set
-				{
-					components = value ?? new List<string>();
-				}
-			}
-
-			public bool Equals(SampleMemento other)
-			{
-				if (Frame != other.Frame)
+				if (this.Frame != other.Frame)
 				{
 					return false;
 				}
-				if (Dt != other.Dt)
+				if (this.Dt != other.Dt)
 				{
 					return false;
 				}
-				if (Scene != other.Scene)
+				if (this.Scene != other.Scene)
 				{
 					return false;
 				}
-				if (!Components.SequenceEqual(Components))
+				if (!this.Components.SequenceEqual<string>(this.Components))
 				{
 					return false;
 				}
@@ -95,124 +164,24 @@ namespace Rilisoft
 
 			public override bool Equals(object obj)
 			{
-				if (!(obj is SampleMemento))
+				if (!(obj is HandmadeProfiler.SampleMemento))
 				{
 					return false;
 				}
-				SampleMemento other = (SampleMemento)obj;
-				return Equals(other);
+				return this.Equals((HandmadeProfiler.SampleMemento)obj);
 			}
 
 			public override int GetHashCode()
 			{
-				return Frame.GetHashCode() ^ Dt.GetHashCode() ^ Scene.GetHashCode() ^ Components.GetHashCode();
+				int hashCode = this.Frame.GetHashCode();
+				double dt = this.Dt;
+				return hashCode ^ dt.GetHashCode() ^ this.Scene.GetHashCode() ^ this.Components.GetHashCode();
 			}
 
 			public override string ToString()
 			{
 				return JsonUtility.ToJson(this);
 			}
-		}
-
-		private float _dtThreshold = 1f;
-
-		[CompilerGenerated]
-		private static Func<MonoBehaviour, bool> _003C_003Ef__am_0024cache1;
-
-		[CompilerGenerated]
-		private static Func<MonoBehaviour, string> _003C_003Ef__am_0024cache2;
-
-		[CompilerGenerated]
-		private static Func<string, string> _003C_003Ef__am_0024cache3;
-
-		private void Awake()
-		{
-			_dtThreshold = ((!Application.isEditor) ? 2f : 1f);
-		}
-
-		private void LateUpdate()
-		{
-			if (!Defs.IsDeveloperBuild)
-			{
-				return;
-			}
-			float num = Time.realtimeSinceStartup - Time.unscaledTime;
-			if (!(num > _dtThreshold))
-			{
-				return;
-			}
-			MonoBehaviour[] source = UnityEngine.Object.FindObjectsOfType<MonoBehaviour>();
-			if (_003C_003Ef__am_0024cache1 == null)
-			{
-				_003C_003Ef__am_0024cache1 = _003CLateUpdate_003Em__2D9;
-			}
-			IEnumerable<MonoBehaviour> source2 = source.Where(_003C_003Ef__am_0024cache1);
-			if (_003C_003Ef__am_0024cache2 == null)
-			{
-				_003C_003Ef__am_0024cache2 = _003CLateUpdate_003Em__2DA;
-			}
-			IEnumerable<string> source3 = source2.Select(_003C_003Ef__am_0024cache2).Distinct();
-			if (_003C_003Ef__am_0024cache3 == null)
-			{
-				_003C_003Ef__am_0024cache3 = _003CLateUpdate_003Em__2DB;
-			}
-			List<string> list = source3.OrderBy(_003C_003Ef__am_0024cache3).ToList();
-			SampleMemento sampleMemento = default(SampleMemento);
-			sampleMemento.Dt = Math.Round(num, 3);
-			sampleMemento.Frame = Time.frameCount;
-			sampleMemento.Scene = SceneManager.GetActiveScene().name;
-			SampleMemento sample = sampleMemento;
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android && list.Count > 32767)
-			{
-				int num2 = 0;
-				while (list.Count > 0)
-				{
-					List<string> list2 = new List<string>(32769);
-					if (num2 > 0)
-					{
-						list2.Add("...");
-					}
-					list2.AddRange(list.Take(32767));
-					list.RemoveRange(0, Math.Min(32767, list.Count));
-					if (list.Count > 0)
-					{
-						list2.Add("...");
-					}
-					sample.Components = list2;
-					LogSample(sample);
-					num2++;
-				}
-			}
-			else
-			{
-				sample.Components = list;
-				LogSample(sample);
-			}
-		}
-
-		private void LogSample(SampleMemento sample)
-		{
-			string text = string.Format(CultureInfo.InvariantCulture, "Frame rate drop: {0}", sample);
-			string message = ((!Application.isEditor) ? text : ("<color=orange><b>" + text + "</b></color>"));
-			Debug.LogWarning(message);
-		}
-
-		[CompilerGenerated]
-		private static bool _003CLateUpdate_003Em__2D9(MonoBehaviour c)
-		{
-			return c.gameObject.activeInHierarchy;
-		}
-
-		[CompilerGenerated]
-		private static string _003CLateUpdate_003Em__2DA(MonoBehaviour c)
-		{
-			return c.GetType().Name;
-		}
-
-		[CompilerGenerated]
-		private static string _003CLateUpdate_003Em__2DB(string s)
-		{
-			return s;
 		}
 	}
 }

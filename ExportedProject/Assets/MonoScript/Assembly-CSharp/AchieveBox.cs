@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class AchieveBox : MonoBehaviour
@@ -15,41 +16,47 @@ public class AchieveBox : MonoBehaviour
 
 	public float speed = 300f;
 
+	public AchieveBox()
+	{
+	}
+
 	private void Awake()
 	{
-		mySprite = GetComponent<UISprite>();
-		hidePos = base.transform.localPosition;
+		this.mySprite = base.GetComponent<UISprite>();
+		this.hidePos = base.transform.localPosition;
+	}
+
+	public void HideBox()
+	{
+		this.toggled = true;
+		this.posToMove = this.hidePos;
 	}
 
 	public void ShowBox()
 	{
 		base.gameObject.SetActive(true);
-		toggled = true;
-		posToMove = hidePos + Vector3.down * mySprite.height;
-	}
-
-	public void HideBox()
-	{
-		toggled = true;
-		posToMove = hidePos;
+		this.toggled = true;
+		this.posToMove = this.hidePos + (Vector3.down * (float)this.mySprite.height);
 	}
 
 	private void Update()
 	{
-		if (!toggled)
+		if (!this.toggled)
 		{
 			return;
 		}
-		if (!(base.transform.localPosition == posToMove))
+		if (base.transform.localPosition == this.posToMove)
 		{
-			base.transform.localPosition = Vector3.MoveTowards(base.transform.localPosition, posToMove, speed * RealTime.deltaTime);
-			return;
+			this.toggled = false;
+			this.isOpened = !this.isOpened;
+			if (!this.isOpened)
+			{
+				base.gameObject.SetActive(false);
+			}
 		}
-		toggled = false;
-		isOpened = !isOpened;
-		if (!isOpened)
+		else
 		{
-			base.gameObject.SetActive(false);
+			base.transform.localPosition = Vector3.MoveTowards(base.transform.localPosition, this.posToMove, this.speed * RealTime.deltaTime);
 		}
 	}
 }

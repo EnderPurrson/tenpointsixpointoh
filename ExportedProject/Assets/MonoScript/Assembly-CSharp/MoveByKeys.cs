@@ -1,4 +1,5 @@
 using Photon;
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -18,11 +19,8 @@ public class MoveByKeys : Photon.MonoBehaviour
 
 	private Rigidbody2D body2d;
 
-	public void Start()
+	public MoveByKeys()
 	{
-		isSprite = GetComponent<SpriteRenderer>() != null;
-		body2d = GetComponent<Rigidbody2D>();
-		body = GetComponent<Rigidbody>();
 	}
 
 	public void FixedUpdate()
@@ -33,31 +31,37 @@ public class MoveByKeys : Photon.MonoBehaviour
 		}
 		if (Input.GetAxisRaw("Horizontal") < -0.1f || Input.GetAxisRaw("Horizontal") > 0.1f)
 		{
-			base.transform.position += Vector3.right * (Speed * Time.deltaTime) * Input.GetAxisRaw("Horizontal");
+			Transform speed = base.transform;
+			speed.position = speed.position + ((Vector3.right * (this.Speed * Time.deltaTime)) * Input.GetAxisRaw("Horizontal"));
 		}
-		if (jumpingTime <= 0f)
+		if (this.jumpingTime > 0f)
 		{
-			if ((body != null || body2d != null) && Input.GetKey(KeyCode.Space))
+			this.jumpingTime -= Time.deltaTime;
+		}
+		else if ((this.body != null || this.body2d != null) && Input.GetKey(KeyCode.Space))
+		{
+			this.jumpingTime = this.JumpTimeout;
+			Vector2 jumpForce = Vector2.up * this.JumpForce;
+			if (this.body2d != null)
 			{
-				jumpingTime = JumpTimeout;
-				Vector2 vector = Vector2.up * JumpForce;
-				if (body2d != null)
-				{
-					body2d.AddForce(vector);
-				}
-				else if (body != null)
-				{
-					body.AddForce(vector);
-				}
+				this.body2d.AddForce(jumpForce);
+			}
+			else if (this.body != null)
+			{
+				this.body.AddForce(jumpForce);
 			}
 		}
-		else
+		if (!this.isSprite && (Input.GetAxisRaw("Vertical") < -0.1f || Input.GetAxisRaw("Vertical") > 0.1f))
 		{
-			jumpingTime -= Time.deltaTime;
+			Transform transforms = base.transform;
+			transforms.position = transforms.position + ((Vector3.forward * (this.Speed * Time.deltaTime)) * Input.GetAxisRaw("Vertical"));
 		}
-		if (!isSprite && (Input.GetAxisRaw("Vertical") < -0.1f || Input.GetAxisRaw("Vertical") > 0.1f))
-		{
-			base.transform.position += Vector3.forward * (Speed * Time.deltaTime) * Input.GetAxisRaw("Vertical");
-		}
+	}
+
+	public void Start()
+	{
+		this.isSprite = base.GetComponent<SpriteRenderer>() != null;
+		this.body2d = base.GetComponent<Rigidbody2D>();
+		this.body = base.GetComponent<Rigidbody>();
 	}
 }

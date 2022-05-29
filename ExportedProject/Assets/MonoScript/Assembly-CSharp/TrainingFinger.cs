@@ -1,5 +1,5 @@
-using System;
 using Holoville.HOTween;
+using System;
 using UnityEngine;
 
 internal sealed class TrainingFinger : MonoBehaviour
@@ -12,24 +12,28 @@ internal sealed class TrainingFinger : MonoBehaviour
 
 	private RectTransform rectTransform;
 
+	public TrainingFinger()
+	{
+	}
+
 	private void Awake()
 	{
-		rectTransform = GetComponent<RectTransform>();
-		initialPosition = rectTransform.localPosition;
+		this.rectTransform = base.GetComponent<RectTransform>();
+		this.initialPosition = this.rectTransform.localPosition;
 	}
 
 	private void OnEnable()
 	{
-		rectTransform.localPosition = initialPosition;
-		AngleX = 0f;
-		HOTween.To(this, 4f, new TweenParms().Prop("AngleX", (float)Math.PI * 2f, true).Ease(EaseType.Linear).Loops(-1, LoopType.Restart));
-		AngleY = 0f;
-		HOTween.To(this, 2f, new TweenParms().Prop("AngleY", (float)Math.PI * 2f, true).Ease(EaseType.Linear).Loops(-1, LoopType.Restart));
+		this.rectTransform.localPosition = this.initialPosition;
+		this.AngleX = 0f;
+		HOTween.To(this, 4f, (new TweenParms()).Prop("AngleX", 6.2831855f, true).Ease(EaseType.Linear).Loops(-1, LoopType.Restart));
+		this.AngleY = 0f;
+		HOTween.To(this, 2f, (new TweenParms()).Prop("AngleY", 6.2831855f, true).Ease(EaseType.Linear).Loops(-1, LoopType.Restart));
 	}
 
 	private void Update()
 	{
-		Vector3 vector = new Vector3(60f * Mathf.Sin(AngleX), 30f * Mathf.Sin(AngleY), 0f);
-		base.transform.localPosition = initialPosition + vector;
+		Vector3 vector3 = new Vector3(60f * Mathf.Sin(this.AngleX), 30f * Mathf.Sin(this.AngleY), 0f);
+		base.transform.localPosition = this.initialPosition + vector3;
 	}
 }

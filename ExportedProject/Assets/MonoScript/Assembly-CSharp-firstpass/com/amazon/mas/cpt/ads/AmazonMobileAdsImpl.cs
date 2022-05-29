@@ -1,559 +1,818 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using com.amazon.mas.cpt.ads.json;
+using System.Threading;
 using UnityEngine;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public abstract class AmazonMobileAdsImpl : MonoBehaviour, IAmazonMobileAds
 	{
+		private static AmazonLogger logger;
+
+		private readonly static Dictionary<string, IDelegator> callbackDictionary;
+
+		private readonly static object callbackLock;
+
+		private readonly static Dictionary<string, List<IDelegator>> eventListeners;
+
+		private readonly static object eventLock;
+
+		public static IAmazonMobileAds Instance
+		{
+			get
+			{
+				return AmazonMobileAdsImpl.Builder.instance;
+			}
+		}
+
+		static AmazonMobileAdsImpl()
+		{
+			AmazonMobileAdsImpl.callbackDictionary = new Dictionary<string, IDelegator>();
+			AmazonMobileAdsImpl.callbackLock = new object();
+			AmazonMobileAdsImpl.eventListeners = new Dictionary<string, List<IDelegator>>();
+			AmazonMobileAdsImpl.eventLock = new object();
+		}
+
+		private AmazonMobileAdsImpl()
+		{
+		}
+
+		public abstract void AddAdCollapsedListener(AdCollapsedDelegate responseDelegate);
+
+		public abstract void AddAdDismissedListener(AdDismissedDelegate responseDelegate);
+
+		public abstract void AddAdExpandedListener(AdExpandedDelegate responseDelegate);
+
+		public abstract void AddAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate);
+
+		public abstract void AddAdLoadedListener(AdLoadedDelegate responseDelegate);
+
+		public abstract void AddAdResizedListener(AdResizedDelegate responseDelegate);
+
+		public abstract IsEqual AreAdsEqual(AdPair adPair);
+
+		public static void callback(string jsonMessage)
+		{
+			Dictionary<string, object> strs = null;
+			try
+			{
+				AmazonMobileAdsImpl.logger.Debug("Executing callback");
+				strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				string item = strs["callerId"] as string;
+				AmazonMobileAdsImpl.callbackCaller(strs["response"] as Dictionary<string, object>, item);
+			}
+			catch (KeyNotFoundException keyNotFoundException1)
+			{
+				KeyNotFoundException keyNotFoundException = keyNotFoundException1;
+				AmazonMobileAdsImpl.logger.Debug("callerId not found in callback");
+				throw new AmazonException("Internal Error: Unknown callback id", keyNotFoundException);
+			}
+			catch (AmazonException amazonException1)
+			{
+				AmazonException amazonException = amazonException1;
+				AmazonMobileAdsImpl.logger.Debug(string.Concat("Async call threw exception: ", amazonException.ToString()));
+			}
+		}
+
+		private static void callbackCaller(Dictionary<string, object> response, string callerId)
+		{
+			IDelegator item = null;
+			try
+			{
+				Jsonable.CheckForErrors(response);
+				object obj = AmazonMobileAdsImpl.callbackLock;
+				Monitor.Enter(obj);
+				try
+				{
+					item = AmazonMobileAdsImpl.callbackDictionary[callerId];
+					AmazonMobileAdsImpl.callbackDictionary.Remove(callerId);
+					item.ExecuteSuccess(response);
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+			catch (AmazonException amazonException1)
+			{
+				AmazonException amazonException = amazonException1;
+				object obj1 = AmazonMobileAdsImpl.callbackLock;
+				Monitor.Enter(obj1);
+				try
+				{
+					if (item == null)
+					{
+						item = AmazonMobileAdsImpl.callbackDictionary[callerId];
+					}
+					AmazonMobileAdsImpl.callbackDictionary.Remove(callerId);
+					item.ExecuteError(amazonException);
+				}
+				finally
+				{
+					Monitor.Exit(obj1);
+				}
+			}
+		}
+
+		public abstract void CloseFloatingBannerAd(Ad ad);
+
+		public abstract Ad CreateFloatingBannerAd(Placement placement);
+
+		public abstract Ad CreateInterstitialAd();
+
+		public abstract void EnableGeoLocation(ShouldEnable shouldEnable);
+
+		public abstract void EnableLogging(ShouldEnable shouldEnable);
+
+		public abstract void EnableTesting(ShouldEnable shouldEnable);
+
+		public static void FireEvent(string jsonMessage)
+		{
+			// 
+			// Current member / type: System.Void com.amazon.mas.cpt.ads.AmazonMobileAdsImpl::FireEvent(System.String)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void FireEvent(System.String)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.VisitTryStatement(TryStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 507
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 120
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(IEnumerable collection) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 383
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
+		}
+
+		public abstract IsReady IsInterstitialAdReady();
+
+		public abstract LoadingStarted LoadAndShowFloatingBannerAd(Ad ad);
+
+		public abstract LoadingStarted LoadInterstitialAd();
+
+		public abstract void RegisterApplication();
+
+		public abstract void RemoveAdCollapsedListener(AdCollapsedDelegate responseDelegate);
+
+		public abstract void RemoveAdDismissedListener(AdDismissedDelegate responseDelegate);
+
+		public abstract void RemoveAdExpandedListener(AdExpandedDelegate responseDelegate);
+
+		public abstract void RemoveAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate);
+
+		public abstract void RemoveAdLoadedListener(AdLoadedDelegate responseDelegate);
+
+		public abstract void RemoveAdResizedListener(AdResizedDelegate responseDelegate);
+
+		public abstract void SetApplicationKey(ApplicationKey applicationKey);
+
+		public abstract AdShown ShowInterstitialAd();
+
+		public abstract void UnityFireEvent(string jsonMessage);
+
 		private abstract class AmazonMobileAdsBase : AmazonMobileAdsImpl
 		{
-			private static readonly object startLock = new object();
+			private readonly static object startLock;
 
-			private static volatile bool startCalled = false;
+			private static volatile bool startCalled;
+
+			static AmazonMobileAdsBase()
+			{
+				AmazonMobileAdsImpl.AmazonMobileAdsBase.startLock = new object();
+				AmazonMobileAdsImpl.AmazonMobileAdsBase.startCalled = false;
+			}
 
 			public AmazonMobileAdsBase()
 			{
-				logger = new AmazonLogger(GetType().Name);
+				AmazonMobileAdsImpl.logger = new AmazonLogger(base.GetType().Name);
 			}
 
-			protected void Start()
+			public override void AddAdCollapsedListener(AdCollapsedDelegate responseDelegate)
 			{
-				if (startCalled)
+				this.Start();
+				string str = "adCollapsed";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					return;
-				}
-				lock (startLock)
-				{
-					if (!startCalled)
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						Init();
-						RegisterCallback();
-						RegisterEventListener();
-						RegisterCrossPlatformTool();
-						startCalled = true;
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdCollapsedDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdCollapsedDelegator(responseDelegate));
 					}
 				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			protected abstract void Init();
-
-			protected abstract void RegisterCallback();
-
-			protected abstract void RegisterEventListener();
-
-			protected abstract void RegisterCrossPlatformTool();
-
-			public override void UnityFireEvent(string jsonMessage)
+			public override void AddAdDismissedListener(AdDismissedDelegate responseDelegate)
 			{
-				FireEvent(jsonMessage);
+				this.Start();
+				string str = "adDismissed";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdDismissedDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdDismissedDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			public override void SetApplicationKey(ApplicationKey applicationKey)
+			public override void AddAdExpandedListener(AdExpandedDelegate responseDelegate)
 			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(SetApplicationKeyJson(applicationKey.ToJson())) as Dictionary<string, object>);
+				this.Start();
+				string str = "adExpanded";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdExpandedDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdExpandedDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			private string SetApplicationKeyJson(string jsonMessage)
+			public override void AddAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate)
 			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeSetApplicationKeyJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				this.Start();
+				string str = "adFailedToLoad";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdFailedToLoadDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdFailedToLoadDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			protected abstract string NativeSetApplicationKeyJson(string jsonMessage);
-
-			public override void RegisterApplication()
+			public override void AddAdLoadedListener(AdLoadedDelegate responseDelegate)
 			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(RegisterApplicationJson("{}")) as Dictionary<string, object>);
+				this.Start();
+				string str = "adLoaded";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdLoadedDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdLoadedDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
 
-			private string RegisterApplicationJson(string jsonMessage)
+			public override void AddAdResizedListener(AdResizedDelegate responseDelegate)
 			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeRegisterApplicationJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				this.Start();
+				string str = "adResized";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
+				{
+					if (!AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
+					{
+						List<IDelegator> delegators = new List<IDelegator>()
+						{
+							new AdResizedDelegator(responseDelegate)
+						};
+						AmazonMobileAdsImpl.eventListeners.Add(str, delegators);
+					}
+					else
+					{
+						AmazonMobileAdsImpl.eventListeners[str].Add(new AdResizedDelegator(responseDelegate));
+					}
+				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
 			}
-
-			protected abstract string NativeRegisterApplicationJson(string jsonMessage);
-
-			public override void EnableLogging(ShouldEnable shouldEnable)
-			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(EnableLoggingJson(shouldEnable.ToJson())) as Dictionary<string, object>);
-			}
-
-			private string EnableLoggingJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeEnableLoggingJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeEnableLoggingJson(string jsonMessage);
-
-			public override void EnableTesting(ShouldEnable shouldEnable)
-			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(EnableTestingJson(shouldEnable.ToJson())) as Dictionary<string, object>);
-			}
-
-			private string EnableTestingJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeEnableTestingJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeEnableTestingJson(string jsonMessage);
-
-			public override void EnableGeoLocation(ShouldEnable shouldEnable)
-			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(EnableGeoLocationJson(shouldEnable.ToJson())) as Dictionary<string, object>);
-			}
-
-			private string EnableGeoLocationJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeEnableGeoLocationJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeEnableGeoLocationJson(string jsonMessage);
-
-			public override Ad CreateFloatingBannerAd(Placement placement)
-			{
-				Start();
-				return Ad.CreateFromJson(CreateFloatingBannerAdJson(placement.ToJson()));
-			}
-
-			private string CreateFloatingBannerAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeCreateFloatingBannerAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeCreateFloatingBannerAdJson(string jsonMessage);
-
-			public override Ad CreateInterstitialAd()
-			{
-				Start();
-				return Ad.CreateFromJson(CreateInterstitialAdJson("{}"));
-			}
-
-			private string CreateInterstitialAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeCreateInterstitialAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeCreateInterstitialAdJson(string jsonMessage);
-
-			public override LoadingStarted LoadAndShowFloatingBannerAd(Ad ad)
-			{
-				Start();
-				return LoadingStarted.CreateFromJson(LoadAndShowFloatingBannerAdJson(ad.ToJson()));
-			}
-
-			private string LoadAndShowFloatingBannerAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeLoadAndShowFloatingBannerAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeLoadAndShowFloatingBannerAdJson(string jsonMessage);
-
-			public override LoadingStarted LoadInterstitialAd()
-			{
-				Start();
-				return LoadingStarted.CreateFromJson(LoadInterstitialAdJson("{}"));
-			}
-
-			private string LoadInterstitialAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeLoadInterstitialAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeLoadInterstitialAdJson(string jsonMessage);
-
-			public override AdShown ShowInterstitialAd()
-			{
-				Start();
-				return AdShown.CreateFromJson(ShowInterstitialAdJson("{}"));
-			}
-
-			private string ShowInterstitialAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeShowInterstitialAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeShowInterstitialAdJson(string jsonMessage);
-
-			public override void CloseFloatingBannerAd(Ad ad)
-			{
-				Start();
-				Jsonable.CheckForErrors(Json.Deserialize(CloseFloatingBannerAdJson(ad.ToJson())) as Dictionary<string, object>);
-			}
-
-			private string CloseFloatingBannerAdJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeCloseFloatingBannerAdJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeCloseFloatingBannerAdJson(string jsonMessage);
-
-			public override IsReady IsInterstitialAdReady()
-			{
-				Start();
-				return IsReady.CreateFromJson(IsInterstitialAdReadyJson("{}"));
-			}
-
-			private string IsInterstitialAdReadyJson(string jsonMessage)
-			{
-				Stopwatch stopwatch = new Stopwatch();
-				stopwatch.Start();
-				string result = NativeIsInterstitialAdReadyJson(jsonMessage);
-				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
-			}
-
-			protected abstract string NativeIsInterstitialAdReadyJson(string jsonMessage);
 
 			public override IsEqual AreAdsEqual(AdPair adPair)
 			{
-				Start();
-				return IsEqual.CreateFromJson(AreAdsEqualJson(adPair.ToJson()));
+				this.Start();
+				return IsEqual.CreateFromJson(this.AreAdsEqualJson(adPair.ToJson()));
 			}
 
 			private string AreAdsEqualJson(string jsonMessage)
 			{
 				Stopwatch stopwatch = new Stopwatch();
 				stopwatch.Start();
-				string result = NativeAreAdsEqualJson(jsonMessage);
+				string str = this.NativeAreAdsEqualJson(jsonMessage);
 				stopwatch.Stop();
-				logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
-				return result;
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override void CloseFloatingBannerAd(Ad ad)
+			{
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.CloseFloatingBannerAdJson(ad.ToJson())) as Dictionary<string, object>);
+			}
+
+			private string CloseFloatingBannerAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeCloseFloatingBannerAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override Ad CreateFloatingBannerAd(Placement placement)
+			{
+				this.Start();
+				return Ad.CreateFromJson(this.CreateFloatingBannerAdJson(placement.ToJson()));
+			}
+
+			private string CreateFloatingBannerAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeCreateFloatingBannerAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override Ad CreateInterstitialAd()
+			{
+				this.Start();
+				return Ad.CreateFromJson(this.CreateInterstitialAdJson("{}"));
+			}
+
+			private string CreateInterstitialAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeCreateInterstitialAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override void EnableGeoLocation(ShouldEnable shouldEnable)
+			{
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.EnableGeoLocationJson(shouldEnable.ToJson())) as Dictionary<string, object>);
+			}
+
+			private string EnableGeoLocationJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeEnableGeoLocationJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override void EnableLogging(ShouldEnable shouldEnable)
+			{
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.EnableLoggingJson(shouldEnable.ToJson())) as Dictionary<string, object>);
+			}
+
+			private string EnableLoggingJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeEnableLoggingJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override void EnableTesting(ShouldEnable shouldEnable)
+			{
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.EnableTestingJson(shouldEnable.ToJson())) as Dictionary<string, object>);
+			}
+
+			private string EnableTestingJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeEnableTestingJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			protected abstract void Init();
+
+			public override IsReady IsInterstitialAdReady()
+			{
+				this.Start();
+				return IsReady.CreateFromJson(this.IsInterstitialAdReadyJson("{}"));
+			}
+
+			private string IsInterstitialAdReadyJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeIsInterstitialAdReadyJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override LoadingStarted LoadAndShowFloatingBannerAd(Ad ad)
+			{
+				this.Start();
+				return LoadingStarted.CreateFromJson(this.LoadAndShowFloatingBannerAdJson(ad.ToJson()));
+			}
+
+			private string LoadAndShowFloatingBannerAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeLoadAndShowFloatingBannerAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override LoadingStarted LoadInterstitialAd()
+			{
+				this.Start();
+				return LoadingStarted.CreateFromJson(this.LoadInterstitialAdJson("{}"));
+			}
+
+			private string LoadInterstitialAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeLoadInterstitialAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
 			}
 
 			protected abstract string NativeAreAdsEqualJson(string jsonMessage);
 
-			public override void AddAdCollapsedListener(AdCollapsedDelegate responseDelegate)
+			protected abstract string NativeCloseFloatingBannerAdJson(string jsonMessage);
+
+			protected abstract string NativeCreateFloatingBannerAdJson(string jsonMessage);
+
+			protected abstract string NativeCreateInterstitialAdJson(string jsonMessage);
+
+			protected abstract string NativeEnableGeoLocationJson(string jsonMessage);
+
+			protected abstract string NativeEnableLoggingJson(string jsonMessage);
+
+			protected abstract string NativeEnableTestingJson(string jsonMessage);
+
+			protected abstract string NativeIsInterstitialAdReadyJson(string jsonMessage);
+
+			protected abstract string NativeLoadAndShowFloatingBannerAdJson(string jsonMessage);
+
+			protected abstract string NativeLoadInterstitialAdJson(string jsonMessage);
+
+			protected abstract string NativeRegisterApplicationJson(string jsonMessage);
+
+			protected abstract string NativeSetApplicationKeyJson(string jsonMessage);
+
+			protected abstract string NativeShowInterstitialAdJson(string jsonMessage);
+
+			public override void RegisterApplication()
 			{
-				Start();
-				string key = "adCollapsed";
-				lock (eventLock)
-				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdCollapsedDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdCollapsedDelegator(responseDelegate));
-					eventListeners.Add(key, list);
-				}
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.RegisterApplicationJson("{}")) as Dictionary<string, object>);
 			}
+
+			private string RegisterApplicationJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeRegisterApplicationJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			protected abstract void RegisterCallback();
+
+			protected abstract void RegisterCrossPlatformTool();
+
+			protected abstract void RegisterEventListener();
 
 			public override void RemoveAdCollapsedListener(AdCollapsedDelegate responseDelegate)
 			{
-				Start();
-				string key = "adCollapsed";
-				lock (eventLock)
+				this.Start();
+				string str = "adCollapsed";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdCollapsedDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdCollapsedDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddAdDismissedListener(AdDismissedDelegate responseDelegate)
-			{
-				Start();
-				string key = "adDismissed";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdDismissedDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdDismissedDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveAdDismissedListener(AdDismissedDelegate responseDelegate)
 			{
-				Start();
-				string key = "adDismissed";
-				lock (eventLock)
+				this.Start();
+				string str = "adDismissed";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdDismissedDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdDismissedDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddAdExpandedListener(AdExpandedDelegate responseDelegate)
-			{
-				Start();
-				string key = "adExpanded";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdExpandedDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdExpandedDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveAdExpandedListener(AdExpandedDelegate responseDelegate)
 			{
-				Start();
-				string key = "adExpanded";
-				lock (eventLock)
+				this.Start();
+				string str = "adExpanded";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdExpandedDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdExpandedDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate)
-			{
-				Start();
-				string key = "adFailedToLoad";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdFailedToLoadDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdFailedToLoadDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate)
 			{
-				Start();
-				string key = "adFailedToLoad";
-				lock (eventLock)
+				this.Start();
+				string str = "adFailedToLoad";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdFailedToLoadDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdFailedToLoadDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddAdLoadedListener(AdLoadedDelegate responseDelegate)
-			{
-				Start();
-				string key = "adLoaded";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdLoadedDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdLoadedDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveAdLoadedListener(AdLoadedDelegate responseDelegate)
 			{
-				Start();
-				string key = "adLoaded";
-				lock (eventLock)
+				this.Start();
+				string str = "adLoaded";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdLoadedDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdLoadedDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
-			}
-
-			public override void AddAdResizedListener(AdResizedDelegate responseDelegate)
-			{
-				Start();
-				string key = "adResized";
-				lock (eventLock)
+				finally
 				{
-					if (eventListeners.ContainsKey(key))
-					{
-						eventListeners[key].Add(new AdResizedDelegator(responseDelegate));
-						return;
-					}
-					List<IDelegator> list = new List<IDelegator>();
-					list.Add(new AdResizedDelegator(responseDelegate));
-					eventListeners.Add(key, list);
+					Monitor.Exit(obj);
 				}
 			}
 
 			public override void RemoveAdResizedListener(AdResizedDelegate responseDelegate)
 			{
-				Start();
-				string key = "adResized";
-				lock (eventLock)
+				this.Start();
+				string str = "adResized";
+				object obj = AmazonMobileAdsImpl.eventLock;
+				Monitor.Enter(obj);
+				try
 				{
-					if (!eventListeners.ContainsKey(key))
+					if (AmazonMobileAdsImpl.eventListeners.ContainsKey(str))
 					{
-						return;
-					}
-					foreach (AdResizedDelegator item in eventListeners[key])
-					{
-						if (item.responseDelegate == responseDelegate)
+						foreach (AdResizedDelegator item in AmazonMobileAdsImpl.eventListeners[str])
 						{
-							eventListeners[key].Remove(item);
-							break;
+							if (item.responseDelegate != responseDelegate)
+							{
+								continue;
+							}
+							AmazonMobileAdsImpl.eventListeners[str].Remove(item);
+							return;
 						}
 					}
 				}
+				finally
+				{
+					Monitor.Exit(obj);
+				}
+			}
+
+			public override void SetApplicationKey(ApplicationKey applicationKey)
+			{
+				this.Start();
+				Jsonable.CheckForErrors(Json.Deserialize(this.SetApplicationKeyJson(applicationKey.ToJson())) as Dictionary<string, object>);
+			}
+
+			private string SetApplicationKeyJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeSetApplicationKeyJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			public override AdShown ShowInterstitialAd()
+			{
+				this.Start();
+				return AdShown.CreateFromJson(this.ShowInterstitialAdJson("{}"));
+			}
+
+			private string ShowInterstitialAdJson(string jsonMessage)
+			{
+				Stopwatch stopwatch = new Stopwatch();
+				stopwatch.Start();
+				string str = this.NativeShowInterstitialAdJson(jsonMessage);
+				stopwatch.Stop();
+				AmazonMobileAdsImpl.logger.Debug(string.Format("Successfully called native code in {0} ms", stopwatch.ElapsedMilliseconds));
+				return str;
+			}
+
+			protected void Start()
+			{
+				// 
+				// Current member / type: System.Void com.amazon.mas.cpt.ads.AmazonMobileAdsImpl/AmazonMobileAdsBase::Start()
+				// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+				// 
+				// Product version: 0.9.2.0
+				// Exception in: System.Void Start()
+				// 
+				// Object reference not set to an instance of an object.
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+				//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+				//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+				// 
+				// mailto: JustDecompilePublicFeedback@telerik.com
+
+			}
+
+			public override void UnityFireEvent(string jsonMessage)
+			{
+				AmazonMobileAdsImpl.FireEvent(jsonMessage);
 			}
 		}
 
-		private class AmazonMobileAdsDefault : AmazonMobileAdsBase
+		private class AmazonMobileAdsDefault : AmazonMobileAdsImpl.AmazonMobileAdsBase
 		{
+			public AmazonMobileAdsDefault()
+			{
+			}
+
 			protected override void Init()
 			{
 			}
 
-			protected override void RegisterCallback()
-			{
-			}
-
-			protected override void RegisterEventListener()
-			{
-			}
-
-			protected override void RegisterCrossPlatformTool()
-			{
-			}
-
-			protected override string NativeSetApplicationKeyJson(string jsonMessage)
+			protected override string NativeAreAdsEqualJson(string jsonMessage)
 			{
 				return "{}";
 			}
 
-			protected override string NativeRegisterApplicationJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativeEnableLoggingJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativeEnableTestingJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativeEnableGeoLocationJson(string jsonMessage)
+			protected override string NativeCloseFloatingBannerAdJson(string jsonMessage)
 			{
 				return "{}";
 			}
@@ -568,6 +827,26 @@ namespace com.amazon.mas.cpt.ads
 				return "{}";
 			}
 
+			protected override string NativeEnableGeoLocationJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
+			protected override string NativeEnableLoggingJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
+			protected override string NativeEnableTestingJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
+			protected override string NativeIsInterstitialAdReadyJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
 			protected override string NativeLoadAndShowFloatingBannerAdJson(string jsonMessage)
 			{
 				return "{}";
@@ -578,226 +857,231 @@ namespace com.amazon.mas.cpt.ads
 				return "{}";
 			}
 
+			protected override string NativeRegisterApplicationJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
+			protected override string NativeSetApplicationKeyJson(string jsonMessage)
+			{
+				return "{}";
+			}
+
 			protected override string NativeShowInterstitialAdJson(string jsonMessage)
 			{
 				return "{}";
 			}
 
-			protected override string NativeCloseFloatingBannerAdJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativeIsInterstitialAdReadyJson(string jsonMessage)
-			{
-				return "{}";
-			}
-
-			protected override string NativeAreAdsEqualJson(string jsonMessage)
-			{
-				return "{}";
-			}
-		}
-
-		private abstract class AmazonMobileAdsDelegatesBase : AmazonMobileAdsBase
-		{
-			private const string CrossPlatformTool = "XAMARIN";
-
-			protected CallbackDelegate callbackDelegate;
-
-			protected CallbackDelegate eventDelegate;
-
-			protected override void Init()
-			{
-				NativeInit();
-			}
-
 			protected override void RegisterCallback()
 			{
-				callbackDelegate = callback;
-				NativeRegisterCallback(callbackDelegate);
-			}
-
-			protected override void RegisterEventListener()
-			{
-				eventDelegate = FireEvent;
-				NativeRegisterEventListener(eventDelegate);
 			}
 
 			protected override void RegisterCrossPlatformTool()
 			{
-				NativeRegisterCrossPlatformTool("XAMARIN");
+			}
+
+			protected override void RegisterEventListener()
+			{
+			}
+		}
+
+		private abstract class AmazonMobileAdsDelegatesBase : AmazonMobileAdsImpl.AmazonMobileAdsBase
+		{
+			private const string CrossPlatformTool = "XAMARIN";
+
+			protected AmazonMobileAdsImpl.CallbackDelegate callbackDelegate;
+
+			protected AmazonMobileAdsImpl.CallbackDelegate eventDelegate;
+
+			protected AmazonMobileAdsDelegatesBase()
+			{
+			}
+
+			protected override void Init()
+			{
+				this.NativeInit();
+			}
+
+			protected abstract void NativeInit();
+
+			protected abstract void NativeRegisterCallback(AmazonMobileAdsImpl.CallbackDelegate callback);
+
+			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
+
+			protected abstract void NativeRegisterEventListener(AmazonMobileAdsImpl.CallbackDelegate callback);
+
+			protected override void RegisterCallback()
+			{
+				this.callbackDelegate = new AmazonMobileAdsImpl.CallbackDelegate(AmazonMobileAdsImpl.callback);
+				this.NativeRegisterCallback(this.callbackDelegate);
+			}
+
+			protected override void RegisterCrossPlatformTool()
+			{
+				this.NativeRegisterCrossPlatformTool("XAMARIN");
+			}
+
+			protected override void RegisterEventListener()
+			{
+				this.eventDelegate = new AmazonMobileAdsImpl.CallbackDelegate(AmazonMobileAdsImpl.FireEvent);
+				this.NativeRegisterEventListener(this.eventDelegate);
 			}
 
 			public override void UnityFireEvent(string jsonMessage)
 			{
 				throw new NotSupportedException("UnityFireEvent is not supported");
 			}
-
-			protected abstract void NativeInit();
-
-			protected abstract void NativeRegisterCallback(CallbackDelegate callback);
-
-			protected abstract void NativeRegisterEventListener(CallbackDelegate callback);
-
-			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
 		}
 
-		private class Builder
+		private class AmazonMobileAdsUnityAndroid : AmazonMobileAdsImpl.AmazonMobileAdsUnityBase
 		{
-			internal static readonly IAmazonMobileAds instance;
-
-			static Builder()
-			{
-				instance = AmazonMobileAdsUnityAndroid.Instance;
-			}
-		}
-
-		private class AmazonMobileAdsUnityAndroid : AmazonMobileAdsUnityBase
-		{
-			public new static AmazonMobileAdsUnityAndroid Instance
+			public new static AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid Instance
 			{
 				get
 				{
-					return AmazonMobileAdsUnityBase.getInstance<AmazonMobileAdsUnityAndroid>();
+					return AmazonMobileAdsImpl.AmazonMobileAdsUnityBase.getInstance<AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid>();
 				}
 			}
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeRegisterCallbackGameObject(string name);
+			public AmazonMobileAdsUnityAndroid()
+			{
+			}
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeInit();
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeAreAdsEqualJson(string jsonMessage);
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeSetApplicationKeyJson(string jsonMessage);
+			protected override string NativeAreAdsEqualJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeAreAdsEqualJson(jsonMessage);
+			}
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeRegisterApplicationJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeEnableLoggingJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeEnableTestingJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeEnableGeoLocationJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeCreateFloatingBannerAdJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeCreateInterstitialAdJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeLoadAndShowFloatingBannerAdJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeLoadInterstitialAdJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeShowInterstitialAdJson(string jsonMessage);
-
-			[DllImport("AmazonMobileAdsBridge")]
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
 			private static extern string nativeCloseFloatingBannerAdJson(string jsonMessage);
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeIsInterstitialAdReadyJson(string jsonMessage);
+			protected override string NativeCloseFloatingBannerAdJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeCloseFloatingBannerAdJson(jsonMessage);
+			}
 
-			[DllImport("AmazonMobileAdsBridge")]
-			private static extern string nativeAreAdsEqualJson(string jsonMessage);
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeCreateFloatingBannerAdJson(string jsonMessage);
+
+			protected override string NativeCreateFloatingBannerAdJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeCreateFloatingBannerAdJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeCreateInterstitialAdJson(string jsonMessage);
+
+			protected override string NativeCreateInterstitialAdJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeCreateInterstitialAdJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeEnableGeoLocationJson(string jsonMessage);
+
+			protected override string NativeEnableGeoLocationJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeEnableGeoLocationJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeEnableLoggingJson(string jsonMessage);
+
+			protected override string NativeEnableLoggingJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeEnableLoggingJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeEnableTestingJson(string jsonMessage);
+
+			protected override string NativeEnableTestingJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeEnableTestingJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeInit();
 
 			protected override void NativeInit()
 			{
-				nativeInit();
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeInit();
 			}
 
-			protected override void RegisterCallback()
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeIsInterstitialAdReadyJson(string jsonMessage);
+
+			protected override string NativeIsInterstitialAdReadyJson(string jsonMessage)
 			{
-				nativeRegisterCallbackGameObject(base.gameObject.name);
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeIsInterstitialAdReadyJson(jsonMessage);
 			}
 
-			protected override void RegisterEventListener()
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeLoadAndShowFloatingBannerAdJson(string jsonMessage);
+
+			protected override string NativeLoadAndShowFloatingBannerAdJson(string jsonMessage)
 			{
-				nativeRegisterCallbackGameObject(base.gameObject.name);
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeLoadAndShowFloatingBannerAdJson(jsonMessage);
 			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeLoadInterstitialAdJson(string jsonMessage);
+
+			protected override string NativeLoadInterstitialAdJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeLoadInterstitialAdJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeRegisterApplicationJson(string jsonMessage);
+
+			protected override string NativeRegisterApplicationJson(string jsonMessage)
+			{
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeRegisterApplicationJson(jsonMessage);
+			}
+
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeRegisterCallbackGameObject(string name);
 
 			protected override void NativeRegisterCrossPlatformTool(string crossPlatformTool)
 			{
 			}
 
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeSetApplicationKeyJson(string jsonMessage);
+
 			protected override string NativeSetApplicationKeyJson(string jsonMessage)
 			{
-				return nativeSetApplicationKeyJson(jsonMessage);
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeSetApplicationKeyJson(jsonMessage);
 			}
 
-			protected override string NativeRegisterApplicationJson(string jsonMessage)
-			{
-				return nativeRegisterApplicationJson(jsonMessage);
-			}
-
-			protected override string NativeEnableLoggingJson(string jsonMessage)
-			{
-				return nativeEnableLoggingJson(jsonMessage);
-			}
-
-			protected override string NativeEnableTestingJson(string jsonMessage)
-			{
-				return nativeEnableTestingJson(jsonMessage);
-			}
-
-			protected override string NativeEnableGeoLocationJson(string jsonMessage)
-			{
-				return nativeEnableGeoLocationJson(jsonMessage);
-			}
-
-			protected override string NativeCreateFloatingBannerAdJson(string jsonMessage)
-			{
-				return nativeCreateFloatingBannerAdJson(jsonMessage);
-			}
-
-			protected override string NativeCreateInterstitialAdJson(string jsonMessage)
-			{
-				return nativeCreateInterstitialAdJson(jsonMessage);
-			}
-
-			protected override string NativeLoadAndShowFloatingBannerAdJson(string jsonMessage)
-			{
-				return nativeLoadAndShowFloatingBannerAdJson(jsonMessage);
-			}
-
-			protected override string NativeLoadInterstitialAdJson(string jsonMessage)
-			{
-				return nativeLoadInterstitialAdJson(jsonMessage);
-			}
+			[DllImport("AmazonMobileAdsBridge", CharSet=CharSet.None, ExactSpelling=false)]
+			private static extern string nativeShowInterstitialAdJson(string jsonMessage);
 
 			protected override string NativeShowInterstitialAdJson(string jsonMessage)
 			{
-				return nativeShowInterstitialAdJson(jsonMessage);
+				return AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeShowInterstitialAdJson(jsonMessage);
 			}
 
-			protected override string NativeCloseFloatingBannerAdJson(string jsonMessage)
+			protected override void RegisterCallback()
 			{
-				return nativeCloseFloatingBannerAdJson(jsonMessage);
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeRegisterCallbackGameObject(base.gameObject.name);
 			}
 
-			protected override string NativeIsInterstitialAdReadyJson(string jsonMessage)
+			protected override void RegisterEventListener()
 			{
-				return nativeIsInterstitialAdReadyJson(jsonMessage);
-			}
-
-			protected override string NativeAreAdsEqualJson(string jsonMessage)
-			{
-				return nativeAreAdsEqualJson(jsonMessage);
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.nativeRegisterCallbackGameObject(base.gameObject.name);
 			}
 		}
 
-		private abstract class AmazonMobileAdsUnityBase : AmazonMobileAdsBase
+		private abstract class AmazonMobileAdsUnityBase : AmazonMobileAdsImpl.AmazonMobileAdsBase
 		{
 			private const string CrossPlatformTool = "UNITY";
 
-			private static AmazonMobileAdsUnityBase instance;
+			private static AmazonMobileAdsImpl.AmazonMobileAdsUnityBase instance;
 
 			private static Type instanceType;
 
@@ -807,40 +1091,12 @@ namespace com.amazon.mas.cpt.ads
 
 			static AmazonMobileAdsUnityBase()
 			{
-				quit = false;
-				initLock = new object();
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityBase.quit = false;
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityBase.initLock = new object();
 			}
 
-			public static T getInstance<T>() where T : AmazonMobileAdsUnityBase
+			protected AmazonMobileAdsUnityBase()
 			{
-				//Discarded unreachable code: IL_00d5
-				if (quit)
-				{
-					return (T)default(T);
-				}
-				if (instance != null)
-				{
-					return (T)instance;
-				}
-				lock (initLock)
-				{
-					Type typeFromHandle = typeof(T);
-					assertTrue(instance == null || (instance != null && instanceType == typeFromHandle), "Only 1 instance of 1 subtype of AmazonMobileAdsUnityBase can exist.");
-					if (instance == null)
-					{
-						instanceType = typeFromHandle;
-						GameObject gameObject = new GameObject();
-						instance = gameObject.AddComponent<T>();
-						gameObject.name = typeFromHandle.ToString() + "_Singleton";
-						UnityEngine.Object.DontDestroyOnLoad(gameObject);
-					}
-					return (T)instance;
-				}
-			}
-
-			public void OnDestroy()
-			{
-				quit = true;
 			}
 
 			private static void assertTrue(bool statement, string errorMessage)
@@ -851,179 +1107,65 @@ namespace com.amazon.mas.cpt.ads
 				}
 			}
 
-			protected override void Init()
+			public static T getInstance<T>()
+			where T : AmazonMobileAdsImpl.AmazonMobileAdsUnityBase
 			{
-				NativeInit();
+				// 
+				// Current member / type: T com.amazon.mas.cpt.ads.AmazonMobileAdsImpl/AmazonMobileAdsUnityBase::getInstance()
+				// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp-firstpass.dll
+				// 
+				// Product version: 0.9.2.0
+				// Exception in: T getInstance()
+				// 
+				// Object reference not set to an instance of an object.
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+				//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+				//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+				//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+				//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+				//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+				// 
+				// mailto: JustDecompilePublicFeedback@telerik.com
+
 			}
 
-			protected override void RegisterCrossPlatformTool()
+			protected override void Init()
 			{
-				NativeRegisterCrossPlatformTool("UNITY");
+				this.NativeInit();
 			}
 
 			protected abstract void NativeInit();
 
 			protected abstract void NativeRegisterCrossPlatformTool(string crossPlatformTool);
+
+			public void OnDestroy()
+			{
+				AmazonMobileAdsImpl.AmazonMobileAdsUnityBase.quit = true;
+			}
+
+			protected override void RegisterCrossPlatformTool()
+			{
+				this.NativeRegisterCrossPlatformTool("UNITY");
+			}
+		}
+
+		private class Builder
+		{
+			internal readonly static IAmazonMobileAds instance;
+
+			static Builder()
+			{
+				AmazonMobileAdsImpl.Builder.instance = AmazonMobileAdsImpl.AmazonMobileAdsUnityAndroid.Instance;
+			}
+
+			public Builder()
+			{
+			}
 		}
 
 		protected delegate void CallbackDelegate(string jsonMessage);
-
-		private static AmazonLogger logger;
-
-		private static readonly Dictionary<string, IDelegator> callbackDictionary = new Dictionary<string, IDelegator>();
-
-		private static readonly object callbackLock = new object();
-
-		private static readonly Dictionary<string, List<IDelegator>> eventListeners = new Dictionary<string, List<IDelegator>>();
-
-		private static readonly object eventLock = new object();
-
-		public static IAmazonMobileAds Instance
-		{
-			get
-			{
-				return Builder.instance;
-			}
-		}
-
-		private AmazonMobileAdsImpl()
-		{
-		}
-
-		public static void callback(string jsonMessage)
-		{
-			//Discarded unreachable code: IL_0067
-			Dictionary<string, object> dictionary = null;
-			try
-			{
-				logger.Debug("Executing callback");
-				dictionary = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				string callerId = dictionary["callerId"] as string;
-				Dictionary<string, object> response = dictionary["response"] as Dictionary<string, object>;
-				callbackCaller(response, callerId);
-			}
-			catch (KeyNotFoundException inner)
-			{
-				logger.Debug("callerId not found in callback");
-				throw new AmazonException("Internal Error: Unknown callback id", inner);
-			}
-			catch (AmazonException ex)
-			{
-				logger.Debug("Async call threw exception: " + ex.ToString());
-			}
-		}
-
-		private static void callbackCaller(Dictionary<string, object> response, string callerId)
-		{
-			IDelegator delegator = null;
-			try
-			{
-				Jsonable.CheckForErrors(response);
-				lock (callbackLock)
-				{
-					delegator = callbackDictionary[callerId];
-					callbackDictionary.Remove(callerId);
-					delegator.ExecuteSuccess(response);
-				}
-			}
-			catch (AmazonException e)
-			{
-				lock (callbackLock)
-				{
-					if (delegator == null)
-					{
-						delegator = callbackDictionary[callerId];
-					}
-					callbackDictionary.Remove(callerId);
-					delegator.ExecuteError(e);
-				}
-			}
-		}
-
-		public static void FireEvent(string jsonMessage)
-		{
-			try
-			{
-				logger.Debug("eventReceived");
-				Dictionary<string, object> dictionary = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				string key = dictionary["eventId"] as string;
-				Dictionary<string, object> dictionary2 = null;
-				if (dictionary.ContainsKey("response"))
-				{
-					dictionary2 = dictionary["response"] as Dictionary<string, object>;
-					Jsonable.CheckForErrors(dictionary2);
-				}
-				lock (eventLock)
-				{
-					foreach (IDelegator item in eventListeners[key])
-					{
-						if (dictionary2 != null)
-						{
-							item.ExecuteSuccess(dictionary2);
-						}
-						else
-						{
-							item.ExecuteSuccess();
-						}
-					}
-				}
-			}
-			catch (AmazonException ex)
-			{
-				logger.Debug("Event call threw exception: " + ex.ToString());
-			}
-		}
-
-		public abstract void SetApplicationKey(ApplicationKey applicationKey);
-
-		public abstract void RegisterApplication();
-
-		public abstract void EnableLogging(ShouldEnable shouldEnable);
-
-		public abstract void EnableTesting(ShouldEnable shouldEnable);
-
-		public abstract void EnableGeoLocation(ShouldEnable shouldEnable);
-
-		public abstract Ad CreateFloatingBannerAd(Placement placement);
-
-		public abstract Ad CreateInterstitialAd();
-
-		public abstract LoadingStarted LoadAndShowFloatingBannerAd(Ad ad);
-
-		public abstract LoadingStarted LoadInterstitialAd();
-
-		public abstract AdShown ShowInterstitialAd();
-
-		public abstract void CloseFloatingBannerAd(Ad ad);
-
-		public abstract IsReady IsInterstitialAdReady();
-
-		public abstract IsEqual AreAdsEqual(AdPair adPair);
-
-		public abstract void UnityFireEvent(string jsonMessage);
-
-		public abstract void AddAdCollapsedListener(AdCollapsedDelegate responseDelegate);
-
-		public abstract void RemoveAdCollapsedListener(AdCollapsedDelegate responseDelegate);
-
-		public abstract void AddAdDismissedListener(AdDismissedDelegate responseDelegate);
-
-		public abstract void RemoveAdDismissedListener(AdDismissedDelegate responseDelegate);
-
-		public abstract void AddAdExpandedListener(AdExpandedDelegate responseDelegate);
-
-		public abstract void RemoveAdExpandedListener(AdExpandedDelegate responseDelegate);
-
-		public abstract void AddAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate);
-
-		public abstract void RemoveAdFailedToLoadListener(AdFailedToLoadDelegate responseDelegate);
-
-		public abstract void AddAdLoadedListener(AdLoadedDelegate responseDelegate);
-
-		public abstract void RemoveAdLoadedListener(AdLoadedDelegate responseDelegate);
-
-		public abstract void AddAdResizedListener(AdResizedDelegate responseDelegate);
-
-		public abstract void RemoveAdResizedListener(AdResizedDelegate responseDelegate);
 	}
 }

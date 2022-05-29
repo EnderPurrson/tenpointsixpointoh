@@ -5,28 +5,28 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UI2DSprite : UIBasicSprite
 {
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Sprite mSprite;
 
 	[HideInInspector]
 	[SerializeField]
 	private Material mMat;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private Shader mShader;
 
 	[HideInInspector]
 	[SerializeField]
 	private Vector4 mBorder = Vector4.zero;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool mFixedAspect;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private float mPixelSize = 1f;
 
 	public Sprite nextSprite;
@@ -34,105 +34,19 @@ public class UI2DSprite : UIBasicSprite
 	[NonSerialized]
 	private int mPMA = -1;
 
-	public Sprite sprite2D
+	public override Vector4 border
 	{
 		get
 		{
-			return mSprite;
+			return this.mBorder;
 		}
 		set
 		{
-			if (mSprite != value)
+			if (this.mBorder != value)
 			{
-				RemoveFromPanel();
-				mSprite = value;
-				nextSprite = null;
-				CreatePanel();
+				this.mBorder = value;
+				this.MarkAsChanged();
 			}
-		}
-	}
-
-	public override Material material
-	{
-		get
-		{
-			return mMat;
-		}
-		set
-		{
-			if (mMat != value)
-			{
-				RemoveFromPanel();
-				mMat = value;
-				mPMA = -1;
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public override Shader shader
-	{
-		get
-		{
-			if (mMat != null)
-			{
-				return mMat.shader;
-			}
-			if (mShader == null)
-			{
-				mShader = Shader.Find("Unlit/Transparent Colored");
-			}
-			return mShader;
-		}
-		set
-		{
-			if (mShader != value)
-			{
-				RemoveFromPanel();
-				mShader = value;
-				if (mMat == null)
-				{
-					mPMA = -1;
-					MarkAsChanged();
-				}
-			}
-		}
-	}
-
-	public override Texture mainTexture
-	{
-		get
-		{
-			if (mSprite != null)
-			{
-				return mSprite.texture;
-			}
-			if (mMat != null)
-			{
-				return mMat.mainTexture;
-			}
-			return null;
-		}
-	}
-
-	public override bool premultipliedAlpha
-	{
-		get
-		{
-			if (mPMA == -1)
-			{
-				Shader shader = this.shader;
-				mPMA = ((shader != null && shader.name.Contains("Premultiplied")) ? 1 : 0);
-			}
-			return mPMA == 1;
-		}
-	}
-
-	public override float pixelSize
-	{
-		get
-		{
-			return mPixelSize;
 		}
 	}
 
@@ -140,188 +54,286 @@ public class UI2DSprite : UIBasicSprite
 	{
 		get
 		{
-			Vector2 vector = base.pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float num3 = num + (float)mWidth;
-			float num4 = num2 + (float)mHeight;
-			if (mSprite != null && mType != Type.Tiled)
+			float single;
+			float single1;
+			Vector2 vector2 = base.pivotOffset;
+			float single2 = -vector2.x * (float)this.mWidth;
+			float single3 = -vector2.y * (float)this.mHeight;
+			float single4 = single2 + (float)this.mWidth;
+			float single5 = single3 + (float)this.mHeight;
+			if (this.mSprite != null && this.mType != UIBasicSprite.Type.Tiled)
 			{
-				int num5 = Mathf.RoundToInt(mSprite.rect.width);
-				int num6 = Mathf.RoundToInt(mSprite.rect.height);
-				int num7 = Mathf.RoundToInt(mSprite.textureRectOffset.x);
-				int num8 = Mathf.RoundToInt(mSprite.textureRectOffset.y);
-				int num9 = Mathf.RoundToInt(mSprite.rect.width - mSprite.textureRect.width - mSprite.textureRectOffset.x);
-				int num10 = Mathf.RoundToInt(mSprite.rect.height - mSprite.textureRect.height - mSprite.textureRectOffset.y);
-				float num11 = 1f;
-				float num12 = 1f;
-				if (num5 > 0 && num6 > 0 && (mType == Type.Simple || mType == Type.Filled))
+				int num = Mathf.RoundToInt(this.mSprite.rect.width);
+				int num1 = Mathf.RoundToInt(this.mSprite.rect.height);
+				int num2 = Mathf.RoundToInt(this.mSprite.textureRectOffset.x);
+				int num3 = Mathf.RoundToInt(this.mSprite.textureRectOffset.y);
+				float single6 = this.mSprite.rect.width - this.mSprite.textureRect.width;
+				Vector2 vector21 = this.mSprite.textureRectOffset;
+				int num4 = Mathf.RoundToInt(single6 - vector21.x);
+				float single7 = this.mSprite.rect.height - this.mSprite.textureRect.height;
+				Vector2 vector22 = this.mSprite.textureRectOffset;
+				int num5 = Mathf.RoundToInt(single7 - vector22.y);
+				float single8 = 1f;
+				float single9 = 1f;
+				if (num > 0 && num1 > 0 && (this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled))
 				{
-					if (((uint)num5 & (true ? 1u : 0u)) != 0)
+					if ((num & 1) != 0)
 					{
-						num9++;
+						num4++;
 					}
-					if (((uint)num6 & (true ? 1u : 0u)) != 0)
+					if ((num1 & 1) != 0)
 					{
-						num10++;
+						num5++;
 					}
-					num11 = 1f / (float)num5 * (float)mWidth;
-					num12 = 1f / (float)num6 * (float)mHeight;
+					single8 = 1f / (float)num * (float)this.mWidth;
+					single9 = 1f / (float)num1 * (float)this.mHeight;
 				}
-				if (mFlip == Flip.Horizontally || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Horizontally || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num += (float)num9 * num11;
-					num3 -= (float)num7 * num11;
+					single2 = single2 + (float)num4 * single8;
+					single4 = single4 - (float)num2 * single8;
 				}
 				else
 				{
-					num += (float)num7 * num11;
-					num3 -= (float)num9 * num11;
+					single2 = single2 + (float)num2 * single8;
+					single4 = single4 - (float)num4 * single8;
 				}
-				if (mFlip == Flip.Vertically || mFlip == Flip.Both)
+				if (this.mFlip == UIBasicSprite.Flip.Vertically || this.mFlip == UIBasicSprite.Flip.Both)
 				{
-					num2 += (float)num10 * num12;
-					num4 -= (float)num8 * num12;
+					single3 = single3 + (float)num5 * single9;
+					single5 = single5 - (float)num3 * single9;
 				}
 				else
 				{
-					num2 += (float)num8 * num12;
-					num4 -= (float)num10 * num12;
+					single3 = single3 + (float)num3 * single9;
+					single5 = single5 - (float)num5 * single9;
 				}
 			}
-			float num13;
-			float num14;
-			if (mFixedAspect)
+			if (!this.mFixedAspect)
 			{
-				num13 = 0f;
-				num14 = 0f;
+				Vector4 vector4 = this.border * this.pixelSize;
+				single = vector4.x + vector4.z;
+				single1 = vector4.y + vector4.w;
 			}
 			else
 			{
-				Vector4 vector2 = border * pixelSize;
-				num13 = vector2.x + vector2.z;
-				num14 = vector2.y + vector2.w;
+				single = 0f;
+				single1 = 0f;
 			}
-			float x = Mathf.Lerp(num, num3 - num13, mDrawRegion.x);
-			float y = Mathf.Lerp(num2, num4 - num14, mDrawRegion.y);
-			float z = Mathf.Lerp(num + num13, num3, mDrawRegion.z);
-			float w = Mathf.Lerp(num2 + num14, num4, mDrawRegion.w);
-			return new Vector4(x, y, z, w);
+			float single10 = Mathf.Lerp(single2, single4 - single, this.mDrawRegion.x);
+			float single11 = Mathf.Lerp(single3, single5 - single1, this.mDrawRegion.y);
+			float single12 = Mathf.Lerp(single2 + single, single4, this.mDrawRegion.z);
+			float single13 = Mathf.Lerp(single3 + single1, single5, this.mDrawRegion.w);
+			return new Vector4(single10, single11, single12, single13);
 		}
 	}
 
-	public override Vector4 border
+	public override Texture mainTexture
 	{
 		get
 		{
-			return mBorder;
+			if (this.mSprite != null)
+			{
+				return this.mSprite.texture;
+			}
+			if (this.mMat == null)
+			{
+				return null;
+			}
+			return this.mMat.mainTexture;
+		}
+	}
+
+	public override Material material
+	{
+		get
+		{
+			return this.mMat;
 		}
 		set
 		{
-			if (mBorder != value)
+			if (this.mMat != value)
 			{
-				mBorder = value;
-				MarkAsChanged();
+				base.RemoveFromPanel();
+				this.mMat = value;
+				this.mPMA = -1;
+				this.MarkAsChanged();
 			}
 		}
 	}
 
-	protected override void OnUpdate()
+	public override float pixelSize
 	{
-		if (nextSprite != null)
+		get
 		{
-			if (nextSprite != mSprite)
-			{
-				sprite2D = nextSprite;
-			}
-			nextSprite = null;
+			return this.mPixelSize;
 		}
-		base.OnUpdate();
-		if (!mFixedAspect)
+	}
+
+	public override bool premultipliedAlpha
+	{
+		get
 		{
-			return;
+			if (this.mPMA == -1)
+			{
+				Shader shader = this.shader;
+				this.mPMA = (!(shader != null) || !shader.name.Contains("Premultiplied") ? 0 : 1);
+			}
+			return this.mPMA == 1;
 		}
-		Texture texture = mainTexture;
-		if (texture != null)
+	}
+
+	public override Shader shader
+	{
+		get
 		{
-			int num = Mathf.RoundToInt(mSprite.rect.width);
-			int num2 = Mathf.RoundToInt(mSprite.rect.height);
-			int num3 = Mathf.RoundToInt(mSprite.textureRectOffset.x);
-			int num4 = Mathf.RoundToInt(mSprite.textureRectOffset.y);
-			int num5 = Mathf.RoundToInt(mSprite.rect.width - mSprite.textureRect.width - mSprite.textureRectOffset.x);
-			int num6 = Mathf.RoundToInt(mSprite.rect.height - mSprite.textureRect.height - mSprite.textureRectOffset.y);
-			num += num3 + num5;
-			num2 += num6 + num4;
-			float num7 = mWidth;
-			float num8 = mHeight;
-			float num9 = num7 / num8;
-			float num10 = (float)num / (float)num2;
-			if (num10 < num9)
+			if (this.mMat != null)
 			{
-				float num11 = (num7 - num8 * num10) / num7 * 0.5f;
-				base.drawRegion = new Vector4(num11, 0f, 1f - num11, 1f);
+				return this.mMat.shader;
 			}
-			else
+			if (this.mShader == null)
 			{
-				float num12 = (num8 - num7 / num10) / num8 * 0.5f;
-				base.drawRegion = new Vector4(0f, num12, 1f, 1f - num12);
+				this.mShader = Shader.Find("Unlit/Transparent Colored");
+			}
+			return this.mShader;
+		}
+		set
+		{
+			if (this.mShader != value)
+			{
+				base.RemoveFromPanel();
+				this.mShader = value;
+				if (this.mMat == null)
+				{
+					this.mPMA = -1;
+					this.MarkAsChanged();
+				}
 			}
 		}
+	}
+
+	public Sprite sprite2D
+	{
+		get
+		{
+			return this.mSprite;
+		}
+		set
+		{
+			if (this.mSprite != value)
+			{
+				base.RemoveFromPanel();
+				this.mSprite = value;
+				this.nextSprite = null;
+				base.CreatePanel();
+			}
+		}
+	}
+
+	public UI2DSprite()
+	{
 	}
 
 	public override void MakePixelPerfect()
 	{
 		base.MakePixelPerfect();
-		if (mType == Type.Tiled)
+		if (this.mType == UIBasicSprite.Type.Tiled)
 		{
 			return;
 		}
-		Texture texture = mainTexture;
-		if (!(texture == null) && (mType == Type.Simple || mType == Type.Filled || !base.hasBorder) && texture != null)
+		Texture texture = this.mainTexture;
+		if (texture == null)
 		{
-			Rect rect = mSprite.rect;
+			return;
+		}
+		if ((this.mType == UIBasicSprite.Type.Simple || this.mType == UIBasicSprite.Type.Filled || !base.hasBorder) && texture != null)
+		{
+			Rect rect = this.mSprite.rect;
 			int num = Mathf.RoundToInt(rect.width);
-			int num2 = Mathf.RoundToInt(rect.height);
+			int num1 = Mathf.RoundToInt(rect.height);
 			if ((num & 1) == 1)
 			{
 				num++;
 			}
-			if ((num2 & 1) == 1)
+			if ((num1 & 1) == 1)
 			{
-				num2++;
+				num1++;
 			}
 			base.width = num;
-			base.height = num2;
+			base.height = num1;
 		}
 	}
 
 	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
 	{
-		Texture texture = mainTexture;
-		if (!(texture == null))
+		Texture texture = this.mainTexture;
+		if (texture == null)
 		{
-			Rect rect = ((!(mSprite != null)) ? new Rect(0f, 0f, texture.width, texture.height) : mSprite.textureRect);
-			Rect inner = rect;
-			Vector4 vector = border;
-			inner.xMin += vector.x;
-			inner.yMin += vector.y;
-			inner.xMax -= vector.z;
-			inner.yMax -= vector.w;
-			float num = 1f / (float)texture.width;
-			float num2 = 1f / (float)texture.height;
-			rect.xMin *= num;
-			rect.xMax *= num;
-			rect.yMin *= num2;
-			rect.yMax *= num2;
-			inner.xMin *= num;
-			inner.xMax *= num;
-			inner.yMin *= num2;
-			inner.yMax *= num2;
-			int size = verts.size;
-			Fill(verts, uvs, cols, rect, inner);
-			if (onPostFill != null)
+			return;
+		}
+		Rect rect = (this.mSprite == null ? new Rect(0f, 0f, (float)texture.width, (float)texture.height) : this.mSprite.textureRect);
+		Rect rect1 = rect;
+		Vector4 vector4 = this.border;
+		rect1.xMin = rect1.xMin + vector4.x;
+		rect1.yMin = rect1.yMin + vector4.y;
+		rect1.xMax = rect1.xMax - vector4.z;
+		rect1.yMax = rect1.yMax - vector4.w;
+		float single = 1f / (float)texture.width;
+		float single1 = 1f / (float)texture.height;
+		rect.xMin = rect.xMin * single;
+		rect.xMax = rect.xMax * single;
+		rect.yMin = rect.yMin * single1;
+		rect.yMax = rect.yMax * single1;
+		rect1.xMin = rect1.xMin * single;
+		rect1.xMax = rect1.xMax * single;
+		rect1.yMin = rect1.yMin * single1;
+		rect1.yMax = rect1.yMax * single1;
+		int num = verts.size;
+		base.Fill(verts, uvs, cols, rect, rect1);
+		if (this.onPostFill != null)
+		{
+			this.onPostFill(this, num, verts, uvs, cols);
+		}
+	}
+
+	protected override void OnUpdate()
+	{
+		if (this.nextSprite != null)
+		{
+			if (this.nextSprite != this.mSprite)
 			{
-				onPostFill(this, size, verts, uvs, cols);
+				this.sprite2D = this.nextSprite;
+			}
+			this.nextSprite = null;
+		}
+		base.OnUpdate();
+		if (this.mFixedAspect && this.mainTexture != null)
+		{
+			int num = Mathf.RoundToInt(this.mSprite.rect.width);
+			int num1 = Mathf.RoundToInt(this.mSprite.rect.height);
+			int num2 = Mathf.RoundToInt(this.mSprite.textureRectOffset.x);
+			int num3 = Mathf.RoundToInt(this.mSprite.textureRectOffset.y);
+			float single = this.mSprite.rect.width - this.mSprite.textureRect.width;
+			Vector2 vector2 = this.mSprite.textureRectOffset;
+			int num4 = Mathf.RoundToInt(single - vector2.x);
+			float single1 = this.mSprite.rect.height - this.mSprite.textureRect.height;
+			Vector2 vector21 = this.mSprite.textureRectOffset;
+			int num5 = Mathf.RoundToInt(single1 - vector21.y);
+			num = num + num2 + num4;
+			num1 = num1 + num5 + num3;
+			float single2 = (float)this.mWidth;
+			float single3 = (float)this.mHeight;
+			float single4 = single2 / single3;
+			float single5 = (float)num / (float)num1;
+			if (single5 >= single4)
+			{
+				float single6 = (single3 - single2 / single5) / single3 * 0.5f;
+				base.drawRegion = new Vector4(0f, single6, 1f, 1f - single6);
+			}
+			else
+			{
+				float single7 = (single2 - single3 * single5) / single2 * 0.5f;
+				base.drawRegion = new Vector4(single7, 0f, 1f - single7, 1f);
 			}
 		}
 	}

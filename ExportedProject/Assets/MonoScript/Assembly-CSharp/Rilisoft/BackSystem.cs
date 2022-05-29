@@ -1,84 +1,15 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	internal sealed class BackSystem : MonoBehaviour
 	{
-		private sealed class Subscription : IDisposable
-		{
-			private Action _callback;
+		private readonly static Lazy<BackSystem> _instance;
 
-			private readonly string _context;
-
-			private LinkedListNode<Subscription> _node;
-
-			public string Context
-			{
-				get
-				{
-					return _context;
-				}
-			}
-
-			public bool Disposed
-			{
-				get
-				{
-					return _node == null;
-				}
-			}
-
-			internal Subscription(Action callback, string context, LinkedList<Subscription> list)
-			{
-				_callback = callback;
-				_context = context ?? string.Empty;
-				if (list != null)
-				{
-					_node = list.AddLast(this);
-				}
-			}
-
-			public void Dispose()
-			{
-				if (!Disposed)
-				{
-					_callback = null;
-					LinkedList<Subscription> list = _node.List;
-					if (list != null)
-					{
-						list.Remove(_node);
-					}
-					_node = null;
-				}
-			}
-
-			public void Invoke()
-			{
-				if (Disposed)
-				{
-					Debug.LogWarning("Attempt to invoke disposed handler.");
-				}
-				else if (_callback != null)
-				{
-					_callback();
-				}
-			}
-		}
-
-		private static readonly Lazy<BackSystem> _instance = new Lazy<BackSystem>(InitializeInstance);
-
-		private readonly LinkedList<Subscription> _subscriptions = new LinkedList<Subscription>();
-
-		public static BackSystem Instance
-		{
-			get
-			{
-				return _instance.Value;
-			}
-		}
+		private readonly LinkedList<BackSystem.Subscription> _subscriptions = new LinkedList<BackSystem.Subscription>();
 
 		public static bool Active
 		{
@@ -88,78 +19,42 @@ namespace Rilisoft
 			}
 		}
 
-		public IDisposable Register(Action callback, string context = null)
+		public static BackSystem Instance
 		{
-			Subscription result = new Subscription(callback, context, _subscriptions);
-			if (Application.isEditor)
+			get
 			{
-				Debug.Log(string.Format("<color=lightblue>Back stack after registration: {0}</color>", this));
+				return BackSystem._instance.Value;
 			}
-			return result;
 		}
 
-		public override string ToString()
+		static BackSystem()
 		{
-			return Json.Serialize(ToJson());
+			BackSystem._instance = new Lazy<BackSystem>(new Func<BackSystem>(BackSystem.InitializeInstance));
 		}
 
-		private void Update()
+		public BackSystem()
 		{
-			if (EscapePressed())
+		}
+
+		private void CollectGarbage()
+		{
+			for (LinkedListNode<BackSystem.Subscription> i = this._subscriptions.Last; i != null; i = this._subscriptions.Last)
 			{
-				Input.ResetInputAxes();
-				string arg = ((!Application.isEditor) ? string.Empty : ToString());
-				CollectGarbage();
-				LinkedListNode<Subscription> last = _subscriptions.Last;
-				if (last != null)
+				if (!i.Value.Disposed)
 				{
-					last.Value.Invoke();
-					if (Application.isEditor)
-					{
-						Debug.Log(string.Format("<color=#db7093ff>Back stack on invoke: {0} -> {1}</color>", arg, this));
-					}
+					return;
 				}
-			}
-			else if (Input.GetKeyUp(KeyCode.Backspace) && Application.isEditor)
-			{
-				Debug.Log(string.Format("<color=#db7093ff>Current back stack: {0}</color>", this));
+				this._subscriptions.RemoveLast();
 			}
 		}
 
 		private static bool EscapePressed()
 		{
-			if (!Active)
+			if (!BackSystem.Active)
 			{
 				return false;
 			}
 			return Input.GetKeyUp(KeyCode.Escape);
-		}
-
-		private object ToJson()
-		{
-			List<string> list = new List<string>(_subscriptions.Count);
-			foreach (Subscription subscription in _subscriptions)
-			{
-				if (subscription.Disposed)
-				{
-					list.Add(subscription.Context + " (Disposed)");
-				}
-				else
-				{
-					list.Add(subscription.Context);
-				}
-			}
-			return list;
-		}
-
-		private void CollectGarbage()
-		{
-			LinkedListNode<Subscription> last = _subscriptions.Last;
-			while (last != null && last.Value.Disposed)
-			{
-				_subscriptions.RemoveLast();
-				last = _subscriptions.Last;
-			}
 		}
 
 		private static BackSystem InitializeInstance()
@@ -173,6 +68,125 @@ namespace Rilisoft
 			GameObject gameObject = new GameObject("Rilisoft.BackSystem");
 			UnityEngine.Object.DontDestroyOnLoad(gameObject);
 			return gameObject.AddComponent<BackSystem>();
+		}
+
+		public IDisposable Register(Action callback, string context = null)
+		{
+			BackSystem.Subscription subscription = new BackSystem.Subscription(callback, context, this._subscriptions);
+			if (Application.isEditor)
+			{
+				Debug.Log(string.Format("<color=lightblue>Back stack after registration: {0}</color>", this));
+			}
+			return subscription;
+		}
+
+		private object ToJson()
+		{
+			List<string> strs = new List<string>(this._subscriptions.Count);
+			foreach (BackSystem.Subscription _subscription in this._subscriptions)
+			{
+				if (!_subscription.Disposed)
+				{
+					strs.Add(_subscription.Context);
+				}
+				else
+				{
+					strs.Add(string.Concat(_subscription.Context, " (Disposed)"));
+				}
+			}
+			return strs;
+		}
+
+		public override string ToString()
+		{
+			return Json.Serialize(this.ToJson());
+		}
+
+		private void Update()
+		{
+			if (BackSystem.EscapePressed())
+			{
+				Input.ResetInputAxes();
+				string str = (!Application.isEditor ? string.Empty : this.ToString());
+				this.CollectGarbage();
+				LinkedListNode<BackSystem.Subscription> last = this._subscriptions.Last;
+				if (last == null)
+				{
+					return;
+				}
+				last.Value.Invoke();
+				if (Application.isEditor)
+				{
+					Debug.Log(string.Format("<color=#db7093ff>Back stack on invoke: {0} -> {1}</color>", str, this));
+				}
+			}
+			else if (Input.GetKeyUp(KeyCode.Backspace) && Application.isEditor)
+			{
+				Debug.Log(string.Format("<color=#db7093ff>Current back stack: {0}</color>", this));
+			}
+		}
+
+		private sealed class Subscription : IDisposable
+		{
+			private Action _callback;
+
+			private readonly string _context;
+
+			private LinkedListNode<BackSystem.Subscription> _node;
+
+			public string Context
+			{
+				get
+				{
+					return this._context;
+				}
+			}
+
+			public bool Disposed
+			{
+				get
+				{
+					return this._node == null;
+				}
+			}
+
+			internal Subscription(Action callback, string context, LinkedList<BackSystem.Subscription> list)
+			{
+				this._callback = callback;
+				this._context = context ?? string.Empty;
+				if (list != null)
+				{
+					this._node = list.AddLast(this);
+				}
+			}
+
+			public void Dispose()
+			{
+				if (this.Disposed)
+				{
+					return;
+				}
+				this._callback = null;
+				LinkedList<BackSystem.Subscription> list = this._node.List;
+				if (list != null)
+				{
+					list.Remove(this._node);
+				}
+				this._node = null;
+			}
+
+			public void Invoke()
+			{
+				if (this.Disposed)
+				{
+					Debug.LogWarning("Attempt to invoke disposed handler.");
+					return;
+				}
+				if (this._callback != null)
+				{
+					this._callback();
+				}
+			}
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MenuSceneLoader : MonoBehaviour
@@ -6,11 +7,15 @@ public class MenuSceneLoader : MonoBehaviour
 
 	private GameObject m_Go;
 
+	public MenuSceneLoader()
+	{
+	}
+
 	private void Awake()
 	{
-		if (m_Go == null)
+		if (this.m_Go == null)
 		{
-			m_Go = Object.Instantiate(menuUI);
+			this.m_Go = UnityEngine.Object.Instantiate<GameObject>(this.menuUI);
 		}
 	}
 }

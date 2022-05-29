@@ -1,89 +1,15 @@
-using System;
-using System.Runtime.CompilerServices;
 using Com.Google.Android.Gms.Common.Api;
+using GooglePlayGames;
 using GooglePlayGames.BasicApi;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace GooglePlayGames.Android
 {
 	internal class AndroidTokenClient : TokenClient
 	{
-		[CompilerGenerated]
-		private sealed class _003CFetch_003Ec__AnonStorey200
-		{
-			internal string scope;
-
-			internal bool fetchEmail;
-
-			internal bool fetchAccessToken;
-
-			internal bool fetchIdToken;
-
-			internal Action<CommonStatusCodes> doneCallback;
-
-			internal AndroidTokenClient _003C_003Ef__this;
-
-			internal void _003C_003Em__84()
-			{
-				FetchToken(scope, _003C_003Ef__this.playerId, _003C_003Ef__this.rationale, fetchEmail, fetchAccessToken, fetchIdToken, _003C_003Em__88);
-			}
-
-			internal void _003C_003Em__88(int rc, string access, string id, string email)
-			{
-				if (rc != 0)
-				{
-					_003C_003Ef__this.apiAccessDenied = rc == 3001 || rc == 16;
-					GooglePlayGames.OurUtils.Logger.w("Non-success returned from fetch: " + rc);
-					doneCallback(CommonStatusCodes.AuthApiAccessForbidden);
-					return;
-				}
-				if (fetchAccessToken)
-				{
-					GooglePlayGames.OurUtils.Logger.d("a = " + access);
-				}
-				if (fetchEmail)
-				{
-					GooglePlayGames.OurUtils.Logger.d("email = " + email);
-				}
-				if (fetchIdToken)
-				{
-					GooglePlayGames.OurUtils.Logger.d("idt = " + id);
-				}
-				if (fetchAccessToken && !string.IsNullOrEmpty(access))
-				{
-					_003C_003Ef__this.accessToken = access;
-				}
-				if (fetchIdToken && !string.IsNullOrEmpty(id))
-				{
-					_003C_003Ef__this.idToken = id;
-					_003C_003Ef__this.idTokenCb(_003C_003Ef__this.idToken);
-				}
-				if (fetchEmail && !string.IsNullOrEmpty(email))
-				{
-					_003C_003Ef__this.accountName = email;
-				}
-				doneCallback(CommonStatusCodes.Success);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CGetAccountName_003Ec__AnonStorey201
-		{
-			internal Action<CommonStatusCodes, string> callback;
-
-			internal AndroidTokenClient _003C_003Ef__this;
-
-			internal void _003C_003Em__85(CommonStatusCodes status)
-			{
-				_003C_003Ef__this.fetchingEmail = false;
-				if (callback != null)
-				{
-					callback(status, _003C_003Ef__this.accountName);
-				}
-			}
-		}
-
 		private const string TokenFragmentClass = "com.google.games.bridge.TokenFragment";
 
 		private const string FetchTokenSignature = "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;)Lcom/google/android/gms/common/api/PendingResult;";
@@ -125,118 +51,149 @@ namespace GooglePlayGames.Android
 			this.playerId = playerId;
 		}
 
-		public static AndroidJavaObject GetActivity()
-		{
-			//Discarded unreachable code: IL_001c
-			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
-			{
-				return androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
-			}
-		}
-
-		public void SetRationale(string rationale)
-		{
-			this.rationale = rationale;
-		}
-
 		internal void Fetch(string scope, bool fetchEmail, bool fetchAccessToken, bool fetchIdToken, Action<CommonStatusCodes> doneCallback)
 		{
-			_003CFetch_003Ec__AnonStorey200 _003CFetch_003Ec__AnonStorey = new _003CFetch_003Ec__AnonStorey200();
-			_003CFetch_003Ec__AnonStorey.scope = scope;
-			_003CFetch_003Ec__AnonStorey.fetchEmail = fetchEmail;
-			_003CFetch_003Ec__AnonStorey.fetchAccessToken = fetchAccessToken;
-			_003CFetch_003Ec__AnonStorey.fetchIdToken = fetchIdToken;
-			_003CFetch_003Ec__AnonStorey.doneCallback = doneCallback;
-			_003CFetch_003Ec__AnonStorey._003C_003Ef__this = this;
-			if (apiAccessDenied)
+			if (!this.apiAccessDenied)
 			{
-				if (apiWarningCount++ % apiWarningFreq == 0)
-				{
-					GooglePlayGames.OurUtils.Logger.w("Access to API denied");
-					apiWarningCount = apiWarningCount / apiWarningFreq + 1;
-				}
-				_003CFetch_003Ec__AnonStorey.doneCallback(CommonStatusCodes.AuthApiAccessForbidden);
+				PlayGamesHelperObject.RunOnGameThread(() => AndroidTokenClient.FetchToken(scope, this.playerId, this.rationale, fetchEmail, fetchAccessToken, fetchIdToken, (int rc, string access, string id, string email) => {
+					if (rc != 0)
+					{
+						this.apiAccessDenied = (rc == 3001 ? true : rc == 16);
+						GooglePlayGames.OurUtils.Logger.w(string.Concat("Non-success returned from fetch: ", rc));
+						doneCallback(3001);
+						return;
+					}
+					if (fetchAccessToken)
+					{
+						GooglePlayGames.OurUtils.Logger.d(string.Concat("a = ", access));
+					}
+					if (fetchEmail)
+					{
+						GooglePlayGames.OurUtils.Logger.d(string.Concat("email = ", email));
+					}
+					if (fetchIdToken)
+					{
+						GooglePlayGames.OurUtils.Logger.d(string.Concat("idt = ", id));
+					}
+					if (fetchAccessToken && !string.IsNullOrEmpty(access))
+					{
+						this.accessToken = access;
+					}
+					if (fetchIdToken && !string.IsNullOrEmpty(id))
+					{
+						this.idToken = id;
+						this.idTokenCb(this.idToken);
+					}
+					if (fetchEmail && !string.IsNullOrEmpty(email))
+					{
+						this.accountName = email;
+					}
+					doneCallback(0);
+				}));
+				return;
 			}
-			else
+			AndroidTokenClient androidTokenClient = this;
+			int num = androidTokenClient.apiWarningCount;
+			int num1 = num;
+			androidTokenClient.apiWarningCount = num + 1;
+			if (num1 % this.apiWarningFreq == 0)
 			{
-				PlayGamesHelperObject.RunOnGameThread(_003CFetch_003Ec__AnonStorey._003C_003Em__84);
+				GooglePlayGames.OurUtils.Logger.w("Access to API denied");
+				this.apiWarningCount = this.apiWarningCount / this.apiWarningFreq + 1;
 			}
+			doneCallback(3001);
 		}
 
 		internal static void FetchToken(string scope, string playerId, string rationale, bool fetchEmail, bool fetchAccessToken, bool fetchIdToken, Action<int, string, string, string> callback)
 		{
-			object[] args = new object[7];
-			jvalue[] array = AndroidJNIHelper.CreateJNIArgArray(args);
+			object[] objArray = new object[7];
+			jvalue[] rawObject = AndroidJNIHelper.CreateJNIArgArray(objArray);
 			try
 			{
-				using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.TokenFragment"))
+				try
 				{
-					using (AndroidJavaObject androidJavaObject = GetActivity())
+					using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.TokenFragment"))
 					{
-						IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "fetchToken", "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;)Lcom/google/android/gms/common/api/PendingResult;");
-						array[0].l = androidJavaObject.GetRawObject();
-						array[1].l = AndroidJNI.NewStringUTF(playerId);
-						array[2].l = AndroidJNI.NewStringUTF(rationale);
-						array[3].z = fetchEmail;
-						array[4].z = fetchAccessToken;
-						array[5].z = fetchIdToken;
-						array[6].l = AndroidJNI.NewStringUTF(scope);
-						IntPtr ptr = AndroidJNI.CallStaticObjectMethod(androidJavaClass.GetRawClass(), staticMethodID, array);
-						PendingResult<TokenResult> pendingResult = new PendingResult<TokenResult>(ptr);
-						pendingResult.setResultCallback(new TokenResultCallback(callback));
+						using (AndroidJavaObject activity = AndroidTokenClient.GetActivity())
+						{
+							IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "fetchToken", "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;)Lcom/google/android/gms/common/api/PendingResult;");
+							rawObject[0].l = activity.GetRawObject();
+							rawObject[1].l = AndroidJNI.NewStringUTF(playerId);
+							rawObject[2].l = AndroidJNI.NewStringUTF(rationale);
+							rawObject[3].z = fetchEmail;
+							rawObject[4].z = fetchAccessToken;
+							rawObject[5].z = fetchIdToken;
+							rawObject[6].l = AndroidJNI.NewStringUTF(scope);
+							IntPtr intPtr = AndroidJNI.CallStaticObjectMethod(androidJavaClass.GetRawClass(), staticMethodID, rawObject);
+							(new PendingResult<TokenResult>(intPtr)).setResultCallback(new TokenResultCallback(callback));
+						}
 					}
 				}
-			}
-			catch (Exception ex)
-			{
-				GooglePlayGames.OurUtils.Logger.e("Exception launching token request: " + ex.Message);
-				GooglePlayGames.OurUtils.Logger.e(ex.ToString());
+				catch (Exception exception1)
+				{
+					Exception exception = exception1;
+					GooglePlayGames.OurUtils.Logger.e(string.Concat("Exception launching token request: ", exception.Message));
+					GooglePlayGames.OurUtils.Logger.e(exception.ToString());
+				}
 			}
 			finally
 			{
-				AndroidJNIHelper.DeleteJNIArgArray(args, array);
+				AndroidJNIHelper.DeleteJNIArgArray(objArray, rawObject);
 			}
-		}
-
-		private string GetAccountName(Action<CommonStatusCodes, string> callback)
-		{
-			_003CGetAccountName_003Ec__AnonStorey201 _003CGetAccountName_003Ec__AnonStorey = new _003CGetAccountName_003Ec__AnonStorey201();
-			_003CGetAccountName_003Ec__AnonStorey.callback = callback;
-			_003CGetAccountName_003Ec__AnonStorey._003C_003Ef__this = this;
-			if (string.IsNullOrEmpty(accountName))
-			{
-				if (!fetchingEmail)
-				{
-					fetchingEmail = true;
-					Fetch(idTokenScope, true, false, false, _003CGetAccountName_003Ec__AnonStorey._003C_003Em__85);
-				}
-			}
-			else if (_003CGetAccountName_003Ec__AnonStorey.callback != null)
-			{
-				_003CGetAccountName_003Ec__AnonStorey.callback(CommonStatusCodes.Success, accountName);
-			}
-			return accountName;
-		}
-
-		public string GetEmail()
-		{
-			return GetAccountName(null);
-		}
-
-		public void GetEmail(Action<CommonStatusCodes, string> callback)
-		{
-			GetAccountName(callback);
 		}
 
 		[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
 		public string GetAccessToken()
 		{
-			if (string.IsNullOrEmpty(accessToken) && !fetchingAccessToken)
+			if (string.IsNullOrEmpty(this.accessToken) && !this.fetchingAccessToken)
 			{
-				fetchingAccessToken = true;
-				Fetch(idTokenScope, false, true, false, _003CGetAccessToken_003Em__86);
+				this.fetchingAccessToken = true;
+				this.Fetch(this.idTokenScope, false, true, false, (CommonStatusCodes rc) => this.fetchingAccessToken = false);
 			}
-			return accessToken;
+			return this.accessToken;
+		}
+
+		private string GetAccountName(Action<CommonStatusCodes, string> callback)
+		{
+			if (string.IsNullOrEmpty(this.accountName))
+			{
+				if (!this.fetchingEmail)
+				{
+					this.fetchingEmail = true;
+					this.Fetch(this.idTokenScope, true, false, false, (CommonStatusCodes status) => {
+						this.fetchingEmail = false;
+						if (callback != null)
+						{
+							callback(status, this.accountName);
+						}
+					});
+				}
+			}
+			else if (callback != null)
+			{
+				callback(0, this.accountName);
+			}
+			return this.accountName;
+		}
+
+		public static AndroidJavaObject GetActivity()
+		{
+			AndroidJavaObject @static;
+			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+			{
+				@static = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+			}
+			return @static;
+		}
+
+		public string GetEmail()
+		{
+			return this.GetAccountName(null);
+		}
+
+		public void GetEmail(Action<CommonStatusCodes, string> callback)
+		{
+			this.GetAccountName(callback);
 		}
 
 		[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
@@ -244,49 +201,45 @@ namespace GooglePlayGames.Android
 		{
 			if (string.IsNullOrEmpty(serverClientId))
 			{
-				if (webClientWarningCount++ % webClientWarningFreq == 0)
+				AndroidTokenClient androidTokenClient = this;
+				int num = androidTokenClient.webClientWarningCount;
+				int num1 = num;
+				androidTokenClient.webClientWarningCount = num + 1;
+				if (num1 % this.webClientWarningFreq == 0)
 				{
 					GooglePlayGames.OurUtils.Logger.w("serverClientId is empty, cannot get Id Token");
-					webClientWarningCount = webClientWarningCount / webClientWarningFreq + 1;
+					this.webClientWarningCount = this.webClientWarningCount / this.webClientWarningFreq + 1;
 				}
 				idTokenCallback(null);
 				return;
 			}
-			string text = "audience:server:client_id:" + serverClientId;
-			if (string.IsNullOrEmpty(idToken) || text != idTokenScope)
+			string str = string.Concat("audience:server:client_id:", serverClientId);
+			if (!string.IsNullOrEmpty(this.idToken) && str == this.idTokenScope)
 			{
-				if (!fetchingIdToken)
-				{
-					fetchingIdToken = true;
-					idTokenScope = text;
-					idTokenCb = idTokenCallback;
-					Fetch(idTokenScope, false, false, true, _003CGetIdToken_003Em__87);
-				}
+				idTokenCallback(this.idToken);
 			}
-			else
+			else if (!this.fetchingIdToken)
 			{
-				idTokenCallback(idToken);
+				this.fetchingIdToken = true;
+				this.idTokenScope = str;
+				this.idTokenCb = idTokenCallback;
+				this.Fetch(this.idTokenScope, false, false, true, (CommonStatusCodes status) => {
+					this.fetchingIdToken = false;
+					if (status != CommonStatusCodes.Success)
+					{
+						this.idTokenCb(this.idToken);
+					}
+					else
+					{
+						this.idTokenCb(null);
+					}
+				});
 			}
 		}
 
-		[CompilerGenerated]
-		private void _003CGetAccessToken_003Em__86(CommonStatusCodes rc)
+		public void SetRationale(string rationale)
 		{
-			fetchingAccessToken = false;
-		}
-
-		[CompilerGenerated]
-		private void _003CGetIdToken_003Em__87(CommonStatusCodes status)
-		{
-			fetchingIdToken = false;
-			if (status == CommonStatusCodes.Success)
-			{
-				idTokenCb(null);
-			}
-			else
-			{
-				idTokenCb(idToken);
-			}
+			this.rationale = rationale;
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Conveyor : MonoBehaviour
@@ -7,4 +8,8 @@ public class Conveyor : MonoBehaviour
 	public float acceleration = 1f;
 
 	public float maxspeed = 1.2f;
+
+	public Conveyor()
+	{
+	}
 }

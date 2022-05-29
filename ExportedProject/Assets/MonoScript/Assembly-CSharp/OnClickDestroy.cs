@@ -1,5 +1,9 @@
-using System.Collections;
 using Photon;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -7,23 +11,27 @@ public class OnClickDestroy : Photon.MonoBehaviour
 {
 	public bool DestroyByRpc;
 
-	public void OnClick()
+	public OnClickDestroy()
 	{
-		if (!DestroyByRpc)
-		{
-			PhotonNetwork.Destroy(base.gameObject);
-		}
-		else
-		{
-			base.photonView.RPC("DestroyRpc", PhotonTargets.AllBuffered);
-		}
 	}
 
+	[DebuggerHidden]
 	[PunRPC]
 	public IEnumerator DestroyRpc()
 	{
-		Object.Destroy(base.gameObject);
-		yield return 0;
-		PhotonNetwork.UnAllocateViewID(base.photonView.viewID);
+		OnClickDestroy.u003cDestroyRpcu003ec__IteratorD5 variable = null;
+		return variable;
+	}
+
+	public void OnClick()
+	{
+		if (this.DestroyByRpc)
+		{
+			base.photonView.RPC("DestroyRpc", PhotonTargets.AllBuffered, new object[0]);
+		}
+		else
+		{
+			PhotonNetwork.Destroy(base.gameObject);
+		}
 	}
 }

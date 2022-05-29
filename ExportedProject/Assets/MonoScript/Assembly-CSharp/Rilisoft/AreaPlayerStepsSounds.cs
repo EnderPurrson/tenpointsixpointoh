@@ -16,10 +16,16 @@ namespace Rilisoft
 		[SerializeField]
 		private PlayerStepsSoundsData _soundsOriginal;
 
-		private static readonly Dictionary<int, SkinName> _soundsComponents = new Dictionary<int, SkinName>();
+		private readonly static Dictionary<int, SkinName> _soundsComponents;
 
-		[CompilerGenerated]
-		private static Func<GameObject, bool> _003C_003Ef__am_0024cache3;
+		static AreaPlayerStepsSounds()
+		{
+			AreaPlayerStepsSounds._soundsComponents = new Dictionary<int, SkinName>();
+		}
+
+		public AreaPlayerStepsSounds()
+		{
+		}
 
 		public override void CheckIn(GameObject to)
 		{
@@ -34,24 +40,13 @@ namespace Rilisoft
 		private SkinName GetSoundsComponent(GameObject go)
 		{
 			int hashCode = go.GetHashCode();
-			if (_soundsComponents.ContainsKey(hashCode))
+			if (AreaPlayerStepsSounds._soundsComponents.ContainsKey(hashCode))
 			{
-				return _soundsComponents[hashCode];
+				return AreaPlayerStepsSounds._soundsComponents[hashCode];
 			}
-			IEnumerable<GameObject> source = go.Ancestors();
-			if (_003C_003Ef__am_0024cache3 == null)
-			{
-				_003C_003Ef__am_0024cache3 = _003CGetSoundsComponent_003Em__246;
-			}
-			SkinName componentInChildren = source.First(_003C_003Ef__am_0024cache3).GetComponentInChildren<SkinName>();
-			_soundsComponents.Add(hashCode, componentInChildren);
+			SkinName componentInChildren = go.Ancestors().First<GameObject>((GameObject a) => a.Parent() == null).GetComponentInChildren<SkinName>();
+			AreaPlayerStepsSounds._soundsComponents.Add(hashCode, componentInChildren);
 			return componentInChildren;
-		}
-
-		[CompilerGenerated]
-		private static bool _003CGetSoundsComponent_003Em__246(GameObject a)
-		{
-			return a.Parent() == null;
 		}
 	}
 }

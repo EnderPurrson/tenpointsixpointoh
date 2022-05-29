@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class EveryplayThumbnailPool : MonoBehaviour
@@ -26,33 +28,95 @@ public class EveryplayThumbnailPool : MonoBehaviour
 
 	private int thumbnailHeight;
 
-	public Texture2D[] thumbnailTextures { get; private set; }
+	public float aspectRatio
+	{
+		get;
+		private set;
+	}
 
-	public int availableThumbnailCount { get; private set; }
+	public int availableThumbnailCount
+	{
+		get;
+		private set;
+	}
 
-	public float aspectRatio { get; private set; }
+	public Vector2 thumbnailScale
+	{
+		get;
+		private set;
+	}
 
-	public Vector2 thumbnailScale { get; private set; }
+	public Texture2D[] thumbnailTextures
+	{
+		get;
+		private set;
+	}
+
+	public EveryplayThumbnailPool()
+	{
+	}
 
 	private void Awake()
 	{
-		if (allowOneInstanceOnly && Object.FindObjectsOfType(GetType()).Length > 1)
+		if (!this.allowOneInstanceOnly || (int)UnityEngine.Object.FindObjectsOfType(base.GetType()).Length <= 1)
 		{
-			Object.Destroy(base.gameObject);
-			return;
+			if (this.dontDestroyOnLoad)
+			{
+				UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+			}
+			Everyplay.ReadyForRecording += new Everyplay.ReadyForRecordingDelegate(this.OnReadyForRecording);
 		}
-		if (dontDestroyOnLoad)
+		else
 		{
-			Object.DontDestroyOnLoad(base.gameObject);
+			UnityEngine.Object.Destroy(base.gameObject);
 		}
-		Everyplay.ReadyForRecording += OnReadyForRecording;
 	}
 
-	private void Start()
+	private void Initialize()
 	{
-		if (base.enabled)
+		if (!this.initialized && Everyplay.IsRecordingSupported())
 		{
-			Initialize();
+			this.thumbnailWidth = Mathf.Clamp(this.thumbnailWidth, 32, 2048);
+			this.aspectRatio = (float)Mathf.Min(Screen.width, Screen.height) / (float)Mathf.Max(Screen.width, Screen.height);
+			this.thumbnailHeight = (int)((float)this.thumbnailWidth * this.aspectRatio);
+			this.npotSupported = false;
+			this.npotSupported = SystemInfo.npotSupport != NPOTSupport.None;
+			int num = Mathf.NextPowerOfTwo(this.thumbnailWidth);
+			int num1 = Mathf.NextPowerOfTwo(this.thumbnailHeight);
+			this.thumbnailTextures = new Texture2D[this.thumbnailCount];
+			for (int i = 0; i < this.thumbnailCount; i++)
+			{
+				this.thumbnailTextures[i] = new Texture2D((!this.npotSupported ? num : this.thumbnailWidth), (!this.npotSupported ? num1 : this.thumbnailHeight), this.textureFormat, false);
+				this.thumbnailTextures[i].wrapMode = TextureWrapMode.Clamp;
+			}
+			this.currentThumbnailTextureIndex = 0;
+			Everyplay.SetThumbnailTargetTexture(this.thumbnailTextures[this.currentThumbnailTextureIndex]);
+			this.SetThumbnailTargetSize();
+			Everyplay.ThumbnailTextureReady += new Everyplay.ThumbnailTextureReadyDelegate(this.OnThumbnailReady);
+			Everyplay.RecordingStarted += new Everyplay.RecordingStartedDelegate(this.OnRecordingStarted);
+			this.initialized = true;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		Everyplay.ReadyForRecording -= new Everyplay.ReadyForRecordingDelegate(this.OnReadyForRecording);
+		if (this.initialized)
+		{
+			Everyplay.SetThumbnailTargetTexture(null);
+			Everyplay.RecordingStarted -= new Everyplay.RecordingStartedDelegate(this.OnRecordingStarted);
+			Everyplay.ThumbnailTextureReady -= new Everyplay.ThumbnailTextureReadyDelegate(this.OnThumbnailReady);
+			Texture2D[] texture2DArray = this.thumbnailTextures;
+			for (int i = 0; i < (int)texture2DArray.Length; i++)
+			{
+				Texture2D texture2D = texture2DArray[i];
+				if (texture2D != null)
+				{
+					UnityEngine.Object.Destroy(texture2D);
+				}
+			}
+			this.thumbnailTextures = null;
+			this.initialized = false;
 		}
 	}
 
@@ -60,119 +124,80 @@ public class EveryplayThumbnailPool : MonoBehaviour
 	{
 		if (ready)
 		{
-			Initialize();
-		}
-	}
-
-	private void Initialize()
-	{
-		if (!initialized && Everyplay.IsRecordingSupported())
-		{
-			thumbnailWidth = Mathf.Clamp(thumbnailWidth, 32, 2048);
-			aspectRatio = (float)Mathf.Min(Screen.width, Screen.height) / (float)Mathf.Max(Screen.width, Screen.height);
-			thumbnailHeight = (int)((float)thumbnailWidth * aspectRatio);
-			npotSupported = false;
-			npotSupported = SystemInfo.npotSupport != NPOTSupport.None;
-			int num = Mathf.NextPowerOfTwo(thumbnailWidth);
-			int num2 = Mathf.NextPowerOfTwo(thumbnailHeight);
-			thumbnailTextures = new Texture2D[thumbnailCount];
-			for (int i = 0; i < thumbnailCount; i++)
-			{
-				thumbnailTextures[i] = new Texture2D((!npotSupported) ? num : thumbnailWidth, (!npotSupported) ? num2 : thumbnailHeight, textureFormat, false);
-				thumbnailTextures[i].wrapMode = TextureWrapMode.Clamp;
-			}
-			currentThumbnailTextureIndex = 0;
-			Everyplay.SetThumbnailTargetTexture(thumbnailTextures[currentThumbnailTextureIndex]);
-			SetThumbnailTargetSize();
-			Everyplay.ThumbnailTextureReady += OnThumbnailReady;
-			Everyplay.RecordingStarted += OnRecordingStarted;
-			initialized = true;
+			this.Initialize();
 		}
 	}
 
 	private void OnRecordingStarted()
 	{
-		availableThumbnailCount = 0;
-		currentThumbnailTextureIndex = 0;
-		Everyplay.SetThumbnailTargetTexture(thumbnailTextures[currentThumbnailTextureIndex]);
-		SetThumbnailTargetSize();
-		if (takeRandomShots)
+		this.availableThumbnailCount = 0;
+		this.currentThumbnailTextureIndex = 0;
+		Everyplay.SetThumbnailTargetTexture(this.thumbnailTextures[this.currentThumbnailTextureIndex]);
+		this.SetThumbnailTargetSize();
+		if (this.takeRandomShots)
 		{
 			Everyplay.TakeThumbnail();
-			nextRandomShotTime = Time.time + Random.Range(3f, 15f);
-		}
-	}
-
-	private void Update()
-	{
-		if (takeRandomShots && Everyplay.IsRecording() && !Everyplay.IsPaused() && Time.time > nextRandomShotTime)
-		{
-			Everyplay.TakeThumbnail();
-			nextRandomShotTime = Time.time + Random.Range(3f, 15f);
+			this.nextRandomShotTime = Time.time + UnityEngine.Random.Range(3f, 15f);
 		}
 	}
 
 	private void OnThumbnailReady(Texture2D texture, bool portrait)
 	{
-		if (thumbnailTextures[currentThumbnailTextureIndex] == texture)
+		if (this.thumbnailTextures[this.currentThumbnailTextureIndex] == texture)
 		{
-			currentThumbnailTextureIndex++;
-			if (currentThumbnailTextureIndex >= thumbnailTextures.Length)
+			this.currentThumbnailTextureIndex++;
+			if (this.currentThumbnailTextureIndex >= (int)this.thumbnailTextures.Length)
 			{
-				currentThumbnailTextureIndex = 0;
+				this.currentThumbnailTextureIndex = 0;
 			}
-			if (availableThumbnailCount < thumbnailTextures.Length)
+			if (this.availableThumbnailCount < (int)this.thumbnailTextures.Length)
 			{
-				availableThumbnailCount++;
+				EveryplayThumbnailPool everyplayThumbnailPool = this;
+				everyplayThumbnailPool.availableThumbnailCount = everyplayThumbnailPool.availableThumbnailCount + 1;
 			}
-			Everyplay.SetThumbnailTargetTexture(thumbnailTextures[currentThumbnailTextureIndex]);
-			SetThumbnailTargetSize();
+			Everyplay.SetThumbnailTargetTexture(this.thumbnailTextures[this.currentThumbnailTextureIndex]);
+			this.SetThumbnailTargetSize();
 		}
 	}
 
 	private void SetThumbnailTargetSize()
 	{
-		int num = Mathf.NextPowerOfTwo(thumbnailWidth);
-		int num2 = Mathf.NextPowerOfTwo(thumbnailHeight);
-		if (npotSupported)
+		int num = Mathf.NextPowerOfTwo(this.thumbnailWidth);
+		int num1 = Mathf.NextPowerOfTwo(this.thumbnailHeight);
+		if (this.npotSupported)
 		{
-			Everyplay.SetThumbnailTargetTextureWidth(thumbnailWidth);
-			Everyplay.SetThumbnailTargetTextureHeight(thumbnailHeight);
-			thumbnailScale = new Vector2(1f, 1f);
+			Everyplay.SetThumbnailTargetTextureWidth(this.thumbnailWidth);
+			Everyplay.SetThumbnailTargetTextureHeight(this.thumbnailHeight);
+			this.thumbnailScale = new Vector2(1f, 1f);
 		}
-		else if (pixelPerfect)
+		else if (!this.pixelPerfect)
 		{
-			Everyplay.SetThumbnailTargetTextureWidth(thumbnailWidth);
-			Everyplay.SetThumbnailTargetTextureHeight(thumbnailHeight);
-			thumbnailScale = new Vector2((float)thumbnailWidth / (float)num, (float)thumbnailHeight / (float)num2);
+			Everyplay.SetThumbnailTargetTextureWidth(num);
+			Everyplay.SetThumbnailTargetTextureHeight(num1);
+			this.thumbnailScale = new Vector2(1f, 1f);
 		}
 		else
 		{
-			Everyplay.SetThumbnailTargetTextureWidth(num);
-			Everyplay.SetThumbnailTargetTextureHeight(num2);
-			thumbnailScale = new Vector2(1f, 1f);
+			Everyplay.SetThumbnailTargetTextureWidth(this.thumbnailWidth);
+			Everyplay.SetThumbnailTargetTextureHeight(this.thumbnailHeight);
+			this.thumbnailScale = new Vector2((float)this.thumbnailWidth / (float)num, (float)this.thumbnailHeight / (float)num1);
 		}
 	}
 
-	private void OnDestroy()
+	private void Start()
 	{
-		Everyplay.ReadyForRecording -= OnReadyForRecording;
-		if (!initialized)
+		if (base.enabled)
 		{
-			return;
+			this.Initialize();
 		}
-		Everyplay.SetThumbnailTargetTexture(null);
-		Everyplay.RecordingStarted -= OnRecordingStarted;
-		Everyplay.ThumbnailTextureReady -= OnThumbnailReady;
-		Texture2D[] array = thumbnailTextures;
-		foreach (Texture2D texture2D in array)
+	}
+
+	private void Update()
+	{
+		if (this.takeRandomShots && Everyplay.IsRecording() && !Everyplay.IsPaused() && Time.time > this.nextRandomShotTime)
 		{
-			if (texture2D != null)
-			{
-				Object.Destroy(texture2D);
-			}
+			Everyplay.TakeThumbnail();
+			this.nextRandomShotTime = Time.time + UnityEngine.Random.Range(3f, 15f);
 		}
-		thumbnailTextures = null;
-		initialized = false;
 	}
 }

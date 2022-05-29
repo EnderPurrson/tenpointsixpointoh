@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace RilisoftBot
@@ -9,26 +10,30 @@ namespace RilisoftBot
 
 		private float _animationAttackLength;
 
-		protected override void Initialize()
+		public MeleeBot()
 		{
-			base.Initialize();
-			_animationAttackLength = animations[animationsName.Attack].length;
-		}
-
-		public float CheckTimeToTakeDamage()
-		{
-			if (!isAutomaticAnimationEnable)
-			{
-				return timeToTakeDamage * Mathf.Pow(0.95f, GlobalGameController.AllLevelsCompleted);
-			}
-			animations[animationsName.Attack].speed = speedAnimationAttack;
-			float num = _animationAttackLength / speedAnimationAttack;
-			return num * Mathf.Pow(0.95f, GlobalGameController.AllLevelsCompleted);
 		}
 
 		public override bool CheckEnemyInAttackZone(float distanceToEnemy)
 		{
-			return GetSquareAttackDistance() >= distanceToEnemy;
+			return base.GetSquareAttackDistance() >= distanceToEnemy;
+		}
+
+		public float CheckTimeToTakeDamage()
+		{
+			if (!this.isAutomaticAnimationEnable)
+			{
+				return this.timeToTakeDamage * Mathf.Pow(0.95f, (float)GlobalGameController.AllLevelsCompleted);
+			}
+			this.animations[this.animationsName.Attack].speed = this.speedAnimationAttack;
+			float single = this._animationAttackLength / this.speedAnimationAttack;
+			return single * Mathf.Pow(0.95f, (float)GlobalGameController.AllLevelsCompleted);
+		}
+
+		protected override void Initialize()
+		{
+			base.Initialize();
+			this._animationAttackLength = this.animations[this.animationsName.Attack].length;
 		}
 	}
 }

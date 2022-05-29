@@ -1,7 +1,12 @@
+using System;
 using UnityEngine;
 
 public class CreateClanButton : MonoBehaviour
 {
+	public CreateClanButton()
+	{
+	}
+
 	private void OnClick()
 	{
 		ButtonClickSound.TryPlayClick();

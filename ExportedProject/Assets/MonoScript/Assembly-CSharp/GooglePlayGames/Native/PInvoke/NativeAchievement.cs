@@ -1,78 +1,47 @@
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.BasicApi;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeAchievement : BaseReferenceHolder
 	{
-		private const ulong MinusOne = ulong.MaxValue;
+		private const ulong MinusOne = 18446744073709551615L;
 
-		internal NativeAchievement(IntPtr selfPointer)
-			: base(selfPointer)
+		internal NativeAchievement(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
-		internal uint CurrentSteps()
+		internal GooglePlayGames.BasicApi.Achievement AsAchievement()
 		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_CurrentSteps(SelfPtr());
-		}
-
-		internal string Description()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CDescription_003Em__11B);
-		}
-
-		internal string Id()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CId_003Em__11C);
-		}
-
-		internal string Name()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CName_003Em__11D);
-		}
-
-		internal Types.AchievementState State()
-		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_State(SelfPtr());
-		}
-
-		internal uint TotalSteps()
-		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_TotalSteps(SelfPtr());
-		}
-
-		internal Types.AchievementType Type()
-		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Type(SelfPtr());
-		}
-
-		internal ulong LastModifiedTime()
-		{
-			if (GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Valid(SelfPtr()))
+			GooglePlayGames.BasicApi.Achievement achievement = new GooglePlayGames.BasicApi.Achievement()
 			{
-				return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_LastModifiedTime(SelfPtr());
+				Id = this.Id(),
+				Name = this.Name(),
+				Description = this.Description()
+			};
+			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+			ulong num = this.LastModifiedTime();
+			if (num == (long)-1)
+			{
+				num = (ulong)0;
 			}
-			return 0uL;
-		}
-
-		internal ulong getXP()
-		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_XP(SelfPtr());
-		}
-
-		internal string getRevealedImageUrl()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CgetRevealedImageUrl_003Em__11E);
-		}
-
-		internal string getUnlockedImageUrl()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CgetUnlockedImageUrl_003Em__11F);
+			achievement.LastModifiedTime = dateTime.AddMilliseconds((double)((float)num));
+			achievement.Points = this.getXP();
+			achievement.RevealedImageUrl = this.getRevealedImageUrl();
+			achievement.UnlockedImageUrl = this.getUnlockedImageUrl();
+			if (this.Type() == Types.AchievementType.INCREMENTAL)
+			{
+				achievement.IsIncremental = true;
+				achievement.CurrentSteps = (int)this.CurrentSteps();
+				achievement.TotalSteps = (int)this.TotalSteps();
+			}
+			achievement.IsRevealed = (this.State() == Types.AchievementState.REVEALED ? true : this.State() == Types.AchievementState.UNLOCKED);
+			achievement.IsUnlocked = this.State() == Types.AchievementState.UNLOCKED;
+			return achievement;
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -80,61 +49,63 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Dispose(selfPointer);
 		}
 
-		internal GooglePlayGames.BasicApi.Achievement AsAchievement()
+		internal uint CurrentSteps()
 		{
-			GooglePlayGames.BasicApi.Achievement achievement = new GooglePlayGames.BasicApi.Achievement();
-			achievement.Id = Id();
-			achievement.Name = Name();
-			achievement.Description = Description();
-			DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			ulong num = LastModifiedTime();
-			if (num == ulong.MaxValue)
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_CurrentSteps(base.SelfPtr());
+		}
+
+		internal string Description()
+		{
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Description(base.SelfPtr(), out_string, out_size));
+		}
+
+		internal string getRevealedImageUrl()
+		{
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_RevealedIconUrl(base.SelfPtr(), out_string, out_size));
+		}
+
+		internal string getUnlockedImageUrl()
+		{
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_UnlockedIconUrl(base.SelfPtr(), out_string, out_size));
+		}
+
+		internal ulong getXP()
+		{
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_XP(base.SelfPtr());
+		}
+
+		internal string Id()
+		{
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Id(base.SelfPtr(), out_string, out_size));
+		}
+
+		internal ulong LastModifiedTime()
+		{
+			if (!GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Valid(base.SelfPtr()))
 			{
-				num = 0uL;
+				return (ulong)0;
 			}
-			achievement.LastModifiedTime = dateTime.AddMilliseconds(num);
-			achievement.Points = getXP();
-			achievement.RevealedImageUrl = getRevealedImageUrl();
-			achievement.UnlockedImageUrl = getUnlockedImageUrl();
-			if (Type() == Types.AchievementType.INCREMENTAL)
-			{
-				achievement.IsIncremental = true;
-				achievement.CurrentSteps = (int)CurrentSteps();
-				achievement.TotalSteps = (int)TotalSteps();
-			}
-			achievement.IsRevealed = State() == Types.AchievementState.REVEALED || State() == Types.AchievementState.UNLOCKED;
-			achievement.IsUnlocked = State() == Types.AchievementState.UNLOCKED;
-			return achievement;
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_LastModifiedTime(base.SelfPtr());
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CDescription_003Em__11B(StringBuilder out_string, UIntPtr out_size)
+		internal string Name()
 		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Description(SelfPtr(), out_string, out_size);
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Name(base.SelfPtr(), out_string, out_size));
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CId_003Em__11C(StringBuilder out_string, UIntPtr out_size)
+		internal Types.AchievementState State()
 		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Id(SelfPtr(), out_string, out_size);
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_State(base.SelfPtr());
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CName_003Em__11D(StringBuilder out_string, UIntPtr out_size)
+		internal uint TotalSteps()
 		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Name(SelfPtr(), out_string, out_size);
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_TotalSteps(base.SelfPtr());
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CgetRevealedImageUrl_003Em__11E(StringBuilder out_string, UIntPtr out_size)
+		internal Types.AchievementType Type()
 		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_RevealedIconUrl(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003CgetUnlockedImageUrl_003Em__11F(StringBuilder out_string, UIntPtr out_size)
-		{
-			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_UnlockedIconUrl(SelfPtr(), out_string, out_size);
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Type(base.SelfPtr());
 		}
 	}
 }

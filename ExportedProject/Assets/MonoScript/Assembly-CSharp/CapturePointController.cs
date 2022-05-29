@@ -1,3 +1,6 @@
+using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CapturePointController : MonoBehaviour
@@ -26,43 +29,115 @@ public class CapturePointController : MonoBehaviour
 
 	public bool isEndMatch;
 
+	public CapturePointController()
+	{
+	}
+
+	private void Awake()
+	{
+		PhotonObjectCacher.AddObject(base.gameObject);
+	}
+
+	public void EndMatch()
+	{
+		Debug.Log("EndMatch");
+		int num = 0;
+		if (this.scoreBlue > this.scoreRed)
+		{
+			num = 1;
+		}
+		if (this.scoreRed > this.scoreBlue)
+		{
+			num = 2;
+		}
+		if (TimeGameController.sharedController.isEndMatch || this.isEndMatch)
+		{
+			Debug.Log("EndMatch in table!");
+		}
+		else
+		{
+			this.isEndMatch = true;
+			if (WeaponManager.sharedManager.myTable != null && WeaponManager.sharedManager.myPlayerMoveC != null)
+			{
+				WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty, num, Mathf.RoundToInt(this.scoreBlue), Mathf.RoundToInt(this.scoreRed));
+			}
+		}
+		this.scoreRed = 0f;
+		this.scoreBlue = 0f;
+		for (int i = 0; i < (int)this.basePointControllers.Length; i++)
+		{
+			this.basePointControllers[i].OnEndMatch();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		CapturePointController.sharedController = null;
+		PhotonObjectCacher.RemoveObject(base.gameObject);
+	}
+
+	public void OnPhotonPlayerConnected(PhotonPlayer player)
+	{
+		this.photonView.RPC("SynchScoresCommandsNewPlayerRPC", player, new object[] { player.ID, PhotonNetwork.isMasterClient, this.scoreBlue, this.scoreRed });
+	}
+
 	private void Start()
 	{
 		if (!Defs.isCapturePoints || !Defs.isMulti)
 		{
-			Object.Destroy(base.gameObject);
+			UnityEngine.Object.Destroy(base.gameObject);
 			return;
 		}
 		if (PhotonNetwork.room != null)
 		{
-			int num = (int)PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty];
-			if (num == 3)
+			int item = (int)PhotonNetwork.room.customProperties[ConnectSceneNGUIController.maxKillProperty];
+			if (item == 3)
 			{
-				speedScoreAdd = 3f;
+				this.speedScoreAdd = 3f;
 			}
-			if (num == 5)
+			if (item == 5)
 			{
-				speedScoreAdd = 2f;
+				this.speedScoreAdd = 2f;
 			}
-			if (num == 7)
+			if (item == 7)
 			{
-				speedScoreAdd = 1.5f;
+				this.speedScoreAdd = 1.5f;
 			}
 		}
-		sharedController = this;
-		myTransform = base.transform;
-		basePointControllers = new BasePointController[myTransform.childCount];
-		for (int i = 0; i < myTransform.childCount; i++)
+		CapturePointController.sharedController = this;
+		this.myTransform = base.transform;
+		this.basePointControllers = new BasePointController[this.myTransform.childCount];
+		for (int i = 0; i < this.myTransform.childCount; i++)
 		{
-			basePointControllers[i] = myTransform.GetChild(i).GetComponent<BasePointController>();
+			this.basePointControllers[i] = this.myTransform.GetChild(i).GetComponent<BasePointController>();
 		}
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SynchScoresCommandsNewPlayerRPC(int _viewId, bool isMaster, float _scoreBlue, float _scoreRed)
+	{
+		if (this.isStartUpdateFromMasterClient || PhotonNetwork.player.ID != _viewId)
+		{
+			return;
+		}
+		this.SynchScoresCommandsRPC(_scoreBlue, _scoreRed);
+		this.isStartUpdateFromMasterClient = isMaster;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void SynchScoresCommandsRPC(float _scoreBlue, float _scoreRed)
+	{
+		this.scoreBlue = _scoreBlue;
+		this.scoreRed = _scoreRed;
 	}
 
 	private void Update()
 	{
-		if (isStartUpdateFromMasterClient && !PhotonNetwork.connected)
+		if (this.isStartUpdateFromMasterClient && !PhotonNetwork.connected)
 		{
-			isStartUpdateFromMasterClient = false;
+			this.isStartUpdateFromMasterClient = false;
 		}
 		if (Initializer.bluePlayers.Count == 0 || Initializer.redPlayers.Count == 0)
 		{
@@ -70,12 +145,12 @@ public class CapturePointController : MonoBehaviour
 			{
 				InGameGUI.sharedInGameGUI.message_wait.SetActive(true);
 			}
-			for (int i = 0; i < basePointControllers.Length; i++)
+			for (int i = 0; i < (int)this.basePointControllers.Length; i++)
 			{
-				basePointControllers[i].isBaseActive = false;
-				if (basePointControllers[i].baseRender != null && basePointControllers[i].baseRender.activeSelf)
+				this.basePointControllers[i].isBaseActive = false;
+				if (this.basePointControllers[i].baseRender != null && this.basePointControllers[i].baseRender.activeSelf)
 				{
-					basePointControllers[i].baseRender.SetActive(false);
+					this.basePointControllers[i].baseRender.SetActive(false);
 				}
 			}
 			return;
@@ -84,114 +159,49 @@ public class CapturePointController : MonoBehaviour
 		{
 			InGameGUI.sharedInGameGUI.message_wait.SetActive(false);
 		}
-		for (int j = 0; j < basePointControllers.Length; j++)
+		for (int j = 0; j < (int)this.basePointControllers.Length; j++)
 		{
-			basePointControllers[j].isBaseActive = true;
-			if (basePointControllers[j].baseRender != null && !basePointControllers[j].baseRender.activeSelf)
+			this.basePointControllers[j].isBaseActive = true;
+			if (this.basePointControllers[j].baseRender != null && !this.basePointControllers[j].baseRender.activeSelf)
 			{
-				basePointControllers[j].baseRender.SetActive(true);
+				this.basePointControllers[j].baseRender.SetActive(true);
 			}
 		}
 		int num = 0;
-		int num2 = 0;
-		for (int k = 0; k < basePointControllers.Length; k++)
+		int num1 = 0;
+		for (int k = 0; k < (int)this.basePointControllers.Length; k++)
 		{
-			if (basePointControllers[k].captureConmmand == BasePointController.TypeCapture.blue)
+			if (this.basePointControllers[k].captureConmmand == BasePointController.TypeCapture.blue)
 			{
 				num++;
 			}
-			if (basePointControllers[k].captureConmmand == BasePointController.TypeCapture.red)
+			if (this.basePointControllers[k].captureConmmand == BasePointController.TypeCapture.red)
 			{
-				num2++;
+				num1++;
 			}
 		}
-		scoreBlue += Time.deltaTime * speedScoreAdd * (float)num;
-		scoreRed += Time.deltaTime * speedScoreAdd * (float)num2;
-		if (scoreBlue > maxScoreCommands)
+		CapturePointController capturePointController = this;
+		capturePointController.scoreBlue = capturePointController.scoreBlue + Time.deltaTime * this.speedScoreAdd * (float)num;
+		CapturePointController capturePointController1 = this;
+		capturePointController1.scoreRed = capturePointController1.scoreRed + Time.deltaTime * this.speedScoreAdd * (float)num1;
+		if (this.scoreBlue > this.maxScoreCommands)
 		{
-			scoreBlue = maxScoreCommands;
-			EndMatch();
+			this.scoreBlue = this.maxScoreCommands;
+			this.EndMatch();
 		}
-		if (scoreRed > maxScoreCommands)
+		if (this.scoreRed > this.maxScoreCommands)
 		{
-			scoreRed = maxScoreCommands;
-			EndMatch();
+			this.scoreRed = this.maxScoreCommands;
+			this.EndMatch();
 		}
 		if (PhotonNetwork.isMasterClient)
 		{
-			timerToSynch -= Time.deltaTime;
-			if (timerToSynch <= 0f)
+			this.timerToSynch -= Time.deltaTime;
+			if (this.timerToSynch <= 0f)
 			{
-				timerToSynch = periodToSynch;
-				photonView.RPC("SynchScoresCommandsRPC", PhotonTargets.All, scoreBlue, scoreRed);
+				this.timerToSynch = this.periodToSynch;
+				this.photonView.RPC("SynchScoresCommandsRPC", PhotonTargets.All, new object[] { this.scoreBlue, this.scoreRed });
 			}
 		}
-	}
-
-	public void OnPhotonPlayerConnected(PhotonPlayer player)
-	{
-		photonView.RPC("SynchScoresCommandsNewPlayerRPC", player, player.ID, PhotonNetwork.isMasterClient, scoreBlue, scoreRed);
-	}
-
-	[RPC]
-	[PunRPC]
-	public void SynchScoresCommandsNewPlayerRPC(int _viewId, bool isMaster, float _scoreBlue, float _scoreRed)
-	{
-		if (!isStartUpdateFromMasterClient && PhotonNetwork.player.ID == _viewId)
-		{
-			SynchScoresCommandsRPC(_scoreBlue, _scoreRed);
-			isStartUpdateFromMasterClient = isMaster;
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	public void SynchScoresCommandsRPC(float _scoreBlue, float _scoreRed)
-	{
-		scoreBlue = _scoreBlue;
-		scoreRed = _scoreRed;
-	}
-
-	public void EndMatch()
-	{
-		Debug.Log("EndMatch");
-		int commandWin = 0;
-		if (scoreBlue > scoreRed)
-		{
-			commandWin = 1;
-		}
-		if (scoreRed > scoreBlue)
-		{
-			commandWin = 2;
-		}
-		if (!TimeGameController.sharedController.isEndMatch && !isEndMatch)
-		{
-			isEndMatch = true;
-			if (WeaponManager.sharedManager.myTable != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-			{
-				WeaponManager.sharedManager.myNetworkStartTable.win(string.Empty, commandWin, Mathf.RoundToInt(scoreBlue), Mathf.RoundToInt(scoreRed));
-			}
-		}
-		else
-		{
-			Debug.Log("EndMatch in table!");
-		}
-		scoreRed = 0f;
-		scoreBlue = 0f;
-		for (int i = 0; i < basePointControllers.Length; i++)
-		{
-			basePointControllers[i].OnEndMatch();
-		}
-	}
-
-	private void Awake()
-	{
-		PhotonObjectCacher.AddObject(base.gameObject);
-	}
-
-	private void OnDestroy()
-	{
-		sharedController = null;
-		PhotonObjectCacher.RemoveObject(base.gameObject);
 	}
 }

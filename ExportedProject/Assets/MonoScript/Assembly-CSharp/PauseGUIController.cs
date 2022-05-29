@@ -1,6 +1,6 @@
+using Rilisoft;
 using System;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class PauseGUIController : MonoBehaviour
@@ -28,18 +28,18 @@ public class PauseGUIController : MonoBehaviour
 
 	private float _lastBackFromShopTime;
 
-	public static PauseGUIController Instance { get; private set; }
-
-	public PauseNGUIController SettingsPanel
+	private bool InPauseShop
 	{
 		get
 		{
-			if (_pauseNguiLazy == null)
-			{
-				_pauseNguiLazy = new LazyObject<PauseNGUIController>(_settingsPrefab.ResourcePath, InGameGUI.sharedInGameGUI.SubpanelsContainer);
-			}
-			return _pauseNguiLazy.Value;
+			return (!(InGameGUI.sharedInGameGUI != null) || !(InGameGUI.sharedInGameGUI.playerMoveC != null) ? false : InGameGUI.sharedInGameGUI.playerMoveC.isInappWinOpen);
 		}
+	}
+
+	public static PauseGUIController Instance
+	{
+		get;
+		private set;
 	}
 
 	public bool IsPaused
@@ -50,96 +50,35 @@ public class PauseGUIController : MonoBehaviour
 		}
 	}
 
-	private bool InPauseShop
+	public PauseNGUIController SettingsPanel
 	{
 		get
 		{
-			return InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null && InGameGUI.sharedInGameGUI.playerMoveC.isInappWinOpen;
+			if (this._pauseNguiLazy == null)
+			{
+				this._pauseNguiLazy = new LazyObject<PauseNGUIController>(this._settingsPrefab.ResourcePath, InGameGUI.sharedInGameGUI.SubpanelsContainer);
+			}
+			return this._pauseNguiLazy.Value;
 		}
+	}
+
+	public PauseGUIController()
+	{
 	}
 
 	private void Awake()
 	{
-		Instance = this;
-		_btnResume.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Em__38C;
-		_btnExit.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Em__38D;
-		_btnBank.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Em__38E;
-		_btnSettings.GetComponent<ButtonHandler>().Clicked += _003CAwake_003Em__38F;
-	}
-
-	private void OnEnable()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			_btnBank.gameObject.SetActive(false);
-		}
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(Close, "Pause window");
-	}
-
-	private void Update()
-	{
-		if (!InPauseShop)
-		{
-			if (_shopOpened)
+		PauseGUIController.Instance = this;
+		this._btnResume.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.Close());
+		this._btnExit.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			if (this.InPauseShop)
 			{
-				_lastBackFromShopTime = Time.realtimeSinceStartup;
+				return;
 			}
-			_shopOpened = false;
-			if (!Defs.isMulti)
+			if (Time.realtimeSinceStartup < this._lastBackFromShopTime + 0.5f)
 			{
-				ExperienceController.sharedController.isShowRanks = true;
+				return;
 			}
-		}
-		else
-		{
-			_shopOpened = true;
-			_lastBackFromShopTime = float.PositiveInfinity;
-		}
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
-	}
-
-	private void Close()
-	{
-		if (!InPauseShop)
-		{
-			ButtonClickSound.Instance.PlayClick();
-			Debug.Log((InGameGUI.sharedInGameGUI != null) + " " + (InGameGUI.sharedInGameGUI.playerMoveC != null));
-			if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
-			{
-				InGameGUI.sharedInGameGUI.playerMoveC.SetPause();
-			}
-			else
-			{
-				base.gameObject.SetActive(false);
-			}
-			ExperienceController.sharedController.isShowRanks = false;
-			ExpController.Instance.InterfaceEnabled = false;
-		}
-	}
-
-	[CompilerGenerated]
-	private void _003CAwake_003Em__38C(object sender, EventArgs e)
-	{
-		Close();
-	}
-
-	[CompilerGenerated]
-	private void _003CAwake_003Em__38D(object sender, EventArgs e)
-	{
-		if (!InPauseShop && !(Time.realtimeSinceStartup < _lastBackFromShopTime + 0.5f))
-		{
 			ButtonClickSound.Instance.PlayClick();
 			if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
 			{
@@ -152,26 +91,82 @@ public class PauseGUIController : MonoBehaviour
 				Defs.typeDisconnectGame = Defs.DisconectGameType.Exit;
 				PhotonNetwork.LeaveRoom();
 			}
-		}
-	}
-
-	[CompilerGenerated]
-	private void _003CAwake_003Em__38E(object sender, EventArgs e)
-	{
-		if (!InPauseShop)
-		{
+		});
+		this._btnBank.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => {
+			if (this.InPauseShop)
+			{
+				return;
+			}
 			ButtonClickSound.Instance.PlayClick();
 			ExperienceController.sharedController.isShowRanks = false;
 			if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
 			{
 				InGameGUI.sharedInGameGUI.playerMoveC.GoToShopFromPause();
 			}
+		});
+		this._btnSettings.GetComponent<ButtonHandler>().Clicked += new EventHandler((object sender, EventArgs e) => this.SettingsPanel.gameObject.SetActive(true));
+	}
+
+	private void Close()
+	{
+		if (this.InPauseShop)
+		{
+			return;
+		}
+		ButtonClickSound.Instance.PlayClick();
+		Debug.Log(string.Concat(InGameGUI.sharedInGameGUI != null, " ", InGameGUI.sharedInGameGUI.playerMoveC != null));
+		if (!(InGameGUI.sharedInGameGUI != null) || !(InGameGUI.sharedInGameGUI.playerMoveC != null))
+		{
+			base.gameObject.SetActive(false);
+		}
+		else
+		{
+			InGameGUI.sharedInGameGUI.playerMoveC.SetPause(true);
+		}
+		ExperienceController.sharedController.isShowRanks = false;
+		ExpController.Instance.InterfaceEnabled = false;
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
 	}
 
-	[CompilerGenerated]
-	private void _003CAwake_003Em__38F(object sender, EventArgs e)
+	private void OnEnable()
 	{
-		SettingsPanel.gameObject.SetActive(true);
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			this._btnBank.gameObject.SetActive(false);
+		}
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.Close), "Pause window");
+	}
+
+	private void Update()
+	{
+		if (this.InPauseShop)
+		{
+			this._shopOpened = true;
+			this._lastBackFromShopTime = Single.PositiveInfinity;
+		}
+		else
+		{
+			if (this._shopOpened)
+			{
+				this._lastBackFromShopTime = Time.realtimeSinceStartup;
+			}
+			this._shopOpened = false;
+			if (!Defs.isMulti)
+			{
+				ExperienceController.sharedController.isShowRanks = true;
+			}
+		}
 	}
 }

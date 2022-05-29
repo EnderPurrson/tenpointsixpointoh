@@ -1,6 +1,7 @@
-using System.Runtime.CompilerServices;
 using Holoville.HOTween;
 using Holoville.HOTween.Plugins;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class CharacterViewRotator : MonoBehaviour
@@ -15,68 +16,66 @@ public class CharacterViewRotator : MonoBehaviour
 
 	private float _lastRotateTime;
 
+	public CharacterViewRotator()
+	{
+	}
+
 	private void Awake()
 	{
-		_character = characterView.transform;
-		_defaultLocalRotation = _character.localRotation;
-	}
-
-	private void Start()
-	{
-		ReturnCharacterToDefaultOrientation();
-	}
-
-	private void OnEnable()
-	{
-		ReturnCharacterToDefaultOrientation();
-	}
-
-	private void Update()
-	{
-		if (Time.realtimeSinceStartup > _toDefaultOrientationTime)
-		{
-			ReturnCharacterToDefaultOrientation();
-		}
-	}
-
-	private void OnDragStart()
-	{
-		_lastRotateTime = Time.realtimeSinceStartup;
+		this._character = this.characterView.transform;
+		this._defaultLocalRotation = this._character.localRotation;
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
-		if (!HOTween.IsTweening(_character))
+		if (HOTween.IsTweening(this._character))
 		{
-			RefreshToDefaultOrientationTime();
-			float num = -30f;
-			_character.Rotate(Vector3.up, delta.x * num * (Time.realtimeSinceStartup - _lastRotateTime));
-			_lastRotateTime = Time.realtimeSinceStartup;
+			return;
 		}
+		this.RefreshToDefaultOrientationTime();
+		float single = -30f;
+		this._character.Rotate(Vector3.up, delta.x * single * (Time.realtimeSinceStartup - this._lastRotateTime));
+		this._lastRotateTime = Time.realtimeSinceStartup;
+	}
+
+	private void OnDragStart()
+	{
+		this._lastRotateTime = Time.realtimeSinceStartup;
+	}
+
+	private void OnEnable()
+	{
+		this.ReturnCharacterToDefaultOrientation();
 	}
 
 	private void OnScroll(float delta)
 	{
-		OnDrag(new Vector2((0f - delta) * 20f, 0f));
+		this.OnDrag(new Vector2(-delta * 20f, 0f));
 	}
 
 	private void RefreshToDefaultOrientationTime()
 	{
-		_toDefaultOrientationTime = Time.realtimeSinceStartup + ShopNGUIController.IdleTimeoutPers;
+		this._toDefaultOrientationTime = Time.realtimeSinceStartup + ShopNGUIController.IdleTimeoutPers;
 	}
 
 	private void ReturnCharacterToDefaultOrientation()
 	{
-		int num = HOTween.Kill(_character);
-		RefreshToDefaultOrientationTime();
-		TweenParms p_parms = new TweenParms().Prop("localRotation", new PlugQuaternion(_defaultLocalRotation)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear)
-			.OnComplete(_003CReturnCharacterToDefaultOrientation_003Em__538);
-		HOTween.To(_character, 0.5f, p_parms);
+		HOTween.Kill(this._character);
+		this.RefreshToDefaultOrientationTime();
+		TweenParms tweenParm = (new TweenParms()).Prop("localRotation", new PlugQuaternion(this._defaultLocalRotation)).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear).OnComplete(() => this.RefreshToDefaultOrientationTime());
+		HOTween.To(this._character, 0.5f, tweenParm);
 	}
 
-	[CompilerGenerated]
-	private void _003CReturnCharacterToDefaultOrientation_003Em__538()
+	private void Start()
 	{
-		RefreshToDefaultOrientationTime();
+		this.ReturnCharacterToDefaultOrientation();
+	}
+
+	private void Update()
+	{
+		if (Time.realtimeSinceStartup > this._toDefaultOrientationTime)
+		{
+			this.ReturnCharacterToDefaultOrientation();
+		}
 	}
 }

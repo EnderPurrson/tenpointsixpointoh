@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -6,15 +7,19 @@ public class AGSSocialAchievement : IAchievementDescription, IAchievement
 {
 	public readonly AGSAchievement achievement;
 
-	public string id { get; set; }
-
-	public double percentCompleted { get; set; }
+	public string achievedDescription
+	{
+		get
+		{
+			return this.achievement.description;
+		}
+	}
 
 	public bool completed
 	{
 		get
 		{
-			return achievement.isUnlocked;
+			return this.achievement.isUnlocked;
 		}
 	}
 
@@ -22,24 +27,14 @@ public class AGSSocialAchievement : IAchievementDescription, IAchievement
 	{
 		get
 		{
-			return achievement.isHidden;
+			return this.achievement.isHidden;
 		}
 	}
 
-	public DateTime lastReportedDate
+	public string id
 	{
-		get
-		{
-			return achievement.dateUnlocked;
-		}
-	}
-
-	public string title
-	{
-		get
-		{
-			return achievement.title;
-		}
+		get;
+		set;
 	}
 
 	public Texture2D image
@@ -51,11 +46,33 @@ public class AGSSocialAchievement : IAchievementDescription, IAchievement
 		}
 	}
 
-	public string achievedDescription
+	public DateTime lastReportedDate
 	{
 		get
 		{
-			return achievement.description;
+			return this.achievement.dateUnlocked;
+		}
+	}
+
+	public double percentCompleted
+	{
+		get;
+		set;
+	}
+
+	public int points
+	{
+		get
+		{
+			return this.achievement.pointValue;
+		}
+	}
+
+	public string title
+	{
+		get
+		{
+			return this.achievement.title;
 		}
 	}
 
@@ -63,40 +80,32 @@ public class AGSSocialAchievement : IAchievementDescription, IAchievement
 	{
 		get
 		{
-			return achievement.description;
-		}
-	}
-
-	public int points
-	{
-		get
-		{
-			return achievement.pointValue;
+			return this.achievement.description;
 		}
 	}
 
 	public AGSSocialAchievement(AGSAchievement achievement)
 	{
-		if (achievement == null)
+		if (achievement != null)
+		{
+			this.achievement = achievement;
+		}
+		else
 		{
 			AGSClient.LogGameCircleError("AGSSocialAchievement constructor \"achievement\" argument should not be null");
 			achievement = AGSAchievement.GetBlankAchievement();
 		}
-		else
-		{
-			this.achievement = achievement;
-		}
-		id = achievement.id;
-		percentCompleted = achievement.progress;
+		this.id = achievement.id;
+		this.percentCompleted = (double)achievement.progress;
 	}
 
 	public AGSSocialAchievement()
 	{
-		achievement = AGSAchievement.GetBlankAchievement();
+		this.achievement = AGSAchievement.GetBlankAchievement();
 	}
 
 	public void ReportProgress(Action<bool> callback)
 	{
-		GameCircleSocial.Instance.ReportProgress(id, percentCompleted, callback);
+		GameCircleSocial.Instance.ReportProgress(this.id, this.percentCompleted, callback);
 	}
 }

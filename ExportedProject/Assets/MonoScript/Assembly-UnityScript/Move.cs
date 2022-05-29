@@ -1,30 +1,13 @@
+using Boo.Lang;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Boo.Lang;
 using UnityEngine;
 
 [Serializable]
 public class Move : MonoBehaviour
 {
-	[Serializable]
-	[CompilerGenerated]
-	internal sealed class _0024Start_002422 : GenericGenerator<WaitForSeconds>
-	{
-		internal Move _0024self__002424;
-
-		public _0024Start_002422(Move self_)
-		{
-			_0024self__002424 = self_;
-		}
-
-		public override IEnumerator<WaitForSeconds> GetEnumerator()
-		{
-			return new _0024(_0024self__002424);
-		}
-	}
-
 	public Transform target;
 
 	public float speed;
@@ -39,38 +22,42 @@ public class Move : MonoBehaviour
 
 	private bool destroyEnabled;
 
-	public override IEnumerator Start()
+	public Move()
 	{
-		return new _0024Start_002422(this).GetEnumerator();
-	}
-
-	public override void Update()
-	{
-		transform.position = Vector3.Lerp(transform.position, target.position, Time.deltaTime * speed);
-		Color color = default(Color);
-		if (destroyEnabled)
-		{
-			ParticleRenderer particleRenderer = (ParticleRenderer)GetComponent(typeof(ParticleRenderer));
-			color = particleRenderer.material.GetColor("_TintColor");
-			Color color2 = smokeStem.material.GetColor("_TintColor");
-			if (!(color.a <= 0f))
-			{
-				color.a -= destroySpeed * Time.deltaTime;
-			}
-			if (!(color2.a <= 0f))
-			{
-				color2.a -= destroySpeedStem * Time.deltaTime;
-			}
-			smokeStem.material.SetColor("_TintColor", color2);
-			particleRenderer.material.SetColor("_TintColor", color);
-		}
-		if (!(color.a >= 0f))
-		{
-			UnityEngine.Object.Destroy(transform.root.gameObject);
-		}
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override IEnumerator Start()
+	{
+		return (new Move.u0024Startu002422(this)).GetEnumerator();
+	}
+
+	public override void Update()
+	{
+		Color color = new Color();
+		this.transform.position = Vector3.Lerp(this.transform.position, this.target.position, Time.deltaTime * this.speed);
+		if (this.destroyEnabled)
+		{
+			ParticleRenderer component = (ParticleRenderer)this.GetComponent(typeof(ParticleRenderer));
+			color = component.material.GetColor("_TintColor");
+			Color color1 = this.smokeStem.material.GetColor("_TintColor");
+			if (color.a > (float)0)
+			{
+				color.a = color.a - this.destroySpeed * Time.deltaTime;
+			}
+			if (color1.a > (float)0)
+			{
+				color1.a = color1.a - this.destroySpeedStem * Time.deltaTime;
+			}
+			this.smokeStem.material.SetColor("_TintColor", color1);
+			component.material.SetColor("_TintColor", color);
+		}
+		if (color.a < (float)0)
+		{
+			UnityEngine.Object.Destroy(this.transform.root.gameObject);
+		}
 	}
 }

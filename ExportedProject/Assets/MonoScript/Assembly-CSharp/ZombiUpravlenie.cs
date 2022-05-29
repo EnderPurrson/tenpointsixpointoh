@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class ZombiUpravlenie : MonoBehaviour
 {
-	public delegate void DelayedCallback();
-
 	public static bool _deathAudioPlaying;
 
 	public GameObject playerKill;
@@ -70,30 +71,27 @@ public sealed class ZombiUpravlenie : MonoBehaviour
 
 	private float timeToResetPath;
 
-	private IEnumerator resetDeathAudio(float tm)
+	static ZombiUpravlenie()
 	{
-		_deathAudioPlaying = true;
-		yield return new WaitForSeconds(tm);
-		_deathAudioPlaying = false;
 	}
 
-	public bool RequestPlayDeath(float tm)
+	public ZombiUpravlenie()
 	{
-		if (_deathAudioPlaying)
-		{
-			return false;
-		}
-		StartCoroutine(resetDeathAudio(tm));
-		return true;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ___DelayedCallback(float time, ZombiUpravlenie.DelayedCallback callback)
+	{
+		ZombiUpravlenie.u003c___DelayedCallbacku003ec__Iterator125 variable = null;
+		return variable;
 	}
 
 	private void Awake()
 	{
-		//Discarded unreachable code: IL_0075
 		try
 		{
-			_modelChild = base.transform.GetChild(0).gameObject;
-			health = _modelChild.GetComponent<Sounds>().health;
+			this._modelChild = base.transform.GetChild(0).gameObject;
+			this.health = this._modelChild.GetComponent<Sounds>().health;
 			if (Defs.isMulti && !Defs.isCOOP)
 			{
 				UnityEngine.Object.Destroy(base.gameObject);
@@ -103,55 +101,192 @@ public sealed class ZombiUpravlenie : MonoBehaviour
 				base.enabled = false;
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
-			Debug.LogError("Cooperative mode failure.");
-			Debug.LogException(exception);
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError("Cooperative mode failure.");
+			UnityEngine.Debug.LogException(exception);
 			throw;
 		}
 	}
 
-	[RPC]
-	[PunRPC]
-	private void setHealthRPC(float _health)
+	public void CodeAfterDelay(float delay, ZombiUpravlenie.DelayedCallback callback)
 	{
-		health = _health;
+		base.StartCoroutine(this.___DelayedCallback(delay, callback));
+	}
+
+	[PunRPC]
+	[RPC]
+	private void Death()
+	{
+		if (!Defs.isCOOP)
+		{
+			return;
+		}
+		if (this._nma != null)
+		{
+			this._nma.enabled = false;
+		}
+		float single = 0.1f;
+		if (Defs.isSoundFX && this._soundClips != null)
+		{
+			if (this.RequestPlayDeath(this._soundClips.death.length))
+			{
+				base.GetComponent<AudioSource>().PlayOneShot(this._soundClips.death);
+			}
+			single = this._soundClips.death.length;
+		}
+		this._modelChild.GetComponent<Animation>().Stop();
+		if (!this._modelChild.GetComponent<Animation>()[this.deathAnim])
+		{
+			this.StartFall();
+		}
+		else
+		{
+			this._modelChild.GetComponent<Animation>().Play(this.deathAnim);
+			single = Mathf.Max(single, this._modelChild.GetComponent<Animation>()[this.deathAnim].length);
+			this.CodeAfterDelay(this._modelChild.GetComponent<Animation>()[this.deathAnim].length * 1.25f, new ZombiUpravlenie.DelayedCallback(this.StartFall));
+		}
+		this.CodeAfterDelay(single, new ZombiUpravlenie.DelayedCallback(this.DestroySelf));
+		this._modelChild.GetComponent<BoxCollider>().enabled = false;
+		this.deaded = true;
+		base.GetComponent<SpawnMonster>().ShouldMove = false;
+	}
+
+	private void DestroySelf()
+	{
+		UnityEngine.Object.Destroy(base.gameObject);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Flash()
+	{
+		ZombiUpravlenie.u003cFlashu003ec__Iterator124 variable = null;
+		return variable;
 	}
 
 	[PunRPC]
 	[RPC]
 	private void flashRPC()
 	{
-		StartCoroutine(Flash());
+		base.StartCoroutine(this.Flash());
 	}
 
-	[RPC]
-	[PunRPC]
-	public void SlowdownRPC(float coef)
+	public void PlayZombieAttack()
 	{
+		if (this.tekAnim != 2 && Defs.isCOOP)
+		{
+			if (this._modelChild.GetComponent<Animation>()[this.attackAnim])
+			{
+				this._modelChild.GetComponent<Animation>().CrossFade(this.attackAnim);
+			}
+			else if (this._modelChild.GetComponent<Animation>()[this.shootAnim])
+			{
+				this._modelChild.GetComponent<Animation>().CrossFade(this.shootAnim);
+			}
+			this.photonView.RPC("PlayZombieAttackRPC", PhotonTargets.Others, new object[0]);
+		}
+		this.tekAnim = 2;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void PlayZombieAttackRPC()
+	{
+		if (this._modelChild.GetComponent<Animation>()[this.attackAnim])
+		{
+			this._modelChild.GetComponent<Animation>().CrossFade(this.attackAnim);
+		}
+		else if (this._modelChild.GetComponent<Animation>()[this.shootAnim])
+		{
+			this._modelChild.GetComponent<Animation>().CrossFade(this.shootAnim);
+		}
+		this.tekAnim = 2;
+	}
+
+	public void PlayZombieRun()
+	{
+		if (this.tekAnim != 1 && Defs.isCOOP)
+		{
+			if (this._modelChild.GetComponent<Animation>()[this.zombieWalkAnim])
+			{
+				this._modelChild.GetComponent<Animation>().CrossFade(this.zombieWalkAnim);
+			}
+			this.photonView.RPC("PlayZombieRunRPC", PhotonTargets.Others, new object[0]);
+		}
+		this.tekAnim = 1;
+	}
+
+	[PunRPC]
+	[RPC]
+	public void PlayZombieRunRPC()
+	{
+		if (this._modelChild.GetComponent<Animation>()[this.zombieWalkAnim])
+		{
+			this._modelChild.GetComponent<Animation>().CrossFade(this.zombieWalkAnim);
+		}
+		this.tekAnim = 1;
+	}
+
+	public bool RequestPlayDeath(float tm)
+	{
+		if (ZombiUpravlenie._deathAudioPlaying)
+		{
+			return false;
+		}
+		base.StartCoroutine(this.resetDeathAudio(tm));
+		return true;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator resetDeathAudio(float tm)
+	{
+		ZombiUpravlenie.u003cresetDeathAudiou003ec__Iterator123 variable = null;
+		return variable;
 	}
 
 	public void setHealth(float _health, bool isFlash)
 	{
-		photonView.RPC("setHealthRPC", PhotonTargets.All, _health);
-		if (isFlash && !_flashing)
+		this.photonView.RPC("setHealthRPC", PhotonTargets.All, new object[] { _health });
+		if (isFlash && !this._flashing)
 		{
-			StartCoroutine(Flash());
-			photonView.RPC("flashRPC", PhotonTargets.Others);
+			base.StartCoroutine(this.Flash());
+			this.photonView.RPC("flashRPC", PhotonTargets.Others, new object[0]);
 		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void setHealthRPC(float _health)
+	{
+		this.health = _health;
+	}
+
+	public void setId(int _id)
+	{
+		this.photonView.RPC("setIdRPC", PhotonTargets.All, new object[] { _id });
+	}
+
+	[PunRPC]
+	[RPC]
+	public void setIdRPC(int _id)
+	{
+		base.GetComponent<PhotonView>().viewID = _id;
 	}
 
 	public static Texture SetSkinForObj(GameObject go)
 	{
-		if (!_skinsManager)
+		if (!ZombiUpravlenie._skinsManager)
 		{
-			_skinsManager = GameObject.FindGameObjectWithTag("SkinsManager").GetComponent<SkinsManagerPixlGun>();
+			ZombiUpravlenie._skinsManager = GameObject.FindGameObjectWithTag("SkinsManager").GetComponent<SkinsManagerPixlGun>();
 		}
 		Texture texture = null;
-		string text = SkinNameForObj(go.name);
-		if (!(texture = _skinsManager.skins[text] as Texture))
+		string str = ZombiUpravlenie.SkinNameForObj(go.name);
+		Texture item = ZombiUpravlenie._skinsManager.skins[str] as Texture;
+		texture = item;
+		if (!item)
 		{
-			Debug.Log("No skin: " + text);
+			UnityEngine.Debug.Log(string.Concat("No skin: ", str));
 		}
 		BotHealth.SetTextureRecursivelyFrom(go, texture);
 		return texture;
@@ -162,315 +297,199 @@ public sealed class ZombiUpravlenie : MonoBehaviour
 		return objName;
 	}
 
-	private IEnumerator Flash()
+	[PunRPC]
+	[RPC]
+	public void SlowdownRPC(float coef)
 	{
-		_flashing = true;
-		BotHealth.SetTextureRecursivelyFrom(_modelChild, hitTexture);
-		yield return new WaitForSeconds(0.125f);
-		BotHealth.SetTextureRecursivelyFrom(_modelChild, _skin);
-		_flashing = false;
 	}
 
 	private void Start()
 	{
-		//Discarded unreachable code: IL_013f
 		try
 		{
-			_skin = SetSkinForObj(_modelChild);
-			_nma = GetComponent<NavMeshAgent>();
-			_modelChildCollider = _modelChild.GetComponent<BoxCollider>();
-			shootAnim = offAnim;
-			player = GameObject.FindGameObjectWithTag("Player");
-			_gameController = GameObject.FindGameObjectWithTag("ZombiCreator").GetComponent<ZombiManager>();
-			_soundClips = _modelChild.GetComponent<Sounds>();
-			CurLifeTime = _soundClips.timeToHit;
-			target = null;
-			_modelChild.GetComponent<Animation>().Stop();
-			Walk();
-			_soundClips.attackingSpeed += UnityEngine.Random.Range(0f - _soundClips.attackingSpeedRandomRange[0], _soundClips.attackingSpeedRandomRange[1]);
-			photonView = PhotonView.Get(this);
-			_skin = SetSkinForObj(_modelChild);
-			if (photonView.isMine)
+			this._skin = ZombiUpravlenie.SetSkinForObj(this._modelChild);
+			this._nma = base.GetComponent<NavMeshAgent>();
+			this._modelChildCollider = this._modelChild.GetComponent<BoxCollider>();
+			this.shootAnim = this.offAnim;
+			this.player = GameObject.FindGameObjectWithTag("Player");
+			this._gameController = GameObject.FindGameObjectWithTag("ZombiCreator").GetComponent<ZombiManager>();
+			this._soundClips = this._modelChild.GetComponent<Sounds>();
+			this.CurLifeTime = this._soundClips.timeToHit;
+			this.target = null;
+			this._modelChild.GetComponent<Animation>().Stop();
+			this.Walk();
+			this._soundClips.attackingSpeed += UnityEngine.Random.Range(-this._soundClips.attackingSpeedRandomRange[0], this._soundClips.attackingSpeedRandomRange[1]);
+			this.photonView = PhotonView.Get(this);
+			this._skin = ZombiUpravlenie.SetSkinForObj(this._modelChild);
+			if (this.photonView.isMine)
 			{
-				photonView.RPC("setHealthRPC", PhotonTargets.All, _soundClips.health);
+				this.photonView.RPC("setHealthRPC", PhotonTargets.All, new object[] { this._soundClips.health });
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
-			Debug.LogError("Cooperative mode failure.");
-			Debug.LogException(exception);
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError("Cooperative mode failure.");
+			UnityEngine.Debug.LogException(exception);
 			throw;
 		}
 	}
 
-	public void setId(int _id)
+	private void StartFall()
 	{
-		photonView.RPC("setIdRPC", PhotonTargets.All, _id);
-	}
-
-	[RPC]
-	[PunRPC]
-	public void setIdRPC(int _id)
-	{
-		GetComponent<PhotonView>().viewID = _id;
+		this.falling = true;
 	}
 
 	private void Update()
 	{
-		//Discarded unreachable code: IL_0564
 		try
 		{
 			if (!ZombiManager.sharedManager.startGame)
 			{
 				UnityEngine.Object.Destroy(base.gameObject);
 			}
-			else
+			else if (this.photonView.isMine)
 			{
-				if (!photonView.isMine)
+				if (!this.deaded)
 				{
-					return;
-				}
-				if (!deaded)
-				{
-					if (target != null && target.CompareTag("Player") && target.GetComponent<SkinName>().playerMoveC.isInvisible)
+					if (this.target != null && this.target.CompareTag("Player") && this.target.GetComponent<SkinName>().playerMoveC.isInvisible)
 					{
-						target = null;
+						this.target = null;
 					}
-					if (target != null && timeToUpdateTarget > 0f)
+					if (!(this.target != null) || this.timeToUpdateTarget <= 0f)
 					{
-						timeToUpdateTarget -= Time.deltaTime;
-						float num = Vector3.SqrMagnitude(target.position - base.transform.position);
-						Vector3 vector = new Vector3(target.position.x, base.transform.position.y, target.position.z);
-						if (num >= _soundClips.attackDistance * _soundClips.attackDistance)
+						this.timeToResetPath -= Time.deltaTime;
+						if (this.timeToResetPath <= 0f)
 						{
-							timeToUpdateNavMesh -= Time.deltaTime;
-							if (timeToUpdateNavMesh < 0f)
-							{
-								_nma.SetDestination(vector);
-								_nma.speed = _soundClips.attackingSpeed * Mathf.Pow(1.05f, GlobalGameController.AllLevelsCompleted);
-								timeToUpdateNavMesh = 0.5f;
-							}
-							CurLifeTime = _soundClips.timeToHit;
-							PlayZombieRun();
+							this.timeToResetPath = 5f;
+							this._nma.ResetPath();
+							float single = (float)(-20 + UnityEngine.Random.Range(0, 40));
+							Vector3 vector3 = base.transform.position;
+							Vector3 vector31 = new Vector3(single, vector3.y, (float)(-20 + UnityEngine.Random.Range(0, 40)));
+							base.transform.LookAt(vector31);
+							this._nma.SetDestination(vector31);
+							this._nma.speed = this._soundClips.notAttackingSpeed;
 						}
-						else
-						{
-							if (_nma.path != null)
-							{
-								_nma.ResetPath();
-							}
-							CurLifeTime -= Time.deltaTime;
-							base.transform.LookAt(vector);
-							if (CurLifeTime <= 0f)
-							{
-								CurLifeTime = _soundClips.timeToHit;
-								if (Defs.isSoundFX)
-								{
-									GetComponent<AudioSource>().PlayOneShot(_soundClips.bite);
-								}
-								if (target.CompareTag("Player"))
-								{
-									target.GetComponent<SkinName>().playerMoveC.minusLiveFromZombi(_soundClips.damagePerHit, base.transform.position);
-								}
-								if (target.CompareTag("Turret"))
-								{
-									target.GetComponent<TurretController>().MinusLive(_soundClips.damagePerHit);
-								}
-							}
-							PlayZombieAttack();
-						}
-					}
-					else
-					{
-						timeToResetPath -= Time.deltaTime;
-						if (timeToResetPath <= 0f)
-						{
-							timeToResetPath = 5f;
-							_nma.ResetPath();
-							Vector3 vector2 = new Vector3(-20 + UnityEngine.Random.Range(0, 40), base.transform.position.y, -20 + UnityEngine.Random.Range(0, 40));
-							base.transform.LookAt(vector2);
-							_nma.SetDestination(vector2);
-							_nma.speed = _soundClips.notAttackingSpeed;
-						}
-						GameObject[] array = GameObject.FindGameObjectsWithTag("Turret");
+						GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("Turret");
 						if (Initializer.players.Count > 0)
 						{
-							timeToUpdateTarget = 5f;
-							float num2 = Vector3.SqrMagnitude(base.transform.position - Initializer.players[0].myPlayerTransform.position);
-							target = Initializer.players[0].myPlayerTransform;
+							this.timeToUpdateTarget = 5f;
+							float single1 = Vector3.SqrMagnitude(base.transform.position - Initializer.players[0].myPlayerTransform.position);
+							this.target = Initializer.players[0].myPlayerTransform;
 							foreach (Player_move_c player in Initializer.players)
 							{
 								if (!player.isInvisible)
 								{
-									float num3 = Vector3.SqrMagnitude(base.transform.position - player.myPlayerTransform.position);
-									if (num3 < num2)
+									float single2 = Vector3.SqrMagnitude(base.transform.position - player.myPlayerTransform.position);
+									if (single2 >= single1)
 									{
-										num2 = num3;
-										target = player.myPlayerTransform;
+										continue;
 									}
+									single1 = single2;
+									this.target = player.myPlayerTransform;
 								}
 							}
-							GameObject[] array2 = array;
-							foreach (GameObject gameObject in array2)
+							GameObject[] gameObjectArray1 = gameObjectArray;
+							for (int i = 0; i < (int)gameObjectArray1.Length; i++)
 							{
+								GameObject gameObject = gameObjectArray1[i];
 								if (gameObject.GetComponent<TurretController>().isRun)
 								{
-									float num4 = Vector3.SqrMagnitude(base.transform.position - gameObject.transform.position);
-									if (num4 < num2)
+									float single3 = Vector3.SqrMagnitude(base.transform.position - gameObject.transform.position);
+									if (single3 < single1)
 									{
-										num2 = num4;
-										target = gameObject.transform;
+										single1 = single3;
+										this.target = gameObject.transform;
 									}
 								}
 							}
 						}
 					}
-					if (health <= 0f)
+					else
 					{
-						photonView.RPC("Death", PhotonTargets.All);
+						this.timeToUpdateTarget -= Time.deltaTime;
+						float single4 = Vector3.SqrMagnitude(this.target.position - base.transform.position);
+						float single5 = this.target.position.x;
+						float single6 = base.transform.position.y;
+						Vector3 vector32 = this.target.position;
+						Vector3 vector33 = new Vector3(single5, single6, vector32.z);
+						if (single4 < this._soundClips.attackDistance * this._soundClips.attackDistance)
+						{
+							if (this._nma.path != null)
+							{
+								this._nma.ResetPath();
+							}
+							this.CurLifeTime -= Time.deltaTime;
+							base.transform.LookAt(vector33);
+							if (this.CurLifeTime <= 0f)
+							{
+								this.CurLifeTime = this._soundClips.timeToHit;
+								if (Defs.isSoundFX)
+								{
+									base.GetComponent<AudioSource>().PlayOneShot(this._soundClips.bite);
+								}
+								if (this.target.CompareTag("Player"))
+								{
+									this.target.GetComponent<SkinName>().playerMoveC.minusLiveFromZombi((float)this._soundClips.damagePerHit, base.transform.position);
+								}
+								if (this.target.CompareTag("Turret"))
+								{
+									this.target.GetComponent<TurretController>().MinusLive((float)this._soundClips.damagePerHit, 0, new NetworkViewID());
+								}
+							}
+							this.PlayZombieAttack();
+						}
+						else
+						{
+							this.timeToUpdateNavMesh -= Time.deltaTime;
+							if (this.timeToUpdateNavMesh < 0f)
+							{
+								this._nma.SetDestination(vector33);
+								this._nma.speed = this._soundClips.attackingSpeed * Mathf.Pow(1.05f, (float)GlobalGameController.AllLevelsCompleted);
+								this.timeToUpdateNavMesh = 0.5f;
+							}
+							this.CurLifeTime = this._soundClips.timeToHit;
+							this.PlayZombieRun();
+						}
+					}
+					if (this.health <= 0f)
+					{
+						this.photonView.RPC("Death", PhotonTargets.All, new object[0]);
 					}
 				}
-				else if (falling)
+				else if (this.falling)
 				{
-					float num5 = 7f;
-					base.transform.position = new Vector3(base.transform.position.x, base.transform.position.y - num5 * Time.deltaTime, base.transform.position.z);
+					float single7 = 7f;
+					Transform transforms = base.transform;
+					float single8 = base.transform.position.x;
+					Vector3 vector34 = base.transform.position;
+					float single9 = vector34.y - single7 * Time.deltaTime;
+					Vector3 vector35 = base.transform.position;
+					transforms.position = new Vector3(single8, single9, vector35.z);
 				}
 			}
 		}
-		catch (Exception exception)
+		catch (Exception exception1)
 		{
-			Debug.LogError("Cooperative mode failure.");
-			Debug.LogException(exception);
+			Exception exception = exception1;
+			UnityEngine.Debug.LogError("Cooperative mode failure.");
+			UnityEngine.Debug.LogException(exception);
 			throw;
 		}
 	}
 
-	[RPC]
-	[PunRPC]
-	private void Death()
-	{
-		if (!Defs.isCOOP)
-		{
-			return;
-		}
-		if (_nma != null)
-		{
-			_nma.enabled = false;
-		}
-		float num = 0.1f;
-		if (Defs.isSoundFX && _soundClips != null)
-		{
-			if (RequestPlayDeath(_soundClips.death.length))
-			{
-				GetComponent<AudioSource>().PlayOneShot(_soundClips.death);
-			}
-			num = _soundClips.death.length;
-		}
-		_modelChild.GetComponent<Animation>().Stop();
-		if ((bool)_modelChild.GetComponent<Animation>()[deathAnim])
-		{
-			_modelChild.GetComponent<Animation>().Play(deathAnim);
-			num = Mathf.Max(num, _modelChild.GetComponent<Animation>()[deathAnim].length);
-			CodeAfterDelay(_modelChild.GetComponent<Animation>()[deathAnim].length * 1.25f, StartFall);
-		}
-		else
-		{
-			StartFall();
-		}
-		CodeAfterDelay(num, DestroySelf);
-		_modelChild.GetComponent<BoxCollider>().enabled = false;
-		deaded = true;
-		SpawnMonster component = GetComponent<SpawnMonster>();
-		component.ShouldMove = false;
-	}
-
-	private void DestroySelf()
-	{
-		UnityEngine.Object.Destroy(base.gameObject);
-	}
-
-	private void StartFall()
-	{
-		falling = true;
-	}
-
 	private void Walk()
 	{
-		_modelChild.GetComponent<Animation>().Stop();
-		if ((bool)_modelChild.GetComponent<Animation>()[normWalkAnim])
+		this._modelChild.GetComponent<Animation>().Stop();
+		if (!this._modelChild.GetComponent<Animation>()[this.normWalkAnim])
 		{
-			_modelChild.GetComponent<Animation>().CrossFade(normWalkAnim);
+			this._modelChild.GetComponent<Animation>().CrossFade(this.zombieWalkAnim);
 		}
 		else
 		{
-			_modelChild.GetComponent<Animation>().CrossFade(zombieWalkAnim);
+			this._modelChild.GetComponent<Animation>().CrossFade(this.normWalkAnim);
 		}
 	}
 
-	public void PlayZombieRun()
-	{
-		if (tekAnim != 1 && Defs.isCOOP)
-		{
-			if ((bool)_modelChild.GetComponent<Animation>()[zombieWalkAnim])
-			{
-				_modelChild.GetComponent<Animation>().CrossFade(zombieWalkAnim);
-			}
-			photonView.RPC("PlayZombieRunRPC", PhotonTargets.Others);
-		}
-		tekAnim = 1;
-	}
-
-	public void PlayZombieAttack()
-	{
-		if (tekAnim != 2 && Defs.isCOOP)
-		{
-			if ((bool)_modelChild.GetComponent<Animation>()[attackAnim])
-			{
-				_modelChild.GetComponent<Animation>().CrossFade(attackAnim);
-			}
-			else if ((bool)_modelChild.GetComponent<Animation>()[shootAnim])
-			{
-				_modelChild.GetComponent<Animation>().CrossFade(shootAnim);
-			}
-			photonView.RPC("PlayZombieAttackRPC", PhotonTargets.Others);
-		}
-		tekAnim = 2;
-	}
-
-	[PunRPC]
-	[RPC]
-	public void PlayZombieRunRPC()
-	{
-		if ((bool)_modelChild.GetComponent<Animation>()[zombieWalkAnim])
-		{
-			_modelChild.GetComponent<Animation>().CrossFade(zombieWalkAnim);
-		}
-		tekAnim = 1;
-	}
-
-	[PunRPC]
-	[RPC]
-	public void PlayZombieAttackRPC()
-	{
-		if ((bool)_modelChild.GetComponent<Animation>()[attackAnim])
-		{
-			_modelChild.GetComponent<Animation>().CrossFade(attackAnim);
-		}
-		else if ((bool)_modelChild.GetComponent<Animation>()[shootAnim])
-		{
-			_modelChild.GetComponent<Animation>().CrossFade(shootAnim);
-		}
-		tekAnim = 2;
-	}
-
-	public void CodeAfterDelay(float delay, DelayedCallback callback)
-	{
-		StartCoroutine(___DelayedCallback(delay, callback));
-	}
-
-	private IEnumerator ___DelayedCallback(float time, DelayedCallback callback)
-	{
-		yield return new WaitForSeconds(time);
-		callback();
-	}
+	public delegate void DelayedCallback();
 }

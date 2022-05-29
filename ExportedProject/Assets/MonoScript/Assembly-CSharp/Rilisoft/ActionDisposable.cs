@@ -10,19 +10,20 @@ namespace Rilisoft
 
 		public ActionDisposable(Action action)
 		{
-			_action = action;
+			this._action = action;
 		}
 
 		public void Dispose()
 		{
-			if (!_disposed)
+			if (this._disposed)
 			{
-				if (_action != null)
-				{
-					_action();
-				}
-				_disposed = true;
+				return;
 			}
+			if (this._action != null)
+			{
+				this._action();
+			}
+			this._disposed = true;
 		}
 	}
 }

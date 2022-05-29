@@ -1,7 +1,8 @@
+using I2.Loc;
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 
 public sealed class SocialGunBannerView : BannerWindow
 {
@@ -11,46 +12,84 @@ public sealed class SocialGunBannerView : BannerWindow
 
 	private IDisposable _backSubscription;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache4;
-
-	public static event Action<bool> SocialGunBannerViewLoginCompletedWithResult;
-
-	private void SetRewardLabelsText()
+	public SocialGunBannerView()
 	{
-		foreach (UILabel rewardLabel in rewardLabels)
-		{
-			rewardLabel.text = string.Format(LocalizationStore.Get("Key_1531"), 10);
-		}
 	}
 
 	private void Awake()
 	{
-		SetRewardLabelsText();
-		LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
+		this.SetRewardLabelsText();
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
 	}
 
-	private void OnEnable()
+	public void Continue()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(HandleEscape, "Social Gun");
+		MainMenuController.DoMemoryConsumingTaskInEmptyScene(() => FacebookController.Login(() => this.FireSocialGunBannerViewLoginCompletedEvent(true), () => this.FireSocialGunBannerViewLoginCompletedEvent(false), "Social Gun Banner", null), () => FacebookController.Login(null, null, "Social Gun Banner", null));
 	}
 
-	private void OnDisable()
+	private void FireSocialGunBannerViewLoginCompletedEvent(bool val)
 	{
-		if (_backSubscription != null)
+		Action<bool> action = SocialGunBannerView.SocialGunBannerViewLoginCompletedWithResult;
+		if (action != null)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			action(val);
 		}
 	}
 
 	private void HandleEscape()
 	{
-		HideWindow();
+		this.HideWindow();
+	}
+
+	private void HandleLocalizationChanged()
+	{
+		this.SetRewardLabelsText();
+	}
+
+	public void HideWindow()
+	{
+		ButtonClickSound.TryPlayClick();
+		if (!this.freePanelBanner)
+		{
+			BannerWindowController sharedController = BannerWindowController.SharedController;
+			if (sharedController != null)
+			{
+				sharedController.HideBannerWindow();
+				return;
+			}
+		}
+		base.Hide();
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Social Gun");
+	}
+
+	private void SetRewardLabelsText()
+	{
+		foreach (UILabel rewardLabel in this.rewardLabels)
+		{
+			rewardLabel.text = string.Format(LocalizationStore.Get("Key_1531"), 10);
+		}
 	}
 
 	public override void Show()
@@ -62,71 +101,5 @@ public sealed class SocialGunBannerView : BannerWindow
 		}
 	}
 
-	public void HideWindow()
-	{
-		ButtonClickSound.TryPlayClick();
-		if (!freePanelBanner)
-		{
-			BannerWindowController sharedController = BannerWindowController.SharedController;
-			if (sharedController != null)
-			{
-				sharedController.HideBannerWindow();
-				return;
-			}
-		}
-		Hide();
-	}
-
-	public void Continue()
-	{
-		Action action = _003CContinue_003Em__44D;
-		if (_003C_003Ef__am_0024cache4 == null)
-		{
-			_003C_003Ef__am_0024cache4 = _003CContinue_003Em__44E;
-		}
-		MainMenuController.DoMemoryConsumingTaskInEmptyScene(action, _003C_003Ef__am_0024cache4);
-	}
-
-	private void FireSocialGunBannerViewLoginCompletedEvent(bool val)
-	{
-		Action<bool> socialGunBannerViewLoginCompletedWithResult = SocialGunBannerView.SocialGunBannerViewLoginCompletedWithResult;
-		if (socialGunBannerViewLoginCompletedWithResult != null)
-		{
-			socialGunBannerViewLoginCompletedWithResult(val);
-		}
-	}
-
-	private void OnDestroy()
-	{
-		LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
-	}
-
-	private void HandleLocalizationChanged()
-	{
-		SetRewardLabelsText();
-	}
-
-	[CompilerGenerated]
-	private void _003CContinue_003Em__44D()
-	{
-		FacebookController.Login(_003CContinue_003Em__44F, _003CContinue_003Em__450, "Social Gun Banner");
-	}
-
-	[CompilerGenerated]
-	private static void _003CContinue_003Em__44E()
-	{
-		FacebookController.Login(null, null, "Social Gun Banner");
-	}
-
-	[CompilerGenerated]
-	private void _003CContinue_003Em__44F()
-	{
-		FireSocialGunBannerViewLoginCompletedEvent(true);
-	}
-
-	[CompilerGenerated]
-	private void _003CContinue_003Em__450()
-	{
-		FireSocialGunBannerViewLoginCompletedEvent(false);
-	}
+	public static event Action<bool> SocialGunBannerViewLoginCompletedWithResult;
 }

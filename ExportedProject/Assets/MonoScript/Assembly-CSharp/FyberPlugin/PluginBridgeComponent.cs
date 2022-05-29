@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace FyberPlugin
@@ -9,79 +10,84 @@ namespace FyberPlugin
 			FyberGameObject.Init();
 		}
 
-		public void StartSDK(string json)
+		public PluginBridgeComponent()
 		{
-			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.fyber.mediation.MediationAdapterStarter"))
-			{
-				FyberSettings instance = FyberSettings.Instance;
-				androidJavaClass.CallStatic("setup", instance.BundlesInfoJson(), instance.BundlesCount());
-			}
-			using (AndroidJavaClass androidJavaClass2 = new AndroidJavaClass("com.fyber.mediation.MediationConfigProvider"))
-			{
-				FyberSettings instance2 = FyberSettings.Instance;
-				androidJavaClass2.CallStatic("setup", instance2.BundlesConfigJson());
-			}
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.FyberPlugin"))
-			{
-				androidJavaObject.CallStatic("setPluginParameters", "8.3.0", Application.unityVersion);
-				androidJavaObject.CallStatic("start", json);
-			}
-		}
-
-		public void Cache(string action)
-		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.cache.CacheWrapper"))
-			{
-				androidJavaObject.CallStatic(action);
-			}
-		}
-
-		public void Request(string json)
-		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.requesters.RequesterWrapper"))
-			{
-				androidJavaObject.CallStatic("request", json);
-			}
-		}
-
-		public void StartAd(string json)
-		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.ads.AdWrapper"))
-			{
-				androidJavaObject.CallStatic("start", json);
-			}
 		}
 
 		public bool Banner(string json)
 		{
-			//Discarded unreachable code: IL_002c
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.ads.AdWrapper"))
+			bool flag;
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.ads.AdWrapper", new object[0]))
 			{
-				return androidJavaObject.CallStatic<bool>("performAdActions", new object[1] { json });
+				flag = androidJavaObject.CallStatic<bool>("performAdActions", new object[] { json });
 			}
+			return flag;
 		}
 
-		public void Report(string json)
+		public void Cache(string action)
 		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.reporters.ReporterWrapper"))
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.cache.CacheWrapper", new object[0]))
 			{
-				androidJavaObject.CallStatic("report", json);
-			}
-		}
-
-		public void Settings(string json)
-		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.settings.SettingsWrapper"))
-			{
-				androidJavaObject.CallStatic("perform", json);
+				androidJavaObject.CallStatic(action, new object[0]);
 			}
 		}
 
 		public void EnableLogging(bool shouldLog)
 		{
-			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.utils.FyberLogger"))
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.utils.FyberLogger", new object[0]))
 			{
-				androidJavaObject.CallStatic<bool>("enableLogging", new object[1] { shouldLog });
+				androidJavaObject.CallStatic<bool>("enableLogging", new object[] { shouldLog });
+			}
+		}
+
+		public void Report(string json)
+		{
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.reporters.ReporterWrapper", new object[0]))
+			{
+				androidJavaObject.CallStatic("report", new object[] { json });
+			}
+		}
+
+		public void Request(string json)
+		{
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.requesters.RequesterWrapper", new object[0]))
+			{
+				androidJavaObject.CallStatic("request", new object[] { json });
+			}
+		}
+
+		public void Settings(string json)
+		{
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.settings.SettingsWrapper", new object[0]))
+			{
+				androidJavaObject.CallStatic("perform", new object[] { json });
+			}
+		}
+
+		public void StartAd(string json)
+		{
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.ads.AdWrapper", new object[0]))
+			{
+				androidJavaObject.CallStatic("start", new object[] { json });
+			}
+		}
+
+		public void StartSDK(string json)
+		{
+			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.fyber.mediation.MediationAdapterStarter"))
+			{
+				FyberSettings instance = FyberSettings.Instance;
+				androidJavaClass.CallStatic("setup", new object[] { instance.BundlesInfoJson(), instance.BundlesCount() });
+			}
+			using (AndroidJavaClass androidJavaClass1 = new AndroidJavaClass("com.fyber.mediation.MediationConfigProvider"))
+			{
+				FyberSettings fyberSetting = FyberSettings.Instance;
+				androidJavaClass1.CallStatic("setup", new object[] { fyberSetting.BundlesConfigJson() });
+			}
+			using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("com.fyber.unity.FyberPlugin", new object[0]))
+			{
+				androidJavaObject.CallStatic("setPluginParameters", new object[] { "8.3.0", Application.unityVersion });
+				androidJavaObject.CallStatic("start", new object[] { json });
 			}
 		}
 	}

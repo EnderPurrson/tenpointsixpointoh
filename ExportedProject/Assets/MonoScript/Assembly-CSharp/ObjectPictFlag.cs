@@ -17,50 +17,56 @@ internal sealed class ObjectPictFlag : MonoBehaviour
 
 	public FlagController myFlagController;
 
+	public ObjectPictFlag()
+	{
+	}
+
 	public void SetTexture(Texture _texture)
 	{
-		GetComponent<GUITexture>().texture = _texture;
+		base.GetComponent<GUITexture>().texture = _texture;
 	}
 
 	private void Update()
 	{
 		try
 		{
-			cam = NickLabelController.currentCamera;
-			if (cam != null)
+			this.cam = NickLabelController.currentCamera;
+			if (this.cam != null)
 			{
-				camTransform = cam.transform;
+				this.camTransform = this.cam.transform;
 			}
-			if (target == null || cam == null)
+			if (this.target == null || this.cam == null)
 			{
 				if (Time.frameCount % 60 == 0)
 				{
 					Debug.Log("target == null");
 				}
 				base.transform.position = new Vector3(-1000f, -1000f, -1000f);
-				return;
-			}
-			posLabel = cam.WorldToViewportPoint(target.position);
-			if (posLabel.z >= 0f && ShopNGUIController.sharedShop != null && !ShopNGUIController.GuiActive)
-			{
-				base.transform.position = posLabel;
 			}
 			else
 			{
-				base.transform.position = new Vector3(-1000f, -1000f, -1000f);
-			}
-			if (isBaza && myFlagController.isBaza && myFlagController.flagModel.activeInHierarchy)
-			{
-				base.transform.position = new Vector3(-1000f, -1000f, -1000f);
-			}
-			if (!isBaza && !target.parent.GetComponent<FlagController>().flagModel.activeInHierarchy)
-			{
-				base.transform.position = new Vector3(-1000f, -1000f, -1000f);
+				this.posLabel = this.cam.WorldToViewportPoint(this.target.position);
+				if (this.posLabel.z < 0f || !(ShopNGUIController.sharedShop != null) || ShopNGUIController.GuiActive)
+				{
+					base.transform.position = new Vector3(-1000f, -1000f, -1000f);
+				}
+				else
+				{
+					base.transform.position = this.posLabel;
+				}
+				if (this.isBaza && this.myFlagController.isBaza && this.myFlagController.flagModel.activeInHierarchy)
+				{
+					base.transform.position = new Vector3(-1000f, -1000f, -1000f);
+				}
+				if (!this.isBaza && !this.target.parent.GetComponent<FlagController>().flagModel.activeInHierarchy)
+				{
+					base.transform.position = new Vector3(-1000f, -1000f, -1000f);
+				}
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.Log("Exception in ObjectLabel: " + ex);
+			Debug.Log(string.Concat("Exception in ObjectLabel: ", exception));
 		}
 	}
 }

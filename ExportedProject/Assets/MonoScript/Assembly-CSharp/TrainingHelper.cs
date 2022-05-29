@@ -1,14 +1,19 @@
+using System;
 using UnityEngine;
 
 internal sealed class TrainingHelper : MonoBehaviour
 {
 	private Rect _buttonRect;
 
+	public TrainingHelper()
+	{
+	}
+
 	private void Start()
 	{
-		float num = 211f * Defs.Coef;
-		float num2 = 114f * Defs.Coef;
-		float num3 = 12f * Defs.Coef;
-		_buttonRect = new Rect((float)Screen.width - num - num3, num2 + 64f * Defs.Coef + 3f * num3, num, num2);
+		float coef = 211f * Defs.Coef;
+		float single = 114f * Defs.Coef;
+		float coef1 = 12f * Defs.Coef;
+		this._buttonRect = new Rect((float)Screen.width - coef - coef1, single + 64f * Defs.Coef + 3f * coef1, coef, single);
 	}
 }

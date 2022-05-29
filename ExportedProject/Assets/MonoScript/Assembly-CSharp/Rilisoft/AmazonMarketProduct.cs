@@ -1,4 +1,5 @@
 using com.amazon.device.iap.cpt;
+using System;
 
 namespace Rilisoft
 {
@@ -6,35 +7,19 @@ namespace Rilisoft
 	{
 		private readonly ProductData _marketProduct;
 
-		public string Id
-		{
-			get
-			{
-				return _marketProduct.Sku;
-			}
-		}
-
-		public string Title
-		{
-			get
-			{
-				return _marketProduct.Title;
-			}
-		}
-
 		public string Description
 		{
 			get
 			{
-				return _marketProduct.Description;
+				return this._marketProduct.Description;
 			}
 		}
 
-		public string Price
+		public string Id
 		{
 			get
 			{
-				return _marketProduct.Price;
+				return this._marketProduct.Sku;
 			}
 		}
 
@@ -42,18 +27,29 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _marketProduct;
+				return this._marketProduct;
+			}
+		}
+
+		public string Price
+		{
+			get
+			{
+				return this._marketProduct.Price;
+			}
+		}
+
+		public string Title
+		{
+			get
+			{
+				return this._marketProduct.Title;
 			}
 		}
 
 		public AmazonMarketProduct(ProductData amazonItem)
 		{
-			_marketProduct = amazonItem;
-		}
-
-		public override string ToString()
-		{
-			return _marketProduct.ToString();
+			this._marketProduct = amazonItem;
 		}
 
 		public override bool Equals(object obj)
@@ -63,13 +59,18 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			ProductData marketProduct = amazonMarketProduct._marketProduct;
-			return _marketProduct.Equals(marketProduct);
+			ProductData productDatum = amazonMarketProduct._marketProduct;
+			return this._marketProduct.Equals(productDatum);
 		}
 
 		public override int GetHashCode()
 		{
-			return _marketProduct.GetHashCode();
+			return this._marketProduct.GetHashCode();
+		}
+
+		public override string ToString()
+		{
+			return this._marketProduct.ToString();
 		}
 	}
 }

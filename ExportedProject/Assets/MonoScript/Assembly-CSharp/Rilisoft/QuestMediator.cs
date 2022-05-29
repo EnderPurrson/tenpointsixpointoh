@@ -4,11 +4,125 @@ namespace Rilisoft
 {
 	internal sealed class QuestMediator
 	{
+		private readonly static QuestMediator.QuestEventSource _eventSource;
+
+		public static QuestEvents Events
+		{
+			get
+			{
+				return QuestMediator._eventSource;
+			}
+		}
+
+		static QuestMediator()
+		{
+			QuestMediator._eventSource = new QuestMediator.QuestEventSource();
+		}
+
+		public QuestMediator()
+		{
+		}
+
+		public static void NotifyBreakSeries()
+		{
+			QuestMediator._eventSource.RaiseBreakSeries(EventArgs.Empty);
+		}
+
+		public static void NotifyCapture(ConnectSceneNGUIController.RegimGame mode)
+		{
+			CaptureEventArgs captureEventArg = new CaptureEventArgs()
+			{
+				Mode = mode
+			};
+			QuestMediator._eventSource.RaiseCapture(captureEventArg);
+		}
+
+		public static void NotifyGetGotcha()
+		{
+			QuestMediator._eventSource.RaiseGetGotcha(EventArgs.Empty);
+		}
+
+		public static void NotifyKillMonster(ShopNGUIController.CategoryNames weaponSlot, bool campaign = false)
+		{
+			KillMonsterEventArgs killMonsterEventArg = new KillMonsterEventArgs()
+			{
+				WeaponSlot = weaponSlot,
+				Campaign = campaign
+			};
+			QuestMediator._eventSource.RaiseKillMonster(killMonsterEventArg);
+		}
+
+		public static void NotifyKillOtherPlayer(ConnectSceneNGUIController.RegimGame mode, ShopNGUIController.CategoryNames weaponSlot, bool headshot = false, bool grenade = false, bool revenge = false)
+		{
+			KillOtherPlayerEventArgs killOtherPlayerEventArg = new KillOtherPlayerEventArgs()
+			{
+				Mode = mode,
+				WeaponSlot = weaponSlot,
+				Headshot = headshot,
+				Grenade = grenade,
+				Revenge = revenge
+			};
+			QuestMediator._eventSource.RaiseKillOtherPlayer(killOtherPlayerEventArg);
+		}
+
+		public static void NotifyKillOtherPlayerWithFlag()
+		{
+			QuestMediator._eventSource.RaiseKillOtherPlayerWithFlag(EventArgs.Empty);
+		}
+
+		public static void NotifyMakeSeries()
+		{
+			QuestMediator._eventSource.RaiseMakeSeries(EventArgs.Empty);
+		}
+
+		public static void NotifySocialInteraction(string kind)
+		{
+			SocialInteractionEventArgs socialInteractionEventArg = new SocialInteractionEventArgs()
+			{
+				Kind = kind ?? string.Empty
+			};
+			QuestMediator._eventSource.RaiseSocialInteraction(socialInteractionEventArg);
+		}
+
+		public static void NotifySurviveWaveInArena()
+		{
+			QuestMediator._eventSource.RaiseSurviveWaveInArena(EventArgs.Empty);
+		}
+
+		public static void NotifyWin(ConnectSceneNGUIController.RegimGame mode, string map)
+		{
+			WinEventArgs winEventArg = new WinEventArgs()
+			{
+				Mode = mode,
+				Map = map ?? string.Empty
+			};
+			QuestMediator._eventSource.RaiseWin(winEventArg);
+		}
+
 		private sealed class QuestEventSource : QuestEvents
 		{
-			internal new void RaiseWin(WinEventArgs e)
+			public QuestEventSource()
 			{
-				base.RaiseWin(e);
+			}
+
+			internal new void RaiseBreakSeries(EventArgs e)
+			{
+				base.RaiseBreakSeries(e);
+			}
+
+			internal new void RaiseCapture(CaptureEventArgs e)
+			{
+				base.RaiseCapture(e);
+			}
+
+			internal new void RaiseGetGotcha(EventArgs e)
+			{
+				base.RaiseGetGotcha(e);
+			}
+
+			internal new void RaiseKillMonster(KillMonsterEventArgs e)
+			{
+				base.RaiseKillMonster(e);
 			}
 
 			internal new void RaiseKillOtherPlayer(KillOtherPlayerEventArgs e)
@@ -21,24 +135,14 @@ namespace Rilisoft
 				base.RaiseKillOtherPlayerWithFlag(e);
 			}
 
-			internal new void RaiseCapture(CaptureEventArgs e)
-			{
-				base.RaiseCapture(e);
-			}
-
-			internal new void RaiseKillMonster(KillMonsterEventArgs e)
-			{
-				base.RaiseKillMonster(e);
-			}
-
-			internal new void RaiseBreakSeries(EventArgs e)
-			{
-				base.RaiseBreakSeries(e);
-			}
-
 			internal new void RaiseMakeSeries(EventArgs e)
 			{
 				base.RaiseMakeSeries(e);
+			}
+
+			internal new void RaiseSocialInteraction(SocialInteractionEventArgs e)
+			{
+				base.RaiseSocialInteraction(e);
 			}
 
 			internal new void RaiseSurviveWaveInArena(EventArgs e)
@@ -46,96 +150,10 @@ namespace Rilisoft
 				base.RaiseSurviveWaveInArena(e);
 			}
 
-			internal new void RaiseGetGotcha(EventArgs e)
+			internal new void RaiseWin(WinEventArgs e)
 			{
-				base.RaiseGetGotcha(e);
+				base.RaiseWin(e);
 			}
-
-			internal new void RaiseSocialInteraction(SocialInteractionEventArgs e)
-			{
-				base.RaiseSocialInteraction(e);
-			}
-		}
-
-		private static readonly QuestEventSource _eventSource = new QuestEventSource();
-
-		public static QuestEvents Events
-		{
-			get
-			{
-				return _eventSource;
-			}
-		}
-
-		public static void NotifyWin(ConnectSceneNGUIController.RegimGame mode, string map)
-		{
-			WinEventArgs winEventArgs = new WinEventArgs();
-			winEventArgs.Mode = mode;
-			winEventArgs.Map = map ?? string.Empty;
-			WinEventArgs e = winEventArgs;
-			_eventSource.RaiseWin(e);
-		}
-
-		public static void NotifyKillOtherPlayer(ConnectSceneNGUIController.RegimGame mode, ShopNGUIController.CategoryNames weaponSlot, bool headshot = false, bool grenade = false, bool revenge = false)
-		{
-			KillOtherPlayerEventArgs killOtherPlayerEventArgs = new KillOtherPlayerEventArgs();
-			killOtherPlayerEventArgs.Mode = mode;
-			killOtherPlayerEventArgs.WeaponSlot = weaponSlot;
-			killOtherPlayerEventArgs.Headshot = headshot;
-			killOtherPlayerEventArgs.Grenade = grenade;
-			killOtherPlayerEventArgs.Revenge = revenge;
-			KillOtherPlayerEventArgs e = killOtherPlayerEventArgs;
-			_eventSource.RaiseKillOtherPlayer(e);
-		}
-
-		public static void NotifyKillOtherPlayerWithFlag()
-		{
-			_eventSource.RaiseKillOtherPlayerWithFlag(EventArgs.Empty);
-		}
-
-		public static void NotifyCapture(ConnectSceneNGUIController.RegimGame mode)
-		{
-			CaptureEventArgs captureEventArgs = new CaptureEventArgs();
-			captureEventArgs.Mode = mode;
-			CaptureEventArgs e = captureEventArgs;
-			_eventSource.RaiseCapture(e);
-		}
-
-		public static void NotifyKillMonster(ShopNGUIController.CategoryNames weaponSlot, bool campaign = false)
-		{
-			KillMonsterEventArgs killMonsterEventArgs = new KillMonsterEventArgs();
-			killMonsterEventArgs.WeaponSlot = weaponSlot;
-			killMonsterEventArgs.Campaign = campaign;
-			KillMonsterEventArgs e = killMonsterEventArgs;
-			_eventSource.RaiseKillMonster(e);
-		}
-
-		public static void NotifyBreakSeries()
-		{
-			_eventSource.RaiseBreakSeries(EventArgs.Empty);
-		}
-
-		public static void NotifyMakeSeries()
-		{
-			_eventSource.RaiseMakeSeries(EventArgs.Empty);
-		}
-
-		public static void NotifySurviveWaveInArena()
-		{
-			_eventSource.RaiseSurviveWaveInArena(EventArgs.Empty);
-		}
-
-		public static void NotifyGetGotcha()
-		{
-			_eventSource.RaiseGetGotcha(EventArgs.Empty);
-		}
-
-		public static void NotifySocialInteraction(string kind)
-		{
-			SocialInteractionEventArgs socialInteractionEventArgs = new SocialInteractionEventArgs();
-			socialInteractionEventArgs.Kind = kind ?? string.Empty;
-			SocialInteractionEventArgs e = socialInteractionEventArgs;
-			_eventSource.RaiseSocialInteraction(e);
 		}
 	}
 }

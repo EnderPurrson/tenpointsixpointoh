@@ -1,5 +1,6 @@
-using System;
 using Rilisoft;
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ControlsSettingsBase : MonoBehaviour
@@ -40,11 +41,23 @@ public class ControlsSettingsBase : MonoBehaviour
 
 	public Transform TopRight;
 
-	public static string JoystickSett = "JoystickSettSettSett";
+	public static string JoystickSett;
 
 	public bool _isCancellationRequested;
 
-	public static event Action ControlsChanged;
+	static ControlsSettingsBase()
+	{
+		ControlsSettingsBase.JoystickSett = "JoystickSettSettSett";
+	}
+
+	public ControlsSettingsBase()
+	{
+	}
+
+	protected virtual void HandleCancelPosJoystikClicked(object sender, EventArgs e)
+	{
+		this._isCancellationRequested = true;
+	}
 
 	protected void HandleControlsClicked()
 	{
@@ -53,57 +66,102 @@ public class ControlsSettingsBase : MonoBehaviour
 			FlurryEvents.LogAfterTraining("Controls", TrainingController.TrainingCompletedFlagForLogging.Value);
 			TrainingController.TrainingCompletedFlagForLogging = null;
 		}
-		if (GlobalGameController.LeftHanded)
+		if (!GlobalGameController.LeftHanded)
 		{
-			BottomRight.localPosition = new Vector3(0f, 0f, 0f);
-			TopRight.localPosition = new Vector3(-512f, 450f, 0f);
-			TopLeft.localPosition = new Vector3(0f, 380f, 0f);
-			BottomLeft.localPosition = new Vector3(300f, 0f, 0f);
-			BottomLeftControlsAnchor.side = UIAnchor.Side.BottomLeft;
-			BottomRightControlsAnchor.side = UIAnchor.Side.BottomRight;
+			this.BottomRight.localPosition = new Vector3(512f, 0f, 0f);
+			this.TopRight.localPosition = new Vector3(0f, 450f, 0f);
+			this.TopLeft.localPosition = new Vector3(-300f, 380f, 0f);
+			this.BottomLeft.localPosition = new Vector3(0f, 0f, 0f);
+			this.BottomLeftControlsAnchor.side = UIAnchor.Side.BottomRight;
+			this.BottomRightControlsAnchor.side = UIAnchor.Side.BottomLeft;
 		}
 		else
 		{
-			BottomRight.localPosition = new Vector3(512f, 0f, 0f);
-			TopRight.localPosition = new Vector3(0f, 450f, 0f);
-			TopLeft.localPosition = new Vector3(-300f, 380f, 0f);
-			BottomLeft.localPosition = new Vector3(0f, 0f, 0f);
-			BottomLeftControlsAnchor.side = UIAnchor.Side.BottomRight;
-			BottomRightControlsAnchor.side = UIAnchor.Side.BottomLeft;
+			this.BottomRight.localPosition = new Vector3(0f, 0f, 0f);
+			this.TopRight.localPosition = new Vector3(-512f, 450f, 0f);
+			this.TopLeft.localPosition = new Vector3(0f, 380f, 0f);
+			this.BottomLeft.localPosition = new Vector3(300f, 0f, 0f);
+			this.BottomLeftControlsAnchor.side = UIAnchor.Side.BottomLeft;
+			this.BottomRightControlsAnchor.side = UIAnchor.Side.BottomRight;
 		}
-		SetControlsCoords();
+		this.SetControlsCoords();
 	}
 
-	private void SetControlsCoords()
+	private void HandleDefaultPosJoystikClicked(object sender, EventArgs e)
 	{
-		float num = ((!GlobalGameController.LeftHanded) ? (-1f) : 1f);
-		Vector3[] array = Load.LoadVector3Array(JoystickSett);
-		if (array == null || array.Length < 7)
+		float single = (float)((!GlobalGameController.LeftHanded ? -1 : 1));
+		Defs.InitCoordsIphone();
+		Transform vector3 = this.zoomButton.transform;
+		float zoomButtonY = (float)Defs.ZoomButtonY;
+		Vector3 vector31 = this.zoomButton.transform.localPosition;
+		vector3.localPosition = new Vector3((float)Defs.ZoomButtonX * single, zoomButtonY, vector31.z);
+		Transform transforms = this.reloadButton.transform;
+		float reloadButtonY = (float)Defs.ReloadButtonY;
+		Vector3 vector32 = this.reloadButton.transform.localPosition;
+		transforms.localPosition = new Vector3((float)Defs.ReloadButtonX * single, reloadButtonY, vector32.z);
+		Transform transforms1 = this.jumpButton.transform;
+		float jumpButtonY = (float)Defs.JumpButtonY;
+		Vector3 vector33 = this.jumpButton.transform.localPosition;
+		transforms1.localPosition = new Vector3((float)Defs.JumpButtonX * single, jumpButtonY, vector33.z);
+		Transform transforms2 = this.fireButton.transform;
+		float fireButtonY = (float)Defs.FireButtonY;
+		Vector3 vector34 = this.fireButton.transform.localPosition;
+		transforms2.localPosition = new Vector3((float)Defs.FireButtonX * single, fireButtonY, vector34.z);
+		Transform transforms3 = this.joystick.transform;
+		float joyStickY = (float)Defs.JoyStickY;
+		Vector3 vector35 = this.joystick.transform.localPosition;
+		transforms3.localPosition = new Vector3((float)Defs.JoyStickX * single, joyStickY, vector35.z);
+		Transform transforms4 = this.grenadeButton.transform;
+		float grenadeY = (float)Defs.GrenadeY;
+		Vector3 vector36 = this.grenadeButton.transform.localPosition;
+		transforms4.localPosition = new Vector3((float)Defs.GrenadeX * single, grenadeY, vector36.z);
+		Transform transforms5 = this.fireButtonInJoystick.transform;
+		float fireButton2Y = (float)Defs.FireButton2Y;
+		Vector3 vector37 = this.fireButtonInJoystick.transform.localPosition;
+		transforms5.localPosition = new Vector3((float)Defs.FireButton2X * single, fireButton2Y, vector37.z);
+	}
+
+	protected virtual void HandleSavePosJoystikClicked(object sender, EventArgs e)
+	{
+		float single = (float)((!GlobalGameController.LeftHanded ? -1 : 1));
+		string joystickSett = ControlsSettingsBase.JoystickSett;
+		Vector3[] vector3 = new Vector3[7];
+		Vector3 vector31 = this.zoomButton.transform.localPosition;
+		float single1 = this.zoomButton.transform.localPosition.y;
+		Vector3 vector32 = this.zoomButton.transform.localPosition;
+		vector3[0] = new Vector3(vector31.x * single, single1, vector32.z);
+		Vector3 vector33 = this.reloadButton.transform.localPosition;
+		float single2 = this.reloadButton.transform.localPosition.y;
+		Vector3 vector34 = this.reloadButton.transform.localPosition;
+		vector3[1] = new Vector3(vector33.x * single, single2, vector34.z);
+		Vector3 vector35 = this.jumpButton.transform.localPosition;
+		float single3 = this.jumpButton.transform.localPosition.y;
+		Vector3 vector36 = this.jumpButton.transform.localPosition;
+		vector3[2] = new Vector3(vector35.x * single, single3, vector36.z);
+		Vector3 vector37 = this.fireButton.transform.localPosition;
+		float single4 = this.fireButton.transform.localPosition.y;
+		Vector3 vector38 = this.fireButton.transform.localPosition;
+		vector3[3] = new Vector3(vector37.x * single, single4, vector38.z);
+		Vector3 vector39 = this.joystick.transform.localPosition;
+		float single5 = this.joystick.transform.localPosition.y;
+		Vector3 vector310 = this.joystick.transform.localPosition;
+		vector3[4] = new Vector3(vector39.x * single, single5, vector310.z);
+		Vector3 vector311 = this.grenadeButton.transform.localPosition;
+		float single6 = this.grenadeButton.transform.localPosition.y;
+		Vector3 vector312 = this.grenadeButton.transform.localPosition;
+		vector3[5] = new Vector3(vector311.x * single, single6, vector312.z);
+		Vector3 vector313 = this.fireButtonInJoystick.transform.localPosition;
+		float single7 = this.fireButtonInJoystick.transform.localPosition.y;
+		Vector3 vector314 = this.fireButtonInJoystick.transform.localPosition;
+		vector3[6] = new Vector3(vector313.x * single, single7, vector314.z);
+		Save.SaveVector3Array(joystickSett, vector3);
+		this.SettingsJoysticksPanel.SetActive(false);
+		this.settingsPanel.SetActive(true);
+		ExperienceController.sharedController.isShowRanks = false;
+		if (ControlsSettingsBase.ControlsChanged != null)
 		{
-			Defs.InitCoordsIphone();
-			zoomButton.transform.localPosition = new Vector3((float)Defs.ZoomButtonX * num, Defs.ZoomButtonY, zoomButton.transform.localPosition.z);
-			reloadButton.transform.localPosition = new Vector3((float)Defs.ReloadButtonX * num, Defs.ReloadButtonY, reloadButton.transform.localPosition.z);
-			jumpButton.transform.localPosition = new Vector3((float)Defs.JumpButtonX * num, Defs.JumpButtonY, jumpButton.transform.localPosition.z);
-			fireButton.transform.localPosition = new Vector3((float)Defs.FireButtonX * num, Defs.FireButtonY, fireButton.transform.localPosition.z);
-			grenadeButton.transform.localPosition = new Vector3((float)Defs.GrenadeX * num, Defs.GrenadeY, grenadeButton.transform.localPosition.z);
-			joystick.transform.localPosition = new Vector3((float)Defs.JoyStickX * num, Defs.JoyStickY, joystick.transform.localPosition.z);
-			fireButtonInJoystick.transform.localPosition = new Vector3((float)Defs.FireButton2X * num, Defs.FireButton2Y, fireButtonInJoystick.transform.localPosition.z);
+			ControlsSettingsBase.ControlsChanged();
 		}
-		else
-		{
-			for (int i = 0; i < array.Length; i++)
-			{
-				array[i].x *= num;
-			}
-			zoomButton.transform.localPosition = array[0];
-			reloadButton.transform.localPosition = array[1];
-			jumpButton.transform.localPosition = array[2];
-			fireButton.transform.localPosition = array[3];
-			joystick.transform.localPosition = array[4];
-			grenadeButton.transform.localPosition = array[5];
-			fireButtonInJoystick.transform.localPosition = array[6];
-		}
-		grenadeButton.transform.GetChild(0).GetComponent<UISprite>().spriteName = ((!Defs.isDaterRegim) ? "grenade_btn" : "grenade_like_btn");
 	}
 
 	protected void OnEnable()
@@ -116,75 +174,91 @@ public class ControlsSettingsBase : MonoBehaviour
 		{
 			ExpController.Instance.InterfaceEnabled = false;
 		}
-		SetControlsCoords();
+		this.SetControlsCoords();
 	}
 
-	protected virtual void HandleSavePosJoystikClicked(object sender, EventArgs e)
+	private void SetControlsCoords()
 	{
-		float num = (GlobalGameController.LeftHanded ? 1 : (-1));
-		Save.SaveVector3Array(JoystickSett, new Vector3[7]
+		float single = (!GlobalGameController.LeftHanded ? -1f : 1f);
+		Vector3[] vector3Array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
+		if (vector3Array == null || (int)vector3Array.Length < 7)
 		{
-			new Vector3(zoomButton.transform.localPosition.x * num, zoomButton.transform.localPosition.y, zoomButton.transform.localPosition.z),
-			new Vector3(reloadButton.transform.localPosition.x * num, reloadButton.transform.localPosition.y, reloadButton.transform.localPosition.z),
-			new Vector3(jumpButton.transform.localPosition.x * num, jumpButton.transform.localPosition.y, jumpButton.transform.localPosition.z),
-			new Vector3(fireButton.transform.localPosition.x * num, fireButton.transform.localPosition.y, fireButton.transform.localPosition.z),
-			new Vector3(joystick.transform.localPosition.x * num, joystick.transform.localPosition.y, joystick.transform.localPosition.z),
-			new Vector3(grenadeButton.transform.localPosition.x * num, grenadeButton.transform.localPosition.y, grenadeButton.transform.localPosition.z),
-			new Vector3(fireButtonInJoystick.transform.localPosition.x * num, fireButtonInJoystick.transform.localPosition.y, fireButtonInJoystick.transform.localPosition.z)
-		});
-		SettingsJoysticksPanel.SetActive(false);
-		settingsPanel.SetActive(true);
-		ExperienceController.sharedController.isShowRanks = false;
-		Action controlsChanged = ControlsSettingsBase.ControlsChanged;
-		if (controlsChanged != null)
-		{
-			ControlsSettingsBase.ControlsChanged();
+			Defs.InitCoordsIphone();
+			Transform vector3 = this.zoomButton.transform;
+			float zoomButtonY = (float)Defs.ZoomButtonY;
+			Vector3 vector31 = this.zoomButton.transform.localPosition;
+			vector3.localPosition = new Vector3((float)Defs.ZoomButtonX * single, zoomButtonY, vector31.z);
+			Transform transforms = this.reloadButton.transform;
+			float reloadButtonY = (float)Defs.ReloadButtonY;
+			Vector3 vector32 = this.reloadButton.transform.localPosition;
+			transforms.localPosition = new Vector3((float)Defs.ReloadButtonX * single, reloadButtonY, vector32.z);
+			Transform transforms1 = this.jumpButton.transform;
+			float jumpButtonY = (float)Defs.JumpButtonY;
+			Vector3 vector33 = this.jumpButton.transform.localPosition;
+			transforms1.localPosition = new Vector3((float)Defs.JumpButtonX * single, jumpButtonY, vector33.z);
+			Transform transforms2 = this.fireButton.transform;
+			float fireButtonY = (float)Defs.FireButtonY;
+			Vector3 vector34 = this.fireButton.transform.localPosition;
+			transforms2.localPosition = new Vector3((float)Defs.FireButtonX * single, fireButtonY, vector34.z);
+			Transform transforms3 = this.grenadeButton.transform;
+			float grenadeY = (float)Defs.GrenadeY;
+			Vector3 vector35 = this.grenadeButton.transform.localPosition;
+			transforms3.localPosition = new Vector3((float)Defs.GrenadeX * single, grenadeY, vector35.z);
+			Transform transforms4 = this.joystick.transform;
+			float joyStickY = (float)Defs.JoyStickY;
+			Vector3 vector36 = this.joystick.transform.localPosition;
+			transforms4.localPosition = new Vector3((float)Defs.JoyStickX * single, joyStickY, vector36.z);
+			Transform transforms5 = this.fireButtonInJoystick.transform;
+			float fireButton2Y = (float)Defs.FireButton2Y;
+			Vector3 vector37 = this.fireButtonInJoystick.transform.localPosition;
+			transforms5.localPosition = new Vector3((float)Defs.FireButton2X * single, fireButton2Y, vector37.z);
 		}
-	}
-
-	private void HandleDefaultPosJoystikClicked(object sender, EventArgs e)
-	{
-		float num = (GlobalGameController.LeftHanded ? 1 : (-1));
-		Defs.InitCoordsIphone();
-		zoomButton.transform.localPosition = new Vector3((float)Defs.ZoomButtonX * num, Defs.ZoomButtonY, zoomButton.transform.localPosition.z);
-		reloadButton.transform.localPosition = new Vector3((float)Defs.ReloadButtonX * num, Defs.ReloadButtonY, reloadButton.transform.localPosition.z);
-		jumpButton.transform.localPosition = new Vector3((float)Defs.JumpButtonX * num, Defs.JumpButtonY, jumpButton.transform.localPosition.z);
-		fireButton.transform.localPosition = new Vector3((float)Defs.FireButtonX * num, Defs.FireButtonY, fireButton.transform.localPosition.z);
-		joystick.transform.localPosition = new Vector3((float)Defs.JoyStickX * num, Defs.JoyStickY, joystick.transform.localPosition.z);
-		grenadeButton.transform.localPosition = new Vector3((float)Defs.GrenadeX * num, Defs.GrenadeY, grenadeButton.transform.localPosition.z);
-		fireButtonInJoystick.transform.localPosition = new Vector3((float)Defs.FireButton2X * num, Defs.FireButton2Y, fireButtonInJoystick.transform.localPosition.z);
-	}
-
-	protected virtual void HandleCancelPosJoystikClicked(object sender, EventArgs e)
-	{
-		_isCancellationRequested = true;
+		else
+		{
+			for (int i = 0; i < (int)vector3Array.Length; i++)
+			{
+				vector3Array[i].x *= single;
+			}
+			this.zoomButton.transform.localPosition = vector3Array[0];
+			this.reloadButton.transform.localPosition = vector3Array[1];
+			this.jumpButton.transform.localPosition = vector3Array[2];
+			this.fireButton.transform.localPosition = vector3Array[3];
+			this.joystick.transform.localPosition = vector3Array[4];
+			this.grenadeButton.transform.localPosition = vector3Array[5];
+			this.fireButtonInJoystick.transform.localPosition = vector3Array[6];
+		}
+		this.grenadeButton.transform.GetChild(0).GetComponent<UISprite>().spriteName = (!Defs.isDaterRegim ? "grenade_btn" : "grenade_like_btn");
 	}
 
 	protected void Start()
 	{
-		if (savePosJoystikButton != null)
+		if (this.savePosJoystikButton != null)
 		{
-			ButtonHandler component = savePosJoystikButton.GetComponent<ButtonHandler>();
+			ButtonHandler component = this.savePosJoystikButton.GetComponent<ButtonHandler>();
 			if (component != null)
 			{
-				component.Clicked += HandleSavePosJoystikClicked;
+				ControlsSettingsBase controlsSettingsBase = this;
+				component.Clicked += new EventHandler(controlsSettingsBase.HandleSavePosJoystikClicked);
 			}
 		}
-		if (defaultPosJoystikButton != null)
+		if (this.defaultPosJoystikButton != null)
 		{
-			ButtonHandler component2 = defaultPosJoystikButton.GetComponent<ButtonHandler>();
-			if (component2 != null)
+			ButtonHandler buttonHandler = this.defaultPosJoystikButton.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
 			{
-				component2.Clicked += HandleDefaultPosJoystikClicked;
+				buttonHandler.Clicked += new EventHandler(this.HandleDefaultPosJoystikClicked);
 			}
 		}
-		if (cancelPosJoystikButton != null)
+		if (this.cancelPosJoystikButton != null)
 		{
-			ButtonHandler component3 = cancelPosJoystikButton.GetComponent<ButtonHandler>();
-			if (component3 != null)
+			ButtonHandler component1 = this.cancelPosJoystikButton.GetComponent<ButtonHandler>();
+			if (component1 != null)
 			{
-				component3.Clicked += HandleCancelPosJoystikClicked;
+				ControlsSettingsBase controlsSettingsBase1 = this;
+				component1.Clicked += new EventHandler(controlsSettingsBase1.HandleCancelPosJoystikClicked);
 			}
 		}
 	}
+
+	public static event Action ControlsChanged;
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class RanksSetPlace : MonoBehaviour
@@ -12,21 +13,25 @@ public class RanksSetPlace : MonoBehaviour
 
 	public bool isShowCups;
 
+	public RanksSetPlace()
+	{
+	}
+
 	public void SetPlace(int place)
 	{
-		if (place <= 3 && isShowCups)
+		if (place > 3 || !this.isShowCups)
 		{
-			placeLabel.text = string.Empty;
-			cupGold.SetActive(place == 1);
-			cupSilver.SetActive(place == 2);
-			cupBronze.SetActive(place == 3);
+			this.cupGold.SetActive(false);
+			this.cupSilver.SetActive(false);
+			this.cupBronze.SetActive(false);
+			this.placeLabel.text = place.ToString();
 		}
 		else
 		{
-			cupGold.SetActive(false);
-			cupSilver.SetActive(false);
-			cupBronze.SetActive(false);
-			placeLabel.text = place.ToString();
+			this.placeLabel.text = string.Empty;
+			this.cupGold.SetActive(place == 1);
+			this.cupSilver.SetActive(place == 2);
+			this.cupBronze.SetActive(place == 3);
 		}
 	}
 }

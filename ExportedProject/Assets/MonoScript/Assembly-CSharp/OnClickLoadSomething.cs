@@ -1,28 +1,33 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class OnClickLoadSomething : MonoBehaviour
 {
-	public enum ResourceTypeOption : byte
-	{
-		Scene = 0,
-		Web = 1
-	}
-
-	public ResourceTypeOption ResourceTypeToLoad;
+	public OnClickLoadSomething.ResourceTypeOption ResourceTypeToLoad;
 
 	public string ResourceToLoad;
 
+	public OnClickLoadSomething()
+	{
+	}
+
 	public void OnClick()
 	{
-		switch (ResourceTypeToLoad)
+		OnClickLoadSomething.ResourceTypeOption resourceTypeToLoad = this.ResourceTypeToLoad;
+		if (resourceTypeToLoad == OnClickLoadSomething.ResourceTypeOption.Scene)
 		{
-		case ResourceTypeOption.Scene:
-			SceneManager.LoadScene(ResourceToLoad);
-			break;
-		case ResourceTypeOption.Web:
-			Application.OpenURL(ResourceToLoad);
-			break;
+			SceneManager.LoadScene(this.ResourceToLoad);
 		}
+		else if (resourceTypeToLoad == OnClickLoadSomething.ResourceTypeOption.Web)
+		{
+			Application.OpenURL(this.ResourceToLoad);
+		}
+	}
+
+	public enum ResourceTypeOption : byte
+	{
+		Scene,
+		Web
 	}
 }

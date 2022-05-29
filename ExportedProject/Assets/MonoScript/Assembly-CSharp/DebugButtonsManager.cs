@@ -6,40 +6,21 @@ using UnityEngine;
 
 public class DebugButtonsManager : MonoBehaviour
 {
-	private class TopBarButton
-	{
-		public bool NeedShow = true;
-
-		public string Text { get; private set; }
-
-		public int Width { get; private set; }
-
-		public Action Act { get; private set; }
-
-		public TopBarButton(string text, int width, Action act)
-		{
-			Text = text;
-			Width = width;
-			Act = act;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CShowTopBarButton_003Ec__AnonStorey33F
-	{
-		internal string text;
-
-		internal bool _003C_003Em__539(TopBarButton b)
-		{
-			return b.Text == text;
-		}
-	}
-
 	private static DebugButtonsManager _instance;
 
-	private static bool _topPanelOpened = true;
+	private static bool _topPanelOpened;
 
-	private static readonly List<TopBarButton> _tbButtons = new List<TopBarButton>();
+	private readonly static List<DebugButtonsManager.TopBarButton> _tbButtons;
+
+	static DebugButtonsManager()
+	{
+		DebugButtonsManager._topPanelOpened = true;
+		DebugButtonsManager._tbButtons = new List<DebugButtonsManager.TopBarButton>();
+	}
+
+	public DebugButtonsManager()
+	{
+	}
 
 	private void Awake()
 	{
@@ -48,20 +29,47 @@ public class DebugButtonsManager : MonoBehaviour
 
 	public static void ShowTopBarButton(string text, int width, Action onClickAction)
 	{
-		_003CShowTopBarButton_003Ec__AnonStorey33F _003CShowTopBarButton_003Ec__AnonStorey33F = new _003CShowTopBarButton_003Ec__AnonStorey33F();
-		_003CShowTopBarButton_003Ec__AnonStorey33F.text = text;
-		if (_instance == null)
+		if (DebugButtonsManager._instance == null)
 		{
-			GameObject gameObject = new GameObject("DebugButtonsManager");
-			_instance = gameObject.AddComponent<DebugButtonsManager>();
+			DebugButtonsManager._instance = (new GameObject("DebugButtonsManager")).AddComponent<DebugButtonsManager>();
 		}
-		TopBarButton topBarButton = _tbButtons.FirstOrDefault(_003CShowTopBarButton_003Ec__AnonStorey33F._003C_003Em__539);
+		DebugButtonsManager.TopBarButton topBarButton = DebugButtonsManager._tbButtons.FirstOrDefault<DebugButtonsManager.TopBarButton>((DebugButtonsManager.TopBarButton b) => b.Text == text);
 		if (topBarButton != null)
 		{
 			topBarButton.NeedShow = true;
 			return;
 		}
-		TopBarButton item = new TopBarButton(_003CShowTopBarButton_003Ec__AnonStorey33F.text, width, onClickAction);
-		_tbButtons.Add(item);
+		DebugButtonsManager.TopBarButton topBarButton1 = new DebugButtonsManager.TopBarButton(text, width, onClickAction);
+		DebugButtonsManager._tbButtons.Add(topBarButton1);
+	}
+
+	private class TopBarButton
+	{
+		public bool NeedShow;
+
+		public Action Act
+		{
+			get;
+			private set;
+		}
+
+		public string Text
+		{
+			get;
+			private set;
+		}
+
+		public int Width
+		{
+			get;
+			private set;
+		}
+
+		public TopBarButton(string text, int width, Action act)
+		{
+			this.Text = text;
+			this.Width = width;
+			this.Act = act;
+		}
 	}
 }

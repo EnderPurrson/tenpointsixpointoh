@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Rilisoft
@@ -8,25 +10,42 @@ namespace Rilisoft
 		{
 			get
 			{
-				return mSnap;
+				return this.mSnap;
 			}
 			set
 			{
-				mSnap = value;
+				this.mSnap = value;
 			}
+		}
+
+		public SpriteAnimation()
+		{
 		}
 
 		protected override void Update()
 		{
-			if (Application.isPlaying && base.isPlaying && base.frames >= 2 && !((float)base.framesPerSecond <= 0f))
+			if (!Application.isPlaying)
 			{
-				int num = Mathf.FloorToInt(Time.realtimeSinceStartup * (float)base.framesPerSecond);
-				mIndex = num % base.frames;
-				mSprite.spriteName = mSpriteNames[mIndex];
-				if (mSnap)
-				{
-					mSprite.MakePixelPerfect();
-				}
+				return;
+			}
+			if (!base.isPlaying)
+			{
+				return;
+			}
+			if (base.frames < 2)
+			{
+				return;
+			}
+			if ((float)base.framesPerSecond <= 0f)
+			{
+				return;
+			}
+			int num = Mathf.FloorToInt(Time.realtimeSinceStartup * (float)base.framesPerSecond);
+			this.mIndex = num % base.frames;
+			this.mSprite.spriteName = this.mSpriteNames[this.mIndex];
+			if (this.mSnap)
+			{
+				this.mSprite.MakePixelPerfect();
 			}
 		}
 	}

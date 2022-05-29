@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BounceCounter : MonoBehaviour
@@ -6,11 +7,15 @@ public class BounceCounter : MonoBehaviour
 
 	public bool trackBounces = true;
 
+	public BounceCounter()
+	{
+	}
+
 	private void OnCollisionEnter(Collision c)
 	{
-		if (trackBounces)
+		if (this.trackBounces)
 		{
-			conn.SaveDataOnTheCloud(base.gameObject.name, c.relativeVelocity.magnitude);
+			this.conn.SaveDataOnTheCloud(base.gameObject.name, c.relativeVelocity.magnitude);
 		}
 	}
 }

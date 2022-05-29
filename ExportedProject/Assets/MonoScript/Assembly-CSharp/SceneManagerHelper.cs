@@ -1,7 +1,16 @@
+using System;
 using UnityEngine.SceneManagement;
 
 public class SceneManagerHelper
 {
+	public static int ActiveSceneBuildIndex
+	{
+		get
+		{
+			return SceneManager.GetActiveScene().buildIndex;
+		}
+	}
+
 	public static string ActiveSceneName
 	{
 		get
@@ -10,11 +19,7 @@ public class SceneManagerHelper
 		}
 	}
 
-	public static int ActiveSceneBuildIndex
+	public SceneManagerHelper()
 	{
-		get
-		{
-			return SceneManager.GetActiveScene().buildIndex;
-		}
 	}
 }

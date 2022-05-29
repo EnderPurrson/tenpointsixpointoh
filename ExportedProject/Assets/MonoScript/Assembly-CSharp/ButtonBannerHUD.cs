@@ -1,3 +1,4 @@
+using I2.Loc;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -30,9 +31,6 @@ public class ButtonBannerHUD : MonoBehaviour
 	[HideInInspector]
 	public MyCenterOnChild centerScript;
 
-	[CompilerGenerated]
-	private static Comparison<ButtonBannerBase> _003C_003Ef__am_0024cache9;
-
 	public int IndexShowBanner
 	{
 		get
@@ -46,7 +44,7 @@ public class ButtonBannerHUD : MonoBehaviour
 			{
 				num = 0;
 			}
-			if (num >= listActiveBanners.Count)
+			if (num >= this.listActiveBanners.Count)
 			{
 				num = 0;
 			}
@@ -54,252 +52,256 @@ public class ButtonBannerHUD : MonoBehaviour
 		}
 	}
 
-	private void Awake()
+	static ButtonBannerHUD()
 	{
-		instance = this;
-		LoadAllExistBanners();
 	}
 
-	private void Start()
+	public ButtonBannerHUD()
 	{
-		centerScript = wrapBanners.GetComponent<MyCenterOnChild>();
-		if (centerScript != null)
-		{
-			MyCenterOnChild myCenterOnChild = centerScript;
-			myCenterOnChild.onFinished = (SpringPanel.OnFinished)Delegate.Combine(myCenterOnChild.onFinished, new SpringPanel.OnFinished(OnCenterBanner));
-		}
-		LocalizationStore.AddEventCallAfterLocalize(LocalizeBanner);
-		UpdateListBanners();
-		ResetTimerNextBanner();
-	}
-
-	private void OnDestroy()
-	{
-		if (centerScript != null)
-		{
-			MyCenterOnChild myCenterOnChild = centerScript;
-			myCenterOnChild.onFinished = (SpringPanel.OnFinished)Delegate.Remove(myCenterOnChild.onFinished, new SpringPanel.OnFinished(OnCenterBanner));
-		}
-		LocalizationStore.DelEventCallAfterLocalize(LocalizeBanner);
-		instance = null;
-	}
-
-	private void LoadAllExistBanners()
-	{
-		listAllBanners.Clear();
-		UnityEngine.Object[] array = Resources.LoadAll("ButtonBanners");
-		UnityEngine.Object[] array2 = array;
-		foreach (UnityEngine.Object @object in array2)
-		{
-			if (@object != null)
-			{
-				GameObject gameObject = UnityEngine.Object.Instantiate(@object) as GameObject;
-				gameObject.transform.parent = objAnchorNoActiveBanners;
-				gameObject.transform.localScale = Vector3.one;
-				ButtonBannerBase component = gameObject.GetComponent<ButtonBannerBase>();
-				if (component != null)
-				{
-					listAllBanners.Add(component);
-				}
-			}
-		}
-	}
-
-	public static void OnUpdateBanners()
-	{
-		if (instance != null)
-		{
-			instance.UpdateListBanners();
-		}
-	}
-
-	private void UpdateListBanners()
-	{
-		RemoveAllNoActiveBanners();
-		AddNewActiveBanners();
-		SortByPriority();
-	}
-
-	private void RemoveAllNoActiveBanners()
-	{
-		if (curShowBanner != null && !curShowBanner.BannerIsActive())
-		{
-			curShowBanner = GetNextActiveBanner();
-		}
-		List<ButtonBannerBase> list = new List<ButtonBannerBase>();
-		foreach (ButtonBannerBase listActiveBanner in listActiveBanners)
-		{
-			if (!listActiveBanner.BannerIsActive())
-			{
-				list.Add(listActiveBanner);
-			}
-		}
-		foreach (ButtonBannerBase item in list)
-		{
-			item.transform.parent = objAnchorNoActiveBanners;
-			listActiveBanners.Remove(item);
-		}
-	}
-
-	private bool IsExistActiveBanner(ButtonBannerBase needBanners)
-	{
-		return listActiveBanners.Contains(needBanners);
 	}
 
 	private void AddNewActiveBanners()
 	{
-		foreach (ButtonBannerBase listAllBanner in listAllBanners)
+		foreach (ButtonBannerBase listAllBanner in this.listAllBanners)
 		{
-			if (!IsExistActiveBanner(listAllBanner) && listAllBanner.BannerIsActive())
+			if (!this.IsExistActiveBanner(listAllBanner))
 			{
-				listAllBanner.transform.parent = wrapBanners.transform;
-				listActiveBanners.Add(listAllBanner);
+				if (listAllBanner.BannerIsActive())
+				{
+					listAllBanner.transform.parent = this.wrapBanners.transform;
+					this.listActiveBanners.Add(listAllBanner);
+				}
 			}
 		}
 	}
 
-	private void SortByPriority()
+	private void Awake()
 	{
-		List<ButtonBannerBase> list = listActiveBanners;
-		if (_003C_003Ef__am_0024cache9 == null)
-		{
-			_003C_003Ef__am_0024cache9 = _003CSortByPriority_003Em__264;
-		}
-		list.Sort(_003C_003Ef__am_0024cache9);
-		string empty = string.Empty;
-		for (int i = 0; i < listActiveBanners.Count; i++)
-		{
-			empty = i.ToString();
-			if (i < 10)
-			{
-				empty = "0" + empty;
-			}
-			listActiveBanners[i].gameObject.name = empty;
-			listActiveBanners[i].indexBut = i;
-		}
-		wrapBanners.SortAlphabetically();
-		wrapBanners.WrapContent();
-		ShowBanner(curShowBanner);
-	}
-
-	public void OnClickShowBanner()
-	{
-		if (curShowBanner != null)
-		{
-			curShowBanner.OnClickButton();
-		}
+		ButtonBannerHUD.instance = this;
+		this.LoadAllExistBanners();
 	}
 
 	private ButtonBannerBase GetNextActiveBanner()
 	{
-		int num = listActiveBanners.Count;
-		ButtonBannerBase buttonBannerBase = null;
-		if (num > 0)
+		int count = this.listActiveBanners.Count;
+		ButtonBannerBase item = null;
+		if (count > 0)
 		{
 			while (true)
 			{
-				IndexShowBanner++;
-				num--;
-				buttonBannerBase = listActiveBanners[IndexShowBanner];
-				if (buttonBannerBase.BannerIsActive())
+				ButtonBannerHUD indexShowBanner = this;
+				indexShowBanner.IndexShowBanner = indexShowBanner.IndexShowBanner + 1;
+				count--;
+				item = this.listActiveBanners[this.IndexShowBanner];
+				if (item.BannerIsActive())
 				{
-					break;
+					return item;
 				}
-				if (num <= 0)
+				if (count <= 0)
 				{
-					Debug.LogWarning("No next banner for show");
 					break;
 				}
 			}
+			Debug.LogWarning("No next banner for show");
 		}
-		return buttonBannerBase;
+		return item;
 	}
 
-	public void ShowNextBanner()
+	private bool IsExistActiveBanner(ButtonBannerBase needBanners)
 	{
-		ButtonBannerBase nextActiveBanner = GetNextActiveBanner();
-		ShowBanner(nextActiveBanner);
+		return this.listActiveBanners.Contains(needBanners);
 	}
 
-	public void ShowBanner(ButtonBannerBase needBanner)
+	private void LoadAllExistBanners()
 	{
-		if (!(needBanner == null) && needBanner.BannerIsActive() && needBanner != null)
+		this.listAllBanners.Clear();
+		UnityEngine.Object[] objArray = Resources.LoadAll("ButtonBanners");
+		for (int i = 0; i < (int)objArray.Length; i++)
 		{
-			SetShowBanner(needBanner, true);
-			centerScript.CenterOn(needBanner.transform);
+			UnityEngine.Object obj = objArray[i];
+			if (obj != null)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(obj) as GameObject;
+				gameObject.transform.parent = this.objAnchorNoActiveBanners;
+				gameObject.transform.localScale = Vector3.one;
+				ButtonBannerBase component = gameObject.GetComponent<ButtonBannerBase>();
+				if (component != null)
+				{
+					this.listAllBanners.Add(component);
+				}
+			}
+		}
+	}
+
+	public void LocalizeBanner()
+	{
+		if (this.curShowBanner != null)
+		{
+			this.curShowBanner.OnChangeLocalize();
 		}
 	}
 
 	public void OnCenterBanner()
 	{
-		if (centerScript != null)
+		if (this.centerScript != null)
 		{
-			ButtonBannerBase component = centerScript.centeredObject.GetComponent<ButtonBannerBase>();
-			if (oldShowBanner != null)
+			ButtonBannerBase component = this.centerScript.centeredObject.GetComponent<ButtonBannerBase>();
+			if (this.oldShowBanner != null)
 			{
-				oldShowBanner.OnHide();
+				this.oldShowBanner.OnHide();
 			}
-			SetShowBanner(component);
-			if ((bool)component)
+			this.SetShowBanner(component, false);
+			if (component)
 			{
-				ResetTimerNextBanner();
-			}
-		}
-	}
-
-	private void SetShowBanner(ButtonBannerBase needBanner, bool auto = false)
-	{
-		if (!(curShowBanner != needBanner))
-		{
-			return;
-		}
-		oldShowBanner = curShowBanner;
-		curShowBanner = needBanner;
-		if (curShowBanner != null)
-		{
-			IndexShowBanner = curShowBanner.indexBut;
-			curShowBanner.OnShow();
-			if (auto)
-			{
-				curShowBanner.OnUpdateParameter();
+				this.ResetTimerNextBanner();
 			}
 		}
 	}
 
-	public void StopTimerNextBanner()
+	public void OnClickShowBanner()
 	{
-		CancelInvoke("ShowNextBanner");
+		if (this.curShowBanner != null)
+		{
+			this.curShowBanner.OnClickButton();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		if (this.centerScript != null)
+		{
+			this.centerScript.onFinished -= new SpringPanel.OnFinished(this.OnCenterBanner);
+		}
+		LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.LocalizeBanner));
+		ButtonBannerHUD.instance = null;
+	}
+
+	public static void OnUpdateBanners()
+	{
+		if (ButtonBannerHUD.instance != null)
+		{
+			ButtonBannerHUD.instance.UpdateListBanners();
+		}
+	}
+
+	private void RemoveAllNoActiveBanners()
+	{
+		if (this.curShowBanner != null && !this.curShowBanner.BannerIsActive())
+		{
+			this.curShowBanner = this.GetNextActiveBanner();
+		}
+		List<ButtonBannerBase> buttonBannerBases = new List<ButtonBannerBase>();
+		foreach (ButtonBannerBase listActiveBanner in this.listActiveBanners)
+		{
+			if (listActiveBanner.BannerIsActive())
+			{
+				continue;
+			}
+			buttonBannerBases.Add(listActiveBanner);
+		}
+		foreach (ButtonBannerBase buttonBannerBasis in buttonBannerBases)
+		{
+			buttonBannerBasis.transform.parent = this.objAnchorNoActiveBanners;
+			this.listActiveBanners.Remove(buttonBannerBasis);
+		}
 	}
 
 	public void ResetTimerNextBanner()
 	{
-		StopTimerNextBanner();
-		InvokeRepeating("ShowNextBanner", 5f, 5f);
+		this.StopTimerNextBanner();
+		base.InvokeRepeating("ShowNextBanner", 5f, 5f);
 	}
 
-	public void LocalizeBanner()
+	private void SetShowBanner(ButtonBannerBase needBanner, bool auto = false)
 	{
-		if (curShowBanner != null)
+		if (this.curShowBanner != needBanner)
 		{
-			curShowBanner.OnChangeLocalize();
+			this.oldShowBanner = this.curShowBanner;
+			this.curShowBanner = needBanner;
+			if (this.curShowBanner != null)
+			{
+				this.IndexShowBanner = this.curShowBanner.indexBut;
+				this.curShowBanner.OnShow();
+				if (auto)
+				{
+					this.curShowBanner.OnUpdateParameter();
+				}
+			}
 		}
 	}
 
-	[CompilerGenerated]
-	private static int _003CSortByPriority_003Em__264(ButtonBannerBase left, ButtonBannerBase right)
+	public void ShowBanner(ButtonBannerBase needBanner)
 	{
-		if (left == null && right == null)
+		if (needBanner == null || !needBanner.BannerIsActive())
 		{
-			return 0;
+			return;
 		}
-		if (left == null)
+		if (needBanner != null)
 		{
-			return -1;
+			this.SetShowBanner(needBanner, true);
+			this.centerScript.CenterOn(needBanner.transform);
 		}
-		if (right == null)
+	}
+
+	public void ShowNextBanner()
+	{
+		this.ShowBanner(this.GetNextActiveBanner());
+	}
+
+	private void SortByPriority()
+	{
+		this.listActiveBanners.Sort((ButtonBannerBase left, ButtonBannerBase right) => {
+			if (left == null && right == null)
+			{
+				return 0;
+			}
+			if (left == null)
+			{
+				return -1;
+			}
+			if (right == null)
+			{
+				return 1;
+			}
+			return left.priorityShow.CompareTo(right.priorityShow);
+		});
+		string empty = string.Empty;
+		for (int i = 0; i < this.listActiveBanners.Count; i++)
 		{
-			return 1;
+			empty = i.ToString();
+			if (i < 10)
+			{
+				empty = string.Concat("0", empty);
+			}
+			this.listActiveBanners[i].gameObject.name = empty;
+			this.listActiveBanners[i].indexBut = i;
 		}
-		return left.priorityShow.CompareTo(right.priorityShow);
+		this.wrapBanners.SortAlphabetically();
+		this.wrapBanners.WrapContent();
+		this.ShowBanner(this.curShowBanner);
+	}
+
+	private void Start()
+	{
+		this.centerScript = this.wrapBanners.GetComponent<MyCenterOnChild>();
+		if (this.centerScript != null)
+		{
+			this.centerScript.onFinished += new SpringPanel.OnFinished(this.OnCenterBanner);
+		}
+		LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.LocalizeBanner));
+		this.UpdateListBanners();
+		this.ResetTimerNextBanner();
+	}
+
+	public void StopTimerNextBanner()
+	{
+		base.CancelInvoke("ShowNextBanner");
+	}
+
+	private void UpdateListBanners()
+	{
+		this.RemoveAllNoActiveBanners();
+		this.AddNewActiveBanners();
+		this.SortByPriority();
 	}
 }

@@ -14,7 +14,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _data;
+				return this._data;
 			}
 		}
 
@@ -22,7 +22,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _slot;
+				return this._slot;
 			}
 		}
 
@@ -30,20 +30,20 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _succeeded;
+				return this._succeeded;
 			}
 		}
 
 		public GooglePlayGamesEventArgs(bool succeeded, int slot, string data)
 		{
-			_succeeded = succeeded;
-			_slot = slot;
-			_data = data ?? string.Empty;
+			this._succeeded = succeeded;
+			this._slot = slot;
+			this._data = data ?? string.Empty;
 		}
 
 		public override string ToString()
 		{
-			return (!_succeeded) ? "<Failed>" : string.Format("Slot: {0}, Data: “{1}”", _slot, _data);
+			return (!this._succeeded ? "<Failed>" : string.Format("Slot: {0}, Data: “{1}”", this._slot, this._data));
 		}
 	}
 }

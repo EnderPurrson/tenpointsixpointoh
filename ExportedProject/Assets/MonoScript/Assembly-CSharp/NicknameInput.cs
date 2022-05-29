@@ -1,6 +1,7 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 internal sealed class NicknameInput : MonoBehaviour
 {
@@ -10,6 +11,10 @@ internal sealed class NicknameInput : MonoBehaviour
 
 	private UIButton _okButton;
 
+	public NicknameInput()
+	{
+	}
+
 	private void HandleOkClicked(object sender, EventArgs e)
 	{
 		if (ButtonClickSound.Instance != null)
@@ -17,21 +22,21 @@ internal sealed class NicknameInput : MonoBehaviour
 			ButtonClickSound.Instance.PlayClick();
 		}
 		PlayerPrefs.SetString("NicknameRequested", "1");
-		if (input != null)
+		if (this.input != null)
 		{
-			if (input.value != null)
+			if (this.input.@value != null)
 			{
-				string text = input.value.Trim();
-				string value = ((!string.IsNullOrEmpty(text)) ? text : "Unnamed");
-				PlayerPrefs.SetString("NamePlayer", value);
-				input.value = value;
+				string str = this.input.@value.Trim();
+				string str1 = (!string.IsNullOrEmpty(str) ? str : "Unnamed");
+				PlayerPrefs.SetString("NamePlayer", str1);
+				this.input.@value = str1;
 			}
-			if (_okButton != null)
+			if (this._okButton != null)
 			{
-				_okButton.isEnabled = false;
+				this._okButton.isEnabled = false;
 			}
 		}
-		Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene);
+		Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene, LoadSceneMode.Single);
 	}
 
 	private void Start()
@@ -39,18 +44,18 @@ internal sealed class NicknameInput : MonoBehaviour
 		ButtonHandler componentInChildren = base.gameObject.GetComponentInChildren<ButtonHandler>();
 		if (componentInChildren != null)
 		{
-			componentInChildren.Clicked += HandleOkClicked;
-			_okButton = componentInChildren.GetComponent<UIButton>();
+			componentInChildren.Clicked += new EventHandler(this.HandleOkClicked);
+			this._okButton = componentInChildren.GetComponent<UIButton>();
 		}
 		if (ExperienceController.sharedController != null && ExpController.Instance != null)
 		{
 			ExperienceController.sharedController.isShowRanks = false;
 			ExpController.Instance.InterfaceEnabled = false;
 		}
-		if (input != null)
+		if (this.input != null)
 		{
 			string playerNameOrDefault = ProfileController.GetPlayerNameOrDefault();
-			input.value = playerNameOrDefault;
+			this.input.@value = playerNameOrDefault;
 		}
 	}
 }

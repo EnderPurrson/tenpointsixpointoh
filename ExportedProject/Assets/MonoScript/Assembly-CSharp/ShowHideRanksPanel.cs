@@ -1,16 +1,10 @@
+using System;
 using UnityEngine;
 
 internal sealed class ShowHideRanksPanel : MonoBehaviour
 {
-	private void OnEnable()
+	public ShowHideRanksPanel()
 	{
-		if (ExperienceController.sharedController != null)
-		{
-			ExperienceController.sharedController.isMenu = false;
-			ExperienceController.sharedController.isConnectScene = false;
-			ExperienceController.sharedController.isShowRanks = false;
-		}
-		ActivityIndicator.IsActiveIndicator = true;
 	}
 
 	private void OnDisable()
@@ -23,5 +17,16 @@ internal sealed class ShowHideRanksPanel : MonoBehaviour
 			ExperienceController.sharedController.isShowRanks = true;
 		}
 		ActivityIndicator.IsActiveIndicator = false;
+	}
+
+	private void OnEnable()
+	{
+		if (ExperienceController.sharedController != null)
+		{
+			ExperienceController.sharedController.isMenu = false;
+			ExperienceController.sharedController.isConnectScene = false;
+			ExperienceController.sharedController.isShowRanks = false;
+		}
+		ActivityIndicator.IsActiveIndicator = true;
 	}
 }

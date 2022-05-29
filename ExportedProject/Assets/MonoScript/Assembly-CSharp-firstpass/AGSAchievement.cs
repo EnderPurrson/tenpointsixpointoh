@@ -21,52 +21,62 @@ public class AGSAchievement
 
 	public DateTime dateUnlocked;
 
+	public AGSAchievement()
+	{
+	}
+
 	public static AGSAchievement fromHashtable(Hashtable hashtable)
 	{
-		//Discarded unreachable code: IL_00f6, IL_011c
+		AGSAchievement blankAchievement;
 		try
 		{
-			AGSAchievement aGSAchievement = new AGSAchievement();
-			aGSAchievement.title = hashtable["achievementTitle"].ToString();
-			aGSAchievement.id = hashtable["achievementId"].ToString();
-			aGSAchievement.description = hashtable["achievementDescription"].ToString();
-			aGSAchievement.progress = float.Parse(hashtable["achievementProgress"].ToString());
-			aGSAchievement.pointValue = int.Parse(hashtable["achievementPointValue"].ToString());
-			aGSAchievement.position = int.Parse(hashtable["achievementPosition"].ToString());
-			aGSAchievement.isUnlocked = bool.Parse(hashtable["achievementUnlocked"].ToString());
-			aGSAchievement.isHidden = bool.Parse(hashtable["achievementHidden"].ToString());
-			aGSAchievement.dateUnlocked = getTimefromEpochTime(long.Parse(hashtable["achievementDateUnlocked"].ToString()));
-			return aGSAchievement;
+			AGSAchievement aGSAchievement = new AGSAchievement()
+			{
+				title = hashtable["achievementTitle"].ToString(),
+				id = hashtable["achievementId"].ToString(),
+				description = hashtable["achievementDescription"].ToString(),
+				progress = float.Parse(hashtable["achievementProgress"].ToString()),
+				pointValue = int.Parse(hashtable["achievementPointValue"].ToString()),
+				position = int.Parse(hashtable["achievementPosition"].ToString()),
+				isUnlocked = bool.Parse(hashtable["achievementUnlocked"].ToString()),
+				isHidden = bool.Parse(hashtable["achievementHidden"].ToString()),
+				dateUnlocked = AGSAchievement.getTimefromEpochTime(long.Parse(hashtable["achievementDateUnlocked"].ToString()))
+			};
+			blankAchievement = aGSAchievement;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError("Returning blank achievement due to exception getting achievement from hashtable: " + ex.ToString());
-			return GetBlankAchievement();
+			AGSClient.LogGameCircleError(string.Concat("Returning blank achievement due to exception getting achievement from hashtable: ", exception.ToString()));
+			blankAchievement = AGSAchievement.GetBlankAchievement();
 		}
+		return blankAchievement;
 	}
 
 	public static AGSAchievement GetBlankAchievement()
 	{
-		AGSAchievement aGSAchievement = new AGSAchievement();
-		aGSAchievement.title = string.Empty;
-		aGSAchievement.id = string.Empty;
-		aGSAchievement.description = string.Empty;
-		aGSAchievement.pointValue = 0;
-		aGSAchievement.isHidden = false;
-		aGSAchievement.isUnlocked = false;
-		aGSAchievement.progress = 0f;
-		aGSAchievement.position = 0;
-		aGSAchievement.dateUnlocked = DateTime.MinValue;
+		AGSAchievement aGSAchievement = new AGSAchievement()
+		{
+			title = string.Empty,
+			id = string.Empty,
+			description = string.Empty,
+			pointValue = 0,
+			isHidden = false,
+			isUnlocked = false,
+			progress = 0f,
+			position = 0,
+			dateUnlocked = DateTime.MinValue
+		};
 		return aGSAchievement;
 	}
 
 	private static DateTime getTimefromEpochTime(long javaTimeStamp)
 	{
-		return new DateTime(1970, 1, 1, 0, 0, 0, 0).AddMilliseconds(javaTimeStamp).ToLocalTime();
+		DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+		return dateTime.AddMilliseconds((double)javaTimeStamp).ToLocalTime();
 	}
 
 	public override string ToString()
 	{
-		return string.Format("title: {0}, id: {1}, pointValue: {2}, hidden: {3}, unlocked: {4}, progress: {5}, position: {6}, date: {7} ", title, id, pointValue, isHidden, isUnlocked, progress, position, dateUnlocked);
+		return string.Format("title: {0}, id: {1}, pointValue: {2}, hidden: {3}, unlocked: {4}, progress: {5}, position: {6}, date: {7} ", new object[] { this.title, this.id, this.pointValue, this.isHidden, this.isUnlocked, this.progress, this.position, this.dateUnlocked });
 	}
 }

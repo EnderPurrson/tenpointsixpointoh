@@ -18,15 +18,20 @@ namespace Rilisoft
 
 		private Dictionary<ShopNGUIController.CategoryNames, string> _mapWeaponToSpriteName;
 
-		private static readonly Color s_defaultColor = new Color32(0, 253, 53, byte.MaxValue);
+		private readonly static Color s_defaultColor;
 
-		private static readonly QuestImage s_instance = default(QuestImage);
+		private readonly static QuestImage s_instance;
 
-		public static QuestImage Instance
+		private HashSet<string> ArenaQuests
 		{
 			get
 			{
-				return s_instance;
+				if (this._arenaQuests == null)
+				{
+					this._arenaQuests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					this._arenaQuests.Add("surviveWavesInArena");
+				}
+				return this._arenaQuests;
 			}
 		}
 
@@ -34,26 +39,21 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (_campaignQuests == null)
+				if (this._campaignQuests == null)
 				{
-					_campaignQuests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-					_campaignQuests.Add("killInCampaign");
-					_campaignQuests.Add("killNpcWithWeapon");
+					this._campaignQuests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					this._campaignQuests.Add("killInCampaign");
+					this._campaignQuests.Add("killNpcWithWeapon");
 				}
-				return _campaignQuests;
+				return this._campaignQuests;
 			}
 		}
 
-		private HashSet<string> ArenaQuests
+		public static QuestImage Instance
 		{
 			get
 			{
-				if (_arenaQuests == null)
-				{
-					_arenaQuests = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-					_arenaQuests.Add("surviveWavesInArena");
-				}
-				return _arenaQuests;
+				return QuestImage.s_instance;
 			}
 		}
 
@@ -61,37 +61,20 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (_mapModeToSpriteName == null)
+				if (this._mapModeToSpriteName == null)
 				{
-					_mapModeToSpriteName = new Dictionary<ConnectSceneNGUIController.RegimGame, string>
+					Dictionary<ConnectSceneNGUIController.RegimGame, string> regimGames = new Dictionary<ConnectSceneNGUIController.RegimGame, string>()
 					{
-						{
-							ConnectSceneNGUIController.RegimGame.Deathmatch,
-							"mode_death_znachek"
-						},
-						{
-							ConnectSceneNGUIController.RegimGame.TimeBattle,
-							"mode_time_znachek"
-						},
-						{
-							ConnectSceneNGUIController.RegimGame.TeamFight,
-							"mode_team_znachek"
-						},
-						{
-							ConnectSceneNGUIController.RegimGame.DeadlyGames,
-							"mode_deadly_games_znachek"
-						},
-						{
-							ConnectSceneNGUIController.RegimGame.FlagCapture,
-							"mode_flag_znachek"
-						},
-						{
-							ConnectSceneNGUIController.RegimGame.CapturePoints,
-							"mode_capture_point"
-						}
+						{ ConnectSceneNGUIController.RegimGame.Deathmatch, "mode_death_znachek" },
+						{ ConnectSceneNGUIController.RegimGame.TimeBattle, "mode_time_znachek" },
+						{ ConnectSceneNGUIController.RegimGame.TeamFight, "mode_team_znachek" },
+						{ ConnectSceneNGUIController.RegimGame.DeadlyGames, "mode_deadly_games_znachek" },
+						{ ConnectSceneNGUIController.RegimGame.FlagCapture, "mode_flag_znachek" },
+						{ ConnectSceneNGUIController.RegimGame.CapturePoints, "mode_capture_point" }
 					};
+					this._mapModeToSpriteName = regimGames;
 				}
-				return _mapModeToSpriteName;
+				return this._mapModeToSpriteName;
 			}
 		}
 
@@ -99,111 +82,80 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (_mapWeaponToSpriteName == null)
+				if (this._mapWeaponToSpriteName == null)
 				{
-					_mapWeaponToSpriteName = new Dictionary<ShopNGUIController.CategoryNames, string>
+					Dictionary<ShopNGUIController.CategoryNames, string> categoryNames = new Dictionary<ShopNGUIController.CategoryNames, string>()
 					{
-						{
-							ShopNGUIController.CategoryNames.BackupCategory,
-							"shop_icons_backup"
-						},
-						{
-							ShopNGUIController.CategoryNames.MeleeCategory,
-							"shop_icons_melee"
-						},
-						{
-							ShopNGUIController.CategoryNames.PremiumCategory,
-							"shop_icons_premium"
-						},
-						{
-							ShopNGUIController.CategoryNames.PrimaryCategory,
-							"shop_icons_primary"
-						},
-						{
-							ShopNGUIController.CategoryNames.SniperCategory,
-							"shop_icons_sniper"
-						},
-						{
-							ShopNGUIController.CategoryNames.SpecilCategory,
-							"shop_icons_special"
-						}
+						{ ShopNGUIController.CategoryNames.BackupCategory, "shop_icons_backup" },
+						{ ShopNGUIController.CategoryNames.MeleeCategory, "shop_icons_melee" },
+						{ ShopNGUIController.CategoryNames.PremiumCategory, "shop_icons_premium" },
+						{ ShopNGUIController.CategoryNames.PrimaryCategory, "shop_icons_primary" },
+						{ ShopNGUIController.CategoryNames.SniperCategory, "shop_icons_sniper" },
+						{ ShopNGUIController.CategoryNames.SpecilCategory, "shop_icons_special" }
 					};
+					this._mapWeaponToSpriteName = categoryNames;
 				}
-				return _mapWeaponToSpriteName;
+				return this._mapWeaponToSpriteName;
 			}
+		}
+
+		static QuestImage()
+		{
+			QuestImage.s_defaultColor = new Color32(0, 253, 53, 255);
+			QuestImage.s_instance = new QuestImage();
 		}
 
 		public Color GetColor(QuestBase quest)
 		{
 			if (quest == null)
 			{
-				return s_defaultColor;
+				return QuestImage.s_defaultColor;
 			}
-			if (CampaignQuests.Contains(quest.Id))
+			if (this.CampaignQuests.Contains(quest.Id))
 			{
-				return new Color32(byte.MaxValue, 184, 0, byte.MaxValue);
+				return new Color32(255, 184, 0, 255);
 			}
-			if (ArenaQuests.Contains(quest.Id))
+			if (!this.ArenaQuests.Contains(quest.Id))
 			{
-				return new Color32(byte.MaxValue, 121, 0, byte.MaxValue);
+				return QuestImage.s_defaultColor;
 			}
-			return s_defaultColor;
+			return new Color32(255, 121, 0, 255);
 		}
 
 		public string GetSpriteName(QuestBase quest)
 		{
 			if (quest == null)
 			{
-				return GetSpriteNameForMultiplayer();
+				return this.GetSpriteNameForMultiplayer();
 			}
 			ModeAccumulativeQuest modeAccumulativeQuest = quest as ModeAccumulativeQuest;
 			if (modeAccumulativeQuest != null)
 			{
-				return GetSpriteNameForMultiplayer(modeAccumulativeQuest.Mode);
+				return this.GetSpriteNameForMultiplayer(modeAccumulativeQuest.Mode);
 			}
 			WeaponSlotAccumulativeQuest weaponSlotAccumulativeQuest = quest as WeaponSlotAccumulativeQuest;
 			if (weaponSlotAccumulativeQuest != null)
 			{
-				if (CampaignQuests.Contains(quest.Id))
+				if (this.CampaignQuests.Contains(quest.Id))
 				{
-					return GetSpriteNameForCampaign(weaponSlotAccumulativeQuest.WeaponSlot);
+					return this.GetSpriteNameForCampaign(weaponSlotAccumulativeQuest.WeaponSlot);
 				}
-				return GetSpriteNameForMultiplayer(weaponSlotAccumulativeQuest.WeaponSlot);
+				return this.GetSpriteNameForMultiplayer(weaponSlotAccumulativeQuest.WeaponSlot);
 			}
-			if (ArenaQuests.Contains(quest.Id))
+			if (this.ArenaQuests.Contains(quest.Id))
 			{
-				return GetSpriteNameForArena();
+				return this.GetSpriteNameForArena();
 			}
-			if (CampaignQuests.Contains(quest.Id))
+			if (this.CampaignQuests.Contains(quest.Id))
 			{
-				return GetSpriteNameForCampaign();
+				return this.GetSpriteNameForCampaign();
 			}
-			return GetSpriteNameForMultiplayer();
+			return this.GetSpriteNameForMultiplayer();
 		}
 
-		private string GetSpriteNameForMultiplayer()
+		private string GetSpriteNameForArena()
 		{
-			return "battle_now_znachek";
-		}
-
-		private string GetSpriteNameForMultiplayer(ConnectSceneNGUIController.RegimGame mode)
-		{
-			string value;
-			if (MapModeToSpriteName.TryGetValue(mode, out value))
-			{
-				return value;
-			}
-			return GetSpriteNameForMultiplayer();
-		}
-
-		private string GetSpriteNameForMultiplayer(ShopNGUIController.CategoryNames weapon)
-		{
-			string value;
-			if (MapWeaponToSpriteName.TryGetValue(weapon, out value))
-			{
-				return value;
-			}
-			return GetSpriteNameForMultiplayer();
+			return "mode_arena";
 		}
 
 		private string GetSpriteNameForCampaign()
@@ -213,17 +165,37 @@ namespace Rilisoft
 
 		private string GetSpriteNameForCampaign(ShopNGUIController.CategoryNames weapon)
 		{
-			string value;
-			if (MapWeaponToSpriteName.TryGetValue(weapon, out value))
+			string str;
+			if (this.MapWeaponToSpriteName.TryGetValue(weapon, out str))
 			{
-				return value;
+				return str;
 			}
-			return GetSpriteNameForCampaign();
+			return this.GetSpriteNameForCampaign();
 		}
 
-		private string GetSpriteNameForArena()
+		private string GetSpriteNameForMultiplayer()
 		{
-			return "mode_arena";
+			return "battle_now_znachek";
+		}
+
+		private string GetSpriteNameForMultiplayer(ConnectSceneNGUIController.RegimGame mode)
+		{
+			string str;
+			if (this.MapModeToSpriteName.TryGetValue(mode, out str))
+			{
+				return str;
+			}
+			return this.GetSpriteNameForMultiplayer();
+		}
+
+		private string GetSpriteNameForMultiplayer(ShopNGUIController.CategoryNames weapon)
+		{
+			string str;
+			if (this.MapWeaponToSpriteName.TryGetValue(weapon, out str))
+			{
+				return str;
+			}
+			return this.GetSpriteNameForMultiplayer();
 		}
 	}
 }

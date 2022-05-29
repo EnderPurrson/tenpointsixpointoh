@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Drag Scroll View")]
@@ -5,8 +6,8 @@ public class UIDragScrollView : MonoBehaviour
 {
 	public UIScrollView scrollView;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private UIScrollView draggablePanel;
 
 	private Transform mTrans;
@@ -17,80 +18,84 @@ public class UIDragScrollView : MonoBehaviour
 
 	private bool mStarted;
 
-	private void OnEnable()
+	public UIDragScrollView()
 	{
-		mTrans = base.transform;
-		if (scrollView == null && draggablePanel != null)
-		{
-			scrollView = draggablePanel;
-			draggablePanel = null;
-		}
-		if (mStarted && (mAutoFind || mScroll == null))
-		{
-			FindScrollView();
-		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
-		FindScrollView();
 	}
 
 	private void FindScrollView()
 	{
-		UIScrollView uIScrollView = NGUITools.FindInParents<UIScrollView>(mTrans);
-		if (scrollView == null || (mAutoFind && uIScrollView != scrollView))
+		UIScrollView uIScrollView = NGUITools.FindInParents<UIScrollView>(this.mTrans);
+		if (this.scrollView == null || this.mAutoFind && uIScrollView != this.scrollView)
 		{
-			scrollView = uIScrollView;
-			mAutoFind = true;
+			this.scrollView = uIScrollView;
+			this.mAutoFind = true;
 		}
-		else if (scrollView == uIScrollView)
+		else if (this.scrollView == uIScrollView)
 		{
-			mAutoFind = true;
+			this.mAutoFind = true;
 		}
-		mScroll = scrollView;
-	}
-
-	private void OnPress(bool pressed)
-	{
-		if (mAutoFind && mScroll != scrollView)
-		{
-			mScroll = scrollView;
-			mAutoFind = false;
-		}
-		if ((bool)scrollView && base.enabled && NGUITools.GetActive(base.gameObject))
-		{
-			scrollView.Press(pressed);
-			if (!pressed && mAutoFind)
-			{
-				scrollView = NGUITools.FindInParents<UIScrollView>(mTrans);
-				mScroll = scrollView;
-			}
-		}
+		this.mScroll = this.scrollView;
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
-		if ((bool)scrollView && NGUITools.GetActive(this))
+		if (this.scrollView && NGUITools.GetActive(this))
 		{
-			scrollView.Drag();
+			this.scrollView.Drag();
 		}
 	}
 
-	private void OnScroll(float delta)
+	private void OnEnable()
 	{
-		if ((bool)scrollView && NGUITools.GetActive(this))
+		this.mTrans = base.transform;
+		if (this.scrollView == null && this.draggablePanel != null)
 		{
-			scrollView.Scroll(delta);
+			this.scrollView = this.draggablePanel;
+			this.draggablePanel = null;
+		}
+		if (this.mStarted && (this.mAutoFind || this.mScroll == null))
+		{
+			this.FindScrollView();
 		}
 	}
 
 	public void OnPan(Vector2 delta)
 	{
-		if ((bool)scrollView && NGUITools.GetActive(this))
+		if (this.scrollView && NGUITools.GetActive(this))
 		{
-			scrollView.OnPan(delta);
+			this.scrollView.OnPan(delta);
 		}
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (this.mAutoFind && this.mScroll != this.scrollView)
+		{
+			this.mScroll = this.scrollView;
+			this.mAutoFind = false;
+		}
+		if (this.scrollView && base.enabled && NGUITools.GetActive(base.gameObject))
+		{
+			this.scrollView.Press(pressed);
+			if (!pressed && this.mAutoFind)
+			{
+				this.scrollView = NGUITools.FindInParents<UIScrollView>(this.mTrans);
+				this.mScroll = this.scrollView;
+			}
+		}
+	}
+
+	private void OnScroll(float delta)
+	{
+		if (this.scrollView && NGUITools.GetActive(this))
+		{
+			this.scrollView.Scroll(delta);
+		}
+	}
+
+	private void Start()
+	{
+		this.mStarted = true;
+		this.FindScrollView();
 	}
 }

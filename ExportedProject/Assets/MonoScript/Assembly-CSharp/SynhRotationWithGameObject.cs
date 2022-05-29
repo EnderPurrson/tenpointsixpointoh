@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 public class SynhRotationWithGameObject : MonoBehaviour
 {
-	public new Transform gameObject;
+	public Transform gameObject;
 
 	public bool transformPos;
 
@@ -10,17 +11,21 @@ public class SynhRotationWithGameObject : MonoBehaviour
 
 	public Vector3 addpos = Vector3.zero;
 
+	public SynhRotationWithGameObject()
+	{
+	}
+
 	private void Start()
 	{
-		myTransform = base.transform;
+		this.myTransform = base.transform;
 	}
 
 	private void Update()
 	{
-		myTransform.rotation = gameObject.rotation;
-		if (transformPos)
+		this.myTransform.rotation = this.gameObject.rotation;
+		if (this.transformPos)
 		{
-			myTransform.position = gameObject.TransformPoint(addpos);
+			this.myTransform.position = this.gameObject.TransformPoint(this.addpos);
 		}
 	}
 }

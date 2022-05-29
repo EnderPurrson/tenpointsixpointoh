@@ -1,18 +1,23 @@
-using System;
 using GooglePlayGames;
+using System;
 
 namespace Rilisoft
 {
 	internal struct GpgFacade
 	{
-		private static readonly GpgFacade s_instance = default(GpgFacade);
+		private readonly static GpgFacade s_instance;
 
 		public static GpgFacade Instance
 		{
 			get
 			{
-				return s_instance;
+				return GpgFacade.s_instance;
 			}
+		}
+
+		static GpgFacade()
+		{
+			GpgFacade.s_instance = new GpgFacade();
 		}
 
 		public void Authenticate(Action<bool> callback, bool silent)

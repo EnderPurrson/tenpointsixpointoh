@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -15,17 +16,11 @@ namespace Rilisoft
 
 		private bool _conflicted;
 
-		[CompilerGenerated]
-		private static Func<LevelProgressMemento, string> _003C_003Ef__am_0024cache2;
-
-		[CompilerGenerated]
-		private static Func<LevelProgressMemento, bool> _003C_003Ef__am_0024cache3;
-
 		internal bool Conflicted
 		{
 			get
 			{
-				return _conflicted;
+				return this._conflicted;
 			}
 		}
 
@@ -33,47 +28,23 @@ namespace Rilisoft
 		{
 			get
 			{
-				if (levels == null)
+				if (this.levels == null)
 				{
-					levels = new List<LevelProgressMemento>();
+					this.levels = new List<LevelProgressMemento>();
 				}
-				return levels;
+				return this.levels;
 			}
 		}
 
 		internal CampaignProgressMemento(bool conflicted)
 		{
-			levels = new List<LevelProgressMemento>();
-			_conflicted = conflicted;
-		}
-
-		internal Dictionary<string, LevelProgressMemento> GetLevelsAsDictionary()
-		{
-			Dictionary<string, LevelProgressMemento> dictionary = new Dictionary<string, LevelProgressMemento>(Levels.Count);
-			foreach (LevelProgressMemento level in Levels)
-			{
-				LevelProgressMemento value;
-				if (dictionary.TryGetValue(level.LevelId, out value))
-				{
-					dictionary[value.LevelId] = LevelProgressMemento.Merge(level, value);
-				}
-				else
-				{
-					dictionary.Add(level.LevelId, level);
-				}
-			}
-			return dictionary;
-		}
-
-		internal void SetConflicted()
-		{
-			_conflicted = true;
+			this.levels = new List<LevelProgressMemento>();
+			this._conflicted = conflicted;
 		}
 
 		public bool Equals(CampaignProgressMemento other)
 		{
-			EqualityComparer<List<LevelProgressMemento>> @default = EqualityComparer<List<LevelProgressMemento>>.Default;
-			if (!@default.Equals(Levels, other.Levels))
+			if (!EqualityComparer<List<LevelProgressMemento>>.Default.Equals(this.Levels, other.Levels))
 			{
 				return false;
 			}
@@ -86,63 +57,79 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			CampaignProgressMemento other = (CampaignProgressMemento)obj;
-			return Equals(other);
+			return this.Equals((CampaignProgressMemento)obj);
 		}
 
 		public override int GetHashCode()
 		{
-			return Levels.GetHashCode();
+			return this.Levels.GetHashCode();
 		}
 
-		public override string ToString()
+		internal Dictionary<string, LevelProgressMemento> GetLevelsAsDictionary()
 		{
-			List<LevelProgressMemento> source = Levels;
-			if (_003C_003Ef__am_0024cache2 == null)
+			LevelProgressMemento levelProgressMemento;
+			Dictionary<string, LevelProgressMemento> strs = new Dictionary<string, LevelProgressMemento>(this.Levels.Count);
+			foreach (LevelProgressMemento level in this.Levels)
 			{
-				_003C_003Ef__am_0024cache2 = _003CToString_003Em__573;
+				if (!strs.TryGetValue(level.LevelId, out levelProgressMemento))
+				{
+					strs.Add(level.LevelId, level);
+				}
+				else
+				{
+					strs[levelProgressMemento.LevelId] = LevelProgressMemento.Merge(level, levelProgressMemento);
+				}
 			}
-			string[] value = source.Select(_003C_003Ef__am_0024cache2).ToArray();
-			return string.Format(CultureInfo.InvariantCulture, "[{0}]", string.Join(",", value));
+			return strs;
 		}
 
 		internal static CampaignProgressMemento Merge(CampaignProgressMemento left, CampaignProgressMemento right)
 		{
-			Dictionary<string, LevelProgressMemento> dictionary = new Dictionary<string, LevelProgressMemento>();
-			IEnumerable<LevelProgressMemento> source = left.Levels.Concat(right.Levels);
-			if (_003C_003Ef__am_0024cache3 == null)
+			LevelProgressMemento levelProgressMemento;
+			Dictionary<string, LevelProgressMemento> strs = new Dictionary<string, LevelProgressMemento>();
+			IEnumerable<LevelProgressMemento> levelProgressMementos = 
+				from l in left.Levels.Concat<LevelProgressMemento>(right.Levels)
+				where l != null
+				select l;
+			IEnumerator<LevelProgressMemento> enumerator = levelProgressMementos.GetEnumerator();
+			try
 			{
-				_003C_003Ef__am_0024cache3 = _003CMerge_003Em__574;
+				while (enumerator.MoveNext())
+				{
+					LevelProgressMemento current = enumerator.Current;
+					if (!strs.TryGetValue(current.LevelId, out levelProgressMemento))
+					{
+						strs.Add(current.LevelId, current);
+					}
+					else
+					{
+						strs[current.LevelId] = LevelProgressMemento.Merge(levelProgressMemento, current);
+					}
+				}
 			}
-			IEnumerable<LevelProgressMemento> enumerable = source.Where(_003C_003Ef__am_0024cache3);
-			foreach (LevelProgressMemento item in enumerable)
+			finally
 			{
-				LevelProgressMemento value;
-				if (dictionary.TryGetValue(item.LevelId, out value))
+				if (enumerator == null)
 				{
-					dictionary[item.LevelId] = LevelProgressMemento.Merge(value, item);
 				}
-				else
-				{
-					dictionary.Add(item.LevelId, item);
-				}
+				enumerator.Dispose();
 			}
-			bool conflicted = left.Conflicted || right.Conflicted;
-			CampaignProgressMemento result = new CampaignProgressMemento(conflicted);
-			result.Levels.AddRange(dictionary.Values);
-			return result;
+			CampaignProgressMemento campaignProgressMemento = new CampaignProgressMemento((left.Conflicted ? true : right.Conflicted));
+			campaignProgressMemento.Levels.AddRange(strs.Values);
+			return campaignProgressMemento;
 		}
 
-		[CompilerGenerated]
-		private static string _003CToString_003Em__573(LevelProgressMemento l)
+		internal void SetConflicted()
 		{
-			return '"' + l.LevelId + '"';
+			this._conflicted = true;
 		}
 
-		[CompilerGenerated]
-		private static bool _003CMerge_003Em__574(LevelProgressMemento l)
+		public override string ToString()
 		{
-			return l != null;
+			string[] array = (
+				from l in this.Levels
+				select string.Concat('\"', l.LevelId, '\"')).ToArray<string>();
+			return string.Format(CultureInfo.InvariantCulture, "[{0}]", new object[] { string.Join(",", array) });
 		}
 	}
 }

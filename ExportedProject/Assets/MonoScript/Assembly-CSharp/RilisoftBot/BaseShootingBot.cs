@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace RilisoftBot
@@ -28,127 +29,130 @@ namespace RilisoftBot
 
 		private int _nextFirePointIndex;
 
-		protected override void Initialize()
+		public BaseShootingBot()
 		{
-			base.Initialize();
-			animationsName.Attack = GameNameShootingAnimation();
-			BotAnimationEventHandler componentInChildren = GetComponentInChildren<BotAnimationEventHandler>();
-			if (componentInChildren != null)
-			{
-				componentInChildren.OnDamageEvent += OnShoot;
-			}
-			animations[animationsName.Attack].speed = speedAnimationAttack;
-			InitializeShotsPool(4);
-			_isEnemyEnterInAttackZone = false;
 		}
 
-		private string GameNameShootingAnimation()
+		public override bool CheckEnemyInAttackZone(float distanceToEnemy)
 		{
-			if (modelCollider == null)
+			float squareAttackDistance = base.GetSquareAttackDistance();
+			if (distanceToEnemy < squareAttackDistance)
 			{
-				return string.Empty;
+				this._isEnemyEnterInAttackZone = true;
+				return true;
 			}
-			string arg = modelCollider.gameObject.name;
-			return string.Format("{0}_shooting", arg);
-		}
-
-		protected virtual void InitializeShotsPool(int sizePool)
-		{
-			int num = sizePool * firePoints.Length;
-			bulletsEffectPool = new GameObject[num];
-			for (int i = 0; i < num; i++)
+			if (this._isEnemyEnterInAttackZone)
 			{
-				GameObject gameObject = Object.Instantiate(bulletPrefab);
-				bulletsEffectPool[i] = gameObject;
+				squareAttackDistance = squareAttackDistance + this.rangeShootingDistance * this.rangeShootingDistance;
+				if (distanceToEnemy < squareAttackDistance)
+				{
+					return true;
+				}
 			}
-		}
-
-		protected virtual Transform GetFirePointForSequentialShot()
-		{
-			int nextFirePointIndex = _nextFirePointIndex;
-			_nextFirePointIndex++;
-			if (_nextFirePointIndex >= firePoints.Length)
-			{
-				_nextFirePointIndex = 0;
-			}
-			return firePoints[nextFirePointIndex];
-		}
-
-		protected virtual void MakeShot(GameObject target)
-		{
-			if (firePoints.Length == 1)
-			{
-				Fire(firePoints[0], target);
-				return;
-			}
-			if (isSequentialShooting)
-			{
-				Transform firePointForSequentialShot = GetFirePointForSequentialShot();
-				Fire(firePointForSequentialShot, target);
-				return;
-			}
-			for (int i = 0; i < firePoints.Length; i++)
-			{
-				Fire(firePoints[i], target);
-			}
+			this._isEnemyEnterInAttackZone = false;
+			return false;
 		}
 
 		protected virtual void Fire(Transform pointFire, GameObject target)
 		{
 		}
 
-		protected GameObject GetShotEffectFromPool()
+		private string GameNameShootingAnimation()
 		{
-			int nextShootEffectIndex = _nextShootEffectIndex;
-			_nextShootEffectIndex++;
-			if (_nextShootEffectIndex >= bulletsEffectPool.Length)
+			if (this.modelCollider == null)
 			{
-				_nextShootEffectIndex = 0;
+				return string.Empty;
 			}
-			return bulletsEffectPool[nextShootEffectIndex];
+			return string.Format("{0}_shooting", this.modelCollider.gameObject.name);
 		}
 
-		private void OnShoot()
+		protected virtual Transform GetFirePointForSequentialShot()
 		{
-			if (!(botAiController == null) && !(botAiController.currentTarget == null))
+			int num = this._nextFirePointIndex;
+			this._nextFirePointIndex++;
+			if (this._nextFirePointIndex >= (int)this.firePoints.Length)
 			{
-				MakeShot(botAiController.currentTarget.gameObject);
+				this._nextFirePointIndex = 0;
 			}
-		}
-
-		public override bool CheckEnemyInAttackZone(float distanceToEnemy)
-		{
-			float squareAttackDistance = GetSquareAttackDistance();
-			if (distanceToEnemy < squareAttackDistance)
-			{
-				_isEnemyEnterInAttackZone = true;
-				return true;
-			}
-			if (_isEnemyEnterInAttackZone)
-			{
-				squareAttackDistance += rangeShootingDistance * rangeShootingDistance;
-				if (distanceToEnemy < squareAttackDistance)
-				{
-					return true;
-				}
-			}
-			_isEnemyEnterInAttackZone = false;
-			return false;
-		}
-
-		public override float GetMaxAttackDistance()
-		{
-			float num = rangeShootingDistance * rangeShootingDistance;
-			return GetSquareAttackDistance() + num;
+			return this.firePoints[num];
 		}
 
 		public override Vector3 GetHeadPoint()
 		{
-			if (headPoint != null)
+			if (this.headPoint == null)
 			{
-				return headPoint.position;
+				return base.GetHeadPoint();
 			}
-			return base.GetHeadPoint();
+			return this.headPoint.position;
+		}
+
+		public override float GetMaxAttackDistance()
+		{
+			float single = this.rangeShootingDistance * this.rangeShootingDistance;
+			return base.GetSquareAttackDistance() + single;
+		}
+
+		protected GameObject GetShotEffectFromPool()
+		{
+			int num = this._nextShootEffectIndex;
+			this._nextShootEffectIndex++;
+			if (this._nextShootEffectIndex >= (int)this.bulletsEffectPool.Length)
+			{
+				this._nextShootEffectIndex = 0;
+			}
+			return this.bulletsEffectPool[num];
+		}
+
+		protected override void Initialize()
+		{
+			base.Initialize();
+			this.animationsName.Attack = this.GameNameShootingAnimation();
+			BotAnimationEventHandler componentInChildren = base.GetComponentInChildren<BotAnimationEventHandler>();
+			if (componentInChildren != null)
+			{
+				componentInChildren.OnDamageEvent += new BotAnimationEventHandler.OnDamageEventDelegate(this.OnShoot);
+			}
+			this.animations[this.animationsName.Attack].speed = this.speedAnimationAttack;
+			this.InitializeShotsPool(4);
+			this._isEnemyEnterInAttackZone = false;
+		}
+
+		protected virtual void InitializeShotsPool(int sizePool)
+		{
+			int num = sizePool * (int)this.firePoints.Length;
+			this.bulletsEffectPool = new GameObject[num];
+			for (int i = 0; i < num; i++)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.bulletPrefab);
+				this.bulletsEffectPool[i] = gameObject;
+			}
+		}
+
+		protected virtual void MakeShot(GameObject target)
+		{
+			if ((int)this.firePoints.Length == 1)
+			{
+				this.Fire(this.firePoints[0], target);
+				return;
+			}
+			if (this.isSequentialShooting)
+			{
+				this.Fire(this.GetFirePointForSequentialShot(), target);
+				return;
+			}
+			for (int i = 0; i < (int)this.firePoints.Length; i++)
+			{
+				this.Fire(this.firePoints[i], target);
+			}
+		}
+
+		private void OnShoot()
+		{
+			if (this.botAiController == null || this.botAiController.currentTarget == null)
+			{
+				return;
+			}
+			this.MakeShot(this.botAiController.currentTarget.gameObject);
 		}
 	}
 }

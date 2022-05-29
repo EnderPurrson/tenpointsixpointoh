@@ -1,4 +1,6 @@
 using Holoville.HOTween;
+using Holoville.HOTween.Core;
+using System;
 using UnityEngine;
 
 public class BlinkingColor : MonoBehaviour
@@ -22,62 +24,66 @@ public class BlinkingColor : MonoBehaviour
 
 	private bool startBlink;
 
-	private void Start()
+	public BlinkingColor()
 	{
-		Renderer component = GetComponent<Renderer>();
-		if ((bool)component)
-		{
-			mainMaterial = component.sharedMaterial;
-			if ((bool)mainMaterial)
-			{
-				cashColor = mainMaterial.GetColor(nameColor);
-			}
-		}
 	}
 
 	private void OnDestroy()
 	{
-		ResetColor();
-	}
-
-	private void Update()
-	{
-		if (IsActive)
-		{
-			if ((bool)mainMaterial)
-			{
-				mainMaterial.SetColor(nameColor, curColor);
-			}
-			if (!startBlink)
-			{
-				SetColorTwo();
-			}
-		}
-		else if (startBlink)
-		{
-			ResetColor();
-		}
+		this.ResetColor();
 	}
 
 	private void ResetColor()
 	{
-		if ((bool)mainMaterial)
+		if (this.mainMaterial)
 		{
-			mainMaterial.SetColor(nameColor, cashColor);
+			this.mainMaterial.SetColor(this.nameColor, this.cashColor);
 		}
-		startBlink = false;
+		this.startBlink = false;
 		HOTween.Kill(this);
 	}
 
 	private void SetColorOne()
 	{
-		startBlink = true;
-		HOTween.To(this, speed, new TweenParms().Prop("curColor", normal).Ease(EaseType.Linear).OnComplete(SetColorTwo));
+		this.startBlink = true;
+		HOTween.To(this, this.speed, (new TweenParms()).Prop("curColor", this.normal).Ease(EaseType.Linear).OnComplete(new TweenDelegate.TweenCallback(this.SetColorTwo)));
 	}
 
 	private void SetColorTwo()
 	{
-		startBlink = true;
-		HOTween.To(this, speed, new TweenParms().Prop("curColor", blink).Ease(EaseType.Linear).OnComplete(SetColorOne));
+		this.startBlink = true;
+		HOTween.To(this, this.speed, (new TweenParms()).Prop("curColor", this.blink).Ease(EaseType.Linear).OnComplete(new TweenDelegate.TweenCallback(this.SetColorOne)));
+	}
+
+	private void Start()
+	{
+		Renderer component = base.GetComponent<Renderer>();
+		if (component)
+		{
+			this.mainMaterial = component.sharedMaterial;
+			if (this.mainMaterial)
+			{
+				this.cashColor = this.mainMaterial.GetColor(this.nameColor);
+			}
+		}
+	}
+
+	private void Update()
+	{
+		if (this.IsActive)
+		{
+			if (this.mainMaterial)
+			{
+				this.mainMaterial.SetColor(this.nameColor, this.curColor);
+			}
+			if (!this.startBlink)
+			{
+				this.SetColorTwo();
+			}
+		}
+		else if (this.startBlink)
+		{
+			this.ResetColor();
+		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class BtnPackItem : MonoBehaviour
@@ -12,54 +13,58 @@ public class BtnPackItem : MonoBehaviour
 
 	private StickerPackScroll scrollPack;
 
+	public BtnPackItem()
+	{
+	}
+
 	private void Awake()
 	{
-		scrollPack = GetComponentInParent<StickerPackScroll>();
+		this.scrollPack = base.GetComponentInParent<StickerPackScroll>();
+	}
+
+	public void HidePack()
+	{
+		if (this.objListSticker)
+		{
+			this.objListSticker.SetActive(false);
+		}
+		if (this.activeState)
+		{
+			this.activeState.SetActive(false);
+		}
+		if (this.noActiveState)
+		{
+			this.noActiveState.SetActive(true);
+		}
 	}
 
 	private void OnClick()
 	{
-		if ((bool)scrollPack)
+		if (this.scrollPack)
 		{
 			ButtonClickSound.Instance.PlayClick();
-			scrollPack.ShowPack(typePack);
+			this.scrollPack.ShowPack(this.typePack);
 		}
 	}
 
 	public void ShowPack()
 	{
-		if ((bool)objListSticker)
+		if (this.objListSticker)
 		{
-			objListSticker.SetActive(true);
-			UIGrid component = objListSticker.GetComponent<UIGrid>();
+			this.objListSticker.SetActive(true);
+			UIGrid component = this.objListSticker.GetComponent<UIGrid>();
 			if (component != null)
 			{
 				component.Reposition();
 			}
 		}
-		if ((bool)activeState)
+		if (this.activeState)
 		{
-			activeState.SetActive(true);
+			this.activeState.SetActive(true);
 		}
-		if ((bool)noActiveState)
+		if (this.noActiveState)
 		{
-			noActiveState.SetActive(false);
-		}
-	}
-
-	public void HidePack()
-	{
-		if ((bool)objListSticker)
-		{
-			objListSticker.SetActive(false);
-		}
-		if ((bool)activeState)
-		{
-			activeState.SetActive(false);
-		}
-		if ((bool)noActiveState)
-		{
-			noActiveState.SetActive(true);
+			this.noActiveState.SetActive(false);
 		}
 	}
 }

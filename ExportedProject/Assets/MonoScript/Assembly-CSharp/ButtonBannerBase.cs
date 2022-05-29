@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ButtonBannerBase : MonoBehaviour
@@ -7,11 +8,7 @@ public class ButtonBannerBase : MonoBehaviour
 
 	public int priorityShow;
 
-	public virtual void OnShow()
-	{
-	}
-
-	public virtual void OnHide()
+	public ButtonBannerBase()
 	{
 	}
 
@@ -20,32 +17,40 @@ public class ButtonBannerBase : MonoBehaviour
 		return false;
 	}
 
-	public virtual void OnClickButton()
-	{
-	}
-
 	public virtual void OnChangeLocalize()
-	{
-	}
-
-	public virtual void OnUpdateParameter()
 	{
 	}
 
 	private void OnClick()
 	{
-		OnClickButton();
+		this.OnClickButton();
+	}
+
+	public virtual void OnClickButton()
+	{
+	}
+
+	public virtual void OnHide()
+	{
 	}
 
 	private void OnPress(bool IsDown)
 	{
-		if (IsDown)
-		{
-			ButtonBannerHUD.instance.StopTimerNextBanner();
-		}
-		else
+		if (!IsDown)
 		{
 			ButtonBannerHUD.instance.ResetTimerNextBanner();
 		}
+		else
+		{
+			ButtonBannerHUD.instance.StopTimerNextBanner();
+		}
+	}
+
+	public virtual void OnShow()
+	{
+	}
+
+	public virtual void OnUpdateParameter()
+	{
 	}
 }

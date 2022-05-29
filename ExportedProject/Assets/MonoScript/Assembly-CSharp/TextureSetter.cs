@@ -1,32 +1,38 @@
+using System;
 using UnityEngine;
 
 public sealed class TextureSetter : MonoBehaviour
 {
 	public string TextureName;
 
+	public TextureSetter()
+	{
+	}
+
 	private void Awake()
 	{
-		SkipPresser.SkipPressed += SetTexture;
-		SkipTrainingButton.SkipTrClosed += UnsetTexture;
+		SkipPresser.SkipPressed += new Action(this.SetTexture);
+		SkipTrainingButton.SkipTrClosed += new Action(this.UnsetTexture);
 	}
 
 	private void OnDestroy()
 	{
-		SkipPresser.SkipPressed -= SetTexture;
-		SkipTrainingButton.SkipTrClosed -= UnsetTexture;
+		SkipPresser.SkipPressed -= new Action(this.SetTexture);
+		SkipTrainingButton.SkipTrClosed -= new Action(this.UnsetTexture);
 	}
 
 	private void SetTexture()
 	{
-		if (!string.IsNullOrEmpty(TextureName))
+		if (string.IsNullOrEmpty(this.TextureName))
 		{
-			string path = ResPath.Combine("SkipTraining", TextureName);
-			GetComponent<UITexture>().mainTexture = Resources.Load<Texture>(path);
+			return;
 		}
+		string str = ResPath.Combine("SkipTraining", this.TextureName);
+		base.GetComponent<UITexture>().mainTexture = Resources.Load<Texture>(str);
 	}
 
 	private void UnsetTexture()
 	{
-		GetComponent<UITexture>().mainTexture = null;
+		base.GetComponent<UITexture>().mainTexture = null;
 	}
 }

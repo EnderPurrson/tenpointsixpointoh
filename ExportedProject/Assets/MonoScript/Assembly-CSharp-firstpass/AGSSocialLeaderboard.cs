@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine.SocialPlatforms;
 
 public class AGSSocialLeaderboard : ILeaderboard
@@ -11,34 +12,17 @@ public class AGSSocialLeaderboard : ILeaderboard
 
 	private TimeScope _timeScope;
 
+	public string id
+	{
+		get;
+		set;
+	}
+
 	public bool loading
 	{
 		get
 		{
-			return !ScoresAvailable();
-		}
-	}
-
-	public string id { get; set; }
-
-	public UserScope userScope { get; set; }
-
-	public Range range { get; set; }
-
-	public TimeScope timeScope
-	{
-		get
-		{
-			return _timeScope;
-		}
-		set
-		{
-			localPlayerScore = -1L;
-			localPlayerRank = -1;
-			scores = new AGSSocialLeaderboardScore[0];
-			_timeScope = value;
-			LoadScores(null);
-			GameCircleSocial.Instance.RequestLocalUserScore(this);
+			return !this.ScoresAvailable();
 		}
 	}
 
@@ -46,12 +30,14 @@ public class AGSSocialLeaderboard : ILeaderboard
 	{
 		get
 		{
-			AGSScore aGSScore = new AGSScore();
-			aGSScore.player = AGSSocialLocalUser.player;
-			aGSScore.scoreValue = localPlayerScore;
-			aGSScore.scoreString = localPlayerScore.ToString();
-			aGSScore.rank = localPlayerRank;
-			return new AGSSocialLeaderboardScore(aGSScore, leaderboard);
+			AGSScore aGSScore = new AGSScore()
+			{
+				player = AGSSocialLocalUser.player,
+				scoreValue = this.localPlayerScore,
+				scoreString = this.localPlayerScore.ToString(),
+				rank = this.localPlayerRank
+			};
+			return new AGSSocialLeaderboardScore(aGSScore, this.leaderboard);
 		}
 	}
 
@@ -60,69 +46,118 @@ public class AGSSocialLeaderboard : ILeaderboard
 		get
 		{
 			AGSClient.LogGameCircleError("ILeaderboard.maxRange.get is not available for GameCircle");
-			return 0u;
+			return (uint)0;
 		}
 	}
 
-	public IScore[] scores { get; set; }
+	public Range range
+	{
+		get;
+		set;
+	}
+
+	public IScore[] scores
+	{
+		get
+		{
+			return JustDecompileGenerated_get_scores();
+		}
+		set
+		{
+			JustDecompileGenerated_set_scores(value);
+		}
+	}
+
+	private IScore[] JustDecompileGenerated_scores_k__BackingField;
+
+	public IScore[] JustDecompileGenerated_get_scores()
+	{
+		return this.JustDecompileGenerated_scores_k__BackingField;
+	}
+
+	public void JustDecompileGenerated_set_scores(IScore[] value)
+	{
+		this.JustDecompileGenerated_scores_k__BackingField = value;
+	}
+
+	public TimeScope timeScope
+	{
+		get
+		{
+			return this._timeScope;
+		}
+		set
+		{
+			this.localPlayerScore = (long)-1;
+			this.localPlayerRank = -1;
+			this.scores = new AGSSocialLeaderboardScore[0];
+			this._timeScope = value;
+			this.LoadScores(null);
+			GameCircleSocial.Instance.RequestLocalUserScore(this);
+		}
+	}
 
 	public string title
 	{
 		get
 		{
-			if (leaderboard == null)
+			if (this.leaderboard == null)
 			{
 				return null;
 			}
-			return leaderboard.name;
+			return this.leaderboard.name;
 		}
+	}
+
+	public UserScope userScope
+	{
+		get;
+		set;
 	}
 
 	public AGSSocialLeaderboard(AGSLeaderboard leaderboard)
 	{
-		if (leaderboard == null)
+		if (leaderboard != null)
+		{
+			this.leaderboard = leaderboard;
+		}
+		else
 		{
 			AGSClient.LogGameCircleError("AGSSocialLeaderboard constructor \"leaderboard\" argument should not be null");
 			this.leaderboard = AGSLeaderboard.GetBlankLeaderboard();
 		}
-		else
-		{
-			this.leaderboard = leaderboard;
-		}
-		id = leaderboard.id;
-		scores = new AGSSocialLeaderboardScore[0];
-		localPlayerScore = -1L;
-		localPlayerRank = -1;
-		_timeScope = TimeScope.AllTime;
+		this.id = leaderboard.id;
+		this.scores = new AGSSocialLeaderboardScore[0];
+		this.localPlayerScore = (long)-1;
+		this.localPlayerRank = -1;
+		this._timeScope = TimeScope.AllTime;
 	}
 
 	public AGSSocialLeaderboard()
 	{
-		leaderboard = AGSLeaderboard.GetBlankLeaderboard();
-		localPlayerScore = -1L;
-		localPlayerRank = -1;
-		_timeScope = TimeScope.AllTime;
+		this.leaderboard = AGSLeaderboard.GetBlankLeaderboard();
+		this.localPlayerScore = (long)-1;
+		this.localPlayerRank = -1;
+		this._timeScope = TimeScope.AllTime;
+	}
+
+	public void LoadScores(Action<bool> callback)
+	{
+		if (this.leaderboard == null)
+		{
+			callback(false);
+			return;
+		}
+		GameCircleSocial.Instance.RequestScores(this, callback);
 	}
 
 	public bool ScoresAvailable()
 	{
-		return leaderboard != null && scores != null && scores.Length > 0 && localPlayerScore > -1 && localPlayerRank > -1;
+		return (this.leaderboard == null || this.scores == null || (int)this.scores.Length <= 0 || this.localPlayerScore <= (long)-1 ? false : this.localPlayerRank > -1);
 	}
 
 	public void SetUserFilter(string[] userIDs)
 	{
 		AGSClient.LogGameCircleError("ILeaderboard.SetUserFilter is not available for GameCircle");
-	}
-
-	public void LoadScores(Action<bool> callback)
-	{
-		if (leaderboard == null)
-		{
-			callback(false);
-		}
-		else
-		{
-			GameCircleSocial.Instance.RequestScores(this, callback);
-		}
 	}
 }

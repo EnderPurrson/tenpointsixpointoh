@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(BotMovement))]
@@ -19,6 +20,10 @@ public class BotAI : MonoBehaviour
 
 	public Transform homePoint;
 
+	public BotAI()
+	{
+	}
+
 	private void Awake()
 	{
 		if (Defs.isCOOP)
@@ -27,29 +32,32 @@ public class BotAI : MonoBehaviour
 		}
 	}
 
+	public void SetTarget(Transform _tgt, bool agression)
+	{
+		this.Agression = agression;
+		this.Target = _tgt;
+		this._motor.SetTarget(this.Target, agression);
+	}
+
 	private void Start()
 	{
-		Target = null;
-		_motor = GetComponent<BotMovement>();
-		_eh = GetComponent<BotHealth>();
-		myTransform = base.transform;
-		_botTrigger = GetComponent<BotTrigger>();
+		this.Target = null;
+		this._motor = base.GetComponent<BotMovement>();
+		this._eh = base.GetComponent<BotHealth>();
+		this.myTransform = base.transform;
+		this._botTrigger = base.GetComponent<BotTrigger>();
 	}
 
 	private void Update()
 	{
-		if (!_eh.getIsLife() && !deaded)
+		if (!this._eh.getIsLife())
 		{
-			SendMessage("Death");
-			_botTrigger.shouldDetectPlayer = false;
-			deaded = true;
+			if (!this.deaded)
+			{
+				base.SendMessage("Death");
+				this._botTrigger.shouldDetectPlayer = false;
+				this.deaded = true;
+			}
 		}
-	}
-
-	public void SetTarget(Transform _tgt, bool agression)
-	{
-		Agression = agression;
-		Target = _tgt;
-		_motor.SetTarget(Target, agression);
 	}
 }

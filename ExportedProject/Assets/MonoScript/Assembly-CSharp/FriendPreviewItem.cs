@@ -1,8 +1,8 @@
+using Rilisoft;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 
 public class FriendPreviewItem : MonoBehaviour
@@ -71,40 +71,144 @@ public class FriendPreviewItem : MonoBehaviour
 
 	public GameObject inYourNetworkIcon;
 
-	[CompilerGenerated]
-	private static Func<FriendsWindowController, FriendsWindowStatusBar> _003C_003Ef__am_0024cache1F;
-
-	[CompilerGenerated]
-	private static Func<FriendsWindowStatusBar, bool> _003C_003Ef__am_0024cache20;
-
-	public int OnlineCodeStatus { get; private set; }
-
-	private void Start()
+	public int OnlineCodeStatus
 	{
-		FriendsWindowController.UpdateFriendsOnlineEvent = (Action)Delegate.Combine(FriendsWindowController.UpdateFriendsOnlineEvent, new Action(UpdateOnline));
+		get;
+		private set;
+	}
+
+	public FriendPreviewItem()
+	{
+	}
+
+	private void CallbackFriendAddRequest(bool isComplete, bool isRequestExist)
+	{
+		this.addFriendButton.enabled = true;
+		InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
+		if (isComplete)
+		{
+			this.SetupFindStateButtons();
+		}
+	}
+
+	private void FillClanAttrs(Dictionary<string, string> plDict)
+	{
+		if (!plDict.ContainsKey("clan_logo") || string.IsNullOrEmpty(plDict["clan_logo"]) || plDict["clan_logo"].Equals("null"))
+		{
+			this.clanIcon.gameObject.SetActive(false);
+		}
+		else
+		{
+			this.clanIcon.gameObject.SetActive(true);
+			try
+			{
+				byte[] numArray = Convert.FromBase64String(plDict["clan_logo"]);
+				Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
+				texture2D.LoadImage(numArray);
+				texture2D.filterMode = FilterMode.Point;
+				texture2D.Apply();
+				Texture texture = this.clanIcon.mainTexture;
+				this.clanIcon.mainTexture = texture2D;
+				if (texture != null)
+				{
+					UnityEngine.Object.DestroyImmediate(texture, true);
+				}
+			}
+			catch (Exception exception)
+			{
+				Texture texture1 = this.clanIcon.mainTexture;
+				this.clanIcon.mainTexture = null;
+				if (texture1 != null)
+				{
+					UnityEngine.Object.DestroyImmediate(texture1, true);
+				}
+			}
+		}
+		if (!plDict.ContainsKey("clan_name") || string.IsNullOrEmpty(plDict["clan_name"]) || plDict["clan_name"].Equals("null"))
+		{
+			this.clanName.gameObject.SetActive(false);
+		}
+		else
+		{
+			this.clanName.gameObject.SetActive(true);
+			string item = plDict["clan_name"];
+			if (item != null)
+			{
+				this.clanName.text = item;
+			}
+		}
+	}
+
+	private void FillCommonAttrsByPlayerData(Dictionary<string, object> playerData)
+	{
+		string str = Convert.ToString(playerData["nick"]);
+		string str1 = Convert.ToString(playerData["rank"]);
+		this.levelAndName.text = str;
+		this.level.spriteName = string.Concat("Rank_", str1);
+		if (playerData.ContainsKey("skin"))
+		{
+			this.SetSkin(playerData["skin"] as string);
+		}
+		Dictionary<string, string> strs = new Dictionary<string, string>();
+		foreach (KeyValuePair<string, object> playerDatum in playerData)
+		{
+			strs.Add(playerDatum.Key, Convert.ToString(playerDatum.Value));
+		}
+		bool flag = (!strs.ContainsKey("clan_name") ? false : !string.IsNullOrEmpty(strs["clan_name"]));
+		this.ResetPositionElementsDetailInfo(flag);
+		if (flag)
+		{
+			this.FillClanAttrs(strs);
+		}
+	}
+
+	private void FillCommonAttrsByPlayerInfo()
+	{
+		Dictionary<string, object> strs;
+		Dictionary<string, object> fullPlayerDataById = FriendsController.GetFullPlayerDataById(this.id);
+		if (fullPlayerDataById != null && fullPlayerDataById.TryGetValue<Dictionary<string, object>>("player", out strs))
+		{
+			this.FillCommonAttrsByPlayerData(strs);
+		}
+	}
+
+	public void FillData(string playerId, FriendItemPreviewType typeItem)
+	{
+		this.id = playerId;
+		this._type = typeItem;
+		this.ShowButtonsByTypePreview(typeItem);
+		this.FillCommonAttrsByPlayerInfo();
+		this.inYourNetworkIcon.SetActive(false);
+		if (typeItem == FriendItemPreviewType.find)
+		{
+			this.FindOrigin = (int)FriendsController.GetPossibleFriendFindOrigin(playerId);
+			if (this.FindOrigin != 0)
+			{
+				this.SetStatusLabelFindOrigin((FriendsController.PossiblleOrigin)this.FindOrigin);
+			}
+			else
+			{
+				this.HideDetailInfo();
+			}
+		}
+		else if (typeItem != FriendItemPreviewType.view)
+		{
+			this.HideDetailInfo();
+		}
+		this.UpdateOnline();
 	}
 
 	private Color[] FlipColorsHorizontally(Color[] colors, int width, int height)
 	{
-		Color[] array = new Color[colors.Length];
+		Color[] colorArray = new Color[(int)colors.Length];
 		for (int i = 0; i < width; i++)
 		{
 			for (int j = 0; j < height; j++)
 			{
-				array[i + width * j] = colors[width - i - 1 + width * j];
+				colorArray[i + width * j] = colors[width - i - 1 + width * j];
 			}
 		}
-		return array;
-	}
-
-	public void SetSkin(string skinStr)
-	{
-		Texture mainTexture = avatarIcon.mainTexture;
-		if (mainTexture != null && !mainTexture.name.Equals("dude") && !mainTexture.name.Equals("multi_skin_1"))
-		{
-			UnityEngine.Object.DestroyImmediate(mainTexture, true);
-		}
-		avatarIcon.mainTexture = Tools.GetPreviewFromSkin(skinStr, Tools.PreviewType.HeadAndBody);
+		return colorArray;
 	}
 
 	private string GetLevelAndNameLabel(string level, string name)
@@ -112,303 +216,84 @@ public class FriendPreviewItem : MonoBehaviour
 		return string.Format("[b]{0} {1}[/b]", level, name);
 	}
 
-	private void FillCommonAttrsByPlayerInfo()
-	{
-		Dictionary<string, object> fullPlayerDataById = FriendsController.GetFullPlayerDataById(id);
-		Dictionary<string, object> value;
-		if (fullPlayerDataById != null && fullPlayerDataById.TryGetValue<Dictionary<string, object>>("player", out value))
-		{
-			FillCommonAttrsByPlayerData(value);
-		}
-	}
-
-	private void ResetPositionElementsDetailInfo(bool isPlayerInClan)
-	{
-		clanContainer.gameObject.SetActive(isPlayerInClan);
-		playerDetailInfoGrid.Reposition();
-	}
-
-	private void FillCommonAttrsByPlayerData(Dictionary<string, object> playerData)
-	{
-		string text = Convert.ToString(playerData["nick"]);
-		string text2 = Convert.ToString(playerData["rank"]);
-		levelAndName.text = text;
-		level.spriteName = "Rank_" + text2;
-		if (playerData.ContainsKey("skin"))
-		{
-			string skin = playerData["skin"] as string;
-			SetSkin(skin);
-		}
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		foreach (KeyValuePair<string, object> playerDatum in playerData)
-		{
-			dictionary.Add(playerDatum.Key, Convert.ToString(playerDatum.Value));
-		}
-		bool flag = dictionary.ContainsKey("clan_name") && !string.IsNullOrEmpty(dictionary["clan_name"]);
-		ResetPositionElementsDetailInfo(flag);
-		if (flag)
-		{
-			FillClanAttrs(dictionary);
-		}
-	}
-
-	private void SetupFindStateButtons()
-	{
-		bool flag = FriendsController.IsAlreadySendInvitePlayer(id);
-		bool flag2 = FriendsController.IsMyPlayerId(id);
-		bool flag3 = FriendsController.IsPlayerOurFriend(id);
-		bool active = !flag3 && !flag2 && !flag;
-		addFriendButton.gameObject.SetActive(active);
-		invitationAddSentContainer.gameObject.SetActive(flag);
-		friendAddContainer.gameObject.SetActive(flag3);
-		selfAddContainer.gameObject.SetActive(flag2);
-	}
-
-	private void ShowButtonsByTypePreview(FriendItemPreviewType typePreview)
-	{
-		friendListButtonContainer.gameObject.SetActive(typePreview == FriendItemPreviewType.view);
-		bool flag = typePreview == FriendItemPreviewType.find;
-		findFrinedsButtonContainer.gameObject.SetActive(flag);
-		if (flag)
-		{
-			SetupFindStateButtons();
-		}
-		inboxFriendsButtonContainer.gameObject.SetActive(typePreview == FriendItemPreviewType.inbox);
-	}
-
 	private void HideDetailInfo()
 	{
-		detailInfoConatiner.gameObject.SetActive(false);
-		playerDetailInfoGrid.Reposition();
+		this.detailInfoConatiner.gameObject.SetActive(false);
+		this.playerDetailInfoGrid.Reposition();
 	}
 
-	public void FillData(string playerId, FriendItemPreviewType typeItem)
+	public void OnClick()
 	{
-		id = playerId;
-		_type = typeItem;
-		ShowButtonsByTypePreview(typeItem);
-		FillCommonAttrsByPlayerInfo();
-		inYourNetworkIcon.SetActive(false);
-		switch (typeItem)
-		{
-		case FriendItemPreviewType.find:
-			FindOrigin = (int)FriendsController.GetPossibleFriendFindOrigin(playerId);
-			if (FindOrigin == 0)
-			{
-				HideDetailInfo();
-			}
-			else
-			{
-				SetStatusLabelFindOrigin((FriendsController.PossiblleOrigin)FindOrigin);
-			}
-			break;
-		default:
-			HideDetailInfo();
-			break;
-		case FriendItemPreviewType.view:
-			break;
-		}
-		UpdateOnline();
+		ButtonClickSound.TryPlayClick();
+		FriendsWindowController.Instance.ShowProfileWindow(this.id, this);
 	}
 
-	private void FillClanAttrs(Dictionary<string, string> plDict)
+	public void OnClickAcceptButton()
 	{
-		if (plDict.ContainsKey("clan_logo") && !string.IsNullOrEmpty(plDict["clan_logo"]) && !plDict["clan_logo"].Equals("null"))
+		ButtonClickSound.TryPlayClick();
+		this.acceptInviteButton.isEnabled = false;
+		this.cancelInviteButton.isEnabled = false;
+		if (FriendsController.IsFriendsMax())
 		{
-			clanIcon.gameObject.SetActive(true);
-			try
-			{
-				byte[] data = Convert.FromBase64String(plDict["clan_logo"]);
-				Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-				texture2D.LoadImage(data);
-				texture2D.filterMode = FilterMode.Point;
-				texture2D.Apply();
-				Texture mainTexture = clanIcon.mainTexture;
-				clanIcon.mainTexture = texture2D;
-				if (mainTexture != null)
-				{
-					UnityEngine.Object.DestroyImmediate(mainTexture, true);
-				}
-			}
-			catch (Exception)
-			{
-				Texture mainTexture2 = clanIcon.mainTexture;
-				clanIcon.mainTexture = null;
-				if (mainTexture2 != null)
-				{
-					UnityEngine.Object.DestroyImmediate(mainTexture2, true);
-				}
-			}
-		}
-		else
-		{
-			clanIcon.gameObject.SetActive(false);
-		}
-		if (plDict.ContainsKey("clan_name") && !string.IsNullOrEmpty(plDict["clan_name"]) && !plDict["clan_name"].Equals("null"))
-		{
-			clanName.gameObject.SetActive(true);
-			string text = plDict["clan_name"];
-			if (text != null)
-			{
-				clanName.text = text;
-			}
-		}
-		else
-		{
-			clanName.gameObject.SetActive(false);
-		}
-	}
-
-	private void SetStatusLabelPlayerBusy()
-	{
-		if (!detailInfoConatiner.gameObject.activeSelf)
-		{
-			detailInfoConatiner.gameObject.SetActive(true);
-			playerDetailInfoGrid.Reposition();
-		}
-		detailInfo.text = string.Format("[ff0000]{0}[-]", LocalizationStore.Get("Key_0576"));
-	}
-
-	private void SetStatusLabelPlayerPlaying(string gameModeName, string mapName)
-	{
-		if (!detailInfoConatiner.gameObject.activeSelf)
-		{
-			detailInfoConatiner.gameObject.SetActive(true);
-			playerDetailInfoGrid.Reposition();
-		}
-		if (string.IsNullOrEmpty(mapName))
-		{
-			detailInfo.text = string.Format("[00aeff]{0}[-]", gameModeName);
-		}
-		else
-		{
-			detailInfo.text = string.Format("[77ef00]{0}: {1}[-]", gameModeName, mapName);
-		}
-	}
-
-	private void SetStatusLabelFindOrigin(FriendsController.PossiblleOrigin findOrigin)
-	{
-		if (!detailInfoConatiner.gameObject.activeSelf)
-		{
-			detailInfoConatiner.gameObject.SetActive(true);
-			playerDetailInfoGrid.Reposition();
-		}
-		switch (findOrigin)
-		{
-		case FriendsController.PossiblleOrigin.Local:
-			detailInfo.text = string.Format("[ffe400]{0}[-]", LocalizationStore.Get("Key_1569"));
-			inYourNetworkIcon.SetActive(true);
-			break;
-		case FriendsController.PossiblleOrigin.Facebook:
-			detailInfo.text = string.Format("[00aeff]{0}[-]", LocalizationStore.Get("Key_1570"));
-			break;
-		case FriendsController.PossiblleOrigin.RandomPlayer:
-			detailInfo.text = string.Format("[77ef00]{0}[-]", LocalizationStore.Get("Key_1571"));
-			break;
-		}
-	}
-
-	private void SetStateButtonConnectContainer(bool isCanConnect, string conditionNotConnect)
-	{
-		connectToRoomButton.gameObject.SetActive(isCanConnect);
-		notConnectLabel.gameObject.SetActive(!isCanConnect);
-		notConnectLabel.text = conditionNotConnect;
-	}
-
-	private void SetOfflineStatePreview()
-	{
-		SetStatusLabelPlayerBusy();
-		OnlineCodeStatus = 3;
-		SetStateButtonConnectContainer(false, LocalizationStore.Get("Key_1577"));
-	}
-
-	private void UpdateOnline()
-	{
-		if (_type == FriendItemPreviewType.find)
-		{
+			InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_1424"));
 			return;
 		}
-		if (!FriendsController.sharedController.onlineInfo.ContainsKey(id))
-		{
-			SetOfflineStatePreview();
-			return;
-		}
-		Dictionary<string, string> onlineData = FriendsController.sharedController.onlineInfo[id];
-		FriendsController.ResultParseOnlineData resultParseOnlineData = FriendsController.ParseOnlineData(onlineData);
-		if (resultParseOnlineData == null)
-		{
-			SetOfflineStatePreview();
-			return;
-		}
-		SetStatusLabelPlayerPlaying(resultParseOnlineData.GetGameModeName(), resultParseOnlineData.GetMapName());
-		SetStateButtonConnectContainer(resultParseOnlineData.IsCanConnect, resultParseOnlineData.GetNotConnectConditionShortString());
-		OnlineCodeStatus = (int)resultParseOnlineData.GetOnlineStatus();
-	}
-
-	private void OnDestroy()
-	{
-		FriendsWindowController.UpdateFriendsOnlineEvent = (Action)Delegate.Remove(FriendsWindowController.UpdateFriendsOnlineEvent, new Action(UpdateOnline));
-	}
-
-	private void CallbackFriendAddRequest(bool isComplete, bool isRequestExist)
-	{
-		addFriendButton.enabled = true;
-		InfoWindowController.CheckShowRequestServerInfoBox(isComplete, isRequestExist);
-		if (isComplete)
-		{
-			SetupFindStateButtons();
-		}
+		FriendsController.sharedController.AcceptInvite(this.id, new Action<bool>(this.OnCompleteAcceptInviteAction));
 	}
 
 	public void OnClickAddFriend()
 	{
-		if (!string.IsNullOrEmpty(id))
+		if (string.IsNullOrEmpty(this.id))
 		{
-			ButtonClickSound.TryPlayClick();
-			addFriendButton.enabled = false;
-			FriendsWindowController instance = FriendsWindowController.Instance;
-			if (_003C_003Ef__am_0024cache1F == null)
-			{
-				_003C_003Ef__am_0024cache1F = _003COnClickAddFriend_003Em__2A8;
-			}
-			FriendsWindowStatusBar o = instance.Map(_003C_003Ef__am_0024cache1F);
-			if (_003C_003Ef__am_0024cache20 == null)
-			{
-				_003C_003Ef__am_0024cache20 = _003COnClickAddFriend_003Em__2A9;
-			}
-			bool flag = o.Map(_003C_003Ef__am_0024cache20);
-			string value = ((!flag) ? string.Format("Find Friends: {0}", (FriendsController.PossiblleOrigin)FindOrigin) : "Search");
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("Added Friends", value);
-			dictionary.Add("Deleted Friends", "Add");
-			Dictionary<string, object> dictionary2 = dictionary;
-			if (flag)
-			{
-				dictionary2.Add("Search Friends", "Add");
-			}
-			FriendsController.SendFriendshipRequest(id, dictionary2, CallbackFriendAddRequest);
+			return;
 		}
+		ButtonClickSound.TryPlayClick();
+		this.addFriendButton.enabled = false;
+		bool flag = FriendsWindowController.Instance.Map<FriendsWindowController, FriendsWindowStatusBar>((FriendsWindowController fwc) => fwc.statusBar).Map<FriendsWindowStatusBar, bool>((FriendsWindowStatusBar s) => s.IsFindFriendByIdStateActivate);
+		string str = (!flag ? string.Format("Find Friends: {0}", (FriendsController.PossiblleOrigin)this.FindOrigin) : "Search");
+		Dictionary<string, object> strs = new Dictionary<string, object>()
+		{
+			{ "Added Friends", str },
+			{ "Deleted Friends", "Add" }
+		};
+		Dictionary<string, object> strs1 = strs;
+		if (flag)
+		{
+			strs1.Add("Search Friends", "Add");
+		}
+		FriendsController.SendFriendshipRequest(this.id, strs1, new Action<bool, bool>(this.CallbackFriendAddRequest));
 	}
 
 	public void OnClickConnectToFriendRoom()
 	{
 		ButtonClickSound.TryPlayClick();
-		FriendsController.JoinToFriendRoom(id);
+		FriendsController.JoinToFriendRoom(this.id);
+	}
+
+	public void OnClickDeclineButton()
+	{
+		this.acceptInviteButton.isEnabled = false;
+		this.cancelInviteButton.isEnabled = false;
+		ButtonClickSound.TryPlayClick();
+		FriendsController.sharedController.RejectInvite(this.id, new Action<bool>(this.OnCompletetRejectInviteAction));
 	}
 
 	public void OnClickGoTohatButton()
 	{
-		FriendsWindowController.Instance.SetActiveChatTab(id);
+		FriendsWindowController.Instance.SetActiveChatTab(this.id);
 	}
 
 	private void OnCompleteAcceptInviteAction(bool isComplete)
 	{
 		InfoWindowController.CheckShowRequestServerInfoBox(isComplete, false);
-		acceptInviteButton.isEnabled = true;
-		cancelInviteButton.isEnabled = true;
+		this.acceptInviteButton.isEnabled = true;
+		this.cancelInviteButton.isEnabled = true;
 		if (isComplete)
 		{
-			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object> { { "Friend Requests", "Accepted" } });
+			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object>()
+			{
+				{ "Friend Requests", "Accepted" }
+			});
 			FriendsWindowController.Instance.UpdateCurrentTabState();
 		}
 	}
@@ -416,61 +301,163 @@ public class FriendPreviewItem : MonoBehaviour
 	private void OnCompletetRejectInviteAction(bool isComplete)
 	{
 		InfoWindowController.CheckShowRequestServerInfoBox(isComplete, false);
-		acceptInviteButton.isEnabled = true;
-		cancelInviteButton.isEnabled = true;
+		this.acceptInviteButton.isEnabled = true;
+		this.cancelInviteButton.isEnabled = true;
 		if (isComplete)
 		{
-			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object> { { "Friend Requests", "Rejected" } });
+			AnalyticsFacade.SendCustomEvent("Social", new Dictionary<string, object>()
+			{
+				{ "Friend Requests", "Rejected" }
+			});
 			FriendsWindowController.Instance.UpdateCurrentTabState();
 		}
 	}
 
-	public void OnClickAcceptButton()
+	private void OnDestroy()
 	{
-		ButtonClickSound.TryPlayClick();
-		acceptInviteButton.isEnabled = false;
-		cancelInviteButton.isEnabled = false;
-		if (FriendsController.IsFriendsMax())
+		FriendsWindowController.UpdateFriendsOnlineEvent -= new Action(this.UpdateOnline);
+	}
+
+	private void ResetPositionElementsDetailInfo(bool isPlayerInClan)
+	{
+		this.clanContainer.gameObject.SetActive(isPlayerInClan);
+		this.playerDetailInfoGrid.Reposition();
+	}
+
+	private void SetOfflineStatePreview()
+	{
+		this.SetStatusLabelPlayerBusy();
+		this.OnlineCodeStatus = 3;
+		this.SetStateButtonConnectContainer(false, LocalizationStore.Get("Key_1577"));
+	}
+
+	public void SetSkin(string skinStr)
+	{
+		Texture texture = this.avatarIcon.mainTexture;
+		if (texture != null && !texture.name.Equals("dude") && !texture.name.Equals("multi_skin_1"))
 		{
-			InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_1424"));
+			UnityEngine.Object.DestroyImmediate(texture, true);
+		}
+		this.avatarIcon.mainTexture = Tools.GetPreviewFromSkin(skinStr, Tools.PreviewType.HeadAndBody);
+	}
+
+	private void SetStateButtonConnectContainer(bool isCanConnect, string conditionNotConnect)
+	{
+		this.connectToRoomButton.gameObject.SetActive(isCanConnect);
+		this.notConnectLabel.gameObject.SetActive(!isCanConnect);
+		this.notConnectLabel.text = conditionNotConnect;
+	}
+
+	private void SetStatusLabelFindOrigin(FriendsController.PossiblleOrigin findOrigin)
+	{
+		if (!this.detailInfoConatiner.gameObject.activeSelf)
+		{
+			this.detailInfoConatiner.gameObject.SetActive(true);
+			this.playerDetailInfoGrid.Reposition();
+		}
+		if (findOrigin == FriendsController.PossiblleOrigin.None)
+		{
+			return;
+		}
+		if (findOrigin == FriendsController.PossiblleOrigin.Local)
+		{
+			this.detailInfo.text = string.Format("[ffe400]{0}[-]", LocalizationStore.Get("Key_1569"));
+			this.inYourNetworkIcon.SetActive(true);
+		}
+		else if (findOrigin == FriendsController.PossiblleOrigin.Facebook)
+		{
+			this.detailInfo.text = string.Format("[00aeff]{0}[-]", LocalizationStore.Get("Key_1570"));
+		}
+		else if (findOrigin == FriendsController.PossiblleOrigin.RandomPlayer)
+		{
+			this.detailInfo.text = string.Format("[77ef00]{0}[-]", LocalizationStore.Get("Key_1571"));
+		}
+	}
+
+	private void SetStatusLabelPlayerBusy()
+	{
+		if (!this.detailInfoConatiner.gameObject.activeSelf)
+		{
+			this.detailInfoConatiner.gameObject.SetActive(true);
+			this.playerDetailInfoGrid.Reposition();
+		}
+		this.detailInfo.text = string.Format("[ff0000]{0}[-]", LocalizationStore.Get("Key_0576"));
+	}
+
+	private void SetStatusLabelPlayerPlaying(string gameModeName, string mapName)
+	{
+		if (!this.detailInfoConatiner.gameObject.activeSelf)
+		{
+			this.detailInfoConatiner.gameObject.SetActive(true);
+			this.playerDetailInfoGrid.Reposition();
+		}
+		if (!string.IsNullOrEmpty(mapName))
+		{
+			this.detailInfo.text = string.Format("[77ef00]{0}: {1}[-]", gameModeName, mapName);
 		}
 		else
 		{
-			FriendsController.sharedController.AcceptInvite(id, OnCompleteAcceptInviteAction);
+			this.detailInfo.text = string.Format("[00aeff]{0}[-]", gameModeName);
 		}
 	}
 
-	public void OnClickDeclineButton()
+	private void SetupFindStateButtons()
 	{
-		acceptInviteButton.isEnabled = false;
-		cancelInviteButton.isEnabled = false;
-		ButtonClickSound.TryPlayClick();
-		FriendsController.sharedController.RejectInvite(id, OnCompletetRejectInviteAction);
+		bool flag = FriendsController.IsAlreadySendInvitePlayer(this.id);
+		bool flag1 = FriendsController.IsMyPlayerId(this.id);
+		bool flag2 = FriendsController.IsPlayerOurFriend(this.id);
+		this.addFriendButton.gameObject.SetActive((flag2 || flag1 ? false : !flag));
+		this.invitationAddSentContainer.gameObject.SetActive(flag);
+		this.friendAddContainer.gameObject.SetActive(flag2);
+		this.selfAddContainer.gameObject.SetActive(flag1);
 	}
 
-	public void OnClick()
+	private void ShowButtonsByTypePreview(FriendItemPreviewType typePreview)
 	{
-		ButtonClickSound.TryPlayClick();
-		FriendsWindowController.Instance.ShowProfileWindow(id, this);
+		this.friendListButtonContainer.gameObject.SetActive(typePreview == FriendItemPreviewType.view);
+		bool flag = typePreview == FriendItemPreviewType.find;
+		this.findFrinedsButtonContainer.gameObject.SetActive(flag);
+		if (flag)
+		{
+			this.SetupFindStateButtons();
+		}
+		this.inboxFriendsButtonContainer.gameObject.SetActive(typePreview == FriendItemPreviewType.inbox);
+	}
+
+	private void Start()
+	{
+		FriendsWindowController.UpdateFriendsOnlineEvent += new Action(this.UpdateOnline);
 	}
 
 	public void UpdateData()
 	{
-		if (!string.IsNullOrEmpty(id))
+		if (string.IsNullOrEmpty(this.id))
 		{
-			FillData(id, _type);
+			return;
 		}
+		this.FillData(this.id, this._type);
 	}
 
-	[CompilerGenerated]
-	private static FriendsWindowStatusBar _003COnClickAddFriend_003Em__2A8(FriendsWindowController fwc)
+	private void UpdateOnline()
 	{
-		return fwc.statusBar;
-	}
-
-	[CompilerGenerated]
-	private static bool _003COnClickAddFriend_003Em__2A9(FriendsWindowStatusBar s)
-	{
-		return s.IsFindFriendByIdStateActivate;
+		if (this._type == FriendItemPreviewType.find)
+		{
+			return;
+		}
+		if (!FriendsController.sharedController.onlineInfo.ContainsKey(this.id))
+		{
+			this.SetOfflineStatePreview();
+			return;
+		}
+		Dictionary<string, string> item = FriendsController.sharedController.onlineInfo[this.id];
+		FriendsController.ResultParseOnlineData resultParseOnlineDatum = FriendsController.ParseOnlineData(item);
+		if (resultParseOnlineDatum == null)
+		{
+			this.SetOfflineStatePreview();
+			return;
+		}
+		this.SetStatusLabelPlayerPlaying(resultParseOnlineDatum.GetGameModeName(), resultParseOnlineDatum.GetMapName());
+		this.SetStateButtonConnectContainer(resultParseOnlineDatum.IsCanConnect, resultParseOnlineDatum.GetNotConnectConditionShortString());
+		this.OnlineCodeStatus = (int)resultParseOnlineDatum.GetOnlineStatus();
 	}
 }

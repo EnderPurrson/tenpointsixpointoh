@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
@@ -13,15 +16,7 @@ namespace Rilisoft
 		[SerializeField]
 		private Rocket _rocketComponent;
 
-		public DirectionViewTargetType Type
-		{
-			get
-			{
-				return _Type;
-			}
-		}
-
-		public Transform Transform
+		public UnityEngine.Transform Transform
 		{
 			get
 			{
@@ -29,41 +24,16 @@ namespace Rilisoft
 			}
 		}
 
-		private void OnEnable()
+		public DirectionViewTargetType Type
 		{
-			_rocketComponent = base.gameObject.GetComponentInParent<Rocket>();
-			if (_rocketComponent == null)
+			get
 			{
-				throw new Exception("rocket component not found");
+				return this._Type;
 			}
-			StartCoroutine(RocketMonitorCoroutine());
 		}
 
-		private void OnDisable()
+		public DirectionViewerTarget()
 		{
-			HidePointer();
-		}
-
-		private IEnumerator RocketMonitorCoroutine()
-		{
-			while (!_rocketComponent.isRun)
-			{
-				yield return null;
-			}
-			ShowPointer();
-			while (_rocketComponent.isRun)
-			{
-				yield return null;
-			}
-			HidePointer();
-		}
-
-		private void ShowPointer()
-		{
-			if (DirectionViewer.Instance != null)
-			{
-				DirectionViewer.Instance.LookToMe(this);
-			}
 		}
 
 		private void HidePointer()
@@ -71,6 +41,36 @@ namespace Rilisoft
 			if (DirectionViewer.Instance != null)
 			{
 				DirectionViewer.Instance.ForgetMe(this);
+			}
+		}
+
+		private void OnDisable()
+		{
+			this.HidePointer();
+		}
+
+		private void OnEnable()
+		{
+			this._rocketComponent = base.gameObject.GetComponentInParent<Rocket>();
+			if (this._rocketComponent == null)
+			{
+				throw new Exception("rocket component not found");
+			}
+			base.StartCoroutine(this.RocketMonitorCoroutine());
+		}
+
+		[DebuggerHidden]
+		private IEnumerator RocketMonitorCoroutine()
+		{
+			DirectionViewerTarget.u003cRocketMonitorCoroutineu003ec__Iterator80 variable = null;
+			return variable;
+		}
+
+		private void ShowPointer()
+		{
+			if (DirectionViewer.Instance != null)
+			{
+				DirectionViewer.Instance.LookToMe(this);
 			}
 		}
 	}

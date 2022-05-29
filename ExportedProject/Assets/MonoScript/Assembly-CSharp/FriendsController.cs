@@ -1,193 +1,22 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+using ExitGames.Client.Photon;
 using Rilisoft;
 using Rilisoft.MiniJson;
 using Rilisoft.NullExtensions;
 using SimpleJSON;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public sealed class FriendsController : MonoBehaviour
 {
-	public enum PossiblleOrigin
-	{
-		None = 0,
-		Local = 1,
-		Facebook = 2,
-		RandomPlayer = 3
-	}
-
-	public enum NotConnectCondition
-	{
-		level = 0,
-		platform = 1,
-		map = 2,
-		clientVersion = 3,
-		InChat = 4,
-		None = 5
-	}
-
-	public class ResultParseOnlineData
-	{
-		public string mapIndex;
-
-		public bool isPlayerInChat;
-
-		public NotConnectCondition notConnectCondition;
-
-		private string _gameRegim;
-
-		private string _gameMode;
-
-		public string gameMode
-		{
-			get
-			{
-				return _gameMode;
-			}
-			set
-			{
-				_gameMode = value;
-				_gameRegim = _gameMode.Substring(_gameMode.Length - 1);
-			}
-		}
-
-		public bool IsCanConnect
-		{
-			get
-			{
-				return notConnectCondition == NotConnectCondition.None;
-			}
-		}
-
-		public OnlineState GetOnlineStatus()
-		{
-			switch (Convert.ToInt32(_gameRegim))
-			{
-			case 6:
-				return OnlineState.inFriends;
-			case 7:
-				return OnlineState.inClans;
-			default:
-				return OnlineState.playing;
-			}
-		}
-
-		public string GetGameModeName()
-		{
-			IDictionary<string, string> gameModesLocalizeKey = ConnectSceneNGUIController.gameModesLocalizeKey;
-			if (!gameModesLocalizeKey.ContainsKey(_gameRegim))
-			{
-				return string.Empty;
-			}
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(mapIndex));
-			if (infoScene != null && infoScene.IsAvaliableForMode(TypeModeGame.Dater))
-			{
-				return LocalizationStore.Get("Key_1567");
-			}
-			return LocalizationStore.Get(gameModesLocalizeKey[_gameRegim]);
-		}
-
-		public string GetMapName()
-		{
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(mapIndex));
-			if (infoScene == null)
-			{
-				return string.Empty;
-			}
-			return infoScene.TranslateName;
-		}
-
-		public string GetNotConnectConditionString()
-		{
-			if (IsCanConnect)
-			{
-				return string.Empty;
-			}
-			string result = string.Empty;
-			switch (notConnectCondition)
-			{
-			case NotConnectCondition.clientVersion:
-				result = LocalizationStore.Get("Key_1418");
-				break;
-			case NotConnectCondition.level:
-				result = LocalizationStore.Get("Key_1420");
-				break;
-			case NotConnectCondition.map:
-				result = LocalizationStore.Get("Key_1419");
-				break;
-			case NotConnectCondition.platform:
-				result = LocalizationStore.Get("Key_1414");
-				break;
-			}
-			return result;
-		}
-
-		public string GetNotConnectConditionShortString()
-		{
-			if (IsCanConnect)
-			{
-				return string.Empty;
-			}
-			string result = string.Empty;
-			switch (notConnectCondition)
-			{
-			case NotConnectCondition.clientVersion:
-				result = LocalizationStore.Get("Key_1573");
-				break;
-			case NotConnectCondition.level:
-				result = LocalizationStore.Get("Key_1574");
-				break;
-			case NotConnectCondition.map:
-				result = LocalizationStore.Get("Key_1575");
-				break;
-			case NotConnectCondition.platform:
-				result = LocalizationStore.Get("Key_1576");
-				break;
-			case NotConnectCondition.InChat:
-				result = LocalizationStore.Get("Key_1577");
-				break;
-			}
-			return result;
-		}
-	}
-
-	public enum TypeTrafficForwardingLog
-	{
-		newView = 0,
-		view = 1,
-		click = 2
-	}
-
-	public delegate void OnChangeClanName(string newName);
-
-	[CompilerGenerated]
-	private sealed class _003C_UpdateClanMembers_003Ec__AnonStorey1F3
-	{
-		internal List<string> toRem;
-
-		internal bool _003C_003Em__52(string obj)
-		{
-			return toRem.Contains(obj);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003C_UpdateClanMembers_003Ec__AnonStorey1F2
-	{
-		internal List<string> toRem__;
-
-		internal bool _003C_003Em__51(string obj)
-		{
-			return toRem__.Contains(obj);
-		}
-	}
-
 	private const string FriendsKey = "FriendsKey";
 
 	private const string ToUsKey = "ToUsKey";
@@ -212,21 +41,21 @@ public sealed class FriendsController : MonoBehaviour
 
 	public const float TimeUpdateFriendAndClanData = 20f;
 
-	public static bool isDebugLogWWW = true;
+	public static bool isDebugLogWWW;
 
 	public int Banned = -1;
 
-	public static float onlineDelta = 60f;
+	public static float onlineDelta;
 
-	public static Dictionary<string, Dictionary<string, string>> mapPopularityDictionary = new Dictionary<string, Dictionary<string, string>>();
+	public static Dictionary<string, Dictionary<string, string>> mapPopularityDictionary;
 
-	public static bool readyToOperate = false;
+	public static bool readyToOperate;
 
-	public static FriendsController sharedController = null;
+	public static FriendsController sharedController;
 
-	private static bool _sandboxEnabled = true;
+	private static bool _sandboxEnabled;
 
-	private static bool _specialOffersEnabled = true;
+	private static bool _specialOffersEnabled;
 
 	private bool friendsReceivedOnce;
 
@@ -318,11 +147,11 @@ public sealed class FriendsController : MonoBehaviour
 
 	private static long localServerTime;
 
-	private static float tickForServerTime = 0f;
+	private static float tickForServerTime;
 
 	private static bool isUpdateServerTimeAfterRun;
 
-	public static bool isInitPixelbookSettingsFromServer = false;
+	public static bool isInitPixelbookSettingsFromServer;
 
 	private string FacebookIDKey = "FacebookIDKey";
 
@@ -332,21 +161,21 @@ public sealed class FriendsController : MonoBehaviour
 
 	private static bool _isConfigNameRatingSystemInit;
 
-	private static string _configNameABTestRatingSystem = "none";
+	private static string _configNameABTestRatingSystem;
 
-	private static string configNameRatingSystemSending = string.Empty;
+	private static string configNameRatingSystemSending;
 
 	private static bool _isUseRatingSystem;
 
 	private static bool _isInitUseRatingSystem;
 
-	private static string useRatingSystemKey = "UseRatingSystemKey";
+	private static string useRatingSystemKey;
 
 	private static bool _isCohortUseRatingSystem;
 
 	private static bool _isInitCohortUseRatingSystem;
 
-	private static string useRatingSystemCohortKey = "useRatingSystemCohortKey";
+	private static string useRatingSystemCohortKey;
 
 	private static bool _isCurrentBankViewStaticInit;
 
@@ -354,27 +183,27 @@ public sealed class FriendsController : MonoBehaviour
 
 	private static bool _isConfigNameBankViewInit;
 
-	private static string _configNameABTestBankView = "none";
+	private static string _configNameABTestBankView;
 
-	private static string configNameSending = string.Empty;
+	private static string configNameSending;
 
 	private static bool _isShowStaticBank;
 
 	private static bool _isInitShowStaticBank;
 
-	private static string staticBankKey = "staticBankKey";
+	private static string staticBankKey;
 
 	private static bool _isCohortStaticBank;
 
 	private static bool _isInitCohortStaticBank;
 
-	private static string staticBankCohortKey = "staticBankCohortKey";
+	private static string staticBankCohortKey;
 
 	private static bool _isUseBuffSystem;
 
 	private static bool _isInitUseBuffSystem;
 
-	private static string useBuffSystemKey = "useBuffSystemKey";
+	private static string useBuffSystemKey;
 
 	private static bool _isCurrentStateBuffSystemInit;
 
@@ -382,21 +211,21 @@ public sealed class FriendsController : MonoBehaviour
 
 	private static bool _isConfigNameBuffSystemInit;
 
-	private static string _configNameABTestBuffSystem = "none";
+	private static string _configNameABTestBuffSystem;
 
-	private static string configNameBuffSystemSending = string.Empty;
+	private static string configNameBuffSystemSending;
 
 	private static bool _isCohortBuffSystem;
 
 	private static bool _isInitCohortBuffSystem;
 
-	private static string buffSystemCohortKey = "buffSystemCohortKey";
+	private static string buffSystemCohortKey;
 
-	public static Dictionary<string, float[]> dpsWeaponsFromABTestBalans = new Dictionary<string, float[]>();
+	public static Dictionary<string, float[]> dpsWeaponsFromABTestBalans;
 
-	public static Dictionary<string, float[]> damageWeaponsFromABTestBalans = new Dictionary<string, float[]>();
+	public static Dictionary<string, float[]> damageWeaponsFromABTestBalans;
 
-	public OnChangeClanName onChangeClanName;
+	public FriendsController.OnChangeClanName onChangeClanName;
 
 	private string _prevClanName;
 
@@ -440,7 +269,7 @@ public sealed class FriendsController : MonoBehaviour
 
 	private float sendingTime;
 
-	public Dictionary<string, PossiblleOrigin> getPossibleFriendsResult = new Dictionary<string, PossiblleOrigin>();
+	public Dictionary<string, FriendsController.PossiblleOrigin> getPossibleFriendsResult = new Dictionary<string, FriendsController.PossiblleOrigin>();
 
 	private bool isUpdateInfoAboutAllFriends;
 
@@ -450,33 +279,36 @@ public sealed class FriendsController : MonoBehaviour
 
 	private static FriendProfileController _friendProfileController;
 
-	private static DateTime timeSendTrafficForwarding = new DateTime(2000, 1, 1, 12, 0, 0);
+	private static DateTime timeSendTrafficForwarding;
 
 	private static bool _isConfigNameSandBoxInit;
 
-	private static string _configNameABTestSandBox = "none";
+	private static string _configNameABTestSandBox;
 
 	private static bool _isConfigNameQuestSystemInit;
 
-	private static string _configNameABTestQuestSystem = "none";
+	private static string _configNameABTestQuestSystem;
 
 	private static bool _isConfigNameSpecialOffersInit;
 
-	private static string _configNameABTestSpecialOffers = "none";
+	private static string _configNameABTestSpecialOffers;
 
-	[CompilerGenerated]
-	private static Func<GameObject, bool> _003C_003Ef__am_0024cache8C;
+	private Action FailedSendNewClan;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache8E;
+	private Action<int> ReturnNewIDClan;
 
-	public bool ClanLimitReached
+	public static string actionAddress
 	{
 		get
 		{
-			FriendsController friendsController = sharedController;
-			return friendsController.clanMembers.Count + friendsController.ClanSentInvites.Count + friendsController.clanSentInvitesLocal.Count >= friendsController.ClanLimit;
+			return URLs.Friends;
 		}
+	}
+
+	public static bool ClanDataSettted
+	{
+		get;
+		private set;
 	}
 
 	public int ClanLimit
@@ -484,6 +316,374 @@ public sealed class FriendsController : MonoBehaviour
 		get
 		{
 			return Defs.maxMemberClanCount;
+		}
+	}
+
+	public bool ClanLimitReached
+	{
+		get
+		{
+			FriendsController friendsController = FriendsController.sharedController;
+			return friendsController.clanMembers.Count + friendsController.ClanSentInvites.Count + friendsController.clanSentInvitesLocal.Count >= friendsController.ClanLimit;
+		}
+	}
+
+	public static string configNameABTestBankView
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameBankViewInit)
+			{
+				FriendsController.ParseABTestBankViewConfig();
+			}
+			return FriendsController._configNameABTestBankView;
+		}
+		set
+		{
+			FriendsController._isConfigNameBankViewInit = true;
+			FriendsController._configNameABTestBankView = value;
+			if (string.IsNullOrEmpty(FriendsController.configNameSending))
+			{
+				FriendsController.configNameSending = PlayerPrefs.GetString("cNS", "none");
+			}
+			string str = string.Concat((!FriendsController.isCohortStaticBank ? "Scroll_" : "Static_"), FriendsController._configNameABTestBankView);
+			if (!str.Equals(FriendsController.configNameSending))
+			{
+				AnalyticsStuff.LogABTest("Assortment", str, true);
+				PlayerPrefs.SetString("cNS", str);
+				FriendsController.configNameSending = str;
+			}
+		}
+	}
+
+	public static string configNameABTestBuffSystem
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameBuffSystemInit)
+			{
+				FriendsController.ParseABTestBuffSystemConfig();
+			}
+			return FriendsController._configNameABTestBuffSystem;
+		}
+		set
+		{
+			FriendsController._isConfigNameBuffSystemInit = true;
+			FriendsController._configNameABTestBuffSystem = value;
+			if (string.IsNullOrEmpty(FriendsController.configNameBuffSystemSending))
+			{
+				FriendsController.configNameBuffSystemSending = PlayerPrefs.GetString("cNBSS", "none");
+			}
+			string str = string.Concat((!FriendsController.isCohortBuffSystem ? "NotBuff_" : "BuffSys_"), FriendsController.configNameBuffSystemSending);
+			if (!str.Equals(FriendsController.configNameBuffSystemSending))
+			{
+				AnalyticsStuff.LogABTest("BuffSystem", str, true);
+				PlayerPrefs.SetString("cNBSS", str);
+				FriendsController.configNameBuffSystemSending = str;
+			}
+		}
+	}
+
+	public static string configNameABTestQuestSystem
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameQuestSystemInit)
+			{
+				FriendsController._configNameABTestQuestSystem = PlayerPrefs.GetString("CNQuestSystem", "none");
+				FriendsController._isConfigNameQuestSystemInit = true;
+			}
+			return FriendsController._configNameABTestQuestSystem;
+		}
+		set
+		{
+			FriendsController._isConfigNameQuestSystemInit = true;
+			FriendsController._configNameABTestQuestSystem = value;
+			PlayerPrefs.SetString("CNQuestSystem", FriendsController._configNameABTestQuestSystem);
+		}
+	}
+
+	public static string configNameABTestRatingSystem
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameRatingSystemInit)
+			{
+				FriendsController.ParseRatingSystemConfig();
+			}
+			return FriendsController._configNameABTestRatingSystem;
+		}
+		set
+		{
+			FriendsController._isConfigNameRatingSystemInit = true;
+			FriendsController._configNameABTestRatingSystem = value;
+			if (string.IsNullOrEmpty(FriendsController.configNameRatingSystemSending))
+			{
+				FriendsController.configNameRatingSystemSending = PlayerPrefs.GetString("cNRatSysS", "none");
+			}
+			string str = string.Concat((!FriendsController.isCohortUseRatingSystem ? "OffRating_" : "UseRaing_"), FriendsController._configNameABTestRatingSystem);
+			if (!str.Equals(FriendsController.configNameRatingSystemSending))
+			{
+				AnalyticsStuff.LogABTest("RatingSystem", str, true);
+				PlayerPrefs.SetString("cNRatSysS", str);
+				FriendsController.configNameRatingSystemSending = str;
+			}
+		}
+	}
+
+	public static string configNameABTestSandBox
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameSandBoxInit)
+			{
+				FriendsController._configNameABTestSandBox = PlayerPrefs.GetString("CNSandBox", "none");
+				FriendsController._isConfigNameSandBoxInit = true;
+			}
+			return FriendsController._configNameABTestSandBox;
+		}
+		set
+		{
+			FriendsController._isConfigNameSandBoxInit = true;
+			FriendsController._configNameABTestSandBox = value;
+			PlayerPrefs.SetString("CNSandBox", FriendsController._configNameABTestSandBox);
+		}
+	}
+
+	public static string configNameABTestSpecialOffers
+	{
+		get
+		{
+			if (!FriendsController._isConfigNameSpecialOffersInit)
+			{
+				FriendsController._configNameABTestSpecialOffers = PlayerPrefs.GetString("CNSpecialOffers", "none");
+				FriendsController._isConfigNameSpecialOffersInit = true;
+			}
+			return FriendsController._configNameABTestSpecialOffers;
+		}
+		set
+		{
+			FriendsController._isConfigNameSpecialOffersInit = true;
+			FriendsController._configNameABTestSpecialOffers = value;
+			PlayerPrefs.SetString("CNSpecialOffers", FriendsController._configNameABTestSpecialOffers);
+		}
+	}
+
+	public static int CurrentPlatform
+	{
+		get
+		{
+			return ProtocolListGetter.CurrentPlatform;
+		}
+	}
+
+	public List<string> findPlayersByParamResult
+	{
+		get;
+		private set;
+	}
+
+	public Dictionary<string, object> getInfoPlayerResult
+	{
+		get;
+		private set;
+	}
+
+	public static bool HasFriends
+	{
+		get
+		{
+			string str = PlayerPrefs.GetString("FriendsKey", "[]");
+			return (string.IsNullOrEmpty(str) ? false : str != "[]");
+		}
+	}
+
+	public string id
+	{
+		get
+		{
+			return this._id;
+		}
+		set
+		{
+			this._id = value;
+		}
+	}
+
+	public static bool isCohortBuffSystem
+	{
+		get
+		{
+			if (!FriendsController._isInitCohortBuffSystem)
+			{
+				if (!PlayerPrefs.HasKey(FriendsController.buffSystemCohortKey))
+				{
+					FriendsController._isCohortBuffSystem = UnityEngine.Random.Range(0, 2) == 1;
+					FriendsController._isCohortBuffSystem = true;
+					PlayerPrefs.SetInt(FriendsController.buffSystemCohortKey, (!FriendsController._isCohortBuffSystem ? 0 : 1));
+					PlayerPrefs.Save();
+				}
+				FriendsController._isCohortBuffSystem = PlayerPrefs.GetInt(FriendsController.buffSystemCohortKey) == 1;
+				FriendsController._isInitCohortBuffSystem = true;
+			}
+			return FriendsController._isCohortBuffSystem;
+		}
+		set
+		{
+			FriendsController._isCohortBuffSystem = value;
+			PlayerPrefs.SetInt(FriendsController.buffSystemCohortKey, (!FriendsController._isCohortBuffSystem ? 0 : 1));
+			PlayerPrefs.Save();
+		}
+	}
+
+	public static bool isCohortStaticBank
+	{
+		get
+		{
+			if (!FriendsController._isInitCohortStaticBank)
+			{
+				if (!PlayerPrefs.HasKey(FriendsController.staticBankCohortKey))
+				{
+					FriendsController._isCohortStaticBank = UnityEngine.Random.Range(0, 2) == 1;
+					PlayerPrefs.SetInt(FriendsController.staticBankCohortKey, (!FriendsController._isCohortStaticBank ? 0 : 1));
+					PlayerPrefs.Save();
+				}
+				FriendsController._isCohortStaticBank = PlayerPrefs.GetInt(FriendsController.staticBankCohortKey) == 1;
+				FriendsController._isInitCohortStaticBank = true;
+			}
+			return FriendsController._isCohortStaticBank;
+		}
+	}
+
+	public static bool isCohortUseRatingSystem
+	{
+		get
+		{
+			if (!FriendsController._isInitCohortUseRatingSystem)
+			{
+				if (!PlayerPrefs.HasKey(FriendsController.useRatingSystemCohortKey))
+				{
+					FriendsController._isCohortUseRatingSystem = UnityEngine.Random.Range(0, 2) == 1;
+					PlayerPrefs.SetInt(FriendsController.useRatingSystemCohortKey, (!FriendsController._isCohortUseRatingSystem ? 0 : 1));
+					PlayerPrefs.Save();
+				}
+				FriendsController._isCohortUseRatingSystem = PlayerPrefs.GetInt(FriendsController.useRatingSystemCohortKey) == 1;
+				FriendsController._isInitCohortUseRatingSystem = true;
+			}
+			return FriendsController._isCohortUseRatingSystem;
+		}
+		set
+		{
+			FriendsController._isCohortUseRatingSystem = value;
+			PlayerPrefs.SetInt(FriendsController.useRatingSystemCohortKey, (!FriendsController._isCohortUseRatingSystem ? 0 : 1));
+			PlayerPrefs.Save();
+		}
+	}
+
+	public static bool isCurrentBankViewStatic
+	{
+		get
+		{
+			if (!FriendsController._isCurrentBankViewStaticInit)
+			{
+				FriendsController.ParseABTestBankViewConfig();
+			}
+			return FriendsController._isCurrentBankViewStatic;
+		}
+		set
+		{
+			FriendsController._isCurrentBankViewStaticInit = true;
+			FriendsController._isCurrentBankViewStatic = value;
+		}
+	}
+
+	public static bool isCurrentStateBuffSystem
+	{
+		get
+		{
+			if (!FriendsController._isCurrentStateBuffSystemInit)
+			{
+				FriendsController.ParseABTestBuffSystemConfig();
+			}
+			return FriendsController._isCurrentStateBuffSystem;
+		}
+		set
+		{
+			FriendsController._isCurrentStateBuffSystemInit = true;
+			FriendsController._isCurrentStateBuffSystem = value;
+		}
+	}
+
+	public static bool isCurrentUseRatingSystem
+	{
+		get
+		{
+			if (!FriendsController._isCurrentOnRatingSystemInit)
+			{
+				FriendsController.ParseRatingSystemConfig();
+			}
+			return FriendsController._isCurrentOnRatingSystem;
+		}
+		set
+		{
+			FriendsController._isCurrentOnRatingSystemInit = true;
+			FriendsController._isCurrentOnRatingSystem = value;
+		}
+	}
+
+	private bool isRunABTest
+	{
+		get
+		{
+			return (Defs.abTestBalansCohort != Defs.ABTestCohortsType.NONE || Defs.isActivABTestBuffSystem || Defs.isActivABTestRatingSystem || Defs.isActivABTestStaticBank || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A ? true : Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B);
+		}
+	}
+
+	public static bool isShowStaticBank
+	{
+		get
+		{
+			if (!FriendsController._isInitShowStaticBank)
+			{
+				if (!PlayerPrefs.HasKey(FriendsController.staticBankKey))
+				{
+					FriendsController._isShowStaticBank = (!Defs.isActivABTestStaticBank ? FriendsController.isCurrentBankViewStatic : FriendsController.isCohortStaticBank);
+					PlayerPrefs.SetInt(FriendsController.staticBankKey, (!FriendsController._isShowStaticBank ? 0 : 1));
+					PlayerPrefs.Save();
+				}
+				FriendsController._isShowStaticBank = PlayerPrefs.GetInt(FriendsController.staticBankKey) == 1;
+				FriendsController._isInitShowStaticBank = true;
+			}
+			return FriendsController._isShowStaticBank;
+		}
+		set
+		{
+			FriendsController._isShowStaticBank = value;
+			PlayerPrefs.SetInt(FriendsController.staticBankKey, (!value ? 0 : 1));
+			FriendsController._isInitShowStaticBank = true;
+		}
+	}
+
+	public static bool isUseRatingSystem
+	{
+		get
+		{
+			return true;
+		}
+		set
+		{
+		}
+	}
+
+	public bool ProfileInterfaceActive
+	{
+		get
+		{
+			if (FriendsController._friendProfileController == null)
+			{
+				return false;
+			}
+			return FriendsController._friendProfileController.FriendProfileGo.Map<GameObject, bool>((GameObject g) => g.activeInHierarchy);
 		}
 	}
 
@@ -503,33 +703,11 @@ public sealed class FriendsController : MonoBehaviour
 	{
 		get
 		{
-			return _sandboxEnabled;
+			return FriendsController._sandboxEnabled;
 		}
 		set
 		{
-			_sandboxEnabled = value;
-		}
-	}
-
-	internal static bool SpecialOffersEnabled
-	{
-		get
-		{
-			return _specialOffersEnabled;
-		}
-		set
-		{
-			_specialOffersEnabled = value;
-		}
-	}
-
-	public static bool ClanDataSettted { get; private set; }
-
-	public static int CurrentPlatform
-	{
-		get
-		{
-			return ProtocolListGetter.CurrentPlatform;
+			FriendsController._sandboxEnabled = value;
 		}
 	}
 
@@ -537,201 +715,23 @@ public sealed class FriendsController : MonoBehaviour
 	{
 		get
 		{
-			if (isUpdateServerTimeAfterRun)
+			if (FriendsController.isUpdateServerTimeAfterRun)
 			{
-				return localServerTime;
+				return FriendsController.localServerTime;
 			}
-			return -1L;
+			return (long)-1;
 		}
 	}
 
-	public static string actionAddress
+	internal static bool SpecialOffersEnabled
 	{
 		get
 		{
-			return URLs.Friends;
-		}
-	}
-
-	public string id
-	{
-		get
-		{
-			return _id;
+			return FriendsController._specialOffersEnabled;
 		}
 		set
 		{
-			_id = value;
-		}
-	}
-
-	public static bool isCurrentUseRatingSystem
-	{
-		get
-		{
-			if (!_isCurrentOnRatingSystemInit)
-			{
-				ParseRatingSystemConfig();
-			}
-			return _isCurrentOnRatingSystem;
-		}
-		set
-		{
-			_isCurrentOnRatingSystemInit = true;
-			_isCurrentOnRatingSystem = value;
-		}
-	}
-
-	public static string configNameABTestRatingSystem
-	{
-		get
-		{
-			if (!_isConfigNameRatingSystemInit)
-			{
-				ParseRatingSystemConfig();
-			}
-			return _configNameABTestRatingSystem;
-		}
-		set
-		{
-			_isConfigNameRatingSystemInit = true;
-			_configNameABTestRatingSystem = value;
-			if (string.IsNullOrEmpty(configNameRatingSystemSending))
-			{
-				configNameRatingSystemSending = PlayerPrefs.GetString("cNRatSysS", "none");
-			}
-			string text = ((!isCohortUseRatingSystem) ? "OffRating_" : "UseRaing_") + _configNameABTestRatingSystem;
-			if (!text.Equals(configNameRatingSystemSending))
-			{
-				AnalyticsStuff.LogABTest("RatingSystem", text);
-				PlayerPrefs.SetString("cNRatSysS", text);
-				configNameRatingSystemSending = text;
-			}
-		}
-	}
-
-	public static bool isUseRatingSystem
-	{
-		get
-		{
-			return true;
-		}
-		set
-		{
-		}
-	}
-
-	public static bool isCohortUseRatingSystem
-	{
-		get
-		{
-			if (!_isInitCohortUseRatingSystem)
-			{
-				if (!PlayerPrefs.HasKey(useRatingSystemCohortKey))
-				{
-					_isCohortUseRatingSystem = UnityEngine.Random.Range(0, 2) == 1;
-					PlayerPrefs.SetInt(useRatingSystemCohortKey, _isCohortUseRatingSystem ? 1 : 0);
-					PlayerPrefs.Save();
-				}
-				_isCohortUseRatingSystem = PlayerPrefs.GetInt(useRatingSystemCohortKey) == 1;
-				_isInitCohortUseRatingSystem = true;
-			}
-			return _isCohortUseRatingSystem;
-		}
-		set
-		{
-			_isCohortUseRatingSystem = value;
-			PlayerPrefs.SetInt(useRatingSystemCohortKey, _isCohortUseRatingSystem ? 1 : 0);
-			PlayerPrefs.Save();
-		}
-	}
-
-	public static bool isCurrentBankViewStatic
-	{
-		get
-		{
-			if (!_isCurrentBankViewStaticInit)
-			{
-				ParseABTestBankViewConfig();
-			}
-			return _isCurrentBankViewStatic;
-		}
-		set
-		{
-			_isCurrentBankViewStaticInit = true;
-			_isCurrentBankViewStatic = value;
-		}
-	}
-
-	public static string configNameABTestBankView
-	{
-		get
-		{
-			if (!_isConfigNameBankViewInit)
-			{
-				ParseABTestBankViewConfig();
-			}
-			return _configNameABTestBankView;
-		}
-		set
-		{
-			_isConfigNameBankViewInit = true;
-			_configNameABTestBankView = value;
-			if (string.IsNullOrEmpty(configNameSending))
-			{
-				configNameSending = PlayerPrefs.GetString("cNS", "none");
-			}
-			string text = ((!isCohortStaticBank) ? "Scroll_" : "Static_") + _configNameABTestBankView;
-			if (!text.Equals(configNameSending))
-			{
-				AnalyticsStuff.LogABTest("Assortment", text);
-				PlayerPrefs.SetString("cNS", text);
-				configNameSending = text;
-			}
-		}
-	}
-
-	public static bool isShowStaticBank
-	{
-		get
-		{
-			if (!_isInitShowStaticBank)
-			{
-				if (!PlayerPrefs.HasKey(staticBankKey))
-				{
-					_isShowStaticBank = ((!Defs.isActivABTestStaticBank) ? isCurrentBankViewStatic : isCohortStaticBank);
-					PlayerPrefs.SetInt(staticBankKey, _isShowStaticBank ? 1 : 0);
-					PlayerPrefs.Save();
-				}
-				_isShowStaticBank = PlayerPrefs.GetInt(staticBankKey) == 1;
-				_isInitShowStaticBank = true;
-			}
-			return _isShowStaticBank;
-		}
-		set
-		{
-			_isShowStaticBank = value;
-			PlayerPrefs.SetInt(staticBankKey, value ? 1 : 0);
-			_isInitShowStaticBank = true;
-		}
-	}
-
-	public static bool isCohortStaticBank
-	{
-		get
-		{
-			if (!_isInitCohortStaticBank)
-			{
-				if (!PlayerPrefs.HasKey(staticBankCohortKey))
-				{
-					_isCohortStaticBank = UnityEngine.Random.Range(0, 2) == 1;
-					PlayerPrefs.SetInt(staticBankCohortKey, _isCohortStaticBank ? 1 : 0);
-					PlayerPrefs.Save();
-				}
-				_isCohortStaticBank = PlayerPrefs.GetInt(staticBankCohortKey) == 1;
-				_isInitCohortStaticBank = true;
-			}
-			return _isCohortStaticBank;
+			FriendsController._specialOffersEnabled = value;
 		}
 	}
 
@@ -739,103 +739,33 @@ public sealed class FriendsController : MonoBehaviour
 	{
 		get
 		{
-			if (!_isInitUseBuffSystem)
+			bool flag;
+			if (!FriendsController._isInitUseBuffSystem)
 			{
-				if (!PlayerPrefs.HasKey(useBuffSystemKey))
+				if (!PlayerPrefs.HasKey(FriendsController.useBuffSystemKey))
 				{
-					_isUseBuffSystem = ((!Defs.isActivABTestRatingSystem) ? isCurrentStateBuffSystem : (isCohortUseRatingSystem && isCurrentStateBuffSystem));
-					PlayerPrefs.SetInt(useBuffSystemKey, _isUseBuffSystem ? 1 : 0);
+					if (!Defs.isActivABTestRatingSystem)
+					{
+						flag = FriendsController.isCurrentStateBuffSystem;
+					}
+					else
+					{
+						flag = (!FriendsController.isCohortUseRatingSystem ? false : FriendsController.isCurrentStateBuffSystem);
+					}
+					FriendsController._isUseBuffSystem = flag;
+					PlayerPrefs.SetInt(FriendsController.useBuffSystemKey, (!FriendsController._isUseBuffSystem ? 0 : 1));
 					PlayerPrefs.Save();
 				}
-				_isUseBuffSystem = PlayerPrefs.GetInt(useBuffSystemKey) == 1;
-				_isInitUseBuffSystem = true;
+				FriendsController._isUseBuffSystem = PlayerPrefs.GetInt(FriendsController.useBuffSystemKey) == 1;
+				FriendsController._isInitUseBuffSystem = true;
 			}
-			return _isUseBuffSystem;
+			return FriendsController._isUseBuffSystem;
 		}
 		set
 		{
-			_isUseBuffSystem = value;
-			PlayerPrefs.SetInt(useBuffSystemKey, value ? 1 : 0);
-			_isInitUseBuffSystem = true;
-		}
-	}
-
-	public static bool isCurrentStateBuffSystem
-	{
-		get
-		{
-			if (!_isCurrentStateBuffSystemInit)
-			{
-				ParseABTestBuffSystemConfig();
-			}
-			return _isCurrentStateBuffSystem;
-		}
-		set
-		{
-			_isCurrentStateBuffSystemInit = true;
-			_isCurrentStateBuffSystem = value;
-		}
-	}
-
-	public static string configNameABTestBuffSystem
-	{
-		get
-		{
-			if (!_isConfigNameBuffSystemInit)
-			{
-				ParseABTestBuffSystemConfig();
-			}
-			return _configNameABTestBuffSystem;
-		}
-		set
-		{
-			_isConfigNameBuffSystemInit = true;
-			_configNameABTestBuffSystem = value;
-			if (string.IsNullOrEmpty(configNameBuffSystemSending))
-			{
-				configNameBuffSystemSending = PlayerPrefs.GetString("cNBSS", "none");
-			}
-			string text = ((!isCohortBuffSystem) ? "NotBuff_" : "BuffSys_") + configNameBuffSystemSending;
-			if (!text.Equals(configNameBuffSystemSending))
-			{
-				AnalyticsStuff.LogABTest("BuffSystem", text);
-				PlayerPrefs.SetString("cNBSS", text);
-				configNameBuffSystemSending = text;
-			}
-		}
-	}
-
-	public static bool isCohortBuffSystem
-	{
-		get
-		{
-			if (!_isInitCohortBuffSystem)
-			{
-				if (!PlayerPrefs.HasKey(buffSystemCohortKey))
-				{
-					_isCohortBuffSystem = UnityEngine.Random.Range(0, 2) == 1;
-					_isCohortBuffSystem = true;
-					PlayerPrefs.SetInt(buffSystemCohortKey, _isCohortBuffSystem ? 1 : 0);
-					PlayerPrefs.Save();
-				}
-				_isCohortBuffSystem = PlayerPrefs.GetInt(buffSystemCohortKey) == 1;
-				_isInitCohortBuffSystem = true;
-			}
-			return _isCohortBuffSystem;
-		}
-		set
-		{
-			_isCohortBuffSystem = value;
-			PlayerPrefs.SetInt(buffSystemCohortKey, _isCohortBuffSystem ? 1 : 0);
-			PlayerPrefs.Save();
-		}
-	}
-
-	private bool isRunABTest
-	{
-		get
-		{
-			return Defs.abTestBalansCohort != 0 || Defs.isActivABTestBuffSystem || Defs.isActivABTestRatingSystem || Defs.isActivABTestStaticBank || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B;
+			FriendsController._isUseBuffSystem = value;
+			PlayerPrefs.SetInt(FriendsController.useBuffSystemKey, (!value ? 0 : 1));
+			FriendsController._isInitUseBuffSystem = true;
 		}
 	}
 
@@ -843,773 +773,1149 @@ public sealed class FriendsController : MonoBehaviour
 	{
 		get
 		{
-			return _winCountTimestamp;
+			return this._winCountTimestamp;
 		}
 	}
-
-	public Dictionary<string, object> getInfoPlayerResult { get; private set; }
-
-	public List<string> findPlayersByParamResult { get; private set; }
-
-	public static bool HasFriends
-	{
-		get
-		{
-			string @string = PlayerPrefs.GetString("FriendsKey", "[]");
-			return !string.IsNullOrEmpty(@string) && @string != "[]";
-		}
-	}
-
-	public bool ProfileInterfaceActive
-	{
-		get
-		{
-			if (_friendProfileController == null)
-			{
-				return false;
-			}
-			GameObject friendProfileGo = _friendProfileController.FriendProfileGo;
-			if (_003C_003Ef__am_0024cache8C == null)
-			{
-				_003C_003Ef__am_0024cache8C = _003Cget_ProfileInterfaceActive_003Em__50;
-			}
-			return friendProfileGo.Map(_003C_003Ef__am_0024cache8C);
-		}
-	}
-
-	public static string configNameABTestSandBox
-	{
-		get
-		{
-			if (!_isConfigNameSandBoxInit)
-			{
-				_configNameABTestSandBox = PlayerPrefs.GetString("CNSandBox", "none");
-				_isConfigNameSandBoxInit = true;
-			}
-			return _configNameABTestSandBox;
-		}
-		set
-		{
-			_isConfigNameSandBoxInit = true;
-			_configNameABTestSandBox = value;
-			PlayerPrefs.SetString("CNSandBox", _configNameABTestSandBox);
-		}
-	}
-
-	public static string configNameABTestQuestSystem
-	{
-		get
-		{
-			if (!_isConfigNameQuestSystemInit)
-			{
-				_configNameABTestQuestSystem = PlayerPrefs.GetString("CNQuestSystem", "none");
-				_isConfigNameQuestSystemInit = true;
-			}
-			return _configNameABTestQuestSystem;
-		}
-		set
-		{
-			_isConfigNameQuestSystemInit = true;
-			_configNameABTestQuestSystem = value;
-			PlayerPrefs.SetString("CNQuestSystem", _configNameABTestQuestSystem);
-		}
-	}
-
-	public static string configNameABTestSpecialOffers
-	{
-		get
-		{
-			if (!_isConfigNameSpecialOffersInit)
-			{
-				_configNameABTestSpecialOffers = PlayerPrefs.GetString("CNSpecialOffers", "none");
-				_isConfigNameSpecialOffersInit = true;
-			}
-			return _configNameABTestSpecialOffers;
-		}
-		set
-		{
-			_isConfigNameSpecialOffersInit = true;
-			_configNameABTestSpecialOffers = value;
-			PlayerPrefs.SetString("CNSpecialOffers", _configNameABTestSpecialOffers);
-		}
-	}
-
-	public static event Action StaticBankConfigUpdated;
-
-	public static event Action FriendsUpdated;
-
-	public static event Action ClanUpdated;
-
-	public static event Action FullInfoUpdated;
-
-	public static event Action ServerTimeUpdated;
-
-	public event Action FailedSendNewClan;
-
-	public event Action<int> ReturnNewIDClan;
-
-	public static event Action<int, int> NewFacebookLimitsAvailable;
-
-	public static event Action<int, int, int, int> NewTwitterLimitsAvailable;
-
-	public static event Action<int, int, int, int> NewCheaterDetectParametersAvailable;
-
-	public static event Action OurInfoUpdated;
 
 	static FriendsController()
 	{
+		FriendsController.isDebugLogWWW = true;
+		FriendsController.onlineDelta = 60f;
+		FriendsController.mapPopularityDictionary = new Dictionary<string, Dictionary<string, string>>();
+		FriendsController.readyToOperate = false;
+		FriendsController.sharedController = null;
+		FriendsController._sandboxEnabled = true;
+		FriendsController._specialOffersEnabled = true;
+		FriendsController.tickForServerTime = 0f;
+		FriendsController.isInitPixelbookSettingsFromServer = false;
+		FriendsController._configNameABTestRatingSystem = "none";
+		FriendsController.configNameRatingSystemSending = string.Empty;
+		FriendsController.useRatingSystemKey = "UseRatingSystemKey";
+		FriendsController.useRatingSystemCohortKey = "useRatingSystemCohortKey";
+		FriendsController._configNameABTestBankView = "none";
+		FriendsController.configNameSending = string.Empty;
+		FriendsController.staticBankKey = "staticBankKey";
+		FriendsController.staticBankCohortKey = "staticBankCohortKey";
+		FriendsController.useBuffSystemKey = "useBuffSystemKey";
+		FriendsController._configNameABTestBuffSystem = "none";
+		FriendsController.configNameBuffSystemSending = string.Empty;
+		FriendsController.buffSystemCohortKey = "buffSystemCohortKey";
+		FriendsController.dpsWeaponsFromABTestBalans = new Dictionary<string, float[]>();
+		FriendsController.damageWeaponsFromABTestBalans = new Dictionary<string, float[]>();
+		FriendsController.timeSendTrafficForwarding = new DateTime(2000, 1, 1, 12, 0, 0);
+		FriendsController._configNameABTestSandBox = "none";
+		FriendsController._configNameABTestQuestSystem = "none";
+		FriendsController._configNameABTestSpecialOffers = "none";
 		FriendsController.FriendsUpdated = null;
 		FriendsController.FullInfoUpdated = null;
 		FriendsController.ServerTimeUpdated = null;
 	}
 
+	public FriendsController()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _AcceptClanInvite(string recordId)
+	{
+		FriendsController.u003c_AcceptClanInviteu003ec__Iterator43 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _ChangeClanLogo()
+	{
+		FriendsController.u003c_ChangeClanLogou003ec__Iterator35 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _ChangeClanName(string newNm, Action onSuccess, Action<string> onFailure)
+	{
+		FriendsController.u003c_ChangeClanNameu003ec__Iterator36 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _DeleteClan()
+	{
+		FriendsController.u003c_DeleteClanu003ec__Iterator63 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _DeleteClanMember(string memberID)
+	{
+		FriendsController.u003c_DeleteClanMemberu003ec__Iterator69 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _ExitClan(string who)
+	{
+		FriendsController.u003c_ExitClanu003ec__Iterator62 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _GetFacebookFriendsInfo(Action callb)
+	{
+		FriendsController.u003c_GetFacebookFriendsInfou003ec__Iterator4C variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _GetOnlineForPlayerIDs(List<string> ids)
+	{
+		FriendsController.u003c_GetOnlineForPlayerIDsu003ec__Iterator4A variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _GetOnlineWithClanInfoForPlayerIDs(List<string> ids)
+	{
+		FriendsController.u003c_GetOnlineWithClanInfoForPlayerIDsu003ec__Iterator4B variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _GetOurWins()
+	{
+		FriendsController.u003c_GetOurWinsu003ec__Iterator33 variable = null;
+		return variable;
+	}
+
+	private void _ProcessClanInvitesList(List<object> clanInv)
+	{
+		List<Dictionary<string, string>> dictionaries = new List<Dictionary<string, string>>();
+		foreach (Dictionary<string, object> strs in clanInv)
+		{
+			Dictionary<string, string> strs1 = new Dictionary<string, string>();
+			foreach (KeyValuePair<string, object> keyValuePair in strs)
+			{
+				strs1.Add(keyValuePair.Key, keyValuePair.Value as string);
+			}
+			dictionaries.Add(strs1);
+		}
+		this.ClanInvites.Clear();
+		this.ClanInvites = dictionaries;
+	}
+
+	private void _ProcessFriendsList(List<object> __list, bool requestAllInfo)
+	{
+		List<Dictionary<string, string>> dictionaries = new List<Dictionary<string, string>>();
+		foreach (Dictionary<string, object> _List in __list)
+		{
+			Dictionary<string, string> strs = new Dictionary<string, string>();
+			foreach (KeyValuePair<string, object> keyValuePair in _List)
+			{
+				strs.Add(keyValuePair.Key, keyValuePair.Value as string);
+			}
+			dictionaries.Add(strs);
+		}
+		foreach (Dictionary<string, string> dictionary in dictionaries)
+		{
+			Dictionary<string, string> strs1 = new Dictionary<string, string>();
+			if (dictionary["whom"].Equals(this.id) && dictionary["status"].Equals("0"))
+			{
+				foreach (string key in dictionary.Keys)
+				{
+					if (!key.Equals("whom") && !key.Equals("status"))
+					{
+						try
+						{
+							strs1.Add((!key.Equals("who") ? key : "friend"), dictionary[key]);
+						}
+						catch
+						{
+						}
+					}
+				}
+				this.invitesToUs.Add(strs1["friend"]);
+				this.notShowAddIds.Remove(dictionary["who"]);
+			}
+			if (!dictionary["status"].Equals("1"))
+			{
+				continue;
+			}
+			string str = (!dictionary["who"].Equals(this.id) ? "whom" : "who");
+			string str1 = (!str.Equals("who") ? "who" : "whom");
+			foreach (string key1 in dictionary.Keys)
+			{
+				if (!key1.Equals(str) && !key1.Equals("status"))
+				{
+					strs1.Add((!key1.Equals(str1) ? key1 : "friend"), dictionary[key1]);
+				}
+			}
+			this.friends.Add(strs1["friend"]);
+			this.notShowAddIds.Remove(dictionary[str1]);
+		}
+		if (!requestAllInfo)
+		{
+			this._UpdatePlayersInfo();
+		}
+		else
+		{
+			this.UpdatePLayersInfo();
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _RejectClanInvite(string clanID, string playerID)
+	{
+		FriendsController.u003c_RejectClanInviteu003ec__Iterator68 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _SendCreateClan(string personId, string nameClan, string skinClan, Action<string> ErrorHandler)
+	{
+		FriendsController.u003c_SendCreateClanu003ec__Iterator61 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator _SendRoundWon(int mode)
+	{
+		FriendsController.u003c_SendRoundWonu003ec__Iterator34 variable = null;
+		return variable;
+	}
+
+	private void _UpdateClanMembers(string text)
+	{
+		object obj1;
+		object obj2;
+		object obj3;
+		int num;
+		int num1;
+		Dictionary<string, object> strs = Json.Deserialize(text) as Dictionary<string, object>;
+		if (strs == null)
+		{
+			if (Application.isEditor || UnityEngine.Debug.isDebugBuild)
+			{
+				UnityEngine.Debug.LogWarning(" _UpdateClanMembers dict = null");
+			}
+			return;
+		}
+		foreach (KeyValuePair<string, object> keyValuePair in strs)
+		{
+			string key = keyValuePair.Key;
+			if (key != null)
+			{
+				if (FriendsController.u003cu003ef__switchu0024map2 == null)
+				{
+					Dictionary<string, int> strs1 = new Dictionary<string, int>(3)
+					{
+						{ "info", 0 },
+						{ "players", 1 },
+						{ "invites", 2 }
+					};
+					FriendsController.u003cu003ef__switchu0024map2 = strs1;
+				}
+				if (FriendsController.u003cu003ef__switchu0024map2.TryGetValue(key, out num1))
+				{
+					switch (num1)
+					{
+						case 0:
+						{
+							Dictionary<string, object> value = keyValuePair.Value as Dictionary<string, object>;
+							if (value != null)
+							{
+								if (value.TryGetValue("name", out obj1))
+								{
+									this._prevClanName = this.clanName;
+									this.clanName = obj1 as string;
+									if (!this._prevClanName.Equals(this.clanName) && this.onChangeClanName != null)
+									{
+										this.onChangeClanName(this.clanName);
+									}
+								}
+								if (value.TryGetValue("logo", out obj2))
+								{
+									this.clanLogo = obj2 as string;
+								}
+								if (value.TryGetValue("creator_id", out obj3))
+								{
+									this.clanLeaderID = obj3 as string;
+								}
+							}
+							continue;
+						}
+						case 1:
+						{
+							List<object> objs = keyValuePair.Value as List<object>;
+							if (objs != null)
+							{
+								this.clanMembers.Clear();
+								foreach (Dictionary<string, object> strs2 in objs)
+								{
+									Dictionary<string, string> strs3 = new Dictionary<string, string>();
+									foreach (KeyValuePair<string, object> keyValuePair1 in strs2)
+									{
+										if (!(keyValuePair1.Value is string))
+										{
+											continue;
+										}
+										strs3.Add(keyValuePair1.Key, keyValuePair1.Value as string);
+									}
+									this.clanMembers.Add(strs3);
+								}
+							}
+							List<string> strs4 = new List<string>();
+							foreach (string str in this.clanDeletedLocal)
+							{
+								bool flag = false;
+								foreach (Dictionary<string, string> clanMember in this.clanMembers)
+								{
+									if (!clanMember.ContainsKey("id") || !clanMember["id"].Equals(str))
+									{
+										continue;
+									}
+									flag = true;
+									break;
+								}
+								if (flag)
+								{
+									continue;
+								}
+								strs4.Add(str);
+							}
+							this.clanDeletedLocal.RemoveAll((string obj) => strs4.Contains(obj));
+							continue;
+						}
+						case 2:
+						{
+							this.ClanSentInvites.Clear();
+							List<object> value1 = keyValuePair.Value as List<object>;
+							if (value1 != null)
+							{
+								foreach (string str1 in value1)
+								{
+									if (!int.TryParse(str1, out num) || this.ClanSentInvites.Contains(num.ToString()))
+									{
+										continue;
+									}
+									this.ClanSentInvites.Add(num.ToString());
+									this.clanSentInvitesLocal.Remove(num.ToString());
+								}
+							}
+							continue;
+						}
+					}
+				}
+			}
+		}
+		List<string> strs5 = new List<string>();
+		foreach (string str2 in this.clanCancelledInvitesLocal)
+		{
+			if (this.ClanSentInvites.Contains(str2))
+			{
+				continue;
+			}
+			strs5.Add(str2);
+		}
+		this.clanCancelledInvitesLocal.RemoveAll((string obj) => strs5.Contains(obj));
+		if (FriendsController.ClanUpdated != null)
+		{
+			FriendsController.ClanUpdated();
+		}
+		FriendsController.ClanDataSettted = true;
+	}
+
+	private void _UpdateFriends(string text, bool requestAllInfo)
+	{
+		object obj;
+		object obj1;
+		if (string.IsNullOrEmpty(text))
+		{
+			return;
+		}
+		this.invitesFromUs.Clear();
+		this.invitesToUs.Clear();
+		this.friends.Clear();
+		this.ClanInvites.Clear();
+		this.friendsDeletedLocal.Clear();
+		Dictionary<string, object> strs = Json.Deserialize(text) as Dictionary<string, object>;
+		if (strs == null)
+		{
+			if (UnityEngine.Debug.isDebugBuild)
+			{
+				UnityEngine.Debug.LogWarning(" _UpdateFriends dict = null");
+			}
+			return;
+		}
+		if (!strs.TryGetValue("friends", out obj))
+		{
+			UnityEngine.Debug.LogWarning(" _UpdateFriends friendsObj!");
+			return;
+		}
+		List<object> objs = obj as List<object>;
+		if (objs == null)
+		{
+			if (Application.isEditor || UnityEngine.Debug.isDebugBuild)
+			{
+				UnityEngine.Debug.LogWarning(" _UpdateFriends __list = null");
+			}
+			return;
+		}
+		this._ProcessFriendsList(objs, requestAllInfo);
+		if (!strs.TryGetValue("clans_invites", out obj1))
+		{
+			UnityEngine.Debug.LogWarning(" _UpdateFriends clanInvObj!");
+			return;
+		}
+		List<object> objs1 = obj1 as List<object>;
+		if (objs1 != null)
+		{
+			this._ProcessClanInvitesList(objs1);
+			return;
+		}
+		if (Application.isEditor || UnityEngine.Debug.isDebugBuild)
+		{
+			UnityEngine.Debug.LogWarning(" _UpdateFriends clanInv = null");
+		}
+	}
+
+	private void _UpdatePlayersInfo()
+	{
+		List<string> strs = new List<string>();
+		strs.AddRange(this.friends);
+		strs.AddRange(this.invitesToUs);
+		if (strs.Count > 0)
+		{
+			base.StartCoroutine(this.GetInfoAboutNPlayers(strs));
+		}
+	}
+
+	public void AcceptClanInvite(string recordId)
+	{
+		if (!string.IsNullOrEmpty(recordId) && FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this._AcceptClanInvite(recordId));
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AcceptFriend(string accepteeId, Action<bool> action = null)
+	{
+		FriendsController.u003cAcceptFriendu003ec__Iterator65 variable = null;
+		return variable;
+	}
+
+	public void AcceptInvite(string accepteeId, Action<bool> action = null)
+	{
+		if (!string.IsNullOrEmpty(accepteeId) && FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this.AcceptFriend(accepteeId, action));
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AddPurchaseEvent(int inapp, string purchaseId)
+	{
+		FriendsController.u003cAddPurchaseEventu003ec__Iterator4E variable = null;
+		return variable;
+	}
+
+	private void Awake()
+	{
+		if (!Storager.hasKey(this.FacebookIDKey))
+		{
+			Storager.setString(this.FacebookIDKey, string.Empty, false);
+		}
+		this.id_fb = Storager.getString(this.FacebookIDKey, false);
+		FriendsController.sharedController = this;
+	}
+
+	public void ChangeClanLogo()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		base.StartCoroutine(this._ChangeClanLogo());
+	}
+
+	public void ChangeClanName(string newNm, Action onSuccess, Action<string> onFailure)
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		base.StartCoroutine(this._ChangeClanName(newNm, onSuccess, onFailure));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator CheckOurIDExists()
+	{
+		FriendsController.u003cCheckOurIDExistsu003ec__Iterator40 variable = null;
+		return variable;
+	}
+
+	public void ClearAllFriendsInvites()
+	{
+		base.StartCoroutine(this.ClearAllFriendsInvitesCoroutine());
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ClearAllFriendsInvitesCoroutine()
+	{
+		FriendsController.u003cClearAllFriendsInvitesCoroutineu003ec__Iterator6B variable = null;
+		return variable;
+	}
+
+	public void ClearClanData()
+	{
+		this.ClanID = null;
+		this.clanName = string.Empty;
+		this.clanLogo = string.Empty;
+		this.clanLeaderID = string.Empty;
+		this.clanMembers.Clear();
+		this.ClanSentInvites.Clear();
+		this.clanSentInvitesLocal.Clear();
+	}
+
+	private void ClearListClickJoinFriends()
+	{
+		this.clicksJoinByFriends.Clear();
+		PlayerPrefs.SetString("CachedFriendsJoinClickList", string.Empty);
+	}
+
+	public static void CopyMyIdToClipboard()
+	{
+		FriendsController.CopyPlayerIdToClipboard(FriendsController.sharedController.id);
+	}
+
+	public static void CopyPlayerIdToClipboard(string playerId)
+	{
+		UniPasteBoard.SetClipBoardString(playerId);
+		InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_1618"));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator CreatePlayer()
+	{
+		FriendsController.u003cCreatePlayeru003ec__Iterator52 variable = null;
+		return variable;
+	}
+
+	public void DeleteClan()
+	{
+		if (FriendsController.readyToOperate && this.ClanID != null)
+		{
+			base.StartCoroutine(this._DeleteClan());
+		}
+	}
+
+	public void DeleteClanMember(string memebrID)
+	{
+		if (!string.IsNullOrEmpty(memebrID) && FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this._DeleteClanMember(memebrID));
+		}
+	}
+
+	public static void DeleteFriend(string rejecteeId, Action<bool> action = null)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return;
+		}
+		if (FriendsController.readyToOperate)
+		{
+			FriendsController.sharedController.StartCoroutine(FriendsController.sharedController.DeleteFriendCoroutine(rejecteeId, action));
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DeleteFriendCoroutine(string rejecteeId, Action<bool> action = null)
+	{
+		FriendsController.u003cDeleteFriendCoroutineu003ec__Iterator66 variable = null;
+		return variable;
+	}
+
+	public static void DisposeProfile()
+	{
+		if (FriendsController._friendProfileController == null)
+		{
+			return;
+		}
+		FriendsController._friendProfileController.Dispose();
+		FriendsController._friendProfileController = null;
+	}
+
+	public void DownloadDataAboutPossibleFriends()
+	{
+		int currentLevel = ExperienceController.GetCurrentLevel();
+		int num = (int)ConnectSceneNGUIController.myPlatformConnect;
+		string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
+		base.StartCoroutine(this.GetPossibleFriendsList(currentLevel, num, multiplayerProtocolVersion));
+	}
+
+	public void DownloadInfoByEverydayDelta()
+	{
+		base.StartCoroutine(this.GetInfoByEverydayDelta());
+	}
+
+	private void DumpCurrentState()
+	{
+	}
+
+	public void ExitClan(string who = null)
+	{
+		if (FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this._ExitClan(who));
+		}
+	}
+
 	public void FastGetPixelbookSettings()
 	{
-		timerUpdatePixelbookSetting = -1f;
+		this.timerUpdatePixelbookSetting = -1f;
 	}
 
-	private IEnumerator GetPixelbookSettingsLoop(Task futureToWait)
+	private void FillClickJoinFriendsListByCachedValue()
 	{
-		yield return new WaitUntil(((_003CGetPixelbookSettingsLoop_003Ec__Iterator2A)(object)this)._003C_003Em__54);
-		timerUpdatePixelbookSetting = Defs.timeUpdatePixelbookInfo;
-		while (true)
-		{
-			yield return StartCoroutine(GetPixelbookSettings());
-			while (timerUpdatePixelbookSetting > 0f)
-			{
-				timerUpdatePixelbookSetting -= Time.deltaTime;
-				yield return null;
-			}
-			timerUpdatePixelbookSetting = Defs.timeUpdatePixelbookInfo;
-		}
-	}
-
-	private IEnumerator GetNewsLoop(Task futureToWait)
-	{
-		yield return new WaitUntil(((_003CGetNewsLoop_003Ec__Iterator2B)(object)this)._003C_003Em__55);
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage <= TrainingController.NewTrainingCompletedStage.ShopCompleted)
-		{
-			yield return null;
-		}
-		while (true)
-		{
-			yield return StartCoroutine(GetLobbyNews(false));
-			yield return new WaitForSeconds(Defs.timeUpdateNews);
-		}
-	}
-
-	private IEnumerator GetFiltersSettings()
-	{
-		WWW response = Tools.CreateWwwIfNotConnected(URLs.FilterBadWord);
-		if (response == null)
-		{
-			yield break;
-		}
-		yield return response;
-		if (!string.IsNullOrEmpty(response.error))
-		{
-			Debug.LogWarning("FilterBadWord response error: " + response.error);
-			yield break;
-		}
-		string responseText = URLs.Sanitize(response);
-		if (string.IsNullOrEmpty(responseText))
-		{
-			Debug.LogWarning("FilterBadWord response is empty");
-			yield break;
-		}
-		Dictionary<string, object> filterDict = Json.Deserialize(responseText) as Dictionary<string, object>;
-		string wordsList = Json.Serialize(filterDict["Words"]);
-		string symbolsList = Json.Serialize(filterDict["Symbols"]);
-		PlayerPrefs.SetString("PixelFilterWordsKey", wordsList);
-		PlayerPrefs.SetString("PixelFilterSymbolsKey", symbolsList);
-		PlayerPrefs.Save();
-		FilterBadWorld.InitBadLists();
-	}
-
-	private IEnumerator GetBuffSettings(Task futureToWait)
-	{
-		yield return new WaitUntil(((_003CGetBuffSettings_003Ec__Iterator2D)(object)this)._003C_003Em__56);
-		string url = ((!useBuffSystem) ? URLs.BuffSettings1031 : URLs.BuffSettings1050);
-		string cachedResponse = PersistentCacheManager.Instance.GetValue(url);
-		string responseText;
-		if (!string.IsNullOrEmpty(cachedResponse))
-		{
-			PersistentCacheManager.DebugReportCacheHit(url);
-			responseText = cachedResponse;
-		}
-		else
-		{
-			WWW response;
-			while (true)
-			{
-				PersistentCacheManager.DebugReportCacheMiss(url);
-				response = Tools.CreateWwwIfNotConnected(url);
-				if (response == null)
-				{
-					yield return new WaitForSeconds(20f);
-					continue;
-				}
-				yield return response;
-				if (!string.IsNullOrEmpty(response.error))
-				{
-					Debug.LogWarning("GetBuffSettings response error: " + response.error);
-					yield return new WaitForSeconds(20f);
-					continue;
-				}
-				responseText = URLs.Sanitize(response);
-				if (!string.IsNullOrEmpty(responseText))
-				{
-					break;
-				}
-				Debug.LogWarning("GetBuffSettings response is empty");
-				yield return new WaitForSeconds(20f);
-			}
-			PersistentCacheManager.Instance.SetValue(response.url, responseText);
-		}
-		Storager.setString("BuffsParam", responseText, false);
-		if (useBuffSystem)
-		{
-			BuffSystem.instance.TryLoadConfig();
-		}
-	}
-
-	private IEnumerator GetLobbyNews(bool fromPause)
-	{
-		string url = URLs.LobbyNews;
-		string cachedResponse = PersistentCacheManager.Instance.GetValue(url);
-		string responseText;
-		if (!string.IsNullOrEmpty(cachedResponse))
-		{
-			PersistentCacheManager.DebugReportCacheHit(url);
-			responseText = cachedResponse;
-		}
-		else
-		{
-			PersistentCacheManager.DebugReportCacheMiss(url);
-			WWW response = Tools.CreateWwwIfNotConnected(url);
-			if (response == null)
-			{
-				yield break;
-			}
-			yield return response;
-			if (!string.IsNullOrEmpty(response.error))
-			{
-				Debug.LogWarning("GetLobbyNews response error: " + response.error);
-				yield break;
-			}
-			responseText = URLs.Sanitize(response);
-			PersistentCacheManager.Instance.SetValue(response.url, responseText);
-		}
-		if (string.IsNullOrEmpty(responseText))
-		{
-			Debug.LogWarning("GetLobbyNews response is empty");
-			yield break;
-		}
-		string oldNews = PlayerPrefs.GetString("LobbyNewsKey", "[]");
-		bool isAnyNews = false;
-		List<object> oldNewsAsList = Json.Deserialize(oldNews) as List<object>;
-		List<Dictionary<string, object>> oldNewsAll = ((oldNewsAsList == null) ? new List<Dictionary<string, object>>() : oldNewsAsList.OfType<Dictionary<string, object>>().ToList());
-		List<object> responseTextAsList = Json.Deserialize(responseText) as List<object>;
-		List<Dictionary<string, object>> newsAll = ((responseTextAsList == null) ? new List<Dictionary<string, object>>() : responseTextAsList.OfType<Dictionary<string, object>>().ToList());
-		if (newsAll.Count == 0)
-		{
-			isAnyNews = false;
-		}
-		else
-		{
-			for (int i = 0; i < newsAll.Count; i++)
-			{
-				newsAll[i]["readed"] = 0;
-				bool isOld = false;
-				for (int o = 0; o < oldNewsAll.Count; o++)
-				{
-					if (Convert.ToInt32(oldNewsAll[o]["date"]) == Convert.ToInt32(newsAll[i]["date"]))
-					{
-						isOld = true;
-						if (oldNewsAll[o].ContainsKey("readed"))
-						{
-							newsAll[i]["readed"] = oldNewsAll[o]["readed"];
-						}
-						break;
-					}
-				}
-				try
-				{
-					if (!isOld)
-					{
-						FlurryPluginWrapper.LogEventAndDublicateToConsole("News", new Dictionary<string, string>
-						{
-							{ "CTR", "Show" },
-							{ "Conversion Total", "Show" }
-						});
-						AnalyticsFacade.SendCustomEvent("News", new Dictionary<string, object>
-						{
-							{ "CTR", "Show" },
-							{ "Conversion Total", "Show" }
-						});
-					}
-				}
-				catch (Exception e)
-				{
-					Debug.LogError("Exception in log News (CTR = Show, Conversion Total = Show): " + e);
-				}
-				if (Convert.ToInt32(newsAll[i]["readed"]) == 0)
-				{
-					isAnyNews = true;
-				}
-			}
-		}
-		PlayerPrefs.SetString("LobbyNewsKey", Json.Serialize(newsAll));
-		PlayerPrefs.SetInt("LobbyIsAnyNewsKey", isAnyNews ? 1 : 0);
-		PlayerPrefs.Save();
-		if (isAnyNews && MainMenuController.sharedController != null)
-		{
-			MainMenuController.sharedController.newsIndicator.SetActive(true);
-		}
-	}
-
-	private IEnumerator GetTimeFromServerLoop()
-	{
-		isUpdateServerTimeAfterRun = false;
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-		{
-			yield return null;
-		}
-		while (string.IsNullOrEmpty(id))
-		{
-			yield return null;
-		}
-		while (!isUpdateServerTimeAfterRun)
-		{
-			yield return StartCoroutine(GetTimeFromServer());
-			float timerUpdate = Defs.timeUpdateServerTime;
-			while (!isUpdateServerTimeAfterRun && timerUpdate > 0f)
-			{
-				timerUpdate -= Time.deltaTime;
-				yield return null;
-			}
-		}
-		if (FriendsController.ServerTimeUpdated != null)
-		{
-			FriendsController.ServerTimeUpdated();
-		}
-	}
-
-	private IEnumerator GetTimeFromServer()
-	{
-		WWWForm wwwForm = new WWWForm();
-		wwwForm.AddField("action", "get_time");
-		wwwForm.AddField("app_version", string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion));
-		wwwForm.AddField("uniq_id", sharedController.id);
-		wwwForm.AddField("auth", Hash("get_time"));
-		WWW download = Tools.CreateWwwIfNotConnected(URLs.Friends, wwwForm, string.Empty);
-		if (download != null)
-		{
-			yield return download;
-			string response = URLs.Sanitize(download);
-			long currentServerTime;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				Debug.LogWarning("get_time error:    " + download.error);
-			}
-			else if (long.TryParse(response, out currentServerTime))
-			{
-				localServerTime = currentServerTime;
-				tickForServerTime = 0f;
-				isUpdateServerTimeAfterRun = true;
-			}
-			else
-			{
-				Debug.LogError("Could not parse response: " + response);
-			}
-		}
-	}
-
-	private IEnumerator GetPixelbookSettings()
-	{
-		string url = URLs.PixelbookSettings;
-		string cachedResponse = PersistentCacheManager.Instance.GetValue(url);
-		string responseText;
-		if (!string.IsNullOrEmpty(cachedResponse))
-		{
-			PersistentCacheManager.DebugReportCacheHit(url);
-			responseText = cachedResponse;
-		}
-		else
-		{
-			PersistentCacheManager.DebugReportCacheMiss(url);
-			WWW response = Tools.CreateWwwIfNotConnected(url);
-			if (response == null)
-			{
-				yield break;
-			}
-			yield return response;
-			if (!string.IsNullOrEmpty(response.error))
-			{
-				Debug.LogWarning("PixelbookSettings response error: " + response.error);
-				yield break;
-			}
-			responseText = URLs.Sanitize(response);
-			if (string.IsNullOrEmpty(responseText))
-			{
-				Debug.LogWarning("PixelbookSettings response is empty");
-				yield break;
-			}
-			PersistentCacheManager.Instance.SetValue(url, responseText);
-		}
-		PlayerPrefs.SetString("PixelbookSettingsKey", responseText);
-		PlayerPrefs.Save();
-		UpdatePixelbookSettingsFromPrefs();
-		isInitPixelbookSettingsFromServer = true;
-	}
-
-	public static void UpdatePixelbookSettingsFromPrefs()
-	{
-		string @string = PlayerPrefs.GetString("PixelbookSettingsKey", "{}");
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("MaxFriendCount"))
+		string str = PlayerPrefs.GetString("CachedFriendsJoinClickList", string.Empty);
+		if (string.IsNullOrEmpty(str))
 		{
 			return;
 		}
-		if (dictionary.ContainsKey("FriendsUrl"))
-		{
-			URLs.Friends = Convert.ToString(dictionary["FriendsUrl"]);
-		}
-		if (dictionary.ContainsKey("MaxFriendCount"))
-		{
-			Defs.maxCountFriend = Convert.ToInt32(dictionary["MaxFriendCount"]);
-		}
-		if (dictionary.ContainsKey("MaxMemberClanCount"))
-		{
-			Defs.maxMemberClanCount = Convert.ToInt32(dictionary["MaxMemberClanCount"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdateFriendInfo"))
-		{
-			Defs.timeUpdateFriendInfo = Convert.ToInt32(dictionary["TimeUpdateFriendInfo"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdateOnlineInGame"))
-		{
-			Defs.timeUpdateOnlineInGame = Convert.ToInt32(dictionary["TimeUpdateOnlineInGame"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdateInfoInProfile"))
-		{
-			Defs.timeUpdateInfoInProfile = Convert.ToInt32(dictionary["TimeUpdateInfoInProfile"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdateLeaderboardIfNullResponce"))
-		{
-			Defs.timeUpdateLeaderboardIfNullResponce = Convert.ToInt32(dictionary["TimeUpdateLeaderboardIfNullResponce"]);
-		}
-		if (dictionary.ContainsKey("TimeBlockRefreshFriendDate"))
-		{
-			Defs.timeBlockRefreshFriendDate = Convert.ToInt32(dictionary["TimeBlockRefreshFriendDate"]);
-		}
-		if (dictionary.ContainsKey("TimeWaitLoadPossibleFriends"))
-		{
-			Defs.timeWaitLoadPossibleFriends = Convert.ToInt32(dictionary["TimeWaitLoadPossibleFriends"]);
-		}
-		if (dictionary.ContainsKey("PauseUpdateLeaderboard"))
-		{
-			Defs.pauseUpdateLeaderboard = Convert.ToInt32(dictionary["PauseUpdateLeaderboard"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdatePixelbookInfo"))
-		{
-			Defs.timeUpdatePixelbookInfo = Convert.ToInt32(dictionary["TimeUpdatePixelbookInfo"]);
-		}
-		if (dictionary.ContainsKey("HistoryPrivateMessageLength"))
-		{
-			Defs.historyPrivateMessageLength = Convert.ToInt32(dictionary["HistoryPrivateMessageLength"]);
-		}
-		if (dictionary.ContainsKey("TimeUpdateStartCheckIfNullResponce"))
-		{
-			Defs.timeUpdateStartCheckIfNullResponce = Convert.ToInt32(dictionary["TimeUpdateStartCheckIfNullResponce"]);
-		}
-		if (dictionary.ContainsKey("FacebookLimits"))
-		{
-			try
-			{
-				object obj = dictionary["FacebookLimits"];
-				Dictionary<string, object> dictionary2 = obj as Dictionary<string, object>;
-				int arg = (int)(long)dictionary2["GreenLimit"];
-				int arg2 = (int)(long)dictionary2["RedLimit"];
-				Action<int, int> newFacebookLimitsAvailable = FriendsController.NewFacebookLimitsAvailable;
-				if (newFacebookLimitsAvailable != null)
-				{
-					newFacebookLimitsAvailable(arg, arg2);
-				}
-			}
-			catch (Exception exception)
-			{
-				Debug.LogException(exception);
-			}
-		}
-		if (dictionary.ContainsKey("TwitterLimits"))
-		{
-			try
-			{
-				object obj2 = dictionary["TwitterLimits"];
-				Dictionary<string, object> dictionary3 = obj2 as Dictionary<string, object>;
-				int arg3 = (int)(long)dictionary3["GreenLimit"];
-				int arg4 = (int)(long)dictionary3["RedLimit"];
-				int arg5 = (int)(long)dictionary3["MultyWinLimit"];
-				int arg6 = (int)(long)dictionary3["ArenaLimit"];
-				Action<int, int, int, int> newTwitterLimitsAvailable = FriendsController.NewTwitterLimitsAvailable;
-				if (newTwitterLimitsAvailable != null)
-				{
-					newTwitterLimitsAvailable(arg3, arg4, arg5, arg6);
-				}
-			}
-			catch (Exception exception2)
-			{
-				Debug.LogException(exception2);
-			}
-		}
-		if (dictionary.ContainsKey("CheaterDetectParameters"))
-		{
-			try
-			{
-				object obj3 = dictionary["CheaterDetectParameters"];
-				Dictionary<string, object> dictionary4 = obj3 as Dictionary<string, object>;
-				Dictionary<string, object> dictionary5 = dictionary4["Paying"] as Dictionary<string, object>;
-				int arg7 = (int)(long)dictionary5["Coins"];
-				int arg8 = (int)(long)dictionary5["GemsCurrency"];
-				Dictionary<string, object> dictionary6 = dictionary4["NonPaying"] as Dictionary<string, object>;
-				int arg9 = (int)(long)dictionary6["Coins"];
-				int arg10 = (int)(long)dictionary6["GemsCurrency"];
-				Action<int, int, int, int> newCheaterDetectParametersAvailable = FriendsController.NewCheaterDetectParametersAvailable;
-				if (newCheaterDetectParametersAvailable != null)
-				{
-					newCheaterDetectParametersAvailable(arg7, arg8, arg9, arg10);
-				}
-			}
-			catch (Exception exception3)
-			{
-				Debug.LogException(exception3);
-			}
-		}
-		if (dictionary.ContainsKey("UseSqlLobby1031"))
-		{
-			Defs.useSqlLobby = Convert.ToInt32(dictionary["UseSqlLobby1031"]) == 1;
-		}
-	}
-
-	private static void FillListDictionary(string key, List<Dictionary<string, string>> list)
-	{
-		string @string = PlayerPrefs.GetString(key, "[]");
-		List<object> list2 = Json.Deserialize(@string) as List<object>;
-		if (list2 == null || list2.Count <= 0)
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs == null)
 		{
 			return;
 		}
-		foreach (Dictionary<string, object> item in list2.OfType<Dictionary<string, object>>())
+		foreach (KeyValuePair<string, object> keyValuePair in strs)
 		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item2 in item)
+			this.clicksJoinByFriends.Add(keyValuePair.Key, Convert.ToString(keyValuePair.Value));
+		}
+	}
+
+	private static void FillDictionary(string key, Dictionary<string, Dictionary<string, object>> dictionary)
+	{
+		string empty = string.Empty;
+		using (StopwatchLogger stopwatchLogger = new StopwatchLogger(string.Concat("Storager extracting ", key)))
+		{
+			empty = PlayerPrefs.GetString(key, "{}");
+		}
+		UnityEngine.Debug.Log(string.Concat(key, " (length): ", empty.Length));
+		Dictionary<string, object> strs = null;
+		using (StopwatchLogger stopwatchLogger1 = new StopwatchLogger(string.Concat("Json decoding ", key)))
+		{
+			strs = Json.Deserialize(empty) as Dictionary<string, object>;
+		}
+		if (strs != null && strs.Count > 0)
+		{
+			UnityEngine.Debug.Log(string.Concat(key, " (count): ", strs.Count));
+			using (StopwatchLogger stopwatchLogger2 = new StopwatchLogger(string.Concat("Dictionary copying ", key)))
 			{
-				string text = item2.Value as string;
-				if (text != null)
+				foreach (KeyValuePair<string, object> keyValuePair in strs)
 				{
-					dictionary.Add(item2.Key, text);
+					Dictionary<string, object> value = keyValuePair.Value as Dictionary<string, object>;
+					if (value == null)
+					{
+						continue;
+					}
+					dictionary.Add(keyValuePair.Key, value);
 				}
 			}
-			list.Add(dictionary);
 		}
 	}
 
 	private static List<string> FillList(string key)
 	{
-		List<string> list = new List<string>();
-		string @string = PlayerPrefs.GetString(key, "[]");
-		List<object> list2 = Json.Deserialize(@string) as List<object>;
-		if (list2 != null && list2.Count > 0)
+		List<string> strs = new List<string>();
+		string str = PlayerPrefs.GetString(key, "[]");
+		List<object> objs = Json.Deserialize(str) as List<object>;
+		if (objs != null && objs.Count > 0)
 		{
-			foreach (string item in list2.OfType<string>())
+			IEnumerator<string> enumerator = objs.OfType<string>().GetEnumerator();
+			try
 			{
-				list.Add(item);
+				while (enumerator.MoveNext())
+				{
+					strs.Add(enumerator.Current);
+				}
 			}
-			return list;
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
 		}
-		return list;
+		return strs;
 	}
 
-	private static void FillDictionary(string key, Dictionary<string, Dictionary<string, object>> dictionary)
+	private static void FillListDictionary(string key, List<Dictionary<string, string>> list)
 	{
-		string text = string.Empty;
-		using (new StopwatchLogger("Storager extracting " + key))
+		string str = PlayerPrefs.GetString(key, "[]");
+		List<object> objs = Json.Deserialize(str) as List<object>;
+		if (objs != null && objs.Count > 0)
 		{
-			text = PlayerPrefs.GetString(key, "{}");
+			IEnumerator<Dictionary<string, object>> enumerator = objs.OfType<Dictionary<string, object>>().GetEnumerator();
+			try
+			{
+				while (enumerator.MoveNext())
+				{
+					Dictionary<string, object> current = enumerator.Current;
+					Dictionary<string, string> strs = new Dictionary<string, string>();
+					Dictionary<string, object>.Enumerator enumerator1 = current.GetEnumerator();
+					try
+					{
+						while (enumerator1.MoveNext())
+						{
+							KeyValuePair<string, object> keyValuePair = enumerator1.Current;
+							string value = keyValuePair.Value as string;
+							if (value == null)
+							{
+								continue;
+							}
+							strs.Add(keyValuePair.Key, value);
+						}
+					}
+					finally
+					{
+						((IDisposable)(object)enumerator1).Dispose();
+					}
+					list.Add(strs);
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
 		}
-		Debug.Log(key + " (length): " + text.Length);
-		Dictionary<string, object> dictionary2 = null;
-		using (new StopwatchLogger("Json decoding " + key))
+	}
+
+	[DebuggerHidden]
+	public IEnumerator FriendRequest(string personId, Dictionary<string, object> socialEventParameters, Action<bool, bool> callbackAnswer = null)
+	{
+		FriendsController.u003cFriendRequestu003ec__Iterator60 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestBalansCohortNameActual()
+	{
+		FriendsController.u003cGetABTestBalansCohortNameActualu003ec__Iterator3E variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestBalansConfig(string nameConfig)
+	{
+		FriendsController.u003cGetABTestBalansConfigu003ec__Iterator3D variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestBalansConfigName()
+	{
+		FriendsController.u003cGetABTestBalansConfigNameu003ec__Iterator39 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestBankViewConfig()
+	{
+		FriendsController.u003cGetABTestBankViewConfigu003ec__Iterator3B variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestBuffSystemConfig()
+	{
+		FriendsController.u003cGetABTestBuffSystemConfigu003ec__Iterator3C variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestQuestSystemConfig()
+	{
+		FriendsController.u003cGetABTestQuestSystemConfigu003ec__Iterator74 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestSandBoxConfig()
+	{
+		FriendsController.u003cGetABTestSandBoxConfigu003ec__Iterator73 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetABTestSpecialOffersConfig()
+	{
+		FriendsController.u003cGetABTestSpecialOffersConfigu003ec__Iterator75 variable = null;
+		return variable;
+	}
+
+	private string GetAccesoriesString()
+	{
+		string empty;
+		string str = Storager.getString(Defs.CapeEquppedSN, false);
+		if (str != "cape_Custom")
 		{
-			dictionary2 = Json.Deserialize(text) as Dictionary<string, object>;
+			empty = string.Empty;
 		}
-		if (dictionary2 == null || dictionary2.Count <= 0)
+		else
+		{
+			string str1 = PlayerPrefs.GetString("NewUserCape");
+			empty = Tools.DeserializeJson<CapeMemento>(str1).Cape;
+			if (string.IsNullOrEmpty(empty))
+			{
+				empty = SkinsController.StringFromTexture(Resources.Load<Texture2D>("cape_CustomTexture"));
+			}
+		}
+		string str2 = Storager.getString(Defs.HatEquppedSN, false);
+		string str3 = Storager.getString(Defs.BootsEquppedSN, false);
+		string str4 = Storager.getString("MaskEquippedSN", false);
+		string str5 = Storager.getString(Defs.ArmorNewEquppedSN, false);
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ "type", "0" },
+			{ "name", str },
+			{ "skin", empty }
+		};
+		Dictionary<string, string> strs1 = new Dictionary<string, string>()
+		{
+			{ "type", "1" },
+			{ "name", str2 },
+			{ "skin", string.Empty }
+		};
+		Dictionary<string, string> strs2 = new Dictionary<string, string>()
+		{
+			{ "type", "2" },
+			{ "name", str3 },
+			{ "skin", string.Empty }
+		};
+		Dictionary<string, string> strs3 = new Dictionary<string, string>()
+		{
+			{ "type", "3" },
+			{ "name", str5 },
+			{ "skin", string.Empty }
+		};
+		Dictionary<string, string> strs4 = new Dictionary<string, string>()
+		{
+			{ "type", "4" },
+			{ "name", str4 },
+			{ "skin", string.Empty }
+		};
+		List<Dictionary<string, string>> dictionaries = new List<Dictionary<string, string>>()
+		{
+			strs,
+			strs1,
+			strs2,
+			strs3,
+			strs4
+		};
+		return Json.Serialize(dictionaries);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetAllPlayersOnline()
+	{
+		FriendsController.u003cGetAllPlayersOnlineu003ec__Iterator48 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetAllPlayersOnlineWithClanInfo()
+	{
+		FriendsController.u003cGetAllPlayersOnlineWithClanInfou003ec__Iterator49 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetBanList()
+	{
+		FriendsController.u003cGetBanListu003ec__Iterator3F variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetBuffSettings(Task futureToWait)
+	{
+		FriendsController.u003cGetBuffSettingsu003ec__Iterator2D variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetClanDataLoop()
+	{
+		FriendsController.u003cGetClanDataLoopu003ec__Iterator57 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetClanDataOnce()
+	{
+		FriendsController.u003cGetClanDataOnceu003ec__Iterator59 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetClanPlayersOnline()
+	{
+		FriendsController.u003cGetClanPlayersOnlineu003ec__Iterator47 variable = null;
+		return variable;
+	}
+
+	public DateTime GetDateLastClickJoinFriend(string friendId)
+	{
+		DateTime dateTime;
+		if (!this.clicksJoinByFriends.ContainsKey(friendId))
+		{
+			return DateTime.MaxValue;
+		}
+		return (!DateTime.TryParse(this.clicksJoinByFriends[friendId], out dateTime) ? dateTime : DateTime.MaxValue);
+	}
+
+	public void GetFacebookFriendsInfo(Action callb)
+	{
+		if (!FriendsController.readyToOperate)
 		{
 			return;
 		}
-		Debug.Log(key + " (count): " + dictionary2.Count);
-		using (new StopwatchLogger("Dictionary copying " + key))
+		base.StartCoroutine(this._GetFacebookFriendsInfo(callb));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetFiltersSettings()
+	{
+		return new FriendsController.u003cGetFiltersSettingsu003ec__Iterator2C();
+	}
+
+	public void GetFriendsData(bool _isUpdateInfoAboutAllFriends = false)
+	{
+		this.timerUpdateFriend = -1f;
+		if (_isUpdateInfoAboutAllFriends)
 		{
-			foreach (KeyValuePair<string, object> item in dictionary2)
-			{
-				Dictionary<string, object> dictionary3 = item.Value as Dictionary<string, object>;
-				if (dictionary3 != null)
-				{
-					dictionary.Add(item.Key, dictionary3);
-				}
-			}
+			this.isUpdateInfoAboutAllFriends = true;
 		}
 	}
 
-	private void Awake()
+	[DebuggerHidden]
+	private IEnumerator GetFriendsDataLoop()
 	{
-		if (!Storager.hasKey(FacebookIDKey))
-		{
-			Storager.setString(FacebookIDKey, string.Empty, false);
-		}
-		id_fb = Storager.getString(FacebookIDKey, false);
-		sharedController = this;
+		FriendsController.u003cGetFriendsDataLoopu003ec__Iterator6E variable = null;
+		return variable;
 	}
 
-	public IEnumerable<float> InitController()
+	public static Dictionary<string, object> GetFullPlayerDataById(string playerId)
 	{
-		string secret = alphaIvory ?? string.Empty;
-		if (string.IsNullOrEmpty(secret))
+		Dictionary<string, object> strs;
+		if (FriendsController.sharedController == null)
 		{
-			Debug.LogError("Secret is empty!");
+			return null;
 		}
-		_hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secret), true);
-		StartCoroutine(GetABTestBankViewConfig());
-		if (TrainingController.TrainingCompleted)
+		if (FriendsController.sharedController.friendsInfo.TryGetValue(playerId, out strs))
 		{
-			if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.NONE)
-			{
-				Defs.cohortABTestSandBox = Defs.ABTestCohortsType.SKIP;
-			}
-			if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.NONE)
-			{
-				Defs.cohortABTestSpecialOffers = Defs.ABTestCohortsType.SKIP;
-			}
-			if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.NONE)
-			{
-				Defs.cohortABTestQuestSystem = Defs.ABTestCohortsType.SKIP;
-			}
+			return strs;
 		}
-		StartCoroutine(GetABTestSandBoxConfig());
-		StartCoroutine(GetABTestQuestSystemConfig());
-		StartCoroutine(GetABTestSpecialOffersConfig());
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShopCompleted && (!Storager.hasKey("abTestBalansConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestBalansConfigKey", false))))
+		if (FriendsController.sharedController.clanFriendsInfo.TryGetValue(playerId, out strs))
 		{
-			StartCoroutine(GetABTestBalansConfigName());
+			return strs;
 		}
-		else
+		if (FriendsController.sharedController.profileInfo.TryGetValue(playerId, out strs))
 		{
-			getCohortInfo = true;
-			if (Defs.isABTestBalansCohortActual)
-			{
-				StartCoroutine(GetABTestBalansCohortNameActual());
-			}
+			return strs;
 		}
-		Task futureToWait = PersistentCacheManager.Instance.FirstResponse;
-		StopCoroutine("GetBanList");
-		StartCoroutine("GetBanList");
-		StartCoroutine("UpdatePopularityMapsLoop");
-		StartCoroutine(GetTimeFromServerLoop());
-		StartCoroutine(SendGameTimeLoop());
-		UpdatePixelbookSettingsFromPrefs();
-		StartCoroutine(GetPixelbookSettingsLoop(futureToWait));
-		StartCoroutine(GetNewsLoop(futureToWait));
-		StartCoroutine(GetRatingSystemConfig());
-		ProfileController.LoadStatisticFromKeychain();
-		TrafficForwardingScript trafficForwardingScript = GetComponent<TrafficForwardingScript>() ?? base.gameObject.AddComponent<TrafficForwardingScript>();
-		StartCoroutine(trafficForwardingScript.GetTrafficForwardingConfigLoopCoroutine());
-		StartCoroutine(GetFiltersSettings());
-		StartCoroutine(GetBuffSettings(futureToWait));
-		if (FacebookController.FacebookSupported)
-		{
-			FacebookController.ReceivedSelfID += HandleReceivedSelfID;
-		}
-		lastTouchTm = Time.realtimeSinceStartup + 15f;
-		friends = FillList("FriendsKey");
-		StartSendReview();
-		yield return 0f;
-		invitesToUs = FillList("ToUsKey");
-		yield return 0f;
-		FillDictionary("PlayerInfoKey", playersInfo);
-		FillDictionary("FriendsInfoKey", friendsInfo);
-		FillDictionary("ClanFriendsInfoKey", clanFriendsInfo);
-		yield return 0f;
-		FillListDictionary("ClanInvitesKey", ClanInvites);
-		yield return 0f;
-		FillClickJoinFriendsListByCachedValue();
-		yield return 0f;
-		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		if (!Storager.hasKey(AccountCreated))
-		{
-			Storager.setString(AccountCreated, string.Empty, false);
-		}
-		id = Storager.getString(AccountCreated, false);
-		if (string.IsNullOrEmpty(id))
-		{
-			Debug.Log("Account id: null or empty    Calling CreatePlayer()...");
-			StartCoroutine(CreatePlayer());
-		}
-		else
-		{
-			Debug.LogFormat("Account id: {0}    Calling CheckOurIdExists()...", id);
-			StartCoroutine(CheckOurIDExists());
-		}
-		SyncClickJoinFriendsListWithListFriends();
+		return null;
 	}
 
-	private void HandleReceivedSelfID(string idfb)
+	[DebuggerHidden]
+	private IEnumerator GetIfnoAboutPlayerLoop(string playerId)
 	{
-		if (idfb != null && (string.IsNullOrEmpty(id_fb) || !idfb.Equals(id_fb)))
-		{
-			id_fb = idfb;
-			if (!Storager.hasKey(FacebookIDKey))
-			{
-				Storager.setString(FacebookIDKey, string.Empty, false);
-			}
-			Storager.setString(FacebookIDKey, id_fb, false);
-			SendOurData();
-		}
+		FriendsController.u003cGetIfnoAboutPlayerLoopu003ec__Iterator5C variable = null;
+		return variable;
 	}
 
-	public void UnbanUs(Action onSuccess)
+	[DebuggerHidden]
+	private IEnumerator GetInfoAboutNPlayers()
 	{
+		FriendsController.u003cGetInfoAboutNPlayersu003ec__Iterator5A variable = null;
+		return variable;
 	}
 
-	public void ChangeClanLogo()
+	[DebuggerHidden]
+	public IEnumerator GetInfoAboutNPlayers(List<string> ids)
 	{
-		if (readyToOperate)
+		FriendsController.u003cGetInfoAboutNPlayersu003ec__Iterator5B variable = null;
+		return variable;
+	}
+
+	public void GetInfoAboutPlayers(List<string> ids)
+	{
+		base.StartCoroutine(this.GetInfoAboutNPlayers(ids));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetInfoByEverydayDelta()
+	{
+		FriendsController.u003cGetInfoByEverydayDeltau003ec__Iterator54 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	public IEnumerator GetInfoByIdCoroutine(string playerId)
+	{
+		FriendsController.u003cGetInfoByIdCoroutineu003ec__Iterator5D variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	public IEnumerator GetInfoByParamCoroutine(string param)
+	{
+		FriendsController.u003cGetInfoByParamCoroutineu003ec__Iterator5E variable = null;
+		return variable;
+	}
+
+	private string GetJsonIdsFacebookFriends()
+	{
+		if (Defs.IsDeveloperBuild)
 		{
-			StartCoroutine(_ChangeClanLogo());
+			UnityEngine.Debug.Log("Start GetJsonIdsFacebookFriends");
 		}
+		FacebookController facebookController = FacebookController.sharedController;
+		if (facebookController == null)
+		{
+			return "[]";
+		}
+		if (facebookController.friendsList == null || facebookController.friendsList.Count == 0)
+		{
+			return "[]";
+		}
+		List<string> strs = new List<string>();
+		for (int i = 0; i < facebookController.friendsList.Count; i++)
+		{
+			strs.Add(facebookController.friendsList[i].id);
+		}
+		string str = Json.Serialize(strs);
+		if (Defs.IsDeveloperBuild)
+		{
+			UnityEngine.Debug.Log(string.Concat("GetJsonIdsFacebookFriends: ", str));
+		}
+		return str;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetLobbyNews(bool fromPause)
+	{
+		return new FriendsController.u003cGetLobbyNewsu003ec__Iterator2E();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetNewsLoop(Task futureToWait)
+	{
+		FriendsController.u003cGetNewsLoopu003ec__Iterator2B variable = null;
+		return variable;
+	}
+
+	private void GetOurLAstOnline()
+	{
+		base.StartCoroutine(this.GetInfoByEverydayDelta());
+		this.ReceivedLastOnline = true;
+		base.StartCoroutine(this.UpdatePlayerOnlineLoop());
 	}
 
 	public void GetOurWins()
 	{
-		if (readyToOperate)
+		if (!FriendsController.readyToOperate)
 		{
-			StartCoroutine(_GetOurWins());
+			return;
 		}
+		base.StartCoroutine(this._GetOurWins());
 	}
 
-	public void SendRoundWon()
+	[DebuggerHidden]
+	private IEnumerator GetPixelbookSettings()
 	{
-		if (readyToOperate)
+		return new FriendsController.u003cGetPixelbookSettingsu003ec__Iterator31();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetPixelbookSettingsLoop(Task futureToWait)
+	{
+		FriendsController.u003cGetPixelbookSettingsLoopu003ec__Iterator2A variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetPopularityMap()
+	{
+		FriendsController.u003cGetPopularityMapu003ec__Iterator38 variable = null;
+		return variable;
+	}
+
+	public static FriendsController.PossiblleOrigin GetPossibleFriendFindOrigin(string playerId)
+	{
+		if (FriendsController.sharedController == null)
 		{
-			int num = -1;
-			if (PhotonNetwork.room != null)
+			return FriendsController.PossiblleOrigin.None;
+		}
+		if (!FriendsController.sharedController.getPossibleFriendsResult.ContainsKey(playerId))
+		{
+			return FriendsController.PossiblleOrigin.None;
+		}
+		return FriendsController.sharedController.getPossibleFriendsResult[playerId];
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetPossibleFriendsList(int playerLevel, int platformId, string clientVersion)
+	{
+		FriendsController.u003cGetPossibleFriendsListu003ec__Iterator6A variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetRatingSystemConfig()
+	{
+		FriendsController.u003cGetRatingSystemConfigu003ec__Iterator3A variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetTimeFromServer()
+	{
+		return new FriendsController.u003cGetTimeFromServeru003ec__Iterator30();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetTimeFromServerLoop()
+	{
+		FriendsController.u003cGetTimeFromServerLoopu003ec__Iterator2F variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetToken()
+	{
+		FriendsController.u003cGetTokenu003ec__Iterator51 variable = null;
+		return variable;
+	}
+
+	private void HandleReceivedSelfID(string idfb)
+	{
+		if (idfb == null)
+		{
+			return;
+		}
+		if (string.IsNullOrEmpty(this.id_fb) || !idfb.Equals(this.id_fb))
+		{
+			this.id_fb = idfb;
+			if (!Storager.hasKey(this.FacebookIDKey))
 			{
-				num = (int)ConnectSceneNGUIController.regim;
+				Storager.setString(this.FacebookIDKey, string.Empty, false);
 			}
-			if (num != -1)
-			{
-				StartCoroutine(_SendRoundWon(num));
-			}
+			Storager.setString(this.FacebookIDKey, this.id_fb, false);
+			this.SendOurData(false);
 		}
 	}
 
@@ -1617,537 +1923,558 @@ public sealed class FriendsController : MonoBehaviour
 	{
 		if (action == null)
 		{
-			Debug.LogWarning("Hash: action is null");
+			UnityEngine.Debug.LogWarning("Hash: action is null");
 			return string.Empty;
 		}
-		string text = token ?? ((!(sharedController != null)) ? null : sharedController.id);
-		if (text == null)
+		object obj = token;
+		if (obj == null)
 		{
-			Debug.LogWarning("Hash: Token is null");
+			if (FriendsController.sharedController == null)
+			{
+				obj = null;
+			}
+			else
+			{
+				obj = FriendsController.sharedController.id;
+			}
+		}
+		string str = (string)obj;
+		if (str == null)
+		{
+			UnityEngine.Debug.LogWarning("Hash: Token is null");
 			return string.Empty;
 		}
-		string text2 = ((!action.Equals("get_player_online")) ? (ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion) : "*:*.*.*");
-		string s = text2 + text + action;
-		byte[] bytes = Encoding.UTF8.GetBytes(s);
-		byte[] array = _hmac.ComputeHash(bytes);
-		string text3 = BitConverter.ToString(array);
-		return text3.Replace("-", string.Empty).ToLower();
+		string str1 = string.Concat((!action.Equals("get_player_online") ? string.Concat(ProtocolListGetter.CurrentPlatform, ":", GlobalGameController.AppVersion) : "*:*.*.*"), str, action);
+		byte[] bytes = Encoding.UTF8.GetBytes(str1);
+		string str2 = BitConverter.ToString(FriendsController._hmac.ComputeHash(bytes));
+		return str2.Replace("-", string.Empty).ToLower();
 	}
 
 	public static string HashForPush(byte[] responceData)
 	{
 		if (responceData == null)
 		{
-			Debug.LogWarning("HashForPush: responceData is null");
+			UnityEngine.Debug.LogWarning("HashForPush: responceData is null");
 			return string.Empty;
 		}
-		if (_hmac == null)
+		if (FriendsController._hmac == null)
 		{
 			throw new InvalidOperationException("Hmac is not initialized yet.");
 		}
-		byte[] array = _hmac.ComputeHash(responceData);
-		string text = BitConverter.ToString(array);
-		return text.Replace("-", string.Empty).ToLower();
+		string str = BitConverter.ToString(FriendsController._hmac.ComputeHash(responceData));
+		return str.Replace("-", string.Empty).ToLower();
+	}
+
+	[DebuggerHidden]
+	public IEnumerable<float> InitController()
+	{
+		FriendsController.u003cInitControlleru003ec__Iterator32 variable = null;
+		return variable;
+	}
+
+	public void InitOurInfo()
+	{
+		this.nick = ProfileController.GetPlayerNameOrDefault();
+		this.skin = Convert.ToBase64String(SkinsController.currentSkinForPers.EncodeToPNG());
+		this.rank = ExperienceController.sharedController.currentLevel;
+		this.wins = Storager.getInt("Rating", false);
+		this.survivalScore = PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0);
+		this.coopScore = PlayerPrefs.GetInt(Defs.COOPScore, 0);
+		this.infoLoaded = true;
+	}
+
+	public static bool IsAlreadySendClanInvitePlayer(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return FriendsController.sharedController.ClanSentInvites.Contains(playerId);
+	}
+
+	public static bool IsAlreadySendInvitePlayer(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return FriendsController.sharedController.invitesFromUs.Contains(playerId);
+	}
+
+	public static bool IsDataAboutFriendDownload(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		if (FriendsController.sharedController.friendsInfo.ContainsKey(playerId))
+		{
+			return true;
+		}
+		if (FriendsController.sharedController.clanFriendsInfo.ContainsKey(playerId))
+		{
+			return true;
+		}
+		if (FriendsController.sharedController.profileInfo.ContainsKey(playerId))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool IsFriendInvitesDataExist()
+	{
+		bool flag;
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		if (FriendsController.sharedController.invitesToUs.Count <= 0)
+		{
+			flag = false;
+		}
+		else
+		{
+			flag = (FriendsController.sharedController.clanFriendsInfo.Count > 0 ? true : FriendsController.sharedController.profileInfo.Count > 0);
+		}
+		return flag;
+	}
+
+	public static bool IsFriendsDataExist()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return (FriendsController.sharedController.friends.Count <= 0 ? false : FriendsController.sharedController.friendsInfo.Count > 0);
+	}
+
+	public static bool IsFriendsMax()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return FriendsController.sharedController.friends.Count >= Defs.maxCountFriend;
+	}
+
+	public static bool IsFriendsOrLocalDataExist()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		List<string> strs = new List<string>();
+		foreach (KeyValuePair<string, FriendsController.PossiblleOrigin> keyValuePair in FriendsController.sharedController.getPossibleFriendsResult)
+		{
+			if (!FriendsController.sharedController.profileInfo.ContainsKey(keyValuePair.Key) || keyValuePair.Value != FriendsController.PossiblleOrigin.Local)
+			{
+				continue;
+			}
+			strs.Add(keyValuePair.Key);
+		}
+		return (FriendsController.sharedController.friends.Count <= 0 || FriendsController.sharedController.friendsInfo.Count <= 0 ? strs.Count > 0 : true);
+	}
+
+	public static bool IsMaxClanMembers()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return FriendsController.sharedController.clanMembers.Count >= Defs.maxMemberClanCount;
+	}
+
+	public static bool IsMyPlayerId(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		if (string.IsNullOrEmpty(FriendsController.sharedController.id))
+		{
+			return false;
+		}
+		return FriendsController.sharedController.id.Equals(playerId);
+	}
+
+	public static bool IsPlayerOurClanMember(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < FriendsController.sharedController.clanMembers.Count; i++)
+		{
+			if (FriendsController.sharedController.clanMembers[i]["id"].Equals(playerId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool IsPlayerOurFriend(string playerId)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return FriendsController.sharedController.friends.Contains(playerId);
+	}
+
+	public static bool IsPossibleFriendsDataExist()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		return (FriendsController.sharedController.getPossibleFriendsResult.Count <= 0 ? false : FriendsController.sharedController.profileInfo.Count > 0);
+	}
+
+	public static bool IsSelfClanLeader()
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return false;
+		}
+		if (string.IsNullOrEmpty(FriendsController.sharedController.clanLeaderID))
+		{
+			return false;
+		}
+		return FriendsController.sharedController.clanLeaderID.Equals(FriendsController.sharedController.id);
 	}
 
 	public bool IsShowAdd(string _pixelBookID)
 	{
 		bool flag = true;
-		if (friends.Count >= Defs.maxCountFriend || _pixelBookID.Equals("-1") || _pixelBookID.Equals(sharedController.id))
+		if (this.friends.Count >= Defs.maxCountFriend || _pixelBookID.Equals("-1") || _pixelBookID.Equals(FriendsController.sharedController.id))
 		{
-			return false;
-		}
-		if (sharedController.friends.Contains(_pixelBookID))
-		{
-			return false;
-		}
-		return !sharedController.notShowAddIds.Contains(_pixelBookID);
-	}
-
-	private IEnumerator _GetOurWins()
-	{
-		while (string.IsNullOrEmpty(sharedController.id) || !TrainingController.TrainingCompleted)
-		{
-			yield return null;
-		}
-		string appVersionString = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_info_by_id");
-		form.AddField("app_version", appVersionString);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_info_by_id"));
-		string response;
-		while (true)
-		{
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			response = URLs.Sanitize(download);
-			if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-			{
-				Debug.Log("_GetOurWins: " + response);
-			}
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("_GetOurWins error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (string.IsNullOrEmpty(response) || !response.Equals("fail"))
-			{
-				break;
-			}
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning("_GetOurWins fail.");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(10f));
-		}
-		Dictionary<string, object> __newInfo = ParseInfo(response);
-		if (__newInfo == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" _GetOurWins newInfo = null");
-			}
-			yield break;
-		}
-		ourInfo = __newInfo;
-		SaveProfileData();
-		if (FriendsController.OurInfoUpdated != null)
-		{
-			FriendsController.OurInfoUpdated();
-		}
-	}
-
-	private void SaveProfileData()
-	{
-		if (ourInfo != null && ourInfo.ContainsKey("wincount"))
-		{
-			int num = 0;
-			Dictionary<string, object> dict = ourInfo["wincount"] as Dictionary<string, object>;
-			num = 0;
-			dict.TryGetValue<int>("0", out num);
-			Storager.setInt(Defs.RatingDeathmatch, num, false);
-			num = 0;
-			dict.TryGetValue<int>("2", out num);
-			Storager.setInt(Defs.RatingTeamBattle, num, false);
-			num = 0;
-			dict.TryGetValue<int>("3", out num);
-			Storager.setInt(Defs.RatingHunger, num, false);
-			num = 0;
-			dict.TryGetValue<int>("4", out num);
-			Storager.setInt(Defs.RatingCapturePoint, num, false);
-		}
-	}
-
-	private IEnumerator _SendRoundWon(int mode)
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			form.AddField("action", "round_won");
-			form.AddField("app_version", appVersionField);
-			form.AddField("uniq_id", id);
-			form.AddField("mode", mode);
-			form.AddField("auth", Hash("round_won"));
-			WWW roundWonRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-			yield return roundWonRequest;
-			string response = URLs.Sanitize(roundWonRequest);
-			if (string.IsNullOrEmpty(roundWonRequest.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-			{
-				Debug.Log("_SendRoundWon: " + response);
-			}
-			if (!string.IsNullOrEmpty(roundWonRequest.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("_SendRoundWon error: " + roundWonRequest.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (string.IsNullOrEmpty(response) || !response.Equals("fail"))
-			{
-				break;
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_SendRoundWon fail.");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(10f));
-		}
-		PlayerPrefs.SetInt("TotalWinsForLeaderboards", PlayerPrefs.GetInt("TotalWinsForLeaderboards", 0) + 1);
-	}
-
-	private IEnumerator _ChangeClanLogo()
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			form.AddField("action", "change_logo");
-			form.AddField("app_version", appVersionField);
-			form.AddField("id_clan", ClanID);
-			form.AddField("logo", clanLogo);
-			form.AddField("id", id);
-			form.AddField("uniq_id", id);
-			form.AddField("auth", Hash("change_logo"));
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			string response = URLs.Sanitize(download);
-			if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-			{
-				Debug.Log("_ChangeClanLogo: " + response);
-			}
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("_ChangeClanLogo error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("_ChangeClanLogo fail.");
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			break;
-		}
-	}
-
-	public void ChangeClanName(string newNm, Action onSuccess, Action<string> onFailure)
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(_ChangeClanName(newNm, onSuccess, onFailure));
-		}
-	}
-
-	private IEnumerator _ChangeClanName(string newNm, Action onSuccess, Action<string> onFailure)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "change_clan_name");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_clan", ClanID);
-		form.AddField("id", id);
-		string filteredNick2 = newNm;
-		filteredNick2 = FilterBadWorld.FilterString(newNm);
-		form.AddField("name", filteredNick2);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("change_clan_name"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			if (onFailure != null)
-			{
-				onFailure("Request skipped.");
-			}
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_ChangeClanName: " + response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_ChangeClanName error: " + download.error);
-			}
-			if (onFailure != null)
-			{
-				onFailure(download.error);
-			}
-		}
-		else if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_ChangeClanName fail.");
-			}
-			if (onFailure != null)
-			{
-				onFailure(response);
-			}
-		}
-		else if (onSuccess != null)
-		{
-			onSuccess();
-		}
-	}
-
-	private IEnumerator UpdatePopularityMapsLoop()
-	{
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage < TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted)
-		{
-			yield return null;
-		}
-		while (true)
-		{
-			UpdatePopularityMaps();
-			yield return StartCoroutine(MyWaitForSeconds(1800f));
-		}
-	}
-
-	public void UpdatePopularityMaps()
-	{
-		StopCoroutine("GetPopularityMap");
-		StartCoroutine("GetPopularityMap");
-	}
-
-	private IEnumerator GetPopularityMap()
-	{
-		while (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage <= TrainingController.NewTrainingCompletedStage.None)
-		{
-			yield return null;
-		}
-		Dictionary<string, object> dict;
-		while (true)
-		{
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.PopularityMapUrl);
-			if (download == null)
-			{
-				yield break;
-			}
-			yield return download;
-			string response = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("CheckMapPopularity error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(18f));
-				continue;
-			}
-			if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("CheckMapPopularity fail.");
-				}
-				yield return StartCoroutine(MyWaitForSeconds(18f));
-				continue;
-			}
-			object o = Json.Deserialize(response);
-			dict = o as Dictionary<string, object>;
-			if (dict != null)
-			{
-				break;
-			}
-			if (Application.isEditor || Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" GetPopularityMap dict = null");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(20f));
-		}
-		foreach (KeyValuePair<string, object> kvp in dict)
-		{
-			Dictionary<string, string> _mapPopularityInRegim = new Dictionary<string, string>();
-			Dictionary<string, object> dict2 = kvp.Value as Dictionary<string, object>;
-			if (dict2 == null)
-			{
-				continue;
-			}
-			foreach (KeyValuePair<string, object> kvp2 in dict2)
-			{
-				_mapPopularityInRegim.Add(kvp2.Key, kvp2.Value.ToString());
-			}
-			if (_mapPopularityInRegim.Count > 0 && !mapPopularityDictionary.ContainsKey(kvp.Key))
-			{
-				mapPopularityDictionary.Add(kvp.Key, _mapPopularityInRegim);
-			}
-		}
-	}
-
-	private IEnumerator GetABTestBalansConfigName()
-	{
-		string response2;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			form.AddField("action", "get_cohort_name");
-			form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-			form.AddField("device", SystemInfo.deviceUniqueIdentifier);
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(1f));
-				continue;
-			}
-			yield return download;
-			response2 = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("get_cohort_name error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(1f));
-				continue;
-			}
-			if (!"fail".Equals(response2))
-			{
-				break;
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("get_cohort_name fail.");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(1f));
-		}
-		if ("skip".Equals(response2))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("get_cohort_name skip");
-			}
-			getCohortInfo = true;
+			flag = false;
 		}
 		else
 		{
-			response2 = response2.Replace("/", "-");
-			StartCoroutine(GetABTestBalansConfig(response2));
+			flag = (!FriendsController.sharedController.friends.Contains(_pixelBookID) ? !FriendsController.sharedController.notShowAddIds.Contains(_pixelBookID) : false);
 		}
+		return flag;
 	}
 
-	private IEnumerator GetRatingSystemConfig()
+	public static void JoinToFriendRoom(string friendId)
 	{
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.RatingSystemConfigURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(60f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetRatingSystemConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(600f));
-				continue;
-			}
-			string responseText = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(responseText))
-			{
-				Storager.setString("rSCKey", responseText, false);
-				ParseRatingSystemConfig();
-				RatingSystem.instance.ParseConfig();
-			}
-			yield return StartCoroutine(MyWaitForSeconds(1800f));
-		}
-	}
-
-	public static void ParseRatingSystemConfig()
-	{
-		if (!Storager.hasKey("rSCKey") || string.IsNullOrEmpty(Storager.getString("rSCKey", false)))
+		int num;
+		if (FriendsController.sharedController == null)
 		{
 			return;
 		}
-		string @string = Storager.getString("rSCKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		int num = (dictionary.ContainsKey("abTestEnabled") ? Convert.ToInt32(dictionary["abTestEnabled"]) : 0);
-		Defs.isActivABTestRatingSystem = num == 1;
-		if (dictionary.ContainsKey("currentStateUseRatingSystem"))
+		if (!FriendsController.sharedController.onlineInfo.ContainsKey(friendId))
 		{
-			isCurrentUseRatingSystem = Convert.ToInt32(dictionary["currentStateUseRatingSystem"]) == 1;
+			return;
 		}
-		if (dictionary.ContainsKey("currentStateBuffSystem"))
+		Dictionary<string, string> item = FriendsController.sharedController.onlineInfo[friendId];
+		int.TryParse(item["game_mode"], out num);
+		string str = item["room_name"];
+		string item1 = item["map"];
+		JoinToFriendRoomController instance = JoinToFriendRoomController.Instance;
+		if (SceneInfoController.instance.GetInfoScene(int.Parse(item1)) != null && instance != null)
 		{
-			isCurrentStateBuffSystem = Convert.ToString(dictionary["currentStateBuffSystem"]).Equals("BuffSystem");
+			instance.ConnectToRoom(num, str, item1);
+			FriendsController.sharedController.UpdateRecordByFriendsJoinClick(friendId);
 		}
-		if (!Defs.isActivABTestRatingSystem)
-		{
-			if (isCurrentUseRatingSystem)
-			{
-				isUseRatingSystem = true;
-			}
-			else
-			{
-				isUseRatingSystem = false;
-			}
-			if (isCurrentStateBuffSystem)
-			{
-				useBuffSystem = true;
-			}
-			else
-			{
-				useBuffSystem = false;
-			}
-		}
-		else
-		{
-			isUseRatingSystem = isCohortUseRatingSystem && isCurrentUseRatingSystem;
-			useBuffSystem = isCohortUseRatingSystem && isCurrentStateBuffSystem;
-		}
-		if (dictionary.ContainsKey("configName"))
-		{
-			configNameABTestRatingSystem = Convert.ToString(dictionary["configName"]);
-		}
-		RatingSystem.instance.ParseConfig();
 	}
 
-	private IEnumerator GetABTestBankViewConfig()
+	public static void LogPromoTrafficForwarding(FriendsController.TypeTrafficForwardingLog type)
 	{
-		while (true)
+		if (type == FriendsController.TypeTrafficForwardingLog.view && (DateTime.Now - FriendsController.timeSendTrafficForwarding).TotalMinutes < 60)
 		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestViewBankURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestBankViewConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-				continue;
-			}
-			string responseText = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(responseText))
-			{
-				Storager.setString("abTestBankViewKey", responseText, false);
-				ParseABTestBankViewConfig();
-				if (FriendsController.StaticBankConfigUpdated != null)
-				{
-					FriendsController.StaticBankConfigUpdated();
-				}
-			}
-			yield return StartCoroutine(MyWaitForSeconds(900f));
+			return;
 		}
+		if (type == FriendsController.TypeTrafficForwardingLog.view || type == FriendsController.TypeTrafficForwardingLog.newView)
+		{
+			FriendsController.timeSendTrafficForwarding = DateTime.Now;
+		}
+		if (FriendsController.sharedController != null)
+		{
+			FriendsController.sharedController.StartCoroutine(FriendsController.sharedController.SendPromoTrafficForwarding(type));
+		}
+	}
+
+	[DebuggerHidden]
+	public IEnumerator MyWaitForSeconds(float tm)
+	{
+		FriendsController.u003cMyWaitForSecondsu003ec__Iterator58 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		FriendsController.u003cOnApplicationPauseu003ec__Iterator42 variable = null;
+		return variable;
+	}
+
+	private void OnDestroy()
+	{
+		this.DumpCurrentState();
+	}
+
+	private static void ParseABTestBalansArmorsConfig(object obj)
+	{
+		Dictionary<string, ItemPrice> strs = new Dictionary<string, ItemPrice>();
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			string str = item["Name"] as string;
+			int num = Convert.ToInt32(item["Price"]);
+			string item1 = item["Currency"] as string;
+			strs.Add(str, new ItemPrice(num, item1));
+		}
+		Defs2.ArmorPricesFromServer = strs;
+	}
+
+	private static void ParseABTestBalansAwardConfig(object obj)
+	{
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			string str = Convert.ToString(item["Mode"]);
+			int[] num = new int[10];
+			for (int j = 1; j <= 10; j++)
+			{
+				num[j - 1] = Convert.ToInt32(item[j.ToString()]);
+			}
+			if (str.Equals("XP Team"))
+			{
+				AdminSettingsController.expAvardTeamFight[0] = num;
+				AdminSettingsController.minScoreTeamFight = 5;
+			}
+			if (str.Equals("Coins Team"))
+			{
+				AdminSettingsController.coinAvardTeamFight[0] = num;
+				AdminSettingsController.minScoreTeamFight = 5;
+			}
+			if (str.Equals("XP DM"))
+			{
+				AdminSettingsController.expAvardDeathMath[0] = num;
+				AdminSettingsController.minScoreDeathMath = 5;
+			}
+			if (str.Equals("Coins DM"))
+			{
+				AdminSettingsController.coinAvardDeathMath[0] = num;
+				AdminSettingsController.minScoreDeathMath = 5;
+			}
+			if (str.Equals("XP Coop"))
+			{
+				AdminSettingsController.expAvardTimeBattle = num;
+				AdminSettingsController.minScoreTimeBattle = 5;
+			}
+			if (str.Equals("Coins Coop"))
+			{
+				AdminSettingsController.coinAvardTimeBattle = num;
+				AdminSettingsController.minScoreTimeBattle = 5;
+			}
+			if (str.Equals("XP Flag"))
+			{
+				AdminSettingsController.expAvardFlagCapture[0] = num;
+				AdminSettingsController.minScoreFlagCapture = 5;
+			}
+			if (str.Equals("Coins Flag"))
+			{
+				AdminSettingsController.coinAvardFlagCapture[0] = num;
+				AdminSettingsController.minScoreFlagCapture = 5;
+			}
+			if (str.Equals("XP Deadly"))
+			{
+				AdminSettingsController.expAvardDeadlyGames = num;
+			}
+			if (str.Equals("Coins Deadly"))
+			{
+				AdminSettingsController.coinAvardDeadlyGames = num;
+			}
+			if (str.Equals("XP Points"))
+			{
+				AdminSettingsController.expAvardCapturePoint[0] = num;
+				AdminSettingsController.minScoreCapturePoint = 5;
+			}
+			if (str.Equals("Coins Points"))
+			{
+				AdminSettingsController.coinAvardCapturePoint[0] = num;
+				AdminSettingsController.minScoreCapturePoint = 5;
+			}
+		}
+	}
+
+	public static void ParseABTestBalansConfig(bool isFirstParse = false)
+	{
+		string str = Storager.getString("abTestBalansConfigKey", false);
+		if (string.IsNullOrEmpty(str))
+		{
+			if (Defs.abTestBalansCohort != Defs.ABTestCohortsType.NONE)
+			{
+				AnalyticsStuff.LogABTest("New Balance", Defs.abTestBalansCohortName, false);
+				Defs.abTestBalansCohort = Defs.ABTestCohortsType.NONE;
+				Defs.abTestBalansCohortName = string.Empty;
+				FriendsController.ResetABTestsBalans();
+				if (FriendsController.sharedController != null)
+				{
+					FriendsController.sharedController.SendOurData(false);
+				}
+			}
+			return;
+		}
+		List<object> objs = Json.Deserialize(str) as List<object>;
+		if (objs == null)
+		{
+			return;
+		}
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			if (item.ContainsKey("NameConfig"))
+			{
+				FriendsController.ParseABTestBalansNameConfig(item["NameConfig"], isFirstParse);
+			}
+			if (item.ContainsKey("Weapons"))
+			{
+				FriendsController.ParseABTestBalansWeaponConfig(item["Weapons"]);
+			}
+			if (item.ContainsKey("Armors"))
+			{
+				FriendsController.ParseABTestBalansArmorsConfig(item["Armors"]);
+			}
+			if (item.ContainsKey("Levelling"))
+			{
+				FriendsController.ParseABTestBalansLevelingConfig(item["Levelling"]);
+			}
+			if (item.ContainsKey("Inapps"))
+			{
+				FriendsController.ParseABTestBalansInappsConfig(item["Inapps"]);
+			}
+			if (item.ContainsKey("Rewards"))
+			{
+				FriendsController.ParseABTestBalansAwardConfig(item["Rewards"]);
+			}
+			if (item.ContainsKey("SpecialEvents"))
+			{
+				FriendsController.ParseABTestBalansSpecialEventsConfig(item["SpecialEvents"]);
+			}
+		}
+	}
+
+	private static void ParseABTestBalansInappsConfig(object obj)
+	{
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			int num = Convert.ToInt32(item["Real"]);
+			int num1 = Convert.ToInt32(item["Coins"]);
+			int num2 = Convert.ToInt32(item["Gems"]);
+			int num3 = Convert.ToInt32(item["Bonus Coins"]);
+			int num4 = Convert.ToInt32(item["Bonus Gems"]);
+			VirtualCurrencyHelper.RewriteInappsQuantity(num, num1, num2, num3, num4);
+		}
+	}
+
+	private static void ParseABTestBalansLevelingConfig(object obj)
+	{
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			int num = Convert.ToInt32(item["Level"]);
+			int num1 = Convert.ToInt32(item["XP"]);
+			int num2 = Convert.ToInt32(item["Coins"]);
+			int num3 = Convert.ToInt32(item["Gems"]);
+			ExperienceController.RewriteLevelingParametersForLevel(num, num1, num2, num3);
+		}
+	}
+
+	private static void ParseABTestBalansNameConfig(object obj, bool isFirstParse)
+	{
+		Dictionary<string, object> item = (obj as List<object>)[0] as Dictionary<string, object>;
+		if (item.ContainsKey("Group"))
+		{
+			Defs.abTestBalansCohort = (Defs.ABTestCohortsType)((int)Enum.Parse(typeof(Defs.ABTestCohortsType), item["Group"] as string));
+			if (Defs.abTestBalansCohort == Defs.ABTestCohortsType.B)
+			{
+				Defs.isABTestBalansCohortActual = true;
+			}
+			if (Application.isEditor)
+			{
+				UnityEngine.Debug.Log(string.Concat("Defs.abTestBalansCohort = ", Defs.abTestBalansCohort.ToString()));
+			}
+		}
+		if (item.ContainsKey("NameGroup"))
+		{
+			Defs.abTestBalansCohortName = item["NameGroup"] as string;
+			if (isFirstParse)
+			{
+				AnalyticsStuff.LogABTest("New Balance", Defs.abTestBalansCohortName, true);
+				if (FriendsController.sharedController != null)
+				{
+					FriendsController.sharedController.SendOurData(false);
+				}
+			}
+			if (Application.isEditor)
+			{
+				UnityEngine.Debug.Log(string.Concat("abTestBalansCohortName = ", Defs.abTestBalansCohortName.ToString()));
+			}
+		}
+	}
+
+	private static void ParseABTestBalansSpecialEventsConfig(object obj)
+	{
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			string str = Convert.ToString(item["Event"]);
+			int num = Convert.ToInt32(item["Coins"]);
+			int num1 = Convert.ToInt32(item["Gems"]);
+			Convert.ToInt32(item["XP"]);
+			if (str.Equals("StartCapital"))
+			{
+				Defs.abTestBalansStartCapitalCoins = num;
+				Defs.abTestBalansStartCapitalGems = num1;
+			}
+		}
+	}
+
+	private static void ParseABTestBalansWeaponConfig(object obj)
+	{
+		Dictionary<string, ItemPrice> strs = new Dictionary<string, ItemPrice>();
+		List<object> objs = obj as List<object>;
+		for (int i = 0; i < objs.Count; i++)
+		{
+			Dictionary<string, object> item = objs[i] as Dictionary<string, object>;
+			string str = item["Name"] as string;
+			int num = Convert.ToInt32(item["Price"]);
+			string item1 = item["Currency"] as string;
+			strs.Add(str, new ItemPrice(num, item1));
+			if (item.ContainsKey("DPS"))
+			{
+				float single = Convert.ToSingle(item["DPS"]);
+				float[] singleArray = new float[6];
+				for (int j = 0; j < 6; j++)
+				{
+					singleArray[j] = single;
+				}
+				FriendsController.dpsWeaponsFromABTestBalans.Add(str, singleArray);
+			}
+			if (item.ContainsKey("Damage"))
+			{
+				float single1 = Convert.ToSingle(item["Damage"]);
+				float[] singleArray1 = new float[6];
+				for (int k = 0; k < 6; k++)
+				{
+					singleArray1[k] = single1;
+				}
+				FriendsController.damageWeaponsFromABTestBalans.Add(str, singleArray1);
+			}
+		}
+		Defs2.GunPricesFromServer = strs;
 	}
 
 	public static void ParseABTestBankViewConfig()
@@ -2156,77 +2483,42 @@ public sealed class FriendsController : MonoBehaviour
 		{
 			return;
 		}
-		string @string = Storager.getString("abTestBankViewKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("enableABTest"))
+		string str = Storager.getString("abTestBankViewKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.ContainsKey("enableABTest"))
 		{
-			return;
-		}
-		int num = Convert.ToInt32(dictionary["enableABTest"]);
-		Defs.isActivABTestStaticBank = num == 1;
-		if (dictionary.ContainsKey("currentViewBank"))
-		{
-			isCurrentBankViewStatic = Convert.ToString(dictionary["currentViewBank"]).Equals("static");
-		}
-		if (!Defs.isActivABTestStaticBank)
-		{
-			if (isCurrentBankViewStatic)
+			int num = Convert.ToInt32(strs["enableABTest"]);
+			Defs.isActivABTestStaticBank = num == 1;
+			if (strs.ContainsKey("currentViewBank"))
 			{
-				isShowStaticBank = true;
+				FriendsController.isCurrentBankViewStatic = Convert.ToString(strs["currentViewBank"]).Equals("static");
+			}
+			if (Defs.isActivABTestStaticBank)
+			{
+				FriendsController.isShowStaticBank = FriendsController.isCohortStaticBank;
+			}
+			else if (!FriendsController.isCurrentBankViewStatic)
+			{
+				FriendsController.isShowStaticBank = false;
 			}
 			else
 			{
-				isShowStaticBank = false;
+				FriendsController.isShowStaticBank = true;
 			}
-		}
-		else
-		{
-			isShowStaticBank = isCohortStaticBank;
-		}
-		if (dictionary.ContainsKey("configName"))
-		{
-			configNameABTestBankView = Convert.ToString(dictionary["configName"]);
-		}
-		if (isShowStaticBank)
-		{
-			List<object> list = dictionary["coinInappsQuantity"] as List<object>;
-			List<object> list2 = dictionary["gemsInappsQuantity"] as List<object>;
-			for (int i = 0; i < 7; i++)
+			if (strs.ContainsKey("configName"))
 			{
-				VirtualCurrencyHelper._coinInappsQuantityStaticBank[i] = Convert.ToInt32(list[i]);
-				VirtualCurrencyHelper._gemsInappsQuantityStaticBank[i] = Convert.ToInt32(list2[i]);
+				FriendsController.configNameABTestBankView = Convert.ToString(strs["configName"]);
 			}
-		}
-	}
-
-	private IEnumerator GetABTestBuffSystemConfig()
-	{
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestBuffSettingsURL);
-			if (download == null)
+			if (FriendsController.isShowStaticBank)
 			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
+				List<object> item = strs["coinInappsQuantity"] as List<object>;
+				List<object> objs = strs["gemsInappsQuantity"] as List<object>;
+				for (int i = 0; i < 7; i++)
 				{
-					Debug.LogWarning("GetABTestBuffSystemConfig error: " + download.error);
+					VirtualCurrencyHelper._coinInappsQuantityStaticBank[i] = Convert.ToInt32(item[i]);
+					VirtualCurrencyHelper._gemsInappsQuantityStaticBank[i] = Convert.ToInt32(objs[i]);
 				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
 			}
-			string responseText = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(responseText))
-			{
-				Storager.setString("abTestBuffSystemKey", responseText, false);
-				ParseABTestBuffSystemConfig();
-			}
-			yield return StartCoroutine(MyWaitForSeconds(900f));
 		}
 	}
 
@@ -2236,200 +2528,483 @@ public sealed class FriendsController : MonoBehaviour
 		{
 			return;
 		}
-		string @string = Storager.getString("abTestBuffSystemKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("enableABTest"))
+		string str = Storager.getString("abTestBuffSystemKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.ContainsKey("enableABTest"))
 		{
-			return;
-		}
-		int num = Convert.ToInt32(dictionary["enableABTest"]);
-		Defs.isActivABTestBuffSystem = num == 1;
-		if (dictionary.ContainsKey("currentState"))
-		{
-			isCurrentStateBuffSystem = Convert.ToString(dictionary["currentState"]).Equals("BuffSystem");
-		}
-		if (!Defs.isActivABTestBuffSystem)
-		{
-			if (isCurrentStateBuffSystem)
+			int num = Convert.ToInt32(strs["enableABTest"]);
+			Defs.isActivABTestBuffSystem = num == 1;
+			if (strs.ContainsKey("currentState"))
 			{
-				useBuffSystem = true;
+				FriendsController.isCurrentStateBuffSystem = Convert.ToString(strs["currentState"]).Equals("BuffSystem");
+			}
+			if (Defs.isActivABTestBuffSystem)
+			{
+				FriendsController.useBuffSystem = FriendsController.isCohortBuffSystem;
+			}
+			else if (!FriendsController.isCurrentStateBuffSystem)
+			{
+				FriendsController.useBuffSystem = false;
 			}
 			else
 			{
-				useBuffSystem = false;
+				FriendsController.useBuffSystem = true;
 			}
+			if (strs.ContainsKey("cohortSuffix"))
+			{
+				FriendsController.configNameABTestBuffSystem = Convert.ToString(strs["cohortSuffix"]);
+			}
+		}
+	}
+
+	public static void ParseABTestQuestSystemConfig(bool isFromReset = false)
+	{
+		if (!Storager.hasKey("abTestQuestSystemConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestQuestSystemConfigKey", false)))
+		{
+			return;
+		}
+		string str = Storager.getString("abTestQuestSystemConfigKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.ContainsKey("enableABTest"))
+		{
+			int num = Convert.ToInt32(strs["enableABTest"]);
+			int num1 = Convert.ToInt32(strs["currentStateEnable"]);
+			if (num != 1 || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.SKIP)
+			{
+				if (!isFromReset)
+				{
+					FriendsController.ResetABTestQuestSystem();
+				}
+				FriendsController.QuestSystemEnabled = num1 == 1;
+			}
+			else
+			{
+				FriendsController.configNameABTestQuestSystem = Convert.ToString(strs["configName"]);
+				if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.NONE)
+				{
+					Defs.cohortABTestQuestSystem = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3);
+					string str1 = string.Concat((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A ? "QuestOff_" : "QuestON_"), FriendsController.configNameABTestQuestSystem);
+					AnalyticsStuff.LogABTest("QuestSystem", str1, true);
+				}
+				if (Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.B)
+				{
+					FriendsController.QuestSystemEnabled = true;
+				}
+				else
+				{
+					FriendsController.QuestSystemEnabled = false;
+				}
+			}
+		}
+	}
+
+	public static void ParseABTestSandBoxConfig(bool isFromReset = false)
+	{
+		if (!Storager.hasKey("abTestSandBoxConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestSandBoxConfigKey", false)))
+		{
+			return;
+		}
+		string str = Storager.getString("abTestSandBoxConfigKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.ContainsKey("enableABTest"))
+		{
+			int num = Convert.ToInt32(strs["enableABTest"]);
+			int num1 = Convert.ToInt32(strs["currentStateEnable"]);
+			if (num != 1 || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.SKIP)
+			{
+				if (!isFromReset)
+				{
+					FriendsController.ResetABTestSandBox();
+				}
+				FriendsController.SandboxEnabled = num1 == 1;
+			}
+			else
+			{
+				FriendsController.configNameABTestSandBox = Convert.ToString(strs["configName"]);
+				if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.NONE)
+				{
+					Defs.cohortABTestSandBox = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3);
+					string str1 = string.Concat((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A ? "SandBoxOff_" : "SandBoxON_"), FriendsController.configNameABTestSandBox);
+					AnalyticsStuff.LogABTest("SandBox", str1, true);
+				}
+				if (Defs.cohortABTestSandBox != Defs.ABTestCohortsType.B)
+				{
+					FriendsController.SandboxEnabled = true;
+				}
+				else
+				{
+					FriendsController.SandboxEnabled = false;
+				}
+			}
+		}
+	}
+
+	public static void ParseABTestSpecialOffersConfig(bool isFromReset = false)
+	{
+		if (!Storager.hasKey("abTestSpecialOffersConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestSpecialOffersConfigKey", false)))
+		{
+			return;
+		}
+		string str = Storager.getString("abTestSpecialOffersConfigKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.ContainsKey("enableABTest"))
+		{
+			int num = Convert.ToInt32(strs["enableABTest"]);
+			int num1 = Convert.ToInt32(strs["currentStateEnable"]);
+			if (num != 1 || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.SKIP)
+			{
+				if (!isFromReset)
+				{
+					FriendsController.ResetABTestSpecialOffers();
+				}
+				FriendsController.SpecialOffersEnabled = num1 == 1;
+			}
+			else
+			{
+				FriendsController.configNameABTestSpecialOffers = Convert.ToString(strs["configName"]);
+				if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.NONE)
+				{
+					Defs.cohortABTestSpecialOffers = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3);
+					string str1 = string.Concat((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A ? "OffersOff_" : "OffersON_"), FriendsController.configNameABTestSpecialOffers);
+					AnalyticsStuff.LogABTest("SpecialOffers", str1, true);
+				}
+				if (Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.B)
+				{
+					FriendsController.SpecialOffersEnabled = true;
+				}
+				else
+				{
+					FriendsController.SpecialOffersEnabled = false;
+				}
+			}
+		}
+	}
+
+	private Dictionary<string, object> ParseInfo(string info)
+	{
+		return Json.Deserialize(info) as Dictionary<string, object>;
+	}
+
+	public static FriendsController.ResultParseOnlineData ParseOnlineData(Dictionary<string, string> onlineData)
+	{
+		string item = onlineData["game_mode"];
+		string str = onlineData["protocol"];
+		string empty = string.Empty;
+		if (onlineData.ContainsKey("map"))
+		{
+			empty = onlineData["map"];
+		}
+		return FriendsController.ParseOnlineData(item, str, empty);
+	}
+
+	private static FriendsController.ResultParseOnlineData ParseOnlineData(string gameModeString, string protocolString, string mapIndex)
+	{
+		int num;
+		int num1 = int.Parse(gameModeString);
+		if (num1 <= 99)
+		{
+			num1 = -1;
 		}
 		else
 		{
-			useBuffSystem = isCohortBuffSystem;
+			num1 /= 100;
 		}
-		if (dictionary.ContainsKey("cohortSuffix"))
+		if (int.TryParse(gameModeString, out num))
 		{
-			configNameABTestBuffSystem = Convert.ToString(dictionary["cohortSuffix"]);
+			if (num > 99)
+			{
+				num = num - num1 * 100;
+			}
+			num /= 10;
 		}
+		else
+		{
+			num = -1;
+		}
+		FriendsController.ResultParseOnlineData resultParseOnlineDatum = new FriendsController.ResultParseOnlineData();
+		bool flag = (num1 == -1 ? true : num1 != (int)ConnectSceneNGUIController.myPlatformConnect);
+		bool flag1 = (num == -1 ? true : ExpController.GetOurTier() != num);
+		bool flag2 = num1 == 3;
+		int num2 = Convert.ToInt32(gameModeString);
+		string str = protocolString;
+		string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
+		resultParseOnlineDatum.gameMode = gameModeString;
+		resultParseOnlineDatum.mapIndex = mapIndex;
+		bool flag3 = num2 == 6;
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(mapIndex));
+		bool flag4 = (!(infoScene != null) || !infoScene.IsAvaliableForMode(TypeModeGame.Dater) ? false : true);
+		if (flag4 && !FriendsController.SandboxEnabled)
+		{
+			return null;
+		}
+		if (flag3)
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.InChat;
+		}
+		else if (!flag2 && flag && !flag4)
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.platform;
+		}
+		else if (!flag2 && flag1 && !flag4)
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.level;
+		}
+		else if (multiplayerProtocolVersion != str)
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.clientVersion;
+		}
+		else if (infoScene != null)
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.None;
+		}
+		else
+		{
+			resultParseOnlineDatum.notConnectCondition = FriendsController.NotConnectCondition.map;
+		}
+		resultParseOnlineDatum.isPlayerInChat = flag3;
+		return resultParseOnlineDatum;
 	}
 
-	private IEnumerator GetABTestBalansConfig(string nameConfig)
+	private void ParseOnlinesResponse(string response)
 	{
-		string responseText;
-		while (true)
+		Dictionary<string, object> strs = Json.Deserialize(response) as Dictionary<string, object>;
+		if (strs == null)
 		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected((!nameConfig.Equals("none")) ? (URLs.ABTestBalansFolderURL + nameConfig + ".json") : URLs.ABTestBalansURL);
-			if (download == null)
+			if (UnityEngine.Debug.isDebugBuild || Application.isEditor)
 			{
-				yield return StartCoroutine(MyWaitForSeconds(1f));
+				UnityEngine.Debug.LogWarning(" GetAllPlayersOnline info = null");
+			}
+			return;
+		}
+		Dictionary<string, Dictionary<string, string>> strs1 = new Dictionary<string, Dictionary<string, string>>();
+		foreach (string key in strs.Keys)
+		{
+			Dictionary<string, object> item = strs[key] as Dictionary<string, object>;
+			Dictionary<string, string> strs2 = new Dictionary<string, string>();
+			foreach (KeyValuePair<string, object> keyValuePair in item)
+			{
+				strs2.Add(keyValuePair.Key, keyValuePair.Value as string);
+			}
+			strs1.Add(key, strs2);
+		}
+		this.onlineInfo.Clear();
+		foreach (string str in strs1.Keys)
+		{
+			Dictionary<string, string> item1 = strs1[str];
+			int num = int.Parse(item1["game_mode"]);
+			if (num - num / 10 * 10 == 3)
+			{
 				continue;
 			}
-			yield return download;
-			if (nameConfig.Equals("none") && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage >= TrainingController.NewTrainingCompletedStage.ShopCompleted))
+			if (this.onlineInfo.ContainsKey(str))
 			{
-				getCohortInfo = true;
-				yield break;
-			}
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestBalansConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(1f));
+				this.onlineInfo[str] = item1;
 			}
 			else
 			{
-				responseText = URLs.Sanitize(download);
-				if (!string.IsNullOrEmpty(responseText))
-				{
-					break;
-				}
+				this.onlineInfo.Add(str, item1);
 			}
-		}
-		Storager.setString("abTestBalansConfigKey", responseText, false);
-		getCohortInfo = true;
-		if (!nameConfig.Equals("none"))
-		{
-			Defs.isABTestBalansNoneSkip = true;
-		}
-		ParseABTestBalansConfig(true);
-		if (Debug.isDebugBuild)
-		{
-			Debug.Log("GetConfigABtestBalans");
 		}
 	}
 
-	private IEnumerator GetABTestBalansCohortNameActual()
+	public static void ParseRatingSystemConfig()
 	{
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestBalansActualCohortNameURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(60f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestBalansCohortNameActual error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(60f));
-				continue;
-			}
-			string responseText = URLs.Sanitize(download);
-			if (string.IsNullOrEmpty(responseText))
-			{
-				continue;
-			}
-			Dictionary<string, object> _nameCohortDict = Json.Deserialize(responseText) as Dictionary<string, object>;
-			if (_nameCohortDict == null)
-			{
-				if (Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestBalansCohortNameActual parse error");
-				}
-				yield return StartCoroutine(MyWaitForSeconds(60f));
-				continue;
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("GetConfigABtestBalans");
-			}
-			if (!Convert.ToString(_nameCohortDict["ActualCohortNameB"]).Equals(Defs.abTestBalansCohortName))
-			{
-				break;
-			}
-			yield return StartCoroutine(MyWaitForSeconds(900f));
-		}
-		Defs.isABTestBalansCohortActual = false;
-	}
-
-	public static void ResetABTestsBalans()
-	{
-		Storager.setString("abTestBalansConfigKey", string.Empty, false);
-		if (sharedController != null)
-		{
-			sharedController.ResetABTestBalansConfig();
-		}
-	}
-
-	public static void ParseABTestBalansConfig(bool isFirstParse = false)
-	{
-		string @string = Storager.getString("abTestBalansConfigKey", false);
-		if (string.IsNullOrEmpty(@string))
-		{
-			if (Defs.abTestBalansCohort != 0)
-			{
-				AnalyticsStuff.LogABTest("New Balance", Defs.abTestBalansCohortName, false);
-				Defs.abTestBalansCohort = Defs.ABTestCohortsType.NONE;
-				Defs.abTestBalansCohortName = string.Empty;
-				ResetABTestsBalans();
-				if (sharedController != null)
-				{
-					sharedController.SendOurData();
-				}
-			}
-			return;
-		}
-		List<object> list = Json.Deserialize(@string) as List<object>;
-		if (list == null)
+		if (!Storager.hasKey("rSCKey") || string.IsNullOrEmpty(Storager.getString("rSCKey", false)))
 		{
 			return;
 		}
-		for (int i = 0; i < list.Count; i++)
+		string str = Storager.getString("rSCKey", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		Defs.isActivABTestRatingSystem = (!strs.ContainsKey("abTestEnabled") ? 0 : Convert.ToInt32(strs["abTestEnabled"])) == 1;
+		if (strs.ContainsKey("currentStateUseRatingSystem"))
 		{
-			Dictionary<string, object> dictionary = list[i] as Dictionary<string, object>;
-			if (dictionary.ContainsKey("NameConfig"))
+			FriendsController.isCurrentUseRatingSystem = Convert.ToInt32(strs["currentStateUseRatingSystem"]) == 1;
+		}
+		if (strs.ContainsKey("currentStateBuffSystem"))
+		{
+			FriendsController.isCurrentStateBuffSystem = Convert.ToString(strs["currentStateBuffSystem"]).Equals("BuffSystem");
+		}
+		if (Defs.isActivABTestRatingSystem)
+		{
+			FriendsController.isUseRatingSystem = (!FriendsController.isCohortUseRatingSystem ? false : FriendsController.isCurrentUseRatingSystem);
+			FriendsController.useBuffSystem = (!FriendsController.isCohortUseRatingSystem ? false : FriendsController.isCurrentStateBuffSystem);
+		}
+		else
+		{
+			if (!FriendsController.isCurrentUseRatingSystem)
 			{
-				ParseABTestBalansNameConfig(dictionary["NameConfig"], isFirstParse);
+				FriendsController.isUseRatingSystem = false;
 			}
-			if (dictionary.ContainsKey("Weapons"))
+			else
 			{
-				ParseABTestBalansWeaponConfig(dictionary["Weapons"]);
+				FriendsController.isUseRatingSystem = true;
 			}
-			if (dictionary.ContainsKey("Armors"))
+			if (!FriendsController.isCurrentStateBuffSystem)
 			{
-				ParseABTestBalansArmorsConfig(dictionary["Armors"]);
+				FriendsController.useBuffSystem = false;
 			}
-			if (dictionary.ContainsKey("Levelling"))
+			else
 			{
-				ParseABTestBalansLevelingConfig(dictionary["Levelling"]);
-			}
-			if (dictionary.ContainsKey("Inapps"))
-			{
-				ParseABTestBalansInappsConfig(dictionary["Inapps"]);
-			}
-			if (dictionary.ContainsKey("Rewards"))
-			{
-				ParseABTestBalansAwardConfig(dictionary["Rewards"]);
-			}
-			if (dictionary.ContainsKey("SpecialEvents"))
-			{
-				ParseABTestBalansSpecialEventsConfig(dictionary["SpecialEvents"]);
+				FriendsController.useBuffSystem = true;
 			}
 		}
+		if (strs.ContainsKey("configName"))
+		{
+			FriendsController.configNameABTestRatingSystem = Convert.ToString(strs["configName"]);
+		}
+		RatingSystem.instance.ParseConfig();
+	}
+
+	private void ParseUpdateFriendsInfoResponse(string response, bool _isUpdateInfoAboutAllFriends)
+	{
+		Dictionary<string, object> strs = Json.Deserialize(response) as Dictionary<string, object>;
+		List<string> strs1 = new List<string>();
+		HashSet<string> strs2 = new HashSet<string>(this.friends);
+		HashSet<string> strs3 = new HashSet<string>(this.invitesToUs);
+		if (strs.ContainsKey("friends"))
+		{
+			this.friends.Clear();
+			List<object> item = strs["friends"] as List<object>;
+			for (int i = 0; i < item.Count; i++)
+			{
+				string str = item[i] as string;
+				if (this.getPossibleFriendsResult.ContainsKey(str))
+				{
+					this.getPossibleFriendsResult.Remove(str);
+				}
+				this.friends.Add(str);
+				if (!_isUpdateInfoAboutAllFriends && !this.friendsInfo.ContainsKey(str) || _isUpdateInfoAboutAllFriends)
+				{
+					strs1.Add(str);
+				}
+			}
+		}
+		if (strs.ContainsKey("invites"))
+		{
+			this.invitesToUs.Clear();
+			List<object> objs = strs["invites"] as List<object>;
+			for (int j = 0; j < objs.Count; j++)
+			{
+				string item1 = objs[j] as string;
+				if (!this.friends.Contains(item1))
+				{
+					this.invitesToUs.Add(item1);
+				}
+				if (!_isUpdateInfoAboutAllFriends && !this.friendsInfo.ContainsKey(item1) && !this.clanFriendsInfo.ContainsKey(item1) && !this.profileInfo.ContainsKey(item1) || _isUpdateInfoAboutAllFriends)
+				{
+					strs1.Add(item1);
+				}
+			}
+		}
+		if (strs.ContainsKey("invites_outcoming"))
+		{
+			this.invitesFromUs.Clear();
+			List<object> objs1 = strs["invites_outcoming"] as List<object>;
+			for (int k = 0; k < objs1.Count; k++)
+			{
+				string str1 = objs1[k] as string;
+				if (!this.friends.Contains(str1))
+				{
+					this.invitesFromUs.Add(str1);
+				}
+			}
+		}
+		if (_isUpdateInfoAboutAllFriends)
+		{
+			List<string> strs4 = new List<string>(this.friends);
+			List<string> strs5 = new List<string>();
+			strs4.AddRange(this.invitesToUs);
+			foreach (KeyValuePair<string, Dictionary<string, object>> keyValuePair in this.friendsInfo)
+			{
+				if (strs4.Contains(keyValuePair.Key))
+				{
+					continue;
+				}
+				strs5.Add(keyValuePair.Key);
+			}
+			if (strs5.Count > 0)
+			{
+				for (int l = 0; l < strs5.Count; l++)
+				{
+					this.friendsInfo.Remove(strs5[l]);
+				}
+				this.SaveCurrentState();
+			}
+		}
+		if (strs.ContainsKey("onLines"))
+		{
+			this.ParseOnlinesResponse(Json.Serialize(strs["onLines"]));
+		}
+		if (strs1.Count <= 0)
+		{
+			if ((!strs2.SetEquals(this.friends) ? 0 : (int)strs3.SetEquals(this.invitesToUs)) == 0 && FriendsController.FriendsUpdated != null)
+			{
+				FriendsController.FriendsUpdated();
+			}
+			this.TrySendEventHideBoxProcessFriendsData();
+		}
+		else
+		{
+			base.StartCoroutine(this.GetInfoAboutNPlayers(strs1));
+		}
+		if (strs.ContainsKey("chat"))
+		{
+			string str2 = Json.Serialize(strs["chat"]);
+			if (ChatController.sharedController != null)
+			{
+				ChatController.sharedController.ParseUpdateChatMessageResponse(str2);
+			}
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RefreshClanOnline()
+	{
+		FriendsController.u003cRefreshClanOnlineu003ec__Iterator46 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RefreshOnlinePlayer()
+	{
+		FriendsController.u003cRefreshOnlinePlayeru003ec__Iterator45 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RefreshOnlinePlayerWithClanInfo()
+	{
+		FriendsController.u003cRefreshOnlinePlayerWithClanInfou003ec__Iterator44 variable = null;
+		return variable;
+	}
+
+	public void RejectClanInvite(string clanID, string playerID = null)
+	{
+		if (!string.IsNullOrEmpty(clanID) && FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this._RejectClanInvite(clanID, playerID));
+		}
+	}
+
+	public void RejectInvite(string rejecteeId, Action<bool> action = null)
+	{
+		if (FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this.RejectInviteFriendCoroutine(rejecteeId, action));
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RejectInviteFriendCoroutine(string rejecteeId, Action<bool> action = null)
+	{
+		FriendsController.u003cRejectInviteFriendCoroutineu003ec__Iterator67 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RequestWinCountTimestampCoroutine()
+	{
+		return new FriendsController.u003cRequestWinCountTimestampCoroutineu003ec__Iterator53();
 	}
 
 	public void ResetABTestBalansConfig()
@@ -2447,4478 +3022,17 @@ public sealed class FriendsController : MonoBehaviour
 		AdminSettingsController.ResetAvardSettingsOnDefault();
 	}
 
-	private static void ParseABTestBalansNameConfig(object obj, bool isFirstParse)
+	public static void ResetABTestQuestSystem()
 	{
-		List<object> list = obj as List<object>;
-		Dictionary<string, object> dictionary = list[0] as Dictionary<string, object>;
-		if (dictionary.ContainsKey("Group"))
+		if (Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.SKIP)
 		{
-			Defs.abTestBalansCohort = (Defs.ABTestCohortsType)(int)Enum.Parse(typeof(Defs.ABTestCohortsType), dictionary["Group"] as string);
-			if (Defs.abTestBalansCohort == Defs.ABTestCohortsType.B)
-			{
-				Defs.isABTestBalansCohortActual = true;
-			}
-			if (Application.isEditor)
-			{
-				Debug.Log("Defs.abTestBalansCohort = " + Defs.abTestBalansCohort);
-			}
-		}
-		if (!dictionary.ContainsKey("NameGroup"))
-		{
-			return;
-		}
-		Defs.abTestBalansCohortName = dictionary["NameGroup"] as string;
-		if (isFirstParse)
-		{
-			AnalyticsStuff.LogABTest("New Balance", Defs.abTestBalansCohortName);
-			if (sharedController != null)
-			{
-				sharedController.SendOurData();
-			}
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log("abTestBalansCohortName = " + Defs.abTestBalansCohortName.ToString());
-		}
-	}
-
-	private static void ParseABTestBalansWeaponConfig(object obj)
-	{
-		Dictionary<string, ItemPrice> dictionary = new Dictionary<string, ItemPrice>();
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary2 = list[i] as Dictionary<string, object>;
-			string key = dictionary2["Name"] as string;
-			int price = Convert.ToInt32(dictionary2["Price"]);
-			string currency = dictionary2["Currency"] as string;
-			dictionary.Add(key, new ItemPrice(price, currency));
-			if (dictionary2.ContainsKey("DPS"))
-			{
-				float num = Convert.ToSingle(dictionary2["DPS"]);
-				float[] array = new float[6];
-				for (int j = 0; j < 6; j++)
-				{
-					array[j] = num;
-				}
-				dpsWeaponsFromABTestBalans.Add(key, array);
-			}
-			if (dictionary2.ContainsKey("Damage"))
-			{
-				float num2 = Convert.ToSingle(dictionary2["Damage"]);
-				float[] array2 = new float[6];
-				for (int k = 0; k < 6; k++)
-				{
-					array2[k] = num2;
-				}
-				damageWeaponsFromABTestBalans.Add(key, array2);
-			}
-		}
-		Defs2.GunPricesFromServer = dictionary;
-	}
-
-	private static void ParseABTestBalansArmorsConfig(object obj)
-	{
-		Dictionary<string, ItemPrice> dictionary = new Dictionary<string, ItemPrice>();
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary2 = list[i] as Dictionary<string, object>;
-			string key = dictionary2["Name"] as string;
-			int price = Convert.ToInt32(dictionary2["Price"]);
-			string currency = dictionary2["Currency"] as string;
-			dictionary.Add(key, new ItemPrice(price, currency));
-		}
-		Defs2.ArmorPricesFromServer = dictionary;
-	}
-
-	private static void ParseABTestBalansLevelingConfig(object obj)
-	{
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary = list[i] as Dictionary<string, object>;
-			int level = Convert.ToInt32(dictionary["Level"]);
-			int exp = Convert.ToInt32(dictionary["XP"]);
-			int coins = Convert.ToInt32(dictionary["Coins"]);
-			int gems = Convert.ToInt32(dictionary["Gems"]);
-			ExperienceController.RewriteLevelingParametersForLevel(level, exp, coins, gems);
-		}
-	}
-
-	private static void ParseABTestBalansInappsConfig(object obj)
-	{
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary = list[i] as Dictionary<string, object>;
-			int priceId = Convert.ToInt32(dictionary["Real"]);
-			int coinQuantity = Convert.ToInt32(dictionary["Coins"]);
-			int gemsQuantity = Convert.ToInt32(dictionary["Gems"]);
-			int bonusCoins = Convert.ToInt32(dictionary["Bonus Coins"]);
-			int bonusGems = Convert.ToInt32(dictionary["Bonus Gems"]);
-			VirtualCurrencyHelper.RewriteInappsQuantity(priceId, coinQuantity, gemsQuantity, bonusCoins, bonusGems);
-		}
-	}
-
-	private static void ParseABTestBalansAwardConfig(object obj)
-	{
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary = list[i] as Dictionary<string, object>;
-			string text = Convert.ToString(dictionary["Mode"]);
-			int[] array = new int[10];
-			for (int j = 1; j <= 10; j++)
-			{
-				array[j - 1] = Convert.ToInt32(dictionary[j.ToString()]);
-			}
-			if (text.Equals("XP Team"))
-			{
-				AdminSettingsController.expAvardTeamFight[0] = array;
-				AdminSettingsController.minScoreTeamFight = 5;
-			}
-			if (text.Equals("Coins Team"))
-			{
-				AdminSettingsController.coinAvardTeamFight[0] = array;
-				AdminSettingsController.minScoreTeamFight = 5;
-			}
-			if (text.Equals("XP DM"))
-			{
-				AdminSettingsController.expAvardDeathMath[0] = array;
-				AdminSettingsController.minScoreDeathMath = 5;
-			}
-			if (text.Equals("Coins DM"))
-			{
-				AdminSettingsController.coinAvardDeathMath[0] = array;
-				AdminSettingsController.minScoreDeathMath = 5;
-			}
-			if (text.Equals("XP Coop"))
-			{
-				AdminSettingsController.expAvardTimeBattle = array;
-				AdminSettingsController.minScoreTimeBattle = 5;
-			}
-			if (text.Equals("Coins Coop"))
-			{
-				AdminSettingsController.coinAvardTimeBattle = array;
-				AdminSettingsController.minScoreTimeBattle = 5;
-			}
-			if (text.Equals("XP Flag"))
-			{
-				AdminSettingsController.expAvardFlagCapture[0] = array;
-				AdminSettingsController.minScoreFlagCapture = 5;
-			}
-			if (text.Equals("Coins Flag"))
-			{
-				AdminSettingsController.coinAvardFlagCapture[0] = array;
-				AdminSettingsController.minScoreFlagCapture = 5;
-			}
-			if (text.Equals("XP Deadly"))
-			{
-				AdminSettingsController.expAvardDeadlyGames = array;
-			}
-			if (text.Equals("Coins Deadly"))
-			{
-				AdminSettingsController.coinAvardDeadlyGames = array;
-			}
-			if (text.Equals("XP Points"))
-			{
-				AdminSettingsController.expAvardCapturePoint[0] = array;
-				AdminSettingsController.minScoreCapturePoint = 5;
-			}
-			if (text.Equals("Coins Points"))
-			{
-				AdminSettingsController.coinAvardCapturePoint[0] = array;
-				AdminSettingsController.minScoreCapturePoint = 5;
-			}
-		}
-	}
-
-	private static void ParseABTestBalansSpecialEventsConfig(object obj)
-	{
-		List<object> list = obj as List<object>;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Dictionary<string, object> dictionary = list[i] as Dictionary<string, object>;
-			string text = Convert.ToString(dictionary["Event"]);
-			int abTestBalansStartCapitalCoins = Convert.ToInt32(dictionary["Coins"]);
-			int abTestBalansStartCapitalGems = Convert.ToInt32(dictionary["Gems"]);
-			int num = Convert.ToInt32(dictionary["XP"]);
-			if (text.Equals("StartCapital"))
-			{
-				Defs.abTestBalansStartCapitalCoins = abTestBalansStartCapitalCoins;
-				Defs.abTestBalansStartCapitalGems = abTestBalansStartCapitalGems;
-			}
-		}
-	}
-
-	private IEnumerator GetBanList()
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		int ban;
-		while (true)
-		{
-			if (string.IsNullOrEmpty(id))
-			{
-				yield return null;
-				continue;
-			}
-			WWWForm form = new WWWForm();
-			form.AddField("app_version", appVersionField);
-			form.AddField("id", id);
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.BanURL, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetBanList error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			string responseText = URLs.Sanitize(download);
-			if (int.TryParse(responseText, out ban))
-			{
-				break;
-			}
-			Debug.LogWarning("GetBanList cannot parse ban!");
-			yield return StartCoroutine(MyWaitForSeconds(10f));
-		}
-		Banned = ban;
-		if (Debug.isDebugBuild)
-		{
-			Debug.Log("GetBanList Banned: " + Banned);
-		}
-	}
-
-	private IEnumerator CheckOurIDExists()
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		string response;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			form.AddField("action", "start_check");
-			form.AddField("app_version", appVersionField);
-			form.AddField("platform", ProtocolListGetter.CurrentPlatform.ToString());
-			form.AddField("uniq_id", sharedController.id);
-			form.AddField("device_model", SystemInfo.deviceModel);
-			form.AddField("type_device", Device.isPixelGunLow ? 1 : 2);
-			form.AddField("auth", Hash("start_check"));
-			form.AddField("abuse_method", Storager.getInt("AbuseMethod", false));
-			if (Launcher.PackageInfo.HasValue)
-			{
-			}
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(Defs.timeUpdateStartCheckIfNullResponce));
-				continue;
-			}
-			yield return download;
-			response = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("CheckOurIDExists error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(Defs.timeUpdateStartCheckIfNullResponce));
-				continue;
-			}
-			if (!"fail".Equals(response))
-			{
-				break;
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("CheckOurIDExists fail.");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(Defs.timeUpdateStartCheckIfNullResponce));
-		}
-		int newId;
-		if (!int.TryParse(response, out newId))
-		{
-			Dictionary<string, object> clanInfo = Json.Deserialize(response) as Dictionary<string, object>;
-			if (clanInfo == null)
-			{
-				Debug.LogWarning("CheckOurIDExists cannot parse clan info!");
-			}
-			else
-			{
-				object clanIDObj;
-				if (clanInfo.TryGetValue("id", out clanIDObj) && clanIDObj != null && !clanIDObj.Equals("null"))
-				{
-					ClanID = Convert.ToString(clanIDObj);
-				}
-				object clanCreatorObj;
-				if (clanInfo.TryGetValue("creator_id", out clanCreatorObj) && clanCreatorObj != null && !clanCreatorObj.Equals("null"))
-				{
-					clanLeaderID = clanCreatorObj as string;
-				}
-				object clanNameObj;
-				if (clanInfo.TryGetValue("name", out clanNameObj) && clanNameObj != null && !clanNameObj.Equals("null"))
-				{
-					_prevClanName = clanName;
-					clanName = clanNameObj as string;
-					if (!_prevClanName.Equals(clanName) && onChangeClanName != null)
-					{
-						onChangeClanName(clanName);
-					}
-				}
-				object clanLogoObj;
-				if (clanInfo.TryGetValue("logo", out clanLogoObj) && clanLogoObj != null && !clanLogoObj.Equals("null"))
-				{
-					clanLogo = clanLogoObj as string;
-				}
-			}
-		}
-		else
-		{
-			Storager.setString(AccountCreated, response, false);
-			id = response;
-			onlineInfo.Clear();
-			friends.Clear();
-			invitesFromUs.Clear();
-			playersInfo.Clear();
-			invitesToUs.Clear();
-			ClanInvites.Clear();
-			notShowAddIds.Clear();
-			SaveCurrentState();
-			PlayerPrefs.Save();
-		}
-		readyToOperate = true;
-		StartCoroutine(GetFriendsDataLoop());
-		StartCoroutine(GetClanDataLoop());
-		GetOurLAstOnline();
-		StartCoroutine(RequestWinCountTimestampCoroutine());
-		GetOurWins();
-	}
-
-	public void InitOurInfo()
-	{
-		nick = ProfileController.GetPlayerNameOrDefault();
-		byte[] inArray = SkinsController.currentSkinForPers.EncodeToPNG();
-		skin = Convert.ToBase64String(inArray);
-		rank = ExperienceController.sharedController.currentLevel;
-		wins = Storager.getInt("Rating", false);
-		survivalScore = PlayerPrefs.GetInt(Defs.SurvivalScoreSett, 0);
-		coopScore = PlayerPrefs.GetInt(Defs.COOPScore, 0);
-		infoLoaded = true;
-	}
-
-	public IEnumerator WaitForReadyToOperateAndUpdatePlayer()
-	{
-		while (!readyToOperate)
-		{
-			yield return null;
-		}
-		StartCoroutine(UpdatePlayer(true));
-	}
-
-	public void SendOurData(bool SendSkin = false)
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(UpdatePlayer(SendSkin));
-		}
-	}
-
-	private void SaveCurrentState()
-	{
-		if (friends != null)
-		{
-			string text = Json.Serialize(friends);
-			PlayerPrefs.SetString("FriendsKey", text ?? "[]");
-		}
-		if (invitesToUs != null)
-		{
-			string text2 = Json.Serialize(invitesToUs);
-			PlayerPrefs.SetString("ToUsKey", text2 ?? "[]");
-		}
-		if (playersInfo != null)
-		{
-			string text3 = Json.Serialize(playersInfo);
-			PlayerPrefs.SetString("PlayerInfoKey", text3 ?? "{}");
-		}
-		if (friendsInfo != null)
-		{
-			string text4 = Json.Serialize(friendsInfo);
-			PlayerPrefs.SetString("FriendsInfoKey", text4 ?? "{}");
-		}
-		if (clanFriendsInfo != null)
-		{
-			string text5 = Json.Serialize(clanFriendsInfo);
-			PlayerPrefs.SetString("ClanFriendsInfoKey", text5 ?? "{}");
-		}
-		if (ClanInvites != null)
-		{
-			string text6 = Json.Serialize(ClanInvites);
-			PlayerPrefs.SetString("ClanInvitesKey", text6 ?? "[]");
-		}
-		UpdateCachedClickJoinListValue();
-	}
-
-	private void DumpCurrentState()
-	{
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		if (pause)
-		{
-			DumpCurrentState();
-			isUpdateServerTimeAfterRun = false;
-			AnalyticsStuff.SaveTrainingStep();
-			yield break;
-		}
-		yield return null;
-		yield return null;
-		yield return null;
-		StartSendReview();
-		if (GiftBannerWindow.instance != null)
-		{
-			GiftBannerWindow.instance.ForceCloseAll();
-		}
-		StopCoroutine("GetBanList");
-		StartCoroutine("GetBanList");
-		if (Defs.isABTestBalansCohortActual)
-		{
-			StopCoroutine(GetABTestBalansCohortNameActual());
-			StartCoroutine(GetABTestBalansCohortNameActual());
-		}
-		StopCoroutine(GetABTestBankViewConfig());
-		StartCoroutine(GetABTestBankViewConfig());
-		StopCoroutine(GetABTestSandBoxConfig());
-		StartCoroutine(GetABTestSandBoxConfig());
-		StopCoroutine(GetABTestSpecialOffersConfig());
-		StartCoroutine(GetABTestSpecialOffersConfig());
-		StopCoroutine(GetABTestQuestSystemConfig());
-		StartCoroutine(GetABTestQuestSystemConfig());
-		StopCoroutine(GetRatingSystemConfig());
-		StartCoroutine(GetRatingSystemConfig());
-		UpdatePopularityMaps();
-		StartCoroutine(GetTimeFromServerLoop());
-		StartCoroutine(GetFiltersSettings());
-		StartCoroutine(GetLobbyNews(true));
-		Task futureToWait = PersistentCacheManager.Instance.FirstResponse;
-		StartCoroutine(GetBuffSettings(futureToWait));
-		GetFriendsData(true);
-		FastGetPixelbookSettings();
-		if (SceneLoader.ActiveSceneName.Equals("Friends") && FriendsGUIController.ShowProfile && FriendProfileController.currentFriendId != null && readyToOperate)
-		{
-			StartCoroutine(UpdatePlayerInfoById(FriendProfileController.currentFriendId));
-		}
-		if (SceneLoader.ActiveSceneName.Equals("Clans"))
-		{
-			if (!string.IsNullOrEmpty(ClanID))
-			{
-				StartCoroutine(GetClanDataOnce());
-			}
-			if (ClansGUIController.AtAddPanel)
-			{
-				StartCoroutine(GetAllPlayersOnline());
-			}
-			else
-			{
-				StartCoroutine(GetClanPlayersOnline());
-			}
-			if (ClansGUIController.ShowProfile && FriendProfileController.currentFriendId != null && readyToOperate)
-			{
-				StartCoroutine(UpdatePlayerInfoById(FriendProfileController.currentFriendId));
-			}
-		}
-	}
-
-	private void OnDestroy()
-	{
-		DumpCurrentState();
-	}
-
-	public void SendInvitation(string personId, Dictionary<string, object> socialEventParameters)
-	{
-		if (!string.IsNullOrEmpty(personId) && readyToOperate)
-		{
-			if (socialEventParameters == null)
-			{
-				throw new ArgumentNullException("socialEventParameters");
-			}
-			StartCoroutine(FriendRequest(personId, socialEventParameters));
-		}
-	}
-
-	public void SendCreateClan(string personId, string nameClan, string skinClan, Action<string> ErrorHandler)
-	{
-		if (!string.IsNullOrEmpty(personId) && !string.IsNullOrEmpty(nameClan) && !string.IsNullOrEmpty(skinClan) && readyToOperate)
-		{
-			StartCoroutine(_SendCreateClan(personId, nameClan, skinClan, ErrorHandler));
-		}
-		else if (ErrorHandler != null)
-		{
-			ErrorHandler("Error: FALSE:  ! string.IsNullOrEmpty (personId) && ! string.IsNullOrEmpty (nameClan) && ! string.IsNullOrEmpty (skinClan) && readyToOperate");
-		}
-	}
-
-	public static void SendPlayerInviteToClan(string personId, Action<bool, bool> callbackResult = null)
-	{
-		if (!(sharedController == null) && !string.IsNullOrEmpty(personId) && readyToOperate)
-		{
-			sharedController.StartCoroutine(sharedController.SendClanInvitation(personId, callbackResult));
-		}
-	}
-
-	public void AcceptInvite(string accepteeId, Action<bool> action = null)
-	{
-		if (!string.IsNullOrEmpty(accepteeId) && readyToOperate)
-		{
-			StartCoroutine(AcceptFriend(accepteeId, action));
-		}
-	}
-
-	public void AcceptClanInvite(string recordId)
-	{
-		if (!string.IsNullOrEmpty(recordId) && readyToOperate)
-		{
-			StartCoroutine(_AcceptClanInvite(recordId));
-		}
-	}
-
-	private IEnumerator _AcceptClanInvite(string recordId)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "accept_invite");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", id);
-		form.AddField("id_clan", recordId);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("accept_invite"));
-		WWW acceptInviteRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		JoinClanSent = recordId;
-		yield return acceptInviteRequest;
-		string response = URLs.Sanitize(acceptInviteRequest);
-		if (string.IsNullOrEmpty(acceptInviteRequest.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("Accept clan invite: " + response);
-		}
-		if (!string.IsNullOrEmpty(acceptInviteRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_AcceptClanInvite error: " + acceptInviteRequest.error);
-			}
-			JoinClanSent = null;
-		}
-		else if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_AcceptClanInvite fail.");
-			}
-			JoinClanSent = null;
-		}
-		else
-		{
-			clanLogo = tempClanLogo;
-			ClanID = tempClanID;
-			clanName = tempClanName;
-			clanLeaderID = tempClanCreatorID;
-		}
-	}
-
-	public void StartRefreshingOnline()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopOnline = false;
-			StartCoroutine(RefreshOnlinePlayer());
-		}
-	}
-
-	public void StopRefreshingOnline()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopOnline = true;
-		}
-	}
-
-	public void StartRefreshingOnlineWithClanInfo()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopOnlineWithClanInfo = false;
-			StartCoroutine(RefreshOnlinePlayerWithClanInfo());
-		}
-	}
-
-	public void StopRefreshingOnlineWithClanInfo()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopOnlineWithClanInfo = true;
-		}
-	}
-
-	private IEnumerator RefreshOnlinePlayerWithClanInfo()
-	{
-		while (true)
-		{
-			if (idle)
-			{
-				yield return null;
-				continue;
-			}
-			StartCoroutine(GetAllPlayersOnlineWithClanInfo());
-			float startTime = Time.realtimeSinceStartup;
-			do
-			{
-				yield return null;
-			}
-			while (Time.realtimeSinceStartup - startTime < 20f && !_shouldStopOnlineWithClanInfo);
-			if (_shouldStopOnlineWithClanInfo)
-			{
-				break;
-			}
-		}
-		_shouldStopOnlineWithClanInfo = false;
-	}
-
-	private IEnumerator RefreshOnlinePlayer()
-	{
-		while (true)
-		{
-			if (idle)
-			{
-				yield return null;
-				continue;
-			}
-			StartCoroutine(GetAllPlayersOnline());
-			float startTime = Time.realtimeSinceStartup;
-			do
-			{
-				yield return null;
-			}
-			while (Time.realtimeSinceStartup - startTime < 20f && !_shouldStopOnline);
-			if (_shouldStopOnline)
-			{
-				break;
-			}
-		}
-		_shouldStopOnline = false;
-	}
-
-	public void StartRefreshingClanOnline()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopRefrClanOnline = false;
-			StartCoroutine(RefreshClanOnline());
-		}
-	}
-
-	public void StopRefreshingClanOnline()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopRefrClanOnline = true;
-		}
-	}
-
-	private IEnumerator RefreshClanOnline()
-	{
-		while (true)
-		{
-			if (idle)
-			{
-				yield return null;
-				continue;
-			}
-			StartCoroutine(GetClanPlayersOnline());
-			float startTime = Time.realtimeSinceStartup;
-			do
-			{
-				yield return null;
-			}
-			while (Time.realtimeSinceStartup - startTime < 20f && !_shouldStopRefrClanOnline);
-			if (_shouldStopRefrClanOnline)
-			{
-				break;
-			}
-		}
-		_shouldStopRefrClanOnline = false;
-	}
-
-	private IEnumerator GetClanPlayersOnline()
-	{
-		if (!readyToOperate)
-		{
-			yield break;
-		}
-		List<string> ids = new List<string>();
-		foreach (Dictionary<string, string> fr in clanMembers)
-		{
-			string firIdStr;
-			if (fr.TryGetValue("id", out firIdStr))
-			{
-				ids.Add(firIdStr);
-			}
-		}
-		yield return StartCoroutine(_GetOnlineForPlayerIDs(ids));
-	}
-
-	private IEnumerator GetAllPlayersOnline()
-	{
-		if (readyToOperate)
-		{
-			yield return StartCoroutine(_GetOnlineForPlayerIDs(friends));
-		}
-	}
-
-	private IEnumerator GetAllPlayersOnlineWithClanInfo()
-	{
-		if (readyToOperate)
-		{
-			yield return StartCoroutine(_GetOnlineWithClanInfoForPlayerIDs(friends));
-		}
-	}
-
-	private IEnumerator _GetOnlineForPlayerIDs(List<string> ids)
-	{
-		if (ids.Count == 0)
-		{
-			yield break;
-		}
-		string json = Json.Serialize(ids);
-		if (json == null)
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_all_players_online");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", id);
-		form.AddField("ids", json);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_all_players_online"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && (Debug.isDebugBuild || Application.isEditor))
-		{
-			Debug.Log(response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning("GetAllPlayersOnline error: " + download.error);
-			}
-			yield break;
-		}
-		Dictionary<string, object> __list = Json.Deserialize(response) as Dictionary<string, object>;
-		if (__list == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" GetAllPlayersOnline info = null");
-			}
-			yield break;
-		}
-		Dictionary<string, Dictionary<string, string>> list = new Dictionary<string, Dictionary<string, string>>();
-		foreach (string key2 in __list.Keys)
-		{
-			Dictionary<string, object> d2 = __list[key2] as Dictionary<string, object>;
-			Dictionary<string, string> newd = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> kvp in d2)
-			{
-				newd.Add(kvp.Key, kvp.Value as string);
-			}
-			list.Add(key2, newd);
-		}
-		onlineInfo.Clear();
-		foreach (string key in list.Keys)
-		{
-			Dictionary<string, string> d = list[key];
-			int _game_mode = int.Parse(d["game_mode"]);
-			int _regim = _game_mode - _game_mode / 10 * 10;
-			if (_regim != 3)
-			{
-				if (!onlineInfo.ContainsKey(key))
-				{
-					onlineInfo.Add(key, d);
-				}
-				else
-				{
-					onlineInfo[key] = d;
-				}
-			}
-		}
-	}
-
-	private IEnumerator _GetOnlineWithClanInfoForPlayerIDs(List<string> ids)
-	{
-		if (ids.Count == 0)
-		{
-			yield break;
-		}
-		string json = Json.Serialize(ids);
-		if (json == null)
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_all_players_online_with_clan_info");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", id);
-		form.AddField("ids", json);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_all_players_online_with_clan_info"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log(response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_GetOnlineWithClanInfoForPlayerIDs error: " + download.error);
-			}
-			yield break;
-		}
-		Dictionary<string, object> allDict = Json.Deserialize(response) as Dictionary<string, object>;
-		if (allDict == null)
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" _GetOnlineWithClanInfoForPlayerIDs allDict = null");
-			}
-			yield break;
-		}
-		Dictionary<string, object> __list = allDict["online"] as Dictionary<string, object>;
-		if (__list == null)
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" _GetOnlineWithClanInfoForPlayerIDs __list = null");
-			}
-			yield break;
-		}
-		Dictionary<string, Dictionary<string, string>> list = new Dictionary<string, Dictionary<string, string>>();
-		foreach (string key3 in __list.Keys)
-		{
-			Dictionary<string, object> d3 = __list[key3] as Dictionary<string, object>;
-			Dictionary<string, string> newd2 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> kvp2 in d3)
-			{
-				newd2.Add(kvp2.Key, kvp2.Value as string);
-			}
-			list.Add(key3, newd2);
-		}
-		onlineInfo.Clear();
-		foreach (string key2 in list.Keys)
-		{
-			Dictionary<string, string> d2 = list[key2];
-			int _game_mode = int.Parse(d2["game_mode"]);
-			int _regim = _game_mode - _game_mode / 10 * 10;
-			if (_regim != 3)
-			{
-				if (!onlineInfo.ContainsKey(key2))
-				{
-					onlineInfo.Add(key2, d2);
-				}
-				else
-				{
-					onlineInfo[key2] = d2;
-				}
-			}
-		}
-		Dictionary<string, object> clanInfo = allDict["clan_info"] as Dictionary<string, object>;
-		if (clanInfo == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" _GetOnlineWithClanInfoForPlayerIDs clanInfo = null");
-			}
-			yield break;
-		}
-		Dictionary<string, Dictionary<string, string>> convertedClanInfo = new Dictionary<string, Dictionary<string, string>>();
-		foreach (string key in clanInfo.Keys)
-		{
-			Dictionary<string, object> d = clanInfo[key] as Dictionary<string, object>;
-			Dictionary<string, string> newd = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> kvp in d)
-			{
-				newd.Add(kvp.Key, Convert.ToString(kvp.Value));
-			}
-			convertedClanInfo.Add(key, newd);
-		}
-		foreach (string playerID in convertedClanInfo.Keys)
-		{
-			Dictionary<string, string> playerClanInfo = convertedClanInfo[playerID];
-			if (!sharedController.playersInfo.ContainsKey(playerID))
-			{
-				continue;
-			}
-			Dictionary<string, object> pl = sharedController.playersInfo[playerID];
-			if (pl.ContainsKey("player"))
-			{
-				Dictionary<string, object> plpl = pl["player"] as Dictionary<string, object>;
-				if (plpl.ContainsKey("clan_creator_id"))
-				{
-					plpl["clan_creator_id"] = playerClanInfo["clan_creator_id"];
-				}
-				else
-				{
-					plpl.Add("clan_creator_id", playerClanInfo["clan_creator_id"]);
-				}
-				if (plpl.ContainsKey("clan_name"))
-				{
-					plpl["clan_name"] = playerClanInfo["clan_name"];
-				}
-				else
-				{
-					plpl.Add("clan_name", playerClanInfo["clan_name"]);
-				}
-				if (plpl.ContainsKey("clan_logo"))
-				{
-					plpl["clan_logo"] = playerClanInfo["clan_logo"];
-				}
-				else
-				{
-					plpl.Add("clan_logo", playerClanInfo["clan_logo"]);
-				}
-			}
-		}
-	}
-
-	public void GetFacebookFriendsInfo(Action callb)
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(_GetFacebookFriendsInfo(callb));
-		}
-	}
-
-	private IEnumerator _GetFacebookFriendsInfo(Action callb)
-	{
-		if (!FacebookController.FacebookSupported || FacebookController.sharedController.friendsList == null)
-		{
-			yield break;
-		}
-		GetFacebookFriendsCallback = callb;
-		List<string> ids = new List<string>();
-		foreach (Friend f in FacebookController.sharedController.friendsList)
-		{
-			ids.Add(f.id);
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_info_by_facebook_ids");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("platform", ProtocolListGetter.CurrentPlatform.ToString());
-		form.AddField("id", id);
-		string json = Json.Serialize(ids);
-		form.AddField("ids", json);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_info_by_facebook_ids"));
-		Debug.LogFormat("Facebook json: {0}", json);
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			GetFacebookFriendsCallback = null;
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && (Debug.isDebugBuild || Application.isEditor))
-		{
-			Debug.Log(response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning("_GetFacebookFriendsInfo error: " + download.error);
-			}
-			GetFacebookFriendsCallback = null;
-			yield break;
-		}
-		List<object> __info = Json.Deserialize(response) as List<object>;
-		if (__info == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" _GetFacebookFriendsInfo info = null");
-			}
-			GetFacebookFriendsCallback = null;
-			yield break;
-		}
-		foreach (Dictionary<string, object> d in __info)
-		{
-			Dictionary<string, object> ff = new Dictionary<string, object>();
-			foreach (KeyValuePair<string, object> i in d)
-			{
-				ff.Add(i.Key, i.Value);
-			}
-			object ffid;
-			if (ff.TryGetValue("id", out ffid))
-			{
-				facebookFriendsInfo.Add(ffid as string, ff);
-			}
-		}
-		if (GetFacebookFriendsCallback != null)
-		{
-			GetFacebookFriendsCallback();
-		}
-		GetFacebookFriendsCallback = null;
-	}
-
-	private IEnumerator UpdatePlayerOnlineLoop()
-	{
-		while (true)
-		{
-			if (idle)
-			{
-				yield return null;
-				continue;
-			}
-			int gameMode = -1;
-			int platform = (int)ConnectSceneNGUIController.myPlatformConnect;
-			if (PhotonNetwork.room != null)
-			{
-				gameMode = (int)ConnectSceneNGUIController.regim;
-				if (!string.IsNullOrEmpty(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.passwordProperty].ToString()))
-				{
-					platform = 3;
-				}
-			}
-			if (gameMode != -1)
-			{
-				StartCoroutine(UpdatePlayerOnline(platform * 100 + ConnectSceneNGUIController.gameTier * 10 + gameMode));
-			}
-			yield return StartCoroutine(MyWaitForSeconds(Defs.timeUpdateOnlineInGame));
-		}
-	}
-
-	public void SendAddPurchaseEvent(int inapp, string purchaseId)
-	{
-		StartCoroutine(AddPurchaseEvent(inapp, purchaseId));
-	}
-
-	private IEnumerator AddPurchaseEvent(int inapp, string purchaseId)
-	{
-		WaitForSeconds awaiter = new WaitForSeconds(5f);
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			form.AddField("action", "add_purchase");
-			form.AddField("auth", Hash("add_purchase"));
-			form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-			form.AddField("uniq_id", id);
-			form.AddField("platform", ProtocolListGetter.CurrentPlatform.ToString());
-			form.AddField("type_device", Device.isPixelGunLow ? 1 : 2);
-			int playerLevel = ((!(ExperienceController.sharedController != null)) ? 1 : ExperienceController.sharedController.currentLevel);
-			form.AddField("rank", playerLevel);
-			form.AddField("inapp", inapp);
-			if (Defs.abTestBalansCohort != 0)
-			{
-				form.AddField("cohort", (int)Defs.abTestBalansCohort);
-				form.AddField("cohortName", Defs.abTestBalansCohortName);
-			}
-			if (Defs.isActivABTestStaticBank)
-			{
-				form.AddField("cohort_bank_view", ((!isCohortStaticBank) ? "Scroll_" : "Static_") + _configNameABTestBankView);
-			}
-			if (Defs.isActivABTestBuffSystem)
-			{
-				form.AddField("cohort_buf", ((!isCohortBuffSystem) ? "NotBuff_" : "BuffSys_") + configNameABTestBuffSystem);
-			}
-			if (Defs.isActivABTestRatingSystem)
-			{
-				form.AddField("cohort_cup", ((!isCohortUseRatingSystem) ? "OffRating_" : "UseRaing_") + configNameABTestRatingSystem);
-			}
-			if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B)
-			{
-				string _currentConfigSandBoxNameForEvent = ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A) ? "SandBoxOff_" : "SandBoxON_") + configNameABTestSandBox;
-				form.AddField("cohort_dater", _currentConfigSandBoxNameForEvent);
-			}
 			if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B)
 			{
-				string _currentConfigQuestSystemNameForEvent = ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A) ? "QuestOff_" : "QuestON_") + configNameABTestQuestSystem;
-				form.AddField("cohort_quest", _currentConfigQuestSystemNameForEvent);
-			}
-			if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B)
-			{
-				string _currentConfigSpecialOffersNameForEvent = ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A) ? "OffersOff_" : "OffersON_") + configNameABTestSpecialOffers;
-				form.AddField("cohort_offers", _currentConfigSpecialOffersNameForEvent);
-			}
-			form.AddField("purchaseId", purchaseId);
-			float savedPlayTime = 0f;
-			float savedPlayTimeInMatch = 0f;
-			if (Storager.hasKey("PlayTime") && float.TryParse(Storager.getString("PlayTime", false), out savedPlayTime))
-			{
-				form.AddField("playTime", Mathf.RoundToInt(savedPlayTime));
-			}
-			if (Storager.hasKey("PlayTimeInMatch") && float.TryParse(Storager.getString("PlayTimeInMatch", false), out savedPlayTimeInMatch))
-			{
-				form.AddField("playTimeInMatch", Mathf.RoundToInt(savedPlayTimeInMatch));
-			}
-			WWW addPurchaseEventRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-			yield return addPurchaseEventRequest;
-			string response = URLs.Sanitize(addPurchaseEventRequest);
-			if (!string.IsNullOrEmpty(addPurchaseEventRequest.error))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("AddPurchaseEvent error: " + addPurchaseEventRequest.error);
-				}
-				yield return awaiter;
-				continue;
-			}
-			if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-			{
-				if (Debug.isDebugBuild)
-				{
-					Debug.LogWarning("AddPurchaseEvent fail.");
-				}
-				yield return awaiter;
-				continue;
-			}
-			break;
-		}
-	}
-
-	public IEnumerator SynchRating(int rating)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "synch_rating");
-		form.AddField("auth", Hash("synch_rating"));
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("uniq_id", id);
-		form.AddField("rating", rating);
-		form.AddField("league_id", (int)RatingSystem.instance.currentLeague);
-		form.AddField("division", RatingSystem.instance.currentDivision);
-		WWW synchRatingRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return synchRatingRequest;
-		string response = URLs.Sanitize(synchRatingRequest);
-		if (!string.IsNullOrEmpty(synchRatingRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("synchRatingRequest error: " + synchRatingRequest.error);
-			}
-		}
-		else if (!string.IsNullOrEmpty(response) && response.Equals("fail") && Debug.isDebugBuild)
-		{
-			Debug.LogWarning("synchRatingRequest fail.");
-		}
-	}
-
-	private IEnumerator UpdatePlayerOnline(int gameMode)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "update_player_online");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", id);
-		form.AddField("game_mode", gameMode.ToString("D3"));
-		form.AddField("room_name", (PhotonNetwork.room == null || PhotonNetwork.room.name == null) ? string.Empty : PhotonNetwork.room.name);
-		form.AddField("map", (PhotonNetwork.room == null || PhotonNetwork.room.customProperties == null) ? string.Empty : PhotonNetwork.room.customProperties[ConnectSceneNGUIController.mapProperty].ToString());
-		form.AddField("protocol", GlobalGameController.MultiplayerProtocolVersion);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("update_player_online"));
-		form.AddField("platform", ProtocolListGetter.CurrentPlatform.ToString());
-		form.AddField("type_device", Device.isPixelGunLow ? 1 : 2);
-		if (isRunABTest)
-		{
-			form.AddField("game_time", Mathf.RoundToInt(deltaTimeInGame));
-			sendingTime = Mathf.RoundToInt(deltaTimeInGame);
-		}
-		if (Defs.isActivABTestStaticBank)
-		{
-			form.AddField("abtest_staticbank_cohort", ((!isCohortStaticBank) ? "Scroll_" : "Static_") + _configNameABTestBankView);
-		}
-		if (Defs.isActivABTestRatingSystem)
-		{
-			string cohortName = ((!isCohortUseRatingSystem) ? "OffRating_" : "UseRaing_") + configNameABTestRatingSystem;
-			form.AddField("cohort_cup", cohortName);
-		}
-		if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigSandBoxNameForEvent = ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A) ? "SandBoxOff_" : "SandBoxON_") + configNameABTestSandBox;
-			form.AddField("cohort_dater", _currentConfigSandBoxNameForEvent);
-		}
-		if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigQuestSystemNameForEvent = ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A) ? "QuestOff_" : "QuestON_") + configNameABTestQuestSystem;
-			form.AddField("cohort_quest", _currentConfigQuestSystemNameForEvent);
-		}
-		if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigSpecialOffersNameForEvent = ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A) ? "OffersOff_" : "OffersON_") + configNameABTestSpecialOffers;
-			form.AddField("cohort_offers", _currentConfigSpecialOffersNameForEvent);
-		}
-		form.AddField("paying", Storager.getInt("PayingUser", true).ToString());
-		int playerLevel = ((!(ExperienceController.sharedController != null)) ? 1 : ExperienceController.sharedController.currentLevel);
-		form.AddField("rank", playerLevel);
-		WWW updatePlayerOnlineRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return updatePlayerOnlineRequest;
-		string response = URLs.Sanitize(updatePlayerOnlineRequest);
-		if (!string.IsNullOrEmpty(updatePlayerOnlineRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("UpdatePlayerOnline error: " + updatePlayerOnlineRequest.error);
-			}
-			yield break;
-		}
-		if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("UpdatePlayerOnline fail.");
-			}
-			yield break;
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log("updateGameTimeRequest:" + sendingTime);
-		}
-		if (Defs.abTestBalansCohort != 0)
-		{
-			deltaTimeInGame -= sendingTime;
-		}
-	}
-
-	private IEnumerator GetToken()
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		WWWForm form = new WWWForm();
-		form.AddField("action", "create_player_intent");
-		form.AddField("app_version", appVersionField);
-		string response;
-		while (true)
-		{
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			response = URLs.Sanitize(download);
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("create_player_intent error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("create_player_intent fail.");
-				}
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (response != null)
-			{
-				break;
-			}
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning("create_player_intent response == null");
-			}
-			yield return StartCoroutine(MyWaitForSeconds(10f));
-		}
-		_inputToken = response;
-	}
-
-	private IEnumerator CreatePlayer()
-	{
-		string appVersionField = ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion;
-		string response;
-		while (true)
-		{
-			yield return StartCoroutine(GetToken());
-			while (string.IsNullOrEmpty(_inputToken))
-			{
-				yield return null;
-			}
-			WWWForm form = new WWWForm();
-			form.AddField("action", "create_player");
-			form.AddField("platform", ProtocolListGetter.CurrentPlatform.ToString());
-			form.AddField("device", SystemInfo.deviceUniqueIdentifier);
-			form.AddField("device_model", SystemInfo.deviceModel);
-			form.AddField("app_version", appVersionField);
-			string hash = Hash("create_player", _inputToken);
-			form.AddField("auth", hash);
-			form.AddField("token", _inputToken);
-			string tokenHashString = string.Format("token:hash = {0}:{1}", _inputToken, hash);
-			_inputToken = null;
-			bool canPrintSecuritySensitiveInfo = Debug.isDebugBuild || Defs.IsDeveloperBuild;
-			if (canPrintSecuritySensitiveInfo)
-			{
-				Debug.Log("CreatePlayer: Trying to perform request for “" + tokenHashString + "”...");
-			}
-			WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			yield return download;
-			response = URLs.Sanitize(download);
-			if (canPrintSecuritySensitiveInfo)
-			{
-				Debug.LogFormat("CreatePlayer: Response for '{0}' received:    '{1}'", tokenHashString, response);
-			}
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				Debug.LogWarning("CreatePlayer error:    " + download.error);
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-			{
-				Debug.LogWarning("CreatePlayer failed.");
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (string.IsNullOrEmpty(response))
-			{
-				Debug.LogWarning("CreatePlayer response is empty.");
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			long resultId;
-			if (!long.TryParse(response, out resultId))
-			{
-				Debug.LogWarning("CreatePlayer parsing error in response:    “" + response + "”");
-				yield return StartCoroutine(MyWaitForSeconds(10f));
-				continue;
-			}
-			if (resultId >= 1)
-			{
-				break;
-			}
-			Debug.LogWarning("CreatePlayer bad id:    “" + response + "”");
-			yield return StartCoroutine(MyWaitForSeconds(10f));
-		}
-		Debug.Log("CreatePlayer succeeded with response:    “" + response + "”");
-		Storager.setString(AccountCreated, response, false);
-		id = response;
-		readyToOperate = true;
-		StartCoroutine(GetFriendsDataLoop());
-		StartCoroutine(GetClanDataLoop());
-		GetOurLAstOnline();
-		GetOurWins();
-	}
-
-	private void SetWinCountTimestamp(string timestamp, int winCount)
-	{
-		_winCountTimestamp = new KeyValuePair<string, int>(timestamp, winCount);
-		string text = string.Format("{{ \"{0}\": {1} }}", timestamp, winCount);
-		Storager.setString("Win Count Timestamp", text, false);
-		if (Application.isEditor)
-		{
-			Debug.Log("Setting win count timestamp:    " + text);
-		}
-	}
-
-	public bool TryIncrementWinCountTimestamp()
-	{
-		if (!_winCountTimestamp.HasValue)
-		{
-			return false;
-		}
-		_winCountTimestamp = new KeyValuePair<string, int>(_winCountTimestamp.Value.Key, _winCountTimestamp.Value.Value + 1);
-		return true;
-	}
-
-	private IEnumerator RequestWinCountTimestampCoroutine()
-	{
-		yield break;
-	}
-
-	private void GetOurLAstOnline()
-	{
-		StartCoroutine(GetInfoByEverydayDelta());
-		ReceivedLastOnline = true;
-		StartCoroutine(UpdatePlayerOnlineLoop());
-	}
-
-	public void DownloadInfoByEverydayDelta()
-	{
-		StartCoroutine(GetInfoByEverydayDelta());
-	}
-
-	private IEnumerator GetInfoByEverydayDelta()
-	{
-		bool needTakeMarathonBonus = false;
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_player_online");
-		form.AddField("id", id);
-		form.AddField("app_version", "*:*.*.*");
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_player_online"));
-		WWW getPlayerOnlineRequest = Tools.CreateWwwIfNotConnected(actionAddress, form, "*:*.*.*");
-		if (getPlayerOnlineRequest == null)
-		{
-			yield return StartCoroutine(MyWaitForSeconds(120f));
-			yield break;
-		}
-		yield return getPlayerOnlineRequest;
-		string response = URLs.Sanitize(getPlayerOnlineRequest);
-		if (!string.IsNullOrEmpty(getPlayerOnlineRequest.error))
-		{
-			Debug.LogWarning("GetInfoByEverydayDelta()    Error: " + getPlayerOnlineRequest.error);
-			yield return StartCoroutine(MyWaitForSeconds(120f));
-			yield break;
-		}
-		if ("fail".Equals(response))
-		{
-			Debug.LogWarning("GetInfoByEverydayDelta()    Fail returned.");
-			yield return StartCoroutine(MyWaitForSeconds(120f));
-			yield break;
-		}
-		JSONNode data = JSON.Parse(response);
-		if (data == null)
-		{
-			Debug.LogWarning("GetInfoByEverydayDelta()    Cannot deserialize response: " + response);
-			yield return StartCoroutine(MyWaitForSeconds(120f));
-			yield break;
-		}
-		string deltaData = data["delta"].Value;
-		float deltaValue;
-		if (float.TryParse(deltaData, out deltaValue))
-		{
-			if (deltaValue > 82800f)
-			{
-				NotificationController.isGetEveryDayMoney = true;
-				if (Storager.getInt(Defs.NeedTakeMarathonBonus, false) == 0)
-				{
-					Storager.setInt(Defs.NeedTakeMarathonBonus, 1, false);
-				}
-			}
-		}
-		else
-		{
-			Debug.LogWarning("GetInfoByEverydayDelta()    Cannot parse delta: " + deltaData);
-			yield return StartCoroutine(MyWaitForSeconds(120f));
-		}
-	}
-
-	private string GetAccesoriesString()
-	{
-		string @string = Storager.getString(Defs.CapeEquppedSN, false);
-		string value;
-		if (@string == "cape_Custom")
-		{
-			string string2 = PlayerPrefs.GetString("NewUserCape");
-			value = Tools.DeserializeJson<CapeMemento>(string2).Cape;
-			if (string.IsNullOrEmpty(value))
-			{
-				value = SkinsController.StringFromTexture(Resources.Load<Texture2D>("cape_CustomTexture"));
-			}
-		}
-		else
-		{
-			value = string.Empty;
-		}
-		string string3 = Storager.getString(Defs.HatEquppedSN, false);
-		string string4 = Storager.getString(Defs.BootsEquppedSN, false);
-		string string5 = Storager.getString("MaskEquippedSN", false);
-		string string6 = Storager.getString(Defs.ArmorNewEquppedSN, false);
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("type", "0");
-		dictionary.Add("name", @string);
-		dictionary.Add("skin", value);
-		Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
-		dictionary2.Add("type", "1");
-		dictionary2.Add("name", string3);
-		dictionary2.Add("skin", string.Empty);
-		Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
-		dictionary3.Add("type", "2");
-		dictionary3.Add("name", string4);
-		dictionary3.Add("skin", string.Empty);
-		Dictionary<string, string> dictionary4 = new Dictionary<string, string>();
-		dictionary4.Add("type", "3");
-		dictionary4.Add("name", string6);
-		dictionary4.Add("skin", string.Empty);
-		Dictionary<string, string> dictionary5 = new Dictionary<string, string>();
-		dictionary5.Add("type", "4");
-		dictionary5.Add("name", string5);
-		dictionary5.Add("skin", string.Empty);
-		List<Dictionary<string, string>> list = new List<Dictionary<string, string>>();
-		list.Add(dictionary);
-		list.Add(dictionary2);
-		list.Add(dictionary3);
-		list.Add(dictionary4);
-		list.Add(dictionary5);
-		return Json.Serialize(list);
-	}
-
-	public void SendAccessories()
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(UpdateAccessories());
-		}
-	}
-
-	private IEnumerator UpdateAccessories()
-	{
-		if (string.IsNullOrEmpty(id))
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "update_accessories");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("auth", Hash("update_player"));
-		form.AddField("uniq_id", id);
-		form.AddField("accessories", GetAccesoriesString());
-		WWW updateAccessoriesRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return updateAccessoriesRequest;
-		string response = URLs.Sanitize(updateAccessoriesRequest);
-		if (string.IsNullOrEmpty(updateAccessoriesRequest.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("UpdateAccessories: " + response);
-		}
-		if (!string.IsNullOrEmpty(updateAccessoriesRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("UpdateAccessories error: " + updateAccessoriesRequest.error);
-			}
-		}
-		else if (!string.IsNullOrEmpty(response) && response.Equals("fail") && (Debug.isDebugBuild || Application.isEditor))
-		{
-			Debug.LogWarning("UpdateAccessories fail.");
-		}
-	}
-
-	private IEnumerator UpdatePlayer(bool sendSkin)
-	{
-		while (!ReceivedLastOnline || !infoLoaded || !getCohortInfo)
-		{
-			yield return null;
-		}
-		InitOurInfo();
-		WWWForm form = new WWWForm();
-		form.AddField("action", "update_player");
-		form.AddField("id", id);
-		string filteredNick = nick;
-		filteredNick = FilterBadWorld.FilterString(nick);
-		if (filteredNick.Length > 20)
-		{
-			filteredNick = filteredNick.Substring(0, 20);
-		}
-		form.AddField("nick", filteredNick);
-		form.AddField("skin", (!sendSkin) ? string.Empty : skin);
-		form.AddField("rank", rank);
-		form.AddField("wins", wins.Value);
-		if (Defs.IsDeveloperBuild)
-		{
-			form.AddField("developer", 1);
-		}
-		form.AddField("cohortName", Defs.abTestBalansCohortName);
-		int _cohort = (int)Defs.abTestBalansCohort;
-		form.AddField("cohort", (int)Defs.abTestBalansCohort);
-		if (Defs.isActivABTestStaticBank)
-		{
-			form.AddField("abtest_staticbank_cohort", ((!isCohortStaticBank) ? "Scroll_" : "Static_") + _configNameABTestBankView);
-		}
-		if (Defs.isActivABTestBuffSystem)
-		{
-			form.AddField("cohort_buf", ((!isCohortBuffSystem) ? "NotBuff_" : "BuffSys_") + configNameABTestBuffSystem);
-		}
-		if (Defs.isActivABTestRatingSystem)
-		{
-			string cohortName = ((!isCohortUseRatingSystem) ? "OffRating_" : "UseRaing_") + configNameABTestRatingSystem;
-			if (Application.isEditor)
-			{
-				Debug.LogFormat("<color=red>{0}</color>", "Update rating cohort = " + cohortName);
-			}
-			form.AddField("cohort_cup", cohortName);
-		}
-		if (Defs.cohortABTestSandBox != 0)
-		{
-			string _currentConfigSandBoxNameForEvent = ((Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A) ? "SandBoxON_" : ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.B) ? "skip_" : "SandBoxOff_")) + configNameABTestSandBox;
-			form.AddField("cohort_dater", _currentConfigSandBoxNameForEvent);
-		}
-		if (Defs.cohortABTestQuestSystem != 0)
-		{
-			string _currentConfigQuestSystemNameForEvent = ((Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A) ? "QuestON_" : ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.B) ? "skip_" : "QuestOff_")) + configNameABTestQuestSystem;
-			form.AddField("cohort_quest", _currentConfigQuestSystemNameForEvent);
-		}
-		if (Defs.cohortABTestSpecialOffers != 0)
-		{
-			string _currentConfigSpecialOffersNameForEvent = ((Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A) ? "OffersON_" : ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.B) ? "skip_" : "OffersOff_")) + configNameABTestSpecialOffers;
-			form.AddField("cohort_offers", _currentConfigSpecialOffersNameForEvent);
-		}
-		int totalWinCount = PlayerPrefs.GetInt("TotalWinsForLeaderboards", 0);
-		form.AddField("total_wins", totalWinCount);
-		form.AddField("id_fb", id_fb ?? string.Empty);
-		form.AddField("id_clan", "0");
-		form.AddField("device", SystemInfo.deviceUniqueIdentifier);
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		BankController.GiveInitialNumOfCoins();
-		form.AddField("coins", Storager.getInt("Coins", false).ToString());
-		form.AddField("gems", Storager.getInt("GemsCurrency", false).ToString());
-		form.AddField("paying", Storager.getInt("PayingUser", true).ToString());
-		form.AddField("kill_cnt", ProfileController.countGameTotalKills.Value);
-		form.AddField("death_cnt", ProfileController.countGameTotalDeaths.Value);
-		float savedPlayTime = 0f;
-		float savedPlayTimeInMatch = 0f;
-		if (Storager.hasKey("PlayTime") && float.TryParse(Storager.getString("PlayTime", false), out savedPlayTime))
-		{
-			form.AddField("playTime", Mathf.RoundToInt(savedPlayTime));
-		}
-		if (Storager.hasKey("PlayTimeInMatch") && float.TryParse(Storager.getString("PlayTimeInMatch", false), out savedPlayTimeInMatch))
-		{
-			form.AddField("playTimeInMatch", Mathf.RoundToInt(savedPlayTimeInMatch));
-		}
-		string killRatesString = Storager.getString("LastKillRates", false);
-		List<object> killRateList = Json.Deserialize(killRatesString) as List<object>;
-		if (killRateList != null && killRateList.Count == 2)
-		{
-			List<object> source = killRateList[0] as List<object>;
-			if (_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3D == null)
-			{
-				_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3D = _003CUpdatePlayer_003Ec__Iterator56._003C_003Em__57;
-			}
-			int[] kills = source.Select(_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3D).ToArray();
-			List<object> source2 = killRateList[1] as List<object>;
-			if (_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3E == null)
-			{
-				_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3E = _003CUpdatePlayer_003Ec__Iterator56._003C_003Em__58;
-			}
-			int[] deaths = source2.Select(_003CUpdatePlayer_003Ec__Iterator56._003C_003Ef__am_0024cache3E).ToArray();
-			int allKills = 0;
-			int allDeath = 0;
-			for (int i = 0; i < kills.Length; i++)
-			{
-				allKills += kills[i];
-			}
-			for (int j = 0; j < deaths.Length; j++)
-			{
-				allDeath += deaths[j];
-			}
-			form.AddField("kill_cnt_month", allKills);
-			form.AddField("death_cnt_month", allDeath);
-		}
-		if (ProfileController.countGameTotalHit.Value != 0)
-		{
-			int _accuracy = Mathf.RoundToInt(100f * (float)ProfileController.countGameTotalHit.Value / (float)ProfileController.countGameTotalShoot.Value);
-			form.AddField("accuracy", _accuracy);
-		}
-		if (Application.platform == RuntimePlatform.Android)
-		{
-			string advertisingId2 = AndroidSystem.Instance.GetAdvertisingId();
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Android advertising id: " + advertisingId2);
-			}
-			form.AddField("ad_id", advertisingId2);
-		}
-		else if (Application.platform == RuntimePlatform.IPhonePlayer)
-		{
-			string advertisingId = string.Empty;
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("iOS advertising id: " + advertisingId);
-			}
-			form.AddField("ad_id", advertisingId);
-		}
-		form.AddField("accessories", GetAccesoriesString());
-		Dictionary<string, string> scoresdictOne = new Dictionary<string, string>
-		{
-			{ "game", "0" },
-			{
-				"max_score",
-				survivalScore.ToString()
-			}
-		};
-		Dictionary<string, string> scoresdictTwo = new Dictionary<string, string>
-		{
-			{ "game", "1" },
-			{
-				"max_score",
-				coopScore.ToString()
-			}
-		};
-		Dictionary<string, string> scoresdictThree = new Dictionary<string, string>
-		{
-			{ "game", "2" },
-			{
-				"max_score",
-				Storager.getInt("DaterDayLived", false).ToString()
-			}
-		};
-		string serializedScores = Json.Serialize(new List<Dictionary<string, string>> { scoresdictOne, scoresdictTwo, scoresdictThree });
-		form.AddField("scores", serializedScores);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("update_player"));
-		form.AddField("coins_bought", Storager.getInt(Defs.AllCurrencyBought + "Coins", false).ToString());
-		form.AddField("gems_bought", Storager.getInt(Defs.AllCurrencyBought + "GemsCurrency", false).ToString());
-		bool killRateStatisticsWasSent = false;
-		try
-		{
-			bool shouldSendKillRate = true;
-			string lastSendKillRateString = PlayerPrefs.GetString(Defs.LastSendKillRateTimeKey, string.Empty);
-			DateTime lastSendKillRate;
-			if (!string.IsNullOrEmpty(lastSendKillRateString) && DateTime.TryParse(lastSendKillRateString, out lastSendKillRate))
-			{
-				TimeSpan timeout = TimeSpan.FromHours(20.0);
-				shouldSendKillRate = DateTime.UtcNow - lastSendKillRate >= timeout;
-			}
-			if (shouldSendKillRate)
-			{
-				Dictionary<string, Dictionary<int, int>>.KeyCollection keysIntersection = KillRateStatisticsManager.WeWereKilledOld.Keys;
-				Dictionary<string, Dictionary<int, int>> calculatedStatistics = new Dictionary<string, Dictionary<int, int>>();
-				foreach (string weapon in keysIntersection)
-				{
-					Dictionary<int, int> weKill = ((!KillRateStatisticsManager.WeKillOld.ContainsKey(weapon)) ? new Dictionary<int, int>() : KillRateStatisticsManager.WeKillOld[weapon]);
-					Dictionary<int, int> weWereKilled = KillRateStatisticsManager.WeWereKilledOld[weapon];
-					if (weKill == null)
-					{
-						Debug.LogError("Exception adding kill_rate to update_player: weKill == null  " + weapon);
-						continue;
-					}
-					if (weWereKilled == null)
-					{
-						Debug.LogError("Exception adding kill_rate to update_player: weWereKilled == null  " + weapon);
-						continue;
-					}
-					Dictionary<int, int>.KeyCollection tiersIntersecion = weWereKilled.Keys;
-					Dictionary<int, int> calculatedInnerDictionary = new Dictionary<int, int>();
-					foreach (int tier in tiersIntersecion)
-					{
-						int weWereKilledTier = weWereKilled[tier];
-						if (weWereKilledTier == 0)
-						{
-							Debug.LogError("Exception adding kill_rate to update_player: weWereKilledTier == 0 " + weapon);
-							continue;
-						}
-						int result = (weKill.ContainsKey(tier) ? weKill[tier] : 0) * 1000 / weWereKilledTier;
-						calculatedInnerDictionary.Add(tier, result);
-					}
-					WeaponSounds weaponInfo = ItemDb.GetWeaponInfoByPrefabName(weapon);
-					if (weaponInfo == null)
-					{
-						Debug.LogError("Exception adding kill_rate to update_player: weaponInfo == null  " + weapon);
-						continue;
-					}
-					string readableWeaponName = weaponInfo.shopNameNonLocalized;
-					if (readableWeaponName == null)
-					{
-						Debug.LogError("Exception adding kill_rate to update_player: readableWeaponName == null  " + weapon);
-						continue;
-					}
-					string weaponInfoTag = null;
-					try
-					{
-						weaponInfoTag = ItemDb.GetByPrefabName(weaponInfo.name.Replace("(Clone)", string.Empty)).Tag;
-					}
-					catch (Exception ex)
-					{
-						Exception e2 = ex;
-						if (Application.isEditor)
-						{
-							Debug.LogWarning("Exception  weaponInfoTag = ItemDb.GetByPrefabName(weaponInfo.name.Replace(\"(Clone)\",\"\")).Tag:  " + e2);
-						}
-					}
-					if (weaponInfoTag == null)
-					{
-						Debug.LogError("Exception adding kill_rate to update_player: weaponInfo.tag == null  " + weapon);
-						continue;
-					}
-					if (weapon == WeaponManager.SocialGunWN || WeaponManager.GotchaGuns.Contains(weaponInfoTag))
-					{
-						readableWeaponName = readableWeaponName + "__DPS_TIER_" + (Storager.getInt("RememberedTierWhenObtainGun_" + weapon, false) + 1);
-					}
-					calculatedStatistics.Add(readableWeaponName, calculatedInnerDictionary);
-				}
-				if (calculatedStatistics.Count > 0)
-				{
-					Dictionary<string, object> dictToSent = new Dictionary<string, object>
-					{
-						{
-							"version",
-							GlobalGameController.AppVersion
-						},
-						{ "kill_rate", calculatedStatistics }
-					};
-					string killRateJson = Json.Serialize(dictToSent);
-					form.AddField("kill_rate", killRateJson);
-					killRateStatisticsWasSent = true;
-					if (Debug.isDebugBuild)
-					{
-						string modifyLog = string.Format("<color=white>kill_rate: {0}</color>", killRateJson);
-						Debug.Log(modifyLog);
-					}
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			Debug.LogError("Exception adding kill_rate to update_player: " + e);
-		}
-		WWW updatePlayerRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return updatePlayerRequest;
-		string response = URLs.Sanitize(updatePlayerRequest);
-		if (string.IsNullOrEmpty(updatePlayerRequest.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("Update: " + response);
-		}
-		if (!string.IsNullOrEmpty(updatePlayerRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("Update error: " + updatePlayerRequest.error);
-			}
-		}
-		else if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning("Update fail.");
-			}
-		}
-		else if (killRateStatisticsWasSent)
-		{
-			PlayerPrefs.SetString(Defs.LastSendKillRateTimeKey, DateTime.UtcNow.ToString("s"));
-		}
-	}
-
-	private IEnumerator GetClanDataLoop()
-	{
-		while (true)
-		{
-			if (idle || !SceneLoader.ActiveSceneName.Equals("Clans") || string.IsNullOrEmpty(ClanID))
-			{
-				yield return null;
-				continue;
-			}
-			StartCoroutine(GetClanDataOnce());
-			yield return StartCoroutine(MyWaitForSeconds(20f));
-		}
-	}
-
-	public IEnumerator MyWaitForSeconds(float tm)
-	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
-	}
-
-	private void TrySendEventShowBoxProcessFriendsData()
-	{
-		if (OnShowBoxProcessFriendsData != null)
-		{
-			OnShowBoxProcessFriendsData();
-		}
-	}
-
-	private void TrySendEventHideBoxProcessFriendsData()
-	{
-		if (OnHideBoxProcessFriendsData != null)
-		{
-			OnHideBoxProcessFriendsData();
-		}
-	}
-
-	private IEnumerator GetClanDataOnce()
-	{
-		if (!readyToOperate)
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_clan_info");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_clan_info"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		NumberOfClanInfoRequests++;
-		try
-		{
-			yield return download;
-		}
-		finally
-		{
-			NumberOfClanInfoRequests--;
-		}
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetClanDataOnce error: " + download.error);
-			}
-			yield break;
-		}
-		if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetClanDataOnce fail.");
-			}
-			yield break;
-		}
-		int code;
-		if (string.IsNullOrEmpty(response) || int.TryParse(response, out code))
-		{
-			ClearClanData();
-			yield break;
-		}
-		_UpdateClanMembers(response);
-		if (FriendsController.ClanUpdated != null)
-		{
-			FriendsController.ClanUpdated();
-		}
-	}
-
-	public void ClearClanData()
-	{
-		ClanID = null;
-		clanName = string.Empty;
-		clanLogo = string.Empty;
-		clanLeaderID = string.Empty;
-		clanMembers.Clear();
-		ClanSentInvites.Clear();
-		clanSentInvitesLocal.Clear();
-	}
-
-	private void _UpdateClanMembers(string text)
-	{
-		_003C_UpdateClanMembers_003Ec__AnonStorey1F3 _003C_UpdateClanMembers_003Ec__AnonStorey1F = new _003C_UpdateClanMembers_003Ec__AnonStorey1F3();
-		object obj = Json.Deserialize(text);
-		Dictionary<string, object> dictionary = obj as Dictionary<string, object>;
-		if (dictionary == null)
-		{
-			if (Application.isEditor || Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" _UpdateClanMembers dict = null");
-			}
-			return;
-		}
-		foreach (KeyValuePair<string, object> item in dictionary)
-		{
-			switch (item.Key)
-			{
-			case "info":
-			{
-				Dictionary<string, object> dictionary2 = item.Value as Dictionary<string, object>;
-				if (dictionary2 == null)
-				{
-					break;
-				}
-				object value;
-				if (dictionary2.TryGetValue("name", out value))
-				{
-					_prevClanName = clanName;
-					clanName = value as string;
-					if (!_prevClanName.Equals(clanName) && onChangeClanName != null)
-					{
-						onChangeClanName(clanName);
-					}
-				}
-				object value2;
-				if (dictionary2.TryGetValue("logo", out value2))
-				{
-					clanLogo = value2 as string;
-				}
-				object value3;
-				if (dictionary2.TryGetValue("creator_id", out value3))
-				{
-					clanLeaderID = value3 as string;
-				}
-				break;
-			}
-			case "players":
-			{
-				_003C_UpdateClanMembers_003Ec__AnonStorey1F2 _003C_UpdateClanMembers_003Ec__AnonStorey1F2 = new _003C_UpdateClanMembers_003Ec__AnonStorey1F2();
-				List<object> list2 = item.Value as List<object>;
-				if (list2 != null)
-				{
-					clanMembers.Clear();
-					foreach (Dictionary<string, object> item2 in list2)
-					{
-						Dictionary<string, string> dictionary4 = new Dictionary<string, string>();
-						foreach (KeyValuePair<string, object> item3 in item2)
-						{
-							if (item3.Value is string)
-							{
-								dictionary4.Add(item3.Key, item3.Value as string);
-							}
-						}
-						clanMembers.Add(dictionary4);
-					}
-				}
-				_003C_UpdateClanMembers_003Ec__AnonStorey1F2.toRem__ = new List<string>();
-				foreach (string item4 in clanDeletedLocal)
-				{
-					bool flag = false;
-					foreach (Dictionary<string, string> clanMember in clanMembers)
-					{
-						if (clanMember.ContainsKey("id") && clanMember["id"].Equals(item4))
-						{
-							flag = true;
-							break;
-						}
-					}
-					if (!flag)
-					{
-						_003C_UpdateClanMembers_003Ec__AnonStorey1F2.toRem__.Add(item4);
-					}
-				}
-				clanDeletedLocal.RemoveAll(_003C_UpdateClanMembers_003Ec__AnonStorey1F2._003C_003Em__51);
-				break;
-			}
-			case "invites":
-			{
-				ClanSentInvites.Clear();
-				List<object> list = item.Value as List<object>;
-				if (list == null)
-				{
-					break;
-				}
-				foreach (string item5 in list)
-				{
-					int result;
-					if (int.TryParse(item5, out result) && !ClanSentInvites.Contains(result.ToString()))
-					{
-						ClanSentInvites.Add(result.ToString());
-						clanSentInvitesLocal.Remove(result.ToString());
-					}
-				}
-				break;
-			}
-			}
-		}
-		_003C_UpdateClanMembers_003Ec__AnonStorey1F.toRem = new List<string>();
-		foreach (string item6 in clanCancelledInvitesLocal)
-		{
-			if (!ClanSentInvites.Contains(item6))
-			{
-				_003C_UpdateClanMembers_003Ec__AnonStorey1F.toRem.Add(item6);
-			}
-		}
-		clanCancelledInvitesLocal.RemoveAll(_003C_UpdateClanMembers_003Ec__AnonStorey1F._003C_003Em__52);
-		if (FriendsController.ClanUpdated != null)
-		{
-			FriendsController.ClanUpdated();
-		}
-		ClanDataSettted = true;
-	}
-
-	private void _UpdateFriends(string text, bool requestAllInfo)
-	{
-		if (string.IsNullOrEmpty(text))
-		{
-			return;
-		}
-		invitesFromUs.Clear();
-		invitesToUs.Clear();
-		friends.Clear();
-		ClanInvites.Clear();
-		friendsDeletedLocal.Clear();
-		object obj = Json.Deserialize(text);
-		Dictionary<string, object> dictionary = obj as Dictionary<string, object>;
-		object value;
-		if (dictionary == null)
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" _UpdateFriends dict = null");
-			}
-		}
-		else if (dictionary.TryGetValue("friends", out value))
-		{
-			List<object> list = value as List<object>;
-			if (list == null)
-			{
-				if (Application.isEditor || Debug.isDebugBuild)
-				{
-					Debug.LogWarning(" _UpdateFriends __list = null");
-				}
-				return;
-			}
-			_ProcessFriendsList(list, requestAllInfo);
-			object value2;
-			if (dictionary.TryGetValue("clans_invites", out value2))
-			{
-				List<object> list2 = value2 as List<object>;
-				if (list2 == null)
-				{
-					if (Application.isEditor || Debug.isDebugBuild)
-					{
-						Debug.LogWarning(" _UpdateFriends clanInv = null");
-					}
-				}
-				else
-				{
-					_ProcessClanInvitesList(list2);
-				}
-			}
-			else
-			{
-				Debug.LogWarning(" _UpdateFriends clanInvObj!");
-			}
-		}
-		else
-		{
-			Debug.LogWarning(" _UpdateFriends friendsObj!");
-		}
-	}
-
-	private void _ProcessClanInvitesList(List<object> clanInv)
-	{
-		List<Dictionary<string, string>> list = new List<Dictionary<string, string>>();
-		foreach (Dictionary<string, object> item in clanInv)
-		{
-			Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item2 in item)
-			{
-				dictionary2.Add(item2.Key, item2.Value as string);
-			}
-			list.Add(dictionary2);
-		}
-		ClanInvites.Clear();
-		ClanInvites = list;
-	}
-
-	private void _ProcessFriendsList(List<object> __list, bool requestAllInfo)
-	{
-		List<Dictionary<string, string>> list = new List<Dictionary<string, string>>();
-		foreach (Dictionary<string, object> item in __list)
-		{
-			Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item2 in item)
-			{
-				dictionary2.Add(item2.Key, item2.Value as string);
-			}
-			list.Add(dictionary2);
-		}
-		foreach (Dictionary<string, string> item3 in list)
-		{
-			Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
-			if (item3["whom"].Equals(id) && item3["status"].Equals("0"))
-			{
-				foreach (string key in item3.Keys)
-				{
-					if (!key.Equals("whom") && !key.Equals("status"))
-					{
-						try
-						{
-							dictionary3.Add((!key.Equals("who")) ? key : "friend", item3[key]);
-						}
-						catch
-						{
-						}
-					}
-				}
-				invitesToUs.Add(dictionary3["friend"]);
-				notShowAddIds.Remove(item3["who"]);
-			}
-			if (!item3["status"].Equals("1"))
-			{
-				continue;
-			}
-			string text = ((!item3["who"].Equals(id)) ? "whom" : "who");
-			string text2 = ((!text.Equals("who")) ? "who" : "whom");
-			foreach (string key2 in item3.Keys)
-			{
-				if (!key2.Equals(text) && !key2.Equals("status"))
-				{
-					dictionary3.Add((!key2.Equals(text2)) ? key2 : "friend", item3[key2]);
-				}
-			}
-			friends.Add(dictionary3["friend"]);
-			notShowAddIds.Remove(item3[text2]);
-		}
-		if (requestAllInfo)
-		{
-			UpdatePLayersInfo();
-		}
-		else
-		{
-			_UpdatePlayersInfo();
-		}
-	}
-
-	private void _UpdatePlayersInfo()
-	{
-		List<string> list = new List<string>();
-		list.AddRange(friends);
-		list.AddRange(invitesToUs);
-		if (list.Count > 0)
-		{
-			StartCoroutine(GetInfoAboutNPlayers(list));
-		}
-	}
-
-	private IEnumerator GetInfoAboutNPlayers()
-	{
-		List<string> allFriends = new List<string>();
-		allFriends.AddRange(friends);
-		allFriends.AddRange(invitesToUs);
-		if (allFriends.Count != 0)
-		{
-			yield return StartCoroutine(GetInfoAboutNPlayers(allFriends));
-		}
-	}
-
-	public void GetInfoAboutPlayers(List<string> ids)
-	{
-		StartCoroutine(GetInfoAboutNPlayers(ids));
-	}
-
-	public IEnumerator GetInfoAboutNPlayers(List<string> ids)
-	{
-		string json = Json.Serialize(ids);
-		if (json == null)
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_all_short_info_by_id");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("ids", json);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_all_short_info_by_id"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		TrySendEventHideBoxProcessFriendsData();
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoAboutNPlayers error: " + download.error);
-			}
-			yield break;
-		}
-		if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoAboutNPlayers fail.");
-			}
-			yield break;
-		}
-		Dictionary<string, object> __list = Json.Deserialize(response) as Dictionary<string, object>;
-		if (__list == null)
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning(" GetInfoAboutNPlayers info = null");
-			}
-			yield break;
-		}
-		Dictionary<string, Dictionary<string, object>> list = new Dictionary<string, Dictionary<string, object>>();
-		foreach (string key2 in __list.Keys)
-		{
-			Dictionary<string, object> d2 = __list[key2] as Dictionary<string, object>;
-			Dictionary<string, object> newd = new Dictionary<string, object>();
-			foreach (KeyValuePair<string, object> kvp in d2)
-			{
-				newd.Add(kvp.Key, kvp.Value);
-			}
-			list.Add(key2, newd);
-		}
-		foreach (string key in list.Keys)
-		{
-			Dictionary<string, object> d = list[key];
-			bool _isAdd = false;
-			if (friends.Contains(key))
-			{
-				_isAdd = true;
-				if (friendsInfo.ContainsKey(key))
-				{
-					friendsInfo[key] = d;
-				}
-				else
-				{
-					friendsInfo.Add(key, d);
-				}
-			}
-			if (!_isAdd)
-			{
-				if (profileInfo.ContainsKey(key))
-				{
-					profileInfo[key] = d;
-				}
-				else
-				{
-					profileInfo.Add(key, d);
-				}
-				if (!sharedController.id.Equals(key) && FindFriendsFromLocalLAN.lanPlayerInfo.Contains(key) && !getPossibleFriendsResult.ContainsKey(key))
-				{
-					getPossibleFriendsResult.Add(key, PossiblleOrigin.Local);
-				}
-			}
-			if (playersInfo.ContainsKey(key))
-			{
-				playersInfo[key] = d;
-			}
-			else
-			{
-				playersInfo.Add(key, d);
-			}
-		}
-		isUpdateInfoAboutAllFriends = false;
-		if (FriendsController.FriendsUpdated != null)
-		{
-			FriendsController.FriendsUpdated();
-		}
-		SaveCurrentState();
-	}
-
-	public void UpdatePLayersInfo()
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(GetInfoAboutNPlayers());
-		}
-	}
-
-	public void StartRefreshingInfo(string playerId)
-	{
-		if (readyToOperate)
-		{
-			_shouldStopRefreshingInfo = false;
-			StartCoroutine(GetIfnoAboutPlayerLoop(playerId));
-		}
-	}
-
-	public void StopRefreshingInfo()
-	{
-		if (readyToOperate)
-		{
-			_shouldStopRefreshingInfo = true;
-		}
-	}
-
-	private IEnumerator GetIfnoAboutPlayerLoop(string playerId)
-	{
-		while (true)
-		{
-			if (idle)
-			{
-				yield return null;
-				continue;
-			}
-			StartCoroutine(UpdatePlayerInfoById(playerId));
-			float startTime = Time.realtimeSinceStartup;
-			do
-			{
-				yield return null;
-			}
-			while (Time.realtimeSinceStartup - startTime < 20f && !_shouldStopRefreshingInfo);
-			if (!_shouldStopRefreshingInfo)
-			{
-				continue;
-			}
-			break;
-		}
-	}
-
-	public IEnumerator GetInfoByIdCoroutine(string playerId)
-	{
-		getInfoPlayerResult = null;
-		if (string.IsNullOrEmpty(playerId))
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_info_by_id");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", playerId);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_info_by_id"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		NumberOffFullInfoRequests++;
-		try
-		{
-			yield return download;
-		}
-		finally
-		{
-			NumberOffFullInfoRequests--;
-		}
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("Info for id " + playerId + ": " + response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoById error: " + download.error);
-			}
-			yield break;
-		}
-		if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoById fail.");
-			}
-			yield break;
-		}
-		Dictionary<string, object> responseData = ParseInfo(response);
-		if (responseData == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" GetInfoById newInfo = null");
-			}
-		}
-		else
-		{
-			getInfoPlayerResult = responseData;
-		}
-	}
-
-	public IEnumerator GetInfoByParamCoroutine(string param)
-	{
-		findPlayersByParamResult = null;
-		if (string.IsNullOrEmpty(param))
-		{
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "get_users_info_by_param");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("param", param);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("get_users_info_by_param"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		TrySendEventShowBoxProcessFriendsData();
-		yield return download;
-		TrySendEventHideBoxProcessFriendsData();
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoById error: " + download.error);
-			}
-			yield break;
-		}
-		if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetInfoById fail.");
-			}
-			yield break;
-		}
-		if (!string.IsNullOrEmpty(download.error) || string.IsNullOrEmpty(response) || Debug.isDebugBuild)
-		{
-		}
-		List<object> responseData = Json.Deserialize(response) as List<object>;
-		if (responseData == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" GetInfoByParam newInfo = null");
-			}
-		}
-		else
-		{
-			if (responseData == null || responseData.Count <= 0)
-			{
-				yield break;
-			}
-			findPlayersByParamResult = new List<string>();
-			foreach (object _playerInfoObj in responseData)
-			{
-				Dictionary<string, object> _playerInfoDict = _playerInfoObj as Dictionary<string, object>;
-				string _id = Convert.ToString(_playerInfoDict["id"]);
-				findPlayersByParamResult.Add(_id);
-				if (profileInfo.ContainsKey(_id))
-				{
-					profileInfo[_id]["player"] = _playerInfoDict;
-					continue;
-				}
-				Dictionary<string, object> _infoPlayer = new Dictionary<string, object> { { "player", _playerInfoDict } };
-				profileInfo.Add(_id, _infoPlayer);
-			}
-		}
-	}
-
-	private IEnumerator UpdatePlayerInfoById(string playerId)
-	{
-		yield return StartCoroutine(GetInfoByIdCoroutine(playerId));
-		if (getInfoPlayerResult == null)
-		{
-			yield break;
-		}
-		playersInfo[playerId] = getInfoPlayerResult;
-		bool _addInfo = false;
-		if (friends.Contains(playerId))
-		{
-			_addInfo = true;
-			if (friendsInfo.ContainsKey(playerId))
-			{
-				friendsInfo[playerId] = getInfoPlayerResult;
-			}
-			else
-			{
-				friendsInfo.Add(playerId, getInfoPlayerResult);
-			}
-		}
-		if (clanFriendsInfo.ContainsKey(playerId))
-		{
-			clanFriendsInfo[playerId] = getInfoPlayerResult;
-			_addInfo = true;
-		}
-		if (!_addInfo)
-		{
-			if (profileInfo.ContainsKey(playerId))
-			{
-				profileInfo[playerId] = getInfoPlayerResult;
-			}
-			else
-			{
-				profileInfo.Add(playerId, getInfoPlayerResult);
-			}
-		}
-		if (playersInfo.ContainsKey(playerId))
-		{
-			playersInfo[playerId] = getInfoPlayerResult;
-		}
-		else
-		{
-			playersInfo.Add(playerId, getInfoPlayerResult);
-		}
-		if (FriendsController.FullInfoUpdated != null)
-		{
-			FriendsController.FullInfoUpdated();
-		}
-	}
-
-	private Dictionary<string, object> ParseInfo(string info)
-	{
-		return Json.Deserialize(info) as Dictionary<string, object>;
-	}
-
-	public IEnumerator FriendRequest(string personId, Dictionary<string, object> socialEventParameters, Action<bool, bool> callbackAnswer = null)
-	{
-		if (socialEventParameters == null)
-		{
-			throw new ArgumentNullException("socialEventParameters");
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "friend_request");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", id);
-		form.AddField("whom", personId);
-		form.AddField("type", 0);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("friend_request"));
-		WWW friendRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		TrySendEventShowBoxProcessFriendsData();
-		yield return friendRequest;
-		string response = URLs.Sanitize(friendRequest);
-		TrySendEventHideBoxProcessFriendsData();
-		if (string.IsNullOrEmpty(friendRequest.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("Friend request: " + response);
-		}
-		bool isCallbackAnswerRecive = false;
-		if (!string.IsNullOrEmpty(friendRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("FriendRequest error: " + friendRequest.error);
-			}
-			if (callbackAnswer != null)
-			{
-				callbackAnswer(false, false);
-				isCallbackAnswerRecive = true;
-			}
-		}
-		else if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("FriendRequest fail.");
-			}
-			if (callbackAnswer != null)
-			{
-				callbackAnswer(false, false);
-				isCallbackAnswerRecive = true;
-			}
-		}
-		if (response.Equals("ok"))
-		{
-			TutorialQuestManager.Instance.AddFulfilledQuest("addFriend");
-			QuestMediator.NotifySocialInteraction("addFriend");
-			if (invitesToUs.Contains(personId))
-			{
-				invitesToUs.Remove(personId);
-				friends.Add(personId);
-			}
-			else
-			{
-				invitesFromUs.Add(personId);
-			}
-			AnalyticsFacade.SendCustomEvent("Social", socialEventParameters);
-		}
-		if (callbackAnswer != null && !isCallbackAnswerRecive)
-		{
-			callbackAnswer(true, response.Equals("exist"));
-		}
-	}
-
-	private IEnumerator _SendCreateClan(string personId, string nameClan, string skinClan, Action<string> ErrorHandler)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "create_clan");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id", personId);
-		string filteredNick = nameClan;
-		filteredNick = FilterBadWorld.FilterString(nameClan);
-		form.AddField("name", filteredNick);
-		form.AddField("logo", skinClan);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("create_clan"));
-		WWW download2 = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download2 == null)
-		{
-			if (ErrorHandler != null)
-			{
-				ErrorHandler("Request skipped.");
-			}
-			yield break;
-		}
-		NumberOfCreateClanRequests++;
-		float tm = Time.realtimeSinceStartup;
-		try
-		{
-			while (!download2.isDone && string.IsNullOrEmpty(download2.error) && Time.realtimeSinceStartup - tm < 25f)
-			{
-				yield return null;
-			}
-		}
-		finally
-		{
-			NumberOfCreateClanRequests--;
-		}
-		bool timeout = !download2.isDone && string.IsNullOrEmpty(download2.error) && Time.realtimeSinceStartup - tm >= 25f;
-		string response = ((!timeout) ? URLs.Sanitize(download2) : string.Empty);
-		if (!timeout && string.IsNullOrEmpty(download2.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_SendCreateClan request: " + response);
-		}
-		int newClanID;
-		if (timeout || !string.IsNullOrEmpty(download2.error))
-		{
-			string errorMessage = ((!timeout) ? download2.error : "TIMEOUT");
-			if (ErrorHandler != null)
-			{
-				ErrorHandler(errorMessage);
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_SendCreateClan error: " + errorMessage);
-			}
-			if (timeout)
-			{
-				download2.Dispose();
-				download2 = null;
-			}
-		}
-		else if ("fail".Equals(response))
-		{
-			if (ErrorHandler != null)
-			{
-				ErrorHandler("fail");
-			}
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_SendCreateClan fail.");
-			}
-		}
-		else if (int.TryParse(response, out newClanID))
-		{
-			if (newClanID != -1)
-			{
-				ClanID = newClanID.ToString();
-			}
-			if (this.ReturnNewIDClan != null)
-			{
-				this.ReturnNewIDClan(newClanID);
-			}
-		}
-	}
-
-	public void ExitClan(string who = null)
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(_ExitClan(who));
-		}
-	}
-
-	private IEnumerator _ExitClan(string who)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "exit_clan");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", who ?? id);
-		form.AddField("id_clan", ClanID);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("exit_clan"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_ExitClan: " + response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_ExitClan error: " + download.error);
-			}
-		}
-		else if ("fail".Equals(response) && Debug.isDebugBuild)
-		{
-			Debug.LogWarning("_ExitClan fail.");
-		}
-	}
-
-	public void DeleteClan()
-	{
-		if (readyToOperate && ClanID != null)
-		{
-			StartCoroutine(_DeleteClan());
-		}
-	}
-
-	private IEnumerator _DeleteClan()
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "delete_clan");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_clan", ClanID);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("delete_clan"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_DeleteClan: " + response);
-		}
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_DeleteClan error: " + download.error);
-			}
-		}
-		else if ("fail".Equals(response) && Debug.isDebugBuild)
-		{
-			Debug.LogWarning("_DeleteClan fail.");
-		}
-	}
-
-	private IEnumerator SendClanInvitation(string personID, Action<bool, bool> callbackResult = null)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "invite_to_clan");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", personID);
-		form.AddField("id_clan", ClanID);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("invite_to_clan"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			if (callbackResult != null)
-			{
-				callbackResult(false, false);
-			}
-			clanSentInvitesLocal.Remove(personID);
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("SendClanInvitation: " + response);
-		}
-		bool isCallbackCall = false;
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("SendClanInvitation error: " + download.error);
-			}
-			if (callbackResult != null)
-			{
-				isCallbackCall = true;
-				callbackResult(false, false);
-			}
-			clanSentInvitesLocal.Remove(personID);
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("SendClanInvitation fail.");
-			}
-			if (callbackResult != null)
-			{
-				isCallbackCall = true;
-				callbackResult(false, false);
-			}
-			clanSentInvitesLocal.Remove(personID);
-		}
-		if (response.Equals("ok") && !ClanSentInvites.Contains(personID))
-		{
-			ClanSentInvites.Add(personID);
-		}
-		if (callbackResult != null && !isCallbackCall)
-		{
-			callbackResult(true, response.Equals("exist"));
-		}
-	}
-
-	private IEnumerator AcceptFriend(string accepteeId, Action<bool> action = null)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "accept_friend");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("player_id", id);
-		form.AddField("acceptee_id", accepteeId);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("accept_friend"));
-		WWW acceptFriendRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		TrySendEventShowBoxProcessFriendsData();
-		yield return acceptFriendRequest;
-		string response = URLs.Sanitize(acceptFriendRequest);
-		TrySendEventHideBoxProcessFriendsData();
-		if (!string.IsNullOrEmpty(acceptFriendRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("AcceptFriend error: " + acceptFriendRequest.error);
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("AcceptFriend fail.");
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if (string.IsNullOrEmpty(acceptFriendRequest.error) && !string.IsNullOrEmpty(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("Accept friend: " + response);
-			}
-			if (invitesToUs.Contains(accepteeId))
-			{
-				invitesToUs.Remove(accepteeId);
-				FriendsWindowController.Instance.UpdateCurrentFriendsArrayAndItems();
-			}
-			if (!friends.Contains(accepteeId))
-			{
-				friends.Add(accepteeId);
-			}
-			QuestMediator.NotifySocialInteraction("addFriend");
-			if (action != null)
-			{
-				action(true);
-			}
-		}
-	}
-
-	public static void DeleteFriend(string rejecteeId, Action<bool> action = null)
-	{
-		if (!(sharedController == null) && readyToOperate)
-		{
-			sharedController.StartCoroutine(sharedController.DeleteFriendCoroutine(rejecteeId, action));
-		}
-	}
-
-	private IEnumerator DeleteFriendCoroutine(string rejecteeId, Action<bool> action = null)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "reject_friendship");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("rejectee_id", rejecteeId);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("reject_friendship"));
-		WWW rejectFriendshipRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return rejectFriendshipRequest;
-		string response = URLs.Sanitize(rejectFriendshipRequest);
-		if (!string.IsNullOrEmpty(rejectFriendshipRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("Reject_friendship error: " + rejectFriendshipRequest.error);
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("Reject_friendship fail.");
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if (string.IsNullOrEmpty(rejectFriendshipRequest.error) && !string.IsNullOrEmpty(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("reject_friendship: " + response);
-			}
-			if (friends.Contains(rejecteeId))
-			{
-				friends.Remove(rejecteeId);
-				FriendsWindowController.Instance.UpdateCurrentFriendsArrayAndItems();
-			}
-			if (action != null)
-			{
-				action(true);
-			}
-		}
-	}
-
-	public void RejectInvite(string rejecteeId, Action<bool> action = null)
-	{
-		if (readyToOperate)
-		{
-			StartCoroutine(RejectInviteFriendCoroutine(rejecteeId, action));
-		}
-	}
-
-	public void RejectClanInvite(string clanID, string playerID = null)
-	{
-		if (!string.IsNullOrEmpty(clanID) && readyToOperate)
-		{
-			StartCoroutine(_RejectClanInvite(clanID, playerID));
-		}
-	}
-
-	private IEnumerator RejectInviteFriendCoroutine(string rejecteeId, Action<bool> action = null)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "reject_invite_friendship");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("rejectee_id", rejecteeId);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("reject_invite_friendship"));
-		WWW rejectInviteFriendshipRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		TrySendEventShowBoxProcessFriendsData();
-		yield return rejectInviteFriendshipRequest;
-		TrySendEventHideBoxProcessFriendsData();
-		string response = URLs.Sanitize(rejectInviteFriendshipRequest);
-		if (!string.IsNullOrEmpty(rejectInviteFriendshipRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("RejectFriend error: " + rejectInviteFriendshipRequest.error);
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("RejectFriend fail.");
-			}
-			if (action != null)
-			{
-				action(false);
-			}
-		}
-		else if (string.IsNullOrEmpty(rejectInviteFriendshipRequest.error) && !string.IsNullOrEmpty(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("Reject friend: " + response);
-			}
-			if (invitesToUs.Contains(rejecteeId))
-			{
-				invitesToUs.Remove(rejecteeId);
-				FriendsWindowController.Instance.UpdateCurrentFriendsArrayAndItems();
-			}
-			if (action != null)
-			{
-				action(true);
-			}
-		}
-	}
-
-	private IEnumerator _RejectClanInvite(string clanID, string playerID)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "reject_invite");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", playerID ?? id);
-		form.AddField("id_clan", clanID);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("reject_invite"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			clanCancelledInvitesLocal.Remove(playerID);
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_RejectClanInvite error: " + download.error);
-			}
-			clanCancelledInvitesLocal.Remove(playerID);
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_RejectClanInvite fail.");
-			}
-			clanCancelledInvitesLocal.Remove(playerID);
-		}
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_RejectClanInvite: " + response);
-		}
-	}
-
-	public void DeleteClanMember(string memebrID)
-	{
-		if (!string.IsNullOrEmpty(memebrID) && readyToOperate)
-		{
-			StartCoroutine(_DeleteClanMember(memebrID));
-		}
-	}
-
-	private IEnumerator _DeleteClanMember(string memberID)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "delete_clan_member");
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("id_player", memberID);
-		form.AddField("id_clan", ClanID);
-		form.AddField("id", id);
-		form.AddField("uniq_id", sharedController.id);
-		form.AddField("auth", Hash("delete_clan_member"));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			clanDeletedLocal.Remove(memberID);
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_DeleteClanMember error: " + download.error);
-			}
-			clanDeletedLocal.Remove(memberID);
-		}
-		else if ("fail".Equals(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("_DeleteClanMember fail.");
-			}
-			clanDeletedLocal.Remove(memberID);
-		}
-		if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response) && Debug.isDebugBuild)
-		{
-			Debug.Log("_DeleteClanMember: " + response);
-		}
-	}
-
-	private void Update()
-	{
-		if (isUpdateServerTimeAfterRun)
-		{
-			tickForServerTime += Time.deltaTime;
-			if (tickForServerTime >= 1f)
-			{
-				localServerTime++;
-				tickForServerTime -= 1f;
-			}
-		}
-		deltaTimeInGame += Time.deltaTime;
-		if (Banned == 1 && PhotonNetwork.connected)
-		{
-			PhotonNetwork.Disconnect();
-		}
-		if (Input.touchCount > 0)
-		{
-			if (Time.realtimeSinceStartup - lastTouchTm > 30f)
-			{
-				idle = true;
-			}
-		}
-		else
-		{
-			lastTouchTm = Time.realtimeSinceStartup;
-			idle = false;
-		}
-	}
-
-	private string GetJsonIdsFacebookFriends()
-	{
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log("Start GetJsonIdsFacebookFriends");
-		}
-		FacebookController facebookController = FacebookController.sharedController;
-		if (facebookController == null)
-		{
-			return "[]";
-		}
-		if (facebookController.friendsList == null || facebookController.friendsList.Count == 0)
-		{
-			return "[]";
-		}
-		List<string> list = new List<string>();
-		for (int i = 0; i < facebookController.friendsList.Count; i++)
-		{
-			Friend friend = facebookController.friendsList[i];
-			list.Add(friend.id);
-		}
-		string text = Json.Serialize(list);
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log("GetJsonIdsFacebookFriends: " + text);
-		}
-		return text;
-	}
-
-	private IEnumerator GetPossibleFriendsList(int playerLevel, int platformId, string clientVersion)
-	{
-		WWWForm wwwForm = new WWWForm();
-		string requestName = "possible_friends_list";
-		string appVersion = string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion);
-		wwwForm.AddField("action", requestName);
-		wwwForm.AddField("app_version", appVersion);
-		wwwForm.AddField("uniq_id", id);
-		wwwForm.AddField("auth", Hash(requestName));
-		if (FindFriendsFromLocalLAN.lanPlayerInfo.Count > 0)
-		{
-			wwwForm.AddField("local_ids", Json.Serialize(FindFriendsFromLocalLAN.lanPlayerInfo));
-		}
-		string facebookFriendsJsonIds = GetJsonIdsFacebookFriends();
-		wwwForm.AddField("ids", facebookFriendsJsonIds);
-		wwwForm.AddField("rank", playerLevel.ToString());
-		wwwForm.AddField("platform_id", platformId.ToString());
-		wwwForm.AddField("version", clientVersion);
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, wwwForm, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetPossibleFriendsList error: " + download.error);
-			}
-			yield break;
-		}
-		if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("GetPossibleFriendsList fail.");
-			}
-			yield break;
-		}
-		Dictionary<string, object> dataList = Json.Deserialize(response) as Dictionary<string, object>;
-		if (dataList == null)
-		{
-			yield break;
-		}
-		getPossibleFriendsResult.Clear();
-		if (dataList.ContainsKey("local_users"))
-		{
-			List<object> userList2 = dataList["local_users"] as List<object>;
-			if (userList2 != null && userList2.Count > 0)
-			{
-				foreach (Dictionary<string, object> dictListItem3 in userList2.OfType<Dictionary<string, object>>())
-				{
-					Dictionary<string, object> clone3 = new Dictionary<string, object>();
-					foreach (KeyValuePair<string, object> dictItem3 in dictListItem3)
-					{
-						clone3.Add(dictItem3.Key, dictItem3.Value);
-					}
-					string userId3 = Convert.ToString(clone3["id"]);
-					if (profileInfo.ContainsKey(userId3))
-					{
-						Dictionary<string, object> _cache6 = profileInfo[userId3]["player"] as Dictionary<string, object>;
-						_cache6["nick"] = clone3["nick"];
-						_cache6["rank"] = clone3["rank"];
-						_cache6["clan_logo"] = clone3["clan_logo"];
-						_cache6["clan_name"] = clone3["clan_name"];
-						_cache6["skin"] = clone3["skin"];
-						profileInfo[userId3]["player"] = _cache6;
-					}
-					else
-					{
-						Dictionary<string, object> _cache6 = new Dictionary<string, object>
-						{
-							{
-								"nick",
-								clone3["nick"]
-							},
-							{
-								"rank",
-								clone3["rank"]
-							},
-							{
-								"clan_logo",
-								clone3["clan_logo"]
-							},
-							{
-								"clan_name",
-								clone3["clan_name"]
-							},
-							{
-								"skin",
-								clone3["skin"]
-							}
-						};
-						Dictionary<string, object> _infoPlayer3 = new Dictionary<string, object> { { "player", _cache6 } };
-						profileInfo.Add(userId3, _infoPlayer3);
-					}
-					if (!getPossibleFriendsResult.ContainsKey(userId3) && !friends.Contains(userId3))
-					{
-						getPossibleFriendsResult.Add(userId3, PossiblleOrigin.Local);
-					}
-				}
-			}
-		}
-		if (dataList.ContainsKey("facebook_users"))
-		{
-			List<object> facebookUsers = dataList["facebook_users"] as List<object>;
-			if (facebookUsers != null && facebookUsers.Count > 0)
-			{
-				foreach (Dictionary<string, object> dictListItem2 in facebookUsers.OfType<Dictionary<string, object>>())
-				{
-					string userId2 = Convert.ToString(dictListItem2["id"]);
-					if (IsPlayerOurFriend(userId2))
-					{
-						continue;
-					}
-					Dictionary<string, object> clone2 = new Dictionary<string, object>();
-					foreach (KeyValuePair<string, object> dictItem2 in dictListItem2)
-					{
-						clone2.Add(dictItem2.Key, dictItem2.Value);
-					}
-					if (profileInfo.ContainsKey(userId2))
-					{
-						Dictionary<string, object> _cache4 = profileInfo[userId2]["player"] as Dictionary<string, object>;
-						_cache4["nick"] = clone2["nick"];
-						_cache4["rank"] = clone2["rank"];
-						_cache4["clan_logo"] = clone2["clan_logo"];
-						_cache4["clan_name"] = clone2["clan_name"];
-						_cache4["skin"] = clone2["skin"];
-						profileInfo[userId2]["player"] = _cache4;
-					}
-					else
-					{
-						Dictionary<string, object> _cache4 = new Dictionary<string, object>
-						{
-							{
-								"nick",
-								clone2["nick"]
-							},
-							{
-								"rank",
-								clone2["rank"]
-							},
-							{
-								"clan_logo",
-								clone2["clan_logo"]
-							},
-							{
-								"clan_name",
-								clone2["clan_name"]
-							},
-							{
-								"skin",
-								clone2["skin"]
-							}
-						};
-						Dictionary<string, object> _infoPlayer2 = new Dictionary<string, object> { { "player", _cache4 } };
-						profileInfo.Add(userId2, _infoPlayer2);
-					}
-					if (!getPossibleFriendsResult.ContainsKey(userId2) && !friends.Contains(userId2))
-					{
-						getPossibleFriendsResult.Add(userId2, PossiblleOrigin.Facebook);
-					}
-				}
-			}
-		}
-		if (dataList.ContainsKey("users"))
-		{
-			List<object> userList = dataList["users"] as List<object>;
-			if (userList != null && userList.Count > 0)
-			{
-				foreach (Dictionary<string, object> dictListItem in userList.OfType<Dictionary<string, object>>())
-				{
-					Dictionary<string, object> clone = new Dictionary<string, object>();
-					foreach (KeyValuePair<string, object> dictItem in dictListItem)
-					{
-						clone.Add(dictItem.Key, dictItem.Value);
-					}
-					string userId = Convert.ToString(clone["id"]);
-					if (profileInfo.ContainsKey(userId))
-					{
-						Dictionary<string, object> _cache2 = profileInfo[userId]["player"] as Dictionary<string, object>;
-						_cache2["nick"] = clone["nick"];
-						_cache2["rank"] = clone["rank"];
-						_cache2["clan_logo"] = clone["clan_logo"];
-						_cache2["clan_name"] = clone["clan_name"];
-						_cache2["skin"] = clone["skin"];
-						profileInfo[userId]["player"] = _cache2;
-					}
-					else
-					{
-						Dictionary<string, object> _cache2 = new Dictionary<string, object>
-						{
-							{
-								"nick",
-								clone["nick"]
-							},
-							{
-								"rank",
-								clone["rank"]
-							},
-							{
-								"clan_logo",
-								clone["clan_logo"]
-							},
-							{
-								"clan_name",
-								clone["clan_name"]
-							},
-							{
-								"skin",
-								clone["skin"]
-							}
-						};
-						Dictionary<string, object> _infoPlayer = new Dictionary<string, object> { { "player", _cache2 } };
-						profileInfo.Add(userId, _infoPlayer);
-					}
-					if (!getPossibleFriendsResult.ContainsKey(userId) && !friends.Contains(userId))
-					{
-						getPossibleFriendsResult.Add(userId, PossiblleOrigin.RandomPlayer);
-					}
-				}
-			}
-		}
-		if (FriendsController.FriendsUpdated != null)
-		{
-			FriendsController.FriendsUpdated();
-		}
-	}
-
-	public void DownloadDataAboutPossibleFriends()
-	{
-		int currentLevel = ExperienceController.GetCurrentLevel();
-		int myPlatformConnect = (int)ConnectSceneNGUIController.myPlatformConnect;
-		string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
-		StartCoroutine(GetPossibleFriendsList(currentLevel, myPlatformConnect, multiplayerProtocolVersion));
-	}
-
-	private IEnumerator ClearAllFriendsInvitesCoroutine()
-	{
-		WWWForm wwwForm = new WWWForm();
-		string requestName = "delete_friend_invites";
-		string appVersion = string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion);
-		wwwForm.AddField("action", requestName);
-		wwwForm.AddField("app_version", appVersion);
-		wwwForm.AddField("uniq_id", id);
-		wwwForm.AddField("auth", Hash(requestName));
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, wwwForm, string.Empty);
-		if (download == null)
-		{
-			yield break;
-		}
-		TrySendEventShowBoxProcessFriendsData();
-		yield return download;
-		TrySendEventHideBoxProcessFriendsData();
-		if (FriendsWindowController.Instance != null)
-		{
-			FriendsWindowController.Instance.statusBar.clearAllInviteButton.isEnabled = true;
-		}
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("ClearAllFriendsInvites error: " + download.error);
-			}
-		}
-		else if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("ClearAllFriendsInvites fail.");
-			}
-		}
-		else if (string.IsNullOrEmpty(download.error) && !string.IsNullOrEmpty(response))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.Log("ClearAllFriendsInvites: " + response);
-			}
-			if (invitesToUs != null)
-			{
-				invitesToUs.Clear();
-			}
-			if (FriendsController.FriendsUpdated != null)
-			{
-				FriendsController.FriendsUpdated();
-			}
-		}
-	}
-
-	public void GetFriendsData(bool _isUpdateInfoAboutAllFriends = false)
-	{
-		timerUpdateFriend = -1f;
-		if (_isUpdateInfoAboutAllFriends)
-		{
-			isUpdateInfoAboutAllFriends = true;
-		}
-	}
-
-	private IEnumerator SendGameTimeLoop()
-	{
-		float timerSendTimeGame = 30f;
-		while (true)
-		{
-			if (readyToOperate && !idle && !string.IsNullOrEmpty(sharedController.id))
-			{
-				while (timerSendTimeGame > 0f)
-				{
-					timerSendTimeGame = ((PhotonNetwork.room != null) ? 30f : (timerSendTimeGame - Time.deltaTime));
-					yield return null;
-				}
-				if (isRunABTest)
-				{
-					yield return StartCoroutine(SendGameTime());
-				}
-				timerSendTimeGame = 30f;
-			}
-			else
-			{
-				yield return null;
-			}
-		}
-	}
-
-	private IEnumerator SendGameTime()
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("action", "update_game_time");
-		form.AddField("auth", Hash("update_game_time"));
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("uniq_id", sharedController.id);
-		sendingTime = Mathf.RoundToInt(deltaTimeInGame);
-		form.AddField("game_time", Mathf.RoundToInt(sendingTime));
-		if (Defs.isActivABTestStaticBank)
-		{
-			form.AddField("abtest_staticbank_cohort", ((!isCohortStaticBank) ? "Scroll_" : "Static_") + _configNameABTestBankView);
-		}
-		if (Defs.isActivABTestRatingSystem)
-		{
-			string cohortName = ((!isCohortUseRatingSystem) ? "OffRating_" : "UseRaing_") + configNameABTestRatingSystem;
-			form.AddField("cohort_cup", cohortName);
-		}
-		if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigSandBoxNameForEvent = ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A) ? "SandBoxOff_" : "SandBoxON_") + configNameABTestSandBox;
-			form.AddField("cohort_dater", _currentConfigSandBoxNameForEvent);
-		}
-		if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigQuestSystemNameForEvent = ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A) ? "QuestOff_" : "QuestON_") + configNameABTestQuestSystem;
-			form.AddField("cohort_quest", _currentConfigQuestSystemNameForEvent);
-		}
-		if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B)
-		{
-			string _currentConfigSpecialOffersNameForEvent = ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A) ? "OffersOff_" : "OffersON_") + configNameABTestSpecialOffers;
-			form.AddField("cohort_offers", _currentConfigSpecialOffersNameForEvent);
-		}
-		WWW updateGameTimeRequest = Tools.CreateWww(actionAddress, form, string.Empty);
-		yield return updateGameTimeRequest;
-		string response = URLs.Sanitize(updateGameTimeRequest);
-		if (!string.IsNullOrEmpty(updateGameTimeRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("updateGameTimeRequest error: " + updateGameTimeRequest.error);
-			}
-			yield break;
-		}
-		if (!string.IsNullOrEmpty(response) && response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("updateGameTimeRequest fail.");
-			}
-			yield break;
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log("updateGameTimeRequest:" + sendingTime);
-		}
-		deltaTimeInGame -= sendingTime;
-	}
-
-	private IEnumerator GetFriendsDataLoop()
-	{
-		while (true)
-		{
-			if (readyToOperate && !idle && !string.IsNullOrEmpty(sharedController.id) && TrainingController.TrainingCompleted)
-			{
-				yield return StartCoroutine(UpdateFriendsInfo(isUpdateInfoAboutAllFriends));
-				while (timerUpdateFriend > 0f)
-				{
-					if (FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled)
-					{
-						timerUpdateFriend -= Time.deltaTime;
-					}
-					yield return null;
-				}
-				timerUpdateFriend = Defs.timeUpdateFriendInfo;
-			}
-			else
-			{
-				yield return null;
-			}
-		}
-	}
-
-	private IEnumerator UpdateFriendsInfo(bool _isUpdateInfoAboutAllFriends)
-	{
-		WWWForm wwwForm = new WWWForm();
-		string requestName = "update_friends_info";
-		string appVersion = string.Format("{0}:{1}", ProtocolListGetter.CurrentPlatform, GlobalGameController.AppVersion);
-		wwwForm.AddField("action", requestName);
-		wwwForm.AddField("app_version", appVersion);
-		wwwForm.AddField("uniq_id", id);
-		wwwForm.AddField("auth", Hash(requestName));
-		bool isFromFromFriendsScene = FriendsWindowGUI.Instance != null && FriendsWindowGUI.Instance.InterfaceEnabled;
-		wwwForm.AddField("from_friends", isFromFromFriendsScene ? 1 : 0);
-		if (FriendsWindowController.IsActiveFriendListTab() && friends.Count > 0)
-		{
-			string json = Json.Serialize(friends);
-			if (json != null)
-			{
-				wwwForm.AddField("get_all_players_online", json);
-			}
-		}
-		wwwForm.AddField("private_messages", ChatController.GetPrivateChatJsonForSend());
-		WWW updateFriendsInfoRequest = Tools.CreateWww(actionAddress, wwwForm, "from_friends: " + isFromFromFriendsScene);
-		yield return updateFriendsInfoRequest;
-		string response = URLs.Sanitize(updateFriendsInfoRequest);
-		invitesToUs.Clear();
-		if (!string.IsNullOrEmpty(updateFriendsInfoRequest.error))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("update_frieds_info error: " + updateFriendsInfoRequest.error);
-			}
-			TrySendEventHideBoxProcessFriendsData();
-		}
-		else if (response.Equals("fail"))
-		{
-			if (Debug.isDebugBuild)
-			{
-				Debug.LogWarning("update_frieds_info fail.");
-			}
-			TrySendEventHideBoxProcessFriendsData();
-		}
-		else if (string.IsNullOrEmpty(updateFriendsInfoRequest.error) && !string.IsNullOrEmpty(response))
-		{
-			ParseUpdateFriendsInfoResponse(response, _isUpdateInfoAboutAllFriends);
-			notShowAddIds.Clear();
-			if (UpdateFriendsInfoAction != null)
-			{
-				UpdateFriendsInfoAction();
-			}
-		}
-	}
-
-	private void ParseUpdateFriendsInfoResponse(string response, bool _isUpdateInfoAboutAllFriends)
-	{
-		Dictionary<string, object> dictionary = Json.Deserialize(response) as Dictionary<string, object>;
-		List<string> list = new List<string>();
-		HashSet<string> hashSet = new HashSet<string>(friends);
-		HashSet<string> hashSet2 = new HashSet<string>(invitesToUs);
-		if (dictionary.ContainsKey("friends"))
-		{
-			friends.Clear();
-			List<object> list2 = dictionary["friends"] as List<object>;
-			for (int i = 0; i < list2.Count; i++)
-			{
-				string text = list2[i] as string;
-				if (getPossibleFriendsResult.ContainsKey(text))
-				{
-					getPossibleFriendsResult.Remove(text);
-				}
-				friends.Add(text);
-				if ((!_isUpdateInfoAboutAllFriends && !friendsInfo.ContainsKey(text)) || _isUpdateInfoAboutAllFriends)
-				{
-					list.Add(text);
-				}
-			}
-		}
-		if (dictionary.ContainsKey("invites"))
-		{
-			invitesToUs.Clear();
-			List<object> list3 = dictionary["invites"] as List<object>;
-			for (int j = 0; j < list3.Count; j++)
-			{
-				string text2 = list3[j] as string;
-				if (!friends.Contains(text2))
-				{
-					invitesToUs.Add(text2);
-				}
-				if ((!_isUpdateInfoAboutAllFriends && !friendsInfo.ContainsKey(text2) && !clanFriendsInfo.ContainsKey(text2) && !profileInfo.ContainsKey(text2)) || _isUpdateInfoAboutAllFriends)
-				{
-					list.Add(text2);
-				}
-			}
-		}
-		if (dictionary.ContainsKey("invites_outcoming"))
-		{
-			invitesFromUs.Clear();
-			List<object> list4 = dictionary["invites_outcoming"] as List<object>;
-			for (int k = 0; k < list4.Count; k++)
-			{
-				string item = list4[k] as string;
-				if (!friends.Contains(item))
-				{
-					invitesFromUs.Add(item);
-				}
-			}
-		}
-		if (_isUpdateInfoAboutAllFriends)
-		{
-			List<string> list5 = new List<string>(friends);
-			List<string> list6 = new List<string>();
-			list5.AddRange(invitesToUs);
-			foreach (KeyValuePair<string, Dictionary<string, object>> item2 in friendsInfo)
-			{
-				if (!list5.Contains(item2.Key))
-				{
-					list6.Add(item2.Key);
-				}
-			}
-			if (list6.Count > 0)
-			{
-				for (int l = 0; l < list6.Count; l++)
-				{
-					friendsInfo.Remove(list6[l]);
-				}
-				SaveCurrentState();
-			}
-		}
-		if (dictionary.ContainsKey("onLines"))
-		{
-			string response2 = Json.Serialize(dictionary["onLines"]);
-			ParseOnlinesResponse(response2);
-		}
-		if (list.Count > 0)
-		{
-			StartCoroutine(GetInfoAboutNPlayers(list));
-		}
-		else
-		{
-			if ((!hashSet.SetEquals(friends) || !hashSet2.SetEquals(invitesToUs)) && FriendsController.FriendsUpdated != null)
-			{
-				FriendsController.FriendsUpdated();
-			}
-			TrySendEventHideBoxProcessFriendsData();
-		}
-		if (dictionary.ContainsKey("chat"))
-		{
-			string response3 = Json.Serialize(dictionary["chat"]);
-			if (ChatController.sharedController != null)
-			{
-				ChatController.sharedController.ParseUpdateChatMessageResponse(response3);
-			}
-		}
-	}
-
-	private void ParseOnlinesResponse(string response)
-	{
-		Dictionary<string, object> dictionary = Json.Deserialize(response) as Dictionary<string, object>;
-		if (dictionary == null)
-		{
-			if (Debug.isDebugBuild || Application.isEditor)
-			{
-				Debug.LogWarning(" GetAllPlayersOnline info = null");
-			}
-			return;
-		}
-		Dictionary<string, Dictionary<string, string>> dictionary2 = new Dictionary<string, Dictionary<string, string>>();
-		foreach (string key in dictionary.Keys)
-		{
-			Dictionary<string, object> dictionary3 = dictionary[key] as Dictionary<string, object>;
-			Dictionary<string, string> dictionary4 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item in dictionary3)
-			{
-				dictionary4.Add(item.Key, item.Value as string);
-			}
-			dictionary2.Add(key, dictionary4);
-		}
-		onlineInfo.Clear();
-		foreach (string key2 in dictionary2.Keys)
-		{
-			Dictionary<string, string> dictionary5 = dictionary2[key2];
-			int num = int.Parse(dictionary5["game_mode"]);
-			int num2 = num - num / 10 * 10;
-			if (num2 != 3)
-			{
-				if (!onlineInfo.ContainsKey(key2))
-				{
-					onlineInfo.Add(key2, dictionary5);
-				}
-				else
-				{
-					onlineInfo[key2] = dictionary5;
-				}
-			}
-		}
-	}
-
-	public void ClearAllFriendsInvites()
-	{
-		StartCoroutine(ClearAllFriendsInvitesCoroutine());
-	}
-
-	public void UpdateRecordByFriendsJoinClick(string friendId)
-	{
-		if (clicksJoinByFriends.ContainsKey(friendId))
-		{
-			clicksJoinByFriends[friendId] = DateTime.UtcNow.ToString("s");
-		}
-		else
-		{
-			clicksJoinByFriends.Add(friendId, DateTime.UtcNow.ToString("s"));
-		}
-	}
-
-	public DateTime GetDateLastClickJoinFriend(string friendId)
-	{
-		if (!clicksJoinByFriends.ContainsKey(friendId))
-		{
-			return DateTime.MaxValue;
-		}
-		DateTime result;
-		return (!DateTime.TryParse(clicksJoinByFriends[friendId], out result)) ? result : DateTime.MaxValue;
-	}
-
-	private void ClearListClickJoinFriends()
-	{
-		clicksJoinByFriends.Clear();
-		PlayerPrefs.SetString("CachedFriendsJoinClickList", string.Empty);
-	}
-
-	private void UpdateCachedClickJoinListValue()
-	{
-		if (clicksJoinByFriends.Count != 0)
-		{
-			string text = Json.Serialize(clicksJoinByFriends);
-			PlayerPrefs.SetString("CachedFriendsJoinClickList", text ?? string.Empty);
-		}
-	}
-
-	private void FillClickJoinFriendsListByCachedValue()
-	{
-		string @string = PlayerPrefs.GetString("CachedFriendsJoinClickList", string.Empty);
-		if (string.IsNullOrEmpty(@string))
-		{
-			return;
-		}
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null)
-		{
-			return;
-		}
-		foreach (KeyValuePair<string, object> item in dictionary)
-		{
-			clicksJoinByFriends.Add(item.Key, Convert.ToString(item.Value));
-		}
-	}
-
-	private void SyncClickJoinFriendsListWithListFriends()
-	{
-		if (clicksJoinByFriends.Count == 0)
-		{
-			return;
-		}
-		if (friends.Count == 0)
-		{
-			ClearListClickJoinFriends();
-			return;
-		}
-		List<string> list = new List<string>();
-		foreach (KeyValuePair<string, string> clicksJoinByFriend in clicksJoinByFriends)
-		{
-			if (!playersInfo.ContainsKey(clicksJoinByFriend.Key))
-			{
-				list.Add(clicksJoinByFriend.Key);
-			}
-		}
-		if (list.Count != 0)
-		{
-			for (int i = 0; i < list.Count; i++)
-			{
-				string key = list[i];
-				clicksJoinByFriends.Remove(key);
-			}
-			UpdateCachedClickJoinListValue();
-		}
-	}
-
-	public static ResultParseOnlineData ParseOnlineData(Dictionary<string, string> onlineData)
-	{
-		string gameModeString = onlineData["game_mode"];
-		string protocolString = onlineData["protocol"];
-		string mapIndex = string.Empty;
-		if (onlineData.ContainsKey("map"))
-		{
-			mapIndex = onlineData["map"];
-		}
-		return ParseOnlineData(gameModeString, protocolString, mapIndex);
-	}
-
-	private static ResultParseOnlineData ParseOnlineData(string gameModeString, string protocolString, string mapIndex)
-	{
-		int num = int.Parse(gameModeString);
-		num = ((num <= 99) ? (-1) : (num / 100));
-		int result;
-		if (!int.TryParse(gameModeString, out result))
-		{
-			result = -1;
-		}
-		else
-		{
-			if (result > 99)
-			{
-				result -= num * 100;
-			}
-			result /= 10;
-		}
-		ResultParseOnlineData resultParseOnlineData = new ResultParseOnlineData();
-		bool flag = num == -1 || num != (int)ConnectSceneNGUIController.myPlatformConnect;
-		bool flag2 = result == -1 || ExpController.GetOurTier() != result;
-		bool flag3 = num == 3;
-		int num2 = Convert.ToInt32(gameModeString);
-		string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
-		resultParseOnlineData.gameMode = gameModeString;
-		resultParseOnlineData.mapIndex = mapIndex;
-		bool flag4 = num2 == 6;
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(mapIndex));
-		bool flag5 = ((infoScene != null && infoScene.IsAvaliableForMode(TypeModeGame.Dater)) ? true : false);
-		if (flag5 && !SandboxEnabled)
-		{
-			return null;
-		}
-		if (flag4)
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.InChat;
-		}
-		else if (!flag3 && flag && !flag5)
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.platform;
-		}
-		else if (!flag3 && flag2 && !flag5)
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.level;
-		}
-		else if (multiplayerProtocolVersion != protocolString)
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.clientVersion;
-		}
-		else if (infoScene == null)
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.map;
-		}
-		else
-		{
-			resultParseOnlineData.notConnectCondition = NotConnectCondition.None;
-		}
-		resultParseOnlineData.isPlayerInChat = flag4;
-		return resultParseOnlineData;
-	}
-
-	private static void SendEmailWithMyId()
-	{
-		MailUrlBuilder mailUrlBuilder = new MailUrlBuilder();
-		mailUrlBuilder.to = string.Empty;
-		mailUrlBuilder.subject = LocalizationStore.Get("Key_1565");
-		string text = ((!(sharedController != null)) ? string.Empty : sharedController.id);
-		string format = LocalizationStore.Get("Key_1508");
-		mailUrlBuilder.body = string.Format(format, sharedController.id);
-		Application.OpenURL(mailUrlBuilder.GetUrl());
-	}
-
-	public static void SendMyIdByEmail()
-	{
-		if (_003C_003Ef__am_0024cache8E == null)
-		{
-			_003C_003Ef__am_0024cache8E = _003CSendMyIdByEmail_003Em__53;
-		}
-		MainMenuController.DoMemoryConsumingTaskInEmptyScene(_003C_003Ef__am_0024cache8E);
-	}
-
-	public static void CopyMyIdToClipboard()
-	{
-		CopyPlayerIdToClipboard(sharedController.id);
-	}
-
-	public static void CopyPlayerIdToClipboard(string playerId)
-	{
-		UniPasteBoard.SetClipBoardString(playerId);
-		InfoWindowController.ShowInfoBox(LocalizationStore.Get("Key_1618"));
-	}
-
-	public static void JoinToFriendRoom(string friendId)
-	{
-		if (!(sharedController == null) && sharedController.onlineInfo.ContainsKey(friendId))
-		{
-			Dictionary<string, string> dictionary = sharedController.onlineInfo[friendId];
-			int result;
-			int.TryParse(dictionary["game_mode"], out result);
-			string nameRoom = dictionary["room_name"];
-			string text = dictionary["map"];
-			JoinToFriendRoomController instance = JoinToFriendRoomController.Instance;
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(text));
-			if (infoScene != null && instance != null)
-			{
-				instance.ConnectToRoom(result, nameRoom, text);
-				sharedController.UpdateRecordByFriendsJoinClick(friendId);
-			}
-		}
-	}
-
-	public static bool IsPlayerOurFriend(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.friends.Contains(playerId);
-	}
-
-	public static bool IsPlayerOurClanMember(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		for (int i = 0; i < sharedController.clanMembers.Count; i++)
-		{
-			Dictionary<string, string> dictionary = sharedController.clanMembers[i];
-			if (dictionary["id"].Equals(playerId))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public static bool IsSelfClanLeader()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		if (string.IsNullOrEmpty(sharedController.clanLeaderID))
-		{
-			return false;
-		}
-		return sharedController.clanLeaderID.Equals(sharedController.id);
-	}
-
-	public static void SendFriendshipRequest(string playerId, Dictionary<string, object> socialEventParameters, Action<bool, bool> callbackResult)
-	{
-		if (!(sharedController == null))
-		{
-			if (socialEventParameters == null)
-			{
-				throw new ArgumentNullException("socialEventParameters");
-			}
-			sharedController.StartCoroutine(sharedController.FriendRequest(playerId, socialEventParameters, callbackResult));
-		}
-	}
-
-	public static Dictionary<string, object> GetFullPlayerDataById(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return null;
-		}
-		Dictionary<string, object> value;
-		if (sharedController.friendsInfo.TryGetValue(playerId, out value))
-		{
-			return value;
-		}
-		if (sharedController.clanFriendsInfo.TryGetValue(playerId, out value))
-		{
-			return value;
-		}
-		if (sharedController.profileInfo.TryGetValue(playerId, out value))
-		{
-			return value;
-		}
-		return null;
-	}
-
-	public static bool IsFriendsMax()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.friends.Count >= Defs.maxCountFriend;
-	}
-
-	public static bool IsFriendsDataExist()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.friends.Count > 0 && sharedController.friendsInfo.Count > 0;
-	}
-
-	public static bool IsFriendsOrLocalDataExist()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		List<string> list = new List<string>();
-		foreach (KeyValuePair<string, PossiblleOrigin> item in sharedController.getPossibleFriendsResult)
-		{
-			if (sharedController.profileInfo.ContainsKey(item.Key) && item.Value == PossiblleOrigin.Local)
-			{
-				list.Add(item.Key);
-			}
-		}
-		return (sharedController.friends.Count > 0 && sharedController.friendsInfo.Count > 0) || list.Count > 0;
-	}
-
-	public static bool IsPossibleFriendsDataExist()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.getPossibleFriendsResult.Count > 0 && sharedController.profileInfo.Count > 0;
-	}
-
-	public static bool IsFriendInvitesDataExist()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.invitesToUs.Count > 0 && (sharedController.clanFriendsInfo.Count > 0 || sharedController.profileInfo.Count > 0);
-	}
-
-	public static bool IsDataAboutFriendDownload(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		if (sharedController.friendsInfo.ContainsKey(playerId))
-		{
-			return true;
-		}
-		if (sharedController.clanFriendsInfo.ContainsKey(playerId))
-		{
-			return true;
-		}
-		if (sharedController.profileInfo.ContainsKey(playerId))
-		{
-			return true;
-		}
-		return false;
-	}
-
-	public static void ShowProfile(string id, ProfileWindowType type, Action<bool> onCloseEvent = null)
-	{
-		if (_friendProfileController == null)
-		{
-			_friendProfileController = new FriendProfileController(onCloseEvent);
-		}
-		_friendProfileController.HandleProfileClickedCore(id, type, onCloseEvent);
-	}
-
-	public static void DisposeProfile()
-	{
-		if (_friendProfileController != null)
-		{
-			_friendProfileController.Dispose();
-			_friendProfileController = null;
-		}
-	}
-
-	public static bool IsMyPlayerId(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		if (string.IsNullOrEmpty(sharedController.id))
-		{
-			return false;
-		}
-		return sharedController.id.Equals(playerId);
-	}
-
-	public static bool IsAlreadySendInvitePlayer(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.invitesFromUs.Contains(playerId);
-	}
-
-	public static PossiblleOrigin GetPossibleFriendFindOrigin(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return PossiblleOrigin.None;
-		}
-		if (!sharedController.getPossibleFriendsResult.ContainsKey(playerId))
-		{
-			return PossiblleOrigin.None;
-		}
-		return sharedController.getPossibleFriendsResult[playerId];
-	}
-
-	public static bool IsAlreadySendClanInvitePlayer(string playerId)
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.ClanSentInvites.Contains(playerId);
-	}
-
-	public static bool IsMaxClanMembers()
-	{
-		if (sharedController == null)
-		{
-			return false;
-		}
-		return sharedController.clanMembers.Count >= Defs.maxMemberClanCount;
-	}
-
-	public static void StartSendReview()
-	{
-		if (sharedController != null)
-		{
-			sharedController.StopCoroutine("WaitReviewAndSend");
-			sharedController.StartCoroutine("WaitReviewAndSend");
-		}
-	}
-
-	private IEnumerator WaitReviewAndSend()
-	{
-		while (ReviewController.ExistReviewForSend)
-		{
-			yield return StartCoroutine(SendReviewForPlayerWithID(ReviewController.ReviewRating, ReviewController.ReviewMsg));
-			yield return new WaitForSeconds(600f);
-		}
-	}
-
-	public IEnumerator SendReviewForPlayerWithID(int rating, string msgReview)
-	{
-		if (ReviewController.isSending)
-		{
-			yield break;
-		}
-		ReviewController.isSending = true;
-		string playerId = sharedController.id;
-		if (string.IsNullOrEmpty(playerId))
-		{
-			ReviewController.isSending = false;
-			yield break;
-		}
-		WWWForm form = new WWWForm();
-		form.AddField("action", "set_feedback");
-		form.AddField("text", msgReview);
-		form.AddField("rating", rating);
-		form.AddField("version", GlobalGameController.AppVersion);
-		form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-		form.AddField("platform", ProtocolListGetter.CurrentPlatform);
-		form.AddField("device_model", SystemInfo.deviceModel);
-		form.AddField("auth", Hash("set_feedback"));
-		form.AddField("uniq_id", playerId);
-		WWW download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-		if (download == null)
-		{
-			ReviewController.isSending = false;
-			yield break;
-		}
-		yield return download;
-		string response = URLs.Sanitize(download);
-		if (!string.IsNullOrEmpty(download.error))
-		{
-			ReviewController.isSending = false;
-			Debug.LogFormat("Error send review: {0}", download.error);
-			yield break;
-		}
-		if (Debug.isDebugBuild)
-		{
-			Debug.Log("Review send for id " + playerId + ": " + response);
-		}
-		ReviewController.isSending = false;
-		ReviewController.ExistReviewForSend = false;
-	}
-
-	public static void LogPromoTrafficForwarding(TypeTrafficForwardingLog type)
-	{
-		if (type != TypeTrafficForwardingLog.view || !((DateTime.Now - timeSendTrafficForwarding).TotalMinutes < 60.0))
-		{
-			if (type == TypeTrafficForwardingLog.view || type == TypeTrafficForwardingLog.newView)
-			{
-				timeSendTrafficForwarding = DateTime.Now;
-			}
-			if (sharedController != null)
-			{
-				sharedController.StartCoroutine(sharedController.SendPromoTrafficForwarding(type));
-			}
-		}
-	}
-
-	public IEnumerator SendPromoTrafficForwarding(TypeTrafficForwardingLog type)
-	{
-		WWW download;
-		while (true)
-		{
-			if (string.IsNullOrEmpty(id))
-			{
-				yield break;
-			}
-			if (Application.isEditor)
-			{
-				Debug.Log("SendPromoTrafficForwarding:" + type);
-			}
-			WWWForm form = new WWWForm();
-			form.AddField("action", "promo_pgw_stat_update");
-			form.AddField("auth", Hash("promo_pgw_stat_update"));
-			form.AddField("app_version", ProtocolListGetter.CurrentPlatform + ":" + GlobalGameController.AppVersion);
-			form.AddField("uniq_id", id);
-			form.AddField("is_paying", Storager.getInt("PayingUser", true));
-			form.AddField("platform", ProtocolListGetter.CurrentPlatform);
-			if (type == TypeTrafficForwardingLog.click)
-			{
-				form.AddField("add_click", 1);
-			}
-			if (type == TypeTrafficForwardingLog.newView)
-			{
-				form.AddField("add_new_view", 1);
-			}
-			if (type == TypeTrafficForwardingLog.newView || type == TypeTrafficForwardingLog.view)
-			{
-				form.AddField("add_view", 1);
-			}
-			download = Tools.CreateWwwIfNotConnected(actionAddress, form, string.Empty);
-			if (download == null)
-			{
-				yield break;
-			}
-			yield return download;
-			if (download != null && string.IsNullOrEmpty(download.error))
-			{
-				break;
-			}
-			if (Application.isEditor && download != null && !string.IsNullOrEmpty(download.error))
-			{
-				Debug.LogWarning("Error send log promo_pgw_stat_update: " + download.error);
-			}
-			yield return new WaitForSeconds(600f);
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log(string.Concat(str3: URLs.Sanitize(download), str0: "SendPromoTrafficForwarding(", str1: type.ToString(), str2: "):"));
-		}
-	}
-
-	private IEnumerator GetABTestSandBoxConfig()
-	{
-		string responseText;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestSandBoxURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestSandBoxConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-			}
-			else
-			{
-				responseText = URLs.Sanitize(download);
-				if (!string.IsNullOrEmpty(responseText))
-				{
-					break;
-				}
-			}
-		}
-		Storager.setString("abTestSandBoxConfigKey", responseText, false);
-		ParseABTestSandBoxConfig();
-	}
-
-	public static void ParseABTestSandBoxConfig(bool isFromReset = false)
-	{
-		if (!Storager.hasKey("abTestSandBoxConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestSandBoxConfigKey", false)))
-		{
-			return;
-		}
-		string @string = Storager.getString("abTestSandBoxConfigKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("enableABTest"))
-		{
-			return;
-		}
-		int num = Convert.ToInt32(dictionary["enableABTest"]);
-		int num2 = Convert.ToInt32(dictionary["currentStateEnable"]);
-		if (num == 1 && Defs.cohortABTestSandBox != Defs.ABTestCohortsType.SKIP)
-		{
-			configNameABTestSandBox = Convert.ToString(dictionary["configName"]);
-			if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.NONE)
-			{
-				int num3 = (int)(Defs.cohortABTestSandBox = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3));
-				string nameCohort = ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A) ? "SandBoxOff_" : "SandBoxON_") + configNameABTestSandBox;
-				AnalyticsStuff.LogABTest("SandBox", nameCohort);
-			}
-			if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B)
-			{
-				SandboxEnabled = false;
-			}
-			else
-			{
-				SandboxEnabled = true;
-			}
-		}
-		else
-		{
-			if (!isFromReset)
-			{
-				ResetABTestSandBox();
-			}
-			SandboxEnabled = num2 == 1;
+				string str = string.Concat((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A ? "QuestOff_" : "QuestON_"), FriendsController.configNameABTestQuestSystem);
+				AnalyticsStuff.LogABTest("QuestSystem", str, false);
+			}
+			Defs.cohortABTestQuestSystem = Defs.ABTestCohortsType.SKIP;
+			FriendsController.ParseABTestQuestSystemConfig(true);
 		}
 	}
 
@@ -6928,177 +3042,20 @@ public sealed class FriendsController : MonoBehaviour
 		{
 			if (Defs.cohortABTestSandBox == Defs.ABTestCohortsType.A || Defs.cohortABTestSandBox == Defs.ABTestCohortsType.B)
 			{
-				string nameCohort = ((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A) ? "SandBoxOff_" : "SandBoxON_") + configNameABTestSandBox;
-				AnalyticsStuff.LogABTest("SandBox", nameCohort, false);
+				string str = string.Concat((Defs.cohortABTestSandBox != Defs.ABTestCohortsType.A ? "SandBoxOff_" : "SandBoxON_"), FriendsController.configNameABTestSandBox);
+				AnalyticsStuff.LogABTest("SandBox", str, false);
 			}
 			Defs.cohortABTestSandBox = Defs.ABTestCohortsType.SKIP;
-			ParseABTestSandBoxConfig(true);
+			FriendsController.ParseABTestSandBoxConfig(true);
 		}
 	}
 
-	private IEnumerator GetABTestQuestSystemConfig()
+	public static void ResetABTestsBalans()
 	{
-		string responseText;
-		while (true)
+		Storager.setString("abTestBalansConfigKey", string.Empty, false);
+		if (FriendsController.sharedController != null)
 		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestQuestSystemURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestQuestSystemConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-			}
-			else
-			{
-				responseText = URLs.Sanitize(download);
-				if (!string.IsNullOrEmpty(responseText))
-				{
-					break;
-				}
-			}
-		}
-		Storager.setString("abTestQuestSystemConfigKey", responseText, false);
-		ParseABTestQuestSystemConfig();
-	}
-
-	public static void ParseABTestQuestSystemConfig(bool isFromReset = false)
-	{
-		if (!Storager.hasKey("abTestQuestSystemConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestQuestSystemConfigKey", false)))
-		{
-			return;
-		}
-		string @string = Storager.getString("abTestQuestSystemConfigKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("enableABTest"))
-		{
-			return;
-		}
-		int num = Convert.ToInt32(dictionary["enableABTest"]);
-		int num2 = Convert.ToInt32(dictionary["currentStateEnable"]);
-		if (num == 1 && Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.SKIP)
-		{
-			configNameABTestQuestSystem = Convert.ToString(dictionary["configName"]);
-			if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.NONE)
-			{
-				int num3 = (int)(Defs.cohortABTestQuestSystem = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3));
-				string nameCohort = ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A) ? "QuestOff_" : "QuestON_") + configNameABTestQuestSystem;
-				AnalyticsStuff.LogABTest("QuestSystem", nameCohort);
-			}
-			if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B)
-			{
-				QuestSystemEnabled = false;
-			}
-			else
-			{
-				QuestSystemEnabled = true;
-			}
-		}
-		else
-		{
-			if (!isFromReset)
-			{
-				ResetABTestQuestSystem();
-			}
-			QuestSystemEnabled = num2 == 1;
-		}
-	}
-
-	public static void ResetABTestQuestSystem()
-	{
-		if (Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.SKIP)
-		{
-			if (Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.A || Defs.cohortABTestQuestSystem == Defs.ABTestCohortsType.B)
-			{
-				string nameCohort = ((Defs.cohortABTestQuestSystem != Defs.ABTestCohortsType.A) ? "QuestOff_" : "QuestON_") + configNameABTestQuestSystem;
-				AnalyticsStuff.LogABTest("QuestSystem", nameCohort, false);
-			}
-			Defs.cohortABTestQuestSystem = Defs.ABTestCohortsType.SKIP;
-			ParseABTestQuestSystemConfig(true);
-		}
-	}
-
-	private IEnumerator GetABTestSpecialOffersConfig()
-	{
-		string responseText;
-		while (true)
-		{
-			WWWForm form = new WWWForm();
-			WWW download = Tools.CreateWwwIfNotConnected(URLs.ABTestSpecialOffersURL);
-			if (download == null)
-			{
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-				continue;
-			}
-			yield return download;
-			if (!string.IsNullOrEmpty(download.error))
-			{
-				if (Debug.isDebugBuild || Application.isEditor)
-				{
-					Debug.LogWarning("GetABTestSpecialOffersConfig error: " + download.error);
-				}
-				yield return StartCoroutine(MyWaitForSeconds(30f));
-			}
-			else
-			{
-				responseText = URLs.Sanitize(download);
-				if (!string.IsNullOrEmpty(responseText))
-				{
-					break;
-				}
-			}
-		}
-		Storager.setString("abTestSpecialOffersConfigKey", responseText, false);
-		ParseABTestSpecialOffersConfig();
-	}
-
-	public static void ParseABTestSpecialOffersConfig(bool isFromReset = false)
-	{
-		if (!Storager.hasKey("abTestSpecialOffersConfigKey") || string.IsNullOrEmpty(Storager.getString("abTestSpecialOffersConfigKey", false)))
-		{
-			return;
-		}
-		string @string = Storager.getString("abTestSpecialOffersConfigKey", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("enableABTest"))
-		{
-			return;
-		}
-		int num = Convert.ToInt32(dictionary["enableABTest"]);
-		int num2 = Convert.ToInt32(dictionary["currentStateEnable"]);
-		if (num == 1 && Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.SKIP)
-		{
-			configNameABTestSpecialOffers = Convert.ToString(dictionary["configName"]);
-			if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.NONE)
-			{
-				int num3 = (int)(Defs.cohortABTestSpecialOffers = (Defs.ABTestCohortsType)UnityEngine.Random.Range(1, 3));
-				string nameCohort = ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A) ? "OffersOff_" : "OffersON_") + configNameABTestSpecialOffers;
-				AnalyticsStuff.LogABTest("SpecialOffers", nameCohort);
-			}
-			if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B)
-			{
-				SpecialOffersEnabled = false;
-			}
-			else
-			{
-				SpecialOffersEnabled = true;
-			}
-		}
-		else
-		{
-			if (!isFromReset)
-			{
-				ResetABTestSpecialOffers();
-			}
-			SpecialOffersEnabled = num2 == 1;
+			FriendsController.sharedController.ResetABTestBalansConfig();
 		}
 	}
 
@@ -7108,23 +3065,854 @@ public sealed class FriendsController : MonoBehaviour
 		{
 			if (Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.A || Defs.cohortABTestSpecialOffers == Defs.ABTestCohortsType.B)
 			{
-				string nameCohort = ((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A) ? "OffersOff_" : "OffersON_") + configNameABTestSpecialOffers;
-				AnalyticsStuff.LogABTest("SpecialOffers", nameCohort, false);
+				string str = string.Concat((Defs.cohortABTestSpecialOffers != Defs.ABTestCohortsType.A ? "OffersOff_" : "OffersON_"), FriendsController.configNameABTestSpecialOffers);
+				AnalyticsStuff.LogABTest("SpecialOffers", str, false);
 			}
 			Defs.cohortABTestSpecialOffers = Defs.ABTestCohortsType.SKIP;
-			ParseABTestSpecialOffersConfig(true);
+			FriendsController.ParseABTestSpecialOffersConfig(true);
 		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003Cget_ProfileInterfaceActive_003Em__50(GameObject g)
+	private void SaveCurrentState()
 	{
-		return g.activeInHierarchy;
+		if (this.friends != null)
+		{
+			PlayerPrefs.SetString("FriendsKey", Json.Serialize(this.friends) ?? "[]");
+		}
+		if (this.invitesToUs != null)
+		{
+			PlayerPrefs.SetString("ToUsKey", Json.Serialize(this.invitesToUs) ?? "[]");
+		}
+		if (this.playersInfo != null)
+		{
+			PlayerPrefs.SetString("PlayerInfoKey", Json.Serialize(this.playersInfo) ?? "{}");
+		}
+		if (this.friendsInfo != null)
+		{
+			PlayerPrefs.SetString("FriendsInfoKey", Json.Serialize(this.friendsInfo) ?? "{}");
+		}
+		if (this.clanFriendsInfo != null)
+		{
+			PlayerPrefs.SetString("ClanFriendsInfoKey", Json.Serialize(this.clanFriendsInfo) ?? "{}");
+		}
+		if (this.ClanInvites != null)
+		{
+			PlayerPrefs.SetString("ClanInvitesKey", Json.Serialize(this.ClanInvites) ?? "[]");
+		}
+		this.UpdateCachedClickJoinListValue();
 	}
 
-	[CompilerGenerated]
-	private static void _003CSendMyIdByEmail_003Em__53()
+	private void SaveProfileData()
 	{
-		InfoWindowController.ShowDialogBox(LocalizationStore.Get("Key_1572"), SendEmailWithMyId);
+		if (this.ourInfo != null && this.ourInfo.ContainsKey("wincount"))
+		{
+			int num = 0;
+			Dictionary<string, object> item = this.ourInfo["wincount"] as Dictionary<string, object>;
+			num = 0;
+			item.TryGetValue<int>("0", out num);
+			Storager.setInt(Defs.RatingDeathmatch, num, false);
+			num = 0;
+			item.TryGetValue<int>("2", out num);
+			Storager.setInt(Defs.RatingTeamBattle, num, false);
+			num = 0;
+			item.TryGetValue<int>("3", out num);
+			Storager.setInt(Defs.RatingHunger, num, false);
+			num = 0;
+			item.TryGetValue<int>("4", out num);
+			Storager.setInt(Defs.RatingCapturePoint, num, false);
+		}
+	}
+
+	public void SendAccessories()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		base.StartCoroutine(this.UpdateAccessories());
+	}
+
+	public void SendAddPurchaseEvent(int inapp, string purchaseId)
+	{
+		base.StartCoroutine(this.AddPurchaseEvent(inapp, purchaseId));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SendClanInvitation(string personID, Action<bool, bool> callbackResult = null)
+	{
+		FriendsController.u003cSendClanInvitationu003ec__Iterator64 variable = null;
+		return variable;
+	}
+
+	public void SendCreateClan(string personId, string nameClan, string skinClan, Action<string> ErrorHandler)
+	{
+		if (!string.IsNullOrEmpty(personId) && !string.IsNullOrEmpty(nameClan) && !string.IsNullOrEmpty(skinClan) && FriendsController.readyToOperate)
+		{
+			base.StartCoroutine(this._SendCreateClan(personId, nameClan, skinClan, ErrorHandler));
+		}
+		else if (ErrorHandler != null)
+		{
+			ErrorHandler("Error: FALSE:  ! string.IsNullOrEmpty (personId) && ! string.IsNullOrEmpty (nameClan) && ! string.IsNullOrEmpty (skinClan) && readyToOperate");
+		}
+	}
+
+	private static void SendEmailWithMyId()
+	{
+		MailUrlBuilder mailUrlBuilder = new MailUrlBuilder()
+		{
+			to = string.Empty,
+			subject = LocalizationStore.Get("Key_1565")
+		};
+		string str = (FriendsController.sharedController == null ? string.Empty : FriendsController.sharedController.id);
+		string str1 = LocalizationStore.Get("Key_1508");
+		mailUrlBuilder.body = string.Format(str1, FriendsController.sharedController.id);
+		Application.OpenURL(mailUrlBuilder.GetUrl());
+	}
+
+	public static void SendFriendshipRequest(string playerId, Dictionary<string, object> socialEventParameters, Action<bool, bool> callbackResult)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return;
+		}
+		if (socialEventParameters == null)
+		{
+			throw new ArgumentNullException("socialEventParameters");
+		}
+		FriendsController.sharedController.StartCoroutine(FriendsController.sharedController.FriendRequest(playerId, socialEventParameters, callbackResult));
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SendGameTime()
+	{
+		FriendsController.u003cSendGameTimeu003ec__Iterator6D variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SendGameTimeLoop()
+	{
+		FriendsController.u003cSendGameTimeLoopu003ec__Iterator6C variable = null;
+		return variable;
+	}
+
+	public void SendInvitation(string personId, Dictionary<string, object> socialEventParameters)
+	{
+		if (!string.IsNullOrEmpty(personId) && FriendsController.readyToOperate)
+		{
+			if (socialEventParameters == null)
+			{
+				throw new ArgumentNullException("socialEventParameters");
+			}
+			base.StartCoroutine(this.FriendRequest(personId, socialEventParameters, null));
+		}
+	}
+
+	public static void SendMyIdByEmail()
+	{
+		MainMenuController.DoMemoryConsumingTaskInEmptyScene(() => InfoWindowController.ShowDialogBox(LocalizationStore.Get("Key_1572"), new Action(FriendsController.SendEmailWithMyId), null), null);
+	}
+
+	public void SendOurData(bool SendSkin = false)
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		base.StartCoroutine(this.UpdatePlayer(SendSkin));
+	}
+
+	public static void SendPlayerInviteToClan(string personId, Action<bool, bool> callbackResult = null)
+	{
+		if (FriendsController.sharedController == null)
+		{
+			return;
+		}
+		if (!string.IsNullOrEmpty(personId) && FriendsController.readyToOperate)
+		{
+			FriendsController.sharedController.StartCoroutine(FriendsController.sharedController.SendClanInvitation(personId, callbackResult));
+		}
+	}
+
+	[DebuggerHidden]
+	public IEnumerator SendPromoTrafficForwarding(FriendsController.TypeTrafficForwardingLog type)
+	{
+		FriendsController.u003cSendPromoTrafficForwardingu003ec__Iterator72 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	public IEnumerator SendReviewForPlayerWithID(int rating, string msgReview)
+	{
+		FriendsController.u003cSendReviewForPlayerWithIDu003ec__Iterator71 variable = null;
+		return variable;
+	}
+
+	public void SendRoundWon()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		int num = -1;
+		if (PhotonNetwork.room != null)
+		{
+			num = (int)ConnectSceneNGUIController.regim;
+		}
+		if (num != -1)
+		{
+			base.StartCoroutine(this._SendRoundWon(num));
+		}
+	}
+
+	private void SetWinCountTimestamp(string timestamp, int winCount)
+	{
+		this._winCountTimestamp = new KeyValuePair<string, int>?(new KeyValuePair<string, int>(timestamp, winCount));
+		string str = string.Format("{{ \"{0}\": {1} }}", timestamp, winCount);
+		Storager.setString("Win Count Timestamp", str, false);
+		if (Application.isEditor)
+		{
+			UnityEngine.Debug.Log(string.Concat("Setting win count timestamp:    ", str));
+		}
+	}
+
+	public static void ShowProfile(string id, ProfileWindowType type, Action<bool> onCloseEvent = null)
+	{
+		if (FriendsController._friendProfileController == null)
+		{
+			FriendsController._friendProfileController = new FriendProfileController(onCloseEvent);
+		}
+		FriendsController._friendProfileController.HandleProfileClickedCore(id, type, onCloseEvent);
+	}
+
+	public void StartRefreshingClanOnline()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopRefrClanOnline = false;
+		base.StartCoroutine(this.RefreshClanOnline());
+	}
+
+	public void StartRefreshingInfo(string playerId)
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopRefreshingInfo = false;
+		base.StartCoroutine(this.GetIfnoAboutPlayerLoop(playerId));
+	}
+
+	public void StartRefreshingOnline()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopOnline = false;
+		base.StartCoroutine(this.RefreshOnlinePlayer());
+	}
+
+	public void StartRefreshingOnlineWithClanInfo()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopOnlineWithClanInfo = false;
+		base.StartCoroutine(this.RefreshOnlinePlayerWithClanInfo());
+	}
+
+	public static void StartSendReview()
+	{
+		if (FriendsController.sharedController != null)
+		{
+			FriendsController.sharedController.StopCoroutine("WaitReviewAndSend");
+			FriendsController.sharedController.StartCoroutine("WaitReviewAndSend");
+		}
+	}
+
+	public void StopRefreshingClanOnline()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopRefrClanOnline = true;
+	}
+
+	public void StopRefreshingInfo()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopRefreshingInfo = true;
+	}
+
+	public void StopRefreshingOnline()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopOnline = true;
+	}
+
+	public void StopRefreshingOnlineWithClanInfo()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		this._shouldStopOnlineWithClanInfo = true;
+	}
+
+	private void SyncClickJoinFriendsListWithListFriends()
+	{
+		if (this.clicksJoinByFriends.Count == 0)
+		{
+			return;
+		}
+		if (this.friends.Count == 0)
+		{
+			this.ClearListClickJoinFriends();
+			return;
+		}
+		List<string> strs = new List<string>();
+		foreach (KeyValuePair<string, string> clicksJoinByFriend in this.clicksJoinByFriends)
+		{
+			if (!this.playersInfo.ContainsKey(clicksJoinByFriend.Key))
+			{
+				strs.Add(clicksJoinByFriend.Key);
+			}
+		}
+		if (strs.Count == 0)
+		{
+			return;
+		}
+		for (int i = 0; i < strs.Count; i++)
+		{
+			string item = strs[i];
+			this.clicksJoinByFriends.Remove(item);
+		}
+		this.UpdateCachedClickJoinListValue();
+	}
+
+	[DebuggerHidden]
+	public IEnumerator SynchRating(int rating)
+	{
+		FriendsController.u003cSynchRatingu003ec__Iterator4F variable = null;
+		return variable;
+	}
+
+	public bool TryIncrementWinCountTimestamp()
+	{
+		if (!this._winCountTimestamp.HasValue)
+		{
+			return false;
+		}
+		string key = this._winCountTimestamp.Value.Key;
+		KeyValuePair<string, int> value = this._winCountTimestamp.Value;
+		this._winCountTimestamp = new KeyValuePair<string, int>?(new KeyValuePair<string, int>(key, value.Value + 1));
+		return true;
+	}
+
+	private void TrySendEventHideBoxProcessFriendsData()
+	{
+		if (FriendsController.OnHideBoxProcessFriendsData == null)
+		{
+			return;
+		}
+		FriendsController.OnHideBoxProcessFriendsData();
+	}
+
+	private void TrySendEventShowBoxProcessFriendsData()
+	{
+		if (FriendsController.OnShowBoxProcessFriendsData == null)
+		{
+			return;
+		}
+		FriendsController.OnShowBoxProcessFriendsData();
+	}
+
+	public void UnbanUs(Action onSuccess)
+	{
+	}
+
+	private void Update()
+	{
+		if (FriendsController.isUpdateServerTimeAfterRun)
+		{
+			FriendsController.tickForServerTime += Time.deltaTime;
+			if (FriendsController.tickForServerTime >= 1f)
+			{
+				FriendsController.localServerTime += (long)1;
+				FriendsController.tickForServerTime -= 1f;
+			}
+		}
+		this.deltaTimeInGame += Time.deltaTime;
+		if (this.Banned == 1 && PhotonNetwork.connected)
+		{
+			PhotonNetwork.Disconnect();
+		}
+		if (Input.touchCount <= 0)
+		{
+			this.lastTouchTm = Time.realtimeSinceStartup;
+			this.idle = false;
+		}
+		else if (Time.realtimeSinceStartup - this.lastTouchTm > 30f)
+		{
+			this.idle = true;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdateAccessories()
+	{
+		FriendsController.u003cUpdateAccessoriesu003ec__Iterator55 variable = null;
+		return variable;
+	}
+
+	private void UpdateCachedClickJoinListValue()
+	{
+		if (this.clicksJoinByFriends.Count == 0)
+		{
+			return;
+		}
+		PlayerPrefs.SetString("CachedFriendsJoinClickList", Json.Serialize(this.clicksJoinByFriends) ?? string.Empty);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdateFriendsInfo(bool _isUpdateInfoAboutAllFriends)
+	{
+		FriendsController.u003cUpdateFriendsInfou003ec__Iterator6F variable = null;
+		return variable;
+	}
+
+	public static void UpdatePixelbookSettingsFromPrefs()
+	{
+		string str = PlayerPrefs.GetString("PixelbookSettingsKey", "{}");
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs == null)
+		{
+			return;
+		}
+		if (strs.ContainsKey("MaxFriendCount"))
+		{
+			if (strs.ContainsKey("FriendsUrl"))
+			{
+				URLs.Friends = Convert.ToString(strs["FriendsUrl"]);
+			}
+			if (strs.ContainsKey("MaxFriendCount"))
+			{
+				Defs.maxCountFriend = Convert.ToInt32(strs["MaxFriendCount"]);
+			}
+			if (strs.ContainsKey("MaxMemberClanCount"))
+			{
+				Defs.maxMemberClanCount = Convert.ToInt32(strs["MaxMemberClanCount"]);
+			}
+			if (strs.ContainsKey("TimeUpdateFriendInfo"))
+			{
+				Defs.timeUpdateFriendInfo = (float)Convert.ToInt32(strs["TimeUpdateFriendInfo"]);
+			}
+			if (strs.ContainsKey("TimeUpdateOnlineInGame"))
+			{
+				Defs.timeUpdateOnlineInGame = (float)Convert.ToInt32(strs["TimeUpdateOnlineInGame"]);
+			}
+			if (strs.ContainsKey("TimeUpdateInfoInProfile"))
+			{
+				Defs.timeUpdateInfoInProfile = (float)Convert.ToInt32(strs["TimeUpdateInfoInProfile"]);
+			}
+			if (strs.ContainsKey("TimeUpdateLeaderboardIfNullResponce"))
+			{
+				Defs.timeUpdateLeaderboardIfNullResponce = (float)Convert.ToInt32(strs["TimeUpdateLeaderboardIfNullResponce"]);
+			}
+			if (strs.ContainsKey("TimeBlockRefreshFriendDate"))
+			{
+				Defs.timeBlockRefreshFriendDate = (float)Convert.ToInt32(strs["TimeBlockRefreshFriendDate"]);
+			}
+			if (strs.ContainsKey("TimeWaitLoadPossibleFriends"))
+			{
+				Defs.timeWaitLoadPossibleFriends = (float)Convert.ToInt32(strs["TimeWaitLoadPossibleFriends"]);
+			}
+			if (strs.ContainsKey("PauseUpdateLeaderboard"))
+			{
+				Defs.pauseUpdateLeaderboard = (float)Convert.ToInt32(strs["PauseUpdateLeaderboard"]);
+			}
+			if (strs.ContainsKey("TimeUpdatePixelbookInfo"))
+			{
+				Defs.timeUpdatePixelbookInfo = (float)Convert.ToInt32(strs["TimeUpdatePixelbookInfo"]);
+			}
+			if (strs.ContainsKey("HistoryPrivateMessageLength"))
+			{
+				Defs.historyPrivateMessageLength = Convert.ToInt32(strs["HistoryPrivateMessageLength"]);
+			}
+			if (strs.ContainsKey("TimeUpdateStartCheckIfNullResponce"))
+			{
+				Defs.timeUpdateStartCheckIfNullResponce = (float)Convert.ToInt32(strs["TimeUpdateStartCheckIfNullResponce"]);
+			}
+			if (strs.ContainsKey("FacebookLimits"))
+			{
+				try
+				{
+					Dictionary<string, object> item = strs["FacebookLimits"] as Dictionary<string, object>;
+					int num = (int)((long)item["GreenLimit"]);
+					int item1 = (int)((long)item["RedLimit"]);
+					Action<int, int> action = FriendsController.NewFacebookLimitsAvailable;
+					if (action != null)
+					{
+						action(num, item1);
+					}
+				}
+				catch (Exception exception)
+				{
+					UnityEngine.Debug.LogException(exception);
+				}
+			}
+			if (strs.ContainsKey("TwitterLimits"))
+			{
+				try
+				{
+					Dictionary<string, object> strs1 = strs["TwitterLimits"] as Dictionary<string, object>;
+					int num1 = (int)((long)strs1["GreenLimit"]);
+					int item2 = (int)((long)strs1["RedLimit"]);
+					int num2 = (int)((long)strs1["MultyWinLimit"]);
+					int item3 = (int)((long)strs1["ArenaLimit"]);
+					Action<int, int, int, int> action1 = FriendsController.NewTwitterLimitsAvailable;
+					if (action1 != null)
+					{
+						action1(num1, item2, num2, item3);
+					}
+				}
+				catch (Exception exception1)
+				{
+					UnityEngine.Debug.LogException(exception1);
+				}
+			}
+			if (strs.ContainsKey("CheaterDetectParameters"))
+			{
+				try
+				{
+					Dictionary<string, object> strs2 = strs["CheaterDetectParameters"] as Dictionary<string, object>;
+					Dictionary<string, object> strs3 = strs2["Paying"] as Dictionary<string, object>;
+					int num3 = (int)((long)strs3["Coins"]);
+					int item4 = (int)((long)strs3["GemsCurrency"]);
+					Dictionary<string, object> strs4 = strs2["NonPaying"] as Dictionary<string, object>;
+					int num4 = (int)((long)strs4["Coins"]);
+					int item5 = (int)((long)strs4["GemsCurrency"]);
+					Action<int, int, int, int> action2 = FriendsController.NewCheaterDetectParametersAvailable;
+					if (action2 != null)
+					{
+						action2(num3, item4, num4, item5);
+					}
+				}
+				catch (Exception exception2)
+				{
+					UnityEngine.Debug.LogException(exception2);
+				}
+			}
+			if (strs.ContainsKey("UseSqlLobby1031"))
+			{
+				Defs.useSqlLobby = (Convert.ToInt32(strs["UseSqlLobby1031"]) != 1 ? false : true);
+			}
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdatePlayer(bool sendSkin)
+	{
+		FriendsController.u003cUpdatePlayeru003ec__Iterator56 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdatePlayerInfoById(string playerId)
+	{
+		FriendsController.u003cUpdatePlayerInfoByIdu003ec__Iterator5F variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdatePlayerOnline(int gameMode)
+	{
+		FriendsController.u003cUpdatePlayerOnlineu003ec__Iterator50 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdatePlayerOnlineLoop()
+	{
+		FriendsController.u003cUpdatePlayerOnlineLoopu003ec__Iterator4D variable = null;
+		return variable;
+	}
+
+	public void UpdatePLayersInfo()
+	{
+		if (!FriendsController.readyToOperate)
+		{
+			return;
+		}
+		base.StartCoroutine(this.GetInfoAboutNPlayers());
+	}
+
+	public void UpdatePopularityMaps()
+	{
+		base.StopCoroutine("GetPopularityMap");
+		base.StartCoroutine("GetPopularityMap");
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdatePopularityMapsLoop()
+	{
+		FriendsController.u003cUpdatePopularityMapsLoopu003ec__Iterator37 variable = null;
+		return variable;
+	}
+
+	public void UpdateRecordByFriendsJoinClick(string friendId)
+	{
+		if (this.clicksJoinByFriends.ContainsKey(friendId))
+		{
+			this.clicksJoinByFriends[friendId] = DateTime.UtcNow.ToString("s");
+			return;
+		}
+		this.clicksJoinByFriends.Add(friendId, DateTime.UtcNow.ToString("s"));
+	}
+
+	[DebuggerHidden]
+	public IEnumerator WaitForReadyToOperateAndUpdatePlayer()
+	{
+		FriendsController.u003cWaitForReadyToOperateAndUpdatePlayeru003ec__Iterator41 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator WaitReviewAndSend()
+	{
+		FriendsController.u003cWaitReviewAndSendu003ec__Iterator70 variable = null;
+		return variable;
+	}
+
+	public static event Action ClanUpdated;
+
+	public event Action FailedSendNewClan
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.FailedSendNewClan += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.FailedSendNewClan -= value;
+		}
+	}
+
+	public static event Action FriendsUpdated;
+
+	public static event Action FullInfoUpdated;
+
+	public static event Action<int, int, int, int> NewCheaterDetectParametersAvailable;
+
+	public static event Action<int, int> NewFacebookLimitsAvailable;
+
+	public static event Action<int, int, int, int> NewTwitterLimitsAvailable;
+
+	public static event Action OurInfoUpdated;
+
+	public event Action<int> ReturnNewIDClan
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.ReturnNewIDClan += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.ReturnNewIDClan -= value;
+		}
+	}
+
+	public static event Action ServerTimeUpdated;
+
+	public static event Action StaticBankConfigUpdated;
+
+	public enum NotConnectCondition
+	{
+		level,
+		platform,
+		map,
+		clientVersion,
+		InChat,
+		None
+	}
+
+	public delegate void OnChangeClanName(string newName);
+
+	public enum PossiblleOrigin
+	{
+		None,
+		Local,
+		Facebook,
+		RandomPlayer
+	}
+
+	public class ResultParseOnlineData
+	{
+		public string mapIndex;
+
+		public bool isPlayerInChat;
+
+		public FriendsController.NotConnectCondition notConnectCondition;
+
+		private string _gameRegim;
+
+		private string _gameMode;
+
+		public string gameMode
+		{
+			get
+			{
+				return this._gameMode;
+			}
+			set
+			{
+				this._gameMode = value;
+				this._gameRegim = this._gameMode.Substring(this._gameMode.Length - 1);
+			}
+		}
+
+		public bool IsCanConnect
+		{
+			get
+			{
+				return this.notConnectCondition == FriendsController.NotConnectCondition.None;
+			}
+		}
+
+		public ResultParseOnlineData()
+		{
+		}
+
+		public string GetGameModeName()
+		{
+			IDictionary<string, string> strs = ConnectSceneNGUIController.gameModesLocalizeKey;
+			if (!strs.ContainsKey(this._gameRegim))
+			{
+				return string.Empty;
+			}
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(this.mapIndex));
+			if (infoScene != null && infoScene.IsAvaliableForMode(TypeModeGame.Dater))
+			{
+				return LocalizationStore.Get("Key_1567");
+			}
+			return LocalizationStore.Get(strs[this._gameRegim]);
+		}
+
+		public string GetMapName()
+		{
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(this.mapIndex));
+			if (infoScene == null)
+			{
+				return string.Empty;
+			}
+			return infoScene.TranslateName;
+		}
+
+		public string GetNotConnectConditionShortString()
+		{
+			if (this.IsCanConnect)
+			{
+				return string.Empty;
+			}
+			string empty = string.Empty;
+			switch (this.notConnectCondition)
+			{
+				case FriendsController.NotConnectCondition.level:
+				{
+					empty = LocalizationStore.Get("Key_1574");
+					break;
+				}
+				case FriendsController.NotConnectCondition.platform:
+				{
+					empty = LocalizationStore.Get("Key_1576");
+					break;
+				}
+				case FriendsController.NotConnectCondition.map:
+				{
+					empty = LocalizationStore.Get("Key_1575");
+					break;
+				}
+				case FriendsController.NotConnectCondition.clientVersion:
+				{
+					empty = LocalizationStore.Get("Key_1573");
+					break;
+				}
+				case FriendsController.NotConnectCondition.InChat:
+				{
+					empty = LocalizationStore.Get("Key_1577");
+					break;
+				}
+			}
+			return empty;
+		}
+
+		public string GetNotConnectConditionString()
+		{
+			if (this.IsCanConnect)
+			{
+				return string.Empty;
+			}
+			string empty = string.Empty;
+			switch (this.notConnectCondition)
+			{
+				case FriendsController.NotConnectCondition.level:
+				{
+					empty = LocalizationStore.Get("Key_1420");
+					break;
+				}
+				case FriendsController.NotConnectCondition.platform:
+				{
+					empty = LocalizationStore.Get("Key_1414");
+					break;
+				}
+				case FriendsController.NotConnectCondition.map:
+				{
+					empty = LocalizationStore.Get("Key_1419");
+					break;
+				}
+				case FriendsController.NotConnectCondition.clientVersion:
+				{
+					empty = LocalizationStore.Get("Key_1418");
+					break;
+				}
+			}
+			return empty;
+		}
+
+		public OnlineState GetOnlineStatus()
+		{
+			int num = Convert.ToInt32(this._gameRegim);
+			if (num == 6)
+			{
+				return OnlineState.inFriends;
+			}
+			if (num == 7)
+			{
+				return OnlineState.inClans;
+			}
+			return OnlineState.playing;
+		}
+	}
+
+	public enum TypeTrafficForwardingLog
+	{
+		newView,
+		view,
+		click
 	}
 }

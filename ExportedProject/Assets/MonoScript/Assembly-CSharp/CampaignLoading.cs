@@ -1,10 +1,13 @@
-using System.Reflection;
 using Rilisoft;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class CampaignLoading : MonoBehaviour
 {
-	public static readonly string DesignersTestMap = "Coliseum";
+	public readonly static string DesignersTestMap;
 
 	public UITexture backgroundUiTexture;
 
@@ -26,95 +29,110 @@ public sealed class CampaignLoading : MonoBehaviour
 
 	private Rect plashkaCoinsRect;
 
-	private void Start()
+	static CampaignLoading()
 	{
-		ActivityIndicator.IsActiveIndicator = true;
-		string b;
+		CampaignLoading.DesignersTestMap = "Coliseum";
+	}
+
+	public CampaignLoading()
+	{
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void Load()
+	{
 		if (!Defs.IsSurvival)
 		{
-			if (TrainingController.TrainingCompleted)
+			Singleton<SceneLoader>.Instance.LoadScene((TrainingController.TrainingCompleted ? CurrentCampaignGame.levelSceneName : "Training"), LoadSceneMode.Single);
+		}
+		else
+		{
+			Singleton<SceneLoader>.Instance.LoadScene(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % (int)Defs.SurvivalMaps.Length], LoadSceneMode.Single);
+		}
+	}
+
+	private void Start()
+	{
+		string str;
+		string str1;
+		ActivityIndicator.IsActiveIndicator = true;
+		if (Defs.IsSurvival)
+		{
+			str = "gey_surv";
+			if (this.survivalNotesOverlay != null)
 			{
-				int num = 0;
-				LevelBox levelBox = null;
-				foreach (LevelBox campaignBox in LevelBox.campaignBoxes)
+				this.survivalNotesOverlay.SetActive(true);
+			}
+		}
+		else if (!TrainingController.TrainingCompleted)
+		{
+			str = "Restore";
+			if (this.trainingNotesOverlay != null)
+			{
+				this.trainingNotesOverlay.SetActive(true);
+			}
+		}
+		else
+		{
+			int num = 0;
+			LevelBox levelBox = null;
+			foreach (LevelBox campaignBox in LevelBox.campaignBoxes)
+			{
+				if (!campaignBox.name.Equals(CurrentCampaignGame.boXName))
 				{
-					if (!campaignBox.name.Equals(CurrentCampaignGame.boXName))
+					continue;
+				}
+				levelBox = campaignBox;
+				foreach (CampaignLevel level in campaignBox.levels)
+				{
+					if (!level.sceneName.Equals(CurrentCampaignGame.levelSceneName))
 					{
 						continue;
 					}
-					levelBox = campaignBox;
-					foreach (CampaignLevel level in campaignBox.levels)
-					{
-						if (level.sceneName.Equals(CurrentCampaignGame.levelSceneName))
-						{
-							num = campaignBox.levels.IndexOf(level);
-							break;
-						}
-					}
-				}
-				bool flag = false;
-				flag = num >= levelBox.levels.Count - 1;
-				bool flag2 = false;
-				if (!CampaignProgress.boxesLevelsAndStars[CurrentCampaignGame.boXName].ContainsKey(CurrentCampaignGame.levelSceneName))
-				{
-					flag2 = true;
-				}
-				bool flag3 = flag2 && flag;
-				b = ((!flag3) ? "gey_1" : "gey_15");
-				if (ordinaryAwardLabel != null)
-				{
-					ordinaryAwardLabel.SetActive(!flag3);
-				}
-				if (stackOfCoinsLabel != null)
-				{
-					stackOfCoinsLabel.SetActive(flag3);
-				}
-				if (campaignNotesOverlay != null)
-				{
-					campaignNotesOverlay.SetActive(true);
+					num = campaignBox.levels.IndexOf(level);
+					break;
 				}
 			}
-			else
+			bool count = false;
+			count = num >= levelBox.levels.Count - 1;
+			bool flag = false;
+			if (!CampaignProgress.boxesLevelsAndStars[CurrentCampaignGame.boXName].ContainsKey(CurrentCampaignGame.levelSceneName))
 			{
-				b = "Restore";
-				if (trainingNotesOverlay != null)
-				{
-					trainingNotesOverlay.SetActive(true);
-				}
+				flag = true;
 			}
+			bool flag1 = (!flag ? false : count);
+			str = (!flag1 ? "gey_1" : "gey_15");
+			if (this.ordinaryAwardLabel != null)
+			{
+				this.ordinaryAwardLabel.SetActive(!flag1);
+			}
+			if (this.stackOfCoinsLabel != null)
+			{
+				this.stackOfCoinsLabel.SetActive(flag1);
+			}
+			if (this.campaignNotesOverlay != null)
+			{
+				this.campaignNotesOverlay.SetActive(true);
+			}
+		}
+		this.plashkaCoins = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", str));
+		float coef = (float)((!TrainingController.TrainingCompleted ? 484 : 500)) * Defs.Coef;
+		float single = (float)((!TrainingController.TrainingCompleted ? 279 : 244)) * Defs.Coef;
+		this.plashkaCoinsRect = new Rect(((float)Screen.width - coef) / 2f, (float)Screen.height * 0.8f - single / 2f, coef, single);
+		if (TrainingController.TrainingCompleted)
+		{
+			str1 = (!Defs.IsSurvival ? CurrentCampaignGame.levelSceneName : Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % (int)Defs.SurvivalMaps.Length]);
 		}
 		else
 		{
-			b = "gey_surv";
-			if (survivalNotesOverlay != null)
-			{
-				survivalNotesOverlay.SetActive(true);
-			}
+			str1 = "Training";
 		}
-		plashkaCoins = Resources.Load<Texture>(ResPath.Combine("CoinsIndicationSystem", b));
-		float num2 = (float)((!TrainingController.TrainingCompleted) ? 484 : 500) * Defs.Coef;
-		float num3 = (float)((!TrainingController.TrainingCompleted) ? 279 : 244) * Defs.Coef;
-		plashkaCoinsRect = new Rect(((float)Screen.width - num2) / 2f, (float)Screen.height * 0.8f - num3 / 2f, num2, num3);
-		string text = ((!TrainingController.TrainingCompleted) ? "Training" : ((!Defs.IsSurvival) ? CurrentCampaignGame.levelSceneName : Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % Defs.SurvivalMaps.Length]));
-		string b2 = "Loading_" + text;
-		fonToDraw = Resources.Load<Texture>(ResPath.Combine(Switcher.LoadingInResourcesPath + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi"), b2));
-		if (backgroundUiTexture != null)
+		string str2 = string.Concat("Loading_", str1);
+		this.fonToDraw = Resources.Load<Texture>(ResPath.Combine(string.Concat(Switcher.LoadingInResourcesPath, (!Device.isRetinaAndStrong ? string.Empty : "/Hi")), str2));
+		if (this.backgroundUiTexture != null)
 		{
-			backgroundUiTexture.mainTexture = fonToDraw;
+			this.backgroundUiTexture.mainTexture = this.fonToDraw;
 		}
-		Invoke("Load", 2f);
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void Load()
-	{
-		if (Defs.IsSurvival)
-		{
-			Singleton<SceneLoader>.Instance.LoadScene(Defs.SurvivalMaps[Defs.CurrentSurvMapIndex % Defs.SurvivalMaps.Length]);
-		}
-		else
-		{
-			Singleton<SceneLoader>.Instance.LoadScene(TrainingController.TrainingCompleted ? CurrentCampaignGame.levelSceneName : "Training");
-		}
+		base.Invoke("Load", 2f);
 	}
 }

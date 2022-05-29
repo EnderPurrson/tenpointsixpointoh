@@ -4,56 +4,56 @@ using UnityEngine;
 
 public class AGSSyncableElement : AGSSyncable
 {
-	public AGSSyncableElement(AmazonJavaWrapper javaObject)
-		: base(javaObject)
+	public AGSSyncableElement(AmazonJavaWrapper javaObject) : base(javaObject)
 	{
 	}
 
-	public AGSSyncableElement(AndroidJavaObject javaObject)
-		: base(javaObject)
+	public AGSSyncableElement(AndroidJavaObject javaObject) : base(javaObject)
 	{
-	}
-
-	public long GetTimestamp()
-	{
-		return javaObject.Call<long>("getTimestamp", new object[0]);
 	}
 
 	public Dictionary<string, string> GetMetadata()
 	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
+		Dictionary<string, string> strs = new Dictionary<string, string>();
 		AndroidJNI.PushLocalFrame(10);
-		AndroidJavaObject androidJavaObject = javaObject.Call<AndroidJavaObject>("getMetadata", new object[0]);
+		AndroidJavaObject androidJavaObject = this.javaObject.Call<AndroidJavaObject>("getMetadata", new object[0]);
 		if (androidJavaObject == null)
 		{
 			AGSClient.LogGameCircleError("Whispersync element was unable to retrieve metadata java map");
-			return dictionary;
+			return strs;
 		}
-		AndroidJavaObject androidJavaObject2 = androidJavaObject.Call<AndroidJavaObject>("keySet", new object[0]);
-		if (androidJavaObject2 == null)
+		AndroidJavaObject androidJavaObject1 = androidJavaObject.Call<AndroidJavaObject>("keySet", new object[0]);
+		if (androidJavaObject1 == null)
 		{
 			AGSClient.LogGameCircleError("Whispersync element was unable to retrieve java keyset");
-			return dictionary;
+			return strs;
 		}
-		AndroidJavaObject androidJavaObject3 = androidJavaObject2.Call<AndroidJavaObject>("iterator", new object[0]);
-		if (androidJavaObject3 == null)
+		AndroidJavaObject androidJavaObject2 = androidJavaObject1.Call<AndroidJavaObject>("iterator", new object[0]);
+		if (androidJavaObject2 == null)
 		{
 			AGSClient.LogGameCircleError("Whispersync element was unable to retrieve java iterator");
-			return dictionary;
+			return strs;
 		}
-		while (androidJavaObject3.Call<bool>("hasNext", new object[0]))
+		while (androidJavaObject2.Call<bool>("hasNext", new object[0]))
 		{
-			string text = androidJavaObject3.Call<string>("next", new object[0]);
-			if (text != null)
+			string str = androidJavaObject2.Call<string>("next", new object[0]);
+			if (str == null)
 			{
-				string text2 = androidJavaObject.Call<string>("get", new object[1] { text });
-				if (text2 != null)
-				{
-					dictionary.Add(text, text2);
-				}
+				continue;
 			}
+			string str1 = androidJavaObject.Call<string>("get", new object[] { str });
+			if (str1 == null)
+			{
+				continue;
+			}
+			strs.Add(str, str1);
 		}
 		AndroidJNI.PopLocalFrame(IntPtr.Zero);
-		return dictionary;
+		return strs;
+	}
+
+	public long GetTimestamp()
+	{
+		return this.javaObject.Call<long>("getTimestamp", new object[0]);
 	}
 }

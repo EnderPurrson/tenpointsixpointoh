@@ -6,54 +6,74 @@ public class AGSRequestPercentilesForPlayerResponse : AGSRequestPercentilesRespo
 {
 	public string playerId;
 
-	public new static AGSRequestPercentilesForPlayerResponse FromJSON(string json)
+	public AGSRequestPercentilesForPlayerResponse()
 	{
-		//Discarded unreachable code: IL_01e4, IL_0214
+	}
+
+	public static new AGSRequestPercentilesForPlayerResponse FromJSON(string json)
+	{
+		AGSRequestPercentilesForPlayerResponse blankResponseWithError;
 		try
 		{
 			AGSRequestPercentilesForPlayerResponse aGSRequestPercentilesForPlayerResponse = new AGSRequestPercentilesForPlayerResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestPercentilesForPlayerResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestPercentilesForPlayerResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
-			aGSRequestPercentilesForPlayerResponse.leaderboardId = ((!hashtable.ContainsKey("leaderboardId")) ? string.Empty : hashtable["leaderboardId"].ToString());
-			if (hashtable.ContainsKey("leaderboard"))
-			{
-				aGSRequestPercentilesForPlayerResponse.leaderboard = AGSLeaderboard.fromHashtable(hashtable["leaderboard"] as Hashtable);
-			}
-			else
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestPercentilesForPlayerResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestPercentilesForPlayerResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
+			aGSRequestPercentilesForPlayerResponse.leaderboardId = (!hashtables.ContainsKey("leaderboardId") ? string.Empty : hashtables["leaderboardId"].ToString());
+			if (!hashtables.ContainsKey("leaderboard"))
 			{
 				aGSRequestPercentilesForPlayerResponse.leaderboard = AGSLeaderboard.GetBlankLeaderboard();
 			}
-			aGSRequestPercentilesForPlayerResponse.percentiles = new List<AGSLeaderboardPercentile>();
-			if (hashtable.Contains("percentiles"))
+			else
 			{
-				foreach (Hashtable item in hashtable["percentiles"] as ArrayList)
+				aGSRequestPercentilesForPlayerResponse.leaderboard = AGSLeaderboard.fromHashtable(hashtables["leaderboard"] as Hashtable);
+			}
+			aGSRequestPercentilesForPlayerResponse.percentiles = new List<AGSLeaderboardPercentile>();
+			if (hashtables.Contains("percentiles"))
+			{
+				IEnumerator enumerator = (hashtables["percentiles"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestPercentilesForPlayerResponse.percentiles.Add(AGSLeaderboardPercentile.fromHashTable(item));
+					while (enumerator.MoveNext())
+					{
+						Hashtable current = (Hashtable)enumerator.Current;
+						aGSRequestPercentilesForPlayerResponse.percentiles.Add(AGSLeaderboardPercentile.fromHashTable(current));
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			aGSRequestPercentilesForPlayerResponse.userIndex = ((!hashtable.ContainsKey("userIndex")) ? (-1) : int.Parse(hashtable["userIndex"].ToString()));
-			aGSRequestPercentilesForPlayerResponse.scope = (LeaderboardScope)(int)Enum.Parse(typeof(LeaderboardScope), hashtable["scope"].ToString());
-			aGSRequestPercentilesForPlayerResponse.playerId = ((!hashtable.ContainsKey("playerId")) ? string.Empty : hashtable["playerId"].ToString());
-			return aGSRequestPercentilesForPlayerResponse;
+			aGSRequestPercentilesForPlayerResponse.userIndex = (!hashtables.ContainsKey("userIndex") ? -1 : int.Parse(hashtables["userIndex"].ToString()));
+			aGSRequestPercentilesForPlayerResponse.scope = (LeaderboardScope)((int)Enum.Parse(typeof(LeaderboardScope), hashtables["scope"].ToString()));
+			aGSRequestPercentilesForPlayerResponse.playerId = (!hashtables.ContainsKey("playerId") ? string.Empty : hashtables["playerId"].ToString());
+			blankResponseWithError = aGSRequestPercentilesForPlayerResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, string.Empty);
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestPercentilesForPlayerResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", string.Empty, string.Empty, LeaderboardScope.GlobalAllTime, 0);
 		}
+		return blankResponseWithError;
 	}
 
-	public static AGSRequestPercentilesForPlayerResponse GetBlankResponseWithError(string error, string leaderboardId = "", string playerId = "", LeaderboardScope scope = LeaderboardScope.GlobalAllTime, int userData = 0)
+	public static AGSRequestPercentilesForPlayerResponse GetBlankResponseWithError(string error, string leaderboardId = "", string playerId = "", LeaderboardScope scope = 0, int userData = 0)
 	{
-		AGSRequestPercentilesForPlayerResponse aGSRequestPercentilesForPlayerResponse = new AGSRequestPercentilesForPlayerResponse();
-		aGSRequestPercentilesForPlayerResponse.error = error;
-		aGSRequestPercentilesForPlayerResponse.userData = userData;
-		aGSRequestPercentilesForPlayerResponse.leaderboardId = leaderboardId;
-		aGSRequestPercentilesForPlayerResponse.scope = scope;
-		aGSRequestPercentilesForPlayerResponse.leaderboard = AGSLeaderboard.GetBlankLeaderboard();
-		aGSRequestPercentilesForPlayerResponse.percentiles = new List<AGSLeaderboardPercentile>();
-		aGSRequestPercentilesForPlayerResponse.userIndex = -1;
+		AGSRequestPercentilesForPlayerResponse aGSRequestPercentilesForPlayerResponse = new AGSRequestPercentilesForPlayerResponse()
+		{
+			error = error,
+			userData = userData,
+			leaderboardId = leaderboardId,
+			scope = scope,
+			leaderboard = AGSLeaderboard.GetBlankLeaderboard(),
+			percentiles = new List<AGSLeaderboardPercentile>(),
+			userIndex = -1
+		};
 		aGSRequestPercentilesForPlayerResponse.scope = scope;
 		aGSRequestPercentilesForPlayerResponse.playerId = playerId;
 		return aGSRequestPercentilesForPlayerResponse;
@@ -61,6 +81,6 @@ public class AGSRequestPercentilesForPlayerResponse : AGSRequestPercentilesRespo
 
 	public static AGSRequestPercentilesForPlayerResponse GetPlatformNotSupportedResponse(string leaderboardId, string playerId, LeaderboardScope scope, int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, playerId, scope, userData);
+		return AGSRequestPercentilesForPlayerResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", leaderboardId, playerId, scope, userData);
 	}
 }

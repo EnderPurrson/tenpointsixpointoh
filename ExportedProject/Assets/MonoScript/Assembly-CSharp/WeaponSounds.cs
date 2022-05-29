@@ -4,181 +4,13 @@ using UnityEngine;
 
 public sealed class WeaponSounds : MonoBehaviour
 {
-	public enum Effects
-	{
-		Automatic = 0,
-		SingleShot = 1,
-		Rockets = 2,
-		Mortar = 3,
-		Laser = 4,
-		Shotgun = 5,
-		Chainsaw = 6,
-		Flamethrower = 7,
-		ElectroThrower = 8,
-		WallBreak = 9,
-		AreaDamage = 10,
-		Zoom = 11,
-		ThroughEnemies = 12,
-		Detonation = 13,
-		GuidedAmmunition = 14,
-		Ricochet = 15,
-		SeveralMissiles = 16,
-		Silent = 17,
-		ForSandbox = 18,
-		SlowTheTarget = 19,
-		SemiAuto = 20,
-		ChargingShot = 21,
-		StickyMines = 22,
-		DamageAbsorbtion = 23,
-		ChainShot = 24,
-		AutoHoming = 25
-	}
-
-	public enum TypeTracer
-	{
-		none = -1,
-		standart = 0,
-		red = 1,
-		for252 = 2,
-		turquoise = 3,
-		green = 4,
-		violet = 5
-	}
-
-	public enum TypeDead
-	{
-		angel = 0,
-		explosion = 1,
-		energyBlue = 2,
-		energyRed = 3,
-		energyPink = 4,
-		energyCyan = 5,
-		energyLight = 6,
-		energyGreen = 7,
-		energyOrange = 8,
-		energyWhite = 9,
-		like = 10
-	}
-
-	public enum SpecialEffects
-	{
-		None = -1,
-		PlayerShield = 0
-	}
-
 	public const string RememberedTierWhereGetGunKey = "RememberedTierWhenObtainGun_";
 
 	public WeaponManager.WeaponTypeForLow typeForLow;
 
-	public static Dictionary<Effects, KeyValuePair<string, string>> keysAndSpritesForEffects = new Dictionary<Effects, KeyValuePair<string, string>>
-	{
-		{
-			Effects.Automatic,
-			new KeyValuePair<string, string>("shop_stats_auto", "Key_1391")
-		},
-		{
-			Effects.SingleShot,
-			new KeyValuePair<string, string>("shop_stats_sngl", "Key_1392")
-		},
-		{
-			Effects.Rockets,
-			new KeyValuePair<string, string>("shop_stats_rkt", "Key_1394")
-		},
-		{
-			Effects.Mortar,
-			new KeyValuePair<string, string>("shop_stats_grav", "Key_1396")
-		},
-		{
-			Effects.Laser,
-			new KeyValuePair<string, string>("shop_stats_lsr", "Key_1393")
-		},
-		{
-			Effects.Shotgun,
-			new KeyValuePair<string, string>("shop_stats_shtgn", "Key_1390")
-		},
-		{
-			Effects.Chainsaw,
-			new KeyValuePair<string, string>("shop_stats_chain", "Key_1383")
-		},
-		{
-			Effects.Flamethrower,
-			new KeyValuePair<string, string>("shop_stats_fire", "Key_1387")
-		},
-		{
-			Effects.ElectroThrower,
-			new KeyValuePair<string, string>("shop_stats_elctrc", "Key_1395")
-		},
-		{
-			Effects.WallBreak,
-			new KeyValuePair<string, string>("shop_stats_no_wall", "Key_0402")
-		},
-		{
-			Effects.AreaDamage,
-			new KeyValuePair<string, string>("shop_stats_area_dmg", "Key_0403")
-		},
-		{
-			Effects.Zoom,
-			new KeyValuePair<string, string>("shop_stats_zoom", "Key_0404")
-		},
-		{
-			Effects.ThroughEnemies,
-			new KeyValuePair<string, string>("shop_stats_mtpl_enms", "Key_1388")
-		},
-		{
-			Effects.Detonation,
-			new KeyValuePair<string, string>("shop_stats_det", "Key_1385")
-		},
-		{
-			Effects.GuidedAmmunition,
-			new KeyValuePair<string, string>("shop_stats_cntrl", "Key_1384")
-		},
-		{
-			Effects.Ricochet,
-			new KeyValuePair<string, string>("shop_stats_refl", "Key_1389")
-		},
-		{
-			Effects.SeveralMissiles,
-			new KeyValuePair<string, string>("shop_stats_few", "Key_1386")
-		},
-		{
-			Effects.Silent,
-			new KeyValuePair<string, string>("shop_stats_g_slnt", "Key_1397")
-		},
-		{
-			Effects.ForSandbox,
-			new KeyValuePair<string, string>("shop_stats_sandbox", "Key_1603")
-		},
-		{
-			Effects.SlowTheTarget,
-			new KeyValuePair<string, string>("shop_stats_slow_target", "Key_1759")
-		},
-		{
-			Effects.SemiAuto,
-			new KeyValuePair<string, string>("shop_stats_semi_auto", "Key_2138")
-		},
-		{
-			Effects.ChargingShot,
-			new KeyValuePair<string, string>("shop_stats_charging_shot", "Key_2226")
-		},
-		{
-			Effects.StickyMines,
-			new KeyValuePair<string, string>("shop_stats_sticky_mines", "Key_2227")
-		},
-		{
-			Effects.DamageAbsorbtion,
-			new KeyValuePair<string, string>("shop_stats_damage_absorbtion", "Key_2228")
-		},
-		{
-			Effects.ChainShot,
-			new KeyValuePair<string, string>("shop_stats_cahin_shot", "Key_2229")
-		},
-		{
-			Effects.AutoHoming,
-			new KeyValuePair<string, string>("shop_stats_auto_homing", "Key_2230")
-		}
-	};
+	public static Dictionary<WeaponSounds.Effects, KeyValuePair<string, string>> keysAndSpritesForEffects;
 
-	public List<Effects> InShopEffects = new List<Effects>();
+	public List<WeaponSounds.Effects> InShopEffects = new List<WeaponSounds.Effects>();
 
 	public int zoomShop;
 
@@ -195,13 +27,13 @@ public sealed class WeaponSounds : MonoBehaviour
 
 	private bool bearActive;
 
-	public TypeTracer typeTracer;
+	public WeaponSounds.TypeTracer typeTracer;
 
 	private InnerWeaponPars _innerWeaponPars;
 
 	private BearInnerWeaponPars _bearPars;
 
-	public TypeDead typeDead;
+	public WeaponSounds.TypeDead typeDead;
 
 	public Transform gunFlash;
 
@@ -211,7 +43,7 @@ public sealed class WeaponSounds : MonoBehaviour
 
 	private float[] damageByTierRememberedTierWhereGet;
 
-	public float[] damageByTier = new float[ExpController.LevelsForTiers.Length];
+	public float[] damageByTier = new float[(int)ExpController.LevelsForTiers.Length];
 
 	public float[] dpses = new float[6];
 
@@ -355,7 +187,7 @@ public sealed class WeaponSounds : MonoBehaviour
 
 	public Vector3 rotationShop;
 
-	public SpecialEffects specialEffect = SpecialEffects.None;
+	public WeaponSounds.SpecialEffects specialEffect = WeaponSounds.SpecialEffects.None;
 
 	public float protectionEffectValue = 1f;
 
@@ -369,11 +201,156 @@ public sealed class WeaponSounds : MonoBehaviour
 
 	public bool DPSRememberWhenGet;
 
+	[HideInInspector]
+	public InnerWeaponPars _innerPars
+	{
+		get
+		{
+			if (this._innerWeaponPars == null)
+			{
+				this.Initialize();
+			}
+			return this._innerWeaponPars;
+		}
+	}
+
+	public Texture2D aimTextureH
+	{
+		get
+		{
+			Texture2D texture2D;
+			if (this._innerPars == null)
+			{
+				texture2D = null;
+			}
+			else
+			{
+				texture2D = this._innerPars.aimTextureH;
+			}
+			return texture2D;
+		}
+	}
+
+	public Texture2D aimTextureV
+	{
+		get
+		{
+			Texture2D texture2D;
+			if (this._innerPars == null)
+			{
+				texture2D = null;
+			}
+			else
+			{
+				texture2D = this._innerPars.aimTextureV;
+			}
+			return texture2D;
+		}
+	}
+
+	public GameObject animationObject
+	{
+		get
+		{
+			GameObject bearWeapon;
+			if (this.bearActive)
+			{
+				bearWeapon = this.BearWeapon;
+			}
+			else if (this._innerPars == null)
+			{
+				bearWeapon = null;
+			}
+			else
+			{
+				bearWeapon = this._innerPars.animationObject;
+			}
+			return bearWeapon;
+		}
+	}
+
 	public GameObject BearWeaponObject
 	{
 		get
 		{
-			return BearWeapon;
+			return this.BearWeapon;
+		}
+	}
+
+	public GameObject bonusPrefab
+	{
+		get
+		{
+			GameObject gameObject;
+			if (this._innerPars == null)
+			{
+				gameObject = null;
+			}
+			else
+			{
+				gameObject = this._innerPars.bonusPrefab;
+			}
+			return gameObject;
+		}
+	}
+
+	public AudioClip charge
+	{
+		get
+		{
+			AudioClip audioClip;
+			if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.charge;
+			}
+			return audioClip;
+		}
+	}
+
+	public float[] DamageByTier
+	{
+		get
+		{
+			if (!this.DPSRememberWhenGet)
+			{
+				string str = base.gameObject.name.Replace("(Clone)", string.Empty);
+				if (!FriendsController.damageWeaponsFromABTestBalans.ContainsKey(str))
+				{
+					return this.damageByTier;
+				}
+				return FriendsController.damageWeaponsFromABTestBalans[str];
+			}
+			if (this.damageByTierRememberedTierWhereGet == null)
+			{
+				int num = Storager.getInt(string.Concat("RememberedTierWhenObtainGun_", base.gameObject.name.Replace("(Clone)", string.Empty)), false);
+				this.damageByTierRememberedTierWhereGet = new float[(int)this.damageByTier.Length];
+				for (int i = 0; i <= num; i++)
+				{
+					this.damageByTierRememberedTierWhereGet[i] = this.damageByTier[i];
+				}
+				for (int j = num + 1; j < (int)this.damageByTierRememberedTierWhereGet.Length; j++)
+				{
+					this.damageByTierRememberedTierWhereGet[j] = this.damageByTier[num];
+				}
+			}
+			return this.damageByTierRememberedTierWhereGet;
+		}
+	}
+
+	public int damageShop
+	{
+		get
+		{
+			if (!this.DPSRememberWhenGet)
+			{
+				return Mathf.RoundToInt(this.dpses[(int)this.dpses.Length - 1] * (!this.isShotGun ? (float)((!this.bazooka ? 1 : this.countInSeriaBazooka)) : (float)this.countShots * WeaponManager.ShotgunShotsCountModif()));
+			}
+			int num = Storager.getInt(string.Concat("RememberedTierWhenObtainGun_", base.gameObject.name.Replace("(Clone)", string.Empty)), false);
+			return Mathf.RoundToInt(this.dpses[num] * (!this.isShotGun ? (float)((!this.bazooka ? 1 : this.countInSeriaBazooka)) : (float)this.countShots * WeaponManager.ShotgunShotsCountModif()));
 		}
 	}
 
@@ -386,175 +363,12 @@ public sealed class WeaponSounds : MonoBehaviour
 				return 0f;
 			}
 			int ourTier = ExpController.Instance.OurTier;
-			int num = Math.Max(ourTier, tier);
-			if (dpsesCorrectedByRememberedGun.Length <= num)
+			int num = Math.Max(ourTier, this.tier);
+			if ((int)this.dpsesCorrectedByRememberedGun.Length <= num)
 			{
 				return 0f;
 			}
-			return dpsesCorrectedByRememberedGun[num] * ((!isShotGun) ? ((float)countInSeriaBazooka) : ((float)countShots * WeaponManager.ShotgunShotsCountModif()));
-		}
-	}
-
-	public GameObject animationObject
-	{
-		get
-		{
-			return bearActive ? BearWeapon : ((!(_innerPars != null)) ? null : _innerPars.animationObject);
-		}
-	}
-
-	public Texture preview
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.preview;
-		}
-	}
-
-	public AudioClip shoot
-	{
-		get
-		{
-			return (bearActive && _bearPars != null && _bearPars.shoot != null) ? _bearPars.shoot : ((!(_innerPars != null)) ? null : _innerPars.shoot);
-		}
-	}
-
-	public AudioClip reload
-	{
-		get
-		{
-			return (bearActive && _bearPars != null && _bearPars.reload != null) ? _bearPars.reload : ((!(_innerPars != null)) ? null : _innerPars.reload);
-		}
-	}
-
-	public AudioClip empty
-	{
-		get
-		{
-			return (bearActive && _bearPars != null && _bearPars.empty != null) ? _bearPars.empty : ((!(_innerPars != null)) ? null : _innerPars.empty);
-		}
-	}
-
-	public AudioClip idle
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.idle;
-		}
-	}
-
-	public AudioClip zoomIn
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.zoomIn;
-		}
-	}
-
-	public AudioClip zoomOut
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : ((!(_innerPars.zoomOut != null)) ? _innerPars.zoomIn : _innerPars.zoomOut);
-		}
-	}
-
-	public AudioClip charge
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.charge;
-		}
-	}
-
-	public GameObject bonusPrefab
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.bonusPrefab;
-		}
-	}
-
-	public Texture2D aimTextureV
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.aimTextureV;
-		}
-	}
-
-	public Texture2D aimTextureH
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.aimTextureH;
-		}
-	}
-
-	public Transform LeftArmorHand
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.LeftArmorHand;
-		}
-	}
-
-	public Transform RightArmorHand
-	{
-		get
-		{
-			return (!(_innerPars != null)) ? null : _innerPars.RightArmorHand;
-		}
-	}
-
-	public Transform grenatePoint
-	{
-		get
-		{
-			return (bearActive && _bearPars != null) ? _bearPars.grenatePoint : ((!(_innerPars != null)) ? null : _innerPars.grenatePoint);
-		}
-	}
-
-	[HideInInspector]
-	public InnerWeaponPars _innerPars
-	{
-		get
-		{
-			if (_innerWeaponPars == null)
-			{
-				Initialize();
-			}
-			return _innerWeaponPars;
-		}
-	}
-
-	public float[] DamageByTier
-	{
-		get
-		{
-			if (DPSRememberWhenGet)
-			{
-				if (damageByTierRememberedTierWhereGet == null)
-				{
-					int @int = Storager.getInt("RememberedTierWhenObtainGun_" + base.gameObject.name.Replace("(Clone)", string.Empty), false);
-					damageByTierRememberedTierWhereGet = new float[damageByTier.Length];
-					for (int i = 0; i <= @int; i++)
-					{
-						damageByTierRememberedTierWhereGet[i] = damageByTier[i];
-					}
-					for (int j = @int + 1; j < damageByTierRememberedTierWhereGet.Length; j++)
-					{
-						damageByTierRememberedTierWhereGet[j] = damageByTier[@int];
-					}
-				}
-				return damageByTierRememberedTierWhereGet;
-			}
-			string key = base.gameObject.name.Replace("(Clone)", string.Empty);
-			if (FriendsController.damageWeaponsFromABTestBalans.ContainsKey(key))
-			{
-				return FriendsController.damageWeaponsFromABTestBalans[key];
-			}
-			return damageByTier;
+			return this.dpsesCorrectedByRememberedGun[num] * (!this.isShotGun ? (float)this.countInSeriaBazooka : (float)this.countShots * WeaponManager.ShotgunShotsCountModif());
 		}
 	}
 
@@ -562,50 +376,88 @@ public sealed class WeaponSounds : MonoBehaviour
 	{
 		get
 		{
-			if (DPSRememberWhenGet)
+			if (!this.DPSRememberWhenGet)
 			{
-				if (_dpsesCorrectedByRememberedGun == null)
+				string str = base.gameObject.name.Replace("(Clone)", string.Empty);
+				if (!FriendsController.dpsWeaponsFromABTestBalans.ContainsKey(str))
 				{
-					int @int = Storager.getInt("RememberedTierWhenObtainGun_" + base.gameObject.name.Replace("(Clone)", string.Empty), false);
-					_dpsesCorrectedByRememberedGun = new float[dpses.Length];
-					for (int i = 0; i <= @int; i++)
-					{
-						_dpsesCorrectedByRememberedGun[i] = dpses[i];
-					}
-					for (int j = @int + 1; j < _dpsesCorrectedByRememberedGun.Length; j++)
-					{
-						_dpsesCorrectedByRememberedGun[j] = dpses[@int];
-					}
+					return this.dpses;
 				}
-				return _dpsesCorrectedByRememberedGun;
+				return FriendsController.dpsWeaponsFromABTestBalans[str];
 			}
-			string key = base.gameObject.name.Replace("(Clone)", string.Empty);
-			if (FriendsController.dpsWeaponsFromABTestBalans.ContainsKey(key))
+			if (this._dpsesCorrectedByRememberedGun == null)
 			{
-				return FriendsController.dpsWeaponsFromABTestBalans[key];
+				int num = Storager.getInt(string.Concat("RememberedTierWhenObtainGun_", base.gameObject.name.Replace("(Clone)", string.Empty)), false);
+				this._dpsesCorrectedByRememberedGun = new float[(int)this.dpses.Length];
+				for (int i = 0; i <= num; i++)
+				{
+					this._dpsesCorrectedByRememberedGun[i] = this.dpses[i];
+				}
+				for (int j = num + 1; j < (int)this._dpsesCorrectedByRememberedGun.Length; j++)
+				{
+					this._dpsesCorrectedByRememberedGun[j] = this.dpses[num];
+				}
 			}
-			return dpses;
+			return this._dpsesCorrectedByRememberedGun;
 		}
 	}
 
-	public int damageShop
+	public AudioClip empty
 	{
 		get
 		{
-			if (DPSRememberWhenGet)
+			AudioClip audioClip;
+			if (this.bearActive && this._bearPars != null && this._bearPars.empty != null)
 			{
-				int @int = Storager.getInt("RememberedTierWhenObtainGun_" + base.gameObject.name.Replace("(Clone)", string.Empty), false);
-				return Mathf.RoundToInt(dpses[@int] * ((!isShotGun) ? ((float)((!bazooka) ? 1 : countInSeriaBazooka)) : ((float)countShots * WeaponManager.ShotgunShotsCountModif())));
+				audioClip = this._bearPars.empty;
 			}
-			return Mathf.RoundToInt(dpses[dpses.Length - 1] * ((!isShotGun) ? ((float)((!bazooka) ? 1 : countInSeriaBazooka)) : ((float)countShots * WeaponManager.ShotgunShotsCountModif())));
+			else if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.empty;
+			}
+			return audioClip;
 		}
 	}
 
-	public int MaxAmmoWithEffectApplied
+	public Transform grenatePoint
 	{
 		get
 		{
-			return (int)((float)maxAmmo * EffectsController.AmmoModForCategory(categoryNabor - 1));
+			Transform transforms;
+			if (this.bearActive && this._bearPars != null)
+			{
+				transforms = this._bearPars.grenatePoint;
+			}
+			else if (this._innerPars == null)
+			{
+				transforms = null;
+			}
+			else
+			{
+				transforms = this._innerPars.grenatePoint;
+			}
+			return transforms;
+		}
+	}
+
+	public AudioClip idle
+	{
+		get
+		{
+			AudioClip audioClip;
+			if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.idle;
+			}
+			return audioClip;
 		}
 	}
 
@@ -613,7 +465,108 @@ public sealed class WeaponSounds : MonoBehaviour
 	{
 		get
 		{
-			return (int)((float)InitialAmmo * EffectsController.AmmoModForCategory(categoryNabor - 1));
+			return (int)((float)this.InitialAmmo * EffectsController.AmmoModForCategory(this.categoryNabor - 1));
+		}
+	}
+
+	public Transform LeftArmorHand
+	{
+		get
+		{
+			Transform leftArmorHand;
+			if (this._innerPars == null)
+			{
+				leftArmorHand = null;
+			}
+			else
+			{
+				leftArmorHand = this._innerPars.LeftArmorHand;
+			}
+			return leftArmorHand;
+		}
+	}
+
+	public int MaxAmmoWithEffectApplied
+	{
+		get
+		{
+			return (int)((float)this.maxAmmo * EffectsController.AmmoModForCategory(this.categoryNabor - 1));
+		}
+	}
+
+	public Texture preview
+	{
+		get
+		{
+			Texture texture;
+			if (this._innerPars == null)
+			{
+				texture = null;
+			}
+			else
+			{
+				texture = this._innerPars.preview;
+			}
+			return texture;
+		}
+	}
+
+	public AudioClip reload
+	{
+		get
+		{
+			AudioClip audioClip;
+			if (this.bearActive && this._bearPars != null && this._bearPars.reload != null)
+			{
+				audioClip = this._bearPars.reload;
+			}
+			else if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.reload;
+			}
+			return audioClip;
+		}
+	}
+
+	public Transform RightArmorHand
+	{
+		get
+		{
+			Transform rightArmorHand;
+			if (this._innerPars == null)
+			{
+				rightArmorHand = null;
+			}
+			else
+			{
+				rightArmorHand = this._innerPars.RightArmorHand;
+			}
+			return rightArmorHand;
+		}
+	}
+
+	public AudioClip shoot
+	{
+		get
+		{
+			AudioClip audioClip;
+			if (this.bearActive && this._bearPars != null && this._bearPars.shoot != null)
+			{
+				audioClip = this._bearPars.shoot;
+			}
+			else if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.shoot;
+			}
+			return audioClip;
 		}
 	}
 
@@ -621,7 +574,7 @@ public sealed class WeaponSounds : MonoBehaviour
 	{
 		get
 		{
-			return LocalizationStore.Get(localizeWeaponKey);
+			return LocalizationStore.Get(this.localizeWeaponKey);
 		}
 	}
 
@@ -629,135 +582,174 @@ public sealed class WeaponSounds : MonoBehaviour
 	{
 		get
 		{
-			return LocalizationStore.GetByDefault(localizeWeaponKey);
+			return LocalizationStore.GetByDefault(this.localizeWeaponKey);
 		}
 	}
 
-	public void SetDaterBearHandsAnim(bool set)
+	public AudioClip zoomIn
 	{
-		bearActive = set && BearWeapon != null;
-		_innerPars.animationObject.SetActive(!bearActive);
-		if (BearWeapon != null)
+		get
 		{
-			BearWeapon.SetActive(bearActive);
+			AudioClip audioClip;
+			if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = this._innerPars.zoomIn;
+			}
+			return audioClip;
 		}
+	}
+
+	public AudioClip zoomOut
+	{
+		get
+		{
+			AudioClip audioClip;
+			if (this._innerPars == null)
+			{
+				audioClip = null;
+			}
+			else
+			{
+				audioClip = (this._innerPars.zoomOut == null ? this._innerPars.zoomIn : this._innerPars.zoomOut);
+			}
+			return audioClip;
+		}
+	}
+
+	static WeaponSounds()
+	{
+		Dictionary<WeaponSounds.Effects, KeyValuePair<string, string>> effects = new Dictionary<WeaponSounds.Effects, KeyValuePair<string, string>>()
+		{
+			{ WeaponSounds.Effects.Automatic, new KeyValuePair<string, string>("shop_stats_auto", "Key_1391") },
+			{ WeaponSounds.Effects.SingleShot, new KeyValuePair<string, string>("shop_stats_sngl", "Key_1392") },
+			{ WeaponSounds.Effects.Rockets, new KeyValuePair<string, string>("shop_stats_rkt", "Key_1394") },
+			{ WeaponSounds.Effects.Mortar, new KeyValuePair<string, string>("shop_stats_grav", "Key_1396") },
+			{ WeaponSounds.Effects.Laser, new KeyValuePair<string, string>("shop_stats_lsr", "Key_1393") },
+			{ WeaponSounds.Effects.Shotgun, new KeyValuePair<string, string>("shop_stats_shtgn", "Key_1390") },
+			{ WeaponSounds.Effects.Chainsaw, new KeyValuePair<string, string>("shop_stats_chain", "Key_1383") },
+			{ WeaponSounds.Effects.Flamethrower, new KeyValuePair<string, string>("shop_stats_fire", "Key_1387") },
+			{ WeaponSounds.Effects.ElectroThrower, new KeyValuePair<string, string>("shop_stats_elctrc", "Key_1395") },
+			{ WeaponSounds.Effects.WallBreak, new KeyValuePair<string, string>("shop_stats_no_wall", "Key_0402") },
+			{ WeaponSounds.Effects.AreaDamage, new KeyValuePair<string, string>("shop_stats_area_dmg", "Key_0403") },
+			{ WeaponSounds.Effects.Zoom, new KeyValuePair<string, string>("shop_stats_zoom", "Key_0404") },
+			{ WeaponSounds.Effects.ThroughEnemies, new KeyValuePair<string, string>("shop_stats_mtpl_enms", "Key_1388") },
+			{ WeaponSounds.Effects.Detonation, new KeyValuePair<string, string>("shop_stats_det", "Key_1385") },
+			{ WeaponSounds.Effects.GuidedAmmunition, new KeyValuePair<string, string>("shop_stats_cntrl", "Key_1384") },
+			{ WeaponSounds.Effects.Ricochet, new KeyValuePair<string, string>("shop_stats_refl", "Key_1389") },
+			{ WeaponSounds.Effects.SeveralMissiles, new KeyValuePair<string, string>("shop_stats_few", "Key_1386") },
+			{ WeaponSounds.Effects.Silent, new KeyValuePair<string, string>("shop_stats_g_slnt", "Key_1397") },
+			{ WeaponSounds.Effects.ForSandbox, new KeyValuePair<string, string>("shop_stats_sandbox", "Key_1603") },
+			{ WeaponSounds.Effects.SlowTheTarget, new KeyValuePair<string, string>("shop_stats_slow_target", "Key_1759") },
+			{ WeaponSounds.Effects.SemiAuto, new KeyValuePair<string, string>("shop_stats_semi_auto", "Key_2138") },
+			{ WeaponSounds.Effects.ChargingShot, new KeyValuePair<string, string>("shop_stats_charging_shot", "Key_2226") },
+			{ WeaponSounds.Effects.StickyMines, new KeyValuePair<string, string>("shop_stats_sticky_mines", "Key_2227") },
+			{ WeaponSounds.Effects.DamageAbsorbtion, new KeyValuePair<string, string>("shop_stats_damage_absorbtion", "Key_2228") },
+			{ WeaponSounds.Effects.ChainShot, new KeyValuePair<string, string>("shop_stats_cahin_shot", "Key_2229") },
+			{ WeaponSounds.Effects.AutoHoming, new KeyValuePair<string, string>("shop_stats_auto_homing", "Key_2230") }
+		};
+		WeaponSounds.keysAndSpritesForEffects = effects;
+	}
+
+	public WeaponSounds()
+	{
+	}
+
+	private void CheckPlayDefaultAnimInMulti()
+	{
+		if (!Defs.isInet)
+		{
+			return;
+		}
+		if (!Defs.isMulti)
+		{
+			return;
+		}
+		Player_move_c component = base.transform.parent.GetComponent<Player_move_c>();
+		if (component != null && !component.isMine && !this._innerPars.GetComponent<Animation>().isPlaying)
+		{
+			this._innerPars.GetComponent<Animation>().Play("Idle");
+		}
+	}
+
+	public void fire()
+	{
+		this.timeFromFire = 0f;
+		WeaponSounds weaponSound = this;
+		weaponSound.tekKoof = weaponSound.tekKoof + (this.upKoofFire + this.downKoofFirst);
+		if (this.tekKoof > this.maxKoof + this.downKoofFirst)
+		{
+			this.tekKoof = this.maxKoof + this.downKoofFirst;
+		}
+	}
+
+	public List<GameObject> GetListWeaponAnimEffects()
+	{
+		if (this._innerPars == null)
+		{
+			return null;
+		}
+		WeaponAnimParticleEffects component = this._innerPars.GetComponent<WeaponAnimParticleEffects>();
+		if (component == null)
+		{
+			return null;
+		}
+		return component.GetListAnimEffects();
 	}
 
 	public void Initialize()
 	{
-		string path = ResPath.Combine(Defs.InnerWeaponsFolder, base.gameObject.name.Replace("(Clone)", string.Empty) + Defs.InnerWeapons_Suffix);
-		LoadAsyncTool.ObjectRequest objectRequest = LoadAsyncTool.Get(path, true);
-		Initialize(objectRequest.asset as GameObject);
-		if (_innerWeaponPars != null)
+		string str = ResPath.Combine(Defs.InnerWeaponsFolder, string.Concat(base.gameObject.name.Replace("(Clone)", string.Empty), Defs.InnerWeapons_Suffix));
+		LoadAsyncTool.ObjectRequest objectRequest = LoadAsyncTool.Get(str, true);
+		this.Initialize(objectRequest.asset as GameObject);
+		if (this._innerWeaponPars != null)
 		{
-			Player_move_c.SetLayerRecursively(_innerWeaponPars.gameObject, base.gameObject.layer);
+			Player_move_c.SetLayerRecursively(this._innerWeaponPars.gameObject, base.gameObject.layer);
 		}
 	}
 
 	public void Initialize(GameObject pref)
 	{
-		if (!base.gameObject.name.Contains("Weapon") || _innerWeaponPars != null)
+		Transform child;
+		if (!base.gameObject.name.Contains("Weapon"))
+		{
+			return;
+		}
+		if (this._innerWeaponPars != null)
 		{
 			return;
 		}
 		if (pref != null)
 		{
-			_innerWeaponPars = (UnityEngine.Object.Instantiate(pref, new Vector3(0f, 0f, 0f), Quaternion.identity) as GameObject).GetComponent<InnerWeaponPars>();
+			this._innerWeaponPars = (UnityEngine.Object.Instantiate(pref, new Vector3(0f, 0f, 0f), Quaternion.identity) as GameObject).GetComponent<InnerWeaponPars>();
 			if (Defs.isDaterRegim)
 			{
-				string path = "MechBearWeapons/" + base.gameObject.name.Replace("(Clone)", string.Empty) + "_MechBear";
-				UnityEngine.Object @object = Resources.Load(path);
-				if (@object != null)
+				string str = string.Concat("MechBearWeapons/", base.gameObject.name.Replace("(Clone)", string.Empty), "_MechBear");
+				UnityEngine.Object obj = Resources.Load(str);
+				if (obj != null)
 				{
-					BearWeapon = (GameObject)UnityEngine.Object.Instantiate(@object, new Vector3(0f, 0f, 0f), Quaternion.identity);
-					_bearPars = BearWeapon.GetComponent<BearInnerWeaponPars>();
-					BearWeapon.transform.SetParent(base.gameObject.transform, false);
-					BearWeapon.SetActive(false);
+					this.BearWeapon = (GameObject)UnityEngine.Object.Instantiate(obj, new Vector3(0f, 0f, 0f), Quaternion.identity);
+					this._bearPars = this.BearWeapon.GetComponent<BearInnerWeaponPars>();
+					this.BearWeapon.transform.SetParent(base.gameObject.transform, false);
+					this.BearWeapon.SetActive(false);
 				}
 			}
-			_innerWeaponPars.gameObject.transform.SetParent(base.gameObject.transform, false);
+			this._innerWeaponPars.gameObject.transform.SetParent(base.gameObject.transform, false);
 		}
-		if (!isMelee)
+		if (!this.isMelee)
 		{
-			gunFlash = ((base.transform.childCount <= 0 || base.transform.GetChild(0).childCount <= 0) ? null : base.transform.GetChild(0).GetChild(0));
-		}
-	}
-
-	private void OnDestroy()
-	{
-		if (_innerPars != null)
-		{
-			UnityEngine.Object.Destroy(_innerPars.gameObject);
-		}
-	}
-
-	private void Start()
-	{
-		if (string.IsNullOrEmpty(bazookaExplosionName))
-		{
-			bazookaExplosionName = base.gameObject.name.Replace("(Clone)", string.Empty);
-		}
-		if (isDoubleShot)
-		{
-			if (animationObject != null && animationObject.GetComponent<Animation>()["Shoot1"] != null)
+			if (base.transform.childCount <= 0 || base.transform.GetChild(0).childCount <= 0)
 			{
-				animLength = animationObject.GetComponent<Animation>()["Shoot1"].length;
+				child = null;
 			}
-		}
-		else if (animationObject != null && animationObject.GetComponent<Animation>()["Shoot"] != null)
-		{
-			animLength = animationObject.GetComponent<Animation>()["Shoot"].length;
-		}
-	}
-
-	private void Update()
-	{
-		if (base.transform.parent != null)
-		{
-			if (myPlayerC == null)
+			else
 			{
-				myPlayerC = base.transform.parent.GetComponent<Player_move_c>();
+				child = base.transform.GetChild(0).GetChild(0);
 			}
-			if (base.transform.parent != null && myPlayerC != null && !myPlayerC.isMine && myPlayerC.isMulti && animationObject.activeSelf == myPlayerC.isInvisible)
-			{
-				animationObject.SetActive(!myPlayerC.isInvisible);
-			}
-		}
-		if (timeFromFire < animLength)
-		{
-			timeFromFire += Time.deltaTime;
-			if (tekKoof > 1f)
-			{
-				tekKoof -= downKoofFirst * Time.deltaTime / animLength;
-			}
-			if (tekKoof < 1f)
-			{
-				tekKoof = 1f;
-			}
-		}
-		else
-		{
-			if (tekKoof > 1f)
-			{
-				tekKoof -= downKoof * Time.deltaTime / animLength;
-			}
-			if (tekKoof < 1f)
-			{
-				tekKoof = 1f;
-			}
-		}
-		CheckPlayDefaultAnimInMulti();
-	}
-
-	private void CheckPlayDefaultAnimInMulti()
-	{
-		if (Defs.isInet && Defs.isMulti)
-		{
-			Player_move_c component = base.transform.parent.GetComponent<Player_move_c>();
-			if (component != null && !component.isMine && !_innerPars.GetComponent<Animation>().isPlaying)
-			{
-				_innerPars.GetComponent<Animation>().Play("Idle");
-			}
+			this.gunFlash = child;
 		}
 	}
 
@@ -767,34 +759,150 @@ public sealed class WeaponSounds : MonoBehaviour
 		{
 			return true;
 		}
-		if (filterMap != null && filterMap.Contains(filter))
+		if (this.filterMap != null && this.filterMap.Contains(filter))
 		{
 			return true;
 		}
 		return false;
 	}
 
-	public void fire()
+	private void OnDestroy()
 	{
-		timeFromFire = 0f;
-		tekKoof += upKoofFire + downKoofFirst;
-		if (tekKoof > maxKoof + downKoofFirst)
+		if (this._innerPars != null)
 		{
-			tekKoof = maxKoof + downKoofFirst;
+			UnityEngine.Object.Destroy(this._innerPars.gameObject);
 		}
 	}
 
-	public List<GameObject> GetListWeaponAnimEffects()
+	public void SetDaterBearHandsAnim(bool set)
 	{
-		if (_innerPars == null)
+		this.bearActive = (!set ? false : this.BearWeapon != null);
+		this._innerPars.animationObject.SetActive(!this.bearActive);
+		if (this.BearWeapon != null)
 		{
-			return null;
+			this.BearWeapon.SetActive(this.bearActive);
 		}
-		WeaponAnimParticleEffects component = _innerPars.GetComponent<WeaponAnimParticleEffects>();
-		if (component == null)
+	}
+
+	private void Start()
+	{
+		if (string.IsNullOrEmpty(this.bazookaExplosionName))
 		{
-			return null;
+			this.bazookaExplosionName = base.gameObject.name.Replace("(Clone)", string.Empty);
 		}
-		return component.GetListAnimEffects();
+		if (this.isDoubleShot)
+		{
+			if (this.animationObject != null && this.animationObject.GetComponent<Animation>()["Shoot1"] != null)
+			{
+				this.animLength = this.animationObject.GetComponent<Animation>()["Shoot1"].length;
+			}
+		}
+		else if (this.animationObject != null && this.animationObject.GetComponent<Animation>()["Shoot"] != null)
+		{
+			this.animLength = this.animationObject.GetComponent<Animation>()["Shoot"].length;
+		}
+	}
+
+	private void Update()
+	{
+		if (base.transform.parent != null)
+		{
+			if (this.myPlayerC == null)
+			{
+				this.myPlayerC = base.transform.parent.GetComponent<Player_move_c>();
+			}
+			if (base.transform.parent != null && this.myPlayerC != null && !this.myPlayerC.isMine && this.myPlayerC.isMulti && this.animationObject.activeSelf == this.myPlayerC.isInvisible)
+			{
+				this.animationObject.SetActive(!this.myPlayerC.isInvisible);
+			}
+		}
+		if (this.timeFromFire >= this.animLength)
+		{
+			if (this.tekKoof > 1f)
+			{
+				WeaponSounds weaponSound = this;
+				weaponSound.tekKoof = weaponSound.tekKoof - this.downKoof * Time.deltaTime / this.animLength;
+			}
+			if (this.tekKoof < 1f)
+			{
+				this.tekKoof = 1f;
+			}
+		}
+		else
+		{
+			this.timeFromFire += Time.deltaTime;
+			if (this.tekKoof > 1f)
+			{
+				WeaponSounds weaponSound1 = this;
+				weaponSound1.tekKoof = weaponSound1.tekKoof - this.downKoofFirst * Time.deltaTime / this.animLength;
+			}
+			if (this.tekKoof < 1f)
+			{
+				this.tekKoof = 1f;
+			}
+		}
+		this.CheckPlayDefaultAnimInMulti();
+	}
+
+	public enum Effects
+	{
+		Automatic,
+		SingleShot,
+		Rockets,
+		Mortar,
+		Laser,
+		Shotgun,
+		Chainsaw,
+		Flamethrower,
+		ElectroThrower,
+		WallBreak,
+		AreaDamage,
+		Zoom,
+		ThroughEnemies,
+		Detonation,
+		GuidedAmmunition,
+		Ricochet,
+		SeveralMissiles,
+		Silent,
+		ForSandbox,
+		SlowTheTarget,
+		SemiAuto,
+		ChargingShot,
+		StickyMines,
+		DamageAbsorbtion,
+		ChainShot,
+		AutoHoming
+	}
+
+	public enum SpecialEffects
+	{
+		None = -1,
+		PlayerShield = 0
+	}
+
+	public enum TypeDead
+	{
+		angel,
+		explosion,
+		energyBlue,
+		energyRed,
+		energyPink,
+		energyCyan,
+		energyLight,
+		energyGreen,
+		energyOrange,
+		energyWhite,
+		like
+	}
+
+	public enum TypeTracer
+	{
+		none = -1,
+		standart = 0,
+		red = 1,
+		for252 = 2,
+		turquoise = 3,
+		green = 4,
+		violet = 5
 	}
 }

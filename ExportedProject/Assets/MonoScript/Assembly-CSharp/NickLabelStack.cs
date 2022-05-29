@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class NickLabelStack : MonoBehaviour
@@ -10,29 +11,18 @@ public class NickLabelStack : MonoBehaviour
 
 	private int currentIndexLabel;
 
-	private void Awake()
+	public NickLabelStack()
 	{
-		sharedStack = this;
 	}
 
-	private void Start()
+	private void Awake()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
-		base.transform.localPosition = Vector3.zero;
-		Transform transform = base.transform.GetChild(0).transform;
-		base.transform.position = Vector3.zero;
-		lables = new NickLabelController[lengthStack];
-		lables[0] = transform.GetChild(0).GetComponent<NickLabelController>();
-		while (transform.childCount < lengthStack)
-		{
-			GameObject gameObject = Object.Instantiate(transform.GetChild(0).gameObject);
-			Transform transform2 = gameObject.transform;
-			transform2.parent = transform;
-			transform2.localPosition = Vector3.zero;
-			transform2.localScale = new Vector3(1f, 1f, 1f);
-			transform2.rotation = Quaternion.identity;
-			lables[transform.childCount - 1] = gameObject.GetComponent<NickLabelController>();
-		}
+		NickLabelStack.sharedStack = this;
+	}
+
+	public NickLabelController GetCurrentLabel()
+	{
+		return this.lables[this.currentIndexLabel];
 	}
 
 	public NickLabelController GetNextCurrentLabel()
@@ -41,29 +31,45 @@ public class NickLabelStack : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexLabel++;
-			if (currentIndexLabel >= lables.Length)
+			this.currentIndexLabel++;
+			if (this.currentIndexLabel < (int)this.lables.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexLabel = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexLabel = 0;
+			flag = false;
 		}
-		while (lables[currentIndexLabel].target != null);
-		lables[currentIndexLabel].currentType = NickLabelController.TypeNickLabel.None;
-		return lables[currentIndexLabel];
-	}
-
-	public NickLabelController GetCurrentLabel()
-	{
-		return lables[currentIndexLabel];
+		while (this.lables[this.currentIndexLabel].target != null);
+		this.lables[this.currentIndexLabel].currentType = NickLabelController.TypeNickLabel.None;
+		return this.lables[this.currentIndexLabel];
 	}
 
 	private void OnDestroy()
 	{
-		sharedStack = null;
+		NickLabelStack.sharedStack = null;
+	}
+
+	private void Start()
+	{
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		base.transform.localPosition = Vector3.zero;
+		Transform child = base.transform.GetChild(0).transform;
+		base.transform.position = Vector3.zero;
+		this.lables = new NickLabelController[this.lengthStack];
+		this.lables[0] = child.GetChild(0).GetComponent<NickLabelController>();
+		while (child.childCount < this.lengthStack)
+		{
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(child.GetChild(0).gameObject);
+			Transform vector3 = gameObject.transform;
+			vector3.parent = child;
+			vector3.localPosition = Vector3.zero;
+			vector3.localScale = new Vector3(1f, 1f, 1f);
+			vector3.rotation = Quaternion.identity;
+			this.lables[child.childCount - 1] = gameObject.GetComponent<NickLabelController>();
+		}
 	}
 }

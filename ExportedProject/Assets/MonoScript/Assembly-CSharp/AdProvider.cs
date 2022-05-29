@@ -1,3 +1,5 @@
+using System;
+
 public enum AdProvider
 {
 	None = 0,

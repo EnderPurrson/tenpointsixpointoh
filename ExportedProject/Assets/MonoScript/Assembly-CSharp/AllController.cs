@@ -1,8 +1,17 @@
+using System;
 using UnityEngine;
 
 public class AllController : MonoBehaviour
 {
 	public static AllController instance;
+
+	static AllController()
+	{
+	}
+
+	public AllController()
+	{
+	}
 
 	private void Awake()
 	{
@@ -11,12 +20,12 @@ public class AllController : MonoBehaviour
 		Screen.autorotateToLandscapeRight = true;
 		Screen.autorotateToPortrait = false;
 		Screen.autorotateToPortraitUpsideDown = false;
-		instance = this;
-		Object.DontDestroyOnLoad(base.gameObject);
+		AllController.instance = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	private void OnDestroy()
 	{
-		instance = null;
+		AllController.instance = null;
 	}
 }

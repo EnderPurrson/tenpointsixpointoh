@@ -1,126 +1,159 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class PurchaseReceipt : Jsonable
 	{
-		public string ReceiptId { get; set; }
-
-		public long CancelDate { get; set; }
-
-		public long PurchaseDate { get; set; }
-
-		public string Sku { get; set; }
-
-		public string ProductType { get; set; }
-
-		public string ToJson()
+		public long CancelDate
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public string ProductType
 		{
-			//Discarded unreachable code: IL_006c, IL_007e
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("receiptId", ReceiptId);
-				dictionary.Add("cancelDate", CancelDate);
-				dictionary.Add("purchaseDate", PurchaseDate);
-				dictionary.Add("sku", Sku);
-				dictionary.Add("productType", ProductType);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		public long PurchaseDate
+		{
+			get;
+			set;
+		}
+
+		public string ReceiptId
+		{
+			get;
+			set;
+		}
+
+		public string Sku
+		{
+			get;
+			set;
+		}
+
+		public PurchaseReceipt()
+		{
 		}
 
 		public static PurchaseReceipt CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_00d8, IL_00ea
+			PurchaseReceipt purchaseReceipt;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					PurchaseReceipt item = new PurchaseReceipt();
+					if (jsonMap.ContainsKey("receiptId"))
+					{
+						item.ReceiptId = (string)jsonMap["receiptId"];
+					}
+					if (jsonMap.ContainsKey("cancelDate"))
+					{
+						item.CancelDate = (long)jsonMap["cancelDate"];
+					}
+					if (jsonMap.ContainsKey("purchaseDate"))
+					{
+						item.PurchaseDate = (long)jsonMap["purchaseDate"];
+					}
+					if (jsonMap.ContainsKey("sku"))
+					{
+						item.Sku = (string)jsonMap["sku"];
+					}
+					if (jsonMap.ContainsKey("productType"))
+					{
+						item.ProductType = (string)jsonMap["productType"];
+					}
+					purchaseReceipt = item;
 				}
-				PurchaseReceipt purchaseReceipt = new PurchaseReceipt();
-				if (jsonMap.ContainsKey("receiptId"))
+				else
 				{
-					purchaseReceipt.ReceiptId = (string)jsonMap["receiptId"];
+					purchaseReceipt = null;
 				}
-				if (jsonMap.ContainsKey("cancelDate"))
-				{
-					purchaseReceipt.CancelDate = (long)jsonMap["cancelDate"];
-				}
-				if (jsonMap.ContainsKey("purchaseDate"))
-				{
-					purchaseReceipt.PurchaseDate = (long)jsonMap["purchaseDate"];
-				}
-				if (jsonMap.ContainsKey("sku"))
-				{
-					purchaseReceipt.Sku = (string)jsonMap["sku"];
-				}
-				if (jsonMap.ContainsKey("productType"))
-				{
-					purchaseReceipt.ProductType = (string)jsonMap["productType"];
-				}
-				return purchaseReceipt;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return purchaseReceipt;
 		}
 
 		public static PurchaseReceipt CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			PurchaseReceipt purchaseReceipt;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				purchaseReceipt = PurchaseReceipt.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return purchaseReceipt;
 		}
 
-		public static Dictionary<string, PurchaseReceipt> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, PurchaseReceipt> dictionary = new Dictionary<string, PurchaseReceipt>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				PurchaseReceipt value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>()
+				{
+					{ "receiptId", this.ReceiptId },
+					{ "cancelDate", this.CancelDate },
+					{ "purchaseDate", this.PurchaseDate },
+					{ "sku", this.Sku },
+					{ "productType", this.ProductType }
+				};
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<PurchaseReceipt> ListFromJson(List<object> array)
 		{
-			List<PurchaseReceipt> list = new List<PurchaseReceipt>();
-			foreach (object item in array)
+			List<PurchaseReceipt> purchaseReceipts = new List<PurchaseReceipt>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				purchaseReceipts.Add(PurchaseReceipt.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return purchaseReceipts;
+		}
+
+		public static Dictionary<string, PurchaseReceipt> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, PurchaseReceipt> strs = new Dictionary<string, PurchaseReceipt>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				PurchaseReceipt purchaseReceipt = PurchaseReceipt.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, purchaseReceipt);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

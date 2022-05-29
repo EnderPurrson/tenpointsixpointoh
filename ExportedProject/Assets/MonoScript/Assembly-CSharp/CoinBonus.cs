@@ -1,8 +1,9 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Rilisoft;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,31 +15,33 @@ internal sealed class CoinBonus : MonoBehaviour
 
 	private Player_move_c test;
 
-	public VirtualCurrencyBonusType BonusType { private get; set; }
+	public VirtualCurrencyBonusType BonusType
+	{
+		private get;
+		set;
+	}
 
-	public static event Action StartBlinkShop;
+	public CoinBonus()
+	{
+	}
 
 	public static List<string> GetLevelsWhereGotBonus(VirtualCurrencyBonusType bonusType)
 	{
-		switch (bonusType)
+		VirtualCurrencyBonusType virtualCurrencyBonusType = bonusType;
+		if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Coin)
 		{
-		case VirtualCurrencyBonusType.Coin:
-		{
-			string[] source = Storager.getString(Defs.LevelsWhereGetCoinS, false).Split(new char[1] { '#' }, StringSplitOptions.RemoveEmptyEntries);
-			return source.ToList();
+			return Storager.getString(Defs.LevelsWhereGetCoinS, false).Split(new char[] { '#' }, StringSplitOptions.RemoveEmptyEntries).ToList<string>();
 		}
-		case VirtualCurrencyBonusType.Gem:
+		if (virtualCurrencyBonusType != VirtualCurrencyBonusType.Gem)
 		{
-			List<object> list = Json.Deserialize(Storager.getString(Defs.LevelsWhereGotGems, false)) as List<object>;
-			if (list == null)
-			{
-				return new List<string>();
-			}
-			return list.OfType<string>().ToList();
-		}
-		default:
 			return new List<string>();
 		}
+		List<object> objs = Json.Deserialize(Storager.getString(Defs.LevelsWhereGotGems, false)) as List<object>;
+		if (objs == null)
+		{
+			return new List<string>();
+		}
+		return objs.OfType<string>().ToList<string>();
 	}
 
 	public static bool SetLevelsWhereGotBonus(string[] levelsWhereGotBonus, VirtualCurrencyBonusType bonusType)
@@ -47,17 +50,17 @@ internal sealed class CoinBonus : MonoBehaviour
 		{
 			throw new ArgumentNullException("levelsWhereGotBonus");
 		}
-		string levelsWhereGotBonusSerialized = string.Empty;
-		switch (bonusType)
+		string empty = string.Empty;
+		VirtualCurrencyBonusType virtualCurrencyBonusType = bonusType;
+		if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Coin)
 		{
-		case VirtualCurrencyBonusType.Coin:
-			levelsWhereGotBonusSerialized = string.Join("#", levelsWhereGotBonus);
-			break;
-		case VirtualCurrencyBonusType.Gem:
-			levelsWhereGotBonusSerialized = Json.Serialize(levelsWhereGotBonus);
-			break;
+			empty = string.Join("#", levelsWhereGotBonus);
 		}
-		return SetLevelsWhereGotBonus(levelsWhereGotBonusSerialized, bonusType);
+		else if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Gem)
+		{
+			empty = Json.Serialize(levelsWhereGotBonus);
+		}
+		return CoinBonus.SetLevelsWhereGotBonus(empty, bonusType);
 	}
 
 	public static bool SetLevelsWhereGotBonus(List<string> levelsWhereGotBonus, VirtualCurrencyBonusType bonusType)
@@ -66,17 +69,17 @@ internal sealed class CoinBonus : MonoBehaviour
 		{
 			throw new ArgumentNullException("levelsWhereGotBonus");
 		}
-		string levelsWhereGotBonusSerialized = string.Empty;
-		switch (bonusType)
+		string empty = string.Empty;
+		VirtualCurrencyBonusType virtualCurrencyBonusType = bonusType;
+		if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Coin)
 		{
-		case VirtualCurrencyBonusType.Coin:
-			levelsWhereGotBonusSerialized = string.Join("#", levelsWhereGotBonus.ToArray());
-			break;
-		case VirtualCurrencyBonusType.Gem:
-			levelsWhereGotBonusSerialized = Json.Serialize(levelsWhereGotBonus);
-			break;
+			empty = string.Join("#", levelsWhereGotBonus.ToArray());
 		}
-		return SetLevelsWhereGotBonus(levelsWhereGotBonusSerialized, bonusType);
+		else if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Gem)
+		{
+			empty = Json.Serialize(levelsWhereGotBonus);
+		}
+		return CoinBonus.SetLevelsWhereGotBonus(empty, bonusType);
 	}
 
 	internal static bool SetLevelsWhereGotBonus(string levelsWhereGotBonusSerialized, VirtualCurrencyBonusType bonusType)
@@ -85,28 +88,37 @@ internal sealed class CoinBonus : MonoBehaviour
 		{
 			throw new ArgumentNullException("levelsWhereGotBonusAsString");
 		}
-		switch (bonusType)
+		VirtualCurrencyBonusType virtualCurrencyBonusType = bonusType;
+		if (virtualCurrencyBonusType == VirtualCurrencyBonusType.Coin)
 		{
-		case VirtualCurrencyBonusType.Coin:
 			Storager.setString(Defs.LevelsWhereGetCoinS, levelsWhereGotBonusSerialized, false);
 			return true;
-		case VirtualCurrencyBonusType.Gem:
-			Storager.setString(Defs.LevelsWhereGotGems, levelsWhereGotBonusSerialized, false);
-			return true;
-		default:
+		}
+		if (virtualCurrencyBonusType != VirtualCurrencyBonusType.Gem)
+		{
 			return false;
 		}
+		Storager.setString(Defs.LevelsWhereGotGems, levelsWhereGotBonusSerialized, false);
+		return true;
 	}
 
 	public void SetPlayer()
 	{
-		test = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
-		player = GameObject.FindGameObjectWithTag("Player");
+		this.test = GameObject.FindGameObjectWithTag("PlayerGun").GetComponent<Player_move_c>();
+		this.player = GameObject.FindGameObjectWithTag("Player");
 	}
 
 	private void Update()
 	{
-		if (test == null || player == null || BonusType == VirtualCurrencyBonusType.None || Vector3.SqrMagnitude(base.transform.position - player.transform.position) > 2.25f)
+		if (this.test == null || this.player == null)
+		{
+			return;
+		}
+		if (this.BonusType == VirtualCurrencyBonusType.None)
+		{
+			return;
+		}
+		if (Vector3.SqrMagnitude(base.transform.position - this.player.transform.position) > 2.25f)
 		{
 			return;
 		}
@@ -114,44 +126,40 @@ internal sealed class CoinBonus : MonoBehaviour
 		{
 			if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None)
 			{
-				int num = ((!(PremiumAccountController.Instance != null)) ? 1 : PremiumAccountController.Instance.RewardCoeff);
+				int num = (PremiumAccountController.Instance == null ? 1 : PremiumAccountController.Instance.RewardCoeff);
 				if (!Defs.IsSurvival && !Defs.isMulti)
 				{
 					num = 1;
 				}
-				switch (BonusType)
+				VirtualCurrencyBonusType bonusType = this.BonusType;
+				if (bonusType == VirtualCurrencyBonusType.Coin)
 				{
-				case VirtualCurrencyBonusType.Coin:
-				{
-					int int2 = Storager.getInt("Coins", false);
-					Storager.setInt("Coins", int2 + 1 * num, false);
-					AnalyticsFacade.CurrencyAccrual(1 * num, "Coins");
+					int num1 = Storager.getInt("Coins", false);
+					Storager.setInt("Coins", num1 + 1 * num, false);
+					AnalyticsFacade.CurrencyAccrual(1 * num, "Coins", AnalyticsConstants.AccrualType.Earned);
 					FlurryEvents.LogCoinsGained(FlurryEvents.GetPlayingMode(), 1);
-					break;
 				}
-				case VirtualCurrencyBonusType.Gem:
+				else if (bonusType == VirtualCurrencyBonusType.Gem)
 				{
-					int @int = Storager.getInt("GemsCurrency", false);
-					Storager.setInt("GemsCurrency", @int + 1 * num, false);
-					AnalyticsFacade.CurrencyAccrual(1 * num, "GemsCurrency");
+					int num2 = Storager.getInt("GemsCurrency", false);
+					Storager.setInt("GemsCurrency", num2 + 1 * num, false);
+					AnalyticsFacade.CurrencyAccrual(1 * num, "GemsCurrency", AnalyticsConstants.AccrualType.Earned);
 					FlurryEvents.LogGemsGained(FlurryEvents.GetPlayingMode(), 1);
-					break;
-				}
 				}
 				if (Application.platform != RuntimePlatform.IPhonePlayer)
 				{
 					PlayerPrefs.Save();
 				}
 			}
-			CoinsMessage.FireCoinsAddedEvent(BonusType == VirtualCurrencyBonusType.Gem, 1);
-			if (!test.isSurvival && TrainingController.TrainingCompleted)
+			CoinsMessage.FireCoinsAddedEvent(this.BonusType == VirtualCurrencyBonusType.Gem, 1);
+			if (!this.test.isSurvival && TrainingController.TrainingCompleted)
 			{
-				List<string> levelsWhereGotBonus = GetLevelsWhereGotBonus(BonusType);
-				string item = SceneManager.GetActiveScene().name;
-				if (!levelsWhereGotBonus.Contains(item))
+				List<string> levelsWhereGotBonus = CoinBonus.GetLevelsWhereGotBonus(this.BonusType);
+				string activeScene = SceneManager.GetActiveScene().name;
+				if (!levelsWhereGotBonus.Contains(activeScene))
 				{
-					levelsWhereGotBonus.Add(item);
-					SetLevelsWhereGotBonus(levelsWhereGotBonus, BonusType);
+					levelsWhereGotBonus.Add(activeScene);
+					CoinBonus.SetLevelsWhereGotBonus(levelsWhereGotBonus, this.BonusType);
 				}
 			}
 			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
@@ -168,4 +176,6 @@ internal sealed class CoinBonus : MonoBehaviour
 			UnityEngine.Object.Destroy(base.gameObject);
 		}
 	}
+
+	public static event Action StartBlinkShop;
 }

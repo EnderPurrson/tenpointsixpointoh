@@ -1,14 +1,16 @@
+using System;
+
 namespace GooglePlayGames.BasicApi
 {
 	public enum UIStatus
 	{
-		Valid = 1,
-		InternalError = -2,
-		NotAuthorized = -3,
-		VersionUpdateRequired = -4,
-		Timeout = -5,
-		UserClosedUI = -6,
+		LeftRoom = -18,
 		UiBusy = -12,
-		LeftRoom = -18
+		UserClosedUI = -6,
+		Timeout = -5,
+		VersionUpdateRequired = -4,
+		NotAuthorized = -3,
+		InternalError = -2,
+		Valid = 1
 	}
 }

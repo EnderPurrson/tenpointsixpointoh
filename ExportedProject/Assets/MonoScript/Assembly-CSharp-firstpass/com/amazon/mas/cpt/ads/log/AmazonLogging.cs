@@ -5,90 +5,104 @@ namespace com.amazon.mas.cpt.ads.log
 {
 	public class AmazonLogging
 	{
-		public enum AmazonLoggingLevel
-		{
-			Silent = 0,
-			Critical = 1,
-			ErrorsAsExceptions = 2,
-			Errors = 3,
-			Warnings = 4,
-			Verbose = 5
-		}
-
-		public enum SDKLoggingLevel
-		{
-			LogOff = 0,
-			LogCritical = 1,
-			LogError = 2,
-			LogWarning = 3
-		}
-
 		private const string errorMessage = "{0} error: {1}";
 
 		private const string warningMessage = "{0} warning: {1}";
 
 		private const string logMessage = "{0}: {1}";
 
-		public static void LogError(AmazonLoggingLevel reportLevel, string service, string message)
+		public AmazonLogging()
 		{
-			if (reportLevel != 0)
+		}
+
+		public static void Log(AmazonLogging.AmazonLoggingLevel reportLevel, string service, string message)
+		{
+			if (reportLevel != AmazonLogging.AmazonLoggingLevel.Verbose)
 			{
-				string message2 = string.Format("{0} error: {1}", service, message);
-				switch (reportLevel)
+				return;
+			}
+			Debug.Log(string.Format("{0}: {1}", service, message));
+		}
+
+		public static void LogError(AmazonLogging.AmazonLoggingLevel reportLevel, string service, string message)
+		{
+			if (reportLevel == AmazonLogging.AmazonLoggingLevel.Silent)
+			{
+				return;
+			}
+			string str = string.Format("{0} error: {1}", service, message);
+			switch (reportLevel)
+			{
+				case AmazonLogging.AmazonLoggingLevel.Critical:
+				case AmazonLogging.AmazonLoggingLevel.Errors:
+				case AmazonLogging.AmazonLoggingLevel.Warnings:
+				case AmazonLogging.AmazonLoggingLevel.Verbose:
 				{
-				case AmazonLoggingLevel.ErrorsAsExceptions:
-					throw new Exception(message2);
-				case AmazonLoggingLevel.Critical:
-				case AmazonLoggingLevel.Errors:
-				case AmazonLoggingLevel.Warnings:
-				case AmazonLoggingLevel.Verbose:
-					Debug.LogError(message2);
+					Debug.LogError(str);
+					break;
+				}
+				case AmazonLogging.AmazonLoggingLevel.ErrorsAsExceptions:
+				{
+					throw new Exception(str);
+				}
+			}
+		}
+
+		public static void LogWarning(AmazonLogging.AmazonLoggingLevel reportLevel, string service, string message)
+		{
+			switch (reportLevel)
+			{
+				case AmazonLogging.AmazonLoggingLevel.Warnings:
+				case AmazonLogging.AmazonLoggingLevel.Verbose:
+				{
+					Debug.LogWarning(string.Format("{0} warning: {1}", service, message));
 					break;
 				}
 			}
 		}
 
-		public static void LogWarning(AmazonLoggingLevel reportLevel, string service, string message)
-		{
-			switch (reportLevel)
-			{
-			case AmazonLoggingLevel.Silent:
-			case AmazonLoggingLevel.Critical:
-			case AmazonLoggingLevel.ErrorsAsExceptions:
-			case AmazonLoggingLevel.Errors:
-				break;
-			case AmazonLoggingLevel.Warnings:
-			case AmazonLoggingLevel.Verbose:
-				Debug.LogWarning(string.Format("{0} warning: {1}", service, message));
-				break;
-			}
-		}
-
-		public static void Log(AmazonLoggingLevel reportLevel, string service, string message)
-		{
-			if (reportLevel == AmazonLoggingLevel.Verbose)
-			{
-				Debug.Log(string.Format("{0}: {1}", service, message));
-			}
-		}
-
-		public static SDKLoggingLevel pluginToSDKLoggingLevel(AmazonLoggingLevel pluginLoggingLevel)
+		public static AmazonLogging.SDKLoggingLevel pluginToSDKLoggingLevel(AmazonLogging.AmazonLoggingLevel pluginLoggingLevel)
 		{
 			switch (pluginLoggingLevel)
 			{
-			case AmazonLoggingLevel.Silent:
-				return SDKLoggingLevel.LogOff;
-			case AmazonLoggingLevel.Critical:
-				return SDKLoggingLevel.LogCritical;
-			case AmazonLoggingLevel.ErrorsAsExceptions:
-			case AmazonLoggingLevel.Errors:
-				return SDKLoggingLevel.LogError;
-			case AmazonLoggingLevel.Warnings:
-			case AmazonLoggingLevel.Verbose:
-				return SDKLoggingLevel.LogWarning;
-			default:
-				return SDKLoggingLevel.LogWarning;
+				case AmazonLogging.AmazonLoggingLevel.Silent:
+				{
+					return AmazonLogging.SDKLoggingLevel.LogOff;
+				}
+				case AmazonLogging.AmazonLoggingLevel.Critical:
+				{
+					return AmazonLogging.SDKLoggingLevel.LogCritical;
+				}
+				case AmazonLogging.AmazonLoggingLevel.ErrorsAsExceptions:
+				case AmazonLogging.AmazonLoggingLevel.Errors:
+				{
+					return AmazonLogging.SDKLoggingLevel.LogError;
+				}
+				case AmazonLogging.AmazonLoggingLevel.Warnings:
+				case AmazonLogging.AmazonLoggingLevel.Verbose:
+				{
+					return AmazonLogging.SDKLoggingLevel.LogWarning;
+				}
 			}
+			return AmazonLogging.SDKLoggingLevel.LogWarning;
+		}
+
+		public enum AmazonLoggingLevel
+		{
+			Silent,
+			Critical,
+			ErrorsAsExceptions,
+			Errors,
+			Warnings,
+			Verbose
+		}
+
+		public enum SDKLoggingLevel
+		{
+			LogOff,
+			LogCritical,
+			LogError,
+			LogWarning
 		}
 	}
 }

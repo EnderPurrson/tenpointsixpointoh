@@ -1,57 +1,68 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	public struct Reward
 	{
-		public int Coins { get; set; }
+		public int Coins
+		{
+			get;
+			set;
+		}
 
-		public int Gems { get; set; }
+		public int Experience
+		{
+			get;
+			set;
+		}
 
-		public int Experience { get; set; }
+		public int Gems
+		{
+			get;
+			set;
+		}
 
 		public static Reward Create(Dictionary<string, object> reward)
 		{
-			Reward result = default(Reward);
+			object obj;
+			object obj1;
+			object obj2;
+			Reward num = new Reward();
 			if (reward == null)
 			{
-				return result;
+				return num;
 			}
 			try
 			{
-				object value;
-				if (reward.TryGetValue("coins", out value))
+				if (reward.TryGetValue("coins", out obj))
 				{
-					result.Coins = Convert.ToInt32(value);
+					num.Coins = Convert.ToInt32(obj);
 				}
-				object value2;
-				if (reward.TryGetValue("gems", out value2))
+				if (reward.TryGetValue("gems", out obj1))
 				{
-					result.Gems = Convert.ToInt32(value2);
+					num.Gems = Convert.ToInt32(obj1);
 				}
-				object value3;
-				if (reward.TryGetValue("xp", out value3))
+				if (reward.TryGetValue("xp", out obj2))
 				{
-					result.Experience = Convert.ToInt32(value3);
-					return result;
+					num.Experience = Convert.ToInt32(obj2);
 				}
-				return result;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
-				return result;
 			}
+			return num;
 		}
 
 		public static Reward Create(List<object> reward)
 		{
-			Reward result = default(Reward);
+			Reward reward1 = new Reward();
 			if (reward == null)
 			{
-				return result;
+				return reward1;
 			}
 			try
 			{
@@ -60,33 +71,40 @@ namespace Rilisoft
 					int num = Convert.ToInt32(reward[i]);
 					switch (i)
 					{
-					case 0:
-						result.Coins = num;
-						break;
-					case 1:
-						result.Gems = num;
-						break;
-					case 2:
-						result.Experience = num;
-						break;
+						case 0:
+						{
+							reward1.Coins = num;
+							break;
+						}
+						case 1:
+						{
+							reward1.Gems = num;
+							break;
+						}
+						case 2:
+						{
+							reward1.Experience = num;
+							break;
+						}
 					}
 				}
-				return result;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
-				return result;
 			}
+			return reward1;
 		}
 
 		public List<int> ToJson()
 		{
-			List<int> list = new List<int>(3);
-			list.Add(Coins);
-			list.Add(Gems);
-			list.Add(Experience);
-			return list;
+			List<int> nums = new List<int>(3)
+			{
+				this.Coins,
+				this.Gems,
+				this.Experience
+			};
+			return nums;
 		}
 	}
 }

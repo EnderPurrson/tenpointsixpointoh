@@ -8,49 +8,53 @@ internal sealed class SkinsManagerPixlGun : MonoBehaviour
 
 	public static SkinsManagerPixlGun sharedManager;
 
+	public SkinsManagerPixlGun()
+	{
+	}
+
+	private void OnDestroy()
+	{
+		SkinsManagerPixlGun.sharedManager = null;
+	}
+
 	private void OnLevelWasLoaded(int idx)
 	{
-		if (skins.Count > 0)
+		string str;
+		if (this.skins.Count > 0)
 		{
-			skins.Clear();
+			this.skins.Clear();
 		}
-		string path;
-		if (Defs.isMulti && Defs.isCOOP && !Defs.isCompany)
-		{
-			path = "EnemySkins/COOP/";
-		}
-		else
+		if (!Defs.isMulti || !Defs.isCOOP || Defs.isCompany)
 		{
 			if (Defs.isMulti || Defs.isCOOP || Defs.isCompany)
 			{
 				return;
 			}
-			path = ((!Defs.IsSurvival) ? ("EnemySkins/Level" + ((!TrainingController.TrainingCompleted) ? "3" : CurrentCampaignGame.currentLevel.ToString())) : Defs.SurvSkinsPath);
+			str = (!Defs.IsSurvival ? string.Concat("EnemySkins/Level", (!TrainingController.TrainingCompleted ? "3" : CurrentCampaignGame.currentLevel.ToString())) : Defs.SurvSkinsPath);
 		}
-		UnityEngine.Object[] array = Resources.LoadAll(path);
+		else
+		{
+			str = "EnemySkins/COOP/";
+		}
+		UnityEngine.Object[] objArray = Resources.LoadAll(str);
 		try
 		{
-			UnityEngine.Object[] array2 = array;
-			for (int i = 0; i < array2.Length; i++)
+			UnityEngine.Object[] objArray1 = objArray;
+			for (int i = 0; i < (int)objArray1.Length; i++)
 			{
-				Texture texture = (Texture)array2[i];
-				skins.Add(texture.name, texture);
+				Texture texture = (Texture)objArray1[i];
+				this.skins.Add(texture.name, texture);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.Log("Exception in SkinsManagerPixlGun: " + ex);
+			Debug.Log(string.Concat("Exception in SkinsManagerPixlGun: ", exception));
 		}
 	}
 
 	private void Start()
 	{
-		sharedManager = this;
+		SkinsManagerPixlGun.sharedManager = this;
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-	}
-
-	private void OnDestroy()
-	{
-		sharedManager = null;
 	}
 }

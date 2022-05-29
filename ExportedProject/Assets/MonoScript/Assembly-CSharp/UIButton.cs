@@ -46,45 +46,44 @@ public class UIButton : UIButtonColor
 				return false;
 			}
 			Collider component = base.gameObject.GetComponent<Collider>();
-			if ((bool)component && component.enabled)
+			if (component && component.enabled)
 			{
 				return true;
 			}
-			Collider2D component2 = GetComponent<Collider2D>();
-			return (bool)component2 && component2.enabled;
+			Collider2D collider2D = base.GetComponent<Collider2D>();
+			return (!collider2D ? false : collider2D.enabled);
 		}
 		set
 		{
-			if (isEnabled == value)
+			if (this.isEnabled != value)
 			{
-				return;
-			}
-			Collider component = base.gameObject.GetComponent<Collider>();
-			if (component != null)
-			{
-				component.enabled = value;
-				UIButton[] components = GetComponents<UIButton>();
-				UIButton[] array = components;
-				foreach (UIButton uIButton in array)
+				Collider component = base.gameObject.GetComponent<Collider>();
+				if (component == null)
 				{
-					uIButton.SetState((!value) ? State.Disabled : State.Normal, false);
+					Collider2D collider2D = base.GetComponent<Collider2D>();
+					if (collider2D == null)
+					{
+						base.enabled = value;
+					}
+					else
+					{
+						collider2D.enabled = value;
+						UIButton[] components = base.GetComponents<UIButton>();
+						for (int i = 0; i < (int)components.Length; i++)
+						{
+							components[i].SetState((!value ? UIButtonColor.State.Disabled : UIButtonColor.State.Normal), false);
+						}
+					}
 				}
-				return;
-			}
-			Collider2D component2 = GetComponent<Collider2D>();
-			if (component2 != null)
-			{
-				component2.enabled = value;
-				UIButton[] components2 = GetComponents<UIButton>();
-				UIButton[] array2 = components2;
-				foreach (UIButton uIButton2 in array2)
+				else
 				{
-					uIButton2.SetState((!value) ? State.Disabled : State.Normal, false);
+					component.enabled = value;
+					UIButton[] uIButtonArray = base.GetComponents<UIButton>();
+					for (int j = 0; j < (int)uIButtonArray.Length; j++)
+					{
+						uIButtonArray[j].SetState((!value ? UIButtonColor.State.Disabled : UIButtonColor.State.Normal), false);
+					}
 				}
-			}
-			else
-			{
-				base.enabled = value;
 			}
 		}
 	}
@@ -93,29 +92,31 @@ public class UIButton : UIButtonColor
 	{
 		get
 		{
-			if (!mInitDone)
+			if (!this.mInitDone)
 			{
-				OnInit();
+				this.OnInit();
 			}
-			return mNormalSprite;
+			return this.mNormalSprite;
 		}
 		set
 		{
-			if (!mInitDone)
+			if (!this.mInitDone)
 			{
-				OnInit();
+				this.OnInit();
 			}
-			if (mSprite != null && !string.IsNullOrEmpty(mNormalSprite) && mNormalSprite == mSprite.spriteName)
+			if (!(this.mSprite != null) || string.IsNullOrEmpty(this.mNormalSprite) || !(this.mNormalSprite == this.mSprite.spriteName))
 			{
-				mNormalSprite = value;
-				SetSprite(value);
-				NGUITools.SetDirty(mSprite);
-				return;
+				this.mNormalSprite = value;
+				if (this.mState == UIButtonColor.State.Normal)
+				{
+					this.SetSprite(value);
+				}
 			}
-			mNormalSprite = value;
-			if (mState == State.Normal)
+			else
 			{
-				SetSprite(value);
+				this.mNormalSprite = value;
+				this.SetSprite(value);
+				NGUITools.SetDirty(this.mSprite);
 			}
 		}
 	}
@@ -124,150 +125,169 @@ public class UIButton : UIButtonColor
 	{
 		get
 		{
-			if (!mInitDone)
+			if (!this.mInitDone)
 			{
-				OnInit();
+				this.OnInit();
 			}
-			return mNormalSprite2D;
+			return this.mNormalSprite2D;
 		}
 		set
 		{
-			if (!mInitDone)
+			if (!this.mInitDone)
 			{
-				OnInit();
+				this.OnInit();
 			}
-			if (mSprite2D != null && mNormalSprite2D == mSprite2D.sprite2D)
+			if (!(this.mSprite2D != null) || !(this.mNormalSprite2D == this.mSprite2D.sprite2D))
 			{
-				mNormalSprite2D = value;
-				SetSprite(value);
-				NGUITools.SetDirty(mSprite);
-				return;
+				this.mNormalSprite2D = value;
+				if (this.mState == UIButtonColor.State.Normal)
+				{
+					this.SetSprite(value);
+				}
 			}
-			mNormalSprite2D = value;
-			if (mState == State.Normal)
+			else
 			{
-				SetSprite(value);
+				this.mNormalSprite2D = value;
+				this.SetSprite(value);
+				NGUITools.SetDirty(this.mSprite);
 			}
+		}
+	}
+
+	public UIButton()
+	{
+	}
+
+	protected virtual void OnClick()
+	{
+		if (UIButton.current == null && this.isEnabled)
+		{
+			UIButton.current = this;
+			EventDelegate.Execute(this.onClick);
+			UIButton.current = null;
+		}
+	}
+
+	protected override void OnDragOut()
+	{
+		if (this.isEnabled && (this.dragHighlight || UICamera.currentTouch.pressed == base.gameObject))
+		{
+			base.OnDragOut();
+		}
+	}
+
+	protected override void OnDragOver()
+	{
+		if (this.isEnabled && (this.dragHighlight || UICamera.currentTouch.pressed == base.gameObject))
+		{
+			base.OnDragOver();
+		}
+	}
+
+	protected override void OnEnable()
+	{
+		if (!this.isEnabled)
+		{
+			this.SetState(UIButtonColor.State.Disabled, true);
+		}
+		else if (this.mInitDone)
+		{
+			this.OnHover(UICamera.hoveredObject == base.gameObject);
 		}
 	}
 
 	protected override void OnInit()
 	{
 		base.OnInit();
-		mSprite = mWidget as UISprite;
-		mSprite2D = mWidget as UI2DSprite;
-		if (mSprite != null)
+		this.mSprite = this.mWidget as UISprite;
+		this.mSprite2D = this.mWidget as UI2DSprite;
+		if (this.mSprite != null)
 		{
-			mNormalSprite = mSprite.spriteName;
+			this.mNormalSprite = this.mSprite.spriteName;
 		}
-		if (mSprite2D != null)
+		if (this.mSprite2D != null)
 		{
-			mNormalSprite2D = mSprite2D.sprite2D;
-		}
-	}
-
-	protected override void OnEnable()
-	{
-		if (isEnabled)
-		{
-			if (mInitDone)
-			{
-				OnHover(UICamera.hoveredObject == base.gameObject);
-			}
-		}
-		else
-		{
-			SetState(State.Disabled, true);
-		}
-	}
-
-	protected override void OnDragOver()
-	{
-		if (isEnabled && (dragHighlight || UICamera.currentTouch.pressed == base.gameObject))
-		{
-			base.OnDragOver();
-		}
-	}
-
-	protected override void OnDragOut()
-	{
-		if (isEnabled && (dragHighlight || UICamera.currentTouch.pressed == base.gameObject))
-		{
-			base.OnDragOut();
-		}
-	}
-
-	protected virtual void OnClick()
-	{
-		if (current == null && isEnabled)
-		{
-			current = this;
-			EventDelegate.Execute(onClick);
-			current = null;
-		}
-	}
-
-	public override void SetState(State state, bool immediate)
-	{
-		base.SetState(state, immediate);
-		if (mSprite != null)
-		{
-			switch (state)
-			{
-			case State.Normal:
-				SetSprite(mNormalSprite);
-				break;
-			case State.Hover:
-				SetSprite((!string.IsNullOrEmpty(hoverSprite)) ? hoverSprite : mNormalSprite);
-				break;
-			case State.Pressed:
-				SetSprite(pressedSprite);
-				break;
-			case State.Disabled:
-				SetSprite(disabledSprite);
-				break;
-			}
-		}
-		else if (mSprite2D != null)
-		{
-			switch (state)
-			{
-			case State.Normal:
-				SetSprite(mNormalSprite2D);
-				break;
-			case State.Hover:
-				SetSprite((!(hoverSprite2D == null)) ? hoverSprite2D : mNormalSprite2D);
-				break;
-			case State.Pressed:
-				SetSprite(pressedSprite2D);
-				break;
-			case State.Disabled:
-				SetSprite(disabledSprite2D);
-				break;
-			}
+			this.mNormalSprite2D = this.mSprite2D.sprite2D;
 		}
 	}
 
 	protected void SetSprite(string sp)
 	{
-		if (mSprite != null && !string.IsNullOrEmpty(sp) && mSprite.spriteName != sp)
+		if (this.mSprite != null && !string.IsNullOrEmpty(sp) && this.mSprite.spriteName != sp)
 		{
-			mSprite.spriteName = sp;
-			if (pixelSnap)
+			this.mSprite.spriteName = sp;
+			if (this.pixelSnap)
 			{
-				mSprite.MakePixelPerfect();
+				this.mSprite.MakePixelPerfect();
 			}
 		}
 	}
 
 	protected void SetSprite(Sprite sp)
 	{
-		if (sp != null && mSprite2D != null && mSprite2D.sprite2D != sp)
+		if (sp != null && this.mSprite2D != null && this.mSprite2D.sprite2D != sp)
 		{
-			mSprite2D.sprite2D = sp;
-			if (pixelSnap)
+			this.mSprite2D.sprite2D = sp;
+			if (this.pixelSnap)
 			{
-				mSprite2D.MakePixelPerfect();
+				this.mSprite2D.MakePixelPerfect();
+			}
+		}
+	}
+
+	public override void SetState(UIButtonColor.State state, bool immediate)
+	{
+		base.SetState(state, immediate);
+		if (this.mSprite != null)
+		{
+			switch (state)
+			{
+				case UIButtonColor.State.Normal:
+				{
+					this.SetSprite(this.mNormalSprite);
+					break;
+				}
+				case UIButtonColor.State.Hover:
+				{
+					this.SetSprite((!string.IsNullOrEmpty(this.hoverSprite) ? this.hoverSprite : this.mNormalSprite));
+					break;
+				}
+				case UIButtonColor.State.Pressed:
+				{
+					this.SetSprite(this.pressedSprite);
+					break;
+				}
+				case UIButtonColor.State.Disabled:
+				{
+					this.SetSprite(this.disabledSprite);
+					break;
+				}
+			}
+		}
+		else if (this.mSprite2D != null)
+		{
+			switch (state)
+			{
+				case UIButtonColor.State.Normal:
+				{
+					this.SetSprite(this.mNormalSprite2D);
+					break;
+				}
+				case UIButtonColor.State.Hover:
+				{
+					this.SetSprite((this.hoverSprite2D != null ? this.hoverSprite2D : this.mNormalSprite2D));
+					break;
+				}
+				case UIButtonColor.State.Pressed:
+				{
+					this.SetSprite(this.pressedSprite2D);
+					break;
+				}
+				case UIButtonColor.State.Disabled:
+				{
+					this.SetSprite(this.disabledSprite2D);
+					break;
+				}
 			}
 		}
 	}

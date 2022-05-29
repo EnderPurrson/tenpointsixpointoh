@@ -1,243 +1,23 @@
+using ExitGames.Client.Photon;
+using FyberPlugin;
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using ExitGames.Client.Photon;
-using FyberPlugin;
-using Rilisoft;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ConnectSceneNGUIController : MonoBehaviour
 {
-	public enum PlatformConnect
-	{
-		ios = 1,
-		android = 2,
-		custom = 3
-	}
-
-	public enum RegimGame
-	{
-		Deathmatch = 0,
-		TimeBattle = 1,
-		TeamFight = 2,
-		DeadlyGames = 3,
-		FlagCapture = 4,
-		CapturePoints = 5,
-		InFriendWindow = 6,
-		InClanWindow = 7
-	}
-
-	public struct infoServer
-	{
-		public string ipAddress;
-
-		public int port;
-
-		public string name;
-
-		public string map;
-
-		public int playerLimit;
-
-		public int connectedPlayers;
-
-		public string coments;
-	}
-
-	public struct infoClient
-	{
-		public string ipAddress;
-
-		public string name;
-
-		public string coments;
-	}
-
-	public enum ABTestParams
-	{
-		Old = 1,
-		Rating = 2,
-		Buff = 3
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E9
-	{
-		private sealed class _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA
-		{
-			internal EventHandler handleBackFromBank;
-
-			internal _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E9 _003C_003Ef__ref_0024489;
-
-			internal void _003C_003Em__3C(object sender_, EventArgs e_)
-			{
-				BankController.Instance.BackRequested -= handleBackFromBank;
-				_003C_003Ef__ref_0024489._003C_003Ef__this.mainPanel.transform.root.gameObject.SetActive(true);
-				coinsShop.thisScript.notEnoughCurrency = null;
-				BankController.Instance.InterfaceEnabled = false;
-			}
-		}
-
-		internal int mapPrice;
-
-		internal SceneInfo scInfo;
-
-		internal ConnectSceneNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__2F()
-		{
-			coinsShop.thisScript.notEnoughCurrency = null;
-			coinsShop.thisScript.onReturnAction = null;
-			int @int = Storager.getInt("Coins", false);
-			int num = @int - mapPrice;
-			string nameScene = scInfo.NameScene;
-			if (num >= 0)
-			{
-				_003C_003Ef__this.LogBuyMap(nameScene);
-				AnalyticsFacade.InAppPurchase(nameScene, "Premium Maps", 1, mapPrice, "Coins");
-				Storager.setInt(nameScene + "Key", 1, true);
-				_003C_003Ef__this.selectMap.mapPreviewTexture.mainTexture = _003C_003Ef__this.mapPreview[nameScene];
-				Storager.setInt("Coins", num, false);
-				ShopNGUIController.SpendBoughtCurrency("Coins", mapPrice);
-				if (Application.platform != RuntimePlatform.IPhonePlayer)
-				{
-					PlayerPrefs.Save();
-				}
-				ShopNGUIController.SynchronizeAndroidPurchases("Map unlocked from connect scene: " + nameScene);
-				if (coinsPlashka.thisScript != null)
-				{
-					coinsPlashka.thisScript.enabled = false;
-				}
-			}
-			else
-			{
-				StoreKitEventListener.State.PurchaseKey = "In map selection";
-				FlurryPluginWrapper.LogEvent("Try_Enable " + nameScene + " map");
-				if (BankController.Instance != null)
-				{
-					_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA = new _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA();
-					_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA._003C_003Ef__ref_0024489 = this;
-					_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA.handleBackFromBank = null;
-					_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA.handleBackFromBank = _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA._003C_003Em__3C;
-					BankController.Instance.BackRequested += _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1EA.handleBackFromBank;
-					_003C_003Ef__this.mainPanel.transform.root.gameObject.SetActive(false);
-					coinsShop.thisScript.notEnoughCurrency = "Coins";
-					BankController.Instance.InterfaceEnabled = true;
-				}
-				else
-				{
-					Debug.LogWarning("BankController.Instance == null");
-				}
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CShowBankWindow_003Ec__AnonStorey1EB
-	{
-		internal EventHandler backFromBankHandler;
-
-		internal ConnectSceneNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__30(object backSender, EventArgs backArgs)
-		{
-			BankController.Instance.BackRequested -= backFromBankHandler;
-			_003C_003Ef__this.mainPanel.transform.root.gameObject.SetActive(true);
-			BankController.Instance.InterfaceEnabled = false;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC
-	{
-		private sealed class _003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED
-		{
-			internal EventHandler handleBackFromBank;
-
-			internal _003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC _003C_003Ef__ref_0024492;
-
-			internal void _003C_003Em__3D(object sender_, EventArgs e_)
-			{
-				BankController.Instance.BackRequested -= handleBackFromBank;
-				_003C_003Ef__ref_0024492._003C_003Ef__this.mainPanel.transform.root.gameObject.SetActive(true);
-				coinsShop.thisScript.notEnoughCurrency = null;
-				BankController.Instance.InterfaceEnabled = false;
-			}
-		}
-
-		internal int _price;
-
-		internal string _storagerPurchasedKey;
-
-		internal ConnectSceneNGUIController _003C_003Ef__this;
-
-		internal void _003C_003Em__31()
-		{
-			coinsShop.thisScript.notEnoughCurrency = null;
-			coinsShop.thisScript.onReturnAction = null;
-			int @int = Storager.getInt("Coins", false);
-			int num = @int - _price;
-			if (num >= 0)
-			{
-				FlurryPluginWrapper.LogEvent("Enable_Flags");
-				Storager.setInt(_storagerPurchasedKey, 1, true);
-				Storager.setInt("Coins", num, false);
-				ShopNGUIController.SpendBoughtCurrency("Coins", _price);
-				if (Application.platform != RuntimePlatform.IPhonePlayer)
-				{
-					PlayerPrefs.Save();
-				}
-				ShopNGUIController.SynchronizeAndroidPurchases("Mode enabled");
-				if (coinsPlashka.thisScript != null)
-				{
-					coinsPlashka.thisScript.enabled = false;
-				}
-				if (regim == RegimGame.FlagCapture)
-				{
-					_003C_003Ef__this.SetUnLockedButton(_003C_003Ef__this.flagCaptureToogle);
-				}
-				if (regim == RegimGame.DeadlyGames)
-				{
-					_003C_003Ef__this.SetUnLockedButton(_003C_003Ef__this.deadlyGamesToogle);
-				}
-				_003C_003Ef__this.unlockBtn.SetActive(false);
-				_003C_003Ef__this.customBtn.SetActive(true);
-				_003C_003Ef__this.randomBtn.SetActive(true);
-				_003C_003Ef__this.conditionLabel.gameObject.SetActive(false);
-				_003C_003Ef__this.goBtn.SetActive(true);
-			}
-			else
-			{
-				FlurryPluginWrapper.LogEvent("Try_Enable_CaptureFlag");
-				StoreKitEventListener.State.PurchaseKey = "Mode opened";
-				if (BankController.Instance != null)
-				{
-					_003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED _003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED = new _003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED();
-					_003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED._003C_003Ef__ref_0024492 = this;
-					_003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED.handleBackFromBank = null;
-					_003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED.handleBackFromBank = _003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED._003C_003Em__3D;
-					BankController.Instance.BackRequested += _003CHandleUnlockBtnClicked_003Ec__AnonStorey1ED.handleBackFromBank;
-					_003C_003Ef__this.mainPanel.transform.root.gameObject.SetActive(false);
-					coinsShop.thisScript.notEnoughCurrency = "Coins";
-					BankController.Instance.InterfaceEnabled = true;
-				}
-				else
-				{
-					Debug.LogWarning("BankController.Instance == null");
-				}
-			}
-		}
-	}
-
 	public const string PendingInterstitialKey = "PendingInterstitial";
 
-	public static PlatformConnect myPlatformConnect = PlatformConnect.android;
+	public static ConnectSceneNGUIController.PlatformConnect myPlatformConnect;
 
 	private string rulesDeadmatch;
 
@@ -259,45 +39,11 @@ public class ConnectSceneNGUIController : MonoBehaviour
 
 	public UILabel rulesLabel;
 
-	public static int gameTier = 1;
+	public static int gameTier;
 
-	public static readonly IDictionary<string, string> gameModesLocalizeKey = new Dictionary<string, string>
-	{
-		{
-			0.ToString(),
-			"Key_0104"
-		},
-		{
-			1.ToString(),
-			"Key_0135"
-		},
-		{
-			2.ToString(),
-			"Key_0130"
-		},
-		{
-			3.ToString(),
-			"Key_0121"
-		},
-		{
-			4.ToString(),
-			"Key_0113"
-		},
-		{
-			5.ToString(),
-			"Key_1263"
-		},
-		{
-			6.ToString(),
-			"Key_1465"
-		},
-		{
-			7.ToString(),
-			"Key_1466"
-		}
-	};
+	public readonly static IDictionary<string, string> gameModesLocalizeKey;
 
-	public List<infoServer> servers = new List<infoServer>();
+	public List<ConnectSceneNGUIController.infoServer> servers = new List<ConnectSceneNGUIController.infoServer>();
 
 	private float posNumberOffPlayersX = -139f;
 
@@ -423,7 +169,7 @@ public class ConnectSceneNGUIController : MonoBehaviour
 
 	public UILabel conditionLabel;
 
-	private static RegimGame _regim = RegimGame.Deathmatch;
+	private static ConnectSceneNGUIController.RegimGame _regim;
 
 	public static bool isReturnFromGame;
 
@@ -505,11 +251,11 @@ public class ConnectSceneNGUIController : MonoBehaviour
 
 	public UIScrollView scrollGames;
 
-	public static Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, int>>>> mapStatistics = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, int>>>>();
+	public static Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, int>>>> mapStatistics;
 
-	public static string selectedMap = string.Empty;
+	public static string selectedMap;
 
-	public static bool directedFromQuests = false;
+	public static bool directedFromQuests;
 
 	public GameObject modeAnimObj;
 
@@ -531,23 +277,23 @@ public class ConnectSceneNGUIController : MonoBehaviour
 
 	private float _lastTimeInterstitialShown;
 
-	public static bool NeedShowReviewInConnectScene = false;
+	public static bool NeedShowReviewInConnectScene;
 
-	public static readonly string mapProperty = "C0";
+	public readonly static string mapProperty;
 
-	public static readonly string passwordProperty = "C1";
+	public readonly static string passwordProperty;
 
-	public static readonly string platformProperty = "C2";
+	public readonly static string platformProperty;
 
-	public static readonly string endingProperty = "C3";
+	public readonly static string endingProperty;
 
-	public static readonly string maxKillProperty = "C4";
+	public readonly static string maxKillProperty;
 
-	public static readonly string ABTestProperty = "C5";
+	public readonly static string ABTestProperty;
 
-	public static readonly string ABTestEnum = "C6";
+	public readonly static string ABTestEnum;
 
-	private bool abTestConnect = Defs.isActivABTestBuffSystem || Defs.isActivABTestRatingSystem;
+	private bool abTestConnect = (Defs.isActivABTestBuffSystem ? true : Defs.isActivABTestRatingSystem);
 
 	private int joinNewRoundTries;
 
@@ -575,40 +321,355 @@ public class ConnectSceneNGUIController : MonoBehaviour
 
 	private LANBroadcastService.ReceivedMessage[] _copy;
 
-	[CompilerGenerated]
-	private static Func<SceneInfo, int> _003C_003Ef__am_0024cache9A;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache9B;
-
-	public static RegimGame regim
+	internal static bool InterstitialRequest
 	{
-		get
-		{
-			return _regim;
-		}
-		set
-		{
-			_regim = value;
-			UpdateUseMasMaps();
-		}
+		get;
+		set;
 	}
 
 	public static bool isTeamRegim
 	{
 		get
 		{
-			return Defs.isMulti && (regim == RegimGame.TeamFight || regim == RegimGame.FlagCapture || regim == RegimGame.CapturePoints);
+			bool flag;
+			if (!Defs.isMulti)
+			{
+				flag = false;
+			}
+			else
+			{
+				flag = (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture ? true : ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints);
+			}
+			return flag;
 		}
 	}
 
-	internal static bool InterstitialRequest { get; set; }
-
-	internal static bool ReplaceAdmobWithPerelivRequest { get; set; }
-
-	public static string MainLoadingTexture()
+	public static ConnectSceneNGUIController.RegimGame regim
 	{
-		return (!Device.isRetinaAndStrong) ? "main_loading" : "main_loading_Hi";
+		get
+		{
+			return ConnectSceneNGUIController._regim;
+		}
+		set
+		{
+			ConnectSceneNGUIController._regim = value;
+			ConnectSceneNGUIController.UpdateUseMasMaps();
+		}
+	}
+
+	internal static bool ReplaceAdmobWithPerelivRequest
+	{
+		get;
+		set;
+	}
+
+	static ConnectSceneNGUIController()
+	{
+		ConnectSceneNGUIController.myPlatformConnect = ConnectSceneNGUIController.PlatformConnect.android;
+		ConnectSceneNGUIController.gameTier = 1;
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ 0.ToString(), "Key_0104" },
+			{ 1.ToString(), "Key_0135" },
+			{ 2.ToString(), "Key_0130" },
+			{ 3.ToString(), "Key_0121" },
+			{ 4.ToString(), "Key_0113" },
+			{ 5.ToString(), "Key_1263" },
+			{ 6.ToString(), "Key_1465" },
+			{ 7.ToString(), "Key_1466" }
+		};
+		ConnectSceneNGUIController.gameModesLocalizeKey = strs;
+		ConnectSceneNGUIController._regim = ConnectSceneNGUIController.RegimGame.Deathmatch;
+		ConnectSceneNGUIController.mapStatistics = new Dictionary<string, Dictionary<string, Dictionary<string, Dictionary<string, int>>>>();
+		ConnectSceneNGUIController.selectedMap = string.Empty;
+		ConnectSceneNGUIController.directedFromQuests = false;
+		ConnectSceneNGUIController.NeedShowReviewInConnectScene = false;
+		ConnectSceneNGUIController.mapProperty = "C0";
+		ConnectSceneNGUIController.passwordProperty = "C1";
+		ConnectSceneNGUIController.platformProperty = "C2";
+		ConnectSceneNGUIController.endingProperty = "C3";
+		ConnectSceneNGUIController.maxKillProperty = "C4";
+		ConnectSceneNGUIController.ABTestProperty = "C5";
+		ConnectSceneNGUIController.ABTestEnum = "C6";
+	}
+
+	public ConnectSceneNGUIController()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AnimateModeOpen()
+	{
+		ConnectSceneNGUIController.u003cAnimateModeOpenu003ec__Iterator1A variable = null;
+		return variable;
+	}
+
+	private void Awake()
+	{
+		if (ConnectSceneNGUIController.isReturnFromGame)
+		{
+			Defs.countReturnInConnectScene = Defs.countReturnInConnectScene + 1;
+		}
+		PhotonObjectCacher.AddObject(base.gameObject);
+		this.setPasswordInput.onSubmit.Add(new EventDelegate(() => this.OnPaswordSelected()));
+	}
+
+	private void BackFromSetPasswordPanel()
+	{
+		this.createPanel.SetActive(true);
+		this.selectMapPanel.SetActive(true);
+		this.passONSprite.SetActive(!string.IsNullOrEmpty(this.password));
+		this.setPasswordPanel.SetActive(false);
+	}
+
+	private bool CheckLocalAvailability()
+	{
+		if (Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void ConnectToPhoton()
+	{
+		string str;
+		if (FriendsController.sharedController != null && FriendsController.sharedController.Banned == 1)
+		{
+			return;
+		}
+		if (PhotonNetwork.connectionState == ConnectionState.Connecting || PhotonNetwork.connectionState == ConnectionState.Connected)
+		{
+			UnityEngine.Debug.Log("ConnectToPhoton return");
+			return;
+		}
+		UnityEngine.Debug.Log("ConnectToPhoton");
+		if (FriendsController.sharedController != null && FriendsController.sharedController.Banned == 1)
+		{
+			this.timerShowBan = 3f;
+			return;
+		}
+		this.isConnectingToPhoton = true;
+		this.isCancelConnectingToPhoton = false;
+		ConnectSceneNGUIController.gameTier = (ExpController.Instance == null ? 1 : ExpController.Instance.OurTier);
+		if (Defs.useSqlLobby)
+		{
+			PhotonNetwork.lobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
+		}
+		string[] separator = new string[] { Initializer.Separator, ConnectSceneNGUIController.regim.ToString(), null, null, null };
+		if (!Defs.isDaterRegim)
+		{
+			str = (!Defs.isHunger ? ConnectSceneNGUIController.gameTier.ToString() : "0");
+		}
+		else
+		{
+			str = "Dater";
+		}
+		separator[2] = str;
+		separator[3] = "v";
+		separator[4] = GlobalGameController.MultiplayerProtocolVersion;
+		PhotonNetwork.ConnectUsingSettings(string.Concat(separator));
+	}
+
+	public static void CreateGameRoom(string roomName, int playerLimit, int mapIndex, int MaxKill, string password, ConnectSceneNGUIController.RegimGame gameMode)
+	{
+		int num;
+		string[] aBTestProperty = new string[] { ConnectSceneNGUIController.mapProperty, ConnectSceneNGUIController.passwordProperty, ConnectSceneNGUIController.platformProperty, ConnectSceneNGUIController.endingProperty, ConnectSceneNGUIController.maxKillProperty, "TimeMatchEnd", "tier", ConnectSceneNGUIController.ABTestProperty, ConnectSceneNGUIController.ABTestEnum, "SpecialBonus" };
+		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
+		hashtable[ConnectSceneNGUIController.mapProperty] = mapIndex;
+		hashtable[ConnectSceneNGUIController.passwordProperty] = password;
+		ExitGames.Client.Photon.Hashtable hashtable1 = hashtable;
+		string str = ConnectSceneNGUIController.platformProperty;
+		if (!string.IsNullOrEmpty(password))
+		{
+			num = 3;
+		}
+		else
+		{
+			num = (int)ConnectSceneNGUIController.myPlatformConnect;
+		}
+		hashtable1[str] = num;
+		hashtable[ConnectSceneNGUIController.endingProperty] = 0;
+		hashtable[ConnectSceneNGUIController.maxKillProperty] = MaxKill;
+		hashtable["TimeMatchEnd"] = PhotonNetwork.time;
+		hashtable["tier"] = ExpController.Instance.OurTier;
+		if (ExpController.Instance.OurTier == 0)
+		{
+			hashtable[ConnectSceneNGUIController.ABTestProperty] = (!Defs.isABTestBalansCohortActual ? 0 : 1);
+		}
+		if (Defs.isActivABTestRatingSystem)
+		{
+			hashtable[ConnectSceneNGUIController.ABTestEnum] = (!FriendsController.isUseRatingSystem ? 1 : 2);
+		}
+		else if (Defs.isActivABTestBuffSystem)
+		{
+			hashtable[ConnectSceneNGUIController.ABTestEnum] = (!FriendsController.useBuffSystem ? 1 : 3);
+		}
+		hashtable["SpecialBonus"] = 0;
+		ConnectSceneNGUIController.PhotonCreateRoom(roomName, true, true, (playerLimit <= 10 ? playerLimit : 10), hashtable, aBTestProperty);
+	}
+
+	private void CustomBtnAct()
+	{
+		this.gameNameFilter = string.Empty;
+		if (Defs.isInet)
+		{
+			base.Invoke("UpdateFilteredRoomListInvoke", 0.03f);
+		}
+		this.showSearchPanelBtn.SetActive(Defs.isInet);
+		this.mainPanel.SetActive(false);
+		this.selectMapPanel.SetActive(false);
+		this.customPanel.SetActive(true);
+		this.password = string.Empty;
+		this.incorrectPasswordLabel.timer = -1f;
+		this.incorrectPasswordLabel.gameObject.SetActive(false);
+		this.gameIsfullLabel.timer = -1f;
+		this.gameIsfullLabel.gameObject.SetActive(false);
+		this.wrapGames.SortAlphabetically();
+		this.scrollGames.ResetPosition();
+	}
+
+	private void EnterPassInput()
+	{
+		this.HandleJoinRoomFromEnterPasswordBtnClicked(null, null);
+	}
+
+	private void EnterPassInputSubmit()
+	{
+		this.enterPasswordInput.RemoveFocus();
+		this.enterPasswordInput.isSelected = false;
+		base.Invoke("EnterPassInput", 0.1f);
+	}
+
+	private void GetMapName(string _mapName, bool isAddCountRun)
+	{
+		bool flag;
+		Texture texture;
+		UnityEngine.Debug.Log(string.Concat("setFonLoading ", _mapName));
+		if (Defs.isCOOP)
+		{
+			int num = PlayerPrefs.GetInt("CountRunCoop", 0);
+			flag = num < 5;
+			if (isAddCountRun)
+			{
+				PlayerPrefs.SetInt("CountRunCoop", PlayerPrefs.GetInt("CountRunCoop", 0) + 1);
+			}
+			texture = Resources.Load(string.Concat("NoteLoadings/note_Time_Survival_", num % this.countNoteCaptureCOOP)) as Texture;
+		}
+		else if (Defs.isCompany)
+		{
+			int num1 = PlayerPrefs.GetInt("CountRunCompany", 0);
+			flag = num1 < 5;
+			texture = Resources.Load(string.Concat("NoteLoadings/note_Team_Battle_", num1 % this.countNoteCaptureCompany)) as Texture;
+			if (isAddCountRun)
+			{
+				PlayerPrefs.SetInt("CountRunCompany", PlayerPrefs.GetInt("CountRunCompany", 0) + 1);
+			}
+		}
+		else if (Defs.isHunger)
+		{
+			int num2 = PlayerPrefs.GetInt("CountRunHunger", 0);
+			flag = num2 < 5;
+			texture = Resources.Load(string.Concat("NoteLoadings/note_Deadly_Games_", num2 % this.countNoteCaptureHunger)) as Texture;
+			if (isAddCountRun)
+			{
+				PlayerPrefs.SetInt("CountRunHunger", PlayerPrefs.GetInt("CountRunHunger", 0) + 1);
+			}
+		}
+		else if (!Defs.isFlag)
+		{
+			int num3 = PlayerPrefs.GetInt("CountRunDeadmath", 0);
+			flag = num3 < 5;
+			texture = Resources.Load(string.Concat("NoteLoadings/note_Deathmatch_", num3 % this.countNoteCaptureDeadmatch)) as Texture;
+			if (isAddCountRun)
+			{
+				PlayerPrefs.SetInt("CountRunDeadmath", PlayerPrefs.GetInt("CountRunDeadmath", 0) + 1);
+			}
+		}
+		else
+		{
+			int num4 = PlayerPrefs.GetInt("CountRunFlag", 0);
+			flag = num4 < 5;
+			texture = Resources.Load(string.Concat("NoteLoadings/note_Flag_Capture_", num4 % this.countNoteCaptureFlag)) as Texture;
+			if (isAddCountRun)
+			{
+				PlayerPrefs.SetInt("CountRunFlag", PlayerPrefs.GetInt("CountRunFlag", 0) + 1);
+			}
+		}
+		LoadConnectScene.textureToShow = Resources.Load(string.Concat("LevelLoadings", (!Device.isRetinaAndStrong ? string.Empty : "/Hi"), "/Loading_", _mapName)) as Texture2D;
+		LoadingInAfterGame.loadingTexture = LoadConnectScene.textureToShow;
+		LoadConnectScene.sceneToLoad = _mapName;
+		LoadConnectScene.noteToShow = null;
+		this.loadingToDraw.gameObject.SetActive(false);
+	}
+
+	private int GetRandomMapIndex()
+	{
+		SceneInfo item;
+		bool flag;
+		bool flag1 = true;
+		AllScenesForMode listScenesForMode = SceneInfoController.instance.GetListScenesForMode(ConnectSceneNGUIController.curSelectMode);
+		if (listScenesForMode == null)
+		{
+			return -1;
+		}
+		int count = listScenesForMode.avaliableScenes.Count;
+		int num = UnityEngine.Random.Range(0, count);
+		int num1 = 0;
+		do
+		{
+			if (num1 > count)
+			{
+				return -1;
+			}
+			item = listScenesForMode.avaliableScenes[num];
+			if (item != null)
+			{
+				num++;
+				num1++;
+				if (num >= count)
+				{
+					num = 0;
+				}
+				if (!item.isPremium)
+				{
+					flag = false;
+				}
+				else
+				{
+					flag = (Storager.getInt(string.Concat(item.NameScene, "Key"), true) != 0 ? false : !PremiumAccountController.MapAvailableDueToPremiumAccount(item.NameScene));
+				}
+				flag1 = flag;
+			}
+		}
+		while (flag1);
+		return item.indexMap;
+	}
+
+	private void GoBtnAct()
+	{
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.selectMap.mapID);
+		if (infoScene == null)
+		{
+			return;
+		}
+		bool flag = infoScene.isPremium;
+		if (!flag || flag && (Storager.getInt(string.Concat(infoScene.NameScene, "Key"), true) == 1 || PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene)))
+		{
+			this.JoinRandomRoom(infoScene.indexMap, ConnectSceneNGUIController.regim);
+		}
+		else
+		{
+			PhotonNetwork.Disconnect();
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void goGame()
+	{
+		WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(PlayerPrefs.GetString("MapName")) ? 0 : Defs.filterMaps[PlayerPrefs.GetString("MapName")]));
+		Singleton<SceneLoader>.Instance.LoadScene(PlayerPrefs.GetString("MapName"), LoadSceneMode.Single);
 	}
 
 	public static void GoToClans()
@@ -624,7 +685,7 @@ public class ConnectSceneNGUIController : MonoBehaviour
 		FriendsController friendsController = FriendsController.sharedController;
 		if (friendsController != null)
 		{
-			friendsController.GetFriendsData();
+			friendsController.GetFriendsData(false);
 		}
 		MainMenuController.friendsOnStart = true;
 		LoadConnectScene.textureToShow = null;
@@ -632,6 +693,856 @@ public class ConnectSceneNGUIController : MonoBehaviour
 		LoadConnectScene.noteToShow = null;
 		SceneManager.LoadScene(Defs.PromSceneName);
 		Defs.isDaterRegim = false;
+	}
+
+	public static void GoToProfile()
+	{
+		PlayerPrefs.SetInt(Defs.SkinEditorMode, 1);
+		GlobalGameController.EditingLogo = 0;
+		GlobalGameController.EditingCape = 0;
+		SceneManager.LoadScene("SkinEditor");
+	}
+
+	private void HandleBackBtnClicked(object sender, EventArgs e)
+	{
+		if (this.mainPanel != null && this.mainPanel.activeSelf)
+		{
+			if (FriendsController.sharedController != null)
+			{
+				FriendsController.sharedController.GetFriendsData(false);
+			}
+			FlurryPluginWrapper.LogEvent("Back to Main Menu");
+			MenuBackgroundMusic.keepPlaying = true;
+			LoadConnectScene.textureToShow = null;
+			LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
+			LoadConnectScene.noteToShow = null;
+			Application.LoadLevel(Defs.PromSceneName);
+			this.isGoInPhotonGame = false;
+		}
+		if (this.customPanel != null && this.customPanel.activeSelf)
+		{
+			this.connectToWiFIInCreateLabel.SetActive(false);
+			this.connectToWiFIInCustomLabel.SetActive(false);
+			this.createRoomUIBtn.isEnabled = true;
+			Defs.isInet = true;
+			this.customPanel.SetActive(false);
+			this.mainPanel.SetActive(true);
+			this.selectMapPanel.SetActive(true);
+			PhotonNetwork.Disconnect();
+		}
+		if (this.searchPanel != null && this.searchPanel.activeSelf)
+		{
+			this.searchInput.@value = this.gameNameFilter;
+			this.searchPanel.SetActive(false);
+			this.customPanel.SetActive(true);
+		}
+		if (this.createPanel != null && this.createPanel.activeSelf)
+		{
+			PlayerPrefs.SetString("TypeGame", "client");
+			this.SetPosSelectMapPanelInMainMenu();
+			this.createPanel.SetActive(false);
+			this.selectMapPanel.SetActive(false);
+			this.customPanel.SetActive(true);
+		}
+		if (this.setPasswordPanel != null && this.setPasswordPanel.activeSelf)
+		{
+			this.BackFromSetPasswordPanel();
+		}
+		if (this.enterPasswordPanel != null && this.enterPasswordPanel.activeSelf)
+		{
+			this.enterPasswordPanel.SetActive(false);
+			this.customPanel.SetActive(true);
+			ExperienceController.sharedController.isShowRanks = true;
+		}
+	}
+
+	private void HandleCancelFromConnectToPhotonBtnClicked()
+	{
+		if (this._someWindowSubscription != null)
+		{
+			this._someWindowSubscription.Dispose();
+		}
+		if (this.failInternetLabel != null)
+		{
+			this.failInternetLabel.SetActive(false);
+		}
+		if (this.connectToPhotonPanel != null)
+		{
+			this.connectToPhotonPanel.SetActive(false);
+		}
+		if (this.actAfterConnectToPhoton == null)
+		{
+			PhotonNetwork.Disconnect();
+		}
+		else
+		{
+			this.actAfterConnectToPhoton = null;
+		}
+	}
+
+	private void HandleCancelFromConnectToPhotonBtnClicked(object sender, EventArgs e)
+	{
+		this.HandleCancelFromConnectToPhotonBtnClicked();
+	}
+
+	private void HandleClearBtnClicked(object sender, EventArgs e)
+	{
+		if (this.searchInput != null)
+		{
+			this.searchInput.@value = string.Empty;
+		}
+	}
+
+	private void HandleClearInSetPasswordBtnClicked(object sender, EventArgs e)
+	{
+		this.setPasswordInput.@value = string.Empty;
+	}
+
+	private void HandleCoinsShopClicked(object sender, EventArgs e)
+	{
+		this.ShowBankWindow();
+	}
+
+	private void HandleCreateRoomBtnClicked(object sender, EventArgs e)
+	{
+		int value;
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.selectMap.mapID);
+		if (infoScene == null)
+		{
+			return;
+		}
+		string str = infoScene.gameObject.name;
+		if (infoScene.isPremium && Storager.getInt(string.Concat(str, "Key"), true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(str))
+		{
+			PhotonNetwork.Disconnect();
+			return;
+		}
+		string str1 = FilterBadWorld.FilterString(this.nameServerInput.@value);
+		bool flag = false;
+		if (Defs.isInet)
+		{
+			RoomInfo[] roomList = PhotonNetwork.GetRoomList();
+			int num = 0;
+			while (num < (int)roomList.Length)
+			{
+				if (!roomList[num].name.Equals(str1))
+				{
+					num++;
+				}
+				else
+				{
+					flag = true;
+					break;
+				}
+			}
+		}
+		if (flag)
+		{
+			this.nameAlreadyUsedLabel.timer = 3f;
+			this.nameAlreadyUsedLabel.gameObject.SetActive(true);
+			return;
+		}
+		this.goMapName = str;
+		PlayerPrefs.SetString("MapName", this.goMapName);
+		if (this.killToWin.@value.Value > this.killToWin.maxValue.Value)
+		{
+			this.killToWin.@value = this.killToWin.maxValue;
+		}
+		if (this.killToWin.@value.Value < this.killToWin.minValue.Value)
+		{
+			this.killToWin.@value = this.killToWin.minValue;
+		}
+		int value1 = this.killToWin.@value.Value;
+		PlayerPrefs.SetString("MaxKill", value1.ToString());
+		if (WeaponManager.sharedManager != null)
+		{
+			WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(str) ? 0 : Defs.filterMaps[str]));
+		}
+		base.StartCoroutine(this.SetFonLoadingWaitForReset(this.goMapName, false));
+		this.loadingMapPanel.SetActive(true);
+		int num1 = (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames ? this.numberOfPlayer.@value.Value : this.teamCountPlayer.@value);
+		if (Defs.isDaterRegim)
+		{
+			value = this.killToWin.@value.Value;
+		}
+		else if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.DeadlyGames)
+		{
+			value = (!Defs.isDaterRegim ? 4 : 5);
+		}
+		else
+		{
+			value = 10;
+		}
+		int num2 = value;
+		if (!Defs.isInet)
+		{
+			bool flag1 = Network.HavePublicAddress();
+			Network.InitializeServer(num1 - 1, 25002, flag1);
+			PlayerPrefs.SetString("ServerName", str1);
+			PlayerPrefs.SetString("PlayersLimits", num1.ToString());
+			Singleton<SceneLoader>.Instance.LoadSceneAsync("PromScene", LoadSceneMode.Single);
+		}
+		else
+		{
+			this.loadingMapPanel.SetActive(true);
+			ActivityIndicator.IsActiveIndicator = true;
+			ConnectSceneNGUIController.CreateGameRoom(str1, num1, infoScene.indexMap, num2, this.password, ConnectSceneNGUIController.regim);
+		}
+	}
+
+	private void HandleCustomBtnClicked(object sender, EventArgs e)
+	{
+		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		{
+			FlurryEvents.LogAfterTraining(string.Concat(ConnectSceneNGUIController.regim, ".Custom"), TrainingController.TrainingCompletedFlagForLogging.Value);
+			TrainingController.TrainingCompletedFlagForLogging = null;
+		}
+		this.actAfterConnectToPhoton = new Action(this.CustomBtnAct);
+		PhotonNetwork.autoJoinLobby = true;
+		this.ShowConnectToPhotonPanel();
+	}
+
+	public void HandleGoBtnClicked(object sender, EventArgs e)
+	{
+		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		{
+			FlurryEvents.LogAfterTraining(string.Concat(ConnectSceneNGUIController.regim, ".Go"), TrainingController.TrainingCompletedFlagForLogging.Value);
+			TrainingController.TrainingCompletedFlagForLogging = null;
+		}
+		this.actAfterConnectToPhoton = new Action(this.GoBtnAct);
+		PhotonNetwork.autoJoinLobby = false;
+		this.ShowConnectToPhotonPanel();
+	}
+
+	private void HandleGoToCreateRoomBtnClicked(object sender, EventArgs e)
+	{
+		PlayerPrefs.SetString("TypeGame", "server");
+		this.password = string.Empty;
+		this.passONSprite.SetActive(false);
+		this.SetPosSelectMapPanelInCreatePanel();
+		this.createPanel.SetActive(true);
+		this.setPasswordBtn.SetActive(Defs.isInet);
+		this.selectMapPanel.SetActive(true);
+		this.customPanel.SetActive(false);
+		this.nameAlreadyUsedLabel.timer = -1f;
+		this.nameAlreadyUsedLabel.gameObject.SetActive(false);
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.minValue.Value = 2;
+			this.numberOfPlayer.maxValue.Value = 10;
+			this.numberOfPlayer.@value.Value = 10;
+			if (!Defs.isDaterRegim)
+			{
+				this.ShowKillToWinPanel(false);
+				if (ExperienceController.sharedController != null)
+				{
+					if (ExperienceController.sharedController.currentLevel > 2)
+					{
+						this.killToWin.minValue.Value = 3;
+						this.killToWin.maxValue.Value = 7;
+						this.killToWin.@value.Value = 3;
+						this.killToWin.stepValue = 2;
+					}
+					else
+					{
+						this.killToWin.minValue.Value = 3;
+						this.killToWin.maxValue.Value = 7;
+						this.killToWin.@value.Value = 3;
+						this.killToWin.stepValue = 2;
+					}
+				}
+			}
+			else
+			{
+				this.ShowKillToWinPanel(true);
+				this.killToWin.minValue.Value = this.daterMinValue;
+				this.killToWin.maxValue.Value = this.daterMaxValue;
+				this.killToWin.@value.Value = this.daterMinValue;
+				this.killToWin.stepValue = this.daterStep;
+			}
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.minValue.Value = 2;
+			this.numberOfPlayer.maxValue.Value = 4;
+			this.numberOfPlayer.@value.Value = 4;
+			this.ShowKillToWinPanel(false);
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.teamCountPlayer.SetValue(10);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.ShowKillToWinPanel(false);
+			this.killToWin.stepValue = 2;
+			if (ExperienceController.sharedController != null)
+			{
+				if (ExperienceController.sharedController.currentLevel > 2)
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+				else
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+			}
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.teamCountPlayer.SetValue(10);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.ShowKillToWinPanel(false);
+			this.killToWin.stepValue = 2;
+			if (ExperienceController.sharedController != null)
+			{
+				if (ExperienceController.sharedController.currentLevel > 2)
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+				else
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+			}
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.teamCountPlayer.SetValue(10);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.ShowKillToWinPanel(false);
+			this.killToWin.stepValue = 2;
+			if (ExperienceController.sharedController != null)
+			{
+				if (ExperienceController.sharedController.currentLevel > 2)
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+				else
+				{
+					this.killToWin.minValue.Value = 3;
+					this.killToWin.maxValue.Value = 7;
+					this.killToWin.@value.Value = 3;
+				}
+			}
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
+		{
+			this.teamCountPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.gameObject.SetActive(false);
+			this.numberOfPlayer.minValue.Value = 3;
+			this.numberOfPlayer.maxValue.Value = 8;
+			this.numberOfPlayer.@value.Value = 6;
+			this.ShowKillToWinPanel(false);
+			this.killToWin.stepValue = 5;
+			if (ExperienceController.sharedController != null)
+			{
+				if (ExperienceController.sharedController.currentLevel > 2)
+				{
+					this.killToWin.minValue.Value = 5;
+					this.killToWin.maxValue.Value = 10;
+					this.killToWin.@value.Value = 10;
+				}
+				else
+				{
+					this.killToWin.minValue.Value = 5;
+					this.killToWin.maxValue.Value = 10;
+					this.killToWin.@value.Value = 10;
+				}
+			}
+		}
+	}
+
+	private void HandleJoinRoomFromEnterPasswordBtnClicked(object sender, EventArgs e)
+	{
+		if (!this.enterPasswordInput.@value.Equals(this.joinRoomInfoFromCustom.customProperties[ConnectSceneNGUIController.passwordProperty].ToString()))
+		{
+			this.enterPasswordPanel.SetActive(false);
+			ExperienceController.sharedController.isShowRanks = true;
+			this.customPanel.SetActive(true);
+			base.Invoke("UpdateFilteredRoomListInvoke", 0.03f);
+		}
+		else
+		{
+			this.JoinToRoomPhotonAfterCheck();
+		}
+	}
+
+	private void HandleLocalBtnClicked(object sender, EventArgs e)
+	{
+		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		{
+			FlurryEvents.LogAfterTraining(string.Concat(ConnectSceneNGUIController.regim, ".Local"), TrainingController.TrainingCompletedFlagForLogging.Value);
+			TrainingController.TrainingCompletedFlagForLogging = null;
+		}
+		Defs.isInet = false;
+		this.UpdateLocalServersList();
+		this.CustomBtnAct();
+		this.wrapGames.SortAlphabetically();
+		this.scrollGames.enabled = true;
+		this.scrollGames.ResetPosition();
+	}
+
+	private void HandleRandomBtnClicked(object sender, EventArgs e)
+	{
+		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		{
+			FlurryEvents.LogAfterTraining(string.Concat(ConnectSceneNGUIController.regim, ".Random"), TrainingController.TrainingCompletedFlagForLogging.Value);
+			TrainingController.TrainingCompletedFlagForLogging = null;
+		}
+		this.actAfterConnectToPhoton = new Action(this.RandomBtnAct);
+		PhotonNetwork.autoJoinLobby = false;
+		this.ShowConnectToPhotonPanel();
+	}
+
+	public void HandleResumeFromShop()
+	{
+		ShopNGUIController.GuiActive = false;
+		ShopNGUIController.sharedShop.resumeAction = () => {
+		};
+		base.StartCoroutine(MainMenuController.ShowRanks());
+	}
+
+	private void HandleSearchBtnClicked(object sender, EventArgs e)
+	{
+		this.customPanel.SetActive(true);
+		if (this.searchInput != null)
+		{
+			this.gameNameFilter = this.searchInput.@value;
+		}
+		this.updateFilteredRoomList(this.gameNameFilter);
+		this.searchPanel.SetActive(false);
+		this.wrapGames.SortAlphabetically();
+		this.scrollGames.ResetPosition();
+	}
+
+	private void HandleSetPasswordBtnClicked(object sender, EventArgs e)
+	{
+		this.createPanel.SetActive(false);
+		this.selectMapPanel.SetActive(false);
+		this.setPasswordInput.@value = this.password;
+		this.setPasswordPanel.SetActive(true);
+	}
+
+	public void HandleShopClicked()
+	{
+		if (ShopNGUIController.GuiActive)
+		{
+			return;
+		}
+		if (MainMenuController.IsLevelUpOrBannerShown() || this.connectToPhotonPanel != null && this.connectToPhotonPanel.activeInHierarchy)
+		{
+			return;
+		}
+		ShopNGUIController.sharedShop.SetInGame(false);
+		ShopNGUIController.GuiActive = true;
+		ShopNGUIController.sharedShop.resumeAction = new Action(this.HandleResumeFromShop);
+	}
+
+	private void HandleShowSearchPanelBtnClicked(object sender, EventArgs e)
+	{
+		this.customPanel.SetActive(false);
+		if (this.searchInput != null)
+		{
+			this.searchInput.@value = this.gameNameFilter;
+		}
+		this.searchPanel.SetActive(true);
+	}
+
+	private void HandleUnlockBtnClicked(object sender, EventArgs e)
+	{
+		int captureFlagPrice = 0;
+		string empty = string.Empty;
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+		{
+			captureFlagPrice = Defs.CaptureFlagPrice;
+			empty = Defs.CaptureFlagPurchasedKey;
+		}
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
+		{
+			captureFlagPrice = Defs.HungerGamesPrice;
+			empty = Defs.hungerGamesPurchasedKey;
+		}
+		new Action(() => {
+			coinsShop.thisScript.notEnoughCurrency = null;
+			coinsShop.thisScript.onReturnAction = null;
+			int num = Storager.getInt("Coins", false) - captureFlagPrice;
+			if (num < 0)
+			{
+				FlurryPluginWrapper.LogEvent("Try_Enable_CaptureFlag");
+				StoreKitEventListener.State.PurchaseKey = "Mode opened";
+				if (BankController.Instance == null)
+				{
+					UnityEngine.Debug.LogWarning("BankController.Instance == null");
+				}
+				else
+				{
+					EventHandler instance = null;
+					instance = (object sender_, EventArgs e_) => {
+						BankController.Instance.BackRequested -= this.handleBackFromBank;
+						this.mainPanel.transform.root.gameObject.SetActive(true);
+						coinsShop.thisScript.notEnoughCurrency = null;
+						BankController.Instance.InterfaceEnabled = false;
+					};
+					BankController.Instance.BackRequested += instance;
+					this.mainPanel.transform.root.gameObject.SetActive(false);
+					coinsShop.thisScript.notEnoughCurrency = "Coins";
+					BankController.Instance.InterfaceEnabled = true;
+				}
+			}
+			else
+			{
+				FlurryPluginWrapper.LogEvent("Enable_Flags");
+				Storager.setInt(empty, 1, true);
+				Storager.setInt("Coins", num, false);
+				ShopNGUIController.SpendBoughtCurrency("Coins", captureFlagPrice);
+				if (Application.platform != RuntimePlatform.IPhonePlayer)
+				{
+					PlayerPrefs.Save();
+				}
+				ShopNGUIController.SynchronizeAndroidPurchases("Mode enabled");
+				if (coinsPlashka.thisScript != null)
+				{
+					coinsPlashka.thisScript.enabled = false;
+				}
+				if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+				{
+					this.SetUnLockedButton(this.flagCaptureToogle);
+				}
+				if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
+				{
+					this.SetUnLockedButton(this.deadlyGamesToogle);
+				}
+				this.unlockBtn.SetActive(false);
+				this.customBtn.SetActive(true);
+				this.randomBtn.SetActive(true);
+				this.conditionLabel.gameObject.SetActive(false);
+				this.goBtn.SetActive(true);
+			}
+		})();
+	}
+
+	private void HandleUnlockMapBtnClicked(object sender, EventArgs e)
+	{
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.selectMap.mapID);
+		if (infoScene == null)
+		{
+			return;
+		}
+		int item = Defs.PremiumMaps[infoScene.NameScene];
+		new Action(() => {
+			coinsShop.thisScript.notEnoughCurrency = null;
+			coinsShop.thisScript.onReturnAction = null;
+			int num = Storager.getInt("Coins", false) - item;
+			string nameScene = infoScene.NameScene;
+			if (num < 0)
+			{
+				StoreKitEventListener.State.PurchaseKey = "In map selection";
+				FlurryPluginWrapper.LogEvent(string.Concat("Try_Enable ", nameScene, " map"));
+				if (BankController.Instance == null)
+				{
+					UnityEngine.Debug.LogWarning("BankController.Instance == null");
+				}
+				else
+				{
+					EventHandler instance = null;
+					instance = (object sender_, EventArgs e_) => {
+						BankController.Instance.BackRequested -= this.handleBackFromBank;
+						this.mainPanel.transform.root.gameObject.SetActive(true);
+						coinsShop.thisScript.notEnoughCurrency = null;
+						BankController.Instance.InterfaceEnabled = false;
+					};
+					BankController.Instance.BackRequested += instance;
+					this.mainPanel.transform.root.gameObject.SetActive(false);
+					coinsShop.thisScript.notEnoughCurrency = "Coins";
+					BankController.Instance.InterfaceEnabled = true;
+				}
+			}
+			else
+			{
+				this.LogBuyMap(nameScene);
+				AnalyticsFacade.InAppPurchase(nameScene, "Premium Maps", 1, item, "Coins");
+				Storager.setInt(string.Concat(nameScene, "Key"), 1, true);
+				this.selectMap.mapPreviewTexture.mainTexture = this.mapPreview[nameScene];
+				Storager.setInt("Coins", num, false);
+				ShopNGUIController.SpendBoughtCurrency("Coins", item);
+				if (Application.platform != RuntimePlatform.IPhonePlayer)
+				{
+					PlayerPrefs.Save();
+				}
+				ShopNGUIController.SynchronizeAndroidPurchases(string.Concat("Map unlocked from connect scene: ", nameScene));
+				if (coinsPlashka.thisScript != null)
+				{
+					coinsPlashka.thisScript.enabled = false;
+				}
+			}
+		})();
+	}
+
+	private void InitializeBannerWindow()
+	{
+		this._advertisementController = base.gameObject.GetComponent<AdvertisementController>();
+		if (this._advertisementController == null)
+		{
+			this._advertisementController = base.gameObject.AddComponent<AdvertisementController>();
+		}
+		BannerWindowController.SharedController.advertiseController = this._advertisementController;
+	}
+
+	private bool IsUseMap(int indMap)
+	{
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(ConnectSceneNGUIController.curSelectMode, indMap);
+		if (infoScene == null)
+		{
+			return false;
+		}
+		return (!infoScene.isPremium || Storager.getInt(string.Concat(infoScene.NameScene, "Key"), true) != 0 ? true : PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene));
+	}
+
+	public static void JoinRandomGameRoom(int mapIndex, ConnectSceneNGUIController.RegimGame gameMode, int joinToNewRound, bool abTestSeparate = false)
+	{
+		string str;
+		string empty = string.Empty;
+		if (Defs.useSqlLobby)
+		{
+			if (mapIndex != -1)
+			{
+				empty = string.Concat(ConnectSceneNGUIController.mapProperty, " = ", mapIndex);
+			}
+			else
+			{
+				TypeModeGame typeModeGame = (TypeModeGame)((int)Enum.Parse(typeof(TypeModeGame), gameMode.ToString()));
+				int[] array = (
+					from m in SceneInfoController.instance.GetListScenesForMode(typeModeGame).avaliableScenes
+					select m.indexMap).ToArray<int>();
+				empty = string.Concat(empty, "( ");
+				for (int i = 0; i < (int)array.Length; i++)
+				{
+					str = empty;
+					empty = string.Concat(new object[] { str, ConnectSceneNGUIController.mapProperty, " = ", array[i] });
+					if (i + 1 < (int)array.Length)
+					{
+						empty = string.Concat(empty, " OR ");
+					}
+				}
+				empty = string.Concat(empty, " )");
+			}
+			empty = string.Concat(empty, " AND ", ConnectSceneNGUIController.passwordProperty, " = \"\"");
+			if (!Defs.isDaterRegim)
+			{
+				str = empty;
+				empty = string.Concat(new string[] { str, " AND ", ConnectSceneNGUIController.platformProperty, " = ", ConnectSceneNGUIController.myPlatformConnect.ToString() });
+			}
+			int num = joinToNewRound;
+			if (num == 0)
+			{
+				empty = string.Concat(empty, " AND ", ConnectSceneNGUIController.endingProperty, " = 0");
+			}
+			else if (num == 1)
+			{
+				empty = string.Concat(empty, " AND ", ConnectSceneNGUIController.endingProperty, " = 2");
+			}
+			if (ExpController.Instance.OurTier == 0)
+			{
+				empty = (!Defs.isABTestBalansCohortActual ? string.Concat(empty, " AND ", ConnectSceneNGUIController.ABTestProperty, " = 0") : string.Concat(empty, " AND ", ConnectSceneNGUIController.ABTestProperty, " = 1"));
+			}
+			if (Defs.isActivABTestBuffSystem || Defs.isActivABTestRatingSystem)
+			{
+				empty = string.Concat(empty, " AND ", ConnectSceneNGUIController.ABTestEnum, " = ");
+				if (abTestSeparate)
+				{
+					if (Defs.isActivABTestRatingSystem)
+					{
+						empty = string.Concat(empty, (!FriendsController.isUseRatingSystem ? 1 : 2));
+					}
+					else if (Defs.isActivABTestBuffSystem)
+					{
+						empty = string.Concat(empty, (!FriendsController.useBuffSystem ? 1 : 3));
+					}
+				}
+				else if (Defs.isActivABTestRatingSystem)
+				{
+					empty = string.Concat(empty, (!FriendsController.isUseRatingSystem ? 2 : 1));
+				}
+				else if (Defs.isActivABTestBuffSystem)
+				{
+					empty = string.Concat(empty, (!FriendsController.useBuffSystem ? 3 : 1));
+				}
+			}
+		}
+		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
+		hashtable[ConnectSceneNGUIController.passwordProperty] = string.Empty;
+		if (!Defs.useSqlLobby)
+		{
+			hashtable[ConnectSceneNGUIController.mapProperty] = mapIndex;
+		}
+		if (!Defs.isDaterRegim && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.DeadlyGames && ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TimeBattle)
+		{
+			hashtable[ConnectSceneNGUIController.maxKillProperty] = 3;
+		}
+		if (joinToNewRound == 0)
+		{
+			hashtable[ConnectSceneNGUIController.endingProperty] = 0;
+		}
+		if (!Defs.isDaterRegim)
+		{
+			hashtable[ConnectSceneNGUIController.platformProperty] = (int)ConnectSceneNGUIController.myPlatformConnect;
+		}
+		if (ExpController.Instance.OurTier == 0)
+		{
+			if (!Defs.isABTestBalansCohortActual)
+			{
+				hashtable[ConnectSceneNGUIController.ABTestProperty] = 0;
+			}
+			else
+			{
+				hashtable[ConnectSceneNGUIController.ABTestProperty] = 1;
+			}
+		}
+		PlayerPrefs.SetString("TypeGame", "client");
+		if (!Defs.useSqlLobby)
+		{
+			PhotonNetwork.JoinRandomRoom(hashtable, 0);
+		}
+		else
+		{
+			TypedLobby typedLobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
+			UnityEngine.Debug.Log(empty);
+			PhotonNetwork.JoinRandomRoom(hashtable, 0, MatchmakingMode.FillRoom, typedLobby, empty, null);
+		}
+		FlurryPluginWrapper.LogMultiplayerWayStart();
+	}
+
+	private void JoinRandomRoom(int mapIndex, ConnectSceneNGUIController.RegimGame gameMode)
+	{
+		this.joinNewRoundTries = 0;
+		this.tryJoinRoundMap = mapIndex;
+		if (mapIndex != -1)
+		{
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(mapIndex);
+			if (infoScene == null)
+			{
+				UnityEngine.Debug.LogError("scInfo == null");
+				return;
+			}
+			FlurryPluginWrapper.LogEnteringMap(0, infoScene.NameScene);
+			this.goMapName = infoScene.NameScene;
+		}
+		else if (Defs.useSqlLobby)
+		{
+			this.goMapName = string.Empty;
+		}
+		else
+		{
+			mapIndex = this.GetRandomMapIndex();
+			if (mapIndex == -1)
+			{
+				return;
+			}
+			SceneInfo sceneInfo = SceneInfoController.instance.GetInfoScene(mapIndex);
+			if (sceneInfo == null)
+			{
+				UnityEngine.Debug.LogError("scInfo == null");
+				return;
+			}
+			FlurryPluginWrapper.LogEnteringMap(0, sceneInfo.NameScene);
+			this.goMapName = sceneInfo.NameScene;
+		}
+		if (!string.IsNullOrEmpty(this.goMapName))
+		{
+			if (WeaponManager.sharedManager != null)
+			{
+				WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(this.goMapName) ? 0 : Defs.filterMaps[this.goMapName]));
+			}
+			base.StartCoroutine(this.SetFonLoadingWaitForReset(this.goMapName, false));
+			this.loadingMapPanel.SetActive(true);
+			ActivityIndicator.IsActiveIndicator = true;
+		}
+		ConnectSceneNGUIController.JoinRandomGameRoom(mapIndex, gameMode, this.joinNewRoundTries, this.abTestConnect);
+	}
+
+	public void JoinToLocalRoom(LANBroadcastService.ReceivedMessage _roomInfo)
+	{
+		if (_roomInfo.connectedPlayers == _roomInfo.playerLimit)
+		{
+			this.gameIsfullLabel.timer = 3f;
+			this.gameIsfullLabel.gameObject.SetActive(true);
+			this.incorrectPasswordLabel.timer = -1f;
+			this.incorrectPasswordLabel.gameObject.SetActive(false);
+			return;
+		}
+		GlobalGameController.countKillsBlue = 0;
+		GlobalGameController.countKillsRed = 0;
+		Defs.ServerIp = _roomInfo.ipAddress;
+		PlayerPrefs.SetString("MaxKill", _roomInfo.comment);
+		PlayerPrefs.SetString("MapName", _roomInfo.map);
+		if (WeaponManager.sharedManager != null)
+		{
+			WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(_roomInfo.map) ? 0 : Defs.filterMaps[_roomInfo.map]));
+		}
+		base.StartCoroutine(this.SetFonLoadingWaitForReset(_roomInfo.map, false));
+		base.Invoke("goGame", 0.1f);
+	}
+
+	public void JoinToRoomPhoton(RoomInfo _roomInfo)
+	{
+		if (_roomInfo.playerCount == _roomInfo.maxPlayers)
+		{
+			this.gameIsfullLabel.timer = 3f;
+			this.gameIsfullLabel.gameObject.SetActive(true);
+			this.incorrectPasswordLabel.timer = -1f;
+			this.incorrectPasswordLabel.gameObject.SetActive(false);
+			return;
+		}
+		this.joinRoomInfoFromCustom = _roomInfo;
+		if (!string.IsNullOrEmpty(_roomInfo.customProperties[ConnectSceneNGUIController.passwordProperty].ToString()))
+		{
+			this.gameIsfullLabel.timer = -1f;
+			this.gameIsfullLabel.gameObject.SetActive(false);
+			this.incorrectPasswordLabel.timer = 3f;
+			this.incorrectPasswordLabel.gameObject.SetActive(true);
+			this.enterPasswordInput.@value = string.Empty;
+			this.enterPasswordPanel.SetActive(true);
+			this.enterPasswordInput.isSelected = false;
+			this.enterPasswordInput.isSelected = true;
+			ExperienceController.sharedController.isShowRanks = false;
+			this.customPanel.SetActive(false);
+		}
+		else
+		{
+			this.JoinToRoomPhotonAfterCheck();
+		}
+	}
+
+	public void JoinToRoomPhotonAfterCheck()
+	{
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(this.joinRoomInfoFromCustom.customProperties[ConnectSceneNGUIController.mapProperty].ToString()));
+		base.StartCoroutine(this.SetFonLoadingWaitForReset(infoScene.NameScene, false));
+		this.loadingMapPanel.SetActive(true);
+		PhotonNetwork.JoinRoom(this.joinRoomInfoFromCustom.name);
+		ActivityIndicator.IsActiveIndicator = true;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator LoadMapPreview()
+	{
+		ConnectSceneNGUIController.u003cLoadMapPreviewu003ec__Iterator1E variable = null;
+		return variable;
 	}
 
 	public static void Local()
@@ -643,1648 +1554,474 @@ public class ConnectSceneNGUIController : MonoBehaviour
 		PhotonNetwork.Disconnect();
 		if (Defs.isGameFromFriends)
 		{
-			GoToFriends();
-			return;
+			ConnectSceneNGUIController.GoToFriends();
 		}
-		if (Defs.isGameFromClans)
+		else if (!Defs.isGameFromClans)
 		{
-			GoToClans();
-			return;
-		}
-		LoadConnectScene.textureToShow = null;
-		if (!Defs.isDaterRegim)
-		{
-			LoadConnectScene.sceneToLoad = "ConnectScene";
-		}
-		else
-		{
-			LoadConnectScene.sceneToLoad = "ConnectSceneSandbox";
-		}
-		LoadConnectScene.noteToShow = null;
-		SceneManager.LoadScene(Defs.PromSceneName);
-	}
-
-	public static void GoToProfile()
-	{
-		PlayerPrefs.SetInt(Defs.SkinEditorMode, 1);
-		GlobalGameController.EditingLogo = 0;
-		GlobalGameController.EditingCape = 0;
-		SceneManager.LoadScene("SkinEditor");
-	}
-
-	public void StopFingerAnim()
-	{
-		if (fingerAnimObj != null && fingerAnimObj.activeSelf)
-		{
-			fingerStopped = true;
-			fingerAnimObj.SetActive(false);
-			UIScrollView component = scrollViewSelectMapTransform.GetComponent<UIScrollView>();
-			component.onDragStarted = (UIScrollView.OnDragNotification)Delegate.Remove(component.onDragStarted, new UIScrollView.OnDragNotification(StopFingerAnim));
-		}
-	}
-
-	private void OnEnableWhenAnimate()
-	{
-		if (animationStarted)
-		{
-			StopFingerAnim();
-			modeAnimObj.SetActive(false);
-			fingerStopped = false;
-			StartCoroutine(AnimateModeOpen());
-		}
-	}
-
-	private IEnumerator AnimateModeOpen()
-	{
-		modeAnimObj.GetComponent<AudioSource>().enabled = Defs.isSoundFX;
-		animationStarted = true;
-		if (!TrainingController.TrainingCompleted)
-		{
-			localBtn.GetComponent<UIButton>().isEnabled = false;
-			randomBtn.GetComponent<UIButton>().isEnabled = false;
-			customBtn.GetComponent<UIButton>().isEnabled = false;
-			goBtn.GetComponent<UIButton>().isEnabled = false;
-		}
-		int storagedStage = Storager.getInt("ModeUnlockStage", false);
-		if (storagedStage == 0 && Storager.getInt("TrainingCompleted_4_4_Sett", false) == 1)
-		{
-			storagedStage = modeButtonByLevel.Length;
-		}
-		int currentStage = Mathf.Clamp(storagedStage, 0, modeButtonByLevel.Length);
-		for (int j = 0; j < modeButtonByLevel.Length; j++)
-		{
-			modeButtonByLevel[j].isEnabled = j < currentStage;
-		}
-		int currentLevel = ExperienceController.sharedController.currentLevel;
-		if (currentLevel >= 4)
-		{
-			currentLevel = modeButtonByLevel.Length;
-		}
-		if (modeUnlockLabelByLevel != null)
-		{
-			for (int i = 0; i < modeUnlockLabelByLevel.Length; i++)
-			{
-				modeUnlockLabelByLevel[i].gameObject.SetActive(i > Mathf.Max(currentStage, currentLevel) - 2);
-				modeUnlockLabelByLevel[i].text = string.Format(LocalizationStore.Get("Key_1923"), Mathf.Min(i + 2, 4));
-			}
-		}
-		if (currentStage < Mathf.Min(currentLevel, modeButtonByLevel.Length))
-		{
-			BannerWindowController.SharedController.AddBannersTimeout(20.1f);
-		}
-		if (currentStage == 0 && !TrainingController.TrainingCompleted)
-		{
-			UIScrollView component = scrollViewSelectMapTransform.GetComponent<UIScrollView>();
-			component.onDragStarted = (UIScrollView.OnDragNotification)Delegate.Combine(component.onDragStarted, new UIScrollView.OnDragNotification(StopFingerAnim));
-			modeButtonByLevel[0].GetComponent<UIToggle>().value = false;
-			modeButtonByLevel[0].GetComponent<UIToggle>().Set(false);
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Connect_Scene);
-		}
-		yield return new WaitForSeconds(0.5f);
-		for (; currentStage < Mathf.Min(currentLevel, modeButtonByLevel.Length); currentStage++)
-		{
-			BannerWindowController.SharedController.AddBannersTimeout(20.1f);
-			if (currentStage == 1)
-			{
-				BannerWindowController.firstScreen = true;
-				BannerWindowController.SharedController.ClearBannerStates();
-			}
-			UIButton currentMode = modeButtonByLevel[currentStage];
-			modeAnimObj.transform.SetParent(currentMode.transform, false);
-			modeAnimObj.SetActive(true);
-			yield return new WaitForSeconds(0.1f);
-			if (currentStage == 0)
-			{
-				modeButtonByLevel[currentStage].GetComponent<UIToggle>().value = true;
-			}
-			modeButtonByLevel[currentStage].isEnabled = true;
-			yield return new WaitForSeconds(1.4f);
-			modeAnimObj.SetActive(false);
-			if (currentStage == 0 && !TrainingController.TrainingCompleted)
-			{
-				if (!fingerStopped)
-				{
-					fingerAnimObj.SetActive(true);
-					yield return new WaitForSeconds(0.22f);
-				}
-				if (!fingerStopped)
-				{
-					SpringPanel.Begin(scrollViewSelectMapTransform.gameObject, scrollViewSelectMapTransform.localPosition - Vector3.left * 410f, 3f);
-					yield return new WaitForSeconds(1.65f);
-				}
-				if (!fingerStopped)
-				{
-					SpringPanel.Begin(scrollViewSelectMapTransform.gameObject, scrollViewSelectMapTransform.localPosition - Vector3.left * 410f, 3f);
-					yield return new WaitForSeconds(1.75f);
-				}
-				if (!fingerStopped)
-				{
-					SpringPanel.Begin(scrollViewSelectMapTransform.gameObject, scrollViewSelectMapTransform.localPosition - Vector3.left * 410f, 3f);
-					yield return new WaitForSeconds(0.7f);
-					fingerAnimObj.SetActive(false);
-					UIScrollView component2 = scrollViewSelectMapTransform.GetComponent<UIScrollView>();
-					component2.onDragStarted = (UIScrollView.OnDragNotification)Delegate.Remove(component2.onDragStarted, new UIScrollView.OnDragNotification(StopFingerAnim));
-					scrollViewSelectMapTransform.GetChild(0).GetComponent<MyCenterOnChild>().Recenter();
-				}
-			}
-			if (currentStage == 1)
-			{
-				HintController.instance.ShowHintByName("deathmatch", 0f);
-				HintController.instance.ShowHintByName("gobattletimeout", 0f);
-			}
-		}
-		if (storagedStage != currentStage)
-		{
-			Storager.setInt("ModeUnlockStage", currentStage, false);
-		}
-		if (!TrainingController.TrainingCompleted)
-		{
-			goBtn.GetComponent<UIButton>().isEnabled = true;
-			HintController.instance.ShowHintByName("gobattle", 0f);
-		}
-		animationStarted = false;
-	}
-
-	private void Start()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
-		{
-			WeaponManager.sharedManager.SaveWeaponAsLastUsed(0);
-		}
-		if (FriendsController.sharedController != null)
-		{
-			FriendsController.sharedController.profileInfo.Clear();
-		}
-		Defs.isDaterRegim = SceneLoader.ActiveSceneName.Equals("ConnectSceneSandbox");
-		GlobalGameController.CountKills = 0;
-		GlobalGameController.Score = 0;
-		WeaponManager.RefreshExpControllers();
-		rulesDeadmatch = LocalizationStore.Key_0550;
-		rulesTeamFight = LocalizationStore.Key_0551;
-		rulesTimeBattle = LocalizationStore.Key_0552;
-		rulesDeadlyGames = LocalizationStore.Key_0553;
-		rulesFlagCapture = LocalizationStore.Key_0554;
-		rulesCapturePoint = LocalizationStore.Get("Key_1368");
-		rulesDater = LocalizationStore.Get("Key_1538");
-		sharedController = this;
-		myLevelGame = ((!(ExperienceController.sharedController != null) || ExperienceController.sharedController.currentLevel > 2) ? ((ExperienceController.sharedController != null && ExperienceController.sharedController.currentLevel <= 5) ? 1 : 2) : 0);
-		mainPanel.SetActive(false);
-		selectMapPanel.SetActive(false);
-		createPanel.SetActive(false);
-		customPanel.SetActive(false);
-		searchPanel.SetActive(false);
-		setPasswordPanel.SetActive(false);
-		enterPasswordPanel.SetActive(false);
-		StartSearchLocalServers();
-		PlayerPrefs.SetString("TypeGame", "client");
-		gameIsfullLabel.gameObject.SetActive(false);
-		accountBlockedLabel.gameObject.SetActive(false);
-		serverIsNotAvalible.gameObject.SetActive(false);
-		nameAlreadyUsedLabel.gameObject.SetActive(false);
-		incorrectPasswordLabel.gameObject.SetActive(false);
-		unlockMapBtn.SetActive(false);
-		unlockMapBtnInCreate.SetActive(false);
-		unlockBtn.SetActive(false);
-		string path = MainLoadingTexture();
-		loadingToDraw.mainTexture = Resources.Load<Texture>(path);
-		loadingMapPanel.SetActive(true);
-		connectToPhotonPanel.SetActive(false);
-		if (PhotonNetwork.connectionState == ConnectionState.Connected)
-		{
-			firstConnectToPhoton = true;
-		}
-		if (!Defs.isDaterRegim)
-		{
-			ScrollTransform.GetComponent<UIPanel>().baseClipRegion = new Vector4(0f, 0f, 760 * Screen.width / Screen.height, 350f);
-		}
-		SetPosSelectMapPanelInMainMenu();
-		regim = ((!TrainingController.TrainingCompleted) ? RegimGame.TeamFight : ((!Defs.isDaterRegim) ? ((RegimGame)PlayerPrefs.GetInt("RegimMulty", 2)) : RegimGame.Deathmatch));
-		directedFromQuests = false;
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(selectedMap);
-		if (infoScene != null)
-		{
-			if (infoScene.IsAvaliableForMode(TypeModeGame.TeamFight))
-			{
-				regim = RegimGame.TeamFight;
-			}
-			else if (infoScene.IsAvaliableForMode(TypeModeGame.Deathmatch))
-			{
-				regim = RegimGame.Deathmatch;
-			}
-			else if (infoScene.IsAvaliableForMode(TypeModeGame.FlagCapture))
-			{
-				regim = RegimGame.FlagCapture;
-			}
-			else if (infoScene.IsAvaliableForMode(TypeModeGame.CapturePoints))
-			{
-				regim = RegimGame.CapturePoints;
-			}
-			else if (infoScene.IsAvaliableForMode(TypeModeGame.DeadlyGames))
-			{
-				regim = RegimGame.DeadlyGames;
-			}
-			else if (infoScene.IsAvaliableForMode(TypeModeGame.TimeBattle))
-			{
-				regim = RegimGame.TimeBattle;
-			}
-		}
-		if (!Defs.isDaterRegim)
-		{
-			deathmatchToggle.value = regim == RegimGame.Deathmatch;
-			timeBattleToogle.value = regim == RegimGame.TimeBattle;
-			teamFightToogle.value = regim == RegimGame.TeamFight;
-			deadlyGamesToogle.value = regim == RegimGame.DeadlyGames;
-			flagCaptureToogle.value = regim == RegimGame.FlagCapture;
-			capturePointsToogle.value = regim == RegimGame.CapturePoints;
-			deathmatchToggle.GetComponent<ButtonHandler>().Clicked += SetRegimDeathmatch;
-			timeBattleToogle.GetComponent<ButtonHandler>().Clicked += SetRegimTimeBattle;
-			teamFightToogle.GetComponent<ButtonHandler>().Clicked += SetRegimTeamFight;
-			deadlyGamesToogle.GetComponent<ButtonHandler>().Clicked += SetRegimDeadleGames;
-			flagCaptureToogle.GetComponent<ButtonHandler>().Clicked += SetRegimFlagCapture;
-			capturePointsToogle.GetComponent<ButtonHandler>().Clicked += SetRegimCapturePoints;
-		}
-		StartCoroutine(LoadMapPreview());
-		if (localBtn != null)
-		{
-			ButtonHandler component = localBtn.GetComponent<ButtonHandler>();
-			if (component != null)
-			{
-				component.Clicked += HandleLocalBtnClicked;
-			}
-		}
-		if (customBtn != null)
-		{
-			ButtonHandler component2 = customBtn.GetComponent<ButtonHandler>();
-			if (component2 != null)
-			{
-				component2.Clicked += HandleCustomBtnClicked;
-			}
-		}
-		if (randomBtn != null)
-		{
-			ButtonHandler component3 = randomBtn.GetComponent<ButtonHandler>();
-			if (component3 != null)
-			{
-				component3.Clicked += HandleRandomBtnClicked;
-			}
-		}
-		if (goBtn != null)
-		{
-			ButtonHandler component4 = goBtn.GetComponent<ButtonHandler>();
-			if (component4 != null)
-			{
-				component4.Clicked += HandleGoBtnClicked;
-			}
-		}
-		if (backBtn != null)
-		{
-			ButtonHandler component5 = backBtn.GetComponent<ButtonHandler>();
-			if (component5 != null)
-			{
-				component5.Clicked += HandleBackBtnClicked;
-			}
-		}
-		if (unlockBtn != null)
-		{
-			ButtonHandler component6 = unlockBtn.GetComponent<ButtonHandler>();
-			if (component6 != null)
-			{
-				component6.Clicked += HandleUnlockBtnClicked;
-			}
-		}
-		if (unlockMapBtn != null)
-		{
-			ButtonHandler component7 = unlockMapBtn.GetComponent<ButtonHandler>();
-			if (component7 != null)
-			{
-				component7.Clicked += HandleUnlockMapBtnClicked;
-			}
-		}
-		if (unlockMapBtnInCreate != null)
-		{
-			ButtonHandler component8 = unlockMapBtnInCreate.GetComponent<ButtonHandler>();
-			if (component8 != null)
-			{
-				component8.Clicked += HandleUnlockMapBtnClicked;
-			}
-		}
-		if (cancelFromConnectToPhotonBtn != null)
-		{
-			ButtonHandler component9 = cancelFromConnectToPhotonBtn.GetComponent<ButtonHandler>();
-			if (component9 != null)
-			{
-				component9.Clicked += HandleCancelFromConnectToPhotonBtnClicked;
-			}
-		}
-		if (clearBtn != null)
-		{
-			ButtonHandler component10 = clearBtn.GetComponent<ButtonHandler>();
-			if (component10 != null)
-			{
-				component10.Clicked += HandleClearBtnClicked;
-			}
-		}
-		if (searchBtn != null)
-		{
-			ButtonHandler component11 = searchBtn.GetComponent<ButtonHandler>();
-			if (component11 != null)
-			{
-				component11.Clicked += HandleSearchBtnClicked;
-			}
-		}
-		if (showSearchPanelBtn != null)
-		{
-			ButtonHandler component12 = showSearchPanelBtn.GetComponent<ButtonHandler>();
-			if (component12 != null)
-			{
-				component12.Clicked += HandleShowSearchPanelBtnClicked;
-			}
-		}
-		if (goToCreateRoomBtn != null)
-		{
-			ButtonHandler component13 = goToCreateRoomBtn.GetComponent<ButtonHandler>();
-			if (component13 != null)
-			{
-				component13.Clicked += HandleGoToCreateRoomBtnClicked;
-			}
-		}
-		if (createRoomBtn != null)
-		{
-			createRoomUIBtn = createRoomBtn.GetComponent<UIButton>();
-			ButtonHandler component14 = createRoomBtn.GetComponent<ButtonHandler>();
-			if (component14 != null)
-			{
-				component14.Clicked += HandleCreateRoomBtnClicked;
-			}
-		}
-		if (setPasswordBtn != null)
-		{
-			ButtonHandler component15 = setPasswordBtn.GetComponent<ButtonHandler>();
-			if (component15 != null)
-			{
-				component15.Clicked += HandleSetPasswordBtnClicked;
-			}
-		}
-		if (clearInSetPasswordBtn != null)
-		{
-			ButtonHandler component16 = clearInSetPasswordBtn.GetComponent<ButtonHandler>();
-			if (component16 != null)
-			{
-				component16.Clicked += HandleClearInSetPasswordBtnClicked;
-			}
-		}
-		if (okInsetPasswordBtn != null)
-		{
-			ButtonHandler component17 = okInsetPasswordBtn.GetComponent<ButtonHandler>();
-			if (component17 != null)
-			{
-				component17.Clicked += _003CStart_003Em__2D;
-			}
-		}
-		if (joinRoomFromEnterPasswordBtn != null)
-		{
-			ButtonHandler component18 = joinRoomFromEnterPasswordBtn.GetComponent<ButtonHandler>();
-			if (component18 != null)
-			{
-				component18.Clicked += HandleJoinRoomFromEnterPasswordBtnClicked;
-			}
-		}
-		if (!Defs.isDaterRegim)
-		{
-			if (true)
-			{
-				SetUnLockedButton(flagCaptureToogle);
-			}
-			if (true)
-			{
-				SetUnLockedButton(deadlyGamesToogle);
-			}
-		}
-		InitializeBannerWindow();
-		InterstitialManager.Instance.ResetAdProvider();
-		if (!NeedShowReviewInConnectScene)
-		{
-			if (ReplaceAdmobPerelivController.ReplaceAdmobWithPerelivApplicable() && ReplaceAdmobWithPerelivRequest)
-			{
-				ReplaceAdmobWithPerelivRequest = false;
-				StartCoroutine(WaitLoadingAndShowReplaceAdmobPereliv("Connect Scene", false));
-			}
-			else
-			{
-				Debug.LogFormat("{0}, Start(), InterstitialRequest: {1}", GetType().Name, InterstitialRequest);
-				if (MobileAdManager.AdIsApplicable(MobileAdManager.Type.Image, true) && InterstitialRequest)
-				{
-					isStartShowAdvert = true;
-					StartCoroutine(WaitLoadingAndShowInterstitialCoroutine("Connect Scene", false));
-				}
-			}
-		}
-		wrapGames.onInitializeItem = OnInitializeItem;
-		enterPasswordInput.onSubmit.Add(new EventDelegate(EnterPassInputSubmit));
-	}
-
-	private IEnumerator OnApplicationPause(bool pausing)
-	{
-		if (pausing)
-		{
-			LogUserQuit();
-			lanScan.StopBroadCasting();
-			yield break;
-		}
-		yield return new WaitForSeconds(1f);
-		StartSearchLocalServers();
-		InterstitialManager.Instance.ResetAdProvider();
-		if (MobileAdManager.Instance.SuppressShowOnReturnFromPause)
-		{
-			MobileAdManager.Instance.SuppressShowOnReturnFromPause = false;
-			yield break;
-		}
-		bool shouldShowReplaceAdmob = ReplaceAdmobPerelivController.ReplaceAdmobWithPerelivApplicable() && ReplaceAdmobPerelivController.sharedController != null;
-		if (shouldShowReplaceAdmob)
-		{
-			ReplaceAdmobPerelivController.IncreaseTimesCounter();
-		}
-		if (shouldShowReplaceAdmob && ReplaceAdmobPerelivController.ShouldShowAtThisTime && !loadAdmobRunning)
-		{
-			StartCoroutine(WaitLoadingAndShowReplaceAdmobPereliv("On return from pause to Connect Scene"));
-		}
-	}
-
-	private IEnumerator WaitLoadingAndShowReplaceAdmobPereliv(string context, bool loadData = true)
-	{
-		if (loadReplaceAdmobPerelivRunning)
-		{
-			yield break;
-		}
-		try
-		{
-			loadReplaceAdmobPerelivRunning = true;
-			if (loadData && !ReplaceAdmobPerelivController.sharedController.DataLoading && !ReplaceAdmobPerelivController.sharedController.DataLoaded)
-			{
-				ReplaceAdmobPerelivController.sharedController.LoadPerelivData();
-			}
-			while (ReplaceAdmobPerelivController.sharedController == null || !ReplaceAdmobPerelivController.sharedController.DataLoaded)
-			{
-				if (!ReplaceAdmobPerelivController.sharedController.DataLoading)
-				{
-					loadReplaceAdmobPerelivRunning = false;
-					yield break;
-				}
-				yield return null;
-			}
-			if (mainPanel != null)
-			{
-				while (!mainPanel.activeInHierarchy)
-				{
-					yield return null;
-				}
-				yield return new WaitForSeconds(0.5f);
-			}
-			ReplaceAdmobPerelivController.TryShowPereliv(context);
-			ReplaceAdmobPerelivController.sharedController.DestroyImage();
-		}
-		finally
-		{
-			loadReplaceAdmobPerelivRunning = false;
-		}
-	}
-
-	private IEnumerator WaitLoadingAndShowInterstitialCoroutine(string context, bool loadData = true)
-	{
-		if (Defs.IsDeveloperBuild)
-		{
-			Debug.Log("Starting WaitLoadingAndShowInterstitialCoroutine()    " + InterstitialManager.Instance.Provider);
-		}
-		if (loadAdmobRunning)
-		{
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Quitting WaitLoadingAndShowInterstitialCoroutine() because loadAdmobRunning==true");
-			}
-			yield break;
-		}
-		loadAdmobRunning = true;
-		try
-		{
-			if (InterstitialManager.Instance.Provider == AdProvider.Fyber)
-			{
-				float loadAttemptTime2 = Time.realtimeSinceStartup;
-				if (Defs.IsDeveloperBuild)
-				{
-					Debug.Log("FyberFacade.Instance.Requests.Count: " + FyberFacade.Instance.Requests.Count);
-				}
-				if (FyberFacade.Instance.Requests.Count == 0)
-				{
-					LogUserInterstitialRequest();
-					Task<Ad> r = FyberFacade.Instance.RequestImageInterstitial("WaitLoadingAndShowInterstitialCoroutine(), requests count: 0");
-					FyberFacade.Instance.Requests.AddLast(r);
-				}
-				if (Defs.IsDeveloperBuild)
-				{
-					Debug.Log("Waiting either at least one loading request completed successfully, or all failed...");
-				}
-				while (true)
-				{
-					LinkedList<Task<Ad>> requests = FyberFacade.Instance.Requests;
-					if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache17 == null)
-					{
-						_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache17 = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__35;
-					}
-					if (requests.Any(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache17))
-					{
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.LogFormat("Found successfully completed request among {0}", FyberFacade.Instance.Requests.Count);
-						}
-						break;
-					}
-					LinkedList<Task<Ad>> requests2 = FyberFacade.Instance.Requests;
-					if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache18 == null)
-					{
-						_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache18 = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__36;
-					}
-					if (requests2.All(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache18))
-					{
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.Log("All requests are completed.");
-						}
-						break;
-					}
-					if (Time.realtimeSinceStartup - loadAttemptTime2 > 5.2f)
-					{
-						if (Defs.IsDeveloperBuild)
-						{
-							Debug.Log("Loading timed out.");
-						}
-						break;
-					}
-					yield return null;
-				}
-				LinkedList<Task<Ad>> requests3 = FyberFacade.Instance.Requests;
-				if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache19 == null)
-				{
-					_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache19 = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__37;
-				}
-				List<Task<Ad>> completedRequests = requests3.Where(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache19).ToList();
-				List<Task<Ad>> source = completedRequests;
-				if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1A == null)
-				{
-					_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1A = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__38;
-				}
-				List<Task<Ad>> noOffersRequests = source.Where(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1A).ToList();
-				if (noOffersRequests.Count > 0)
-				{
-					if (Defs.IsDeveloperBuild)
-					{
-						Debug.Log("Removing not filled requests: " + noOffersRequests.Count);
-					}
-					foreach (Task<Ad> noOffersRequest in noOffersRequests)
-					{
-						FyberFacade.Instance.Requests.Remove(noOffersRequest);
-						completedRequests = null;
-					}
-				}
-				if (completedRequests == null)
-				{
-					LinkedList<Task<Ad>> requests4 = FyberFacade.Instance.Requests;
-					if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1B == null)
-					{
-						_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1B = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__39;
-					}
-					completedRequests = requests4.Where(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1B).ToList();
-				}
-				List<Task<Ad>> source2 = completedRequests;
-				if (_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1C == null)
-				{
-					_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1C = _003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Em__3A;
-				}
-				List<Task<Ad>> errorRequests = source2.Where(_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D._003C_003Ef__am_0024cache1C).ToList();
-				if (errorRequests.Count > 0)
-				{
-					if (Defs.IsDeveloperBuild)
-					{
-						Debug.Log("Removing failed requests: " + errorRequests.Count);
-					}
-					foreach (Task<Ad> errorRequest in errorRequests)
-					{
-						FyberFacade.Instance.Requests.Remove(errorRequest);
-						completedRequests = null;
-					}
-				}
-				if (mainPanel != null)
-				{
-					while (!mainPanel.activeInHierarchy)
-					{
-						yield return null;
-					}
-					yield return new WaitForSeconds(0.5f);
-				}
-				if (!PhotonNetwork.inRoom)
-				{
-					Dictionary<string, string> attributes = new Dictionary<string, string>
-					{
-						{ "af_content_type", "Interstitial" },
-						{ "af_content_id", "Interstitial (ConnectScene)" }
-					};
-					FlurryPluginWrapper.LogEventToAppsFlyer("af_content_view", attributes);
-					MenuBackgroundMusic.sharedMusic.Stop();
-					Task<AdResult> showTask = FyberFacade.Instance.ShowInterstitial(new Dictionary<string, string> { { "Context", "Connect Scene" } }, "WaitLoadingAndShowInterstitialCoroutine()");
-					Storager.setInt("PendingInterstitial", 8, false);
-					showTask.ContinueWith(((_003CWaitLoadingAndShowInterstitialCoroutine_003Ec__Iterator1D)(object)this)._003C_003Em__3B);
-				}
-				else
-				{
-					Dictionary<string, string> parameters2 = new Dictionary<string, string> { { "Fyber - Interstitial", "Impression: Canceled (in Photon room)" } };
-					FlurryPluginWrapper.LogEventAndDublicateToConsole("Ads Show Stats - Total", parameters2);
-				}
-			}
-			else if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
-			{
-				float loadAttemptTime = Time.realtimeSinceStartup;
-				if (!loadData || MobileAdManager.Instance.ImageInterstitialState != MobileAdManager.State.Loaded)
-				{
-				}
-				while (MobileAdManager.Instance.ImageInterstitialState != MobileAdManager.State.Loaded)
-				{
-					if (!string.IsNullOrEmpty(MobileAdManager.Instance.ImageAdFailedToLoadMessage) || Time.realtimeSinceStartup - loadAttemptTime > 5.2f)
-					{
-						bool unitIdsLooped = MobileAdManager.Instance.SwitchImageAdUnitId();
-						if (unitIdsLooped)
-						{
-							InterstitialManager.Instance.SwitchAdProvider();
-						}
-						if (!unitIdsLooped || _countOfLoopsRequestAdThisTime < PromoActionsManager.MobileAdvert.CountRoundReplaceProviders - 1)
-						{
-							if (unitIdsLooped)
-							{
-								_countOfLoopsRequestAdThisTime++;
-							}
-							if (InterstitialManager.Instance.Provider == AdProvider.Fyber)
-							{
-								LogUserInterstitialRequest();
-								Task<Ad> request = FyberFacade.Instance.RequestImageInterstitial("WaitLoadingAndShowInterstitialCoroutine()");
-								FyberFacade.Instance.Requests.AddLast(request);
-							}
-							else if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
-							{
-								LogUserInterstitialRequest();
-							}
-							loadAdmobRunning = false;
-							yield return StartCoroutine(WaitLoadingAndShowInterstitialCoroutine(context, loadData));
-						}
-						yield break;
-					}
-					yield return null;
-				}
-				if (mainPanel != null)
-				{
-					while (!mainPanel.activeInHierarchy)
-					{
-						yield return null;
-					}
-					yield return new WaitForSeconds(0.5f);
-				}
-				while (ShopNGUIController.GuiActive)
-				{
-					yield return null;
-				}
-				if (!PhotonNetwork.inRoom)
-				{
-					MobileAdManager.Instance.ShowImageInterstitial(context);
-					MobileAdManager.Instance.DestroyImageInterstitial();
-				}
-				else
-				{
-					Dictionary<string, string> parameters = new Dictionary<string, string> { { "AdMob - Image", "Impression: Canceled (in Photon room)" } };
-					FlurryPluginWrapper.LogEventAndDublicateToConsole("Ads Show Stats - Total", parameters);
-				}
-			}
-			_lastTimeInterstitialShown = Time.realtimeSinceStartup;
-		}
-		finally
-		{
-			loadAdmobRunning = false;
-			if (Defs.IsDeveloperBuild)
-			{
-				Debug.Log("Finishing WaitLoadingAndShowInterstitialCoroutine()    " + InterstitialManager.Instance.Provider);
-			}
-		}
-	}
-
-	private void InitializeBannerWindow()
-	{
-		_advertisementController = base.gameObject.GetComponent<AdvertisementController>();
-		if (_advertisementController == null)
-		{
-			_advertisementController = base.gameObject.AddComponent<AdvertisementController>();
-		}
-		BannerWindowController.SharedController.advertiseController = _advertisementController;
-	}
-
-	private void SetUnLockedButton(UIToggle butToogle)
-	{
-		UIButton component = butToogle.gameObject.GetComponent<UIButton>();
-		component.normalSprite = "yell_btn";
-		component.hoverSprite = "yell_btn";
-		component.pressedSprite = "green_btn_n";
-		butToogle.transform.FindChild("LockedSprite").gameObject.SetActive(false);
-		butToogle.transform.FindChild("Checkmark").GetComponent<UISprite>().spriteName = "green_btn";
-	}
-
-	private void SetRegimDeathmatch(object sender, EventArgs e)
-	{
-		if (regim != 0)
-		{
-			SetRegim(RegimGame.Deathmatch);
-		}
-	}
-
-	private void SetRegimTeamFight(object sender, EventArgs e)
-	{
-		if (regim != RegimGame.TeamFight)
-		{
-			SetRegim(RegimGame.TeamFight);
-		}
-	}
-
-	private void SetRegimTimeBattle(object sender, EventArgs e)
-	{
-		if (regim != RegimGame.TimeBattle)
-		{
-			SetRegim(RegimGame.TimeBattle);
-		}
-	}
-
-	private void SetRegimDeadleGames(object sender, EventArgs e)
-	{
-		if (regim != RegimGame.DeadlyGames)
-		{
-			SetRegim(RegimGame.DeadlyGames);
-		}
-	}
-
-	private void SetRegimFlagCapture(object sender, EventArgs e)
-	{
-		if (regim != RegimGame.FlagCapture)
-		{
-			SetRegim(RegimGame.FlagCapture);
-		}
-	}
-
-	private void SetRegimCapturePoints(object sender, EventArgs e)
-	{
-		if (regim != RegimGame.CapturePoints)
-		{
-			SetRegim(RegimGame.CapturePoints);
-		}
-	}
-
-	private void HandleJoinRoomFromEnterPasswordBtnClicked(object sender, EventArgs e)
-	{
-		if (enterPasswordInput.value.Equals(joinRoomInfoFromCustom.customProperties[passwordProperty].ToString()))
-		{
-			JoinToRoomPhotonAfterCheck();
-			return;
-		}
-		enterPasswordPanel.SetActive(false);
-		ExperienceController.sharedController.isShowRanks = true;
-		customPanel.SetActive(true);
-		Invoke("UpdateFilteredRoomListInvoke", 0.03f);
-	}
-
-	private void HandleSetPasswordBtnClicked(object sender, EventArgs e)
-	{
-		createPanel.SetActive(false);
-		selectMapPanel.SetActive(false);
-		setPasswordInput.value = password;
-		setPasswordPanel.SetActive(true);
-	}
-
-	private void HandleClearInSetPasswordBtnClicked(object sender, EventArgs e)
-	{
-		setPasswordInput.value = string.Empty;
-	}
-
-	private void OnPaswordSelected()
-	{
-		password = setPasswordInput.value;
-		BackFromSetPasswordPanel();
-	}
-
-	private void BackFromSetPasswordPanel()
-	{
-		createPanel.SetActive(true);
-		selectMapPanel.SetActive(true);
-		passONSprite.SetActive(!string.IsNullOrEmpty(password));
-		setPasswordPanel.SetActive(false);
-	}
-
-	public static void CreateGameRoom(string roomName, int playerLimit, int mapIndex, int MaxKill, string password, RegimGame gameMode)
-	{
-		int num = 10;
-		string[] array = new string[num];
-		array[0] = mapProperty;
-		array[1] = passwordProperty;
-		array[2] = platformProperty;
-		array[3] = endingProperty;
-		array[4] = maxKillProperty;
-		array[5] = "TimeMatchEnd";
-		array[6] = "tier";
-		array[7] = ABTestProperty;
-		array[8] = ABTestEnum;
-		array[9] = "SpecialBonus";
-		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
-		hashtable[mapProperty] = mapIndex;
-		hashtable[passwordProperty] = password;
-		hashtable[platformProperty] = (int)((!string.IsNullOrEmpty(password)) ? PlatformConnect.custom : myPlatformConnect);
-		hashtable[endingProperty] = 0;
-		hashtable[maxKillProperty] = MaxKill;
-		hashtable["TimeMatchEnd"] = PhotonNetwork.time;
-		hashtable["tier"] = ExpController.Instance.OurTier;
-		if (ExpController.Instance.OurTier == 0)
-		{
-			hashtable[ABTestProperty] = (Defs.isABTestBalansCohortActual ? 1 : 0);
-		}
-		if (Defs.isActivABTestRatingSystem)
-		{
-			hashtable[ABTestEnum] = ((!FriendsController.isUseRatingSystem) ? 1 : 2);
-		}
-		else if (Defs.isActivABTestBuffSystem)
-		{
-			hashtable[ABTestEnum] = ((!FriendsController.useBuffSystem) ? 1 : 3);
-		}
-		hashtable["SpecialBonus"] = 0;
-		PhotonCreateRoom(roomName, true, true, (playerLimit <= 10) ? playerLimit : 10, hashtable, array);
-	}
-
-	public static void PhotonCreateRoom(string roomName, bool isVisible, bool isOpen, int maxPlayers, ExitGames.Client.Photon.Hashtable roomProps, string[] roomPropsInLobby)
-	{
-		PlayerPrefs.SetString("TypeGame", "server");
-		RoomOptions roomOptions = new RoomOptions();
-		roomOptions.customRoomProperties = roomProps;
-		roomOptions.customRoomPropertiesForLobby = roomPropsInLobby;
-		RoomOptions roomOptions2 = roomOptions;
-		roomOptions2.maxPlayers = (byte)maxPlayers;
-		roomOptions2.isOpen = isOpen;
-		roomOptions2.isVisible = isVisible;
-		if (!Defs.useSqlLobby)
-		{
-			PhotonNetwork.CreateRoom(roomName, roomOptions2, TypedLobby.Default);
-			return;
-		}
-		TypedLobby typedLobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
-		PhotonNetwork.CreateRoom(roomName, roomOptions2, typedLobby);
-	}
-
-	public static void JoinRandomGameRoom(int mapIndex, RegimGame gameMode, int joinToNewRound, bool abTestSeparate = false)
-	{
-		string text = string.Empty;
-		if (Defs.useSqlLobby)
-		{
-			if (mapIndex == -1)
-			{
-				TypeModeGame needMode = (TypeModeGame)(int)Enum.Parse(typeof(TypeModeGame), gameMode.ToString());
-				List<SceneInfo> avaliableScenes = SceneInfoController.instance.GetListScenesForMode(needMode).avaliableScenes;
-				if (_003C_003Ef__am_0024cache9A == null)
-				{
-					_003C_003Ef__am_0024cache9A = _003CJoinRandomGameRoom_003Em__2E;
-				}
-				int[] array = avaliableScenes.Select(_003C_003Ef__am_0024cache9A).ToArray();
-				text += "( ";
-				for (int i = 0; i < array.Length; i++)
-				{
-					string text2 = text;
-					text = text2 + mapProperty + " = " + array[i];
-					if (i + 1 < array.Length)
-					{
-						text += " OR ";
-					}
-				}
-				text += " )";
-			}
-			else
-			{
-				text = mapProperty + " = " + mapIndex;
-			}
-			text = text + " AND " + passwordProperty + " = \"\"";
-			if (!Defs.isDaterRegim)
-			{
-				string text2 = text;
-				string[] obj = new string[5] { text2, " AND ", platformProperty, " = ", null };
-				int num = (int)myPlatformConnect;
-				obj[4] = num.ToString();
-				text = string.Concat(obj);
-			}
-			switch (joinToNewRound)
-			{
-			case 0:
-				text = text + " AND " + endingProperty + " = 0";
-				break;
-			case 1:
-				text = text + " AND " + endingProperty + " = 2";
-				break;
-			}
-			if (ExpController.Instance.OurTier == 0)
-			{
-				text = ((!Defs.isABTestBalansCohortActual) ? (text + " AND " + ABTestProperty + " = 0") : (text + " AND " + ABTestProperty + " = 1"));
-			}
-			if (Defs.isActivABTestBuffSystem || Defs.isActivABTestRatingSystem)
-			{
-				text = text + " AND " + ABTestEnum + " = ";
-				if (abTestSeparate)
-				{
-					if (Defs.isActivABTestRatingSystem)
-					{
-						text += ((!FriendsController.isUseRatingSystem) ? 1 : 2);
-					}
-					else if (Defs.isActivABTestBuffSystem)
-					{
-						text += ((!FriendsController.useBuffSystem) ? 1 : 3);
-					}
-				}
-				else if (Defs.isActivABTestRatingSystem)
-				{
-					text += (FriendsController.isUseRatingSystem ? 1 : 2);
-				}
-				else if (Defs.isActivABTestBuffSystem)
-				{
-					text += (FriendsController.useBuffSystem ? 1 : 3);
-				}
-			}
-		}
-		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
-		hashtable[passwordProperty] = string.Empty;
-		if (!Defs.useSqlLobby)
-		{
-			hashtable[mapProperty] = mapIndex;
-		}
-		if (!Defs.isDaterRegim && regim != RegimGame.DeadlyGames && regim != RegimGame.TimeBattle)
-		{
-			hashtable[maxKillProperty] = 3;
-		}
-		if (joinToNewRound == 0)
-		{
-			hashtable[endingProperty] = 0;
-		}
-		if (!Defs.isDaterRegim)
-		{
-			hashtable[platformProperty] = (int)myPlatformConnect;
-		}
-		if (ExpController.Instance.OurTier == 0)
-		{
-			if (Defs.isABTestBalansCohortActual)
-			{
-				hashtable[ABTestProperty] = 1;
-			}
-			else
-			{
-				hashtable[ABTestProperty] = 0;
-			}
-		}
-		PlayerPrefs.SetString("TypeGame", "client");
-		if (Defs.useSqlLobby)
-		{
-			TypedLobby typedLobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
-			Debug.Log(text);
-			PhotonNetwork.JoinRandomRoom(hashtable, 0, MatchmakingMode.FillRoom, typedLobby, text);
-		}
-		else
-		{
-			PhotonNetwork.JoinRandomRoom(hashtable, 0);
-		}
-		FlurryPluginWrapper.LogMultiplayerWayStart();
-	}
-
-	private void JoinRandomRoom(int mapIndex, RegimGame gameMode)
-	{
-		joinNewRoundTries = 0;
-		tryJoinRoundMap = mapIndex;
-		if (mapIndex != -1)
-		{
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(mapIndex);
-			if (infoScene == null)
-			{
-				Debug.LogError("scInfo == null");
-				return;
-			}
-			FlurryPluginWrapper.LogEnteringMap(0, infoScene.NameScene);
-			goMapName = infoScene.NameScene;
-		}
-		else if (!Defs.useSqlLobby)
-		{
-			mapIndex = GetRandomMapIndex();
-			if (mapIndex == -1)
-			{
-				return;
-			}
-			SceneInfo infoScene2 = SceneInfoController.instance.GetInfoScene(mapIndex);
-			if (infoScene2 == null)
-			{
-				Debug.LogError("scInfo == null");
-				return;
-			}
-			FlurryPluginWrapper.LogEnteringMap(0, infoScene2.NameScene);
-			goMapName = infoScene2.NameScene;
-		}
-		else
-		{
-			goMapName = string.Empty;
-		}
-		if (!string.IsNullOrEmpty(goMapName))
-		{
-			if (WeaponManager.sharedManager != null)
-			{
-				WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(goMapName) ? Defs.filterMaps[goMapName] : 0);
-			}
-			StartCoroutine(SetFonLoadingWaitForReset(goMapName));
-			loadingMapPanel.SetActive(true);
-			ActivityIndicator.IsActiveIndicator = true;
-		}
-		JoinRandomGameRoom(mapIndex, gameMode, joinNewRoundTries, abTestConnect);
-	}
-
-	private void HandleCreateRoomBtnClicked(object sender, EventArgs e)
-	{
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(selectMap.mapID);
-		if (infoScene == null)
-		{
-			return;
-		}
-		string text = infoScene.gameObject.name;
-		if (infoScene.isPremium && Storager.getInt(text + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(text))
-		{
-			PhotonNetwork.Disconnect();
-			return;
-		}
-		string text2 = FilterBadWorld.FilterString(nameServerInput.value);
-		bool flag = false;
-		if (Defs.isInet)
-		{
-			RoomInfo[] roomList = PhotonNetwork.GetRoomList();
-			for (int i = 0; i < roomList.Length; i++)
-			{
-				if (roomList[i].name.Equals(text2))
-				{
-					flag = true;
-					break;
-				}
-			}
-		}
-		if (flag)
-		{
-			nameAlreadyUsedLabel.timer = 3f;
-			nameAlreadyUsedLabel.gameObject.SetActive(true);
-			return;
-		}
-		goMapName = text;
-		PlayerPrefs.SetString("MapName", goMapName);
-		if (killToWin.value.Value > killToWin.maxValue.Value)
-		{
-			killToWin.value = killToWin.maxValue;
-		}
-		if (killToWin.value.Value < killToWin.minValue.Value)
-		{
-			killToWin.value = killToWin.minValue;
-		}
-		PlayerPrefs.SetString("MaxKill", killToWin.value.Value.ToString());
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(text) ? Defs.filterMaps[text] : 0);
-		}
-		StartCoroutine(SetFonLoadingWaitForReset(goMapName));
-		loadingMapPanel.SetActive(true);
-		int num = ((regim != 0 && regim != RegimGame.TimeBattle && regim != RegimGame.DeadlyGames) ? teamCountPlayer.value : numberOfPlayer.value.Value);
-		int maxKill = (Defs.isDaterRegim ? killToWin.value.Value : ((regim == RegimGame.DeadlyGames) ? 10 : ((!Defs.isDaterRegim) ? 4 : 5)));
-		if (Defs.isInet)
-		{
-			loadingMapPanel.SetActive(true);
-			ActivityIndicator.IsActiveIndicator = true;
-			CreateGameRoom(text2, num, infoScene.indexMap, maxKill, password, regim);
-		}
-		else
-		{
-			bool useNat = Network.HavePublicAddress();
-			Network.InitializeServer(num - 1, 25002, useNat);
-			PlayerPrefs.SetString("ServerName", text2);
-			PlayerPrefs.SetString("PlayersLimits", num.ToString());
-			Singleton<SceneLoader>.Instance.LoadSceneAsync("PromScene");
-		}
-	}
-
-	private void ShowKillToWinPanel(bool show)
-	{
-		if (show)
-		{
-			numberOfPlayer.transform.localPosition = new Vector3(posNumberOffPlayersX, numberOfPlayer.transform.localPosition.y, numberOfPlayer.transform.localPosition.z);
-			teamCountPlayer.transform.localPosition = new Vector3(posNumberOffPlayersX, teamCountPlayer.transform.localPosition.y, teamCountPlayer.transform.localPosition.z);
-			killToWin.headLabel.text = LocalizationStore.Get("Key_0953");
-			killToWin.gameObject.SetActive(true);
-		}
-		else
-		{
-			numberOfPlayer.transform.localPosition = new Vector3(0f, numberOfPlayer.transform.localPosition.y, numberOfPlayer.transform.localPosition.z);
-			teamCountPlayer.transform.localPosition = new Vector3(0f, teamCountPlayer.transform.localPosition.y, teamCountPlayer.transform.localPosition.z);
-			killToWin.gameObject.SetActive(false);
-		}
-	}
-
-	private void HandleGoToCreateRoomBtnClicked(object sender, EventArgs e)
-	{
-		PlayerPrefs.SetString("TypeGame", "server");
-		password = string.Empty;
-		passONSprite.SetActive(false);
-		SetPosSelectMapPanelInCreatePanel();
-		createPanel.SetActive(true);
-		setPasswordBtn.SetActive(Defs.isInet);
-		selectMapPanel.SetActive(true);
-		customPanel.SetActive(false);
-		nameAlreadyUsedLabel.timer = -1f;
-		nameAlreadyUsedLabel.gameObject.SetActive(false);
-		if (regim == RegimGame.Deathmatch)
-		{
-			teamCountPlayer.gameObject.SetActive(false);
-			numberOfPlayer.gameObject.SetActive(false);
-			numberOfPlayer.minValue.Value = 2;
-			numberOfPlayer.maxValue.Value = 10;
-			numberOfPlayer.value.Value = 10;
+			LoadConnectScene.textureToShow = null;
 			if (Defs.isDaterRegim)
 			{
-				ShowKillToWinPanel(true);
-				killToWin.minValue.Value = daterMinValue;
-				killToWin.maxValue.Value = daterMaxValue;
-				killToWin.value.Value = daterMinValue;
-				killToWin.stepValue = daterStep;
+				LoadConnectScene.sceneToLoad = "ConnectSceneSandbox";
 			}
 			else
 			{
-				ShowKillToWinPanel(false);
-				if (ExperienceController.sharedController != null)
-				{
-					if (ExperienceController.sharedController.currentLevel <= 2)
-					{
-						killToWin.minValue.Value = 3;
-						killToWin.maxValue.Value = 7;
-						killToWin.value.Value = 3;
-						killToWin.stepValue = 2;
-					}
-					else
-					{
-						killToWin.minValue.Value = 3;
-						killToWin.maxValue.Value = 7;
-						killToWin.value.Value = 3;
-						killToWin.stepValue = 2;
-					}
-				}
+				LoadConnectScene.sceneToLoad = "ConnectScene";
 			}
-		}
-		if (regim == RegimGame.TimeBattle)
-		{
-			teamCountPlayer.gameObject.SetActive(false);
-			numberOfPlayer.gameObject.SetActive(false);
-			numberOfPlayer.minValue.Value = 2;
-			numberOfPlayer.maxValue.Value = 4;
-			numberOfPlayer.value.Value = 4;
-			ShowKillToWinPanel(false);
-		}
-		if (regim == RegimGame.TeamFight)
-		{
-			teamCountPlayer.gameObject.SetActive(false);
-			teamCountPlayer.SetValue(10);
-			numberOfPlayer.gameObject.SetActive(false);
-			ShowKillToWinPanel(false);
-			killToWin.stepValue = 2;
-			if (ExperienceController.sharedController != null)
-			{
-				if (ExperienceController.sharedController.currentLevel <= 2)
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-				else
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-			}
-		}
-		if (regim == RegimGame.FlagCapture)
-		{
-			teamCountPlayer.gameObject.SetActive(false);
-			teamCountPlayer.SetValue(10);
-			numberOfPlayer.gameObject.SetActive(false);
-			ShowKillToWinPanel(false);
-			killToWin.stepValue = 2;
-			if (ExperienceController.sharedController != null)
-			{
-				if (ExperienceController.sharedController.currentLevel <= 2)
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-				else
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-			}
-		}
-		if (regim == RegimGame.CapturePoints)
-		{
-			teamCountPlayer.gameObject.SetActive(false);
-			teamCountPlayer.SetValue(10);
-			numberOfPlayer.gameObject.SetActive(false);
-			ShowKillToWinPanel(false);
-			killToWin.stepValue = 2;
-			if (ExperienceController.sharedController != null)
-			{
-				if (ExperienceController.sharedController.currentLevel <= 2)
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-				else
-				{
-					killToWin.minValue.Value = 3;
-					killToWin.maxValue.Value = 7;
-					killToWin.value.Value = 3;
-				}
-			}
-		}
-		if (regim != RegimGame.DeadlyGames)
-		{
-			return;
-		}
-		teamCountPlayer.gameObject.SetActive(false);
-		numberOfPlayer.gameObject.SetActive(false);
-		numberOfPlayer.minValue.Value = 3;
-		numberOfPlayer.maxValue.Value = 8;
-		numberOfPlayer.value.Value = 6;
-		ShowKillToWinPanel(false);
-		killToWin.stepValue = 5;
-		if (ExperienceController.sharedController != null)
-		{
-			if (ExperienceController.sharedController.currentLevel <= 2)
-			{
-				killToWin.minValue.Value = 5;
-				killToWin.maxValue.Value = 10;
-				killToWin.value.Value = 10;
-			}
-			else
-			{
-				killToWin.minValue.Value = 5;
-				killToWin.maxValue.Value = 10;
-				killToWin.value.Value = 10;
-			}
-		}
-	}
-
-	private void HandleShowSearchPanelBtnClicked(object sender, EventArgs e)
-	{
-		customPanel.SetActive(false);
-		if (searchInput != null)
-		{
-			searchInput.value = gameNameFilter;
-		}
-		searchPanel.SetActive(true);
-	}
-
-	private void HandleClearBtnClicked(object sender, EventArgs e)
-	{
-		if (searchInput != null)
-		{
-			searchInput.value = string.Empty;
-		}
-	}
-
-	private void HandleSearchBtnClicked(object sender, EventArgs e)
-	{
-		customPanel.SetActive(true);
-		if (searchInput != null)
-		{
-			gameNameFilter = searchInput.value;
-		}
-		updateFilteredRoomList(gameNameFilter);
-		searchPanel.SetActive(false);
-		wrapGames.SortAlphabetically();
-		scrollGames.ResetPosition();
-	}
-
-	private void HandleCancelFromConnectToPhotonBtnClicked()
-	{
-		if (_someWindowSubscription != null)
-		{
-			_someWindowSubscription.Dispose();
-		}
-		if (failInternetLabel != null)
-		{
-			failInternetLabel.SetActive(false);
-		}
-		if (connectToPhotonPanel != null)
-		{
-			connectToPhotonPanel.SetActive(false);
-		}
-		if (actAfterConnectToPhoton != null)
-		{
-			actAfterConnectToPhoton = null;
+			LoadConnectScene.noteToShow = null;
+			SceneManager.LoadScene(Defs.PromSceneName);
 		}
 		else
 		{
-			PhotonNetwork.Disconnect();
+			ConnectSceneNGUIController.GoToClans();
 		}
 	}
 
-	private void HandleCancelFromConnectToPhotonBtnClicked(object sender, EventArgs e)
+	private int LocalServerComparison(LANBroadcastService.ReceivedMessage msg1, LANBroadcastService.ReceivedMessage msg2)
 	{
-		HandleCancelFromConnectToPhotonBtnClicked();
+		return msg1.ipAddress.CompareTo(msg2.ipAddress);
 	}
 
 	private void LogBuyMap(string context)
 	{
 		try
 		{
-			AnalyticsStuff.LogSales(context, "Premium Maps");
+			AnalyticsStuff.LogSales(context, "Premium Maps", false);
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError("LogBuyMap exception: " + ex);
+			UnityEngine.Debug.LogError(string.Concat("LogBuyMap exception: ", exception));
 		}
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Premium Maps", context);
-		Dictionary<string, string> dictionary2 = dictionary;
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ "Premium Maps", context }
+		};
 		if (ExperienceController.sharedController != null)
 		{
-			dictionary2.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
+			strs.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
 		}
 		if (ExpController.Instance != null)
 		{
-			dictionary2.Add("Tier", ExpController.Instance.OurTier.ToString());
+			strs.Add("Tier", ExpController.Instance.OurTier.ToString());
 		}
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Purchases Premium Maps " + FlurryPluginWrapper.GetPayingSuffixNo10(), dictionary2);
+		FlurryPluginWrapper.LogEventAndDublicateToConsole(string.Concat("Purchases Premium Maps ", FlurryPluginWrapper.GetPayingSuffixNo10()), strs, true);
 	}
 
-	private void HandleUnlockMapBtnClicked(object sender, EventArgs e)
+	private void LogIsShowAdvert(string context, bool isShow)
 	{
-		_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E9 _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E = new _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E9();
-		_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E._003C_003Ef__this = this;
-		_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E.scInfo = SceneInfoController.instance.GetInfoScene(selectMap.mapID);
-		if (!(_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E.scInfo == null))
+		Dictionary<string, string> strs = new Dictionary<string, string>()
 		{
-			_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E.mapPrice = Defs.PremiumMaps[_003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E.scInfo.NameScene];
-			Action action = null;
-			action = _003CHandleUnlockMapBtnClicked_003Ec__AnonStorey1E._003C_003Em__2F;
-			action();
+			{ "Context", context },
+			{ "Show", isShow.ToString() }
+		};
+		if (ExperienceController.sharedController != null)
+		{
+			strs.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
+		}
+		if (ExpController.Instance != null)
+		{
+			strs.Add("Tier", ExpController.Instance.OurTier.ToString());
+		}
+		FlurryPluginWrapper.LogEventAndDublicateToConsole("Advert show", strs, true);
+	}
+
+	private void LogUserInterstitialRequest()
+	{
+		try
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendFormat("Round {0}", this._countOfLoopsRequestAdThisTime + 1);
+			stringBuilder.AppendFormat(", Slot {0} ({1})", InterstitialManager.Instance.ProviderClampedIndex + 1, AnalyticsHelper.GetAdProviderName(InterstitialManager.Instance.Provider));
+			if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
+			{
+				stringBuilder.AppendFormat(", Unit {0}", MobileAdManager.Instance.ImageAdUnitIndexClamped + 1);
+			}
+			stringBuilder.Append(" - Request");
+			string str = stringBuilder.ToString();
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Quit - Interstitial", str },
+				{ "Statistics - Interstitial", str }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("ADS Statistics Total", strs, true);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogException(exception);
 		}
 	}
 
-	public void ShowBankWindow()
+	private void LogUserQuit()
 	{
-		if (BankController.Instance != null)
+		try
 		{
-			_003CShowBankWindow_003Ec__AnonStorey1EB _003CShowBankWindow_003Ec__AnonStorey1EB = new _003CShowBankWindow_003Ec__AnonStorey1EB();
-			_003CShowBankWindow_003Ec__AnonStorey1EB._003C_003Ef__this = this;
-			_003CShowBankWindow_003Ec__AnonStorey1EB.backFromBankHandler = null;
-			_003CShowBankWindow_003Ec__AnonStorey1EB.backFromBankHandler = _003CShowBankWindow_003Ec__AnonStorey1EB._003C_003Em__30;
-			BankController.Instance.BackRequested += _003CShowBankWindow_003Ec__AnonStorey1EB.backFromBankHandler;
-			mainPanel.transform.root.gameObject.SetActive(false);
-			BankController.Instance.InterfaceEnabled = true;
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendFormat("Round {0}", this._countOfLoopsRequestAdThisTime + 1);
+			stringBuilder.AppendFormat(", Slot {0} ({1})", InterstitialManager.Instance.ProviderClampedIndex + 1, AnalyticsHelper.GetAdProviderName(InterstitialManager.Instance.Provider));
+			if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
+			{
+				stringBuilder.AppendFormat(", Unit {0}", MobileAdManager.Instance.ImageAdUnitIndexClamped + 1);
+			}
+			stringBuilder.Append(" - User quit");
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Quit - Interstitial", stringBuilder.ToString() }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("ADS Statistics Total", strs, true);
+		}
+		catch (Exception exception)
+		{
+			UnityEngine.Debug.LogException(exception);
+		}
+	}
+
+	public static string MainLoadingTexture()
+	{
+		return (!Device.isRetinaAndStrong ? "main_loading" : "main_loading_Hi");
+	}
+
+	[DebuggerHidden]
+	private IEnumerator MoveToGameScene(string _goMapName)
+	{
+		ConnectSceneNGUIController.u003cMoveToGameSceneu003ec__Iterator21 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pausing)
+	{
+		ConnectSceneNGUIController.u003cOnApplicationPauseu003ec__Iterator1B variable = null;
+		return variable;
+	}
+
+	public void OnConnectedToMaster()
+	{
+		UnityEngine.Debug.Log("OnConnectedToMaster");
+		this.firstConnectToPhoton = true;
+		PhotonNetwork.playerName = ProfileController.GetPlayerNameOrDefault();
+		if (this.connectToPhotonPanel.activeSelf && this.actAfterConnectToPhoton != new Action(this.RandomBtnAct))
+		{
+			this.connectToPhotonPanel.SetActive(false);
+		}
+		if (this.actAfterConnectToPhoton == null)
+		{
+			PhotonNetwork.Disconnect();
 		}
 		else
 		{
-			Debug.LogWarning("BankController.Instance == null");
+			this.actAfterConnectToPhoton();
+			this.actAfterConnectToPhoton = null;
 		}
 	}
 
-	private void HandleCoinsShopClicked(object sender, EventArgs e)
+	public void OnConnectedToPhoton()
 	{
-		ShowBankWindow();
+		UnityEngine.Debug.Log("OnConnectedToPhoton");
 	}
 
-	private void HandleLocalBtnClicked(object sender, EventArgs e)
+	private void OnCreatedRoom()
 	{
-		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		UnityEngine.Debug.Log("OnCreatedRoom");
+	}
+
+	private void OnDestroy()
+	{
+		UnityEngine.Debug.Log("OnDestroy ConnectSceneController");
+		if (this.isStartShowAdvert)
 		{
-			FlurryEvents.LogAfterTraining(string.Concat(regim, ".Local"), TrainingController.TrainingCompletedFlagForLogging.Value);
-			TrainingController.TrainingCompletedFlagForLogging = null;
+			this.LogIsShowAdvert("Connect Scene", false);
 		}
-		Defs.isInet = false;
-		UpdateLocalServersList();
-		CustomBtnAct();
-		wrapGames.SortAlphabetically();
-		scrollGames.enabled = true;
-		scrollGames.ResetPosition();
+		this.LogUserQuit();
+		if (!Defs.isInet || !this.isGoInPhotonGame && PhotonNetwork.connectionState == ConnectionState.Connected || PhotonNetwork.connectionState == ConnectionState.Connecting)
+		{
+			PhotonNetwork.Disconnect();
+			UnityEngine.Debug.Log("PhotonNetwork.Disconnect()");
+		}
+		if (ExperienceController.sharedController != null)
+		{
+			ExperienceController.sharedController.isShowRanks = false;
+			ExperienceController.sharedController.isMenu = false;
+			ExperienceController.sharedController.isConnectScene = false;
+		}
+		this.lanScan.StopBroadCasting();
+		ConnectSceneNGUIController.sharedController = null;
+		PhotonObjectCacher.RemoveObject(base.gameObject);
 	}
 
-	private void ShowConnectToPhotonPanel()
+	private void OnDisable()
 	{
-		_someWindowSubscription = BackSystem.Instance.Register(HandleCancelFromConnectToPhotonBtnClicked, "Connect to Photon panel");
-		if (FriendsController.sharedController != null && FriendsController.sharedController.Banned == 1)
+		if (this._backSubscription != null)
 		{
-			accountBlockedLabel.timer = 3f;
-			accountBlockedLabel.gameObject.SetActive(true);
-		}
-		else
-		{
-			ConnectToPhoton();
-			connectToPhotonPanel.SetActive(true);
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
 		}
 	}
 
-	private void HandleCustomBtnClicked(object sender, EventArgs e)
+	private void OnDisconnectedFromPhoton()
 	{
-		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		UnityEngine.Debug.Log("OnDisconnectedFromPhoton");
+		if ((!this.mainPanel.activeSelf || this.loadingMapPanel.activeSelf) && this.firstConnectToPhoton && Defs.isInet)
 		{
-			FlurryEvents.LogAfterTraining(string.Concat(regim, ".Custom"), TrainingController.TrainingCompletedFlagForLogging.Value);
-			TrainingController.TrainingCompletedFlagForLogging = null;
+			this.mainPanel.SetActive(true);
+			this.selectMapPanel.SetActive(true);
+			this.createPanel.SetActive(false);
+			this.customPanel.SetActive(false);
+			this.searchPanel.SetActive(false);
+			this.setPasswordPanel.SetActive(false);
+			this.enterPasswordPanel.SetActive(false);
+			ExperienceController.sharedController.isShowRanks = true;
+			this.loadingMapPanel.SetActive(false);
+			this.SetPosSelectMapPanelInMainMenu();
+			this.serverIsNotAvalible.timer = 3f;
+			this.serverIsNotAvalible.gameObject.SetActive(true);
+			UICamera.selectedObject = null;
+			ConnectSceneNGUIController.RegimGame regimGame = ConnectSceneNGUIController.regim;
+			ConnectSceneNGUIController.ResetWeaponManagerForDeathmatch();
+			this.SetRegim(regimGame);
 		}
-		actAfterConnectToPhoton = CustomBtnAct;
-		PhotonNetwork.autoJoinLobby = true;
-		ShowConnectToPhotonPanel();
+		if (this.actAfterConnectToPhoton != null)
+		{
+			base.Invoke("ConnectToPhoton", 0.5f);
+		}
+		if (this.connectToPhotonPanel.activeSelf)
+		{
+			this.failInternetLabel.SetActive(true);
+		}
 	}
 
-	private void CustomBtnAct()
+	private void OnEnable()
 	{
-		gameNameFilter = string.Empty;
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(() => {
+			if (!(BannerWindowController.SharedController != null) || !BannerWindowController.SharedController.IsAnyBannerShown)
+			{
+				this.HandleBackBtnClicked(null, EventArgs.Empty);
+			}
+			else
+			{
+				BannerWindowController.SharedController.HideBannerWindow();
+			}
+		}, "Connect Scene");
+		this.OnEnableWhenAnimate();
+	}
+
+	private void OnEnableWhenAnimate()
+	{
+		if (this.animationStarted)
+		{
+			this.StopFingerAnim();
+			this.modeAnimObj.SetActive(false);
+			this.fingerStopped = false;
+			base.StartCoroutine(this.AnimateModeOpen());
+		}
+	}
+
+	private void OnFailedToConnectToPhoton(object parameters)
+	{
+		UnityEngine.Debug.Log(string.Concat("OnFailedToConnectToPhoton. StatusCode: ", parameters));
+		if (this.connectToPhotonPanel.activeSelf)
+		{
+			this.failInternetLabel.SetActive(true);
+		}
+		if (!this.isCancelConnectingToPhoton)
+		{
+			base.Invoke("ConnectToPhoton", 1f);
+		}
+	}
+
+	private void OnInitializeItem(GameObject go, int wrapInd, int realInd)
+	{
 		if (Defs.isInet)
 		{
-			Invoke("UpdateFilteredRoomListInvoke", 0.03f);
+			this.SetRoomInfo(go.GetComponent<GameInfo>(), Mathf.Abs(realInd));
 		}
-		showSearchPanelBtn.SetActive(Defs.isInet);
-		mainPanel.SetActive(false);
-		selectMapPanel.SetActive(false);
-		customPanel.SetActive(true);
-		password = string.Empty;
-		incorrectPasswordLabel.timer = -1f;
-		incorrectPasswordLabel.gameObject.SetActive(false);
-		gameIsfullLabel.timer = -1f;
-		gameIsfullLabel.gameObject.SetActive(false);
-		wrapGames.SortAlphabetically();
-		scrollGames.ResetPosition();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void UpdateFilteredRoomListInvoke()
-	{
-		updateFilteredRoomList(gameNameFilter);
-	}
-
-	private void HandleRandomBtnClicked(object sender, EventArgs e)
-	{
-		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		else
 		{
-			FlurryEvents.LogAfterTraining(string.Concat(regim, ".Random"), TrainingController.TrainingCompletedFlagForLogging.Value);
-			TrainingController.TrainingCompletedFlagForLogging = null;
+			this.SetLocalRoomInfo(go.GetComponent<GameInfo>(), Mathf.Abs(realInd));
 		}
-		actAfterConnectToPhoton = RandomBtnAct;
-		PhotonNetwork.autoJoinLobby = false;
-		ShowConnectToPhotonPanel();
+	}
+
+	public void OnJoinedLobby()
+	{
+		UnityEngine.Debug.Log(string.Concat("OnJoinedLobby: ", PhotonNetwork.lobby.Name));
+		this.OnConnectedToMaster();
+	}
+
+	private void OnJoinedRoom()
+	{
+		AnalyticsStuff.LogMultiplayer();
+		UnityEngine.Debug.Log(string.Concat("OnJoinedRoom ", PhotonNetwork.room.customProperties[ConnectSceneNGUIController.mapProperty].ToString()));
+		PhotonNetwork.isMessageQueueRunning = false;
+		NotificationController.ResetPaused();
+		GlobalGameController.healthMyPlayer = 0f;
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(PhotonNetwork.room.customProperties[ConnectSceneNGUIController.mapProperty].ToString()));
+		this.goMapName = infoScene.NameScene;
+		if (WeaponManager.sharedManager != null)
+		{
+			WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(this.goMapName) ? 0 : Defs.filterMaps[this.goMapName]));
+		}
+		base.StartCoroutine(this.MoveToGameScene(infoScene.NameScene));
+	}
+
+	private void OnPaswordSelected()
+	{
+		this.password = this.setPasswordInput.@value;
+		this.BackFromSetPasswordPanel();
+	}
+
+	private void OnPhotonCreateRoomFailed()
+	{
+		UnityEngine.Debug.Log("OnPhotonCreateRoomFailed");
+		this.nameAlreadyUsedLabel.timer = 3f;
+		this.nameAlreadyUsedLabel.gameObject.SetActive(true);
+		this.loadingMapPanel.SetActive(false);
+		ActivityIndicator.IsActiveIndicator = false;
+	}
+
+	private void OnPhotonJoinRoomFailed()
+	{
+		ActivityIndicator.IsActiveIndicator = false;
+		this.loadingMapPanel.SetActive(false);
+		this.gameIsfullLabel.timer = 3f;
+		this.gameIsfullLabel.gameObject.SetActive(true);
+		this.incorrectPasswordLabel.timer = -1f;
+		this.incorrectPasswordLabel.gameObject.SetActive(false);
+		UnityEngine.Debug.Log("OnPhotonJoinRoomFailed");
+	}
+
+	private void OnPhotonRandomJoinFailed()
+	{
+		int num;
+		int num1;
+		UnityEngine.Debug.Log("OnPhotonJoinRoomFailed");
+		if (string.IsNullOrEmpty(this.goMapName))
+		{
+			int randomMapIndex = this.GetRandomMapIndex();
+			if (randomMapIndex == -1)
+			{
+				return;
+			}
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(randomMapIndex);
+			if (infoScene == null)
+			{
+				return;
+			}
+			this.goMapName = infoScene.name;
+		}
+		SceneInfo sceneInfo = SceneInfoController.instance.GetInfoScene(this.goMapName);
+		if (sceneInfo == null)
+		{
+			return;
+		}
+		if (this.joinNewRoundTries >= 2 && this.abTestConnect)
+		{
+			this.abTestConnect = false;
+			this.joinNewRoundTries = 0;
+		}
+		if (this.joinNewRoundTries < 2)
+		{
+			UnityEngine.Debug.Log(string.Concat("No rooms with new round: ", this.joinNewRoundTries, (!this.abTestConnect ? string.Empty : " <color=yellow>AbTestSeparate</color>")));
+			this.joinNewRoundTries++;
+			ConnectSceneNGUIController.JoinRandomGameRoom(this.tryJoinRoundMap, ConnectSceneNGUIController.regim, this.joinNewRoundTries, this.abTestConnect);
+			return;
+		}
+		if (WeaponManager.sharedManager != null)
+		{
+			WeaponManager.sharedManager.Reset((!Defs.filterMaps.ContainsKey(this.goMapName) ? 0 : Defs.filterMaps[this.goMapName]));
+		}
+		base.StartCoroutine(this.SetFonLoadingWaitForReset(this.goMapName, false));
+		if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.DeadlyGames)
+		{
+			num = (!Defs.isDaterRegim ? 4 : 5);
+		}
+		else
+		{
+			num = 10;
+		}
+		int num2 = num;
+		if (Defs.isCOOP)
+		{
+			num1 = 4;
+		}
+		else if (!Defs.isCompany)
+		{
+			num1 = (!Defs.isHunger ? 10 : 6);
+		}
+		else
+		{
+			num1 = 10;
+		}
+		int num3 = num1;
+		ConnectSceneNGUIController.CreateGameRoom(null, num3, sceneInfo.indexMap, num2, string.Empty, ConnectSceneNGUIController.regim);
+	}
+
+	public void OnReceivedRoomListUpdate()
+	{
+		if (!this.customPanel.activeSelf || !Defs.isInet)
+		{
+			return;
+		}
+		this.updateFilteredRoomList(this.gameNameFilter);
+	}
+
+	public static void PhotonCreateRoom(string roomName, bool isVisible, bool isOpen, int maxPlayers, ExitGames.Client.Photon.Hashtable roomProps, string[] roomPropsInLobby)
+	{
+		PlayerPrefs.SetString("TypeGame", "server");
+		RoomOptions roomOption = new RoomOptions()
+		{
+			customRoomProperties = roomProps,
+			customRoomPropertiesForLobby = roomPropsInLobby
+		};
+		RoomOptions roomOption1 = roomOption;
+		roomOption1.maxPlayers = (byte)maxPlayers;
+		roomOption1.isOpen = isOpen;
+		roomOption1.isVisible = isVisible;
+		if (Defs.useSqlLobby)
+		{
+			TypedLobby typedLobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
+			PhotonNetwork.CreateRoom(roomName, roomOption1, typedLobby);
+		}
+		else
+		{
+			PhotonNetwork.CreateRoom(roomName, roomOption1, TypedLobby.Default);
+		}
 	}
 
 	private void RandomBtnAct()
 	{
-		JoinRandomRoom(-1, regim);
+		this.JoinRandomRoom(-1, ConnectSceneNGUIController.regim);
 	}
 
-	private int GetRandomMapIndex()
+	private static void ResetWeaponManagerForDeathmatch()
 	{
-		bool flag = true;
-		AllScenesForMode listScenesForMode = SceneInfoController.instance.GetListScenesForMode(curSelectMode);
-		if (listScenesForMode == null)
+		ConnectSceneNGUIController.SetFlagsForDeathmatchRegim();
+		WeaponManager.sharedManager.Reset(0);
+	}
+
+	private void SeachServer(string ipServerSeaches)
+	{
+		bool flag = false;
+		if (this.servers.Count > 0)
 		{
-			return -1;
-		}
-		int count = listScenesForMode.avaliableScenes.Count;
-		int num = UnityEngine.Random.Range(0, count);
-		int num2 = 0;
-		SceneInfo sceneInfo;
-		do
-		{
-			if (num2 > count)
+			foreach (ConnectSceneNGUIController.infoServer server in this.servers)
 			{
-				return -1;
-			}
-			sceneInfo = listScenesForMode.avaliableScenes[num];
-			if (!(sceneInfo == null))
-			{
-				num++;
-				num2++;
-				if (num >= count)
+				if (!server.ipAddress.Equals(ipServerSeaches))
 				{
-					num = 0;
+					continue;
 				}
-				flag = sceneInfo.isPremium && Storager.getInt(sceneInfo.NameScene + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(sceneInfo.NameScene);
+				flag = true;
 			}
 		}
-		while (flag);
-		return sceneInfo.indexMap;
-	}
-
-	public void HandleGoBtnClicked(object sender, EventArgs e)
-	{
-		if (TrainingController.TrainingCompletedFlagForLogging.HasValue)
+		if (!flag)
 		{
-			FlurryEvents.LogAfterTraining(string.Concat(regim, ".Go"), TrainingController.TrainingCompletedFlagForLogging.Value);
-			TrainingController.TrainingCompletedFlagForLogging = null;
-		}
-		actAfterConnectToPhoton = GoBtnAct;
-		PhotonNetwork.autoJoinLobby = false;
-		ShowConnectToPhotonPanel();
-	}
-
-	private void GoBtnAct()
-	{
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(selectMap.mapID);
-		if (!(infoScene == null))
-		{
-			bool isPremium = infoScene.isPremium;
-			if (!isPremium || (isPremium && (Storager.getInt(infoScene.NameScene + "Key", true) == 1 || PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene))))
+			ConnectSceneNGUIController.infoServer _infoServer = new ConnectSceneNGUIController.infoServer()
 			{
-				JoinRandomRoom(infoScene.indexMap, regim);
-			}
-			else
-			{
-				PhotonNetwork.Disconnect();
-			}
+				ipAddress = ipServerSeaches
+			};
+			this.servers.Add(_infoServer);
 		}
-	}
-
-	private void HandleBackBtnClicked(object sender, EventArgs e)
-	{
-		if (mainPanel != null && mainPanel.activeSelf)
-		{
-			if (FriendsController.sharedController != null)
-			{
-				FriendsController.sharedController.GetFriendsData();
-			}
-			FlurryPluginWrapper.LogEvent("Back to Main Menu");
-			MenuBackgroundMusic.keepPlaying = true;
-			LoadConnectScene.textureToShow = null;
-			LoadConnectScene.sceneToLoad = Defs.MainMenuScene;
-			LoadConnectScene.noteToShow = null;
-			Application.LoadLevel(Defs.PromSceneName);
-			isGoInPhotonGame = false;
-		}
-		if (customPanel != null && customPanel.activeSelf)
-		{
-			connectToWiFIInCreateLabel.SetActive(false);
-			connectToWiFIInCustomLabel.SetActive(false);
-			createRoomUIBtn.isEnabled = true;
-			Defs.isInet = true;
-			customPanel.SetActive(false);
-			mainPanel.SetActive(true);
-			selectMapPanel.SetActive(true);
-			PhotonNetwork.Disconnect();
-		}
-		if (searchPanel != null && searchPanel.activeSelf)
-		{
-			searchInput.value = gameNameFilter;
-			searchPanel.SetActive(false);
-			customPanel.SetActive(true);
-		}
-		if (createPanel != null && createPanel.activeSelf)
-		{
-			PlayerPrefs.SetString("TypeGame", "client");
-			SetPosSelectMapPanelInMainMenu();
-			createPanel.SetActive(false);
-			selectMapPanel.SetActive(false);
-			customPanel.SetActive(true);
-		}
-		if (setPasswordPanel != null && setPasswordPanel.activeSelf)
-		{
-			BackFromSetPasswordPanel();
-		}
-		if (enterPasswordPanel != null && enterPasswordPanel.activeSelf)
-		{
-			enterPasswordPanel.SetActive(false);
-			customPanel.SetActive(true);
-			ExperienceController.sharedController.isShowRanks = true;
-		}
-	}
-
-	private void HandleUnlockBtnClicked(object sender, EventArgs e)
-	{
-		_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC _003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC = new _003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC();
-		_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._003C_003Ef__this = this;
-		_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._price = 0;
-		_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._storagerPurchasedKey = string.Empty;
-		if (regim == RegimGame.FlagCapture)
-		{
-			_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._price = Defs.CaptureFlagPrice;
-			_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._storagerPurchasedKey = Defs.CaptureFlagPurchasedKey;
-		}
-		if (regim == RegimGame.DeadlyGames)
-		{
-			_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._price = Defs.HungerGamesPrice;
-			_003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._storagerPurchasedKey = Defs.hungerGamesPurchasedKey;
-		}
-		Action action = null;
-		action = _003CHandleUnlockBtnClicked_003Ec__AnonStorey1EC._003C_003Em__31;
-		action();
 	}
 
 	private static void SetFlagsForDeathmatchRegim()
@@ -2301,57 +2038,147 @@ public class ConnectSceneNGUIController : MonoBehaviour
 		StoreKitEventListener.State.Parameters.Clear();
 	}
 
-	private void SetRegim(RegimGame _regim)
+	private void SetFonLoading(string _mapName = "", bool isAddCountRun = false)
 	{
-		bool flag = true;
-		bool flag2 = true;
-		PlayerPrefs.SetInt("RegimMulty", (int)_regim);
-		regim = _regim;
+		this.GetMapName(_mapName, isAddCountRun);
+		if (this._loadingNGUIController != null)
+		{
+			UnityEngine.Object.Destroy(this._loadingNGUIController.gameObject);
+			this._loadingNGUIController = null;
+		}
+		this.ShowLoadingGUI(_mapName);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetFonLoadingWaitForReset(string _mapName = "", bool isAddCountRun = false)
+	{
+		ConnectSceneNGUIController.u003cSetFonLoadingWaitForResetu003ec__Iterator20 variable = null;
+		return variable;
+	}
+
+	private void SetLocalRoomInfo(GameInfo _gameInfo, int index)
+	{
+		_gameInfo.index = index;
+		if (this._copy == null || (int)this._copy.Length <= index)
+		{
+			_gameInfo.gameObject.SetActive(false);
+		}
+		else
+		{
+			_gameInfo.gameObject.SetActive(true);
+			LANBroadcastService.ReceivedMessage receivedMessage = this._copy[index];
+			string str = receivedMessage.name;
+			if (string.IsNullOrEmpty(str))
+			{
+				str = LocalizationStore.Get("Key_0948");
+			}
+			_gameInfo.serverNameLabel.text = str;
+			_gameInfo.countPlayersLabel.text = string.Concat(receivedMessage.connectedPlayers.ToString(), "/", receivedMessage.playerLimit.ToString());
+			_gameInfo.openSprite.SetActive(true);
+			_gameInfo.closeSprite.SetActive(false);
+			string translateName = receivedMessage.map;
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(receivedMessage.map);
+			if (infoScene != null)
+			{
+				translateName = infoScene.TranslateName;
+			}
+			_gameInfo.mapNameLabel.text = string.Format("{0}: {1}", LocalizationStore.Get("Key_0947"), translateName);
+			_gameInfo.roomInfoLocal = receivedMessage;
+		}
+	}
+
+	private void SetPosSelectMapPanelInCreatePanel()
+	{
+		if (Defs.isDaterRegim)
+		{
+			return;
+		}
+		this.selectMapPanelTransform.localPosition = new Vector3(0f, 35f, 0f);
+		this.fonMapPreview.width = Mathf.RoundToInt((float)Screen.width * 768f / (float)Screen.height + 10f);
+		this.fonMapPreview.height = 376;
 		if (!Defs.isDaterRegim)
 		{
-			deathmatchToggle.GetComponent<UIButton>().pressedSprite = ((regim != 0) ? "yell_btn_n" : "green_btn_n");
-			timeBattleToogle.GetComponent<UIButton>().pressedSprite = ((regim != RegimGame.TimeBattle) ? "yell_btn_n" : "green_btn_n");
-			teamFightToogle.GetComponent<UIButton>().pressedSprite = ((regim != RegimGame.TeamFight) ? "yell_btn_n" : "green_btn_n");
+			this.fonMapPreview.transform.localPosition = new Vector3(0f, -24f, 0f);
+		}
+		UIPanel vector4 = this.mapPreviewPanel;
+		float single = (float)Screen.width * 768f / (float)Screen.height;
+		Vector4 vector41 = this.mapPreviewPanel.baseClipRegion;
+		vector4.baseClipRegion = new Vector4(0f, 0f, single, vector41.w);
+		this.ChooseMapLabelSmall.SetActive(false);
+	}
+
+	private void SetPosSelectMapPanelInMainMenu()
+	{
+		if (Defs.isDaterRegim)
+		{
+			this.ChooseMapLabelSmall.SetActive(false);
+			return;
+		}
+		float single = (float)Screen.width * 768f / (float)Screen.height - 322f;
+		if (!Defs.isDaterRegim)
+		{
+			this.selectMapPanelTransform.localPosition = new Vector3(149f, 73f, 0f);
+		}
+		this.fonMapPreview.width = Mathf.RoundToInt(single);
+		this.fonMapPreview.height = 434;
+		this.fonMapPreview.transform.localPosition = Vector3.zero;
+		UIPanel vector4 = this.mapPreviewPanel;
+		Vector4 vector41 = this.mapPreviewPanel.baseClipRegion;
+		vector4.baseClipRegion = new Vector4(0f, 0f, single, vector41.w);
+		this.ChooseMapLabelSmall.SetActive(true);
+	}
+
+	private void SetRegim(ConnectSceneNGUIController.RegimGame _regim)
+	{
+		bool flag = true;
+		bool flag1 = true;
+		PlayerPrefs.SetInt("RegimMulty", (int)_regim);
+		ConnectSceneNGUIController.regim = _regim;
+		if (!Defs.isDaterRegim)
+		{
+			this.deathmatchToggle.GetComponent<UIButton>().pressedSprite = (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.Deathmatch ? "yell_btn_n" : "green_btn_n");
+			this.timeBattleToogle.GetComponent<UIButton>().pressedSprite = (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TimeBattle ? "yell_btn_n" : "green_btn_n");
+			this.teamFightToogle.GetComponent<UIButton>().pressedSprite = (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.TeamFight ? "yell_btn_n" : "green_btn_n");
 			if (flag)
 			{
-				deadlyGamesToogle.GetComponent<UIButton>().pressedSprite = ((regim != RegimGame.DeadlyGames) ? "yell_btn_n" : "green_btn_n");
+				this.deadlyGamesToogle.GetComponent<UIButton>().pressedSprite = (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.DeadlyGames ? "yell_btn_n" : "green_btn_n");
 			}
-			if (flag2)
+			if (flag1)
 			{
-				flagCaptureToogle.GetComponent<UIButton>().pressedSprite = ((regim != RegimGame.FlagCapture) ? "yell_btn_n" : "green_btn_n");
+				this.flagCaptureToogle.GetComponent<UIButton>().pressedSprite = (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.FlagCapture ? "yell_btn_n" : "green_btn_n");
 			}
-			unlockMapBtn.SetActive(false);
-			unlockMapBtnInCreate.SetActive(false);
+			this.unlockMapBtn.SetActive(false);
+			this.unlockMapBtnInCreate.SetActive(false);
 		}
-		createRoomBtn.SetActive(true);
-		if (regim == RegimGame.Deathmatch)
+		this.createRoomBtn.SetActive(true);
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch)
 		{
-			SetFlagsForDeathmatchRegim();
-			if (unlockBtn != null)
+			ConnectSceneNGUIController.SetFlagsForDeathmatchRegim();
+			if (this.unlockBtn != null)
 			{
-				unlockBtn.SetActive(false);
+				this.unlockBtn.SetActive(false);
 			}
-			customBtn.SetActive(true);
-			if (randomBtn != null)
+			this.customBtn.SetActive(true);
+			if (this.randomBtn != null)
 			{
-				randomBtn.SetActive(true);
+				this.randomBtn.SetActive(true);
 			}
-			if (conditionLabel != null)
+			if (this.conditionLabel != null)
 			{
-				conditionLabel.gameObject.SetActive(false);
+				this.conditionLabel.gameObject.SetActive(false);
 			}
-			goBtn.SetActive(true);
-			localBtn.SetActive(BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64);
-			if (Defs.isDaterRegim)
+			this.goBtn.SetActive(true);
+			this.localBtn.SetActive(BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64);
+			if (!Defs.isDaterRegim)
 			{
-				rulesLabel.text = rulesDater;
+				this.rulesLabel.text = this.rulesDeadmatch;
 			}
 			else
 			{
-				rulesLabel.text = rulesDeadmatch;
+				this.rulesLabel.text = this.rulesDater;
 			}
 		}
-		if (regim == RegimGame.TimeBattle)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
 		{
 			Defs.isMulti = true;
 			Defs.isInet = true;
@@ -2360,20 +2187,20 @@ public class ConnectSceneNGUIController : MonoBehaviour
 			Defs.isHunger = false;
 			Defs.isFlag = false;
 			Defs.isCapturePoints = false;
-			if (unlockBtn != null)
+			if (this.unlockBtn != null)
 			{
-				unlockBtn.SetActive(false);
+				this.unlockBtn.SetActive(false);
 			}
-			customBtn.SetActive(true);
-			randomBtn.SetActive(true);
-			conditionLabel.gameObject.SetActive(false);
-			goBtn.SetActive(true);
+			this.customBtn.SetActive(true);
+			this.randomBtn.SetActive(true);
+			this.conditionLabel.gameObject.SetActive(false);
+			this.goBtn.SetActive(true);
 			StoreKitEventListener.State.Mode = "Time Survival";
 			StoreKitEventListener.State.Parameters.Clear();
-			localBtn.SetActive(false);
-			rulesLabel.text = rulesTimeBattle;
+			this.localBtn.SetActive(false);
+			this.rulesLabel.text = this.rulesTimeBattle;
 		}
-		if (regim == RegimGame.TeamFight)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
 		{
 			Defs.isMulti = true;
 			Defs.isInet = true;
@@ -2382,20 +2209,20 @@ public class ConnectSceneNGUIController : MonoBehaviour
 			Defs.isHunger = false;
 			Defs.isFlag = false;
 			Defs.isCapturePoints = false;
-			if (unlockBtn != null)
+			if (this.unlockBtn != null)
 			{
-				unlockBtn.SetActive(false);
+				this.unlockBtn.SetActive(false);
 			}
-			customBtn.SetActive(true);
-			randomBtn.SetActive(true);
-			conditionLabel.gameObject.SetActive(false);
-			goBtn.SetActive(true);
-			localBtn.SetActive(BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64);
+			this.customBtn.SetActive(true);
+			this.randomBtn.SetActive(true);
+			this.conditionLabel.gameObject.SetActive(false);
+			this.goBtn.SetActive(true);
+			this.localBtn.SetActive(BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64);
 			StoreKitEventListener.State.Mode = "Team Battle";
 			StoreKitEventListener.State.Parameters.Clear();
-			rulesLabel.text = rulesTeamFight;
+			this.rulesLabel.text = this.rulesTeamFight;
 		}
-		if (regim == RegimGame.FlagCapture)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
 		{
 			Defs.isMulti = true;
 			Defs.isInet = true;
@@ -2404,36 +2231,36 @@ public class ConnectSceneNGUIController : MonoBehaviour
 			Defs.isHunger = false;
 			Defs.isFlag = true;
 			Defs.isCapturePoints = false;
-			localBtn.SetActive(false);
-			rulesLabel.text = rulesFlagCapture;
-			if (!flag2)
+			this.localBtn.SetActive(false);
+			this.rulesLabel.text = this.rulesFlagCapture;
+			if (flag1)
 			{
-				priceRegimLabel.text = Defs.CaptureFlagPrice.ToString();
-				if (unlockBtn != null)
+				if (this.unlockBtn != null)
 				{
-					unlockBtn.SetActive(true);
+					this.unlockBtn.SetActive(false);
 				}
-				customBtn.SetActive(false);
-				randomBtn.SetActive(false);
-				conditionLabel.gameObject.SetActive(true);
-				conditionLabel.text = "REACH LEVEL 4 TO OPEN";
-				goBtn.SetActive(false);
+				this.customBtn.SetActive(true);
+				this.randomBtn.SetActive(true);
+				this.conditionLabel.gameObject.SetActive(false);
+				this.goBtn.SetActive(true);
 			}
 			else
 			{
-				if (unlockBtn != null)
+				this.priceRegimLabel.text = Defs.CaptureFlagPrice.ToString();
+				if (this.unlockBtn != null)
 				{
-					unlockBtn.SetActive(false);
+					this.unlockBtn.SetActive(true);
 				}
-				customBtn.SetActive(true);
-				randomBtn.SetActive(true);
-				conditionLabel.gameObject.SetActive(false);
-				goBtn.SetActive(true);
+				this.customBtn.SetActive(false);
+				this.randomBtn.SetActive(false);
+				this.conditionLabel.gameObject.SetActive(true);
+				this.conditionLabel.text = "REACH LEVEL 4 TO OPEN";
+				this.goBtn.SetActive(false);
 			}
 			StoreKitEventListener.State.Mode = "Flag Capture";
 			StoreKitEventListener.State.Parameters.Clear();
 		}
-		if (regim == RegimGame.CapturePoints)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
 		{
 			Defs.isMulti = true;
 			Defs.isInet = true;
@@ -2442,20 +2269,20 @@ public class ConnectSceneNGUIController : MonoBehaviour
 			Defs.isHunger = false;
 			Defs.isCapturePoints = true;
 			Defs.isFlag = false;
-			localBtn.SetActive(false);
-			rulesLabel.text = rulesCapturePoint;
-			if (unlockBtn != null)
+			this.localBtn.SetActive(false);
+			this.rulesLabel.text = this.rulesCapturePoint;
+			if (this.unlockBtn != null)
 			{
-				unlockBtn.SetActive(false);
+				this.unlockBtn.SetActive(false);
 			}
-			customBtn.SetActive(true);
-			randomBtn.SetActive(true);
-			conditionLabel.gameObject.SetActive(false);
-			goBtn.SetActive(true);
+			this.customBtn.SetActive(true);
+			this.randomBtn.SetActive(true);
+			this.conditionLabel.gameObject.SetActive(false);
+			this.goBtn.SetActive(true);
 			StoreKitEventListener.State.Mode = "Capture points";
 			StoreKitEventListener.State.Parameters.Clear();
 		}
-		if (regim == RegimGame.DeadlyGames)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
 		{
 			Defs.isMulti = true;
 			Defs.isInet = true;
@@ -2464,240 +2291,733 @@ public class ConnectSceneNGUIController : MonoBehaviour
 			Defs.isHunger = true;
 			Defs.isFlag = false;
 			Defs.isCapturePoints = false;
-			localBtn.SetActive(false);
-			rulesLabel.text = rulesDeadlyGames;
-			if (!flag)
+			this.localBtn.SetActive(false);
+			this.rulesLabel.text = this.rulesDeadlyGames;
+			if (flag)
 			{
-				priceRegimLabel.text = Defs.HungerGamesPrice.ToString();
-				if (unlockBtn != null)
+				if (this.unlockBtn != null)
 				{
-					unlockBtn.SetActive(true);
+					this.unlockBtn.SetActive(false);
 				}
-				customBtn.SetActive(false);
-				randomBtn.SetActive(false);
-				conditionLabel.gameObject.SetActive(true);
-				conditionLabel.text = "REACH LEVEL 3 TO OPEN";
-				goBtn.SetActive(false);
+				this.customBtn.SetActive(true);
+				this.randomBtn.SetActive(true);
+				this.conditionLabel.gameObject.SetActive(false);
+				this.goBtn.SetActive(true);
 			}
 			else
 			{
-				if (unlockBtn != null)
+				this.priceRegimLabel.text = Defs.HungerGamesPrice.ToString();
+				if (this.unlockBtn != null)
 				{
-					unlockBtn.SetActive(false);
+					this.unlockBtn.SetActive(true);
 				}
-				customBtn.SetActive(true);
-				randomBtn.SetActive(true);
-				conditionLabel.gameObject.SetActive(false);
-				goBtn.SetActive(true);
+				this.customBtn.SetActive(false);
+				this.randomBtn.SetActive(false);
+				this.conditionLabel.gameObject.SetActive(true);
+				this.conditionLabel.text = "REACH LEVEL 3 TO OPEN";
+				this.goBtn.SetActive(false);
 			}
 			Defs.IsSurvival = false;
 			StoreKitEventListener.State.Mode = "Deadly Games";
 			StoreKitEventListener.State.Parameters.Clear();
 			if (WeaponManager.sharedManager != null)
 			{
-				WeaponManager.sharedManager.GetWeaponPrefabs();
+				WeaponManager.sharedManager.GetWeaponPrefabs(0);
 			}
 		}
-		StartCoroutine(SetUseMasMap());
+		base.StartCoroutine(this.SetUseMasMap());
 	}
 
-	private void OnEnable()
+	private void SetRegimCapturePoints(object sender, EventArgs e)
 	{
-		if (_backSubscription != null)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
 		{
-			_backSubscription.Dispose();
+			return;
 		}
-		_backSubscription = BackSystem.Instance.Register(_003COnEnable_003Em__32, "Connect Scene");
-		OnEnableWhenAnimate();
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.CapturePoints);
 	}
 
-	private void OnDisable()
+	private void SetRegimDeadleGames(object sender, EventArgs e)
 	{
-		if (_backSubscription != null)
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
 		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
+			return;
+		}
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.DeadlyGames);
+	}
+
+	private void SetRegimDeathmatch(object sender, EventArgs e)
+	{
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch)
+		{
+			return;
+		}
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.Deathmatch);
+	}
+
+	private void SetRegimFlagCapture(object sender, EventArgs e)
+	{
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+		{
+			return;
+		}
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.FlagCapture);
+	}
+
+	private void SetRegimTeamFight(object sender, EventArgs e)
+	{
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
+		{
+			return;
+		}
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.TeamFight);
+	}
+
+	private void SetRegimTimeBattle(object sender, EventArgs e)
+	{
+		if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
+		{
+			return;
+		}
+		this.SetRegim(ConnectSceneNGUIController.RegimGame.TimeBattle);
+	}
+
+	private void SetRoomInfo(GameInfo _gameInfo, int index)
+	{
+		_gameInfo.index = index;
+		if (this.filteredRoomList.Count <= index)
+		{
+			_gameInfo.gameObject.SetActive(false);
+		}
+		else
+		{
+			_gameInfo.gameObject.SetActive(true);
+			RoomInfo item = this.filteredRoomList[index];
+			string str = item.name;
+			if (str.Length == 36 && str.IndexOf("-") == 8 && str.LastIndexOf("-") == 23)
+			{
+				str = LocalizationStore.Get("Key_0088");
+			}
+			_gameInfo.serverNameLabel.text = str;
+			_gameInfo.countPlayersLabel.text = string.Concat(item.playerCount, "/", item.maxPlayers);
+			bool flag = string.IsNullOrEmpty(item.customProperties[ConnectSceneNGUIController.passwordProperty].ToString());
+			_gameInfo.openSprite.SetActive(flag);
+			_gameInfo.closeSprite.SetActive(!flag);
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(item.customProperties[ConnectSceneNGUIController.mapProperty].ToString()));
+			string str1 = string.Format("{0}: {1}", LocalizationStore.Get("Key_0947"), infoScene.TranslateName);
+			_gameInfo.mapNameLabel.text = str1;
+			_gameInfo.roomInfo = item;
+		}
+	}
+
+	private void SetUnLockedButton(UIToggle butToogle)
+	{
+		UIButton component = butToogle.gameObject.GetComponent<UIButton>();
+		component.normalSprite = "yell_btn";
+		component.hoverSprite = "yell_btn";
+		component.pressedSprite = "green_btn_n";
+		butToogle.transform.FindChild("LockedSprite").gameObject.SetActive(false);
+		butToogle.transform.FindChild("Checkmark").GetComponent<UISprite>().spriteName = "green_btn";
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetUseMasMap()
+	{
+		ConnectSceneNGUIController.u003cSetUseMasMapu003ec__Iterator1F variable = null;
+		return variable;
+	}
+
+	public void ShowBankWindow()
+	{
+		if (BankController.Instance == null)
+		{
+			UnityEngine.Debug.LogWarning("BankController.Instance == null");
+		}
+		else
+		{
+			EventHandler instance = null;
+			instance = (object backSender, EventArgs backArgs) => {
+				BankController.Instance.BackRequested -= this.backFromBankHandler;
+				this.u003cu003ef__this.mainPanel.transform.root.gameObject.SetActive(true);
+				BankController.Instance.InterfaceEnabled = false;
+			};
+			BankController.Instance.BackRequested += instance;
+			this.mainPanel.transform.root.gameObject.SetActive(false);
+			BankController.Instance.InterfaceEnabled = true;
+		}
+	}
+
+	private void ShowConnectToPhotonPanel()
+	{
+		this._someWindowSubscription = BackSystem.Instance.Register(new Action(this.HandleCancelFromConnectToPhotonBtnClicked), "Connect to Photon panel");
+		if (!(FriendsController.sharedController != null) || FriendsController.sharedController.Banned != 1)
+		{
+			this.ConnectToPhoton();
+			this.connectToPhotonPanel.SetActive(true);
+			return;
+		}
+		this.accountBlockedLabel.timer = 3f;
+		this.accountBlockedLabel.gameObject.SetActive(true);
+	}
+
+	private void ShowKillToWinPanel(bool show)
+	{
+		if (!show)
+		{
+			Transform vector3 = this.numberOfPlayer.transform;
+			float single = this.numberOfPlayer.transform.localPosition.y;
+			Vector3 vector31 = this.numberOfPlayer.transform.localPosition;
+			vector3.localPosition = new Vector3(0f, single, vector31.z);
+			Transform transforms = this.teamCountPlayer.transform;
+			float single1 = this.teamCountPlayer.transform.localPosition.y;
+			Vector3 vector32 = this.teamCountPlayer.transform.localPosition;
+			transforms.localPosition = new Vector3(0f, single1, vector32.z);
+			this.killToWin.gameObject.SetActive(false);
+		}
+		else
+		{
+			Transform transforms1 = this.numberOfPlayer.transform;
+			float single2 = this.posNumberOffPlayersX;
+			float single3 = this.numberOfPlayer.transform.localPosition.y;
+			Vector3 vector33 = this.numberOfPlayer.transform.localPosition;
+			transforms1.localPosition = new Vector3(single2, single3, vector33.z);
+			Transform transforms2 = this.teamCountPlayer.transform;
+			float single4 = this.posNumberOffPlayersX;
+			float single5 = this.teamCountPlayer.transform.localPosition.y;
+			Vector3 vector34 = this.teamCountPlayer.transform.localPosition;
+			transforms2.localPosition = new Vector3(single4, single5, vector34.z);
+			this.killToWin.headLabel.text = LocalizationStore.Get("Key_0953");
+			this.killToWin.gameObject.SetActive(true);
+		}
+	}
+
+	private void ShowLoadingGUI(string _mapName)
+	{
+		BannerWindowController.SharedController.HideBannerWindowNoShowNext();
+		this._loadingNGUIController = UnityEngine.Object.Instantiate<GameObject>(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
+		this._loadingNGUIController.SceneToLoad = _mapName;
+		this._loadingNGUIController.loadingNGUITexture.mainTexture = LoadConnectScene.textureToShow;
+		this._loadingNGUIController.transform.parent = this.loadingMapPanel.transform;
+		this._loadingNGUIController.transform.localPosition = Vector3.zero;
+		this._loadingNGUIController.Init();
+	}
+
+	private void Start()
+	{
+		int num;
+		ConnectSceneNGUIController.RegimGame regimGame;
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShopCompleted)
+		{
+			WeaponManager.sharedManager.SaveWeaponAsLastUsed(0);
+		}
+		if (FriendsController.sharedController != null)
+		{
+			FriendsController.sharedController.profileInfo.Clear();
+		}
+		Defs.isDaterRegim = SceneLoader.ActiveSceneName.Equals("ConnectSceneSandbox");
+		GlobalGameController.CountKills = 0;
+		GlobalGameController.Score = 0;
+		WeaponManager.RefreshExpControllers();
+		this.rulesDeadmatch = LocalizationStore.Key_0550;
+		this.rulesTeamFight = LocalizationStore.Key_0551;
+		this.rulesTimeBattle = LocalizationStore.Key_0552;
+		this.rulesDeadlyGames = LocalizationStore.Key_0553;
+		this.rulesFlagCapture = LocalizationStore.Key_0554;
+		this.rulesCapturePoint = LocalizationStore.Get("Key_1368");
+		this.rulesDater = LocalizationStore.Get("Key_1538");
+		ConnectSceneNGUIController.sharedController = this;
+		if (!(ExperienceController.sharedController != null) || ExperienceController.sharedController.currentLevel > 2)
+		{
+			num = (!(ExperienceController.sharedController != null) || ExperienceController.sharedController.currentLevel > 5 ? 2 : 1);
+		}
+		else
+		{
+			num = 0;
+		}
+		this.myLevelGame = num;
+		this.mainPanel.SetActive(false);
+		this.selectMapPanel.SetActive(false);
+		this.createPanel.SetActive(false);
+		this.customPanel.SetActive(false);
+		this.searchPanel.SetActive(false);
+		this.setPasswordPanel.SetActive(false);
+		this.enterPasswordPanel.SetActive(false);
+		this.StartSearchLocalServers();
+		PlayerPrefs.SetString("TypeGame", "client");
+		this.gameIsfullLabel.gameObject.SetActive(false);
+		this.accountBlockedLabel.gameObject.SetActive(false);
+		this.serverIsNotAvalible.gameObject.SetActive(false);
+		this.nameAlreadyUsedLabel.gameObject.SetActive(false);
+		this.incorrectPasswordLabel.gameObject.SetActive(false);
+		this.unlockMapBtn.SetActive(false);
+		this.unlockMapBtnInCreate.SetActive(false);
+		this.unlockBtn.SetActive(false);
+		string str = ConnectSceneNGUIController.MainLoadingTexture();
+		this.loadingToDraw.mainTexture = Resources.Load<Texture>(str);
+		this.loadingMapPanel.SetActive(true);
+		this.connectToPhotonPanel.SetActive(false);
+		if (PhotonNetwork.connectionState == ConnectionState.Connected)
+		{
+			this.firstConnectToPhoton = true;
+		}
+		if (!Defs.isDaterRegim)
+		{
+			this.ScrollTransform.GetComponent<UIPanel>().baseClipRegion = new Vector4(0f, 0f, (float)(760 * Screen.width / Screen.height), 350f);
+		}
+		this.SetPosSelectMapPanelInMainMenu();
+		if (!TrainingController.TrainingCompleted)
+		{
+			regimGame = ConnectSceneNGUIController.RegimGame.TeamFight;
+		}
+		else if (!Defs.isDaterRegim)
+		{
+			regimGame = (ConnectSceneNGUIController.RegimGame)PlayerPrefs.GetInt("RegimMulty", 2);
+		}
+		else
+		{
+			regimGame = ConnectSceneNGUIController.RegimGame.Deathmatch;
+		}
+		ConnectSceneNGUIController.regim = regimGame;
+		ConnectSceneNGUIController.directedFromQuests = false;
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(ConnectSceneNGUIController.selectedMap);
+		if (infoScene != null)
+		{
+			if (infoScene.IsAvaliableForMode(TypeModeGame.TeamFight))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TeamFight;
+			}
+			else if (infoScene.IsAvaliableForMode(TypeModeGame.Deathmatch))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.Deathmatch;
+			}
+			else if (infoScene.IsAvaliableForMode(TypeModeGame.FlagCapture))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.FlagCapture;
+			}
+			else if (infoScene.IsAvaliableForMode(TypeModeGame.CapturePoints))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.CapturePoints;
+			}
+			else if (infoScene.IsAvaliableForMode(TypeModeGame.DeadlyGames))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.DeadlyGames;
+			}
+			else if (infoScene.IsAvaliableForMode(TypeModeGame.TimeBattle))
+			{
+				ConnectSceneNGUIController.regim = ConnectSceneNGUIController.RegimGame.TimeBattle;
+			}
+		}
+		if (!Defs.isDaterRegim)
+		{
+			this.deathmatchToggle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch;
+			this.timeBattleToogle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle;
+			this.teamFightToogle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight;
+			this.deadlyGamesToogle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames;
+			this.flagCaptureToogle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture;
+			this.capturePointsToogle.@value = ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints;
+			this.deathmatchToggle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimDeathmatch);
+			this.timeBattleToogle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimTimeBattle);
+			this.teamFightToogle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimTeamFight);
+			this.deadlyGamesToogle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimDeadleGames);
+			this.flagCaptureToogle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimFlagCapture);
+			this.capturePointsToogle.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.SetRegimCapturePoints);
+		}
+		base.StartCoroutine(this.LoadMapPreview());
+		if (this.localBtn != null)
+		{
+			ButtonHandler component = this.localBtn.GetComponent<ButtonHandler>();
+			if (component != null)
+			{
+				component.Clicked += new EventHandler(this.HandleLocalBtnClicked);
+			}
+		}
+		if (this.customBtn != null)
+		{
+			ButtonHandler buttonHandler = this.customBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler != null)
+			{
+				buttonHandler.Clicked += new EventHandler(this.HandleCustomBtnClicked);
+			}
+		}
+		if (this.randomBtn != null)
+		{
+			ButtonHandler component1 = this.randomBtn.GetComponent<ButtonHandler>();
+			if (component1 != null)
+			{
+				component1.Clicked += new EventHandler(this.HandleRandomBtnClicked);
+			}
+		}
+		if (this.goBtn != null)
+		{
+			ButtonHandler buttonHandler1 = this.goBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler1 != null)
+			{
+				buttonHandler1.Clicked += new EventHandler(this.HandleGoBtnClicked);
+			}
+		}
+		if (this.backBtn != null)
+		{
+			ButtonHandler component2 = this.backBtn.GetComponent<ButtonHandler>();
+			if (component2 != null)
+			{
+				component2.Clicked += new EventHandler(this.HandleBackBtnClicked);
+			}
+		}
+		if (this.unlockBtn != null)
+		{
+			ButtonHandler buttonHandler2 = this.unlockBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler2 != null)
+			{
+				buttonHandler2.Clicked += new EventHandler(this.HandleUnlockBtnClicked);
+			}
+		}
+		if (this.unlockMapBtn != null)
+		{
+			ButtonHandler component3 = this.unlockMapBtn.GetComponent<ButtonHandler>();
+			if (component3 != null)
+			{
+				component3.Clicked += new EventHandler(this.HandleUnlockMapBtnClicked);
+			}
+		}
+		if (this.unlockMapBtnInCreate != null)
+		{
+			ButtonHandler buttonHandler3 = this.unlockMapBtnInCreate.GetComponent<ButtonHandler>();
+			if (buttonHandler3 != null)
+			{
+				buttonHandler3.Clicked += new EventHandler(this.HandleUnlockMapBtnClicked);
+			}
+		}
+		if (this.cancelFromConnectToPhotonBtn != null)
+		{
+			ButtonHandler component4 = this.cancelFromConnectToPhotonBtn.GetComponent<ButtonHandler>();
+			if (component4 != null)
+			{
+				component4.Clicked += new EventHandler(this.HandleCancelFromConnectToPhotonBtnClicked);
+			}
+		}
+		if (this.clearBtn != null)
+		{
+			ButtonHandler buttonHandler4 = this.clearBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler4 != null)
+			{
+				buttonHandler4.Clicked += new EventHandler(this.HandleClearBtnClicked);
+			}
+		}
+		if (this.searchBtn != null)
+		{
+			ButtonHandler component5 = this.searchBtn.GetComponent<ButtonHandler>();
+			if (component5 != null)
+			{
+				component5.Clicked += new EventHandler(this.HandleSearchBtnClicked);
+			}
+		}
+		if (this.showSearchPanelBtn != null)
+		{
+			ButtonHandler buttonHandler5 = this.showSearchPanelBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler5 != null)
+			{
+				buttonHandler5.Clicked += new EventHandler(this.HandleShowSearchPanelBtnClicked);
+			}
+		}
+		if (this.goToCreateRoomBtn != null)
+		{
+			ButtonHandler component6 = this.goToCreateRoomBtn.GetComponent<ButtonHandler>();
+			if (component6 != null)
+			{
+				component6.Clicked += new EventHandler(this.HandleGoToCreateRoomBtnClicked);
+			}
+		}
+		if (this.createRoomBtn != null)
+		{
+			this.createRoomUIBtn = this.createRoomBtn.GetComponent<UIButton>();
+			ButtonHandler buttonHandler6 = this.createRoomBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler6 != null)
+			{
+				buttonHandler6.Clicked += new EventHandler(this.HandleCreateRoomBtnClicked);
+			}
+		}
+		if (this.setPasswordBtn != null)
+		{
+			ButtonHandler component7 = this.setPasswordBtn.GetComponent<ButtonHandler>();
+			if (component7 != null)
+			{
+				component7.Clicked += new EventHandler(this.HandleSetPasswordBtnClicked);
+			}
+		}
+		if (this.clearInSetPasswordBtn != null)
+		{
+			ButtonHandler buttonHandler7 = this.clearInSetPasswordBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler7 != null)
+			{
+				buttonHandler7.Clicked += new EventHandler(this.HandleClearInSetPasswordBtnClicked);
+			}
+		}
+		if (this.okInsetPasswordBtn != null)
+		{
+			ButtonHandler component8 = this.okInsetPasswordBtn.GetComponent<ButtonHandler>();
+			if (component8 != null)
+			{
+				component8.Clicked += new EventHandler((object sender, EventArgs e) => this.OnPaswordSelected());
+			}
+		}
+		if (this.joinRoomFromEnterPasswordBtn != null)
+		{
+			ButtonHandler buttonHandler8 = this.joinRoomFromEnterPasswordBtn.GetComponent<ButtonHandler>();
+			if (buttonHandler8 != null)
+			{
+				buttonHandler8.Clicked += new EventHandler(this.HandleJoinRoomFromEnterPasswordBtnClicked);
+			}
+		}
+		if (!Defs.isDaterRegim)
+		{
+			if (true)
+			{
+				this.SetUnLockedButton(this.flagCaptureToogle);
+			}
+			if (true)
+			{
+				this.SetUnLockedButton(this.deadlyGamesToogle);
+			}
+		}
+		this.InitializeBannerWindow();
+		InterstitialManager.Instance.ResetAdProvider();
+		if (!ConnectSceneNGUIController.NeedShowReviewInConnectScene)
+		{
+			if (!ReplaceAdmobPerelivController.ReplaceAdmobWithPerelivApplicable() || !ConnectSceneNGUIController.ReplaceAdmobWithPerelivRequest)
+			{
+				UnityEngine.Debug.LogFormat("{0}, Start(), InterstitialRequest: {1}", new object[] { base.GetType().Name, ConnectSceneNGUIController.InterstitialRequest });
+				if (MobileAdManager.AdIsApplicable(MobileAdManager.Type.Image, true) && ConnectSceneNGUIController.InterstitialRequest)
+				{
+					this.isStartShowAdvert = true;
+					base.StartCoroutine(this.WaitLoadingAndShowInterstitialCoroutine("Connect Scene", false));
+				}
+			}
+			else
+			{
+				ConnectSceneNGUIController.ReplaceAdmobWithPerelivRequest = false;
+				base.StartCoroutine(this.WaitLoadingAndShowReplaceAdmobPereliv("Connect Scene", false));
+			}
+		}
+		this.wrapGames.onInitializeItem = new UIWrapContent.OnInitializeItem(this.OnInitializeItem);
+		this.enterPasswordInput.onSubmit.Add(new EventDelegate(new EventDelegate.Callback(this.EnterPassInputSubmit)));
+	}
+
+	private void StartSearchLocalServers()
+	{
+		this.lanScan.StartSearchBroadCasting(new LANBroadcastService.delJoinServer(this.SeachServer));
+	}
+
+	public void StopFingerAnim()
+	{
+		if (this.fingerAnimObj != null && this.fingerAnimObj.activeSelf)
+		{
+			this.fingerStopped = true;
+			this.fingerAnimObj.SetActive(false);
+			this.scrollViewSelectMapTransform.GetComponent<UIScrollView>().onDragStarted -= new UIScrollView.OnDragNotification(this.StopFingerAnim);
 		}
 	}
 
 	private void Update()
 	{
-		bool flag = deathmatchToggle != null && deathmatchToggle.gameObject.activeInHierarchy;
-		if (armoryButton != null && armoryButton.activeSelf != flag)
+		bool flag = (this.deathmatchToggle == null ? false : this.deathmatchToggle.gameObject.activeInHierarchy);
+		if (this.armoryButton != null && this.armoryButton.activeSelf != flag)
 		{
-			armoryButton.SetActive(flag);
+			this.armoryButton.SetActive(flag);
 		}
-		if (customPanel.activeSelf && !Defs.isInet)
+		if (this.customPanel.activeSelf && !Defs.isInet)
 		{
-			UpdateLocalServersList();
+			this.UpdateLocalServersList();
 		}
-		if (!Defs.isInet)
+		if (Defs.isInet)
 		{
-			connectToWiFIInCreateLabel.SetActive(!CheckLocalAvailability());
-			connectToWiFIInCustomLabel.SetActive(!CheckLocalAvailability());
-			if (createRoomUIBtn.isEnabled != CheckLocalAvailability())
+			if (this.connectToWiFIInCreateLabel.activeSelf)
 			{
-				createRoomUIBtn.isEnabled = CheckLocalAvailability();
+				this.connectToWiFIInCreateLabel.SetActive(false);
+			}
+			if (this.connectToWiFIInCreateLabel.activeSelf)
+			{
+				this.connectToWiFIInCustomLabel.SetActive(false);
 			}
 		}
 		else
 		{
-			if (connectToWiFIInCreateLabel.activeSelf)
+			this.connectToWiFIInCreateLabel.SetActive(!this.CheckLocalAvailability());
+			this.connectToWiFIInCustomLabel.SetActive(!this.CheckLocalAvailability());
+			if (this.createRoomUIBtn.isEnabled != this.CheckLocalAvailability())
 			{
-				connectToWiFIInCreateLabel.SetActive(false);
-			}
-			if (connectToWiFIInCreateLabel.activeSelf)
-			{
-				connectToWiFIInCustomLabel.SetActive(false);
+				this.createRoomUIBtn.isEnabled = this.CheckLocalAvailability();
 			}
 		}
-		if (selectMapPanel.activeInHierarchy && centerScript != null && centerScript.centeredObject != null)
+		if (this.selectMapPanel.activeInHierarchy && this.centerScript != null && this.centerScript.centeredObject != null)
 		{
-			selectMap = centerScript.centeredObject.GetComponent<MapPreviewController>();
+			this.selectMap = this.centerScript.centeredObject.GetComponent<MapPreviewController>();
 		}
-		if (!unlockBtn.activeSelf && (mainPanel.activeSelf || createPanel.activeSelf) && selectMap != null)
+		if (!this.unlockBtn.activeSelf && (this.mainPanel.activeSelf || this.createPanel.activeSelf) && this.selectMap != null)
 		{
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(selectMap.mapID);
+			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.selectMap.mapID);
 			if (infoScene == null)
 			{
 				return;
 			}
-			if (!isSetUseMap && infoScene.isPremium && Storager.getInt(infoScene.NameScene + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene))
+			if ((this.isSetUseMap ? false : infoScene.isPremium) && Storager.getInt(string.Concat(infoScene.NameScene, "Key"), true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene))
 			{
-				if (!unlockMapBtn.activeSelf)
+				if (!this.unlockMapBtn.activeSelf)
 				{
-					priceMapLabel.text = Defs.PremiumMaps[infoScene.NameScene].ToString();
-					unlockMapBtn.SetActive(true);
-					goBtn.SetActive(false);
-					priceMapLabelInCreate.text = Defs.PremiumMaps[infoScene.NameScene].ToString();
-					unlockMapBtnInCreate.SetActive(true);
-					createRoomBtn.SetActive(false);
+					UILabel str = this.priceMapLabel;
+					int item = Defs.PremiumMaps[infoScene.NameScene];
+					str.text = item.ToString();
+					this.unlockMapBtn.SetActive(true);
+					this.goBtn.SetActive(false);
+					UILabel uILabel = this.priceMapLabelInCreate;
+					int num = Defs.PremiumMaps[infoScene.NameScene];
+					uILabel.text = num.ToString();
+					this.unlockMapBtnInCreate.SetActive(true);
+					this.createRoomBtn.SetActive(false);
 				}
 			}
-			else if (unlockMapBtn.activeSelf)
+			else if (this.unlockMapBtn.activeSelf)
 			{
-				unlockMapBtn.SetActive(false);
-				goBtn.SetActive(true);
-				unlockMapBtnInCreate.SetActive(false);
-				createRoomBtn.SetActive(true);
+				this.unlockMapBtn.SetActive(false);
+				this.goBtn.SetActive(true);
+				this.unlockMapBtnInCreate.SetActive(false);
+				this.createRoomBtn.SetActive(true);
 			}
 		}
-		if ((!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled) && (!(BannerWindowController.SharedController != null) || !BannerWindowController.SharedController.IsAnyBannerShown) && (!(loadingToDraw != null) || !loadingToDraw.gameObject.activeInHierarchy) && (!(_loadingNGUIController != null) || !_loadingNGUIController.gameObject.activeInHierarchy) && ExperienceController.sharedController != null)
+		if ((!(BankController.Instance != null) || !BankController.Instance.InterfaceEnabled) && (!(BannerWindowController.SharedController != null) || !BannerWindowController.SharedController.IsAnyBannerShown) && (!(this.loadingToDraw != null) || !this.loadingToDraw.gameObject.activeInHierarchy) && (!(this._loadingNGUIController != null) || !this._loadingNGUIController.gameObject.activeInHierarchy) && ExperienceController.sharedController != null)
 		{
 			ExperienceController.sharedController.isShowRanks = true;
 		}
 	}
 
-	private bool IsUseMap(int indMap)
+	public void updateFilteredRoomList(string gFilter)
 	{
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(curSelectMode, indMap);
-		if (infoScene != null)
+		this.filteredRoomList.Clear();
+		RoomInfo[] roomList = PhotonNetwork.GetRoomList();
+		bool flag = !string.IsNullOrEmpty(gFilter);
+		for (int i = 0; i < (int)roomList.Length; i++)
 		{
-			bool flag = infoScene.isPremium && Storager.getInt(infoScene.NameScene + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(infoScene.NameScene);
-			return !flag;
-		}
-		return false;
-	}
-
-	private static void ResetWeaponManagerForDeathmatch()
-	{
-		SetFlagsForDeathmatchRegim();
-		WeaponManager.sharedManager.Reset();
-	}
-
-	private IEnumerator LoadMapPreview()
-	{
-		List<SceneInfo> listAllNeedMap = new List<SceneInfo>();
-		if (Defs.isDaterRegim)
-		{
-			AllScenesForMode scMode2 = SceneInfoController.instance.GetListScenesForMode(TypeModeGame.Dater);
-			if (scMode2 != null)
+			if (Defs.isDaterRegim || roomList[i].customProperties[ConnectSceneNGUIController.platformProperty] == null || roomList[i].customProperties[ConnectSceneNGUIController.platformProperty].ToString().Equals(ConnectSceneNGUIController.myPlatformConnect.ToString()) || roomList[i].customProperties[ConnectSceneNGUIController.platformProperty].ToString().Equals(3.ToString()))
 			{
-				listAllNeedMap.AddRange(scMode2.avaliableScenes);
+				if (ExpController.Instance.OurTier != 0 || !Defs.isABTestBalansCohortActual || roomList[i].customProperties[ConnectSceneNGUIController.ABTestProperty] != null && (int)roomList[i].customProperties[ConnectSceneNGUIController.ABTestProperty] == 1)
+				{
+					if (ExpController.Instance.OurTier != 0 || Defs.isABTestBalansCohortActual || roomList[i].customProperties[ConnectSceneNGUIController.ABTestProperty] == null || (int)roomList[i].customProperties[ConnectSceneNGUIController.ABTestProperty] != 1)
+					{
+						bool flag1 = true;
+						if (flag)
+						{
+							flag1 = (!roomList[i].name.StartsWith(gFilter, true, null) ? false : (roomList[i].name.Length != 36 || roomList[i].name.IndexOf("-") != 8 ? 0 : (int)(roomList[i].name.LastIndexOf("-") == 23)) == 0);
+						}
+						if (flag1 && this.IsUseMap((int)roomList[i].customProperties[ConnectSceneNGUIController.mapProperty]))
+						{
+							this.filteredRoomList.Add(roomList[i]);
+						}
+					}
+				}
 			}
+		}
+		if (this.filteredRoomList.Count >= 4)
+		{
+			this.scrollGames.enabled = true;
+		}
+		else if (this.scrollGames.enabled)
+		{
+			this.wrapGames.SortAlphabetically();
+			this.scrollGames.ResetPosition();
+			this.scrollGames.enabled = false;
+		}
+		this.wrapGames.minIndex = this.filteredRoomList.Count * -1;
+		if (this.filteredRoomList.Count > 0 && this.roomFields == null)
+		{
+			this.roomFields = new GameInfo[5];
+			for (int j = 0; j < (int)this.roomFields.Length; j++)
+			{
+				GameObject gameObject = NGUITools.AddChild(this.wrapGames.gameObject, this.gameInfoItemPrefab);
+				gameObject.name = string.Concat("GameInfo_", j);
+				this.roomFields[j] = gameObject.GetComponent<GameInfo>();
+			}
+			this.wrapGames.SortAlphabetically();
+			this.scrollGames.enabled = true;
+			this.scrollGames.ResetPosition();
+		}
+		if (this.roomFields != null)
+		{
+			for (int k = 0; k < (int)this.roomFields.Length; k++)
+			{
+				this.SetRoomInfo(this.roomFields[k], this.roomFields[k].index);
+			}
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void UpdateFilteredRoomListInvoke()
+	{
+		this.updateFilteredRoomList(this.gameNameFilter);
+	}
+
+	private void UpdateLocalServersList()
+	{
+		bool item;
+		List<LANBroadcastService.ReceivedMessage> receivedMessages = new List<LANBroadcastService.ReceivedMessage>();
+		for (int i = 0; i < this.lanScan.lstReceivedMessages.Count; i++)
+		{
+			if (!Defs.filterMaps.ContainsKey(this.lanScan.lstReceivedMessages[i].map))
+			{
+				item = false;
+			}
+			else
+			{
+				Dictionary<string, int> strs = Defs.filterMaps;
+				LANBroadcastService.ReceivedMessage receivedMessage = this.lanScan.lstReceivedMessages[i];
+				item = strs[receivedMessage.map] == 3;
+			}
+			bool flag = item;
+			if ((Defs.isDaterRegim && flag || !Defs.isDaterRegim && !flag) && this.lanScan.lstReceivedMessages[i].regim == (int)ConnectSceneNGUIController.regim)
+			{
+				receivedMessages.Add(this.lanScan.lstReceivedMessages[i]);
+			}
+		}
+		if (receivedMessages.Count <= 0)
+		{
+			this._copy = null;
 		}
 		else
 		{
-			TypeModeGame[] arrNeedMode = new TypeModeGame[6]
+			this._copy = receivedMessages.ToArray();
+			Array.Sort<LANBroadcastService.ReceivedMessage>(this._copy, new Comparison<LANBroadcastService.ReceivedMessage>(this.LocalServerComparison));
+		}
+		if (this._copy != null)
+		{
+			if ((int)this._copy.Length >= 4)
 			{
-				TypeModeGame.Deathmatch,
-				TypeModeGame.TeamFight,
-				TypeModeGame.TimeBattle,
-				TypeModeGame.FlagCapture,
-				TypeModeGame.DeadlyGames,
-				TypeModeGame.CapturePoints
-			};
-			TypeModeGame[] array = arrNeedMode;
-			foreach (TypeModeGame curMode in array)
+				this.scrollGames.enabled = true;
+			}
+			else if (this.scrollGames.enabled)
 			{
-				AllScenesForMode scMode = SceneInfoController.instance.GetListScenesForMode(curMode);
-				if (scMode != null)
+				this.wrapGames.SortAlphabetically();
+				this.scrollGames.ResetPosition();
+				this.scrollGames.enabled = false;
+			}
+			this.wrapGames.minIndex = (int)this._copy.Length * -1;
+			if ((int)this._copy.Length > 0 && this.roomFields == null)
+			{
+				this.roomFields = new GameInfo[5];
+				for (int j = 0; j < (int)this.roomFields.Length; j++)
 				{
-					listAllNeedMap.AddRange(scMode.avaliableScenes);
+					GameObject gameObject = NGUITools.AddChild(this.wrapGames.gameObject, this.gameInfoItemPrefab);
+					gameObject.name = string.Concat("GameInfo_", j);
+					this.roomFields[j] = gameObject.GetComponent<GameInfo>();
 				}
+				this.wrapGames.SortAlphabetically();
+				this.scrollGames.enabled = true;
+				this.scrollGames.ResetPosition();
 			}
 		}
-		string allScene = string.Empty;
-		for (int scI = 0; scI < listAllNeedMap.Count; scI++)
+		if (this.roomFields != null)
 		{
-			if (!mapPreview.ContainsKey(listAllNeedMap[scI].NameScene))
+			for (int k = 0; k < (int)this.roomFields.Length; k++)
 			{
-				allScene = allScene + listAllNeedMap[scI].NameScene + "\n";
-				mapPreview.Add(listAllNeedMap[scI].NameScene, Resources.Load("LevelLoadingsPreview" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/Loading_" + listAllNeedMap[scI].NameScene) as Texture);
-				if (listAllNeedMap[scI].isPremium && Storager.getInt(listAllNeedMap[scI].NameScene + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(listAllNeedMap[scI].NameScene))
-				{
-					mapPreview.Add(listAllNeedMap[scI].NameScene + "_off", Resources.Load<Texture>("LevelLoadingsPreview" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/Loading_" + listAllNeedMap[scI].NameScene + "_off"));
-				}
-				yield return null;
+				this.SetLocalRoomInfo(this.roomFields[k], this.roomFields[k].index);
 			}
-		}
-		if (Application.isEditor)
-		{
-			Debug.Log(allScene);
-		}
-		yield return null;
-		mainPanel.SetActive(true);
-		selectMapPanel.SetActive(true);
-		ResetWeaponManagerForDeathmatch();
-		SetRegim(regim);
-		yield return null;
-		if (PromoActionsManager.MobileAdvert == null)
-		{
-			Debug.LogWarning("PromoActionsManager.MobileAdvert == null");
-		}
-		else if (MobileAdManager.AdIsApplicable(MobileAdManager.Type.Image, true))
-		{
-			Debug.LogFormat("{0}, LoadMapPreview(), InterstitialRequest: {1}", GetType().Name, InterstitialRequest);
-			if (InterstitialRequest)
-			{
-				if (Defs.IsDeveloperBuild)
-				{
-					Debug.LogFormat("Waiting for {0:F2}s...", PromoActionsManager.MobileAdvert.ConnectSceneDelaySeconds);
-				}
-				float startWaitingTime = Time.realtimeSinceStartup;
-				while ((double)(Time.realtimeSinceStartup - startWaitingTime) < PromoActionsManager.MobileAdvert.ConnectSceneDelaySeconds)
-				{
-					yield return null;
-				}
-			}
-		}
-		InterstitialRequest = false;
-		yield return null;
-		loadingMapPanel.SetActive(false);
-		ActivityIndicator.IsActiveIndicator = false;
-		if (!Defs.isDaterRegim)
-		{
-			StartCoroutine(AnimateModeOpen());
-		}
-		if (NeedShowReviewInConnectScene)
-		{
-			BannerWindowController.firstScreen = true;
-		}
-		yield return new WaitForSeconds(1f);
-		if (NeedShowReviewInConnectScene)
-		{
-			NeedShowReviewInConnectScene = false;
-			ReviewHUDWindow.Instance.ShowWindowRating();
 		}
 	}
 
@@ -2705,977 +3025,97 @@ public class ConnectSceneNGUIController : MonoBehaviour
 	{
 		if (Defs.isDaterRegim)
 		{
-			curSelectMode = TypeModeGame.Dater;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.Dater;
 		}
-		else if (regim == RegimGame.TimeBattle)
+		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
 		{
-			curSelectMode = TypeModeGame.TimeBattle;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.TimeBattle;
 		}
-		else if (regim == RegimGame.TeamFight)
+		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
 		{
-			curSelectMode = TypeModeGame.TeamFight;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.TeamFight;
 		}
-		else if (regim == RegimGame.DeadlyGames)
+		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
 		{
-			curSelectMode = TypeModeGame.DeadlyGames;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.DeadlyGames;
 		}
-		else if (regim == RegimGame.FlagCapture)
+		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
 		{
-			curSelectMode = TypeModeGame.FlagCapture;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.FlagCapture;
 		}
-		else if (regim == RegimGame.CapturePoints)
+		else if (ConnectSceneNGUIController.regim != ConnectSceneNGUIController.RegimGame.CapturePoints)
 		{
-			curSelectMode = TypeModeGame.CapturePoints;
-		}
-		else
-		{
-			curSelectMode = TypeModeGame.Deathmatch;
-		}
-	}
-
-	private IEnumerator SetUseMasMap()
-	{
-		isSetUseMap = true;
-		SpringPanel _spr = ScrollTransform.GetComponent<SpringPanel>();
-		if (_spr != null)
-		{
-			UnityEngine.Object.Destroy(_spr);
-		}
-		ScrollTransform.GetComponent<UIPanel>().clipOffset = new Vector2(0f, 0f);
-		SetPosSelectMapPanelInMainMenu();
-		ScrollTransform.localPosition = new Vector3(0f, 0f, 0f);
-		for (int j = 0; j < grid.transform.childCount; j++)
-		{
-			UnityEngine.Object.Destroy(grid.transform.GetChild(j).gameObject);
-		}
-		yield return null;
-		AllScenesForMode modeInfo = SceneInfoController.instance.GetListScenesForMode(curSelectMode);
-		if (modeInfo == null)
-		{
-			Debug.LogError("modeInfo == null");
-			yield break;
-		}
-		for (int k = 0; k < modeInfo.avaliableScenes.Count; k++)
-		{
-			SceneInfo scInfo = modeInfo.avaliableScenes[k];
-			GameObject newTexture = UnityEngine.Object.Instantiate(mapPreviewTexture);
-			newTexture.transform.parent = grid.transform;
-			bool _isClose = scInfo.isPremium && Storager.getInt(scInfo.NameScene + "Key", true) == 0 && !PremiumAccountController.MapAvailableDueToPremiumAccount(scInfo.NameScene);
-			newTexture.GetComponent<MapPreviewController>().mapPreviewTexture.mainTexture = mapPreview[scInfo.NameScene + ((!_isClose) ? string.Empty : "_off")];
-			newTexture.name = "Map_" + k;
-			newTexture.transform.localScale = new Vector3(1f, 1f, 1f);
-			newTexture.transform.localPosition = new Vector3(widthCell * (float)k, 0f, 0f);
-			if (!(scInfo == null))
-			{
-				newTexture.GetComponent<MapPreviewController>().NameMapLbl.GetComponent<SetHeadLabelText>().SetText(scInfo.TranslatePreviewName.ToUpper());
-				newTexture.GetComponent<MapPreviewController>().SizeMapNameLbl.text = scInfo.TranslateSizeMap;
-				newTexture.GetComponent<MapPreviewController>().mapID = scInfo.indexMap;
-				if (scInfo.isPremium)
-				{
-					newTexture.GetComponent<MapPreviewController>().premium.SetActive(true);
-				}
-				if (scInfo.AvaliableWeapon == ModeWeapon.knifes)
-				{
-					newTexture.GetComponent<MapPreviewController>().milee.SetActive(true);
-					newTexture.GetComponent<MapPreviewController>().milee.GetComponent<UILabel>().text = LocalizationStore.Get("Key_0096");
-				}
-				if (scInfo.AvaliableWeapon == ModeWeapon.sniper)
-				{
-					newTexture.GetComponent<MapPreviewController>().milee.SetActive(true);
-					newTexture.GetComponent<MapPreviewController>().milee.GetComponent<UILabel>().text = LocalizationStore.Get("Key_0949");
-				}
-				if (Defs.isDaterRegim)
-				{
-					newTexture.GetComponent<MapPreviewController>().milee.SetActive(true);
-					newTexture.GetComponent<MapPreviewController>().milee.GetComponent<UILabel>().text = LocalizationStore.Get("Key_1421");
-				}
-			}
-		}
-		grid.GetComponent<UIWrapContent>().SortBasedOnScrollMovement();
-		Transform curr = grid.transform.GetChild(0);
-		foreach (Transform c in grid.transform)
-		{
-			if (c.gameObject.name.Equals("Map_0"))
-			{
-				curr = c;
-				break;
-			}
-		}
-		grid.GetComponent<UIWrapContent>().WrapContent();
-		grid.SetActive(false);
-		grid.SetActive(true);
-		centerScript = grid.GetComponent<MyCenterOnChild>();
-		if (!TrainingController.TrainingCompleted)
-		{
-			selectedMap = modeInfo.avaliableScenes[UnityEngine.Random.Range(0, modeInfo.avaliableScenes.Count)].NameScene;
-		}
-		if (!string.IsNullOrEmpty(selectedMap))
-		{
-			for (int i = 0; i < modeInfo.avaliableScenes.Count; i++)
-			{
-				if (selectedMap == modeInfo.avaliableScenes[i].NameScene)
-				{
-					centerScript.springStrength = 1E+11f;
-					centerScript.CenterOn(grid.transform.GetChild(i));
-					centerScript.springStrength = 8f;
-					break;
-				}
-			}
-			selectedMap = string.Empty;
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.Deathmatch;
 		}
 		else
 		{
-			centerScript.springStrength = 1E+11f;
-			centerScript.CenterOn(curr);
-			centerScript.springStrength = 8f;
-		}
-		grid.transform.GetChild(1).transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
-		grid.transform.GetChild(grid.transform.childCount - 1).transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
-		startPosX = curr.localPosition.x;
-		yield return null;
-		isSetUseMap = false;
-		Resources.UnloadUnusedAssets();
-	}
-
-	public void OnReceivedRoomListUpdate()
-	{
-		if (customPanel.activeSelf && Defs.isInet)
-		{
-			updateFilteredRoomList(gameNameFilter);
+			ConnectSceneNGUIController.curSelectMode = TypeModeGame.CapturePoints;
 		}
 	}
 
-	private void SetRoomInfo(GameInfo _gameInfo, int index)
+	[DebuggerHidden]
+	private IEnumerator WaitLoadingAndShowInterstitialCoroutine(string context, bool loadData = true)
 	{
-		_gameInfo.index = index;
-		if (filteredRoomList.Count > index)
-		{
-			_gameInfo.gameObject.SetActive(true);
-			RoomInfo roomInfo = filteredRoomList[index];
-			string text = roomInfo.name;
-			if (text.Length == 36 && text.IndexOf("-") == 8 && text.LastIndexOf("-") == 23)
-			{
-				text = LocalizationStore.Get("Key_0088");
-			}
-			_gameInfo.serverNameLabel.text = text;
-			_gameInfo.countPlayersLabel.text = roomInfo.playerCount + "/" + roomInfo.maxPlayers;
-			bool flag = string.IsNullOrEmpty(roomInfo.customProperties[passwordProperty].ToString());
-			_gameInfo.openSprite.SetActive(flag);
-			_gameInfo.closeSprite.SetActive(!flag);
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(roomInfo.customProperties[mapProperty].ToString()));
-			string text2 = string.Format("{0}: {1}", LocalizationStore.Get("Key_0947"), infoScene.TranslateName);
-			_gameInfo.mapNameLabel.text = text2;
-			_gameInfo.roomInfo = roomInfo;
-		}
-		else
-		{
-			_gameInfo.gameObject.SetActive(false);
-		}
+		ConnectSceneNGUIController.u003cWaitLoadingAndShowInterstitialCoroutineu003ec__Iterator1D variable = null;
+		return variable;
 	}
 
-	private void OnInitializeItem(GameObject go, int wrapInd, int realInd)
+	[DebuggerHidden]
+	private IEnumerator WaitLoadingAndShowReplaceAdmobPereliv(string context, bool loadData = true)
 	{
-		if (!Defs.isInet)
-		{
-			SetLocalRoomInfo(go.GetComponent<GameInfo>(), Mathf.Abs(realInd));
-		}
-		else
-		{
-			SetRoomInfo(go.GetComponent<GameInfo>(), Mathf.Abs(realInd));
-		}
+		ConnectSceneNGUIController.u003cWaitLoadingAndShowReplaceAdmobPerelivu003ec__Iterator1C variable = null;
+		return variable;
 	}
 
-	public void updateFilteredRoomList(string gFilter)
+	public enum ABTestParams
 	{
-		filteredRoomList.Clear();
-		RoomInfo[] roomList = PhotonNetwork.GetRoomList();
-		bool flag = !string.IsNullOrEmpty(gFilter);
-		for (int i = 0; i < roomList.Length; i++)
-		{
-			if (!Defs.isDaterRegim && roomList[i].customProperties[platformProperty] != null)
-			{
-				string text = roomList[i].customProperties[platformProperty].ToString();
-				int num = (int)myPlatformConnect;
-				if (!text.Equals(num.ToString()) && !roomList[i].customProperties[platformProperty].ToString().Equals(3.ToString()))
-				{
-					continue;
-				}
-			}
-			if ((ExpController.Instance.OurTier != 0 || !Defs.isABTestBalansCohortActual || (roomList[i].customProperties[ABTestProperty] != null && (int)roomList[i].customProperties[ABTestProperty] == 1)) && (ExpController.Instance.OurTier != 0 || Defs.isABTestBalansCohortActual || roomList[i].customProperties[ABTestProperty] == null || (int)roomList[i].customProperties[ABTestProperty] != 1))
-			{
-				bool flag2 = true;
-				if (flag)
-				{
-					flag2 = roomList[i].name.StartsWith(gFilter, true, null) && (roomList[i].name.Length != 36 || roomList[i].name.IndexOf("-") != 8 || roomList[i].name.LastIndexOf("-") != 23);
-				}
-				if (flag2 && IsUseMap((int)roomList[i].customProperties[mapProperty]))
-				{
-					filteredRoomList.Add(roomList[i]);
-				}
-			}
-		}
-		if (filteredRoomList.Count < 4)
-		{
-			if (scrollGames.enabled)
-			{
-				wrapGames.SortAlphabetically();
-				scrollGames.ResetPosition();
-				scrollGames.enabled = false;
-			}
-		}
-		else
-		{
-			scrollGames.enabled = true;
-		}
-		wrapGames.minIndex = filteredRoomList.Count * -1;
-		if (filteredRoomList.Count > 0 && roomFields == null)
-		{
-			roomFields = new GameInfo[5];
-			for (int j = 0; j < roomFields.Length; j++)
-			{
-				GameObject gameObject = NGUITools.AddChild(wrapGames.gameObject, gameInfoItemPrefab);
-				gameObject.name = "GameInfo_" + j;
-				roomFields[j] = gameObject.GetComponent<GameInfo>();
-			}
-			wrapGames.SortAlphabetically();
-			scrollGames.enabled = true;
-			scrollGames.ResetPosition();
-		}
-		if (roomFields != null)
-		{
-			for (int k = 0; k < roomFields.Length; k++)
-			{
-				SetRoomInfo(roomFields[k], roomFields[k].index);
-			}
-		}
+		Old = 1,
+		Rating = 2,
+		Buff = 3
 	}
 
-	private void OnPhotonRandomJoinFailed()
+	public struct infoClient
 	{
-		Debug.Log("OnPhotonJoinRoomFailed");
-		if (string.IsNullOrEmpty(goMapName))
-		{
-			int randomMapIndex = GetRandomMapIndex();
-			if (randomMapIndex == -1)
-			{
-				return;
-			}
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(randomMapIndex);
-			if (infoScene == null)
-			{
-				return;
-			}
-			goMapName = infoScene.name;
-		}
-		SceneInfo infoScene2 = SceneInfoController.instance.GetInfoScene(goMapName);
-		if (infoScene2 == null)
-		{
-			return;
-		}
-		if (joinNewRoundTries >= 2 && abTestConnect)
-		{
-			abTestConnect = false;
-			joinNewRoundTries = 0;
-		}
-		if (joinNewRoundTries < 2)
-		{
-			Debug.Log("No rooms with new round: " + joinNewRoundTries + ((!abTestConnect) ? string.Empty : " <color=yellow>AbTestSeparate</color>"));
-			joinNewRoundTries++;
-			JoinRandomGameRoom(tryJoinRoundMap, regim, joinNewRoundTries, abTestConnect);
-			return;
-		}
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(goMapName) ? Defs.filterMaps[goMapName] : 0);
-		}
-		StartCoroutine(SetFonLoadingWaitForReset(goMapName));
-		int maxKill = ((regim == RegimGame.DeadlyGames) ? 10 : ((!Defs.isDaterRegim) ? 4 : 5));
-		int playerLimit = (Defs.isCOOP ? 4 : (Defs.isCompany ? 10 : ((!Defs.isHunger) ? 10 : 6)));
-		CreateGameRoom(null, playerLimit, infoScene2.indexMap, maxKill, string.Empty, regim);
+		public string ipAddress;
+
+		public string name;
+
+		public string coments;
 	}
 
-	private void OnPhotonJoinRoomFailed()
+	public struct infoServer
 	{
-		ActivityIndicator.IsActiveIndicator = false;
-		loadingMapPanel.SetActive(false);
-		gameIsfullLabel.timer = 3f;
-		gameIsfullLabel.gameObject.SetActive(true);
-		incorrectPasswordLabel.timer = -1f;
-		incorrectPasswordLabel.gameObject.SetActive(false);
-		Debug.Log("OnPhotonJoinRoomFailed");
+		public string ipAddress;
+
+		public int port;
+
+		public string name;
+
+		public string map;
+
+		public int playerLimit;
+
+		public int connectedPlayers;
+
+		public string coments;
 	}
 
-	private void OnJoinedRoom()
+	public enum PlatformConnect
 	{
-		AnalyticsStuff.LogMultiplayer();
-		Debug.Log("OnJoinedRoom " + PhotonNetwork.room.customProperties[mapProperty].ToString());
-		PhotonNetwork.isMessageQueueRunning = false;
-		NotificationController.ResetPaused();
-		GlobalGameController.healthMyPlayer = 0f;
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(PhotonNetwork.room.customProperties[mapProperty].ToString()));
-		goMapName = infoScene.NameScene;
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(goMapName) ? Defs.filterMaps[goMapName] : 0);
-		}
-		StartCoroutine(MoveToGameScene(infoScene.NameScene));
+		ios = 1,
+		android = 2,
+		custom = 3
 	}
 
-	private void OnCreatedRoom()
+	public enum RegimGame
 	{
-		Debug.Log("OnCreatedRoom");
-	}
-
-	private void OnPhotonCreateRoomFailed()
-	{
-		Debug.Log("OnPhotonCreateRoomFailed");
-		nameAlreadyUsedLabel.timer = 3f;
-		nameAlreadyUsedLabel.gameObject.SetActive(true);
-		loadingMapPanel.SetActive(false);
-		ActivityIndicator.IsActiveIndicator = false;
-	}
-
-	private void OnDisconnectedFromPhoton()
-	{
-		Debug.Log("OnDisconnectedFromPhoton");
-		if ((!mainPanel.activeSelf || loadingMapPanel.activeSelf) && firstConnectToPhoton && Defs.isInet)
-		{
-			mainPanel.SetActive(true);
-			selectMapPanel.SetActive(true);
-			createPanel.SetActive(false);
-			customPanel.SetActive(false);
-			searchPanel.SetActive(false);
-			setPasswordPanel.SetActive(false);
-			enterPasswordPanel.SetActive(false);
-			ExperienceController.sharedController.isShowRanks = true;
-			loadingMapPanel.SetActive(false);
-			SetPosSelectMapPanelInMainMenu();
-			serverIsNotAvalible.timer = 3f;
-			serverIsNotAvalible.gameObject.SetActive(true);
-			UICamera.selectedObject = null;
-			RegimGame regimGame = regim;
-			ResetWeaponManagerForDeathmatch();
-			SetRegim(regimGame);
-		}
-		if (actAfterConnectToPhoton != null)
-		{
-			Invoke("ConnectToPhoton", 0.5f);
-		}
-		if (connectToPhotonPanel.activeSelf)
-		{
-			failInternetLabel.SetActive(true);
-		}
-	}
-
-	private void OnFailedToConnectToPhoton(object parameters)
-	{
-		Debug.Log("OnFailedToConnectToPhoton. StatusCode: " + parameters);
-		if (connectToPhotonPanel.activeSelf)
-		{
-			failInternetLabel.SetActive(true);
-		}
-		if (!isCancelConnectingToPhoton)
-		{
-			Invoke("ConnectToPhoton", 1f);
-		}
-	}
-
-	public void OnConnectedToMaster()
-	{
-		Debug.Log("OnConnectedToMaster");
-		firstConnectToPhoton = true;
-		PhotonNetwork.playerName = ProfileController.GetPlayerNameOrDefault();
-		if (connectToPhotonPanel.activeSelf && actAfterConnectToPhoton != new Action(RandomBtnAct))
-		{
-			connectToPhotonPanel.SetActive(false);
-		}
-		if (actAfterConnectToPhoton != null)
-		{
-			actAfterConnectToPhoton();
-			actAfterConnectToPhoton = null;
-		}
-		else
-		{
-			PhotonNetwork.Disconnect();
-		}
-	}
-
-	public void OnConnectedToPhoton()
-	{
-		Debug.Log("OnConnectedToPhoton");
-	}
-
-	public void OnJoinedLobby()
-	{
-		Debug.Log("OnJoinedLobby: " + PhotonNetwork.lobby.Name);
-		OnConnectedToMaster();
-	}
-
-	private IEnumerator SetFonLoadingWaitForReset(string _mapName = "", bool isAddCountRun = false)
-	{
-		GetMapName(_mapName, isAddCountRun);
-		if (_loadingNGUIController != null)
-		{
-			UnityEngine.Object.Destroy(_loadingNGUIController.gameObject);
-			_loadingNGUIController = null;
-		}
-		while (WeaponManager.sharedManager == null)
-		{
-			yield return null;
-		}
-		while (WeaponManager.sharedManager.LockGetWeaponPrefabs > 0)
-		{
-			yield return null;
-		}
-		ShowLoadingGUI(_mapName);
-	}
-
-	private void SetFonLoading(string _mapName = "", bool isAddCountRun = false)
-	{
-		GetMapName(_mapName, isAddCountRun);
-		if (_loadingNGUIController != null)
-		{
-			UnityEngine.Object.Destroy(_loadingNGUIController.gameObject);
-			_loadingNGUIController = null;
-		}
-		ShowLoadingGUI(_mapName);
-	}
-
-	private void ShowLoadingGUI(string _mapName)
-	{
-		BannerWindowController.SharedController.HideBannerWindowNoShowNext();
-		_loadingNGUIController = UnityEngine.Object.Instantiate(Resources.Load<GameObject>("LoadingGUI")).GetComponent<LoadingNGUIController>();
-		_loadingNGUIController.SceneToLoad = _mapName;
-		_loadingNGUIController.loadingNGUITexture.mainTexture = LoadConnectScene.textureToShow;
-		_loadingNGUIController.transform.parent = loadingMapPanel.transform;
-		_loadingNGUIController.transform.localPosition = Vector3.zero;
-		_loadingNGUIController.Init();
-	}
-
-	private void GetMapName(string _mapName, bool isAddCountRun)
-	{
-		Debug.Log("setFonLoading " + _mapName);
-		Texture texture = null;
-		if (Defs.isCOOP)
-		{
-			int @int = PlayerPrefs.GetInt("CountRunCoop", 0);
-			bool flag = @int < 5;
-			if (isAddCountRun)
-			{
-				PlayerPrefs.SetInt("CountRunCoop", PlayerPrefs.GetInt("CountRunCoop", 0) + 1);
-			}
-			Texture texture2 = Resources.Load("NoteLoadings/note_Time_Survival_" + @int % countNoteCaptureCOOP) as Texture;
-		}
-		else if (Defs.isCompany)
-		{
-			int int2 = PlayerPrefs.GetInt("CountRunCompany", 0);
-			bool flag = int2 < 5;
-			Texture texture2 = Resources.Load("NoteLoadings/note_Team_Battle_" + int2 % countNoteCaptureCompany) as Texture;
-			if (isAddCountRun)
-			{
-				PlayerPrefs.SetInt("CountRunCompany", PlayerPrefs.GetInt("CountRunCompany", 0) + 1);
-			}
-		}
-		else if (Defs.isHunger)
-		{
-			int int3 = PlayerPrefs.GetInt("CountRunHunger", 0);
-			bool flag = int3 < 5;
-			Texture texture2 = Resources.Load("NoteLoadings/note_Deadly_Games_" + int3 % countNoteCaptureHunger) as Texture;
-			if (isAddCountRun)
-			{
-				PlayerPrefs.SetInt("CountRunHunger", PlayerPrefs.GetInt("CountRunHunger", 0) + 1);
-			}
-		}
-		else if (Defs.isFlag)
-		{
-			int int4 = PlayerPrefs.GetInt("CountRunFlag", 0);
-			bool flag = int4 < 5;
-			Texture texture2 = Resources.Load("NoteLoadings/note_Flag_Capture_" + int4 % countNoteCaptureFlag) as Texture;
-			if (isAddCountRun)
-			{
-				PlayerPrefs.SetInt("CountRunFlag", PlayerPrefs.GetInt("CountRunFlag", 0) + 1);
-			}
-		}
-		else
-		{
-			int int5 = PlayerPrefs.GetInt("CountRunDeadmath", 0);
-			bool flag = int5 < 5;
-			Texture texture2 = Resources.Load("NoteLoadings/note_Deathmatch_" + int5 % countNoteCaptureDeadmatch) as Texture;
-			if (isAddCountRun)
-			{
-				PlayerPrefs.SetInt("CountRunDeadmath", PlayerPrefs.GetInt("CountRunDeadmath", 0) + 1);
-			}
-		}
-		LoadConnectScene.textureToShow = Resources.Load("LevelLoadings" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/Loading_" + _mapName) as Texture2D;
-		LoadingInAfterGame.loadingTexture = LoadConnectScene.textureToShow;
-		LoadConnectScene.sceneToLoad = _mapName;
-		LoadConnectScene.noteToShow = null;
-		loadingToDraw.gameObject.SetActive(false);
-	}
-
-	private IEnumerator MoveToGameScene(string _goMapName)
-	{
-		Debug.Log("MoveToGameScene=" + _goMapName);
-		Defs.isGameFromFriends = false;
-		Defs.isGameFromClans = false;
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(_goMapName) ? Defs.filterMaps[_goMapName] : 0);
-		}
-		GlobalGameController.countKillsBlue = 0;
-		GlobalGameController.countKillsRed = 0;
-		while (PhotonNetwork.room == null)
-		{
-			yield return 0;
-		}
-		PlayerPrefs.SetString("RoomName", PhotonNetwork.room.name);
-		PlayerPrefs.SetInt("CustomGame", 0);
-		PhotonNetwork.isMessageQueueRunning = false;
-		yield return null;
-		yield return Resources.UnloadUnusedAssets();
-		yield return StartCoroutine(SetFonLoadingWaitForReset(_goMapName, true));
-		loadingMapPanel.SetActive(true);
-		isGoInPhotonGame = true;
-		AsyncOperation async = Singleton<SceneLoader>.Instance.LoadSceneAsync("PromScene");
-		FlurryPluginWrapper.LogEvent("Play_" + _goMapName);
-		if (FriendsController.sharedController != null)
-		{
-			FriendsController.sharedController.GetFriendsData();
-		}
-		yield return async;
-		for (int i = 0; i < grid.transform.childCount; i++)
-		{
-			UnityEngine.Object.Destroy(grid.transform.GetChild(i).gameObject);
-		}
-		mapPreview.Clear();
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void ConnectToPhoton()
-	{
-		if (FriendsController.sharedController != null && FriendsController.sharedController.Banned == 1)
-		{
-			return;
-		}
-		if (PhotonNetwork.connectionState == ConnectionState.Connecting || PhotonNetwork.connectionState == ConnectionState.Connected)
-		{
-			Debug.Log("ConnectToPhoton return");
-			return;
-		}
-		Debug.Log("ConnectToPhoton");
-		if (FriendsController.sharedController != null && FriendsController.sharedController.Banned == 1)
-		{
-			timerShowBan = 3f;
-			return;
-		}
-		isConnectingToPhoton = true;
-		isCancelConnectingToPhoton = false;
-		gameTier = ((!(ExpController.Instance != null)) ? 1 : ExpController.Instance.OurTier);
-		if (Defs.useSqlLobby)
-		{
-			PhotonNetwork.lobby = new TypedLobby("PixelGun3D", LobbyType.SqlLobby);
-		}
-		PhotonNetwork.ConnectUsingSettings(Initializer.Separator + regim.ToString() + (Defs.isDaterRegim ? "Dater" : ((!Defs.isHunger) ? gameTier.ToString() : "0")) + "v" + GlobalGameController.MultiplayerProtocolVersion);
-	}
-
-	private void StartSearchLocalServers()
-	{
-		lanScan.StartSearchBroadCasting(SeachServer);
-	}
-
-	private void SeachServer(string ipServerSeaches)
-	{
-		bool flag = false;
-		if (servers.Count > 0)
-		{
-			foreach (infoServer server in servers)
-			{
-				if (server.ipAddress.Equals(ipServerSeaches))
-				{
-					flag = true;
-				}
-			}
-		}
-		if (!flag)
-		{
-			infoServer item = default(infoServer);
-			item.ipAddress = ipServerSeaches;
-			servers.Add(item);
-		}
-	}
-
-	private int LocalServerComparison(LANBroadcastService.ReceivedMessage msg1, LANBroadcastService.ReceivedMessage msg2)
-	{
-		return msg1.ipAddress.CompareTo(msg2.ipAddress);
-	}
-
-	private void SetLocalRoomInfo(GameInfo _gameInfo, int index)
-	{
-		_gameInfo.index = index;
-		if (_copy != null && _copy.Length > index)
-		{
-			_gameInfo.gameObject.SetActive(true);
-			LANBroadcastService.ReceivedMessage roomInfoLocal = _copy[index];
-			string text = roomInfoLocal.name;
-			if (string.IsNullOrEmpty(text))
-			{
-				text = LocalizationStore.Get("Key_0948");
-			}
-			_gameInfo.serverNameLabel.text = text;
-			_gameInfo.countPlayersLabel.text = roomInfoLocal.connectedPlayers + "/" + roomInfoLocal.playerLimit;
-			_gameInfo.openSprite.SetActive(true);
-			_gameInfo.closeSprite.SetActive(false);
-			string arg = roomInfoLocal.map;
-			SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(roomInfoLocal.map);
-			if (infoScene != null)
-			{
-				arg = infoScene.TranslateName;
-			}
-			_gameInfo.mapNameLabel.text = string.Format("{0}: {1}", LocalizationStore.Get("Key_0947"), arg);
-			_gameInfo.roomInfoLocal = roomInfoLocal;
-		}
-		else
-		{
-			_gameInfo.gameObject.SetActive(false);
-		}
-	}
-
-	private void UpdateLocalServersList()
-	{
-		List<LANBroadcastService.ReceivedMessage> list = new List<LANBroadcastService.ReceivedMessage>();
-		for (int i = 0; i < lanScan.lstReceivedMessages.Count; i++)
-		{
-			bool flag = Defs.filterMaps.ContainsKey(lanScan.lstReceivedMessages[i].map) && Defs.filterMaps[lanScan.lstReceivedMessages[i].map] == 3;
-			if (((Defs.isDaterRegim && flag) || (!Defs.isDaterRegim && !flag)) && lanScan.lstReceivedMessages[i].regim == (int)regim)
-			{
-				list.Add(lanScan.lstReceivedMessages[i]);
-			}
-		}
-		if (list.Count > 0)
-		{
-			_copy = list.ToArray();
-			Array.Sort(_copy, LocalServerComparison);
-		}
-		else
-		{
-			_copy = null;
-		}
-		if (_copy != null)
-		{
-			if (_copy.Length < 4)
-			{
-				if (scrollGames.enabled)
-				{
-					wrapGames.SortAlphabetically();
-					scrollGames.ResetPosition();
-					scrollGames.enabled = false;
-				}
-			}
-			else
-			{
-				scrollGames.enabled = true;
-			}
-			wrapGames.minIndex = _copy.Length * -1;
-			if (_copy.Length > 0 && roomFields == null)
-			{
-				roomFields = new GameInfo[5];
-				for (int j = 0; j < roomFields.Length; j++)
-				{
-					GameObject gameObject = NGUITools.AddChild(wrapGames.gameObject, gameInfoItemPrefab);
-					gameObject.name = "GameInfo_" + j;
-					roomFields[j] = gameObject.GetComponent<GameInfo>();
-				}
-				wrapGames.SortAlphabetically();
-				scrollGames.enabled = true;
-				scrollGames.ResetPosition();
-			}
-		}
-		if (roomFields != null)
-		{
-			for (int k = 0; k < roomFields.Length; k++)
-			{
-				SetLocalRoomInfo(roomFields[k], roomFields[k].index);
-			}
-		}
-	}
-
-	public void JoinToLocalRoom(LANBroadcastService.ReceivedMessage _roomInfo)
-	{
-		if (_roomInfo.connectedPlayers == _roomInfo.playerLimit)
-		{
-			gameIsfullLabel.timer = 3f;
-			gameIsfullLabel.gameObject.SetActive(true);
-			incorrectPasswordLabel.timer = -1f;
-			incorrectPasswordLabel.gameObject.SetActive(false);
-			return;
-		}
-		GlobalGameController.countKillsBlue = 0;
-		GlobalGameController.countKillsRed = 0;
-		Defs.ServerIp = _roomInfo.ipAddress;
-		PlayerPrefs.SetString("MaxKill", _roomInfo.comment);
-		PlayerPrefs.SetString("MapName", _roomInfo.map);
-		if (WeaponManager.sharedManager != null)
-		{
-			WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(_roomInfo.map) ? Defs.filterMaps[_roomInfo.map] : 0);
-		}
-		StartCoroutine(SetFonLoadingWaitForReset(_roomInfo.map));
-		Invoke("goGame", 0.1f);
-	}
-
-	private bool CheckLocalAvailability()
-	{
-		if (Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork)
-		{
-			return true;
-		}
-		return false;
-	}
-
-	public void JoinToRoomPhoton(RoomInfo _roomInfo)
-	{
-		if (_roomInfo.playerCount == _roomInfo.maxPlayers)
-		{
-			gameIsfullLabel.timer = 3f;
-			gameIsfullLabel.gameObject.SetActive(true);
-			incorrectPasswordLabel.timer = -1f;
-			incorrectPasswordLabel.gameObject.SetActive(false);
-			return;
-		}
-		joinRoomInfoFromCustom = _roomInfo;
-		if (string.IsNullOrEmpty(_roomInfo.customProperties[passwordProperty].ToString()))
-		{
-			JoinToRoomPhotonAfterCheck();
-			return;
-		}
-		gameIsfullLabel.timer = -1f;
-		gameIsfullLabel.gameObject.SetActive(false);
-		incorrectPasswordLabel.timer = 3f;
-		incorrectPasswordLabel.gameObject.SetActive(true);
-		enterPasswordInput.value = string.Empty;
-		enterPasswordPanel.SetActive(true);
-		enterPasswordInput.isSelected = false;
-		enterPasswordInput.isSelected = true;
-		ExperienceController.sharedController.isShowRanks = false;
-		customPanel.SetActive(false);
-	}
-
-	private void EnterPassInputSubmit()
-	{
-		enterPasswordInput.RemoveFocus();
-		enterPasswordInput.isSelected = false;
-		Invoke("EnterPassInput", 0.1f);
-	}
-
-	private void EnterPassInput()
-	{
-		HandleJoinRoomFromEnterPasswordBtnClicked(null, null);
-	}
-
-	public void JoinToRoomPhotonAfterCheck()
-	{
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(joinRoomInfoFromCustom.customProperties[mapProperty].ToString()));
-		StartCoroutine(SetFonLoadingWaitForReset(infoScene.NameScene));
-		loadingMapPanel.SetActive(true);
-		PhotonNetwork.JoinRoom(joinRoomInfoFromCustom.name);
-		ActivityIndicator.IsActiveIndicator = true;
-	}
-
-	private void SetPosSelectMapPanelInMainMenu()
-	{
-		if (Defs.isDaterRegim)
-		{
-			ChooseMapLabelSmall.SetActive(false);
-			return;
-		}
-		float num = (float)Screen.width * 768f / (float)Screen.height - 322f;
-		if (!Defs.isDaterRegim)
-		{
-			selectMapPanelTransform.localPosition = new Vector3(149f, 73f, 0f);
-		}
-		fonMapPreview.width = Mathf.RoundToInt(num);
-		fonMapPreview.height = 434;
-		fonMapPreview.transform.localPosition = Vector3.zero;
-		mapPreviewPanel.baseClipRegion = new Vector4(0f, 0f, num, mapPreviewPanel.baseClipRegion.w);
-		ChooseMapLabelSmall.SetActive(true);
-	}
-
-	private void SetPosSelectMapPanelInCreatePanel()
-	{
-		if (!Defs.isDaterRegim)
-		{
-			selectMapPanelTransform.localPosition = new Vector3(0f, 35f, 0f);
-			fonMapPreview.width = Mathf.RoundToInt((float)Screen.width * 768f / (float)Screen.height + 10f);
-			fonMapPreview.height = 376;
-			if (!Defs.isDaterRegim)
-			{
-				fonMapPreview.transform.localPosition = new Vector3(0f, -24f, 0f);
-			}
-			mapPreviewPanel.baseClipRegion = new Vector4(0f, 0f, (float)Screen.width * 768f / (float)Screen.height, mapPreviewPanel.baseClipRegion.w);
-			ChooseMapLabelSmall.SetActive(false);
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void goGame()
-	{
-		WeaponManager.sharedManager.Reset(Defs.filterMaps.ContainsKey(PlayerPrefs.GetString("MapName")) ? Defs.filterMaps[PlayerPrefs.GetString("MapName")] : 0);
-		Singleton<SceneLoader>.Instance.LoadScene(PlayerPrefs.GetString("MapName"));
-	}
-
-	private void LogUserQuit()
-	{
-		try
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendFormat("Round {0}", _countOfLoopsRequestAdThisTime + 1);
-			stringBuilder.AppendFormat(", Slot {0} ({1})", InterstitialManager.Instance.ProviderClampedIndex + 1, AnalyticsHelper.GetAdProviderName(InterstitialManager.Instance.Provider));
-			if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
-			{
-				stringBuilder.AppendFormat(", Unit {0}", MobileAdManager.Instance.ImageAdUnitIndexClamped + 1);
-			}
-			stringBuilder.Append(" - User quit");
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Quit - Interstitial", stringBuilder.ToString());
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("ADS Statistics Total", parameters);
-		}
-		catch (Exception exception)
-		{
-			Debug.LogException(exception);
-		}
-	}
-
-	private void LogUserInterstitialRequest()
-	{
-		try
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendFormat("Round {0}", _countOfLoopsRequestAdThisTime + 1);
-			stringBuilder.AppendFormat(", Slot {0} ({1})", InterstitialManager.Instance.ProviderClampedIndex + 1, AnalyticsHelper.GetAdProviderName(InterstitialManager.Instance.Provider));
-			if (InterstitialManager.Instance.Provider == AdProvider.GoogleMobileAds)
-			{
-				stringBuilder.AppendFormat(", Unit {0}", MobileAdManager.Instance.ImageAdUnitIndexClamped + 1);
-			}
-			stringBuilder.Append(" - Request");
-			string value = stringBuilder.ToString();
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Quit - Interstitial", value);
-			dictionary.Add("Statistics - Interstitial", value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("ADS Statistics Total", parameters);
-		}
-		catch (Exception exception)
-		{
-			Debug.LogException(exception);
-		}
-	}
-
-	private void Awake()
-	{
-		if (isReturnFromGame)
-		{
-			Defs.countReturnInConnectScene++;
-		}
-		PhotonObjectCacher.AddObject(base.gameObject);
-		setPasswordInput.onSubmit.Add(new EventDelegate(_003CAwake_003Em__33));
-	}
-
-	private void OnDestroy()
-	{
-		Debug.Log("OnDestroy ConnectSceneController");
-		if (isStartShowAdvert)
-		{
-			LogIsShowAdvert("Connect Scene", false);
-		}
-		LogUserQuit();
-		if (!Defs.isInet || (!isGoInPhotonGame && PhotonNetwork.connectionState == ConnectionState.Connected) || PhotonNetwork.connectionState == ConnectionState.Connecting)
-		{
-			PhotonNetwork.Disconnect();
-			Debug.Log("PhotonNetwork.Disconnect()");
-		}
-		if (ExperienceController.sharedController != null)
-		{
-			ExperienceController.sharedController.isShowRanks = false;
-			ExperienceController.sharedController.isMenu = false;
-			ExperienceController.sharedController.isConnectScene = false;
-		}
-		lanScan.StopBroadCasting();
-		sharedController = null;
-		PhotonObjectCacher.RemoveObject(base.gameObject);
-	}
-
-	private void LogIsShowAdvert(string context, bool isShow)
-	{
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Context", context);
-		Dictionary<string, string> dictionary2 = dictionary;
-		dictionary2.Add("Show", isShow.ToString());
-		if (ExperienceController.sharedController != null)
-		{
-			dictionary2.Add("Level", ExperienceController.sharedController.currentLevel.ToString());
-		}
-		if (ExpController.Instance != null)
-		{
-			dictionary2.Add("Tier", ExpController.Instance.OurTier.ToString());
-		}
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Advert show", dictionary2);
-	}
-
-	public void HandleShopClicked()
-	{
-		if (!ShopNGUIController.GuiActive && !MainMenuController.IsLevelUpOrBannerShown() && (!(connectToPhotonPanel != null) || !connectToPhotonPanel.activeInHierarchy))
-		{
-			ShopNGUIController.sharedShop.SetInGame(false);
-			ShopNGUIController.GuiActive = true;
-			ShopNGUIController.sharedShop.resumeAction = HandleResumeFromShop;
-		}
-	}
-
-	public void HandleResumeFromShop()
-	{
-		ShopNGUIController.GuiActive = false;
-		ShopNGUIController sharedShop = ShopNGUIController.sharedShop;
-		if (_003C_003Ef__am_0024cache9B == null)
-		{
-			_003C_003Ef__am_0024cache9B = _003CHandleResumeFromShop_003Em__34;
-		}
-		sharedShop.resumeAction = _003C_003Ef__am_0024cache9B;
-		StartCoroutine(MainMenuController.ShowRanks());
-	}
-
-	[CompilerGenerated]
-	private void _003CStart_003Em__2D(object sender, EventArgs e)
-	{
-		OnPaswordSelected();
-	}
-
-	[CompilerGenerated]
-	private static int _003CJoinRandomGameRoom_003Em__2E(SceneInfo m)
-	{
-		return m.indexMap;
-	}
-
-	[CompilerGenerated]
-	private void _003COnEnable_003Em__32()
-	{
-		if (BannerWindowController.SharedController != null && BannerWindowController.SharedController.IsAnyBannerShown)
-		{
-			BannerWindowController.SharedController.HideBannerWindow();
-		}
-		else
-		{
-			HandleBackBtnClicked(null, EventArgs.Empty);
-		}
-	}
-
-	[CompilerGenerated]
-	private void _003CAwake_003Em__33()
-	{
-		OnPaswordSelected();
-	}
-
-	[CompilerGenerated]
-	private static void _003CHandleResumeFromShop_003Em__34()
-	{
+		Deathmatch,
+		TimeBattle,
+		TeamFight,
+		DeadlyGames,
+		FlagCapture,
+		CapturePoints,
+		InFriendWindow,
+		InClanWindow
 	}
 }

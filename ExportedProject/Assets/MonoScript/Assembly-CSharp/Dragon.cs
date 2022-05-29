@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class Dragon : MonoBehaviour
@@ -11,38 +15,24 @@ public class Dragon : MonoBehaviour
 
 	public GameObject wingsSecond;
 
-	private void Start()
+	public Dragon()
 	{
-		if (!(child == null) && !(wingsFirst == null) && !(wingsSecond == null))
-		{
-			childSound = child.GetComponent<AudioSource>();
-			StartCoroutine(dragonfly());
-		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerator dragonfly()
 	{
-		while (true)
+		Dragon.u003cdragonflyu003ec__Iterator1B3 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		if (this.child == null || this.wingsFirst == null || this.wingsSecond == null)
 		{
-			yield return new WaitForSeconds(6.6666665f);
-			if (Defs.isSoundFX)
-			{
-				wingsFirst.SetActive(true);
-			}
-			yield return new WaitForSeconds(3.2333333f);
-			wingsFirst.SetActive(false);
-			yield return new WaitForSeconds(6.6666665f);
-			child.SetActive(true);
-			childSound.enabled = Defs.isSoundFX;
-			yield return new WaitForSeconds(5f);
-			child.SetActive(false);
-			if (Defs.isSoundFX)
-			{
-				wingsSecond.SetActive(true);
-			}
-			yield return new WaitForSeconds(4f);
-			wingsSecond.SetActive(false);
-			yield return new WaitForSeconds(23.71f);
+			return;
 		}
+		this.childSound = this.child.GetComponent<AudioSource>();
+		base.StartCoroutine(this.dragonfly());
 	}
 }

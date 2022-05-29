@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -6,35 +7,6 @@ using UnityEngine;
 
 public class CharacterView : MonoBehaviour
 {
-	public enum CharacterType
-	{
-		Player = 0,
-		Mech = 1,
-		Turret = 2
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CSetWeaponAndSkin_003Ec__AnonStorey33D
-	{
-		internal string weaponName;
-
-		internal bool _003C_003Em__535(GameObject wp)
-		{
-			return wp.name == weaponName;
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CSetWeaponAndSkin_003Ec__AnonStorey33E
-	{
-		internal WeaponSounds weaponSounds;
-
-		internal bool _003C_003Em__536(GameObject wp)
-		{
-			return wp.name.Equals(weaponSounds.alternativeName);
-		}
-	}
-
 	public Transform character;
 
 	public Transform mech;
@@ -69,189 +41,202 @@ public class CharacterView : MonoBehaviour
 
 	private GameObject _weapon;
 
-	[CompilerGenerated]
-	private static Action<Transform> _003C_003Ef__am_0024cache11;
-
 	private AnimationCoroutineRunner AnimationRunner
 	{
 		get
 		{
-			if (_animationRunner == null)
+			if (this._animationRunner == null)
 			{
-				_animationRunner = GetComponent<AnimationCoroutineRunner>();
+				this._animationRunner = base.GetComponent<AnimationCoroutineRunner>();
 			}
-			return _animationRunner;
+			return this._animationRunner;
 		}
 	}
 
-	public void ShowCharacterType(CharacterType characterType)
+	public CharacterView()
 	{
-		character.gameObject.SetActive(false);
-		if (mech != null)
+	}
+
+	public static Texture2D GetClanLogo(string logoBase64)
+	{
+		if (string.IsNullOrEmpty(logoBase64))
 		{
-			mech.gameObject.SetActive(false);
+			return null;
 		}
-		if (turret != null)
+		byte[] numArray = Convert.FromBase64String(logoBase64);
+		Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
+		texture2D.LoadImage(numArray);
+		texture2D.filterMode = FilterMode.Point;
+		texture2D.Apply();
+		return texture2D;
+	}
+
+	private void PlayWeaponAnimation()
+	{
+		if (this._profile == null)
 		{
-			turret.gameObject.SetActive(false);
+			Debug.LogWarning("_profile == null");
 		}
-		switch (characterType)
+		else
 		{
-		case CharacterType.Player:
-			character.gameObject.SetActive(true);
-			break;
-		case CharacterType.Mech:
-			mech.gameObject.SetActive(true);
-			break;
-		case CharacterType.Turret:
-			turret.gameObject.SetActive(true);
-			break;
+			Animation component = this._weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>();
+			if (Time.timeScale == 0f)
+			{
+				this.AnimationRunner.StopAllCoroutines();
+				if (component.GetClip("Profile") != null)
+				{
+					Debug.LogWarning("Animation clip is null.");
+				}
+				else
+				{
+					component.AddClip(this._profile, "Profile");
+				}
+				this.AnimationRunner.StartPlay(component, "Profile", false, null);
+			}
+			else
+			{
+				if (component.GetClip("Profile") != null)
+				{
+					Debug.LogWarning("Animation clip is null.");
+				}
+				else
+				{
+					component.AddClip(this._profile, "Profile");
+				}
+				component.Play("Profile");
+			}
 		}
 	}
 
-	public void UpdateMech(int mechUpgrade)
+	public void RemoveArmor()
 	{
-		mechBodyRenderer.material = mechBodyMaterials[mechUpgrade];
-		mechHandRenderer.material = mechBodyMaterials[mechUpgrade];
-		mechGunRenderer.material = mechGunMaterials[mechUpgrade];
-		mechBodyRenderer.material.SetColor("_ColorRili", Color.white);
-		mechHandRenderer.material.SetColor("_ColorRili", Color.white);
-	}
-
-	public void UpdateTurret(int turretUpgrade)
-	{
-		TurretController component = turret.GetComponent<TurretController>();
-		if (component.turretRunMaterials != null && component.turretRunMaterials.Length > turretUpgrade && component.turretRunMaterials[turretUpgrade] != null)
+		if (this.armorPoint.childCount > 0)
 		{
-			component.turretRenderer.material = component.turretRunMaterials[turretUpgrade];
-			component.turretRenderer.material.SetColor("_ColorRili", Color.white);
-		}
-	}
-
-	public void SetWeaponAndSkin(string tg, Texture skinForPers, bool replaceRemovedWeapons)
-	{
-		AnimationRunner.StopAllCoroutines();
-		if (WeaponManager.sharedManager == null)
-		{
-			return;
-		}
-		if (armorPoint.childCount > 0)
-		{
-			ArmorRefs component = armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
+			Transform child = this.armorPoint.GetChild(0);
+			ArmorRefs component = child.GetChild(0).GetComponent<ArmorRefs>();
 			if (component != null)
 			{
 				if (component.leftBone != null)
 				{
-					component.leftBone.parent = armorPoint.GetChild(0).GetChild(0);
+					component.leftBone.parent = child.GetChild(0);
 				}
 				if (component.rightBone != null)
 				{
-					component.rightBone.parent = armorPoint.GetChild(0).GetChild(0);
+					component.rightBone.parent = child.GetChild(0);
 				}
+				child.parent = null;
+				UnityEngine.Object.Destroy(child.gameObject);
 			}
 		}
-		List<Transform> list = new List<Transform>();
-		foreach (Transform item in body)
+	}
+
+	public void RemoveBoots()
+	{
+		IEnumerator enumerator = this.bootsPoint.transform.GetEnumerator();
+		try
 		{
-			list.Add(item);
+			while (enumerator.MoveNext())
+			{
+				((Transform)enumerator.Current).gameObject.SetActive(false);
+			}
 		}
-		foreach (Transform item2 in list)
+		finally
 		{
-			item2.parent = null;
-			UnityEngine.Object.Destroy(item2.gameObject);
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
 		}
-		if (tg == null)
+	}
+
+	public void RemoveCape()
+	{
+		for (int i = 0; i < this.capePoint.transform.childCount; i++)
+		{
+			UnityEngine.Object.Destroy(this.capePoint.transform.GetChild(i).gameObject);
+		}
+	}
+
+	public void RemoveHat()
+	{
+		List<Transform> transforms = new List<Transform>();
+		for (int i = 0; i < this.hatPoint.childCount; i++)
+		{
+			transforms.Add(this.hatPoint.GetChild(i));
+		}
+		foreach (Transform transform in transforms)
+		{
+			transform.parent = null;
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+	}
+
+	public void RemoveMask()
+	{
+		List<Transform> transforms = new List<Transform>();
+		for (int i = 0; i < this.maskPoint.childCount; i++)
+		{
+			transforms.Add(this.maskPoint.GetChild(i));
+		}
+		foreach (Transform transform in transforms)
+		{
+			transform.parent = null;
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+	}
+
+	public void SetSkinTexture(Texture skin)
+	{
+		GameObject component;
+		WeaponSounds weaponSound;
+		if (skin == null)
 		{
 			return;
 		}
-		if (_profile != null)
+		if (this.body.transform.childCount <= 0)
 		{
-			Resources.UnloadAsset(_profile);
-			_profile = null;
-		}
-		GameObject gameObject = null;
-		if (tg == "WeaponGrenade")
-		{
-			gameObject = Resources.Load<GameObject>("WeaponGrenade");
+			component = null;
 		}
 		else
 		{
-			try
-			{
-				_003CSetWeaponAndSkin_003Ec__AnonStorey33D _003CSetWeaponAndSkin_003Ec__AnonStorey33D = new _003CSetWeaponAndSkin_003Ec__AnonStorey33D();
-				_003CSetWeaponAndSkin_003Ec__AnonStorey33D.weaponName = ItemDb.GetByTag(tg).PrefabName;
-				gameObject = WeaponManager.sharedManager.weaponsInGame.OfType<GameObject>().FirstOrDefault(_003CSetWeaponAndSkin_003Ec__AnonStorey33D._003C_003Em__535);
-			}
-			catch (Exception ex)
-			{
-				if (Application.isEditor)
-				{
-					Debug.LogError("Exception in var weaponName = ItemDb.GetByTag(tg).PrefabName: " + ex);
-				}
-			}
-			if (replaceRemovedWeapons && gameObject != null)
-			{
-				_003CSetWeaponAndSkin_003Ec__AnonStorey33E _003CSetWeaponAndSkin_003Ec__AnonStorey33E = new _003CSetWeaponAndSkin_003Ec__AnonStorey33E();
-				_003CSetWeaponAndSkin_003Ec__AnonStorey33E.weaponSounds = gameObject.GetComponent<WeaponSounds>();
-				if (_003CSetWeaponAndSkin_003Ec__AnonStorey33E.weaponSounds != null && (WeaponManager.Removed150615_PrefabNames.Contains(gameObject.name) || _003CSetWeaponAndSkin_003Ec__AnonStorey33E.weaponSounds.tier > 100))
-				{
-					gameObject = WeaponManager.sharedManager.weaponsInGame.OfType<GameObject>().FirstOrDefault(_003CSetWeaponAndSkin_003Ec__AnonStorey33E._003C_003Em__536);
-				}
-			}
+			component = this.body.transform.GetChild(0).GetComponent<WeaponSounds>().bonusPrefab;
 		}
-		if (gameObject == null)
+		GameObject gameObject = component;
+		List<GameObject> gameObjects = new List<GameObject>()
 		{
-			Debug.Log("pref == null");
-			return;
+			this.capePoint.gameObject,
+			this.hatPoint.gameObject,
+			this.bootsPoint.gameObject,
+			this.armorPoint.gameObject,
+			this.maskPoint.gameObject,
+			gameObject
+		};
+		List<GameObject> gameObjects1 = gameObjects;
+		if (this.body.transform.childCount <= 0)
+		{
+			weaponSound = null;
 		}
-		_profile = Resources.Load<AnimationClip>("ProfileAnimClips/" + gameObject.name + "_Profile");
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		if (_003C_003Ef__am_0024cache11 == null)
+		else
 		{
-			_003C_003Ef__am_0024cache11 = _003CSetWeaponAndSkin_003Em__537;
+			weaponSound = this.body.transform.GetChild(0).GetComponent<WeaponSounds>();
 		}
-		Player_move_c.PerformActionRecurs(gameObject2, _003C_003Ef__am_0024cache11);
-		Player_move_c.SetLayerRecursively(gameObject2, base.gameObject.layer);
-		gameObject2.transform.parent = body;
-		_weapon = gameObject2;
-		_weapon.transform.localScale = new Vector3(1f, 1f, 1f);
-		_weapon.transform.position = body.transform.position;
-		_weapon.transform.localPosition = Vector3.zero;
-		_weapon.transform.localRotation = Quaternion.identity;
-		WeaponSounds component2 = _weapon.GetComponent<WeaponSounds>();
-		if (armorPoint.childCount > 0 && component2 != null)
+		WeaponSounds weaponSound1 = weaponSound;
+		if (weaponSound1 != null)
 		{
-			ArmorRefs component3 = armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
-			if (component3 != null)
+			List<GameObject> listWeaponAnimEffects = weaponSound1.GetListWeaponAnimEffects();
+			if (listWeaponAnimEffects != null)
 			{
-				if (component3.leftBone != null && component2.LeftArmorHand != null)
-				{
-					component3.leftBone.parent = component2.LeftArmorHand;
-					component3.leftBone.localPosition = Vector3.zero;
-					component3.leftBone.localRotation = Quaternion.identity;
-					component3.leftBone.localScale = new Vector3(1f, 1f, 1f);
-				}
-				if (component3.rightBone != null && component2.RightArmorHand != null)
-				{
-					component3.rightBone.parent = component2.RightArmorHand;
-					component3.rightBone.localPosition = Vector3.zero;
-					component3.rightBone.localRotation = Quaternion.identity;
-					component3.rightBone.localScale = new Vector3(1f, 1f, 1f);
-				}
+				gameObjects1.AddRange(listWeaponAnimEffects);
 			}
 		}
-		PlayWeaponAnimation();
-		SetSkinTexture(skinForPers);
-		if (tg == "WeaponGrenade")
-		{
-			SetupWeaponGrenade(gameObject2);
-		}
+		Player_move_c.SetTextureRecursivelyFrom(this.character.gameObject, skin, gameObjects1.ToArray());
 	}
 
 	public void SetupWeaponGrenade(GameObject weaponGrenade)
 	{
-		GameObject original = Resources.Load<GameObject>("Rocket");
-		Rocket component = (UnityEngine.Object.Instantiate(original, Vector3.zero, Quaternion.identity) as GameObject).GetComponent<Rocket>();
+		GameObject gameObject = Resources.Load<GameObject>("Rocket");
+		Rocket component = (UnityEngine.Object.Instantiate(gameObject, Vector3.zero, Quaternion.identity) as GameObject).GetComponent<Rocket>();
 		component.enabled = false;
 		component.dontExecStart = true;
 		component.GetComponent<Rigidbody>().useGravity = false;
@@ -264,275 +249,325 @@ public class CharacterView : MonoBehaviour
 		component.transform.localScale = Vector3.one;
 	}
 
-	public void SetSkinTexture(Texture skin)
+	public void SetWeaponAndSkin(string tg, Texture skinForPers, bool replaceRemovedWeapons)
 	{
-		if (skin == null)
+		this.AnimationRunner.StopAllCoroutines();
+		if (WeaponManager.sharedManager == null)
 		{
 			return;
 		}
-		GameObject item = ((body.transform.childCount <= 0) ? null : body.transform.GetChild(0).GetComponent<WeaponSounds>().bonusPrefab);
-		List<GameObject> list = new List<GameObject>();
-		list.Add(capePoint.gameObject);
-		list.Add(hatPoint.gameObject);
-		list.Add(bootsPoint.gameObject);
-		list.Add(armorPoint.gameObject);
-		list.Add(maskPoint.gameObject);
-		list.Add(item);
-		List<GameObject> list2 = list;
-		WeaponSounds weaponSounds = ((body.transform.childCount <= 0) ? null : body.transform.GetChild(0).GetComponent<WeaponSounds>());
-		if (weaponSounds != null)
+		if (this.armorPoint.childCount > 0)
 		{
-			List<GameObject> listWeaponAnimEffects = weaponSounds.GetListWeaponAnimEffects();
-			if (listWeaponAnimEffects != null)
+			ArmorRefs child = this.armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
+			if (child != null)
 			{
-				list2.AddRange(listWeaponAnimEffects);
+				if (child.leftBone != null)
+				{
+					child.leftBone.parent = this.armorPoint.GetChild(0).GetChild(0);
+				}
+				if (child.rightBone != null)
+				{
+					child.rightBone.parent = this.armorPoint.GetChild(0).GetChild(0);
+				}
 			}
 		}
-		Player_move_c.SetTextureRecursivelyFrom(character.gameObject, skin, list2.ToArray());
-	}
-
-	public void UpdateHat(string hat)
-	{
-		RemoveHat();
-		string @string = Storager.getString(Defs.VisualHatArmor, false);
-		if (!string.IsNullOrEmpty(@string) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(@string))
+		List<Transform> transforms = new List<Transform>();
+		IEnumerator enumerator = this.body.GetEnumerator();
+		try
 		{
-			hat = @string;
+			while (enumerator.MoveNext())
+			{
+				transforms.Add((Transform)enumerator.Current);
+			}
 		}
-		GameObject gameObject = Resources.Load("Hats/" + hat) as GameObject;
-		if (gameObject == null)
+		finally
 		{
-			Debug.LogWarning("hatPrefab == null");
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		foreach (Transform transform in transforms)
+		{
+			transform.parent = null;
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+		if (tg == null)
+		{
 			return;
 		}
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		ShopNGUIController.DisableLightProbesRecursively(gameObject2);
-		Transform transform = gameObject2.transform;
-		gameObject2.transform.parent = hatPoint.transform;
-		gameObject2.transform.localPosition = Vector3.zero;
-		gameObject2.transform.localRotation = Quaternion.identity;
-		gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-		Player_move_c.SetLayerRecursively(gameObject2, base.gameObject.layer);
-	}
-
-	public void RemoveHat()
-	{
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < hatPoint.childCount; i++)
+		if (this._profile != null)
 		{
-			list.Add(hatPoint.GetChild(i));
+			Resources.UnloadAsset(this._profile);
+			this._profile = null;
 		}
-		foreach (Transform item in list)
+		GameObject gameObject = null;
+		if (tg != "WeaponGrenade")
 		{
-			item.parent = null;
-			UnityEngine.Object.Destroy(item.gameObject);
+			try
+			{
+				string prefabName = ItemDb.GetByTag(tg).PrefabName;
+				gameObject = WeaponManager.sharedManager.weaponsInGame.OfType<GameObject>().FirstOrDefault<GameObject>((GameObject wp) => wp.name == prefabName);
+			}
+			catch (Exception exception1)
+			{
+				Exception exception = exception1;
+				if (Application.isEditor)
+				{
+					Debug.LogError(string.Concat("Exception in var weaponName = ItemDb.GetByTag(tg).PrefabName: ", exception));
+				}
+			}
+			if (replaceRemovedWeapons && gameObject != null)
+			{
+				WeaponSounds weaponSound = gameObject.GetComponent<WeaponSounds>();
+				if (weaponSound != null && (WeaponManager.Removed150615_PrefabNames.Contains(gameObject.name) || weaponSound.tier > 100))
+				{
+					gameObject = WeaponManager.sharedManager.weaponsInGame.OfType<GameObject>().FirstOrDefault<GameObject>((GameObject wp) => wp.name.Equals(weaponSound.alternativeName));
+				}
+			}
 		}
-	}
-
-	public void UpdateCape(string cape, Texture capeTex = null)
-	{
-		RemoveCape();
-		GameObject gameObject = Resources.Load("Capes/" + cape) as GameObject;
+		else
+		{
+			gameObject = Resources.Load<GameObject>("WeaponGrenade");
+		}
 		if (gameObject == null)
 		{
-			Debug.LogWarning("capePrefab == null");
+			Debug.Log("pref == null");
 			return;
 		}
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		ShopNGUIController.DisableLightProbesRecursively(gameObject2);
-		gameObject2.transform.parent = capePoint.transform;
-		gameObject2.transform.localPosition = new Vector3(0f, -0.8f, 0f);
-		gameObject2.transform.localRotation = Quaternion.identity;
-		gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-		Player_move_c.SetLayerRecursively(gameObject2, base.gameObject.layer);
-		if (capeTex != null)
+		this._profile = Resources.Load<AnimationClip>(string.Concat("ProfileAnimClips/", gameObject.name, "_Profile"));
+		GameObject gameObject1 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		Player_move_c.PerformActionRecurs(gameObject1, (Transform t) => {
+			MeshRenderer component = t.GetComponent<MeshRenderer>();
+			SkinnedMeshRenderer skinnedMeshRenderer = t.GetComponent<SkinnedMeshRenderer>();
+			if (component != null)
+			{
+				component.useLightProbes = false;
+			}
+			if (skinnedMeshRenderer != null)
+			{
+				skinnedMeshRenderer.useLightProbes = false;
+			}
+		});
+		Player_move_c.SetLayerRecursively(gameObject1, base.gameObject.layer);
+		gameObject1.transform.parent = this.body;
+		this._weapon = gameObject1;
+		this._weapon.transform.localScale = new Vector3(1f, 1f, 1f);
+		this._weapon.transform.position = this.body.transform.position;
+		this._weapon.transform.localPosition = Vector3.zero;
+		this._weapon.transform.localRotation = Quaternion.identity;
+		WeaponSounds weaponSound1 = this._weapon.GetComponent<WeaponSounds>();
+		if (this.armorPoint.childCount > 0 && weaponSound1 != null)
 		{
-			Player_move_c.SetTextureRecursivelyFrom(gameObject2, capeTex, new GameObject[0]);
+			ArmorRefs leftArmorHand = this.armorPoint.GetChild(0).GetChild(0).GetComponent<ArmorRefs>();
+			if (leftArmorHand != null)
+			{
+				if (leftArmorHand.leftBone != null && weaponSound1.LeftArmorHand != null)
+				{
+					leftArmorHand.leftBone.parent = weaponSound1.LeftArmorHand;
+					leftArmorHand.leftBone.localPosition = Vector3.zero;
+					leftArmorHand.leftBone.localRotation = Quaternion.identity;
+					leftArmorHand.leftBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+				if (leftArmorHand.rightBone != null && weaponSound1.RightArmorHand != null)
+				{
+					leftArmorHand.rightBone.parent = weaponSound1.RightArmorHand;
+					leftArmorHand.rightBone.localPosition = Vector3.zero;
+					leftArmorHand.rightBone.localRotation = Quaternion.identity;
+					leftArmorHand.rightBone.localScale = new Vector3(1f, 1f, 1f);
+				}
+			}
+		}
+		this.PlayWeaponAnimation();
+		this.SetSkinTexture(skinForPers);
+		if (tg == "WeaponGrenade")
+		{
+			this.SetupWeaponGrenade(gameObject1);
 		}
 	}
 
-	public void RemoveCape()
+	public void ShowCharacterType(CharacterView.CharacterType characterType)
 	{
-		for (int i = 0; i < capePoint.transform.childCount; i++)
+		this.character.gameObject.SetActive(false);
+		if (this.mech != null)
 		{
-			UnityEngine.Object.Destroy(capePoint.transform.GetChild(i).gameObject);
+			this.mech.gameObject.SetActive(false);
 		}
-	}
-
-	public void UpdateMask(string mask)
-	{
-		RemoveMask();
-		GameObject gameObject = Resources.Load("Masks/" + mask) as GameObject;
-		if (gameObject == null)
+		if (this.turret != null)
 		{
-			Debug.LogWarning("maskPrefab == null");
-			return;
+			this.turret.gameObject.SetActive(false);
 		}
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		ShopNGUIController.DisableLightProbesRecursively(gameObject2);
-		gameObject2.transform.parent = maskPoint.transform;
-		gameObject2.transform.localPosition = new Vector3(0f, 0f, 0f);
-		gameObject2.transform.localRotation = Quaternion.identity;
-		gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-		Player_move_c.SetLayerRecursively(gameObject2, base.gameObject.layer);
-	}
-
-	public void RemoveMask()
-	{
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < maskPoint.childCount; i++)
+		switch (characterType)
 		{
-			list.Add(maskPoint.GetChild(i));
-		}
-		foreach (Transform item in list)
-		{
-			item.parent = null;
-			UnityEngine.Object.Destroy(item.gameObject);
-		}
-	}
-
-	public void UpdateBoots(string bs)
-	{
-		foreach (Transform item in bootsPoint.transform)
-		{
-			item.gameObject.SetActive(item.gameObject.name.Equals(bs));
-		}
-	}
-
-	public void RemoveBoots()
-	{
-		foreach (Transform item in bootsPoint.transform)
-		{
-			item.gameObject.SetActive(false);
+			case CharacterView.CharacterType.Player:
+			{
+				this.character.gameObject.SetActive(true);
+				break;
+			}
+			case CharacterView.CharacterType.Mech:
+			{
+				this.mech.gameObject.SetActive(true);
+				break;
+			}
+			case CharacterView.CharacterType.Turret:
+			{
+				this.turret.gameObject.SetActive(true);
+				break;
+			}
 		}
 	}
 
 	public void UpdateArmor(string armor)
 	{
-		RemoveArmor();
-		string @string = Storager.getString(Defs.VisualArmor, false);
-		if (!string.IsNullOrEmpty(@string) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(@string))
+		this.RemoveArmor();
+		string str = Storager.getString(Defs.VisualArmor, false);
+		if (!string.IsNullOrEmpty(str) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armor) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str))
 		{
-			armor = @string;
+			armor = str;
 		}
-		GameObject gameObject = Resources.Load("Armor/" + armor) as GameObject;
+		GameObject gameObject = Resources.Load(string.Concat("Armor/", armor)) as GameObject;
 		if (gameObject == null)
 		{
 			Debug.LogWarning("armorPrefab == null");
 			return;
 		}
-		GameObject gameObject2 = UnityEngine.Object.Instantiate(gameObject);
-		ShopNGUIController.DisableLightProbesRecursively(gameObject2);
-		ArmorRefs component = gameObject2.transform.GetChild(0).GetComponent<ArmorRefs>();
-		if (component != null && _weapon != null)
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		ArmorRefs component = vector3.transform.GetChild(0).GetComponent<ArmorRefs>();
+		if (component != null && this._weapon != null)
 		{
-			WeaponSounds component2 = _weapon.GetComponent<WeaponSounds>();
-			if (component.leftBone != null && component2.LeftArmorHand != null)
+			WeaponSounds weaponSound = this._weapon.GetComponent<WeaponSounds>();
+			if (component.leftBone != null && weaponSound.LeftArmorHand != null)
 			{
-				component.leftBone.parent = component2.LeftArmorHand;
+				component.leftBone.parent = weaponSound.LeftArmorHand;
 				component.leftBone.localPosition = Vector3.zero;
 				component.leftBone.localRotation = Quaternion.identity;
 				component.leftBone.localScale = new Vector3(1f, 1f, 1f);
 			}
-			if (component.rightBone != null && component2.RightArmorHand != null)
+			if (component.rightBone != null && weaponSound.RightArmorHand != null)
 			{
-				component.rightBone.parent = component2.RightArmorHand;
+				component.rightBone.parent = weaponSound.RightArmorHand;
 				component.rightBone.localPosition = Vector3.zero;
 				component.rightBone.localRotation = Quaternion.identity;
 				component.rightBone.localScale = new Vector3(1f, 1f, 1f);
 			}
-			gameObject2.transform.parent = armorPoint.transform;
-			gameObject2.transform.localPosition = Vector3.zero;
-			gameObject2.transform.localRotation = Quaternion.identity;
-			gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-			Player_move_c.SetLayerRecursively(gameObject2, base.gameObject.layer);
+			vector3.transform.parent = this.armorPoint.transform;
+			vector3.transform.localPosition = Vector3.zero;
+			vector3.transform.localRotation = Quaternion.identity;
+			vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+			Player_move_c.SetLayerRecursively(vector3, base.gameObject.layer);
 		}
 	}
 
-	public void RemoveArmor()
+	public void UpdateBoots(string bs)
 	{
-		if (armorPoint.childCount <= 0)
+		IEnumerator enumerator = this.bootsPoint.transform.GetEnumerator();
+		try
 		{
+			while (enumerator.MoveNext())
+			{
+				Transform current = (Transform)enumerator.Current;
+				current.gameObject.SetActive(current.gameObject.name.Equals(bs));
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+	}
+
+	public void UpdateCape(string cape, Texture capeTex = null)
+	{
+		this.RemoveCape();
+		GameObject gameObject = Resources.Load(string.Concat("Capes/", cape)) as GameObject;
+		if (gameObject == null)
+		{
+			Debug.LogWarning("capePrefab == null");
 			return;
 		}
-		Transform child = armorPoint.GetChild(0);
-		ArmorRefs component = child.GetChild(0).GetComponent<ArmorRefs>();
-		if (component != null)
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		vector3.transform.parent = this.capePoint.transform;
+		vector3.transform.localPosition = new Vector3(0f, -0.8f, 0f);
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, base.gameObject.layer);
+		if (capeTex != null)
 		{
-			if (component.leftBone != null)
-			{
-				component.leftBone.parent = child.GetChild(0);
-			}
-			if (component.rightBone != null)
-			{
-				component.rightBone.parent = child.GetChild(0);
-			}
-			child.parent = null;
-			UnityEngine.Object.Destroy(child.gameObject);
+			Player_move_c.SetTextureRecursivelyFrom(vector3, capeTex, new GameObject[0]);
 		}
 	}
 
-	private void PlayWeaponAnimation()
+	public void UpdateHat(string hat)
 	{
-		if (_profile != null)
+		this.RemoveHat();
+		string str = Storager.getString(Defs.VisualHatArmor, false);
+		if (!string.IsNullOrEmpty(str) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hat) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str))
 		{
-			Animation component = _weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>();
-			if (Time.timeScale != 0f)
-			{
-				if (component.GetClip("Profile") == null)
-				{
-					component.AddClip(_profile, "Profile");
-				}
-				else
-				{
-					Debug.LogWarning("Animation clip is null.");
-				}
-				component.Play("Profile");
-				return;
-			}
-			AnimationRunner.StopAllCoroutines();
-			if (component.GetClip("Profile") == null)
-			{
-				component.AddClip(_profile, "Profile");
-			}
-			else
-			{
-				Debug.LogWarning("Animation clip is null.");
-			}
-			AnimationRunner.StartPlay(component, "Profile", false, null);
+			hat = str;
 		}
-		else
+		GameObject gameObject = Resources.Load(string.Concat("Hats/", hat)) as GameObject;
+		if (gameObject == null)
 		{
-			Debug.LogWarning("_profile == null");
+			Debug.LogWarning("hatPrefab == null");
+			return;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		Transform transforms = vector3.transform;
+		vector3.transform.parent = this.hatPoint.transform;
+		vector3.transform.localPosition = Vector3.zero;
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, base.gameObject.layer);
+	}
+
+	public void UpdateMask(string mask)
+	{
+		this.RemoveMask();
+		GameObject gameObject = Resources.Load(string.Concat("Masks/", mask)) as GameObject;
+		if (gameObject == null)
+		{
+			Debug.LogWarning("maskPrefab == null");
+			return;
+		}
+		GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		ShopNGUIController.DisableLightProbesRecursively(vector3);
+		vector3.transform.parent = this.maskPoint.transform;
+		vector3.transform.localPosition = new Vector3(0f, 0f, 0f);
+		vector3.transform.localRotation = Quaternion.identity;
+		vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+		Player_move_c.SetLayerRecursively(vector3, base.gameObject.layer);
+	}
+
+	public void UpdateMech(int mechUpgrade)
+	{
+		this.mechBodyRenderer.material = this.mechBodyMaterials[mechUpgrade];
+		this.mechHandRenderer.material = this.mechBodyMaterials[mechUpgrade];
+		this.mechGunRenderer.material = this.mechGunMaterials[mechUpgrade];
+		this.mechBodyRenderer.material.SetColor("_ColorRili", Color.white);
+		this.mechHandRenderer.material.SetColor("_ColorRili", Color.white);
+	}
+
+	public void UpdateTurret(int turretUpgrade)
+	{
+		TurretController component = this.turret.GetComponent<TurretController>();
+		if (component.turretRunMaterials != null && (int)component.turretRunMaterials.Length > turretUpgrade && component.turretRunMaterials[turretUpgrade] != null)
+		{
+			component.turretRenderer.material = component.turretRunMaterials[turretUpgrade];
+			component.turretRenderer.material.SetColor("_ColorRili", Color.white);
 		}
 	}
 
-	public static Texture2D GetClanLogo(string logoBase64)
+	public enum CharacterType
 	{
-		if (string.IsNullOrEmpty(logoBase64))
-		{
-			return null;
-		}
-		byte[] data = Convert.FromBase64String(logoBase64);
-		Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-		texture2D.LoadImage(data);
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.Apply();
-		return texture2D;
-	}
-
-	[CompilerGenerated]
-	private static void _003CSetWeaponAndSkin_003Em__537(Transform t)
-	{
-		MeshRenderer component = t.GetComponent<MeshRenderer>();
-		SkinnedMeshRenderer component2 = t.GetComponent<SkinnedMeshRenderer>();
-		if (component != null)
-		{
-			component.useLightProbes = false;
-		}
-		if (component2 != null)
-		{
-			component2.useLightProbes = false;
-		}
+		Player,
+		Mech,
+		Turret
 	}
 }

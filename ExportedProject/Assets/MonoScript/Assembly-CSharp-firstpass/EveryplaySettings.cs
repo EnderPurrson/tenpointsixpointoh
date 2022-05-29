@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class EveryplaySettings : ScriptableObject
@@ -24,7 +25,7 @@ public class EveryplaySettings : ScriptableObject
 	{
 		get
 		{
-			return androidSupportEnabled;
+			return this.androidSupportEnabled;
 		}
 	}
 
@@ -32,11 +33,15 @@ public class EveryplaySettings : ScriptableObject
 	{
 		get
 		{
-			if (clientId != null && clientSecret != null && redirectURI != null && clientId.Trim().Length > 0 && clientSecret.Trim().Length > 0 && redirectURI.Trim().Length > 0)
+			if (this.clientId != null && this.clientSecret != null && this.redirectURI != null && this.clientId.Trim().Length > 0 && this.clientSecret.Trim().Length > 0 && this.redirectURI.Trim().Length > 0)
 			{
 				return true;
 			}
 			return false;
 		}
+	}
+
+	public EveryplaySettings()
+	{
 	}
 }

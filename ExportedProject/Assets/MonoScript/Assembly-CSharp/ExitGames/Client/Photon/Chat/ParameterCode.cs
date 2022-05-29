@@ -1,3 +1,5 @@
+using System;
+
 namespace ExitGames.Client.Photon.Chat
 {
 	public class ParameterCode
@@ -19,5 +21,9 @@ namespace ExitGames.Client.Photon.Chat
 		public const byte Address = 230;
 
 		public const byte UserId = 225;
+
+		public ParameterCode()
+		{
+		}
 	}
 }

@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public sealed class BackRanksTapReceiver : MonoBehaviour
@@ -8,27 +8,31 @@ public sealed class BackRanksTapReceiver : MonoBehaviour
 
 	private IDisposable _backSubscription;
 
-	private void OnEnable()
+	public BackRanksTapReceiver()
 	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(OnClick, "Back Ranks");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
 	}
 
 	private void OnClick()
 	{
 		ButtonClickSound.TryPlayClick();
-		networkStartTableNGUIController.BackPressFromRanksTable();
+		this.networkStartTableNGUIController.BackPressFromRanksTable(true);
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.OnClick), "Back Ranks");
 	}
 }

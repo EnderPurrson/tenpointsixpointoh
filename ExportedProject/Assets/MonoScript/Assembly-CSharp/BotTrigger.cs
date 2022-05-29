@@ -20,6 +20,10 @@ public class BotTrigger : MonoBehaviour
 
 	private Transform myTransform;
 
+	public BotTrigger()
+	{
+	}
+
 	private void Awake()
 	{
 		if (Defs.isCOOP)
@@ -30,76 +34,75 @@ public class BotTrigger : MonoBehaviour
 
 	private void Start()
 	{
-		myTransform = base.transform;
+		this.myTransform = base.transform;
 		IEnumerator enumerator = base.transform.GetEnumerator();
 		try
 		{
 			if (enumerator.MoveNext())
 			{
-				Transform transform = (Transform)enumerator.Current;
-				_modelChild = transform.gameObject;
+				this._modelChild = ((Transform)enumerator.Current).gameObject;
 			}
 		}
 		finally
 		{
 			IDisposable disposable = enumerator as IDisposable;
-			if (disposable != null)
+			if (disposable == null)
 			{
-				disposable.Dispose();
 			}
+			disposable.Dispose();
 		}
-		_soundClips = _modelChild.GetComponent<Sounds>();
-		_eai = GetComponent<BotAI>();
-		_player = GameObject.FindGameObjectWithTag("Player");
-		if (_player != null)
+		this._soundClips = this._modelChild.GetComponent<Sounds>();
+		this._eai = base.GetComponent<BotAI>();
+		this._player = GameObject.FindGameObjectWithTag("Player");
+		if (this._player != null)
 		{
-			_playerMoveC = _player.GetComponent<SkinName>().playerMoveC;
+			this._playerMoveC = this._player.GetComponent<SkinName>().playerMoveC;
 		}
 	}
 
 	private void Update()
 	{
-		if (!shouldDetectPlayer)
+		if (!this.shouldDetectPlayer)
 		{
 			return;
 		}
-		if (!_entered)
+		if (!this._entered)
 		{
 			GameObject gameObject = GameObject.FindGameObjectWithTag("Turret");
 			if (gameObject != null && gameObject.GetComponent<TurretController>() != null && (gameObject.GetComponent<TurretController>().isKilled || !gameObject.GetComponent<TurretController>().isRun))
 			{
 				gameObject = null;
 			}
-			float num = ((!(gameObject != null)) ? 1E+09f : Vector3.Distance(myTransform.position, gameObject.transform.position));
-			bool flag = gameObject != null && num <= _soundClips.detectRadius;
-			float num2 = Vector3.Distance(myTransform.position, _player.transform.position);
-			bool flag2 = !_playerMoveC.isInvisible && num2 <= _soundClips.detectRadius;
-			Transform transform = null;
-			if (flag2 && flag)
+			float single = (gameObject == null ? 1E+09f : Vector3.Distance(this.myTransform.position, gameObject.transform.position));
+			bool flag = (gameObject == null ? false : single <= this._soundClips.detectRadius);
+			float single1 = Vector3.Distance(this.myTransform.position, this._player.transform.position);
+			bool flag1 = (this._playerMoveC.isInvisible ? false : single1 <= this._soundClips.detectRadius);
+			Transform transforms = null;
+			if (!flag1 || !flag)
 			{
-				transform = ((!(num2 < num)) ? gameObject.transform : _player.transform);
-			}
-			else
-			{
-				if (flag2)
+				if (flag1)
 				{
-					transform = _player.transform;
+					transforms = this._player.transform;
 				}
 				if (flag)
 				{
-					transform = gameObject.transform;
+					transforms = gameObject.transform;
 				}
 			}
-			if (transform != null)
+			else
 			{
-				_eai.SetTarget(transform, true);
-				_entered = true;
+				transforms = (single1 >= single ? gameObject.transform : this._player.transform);
+			}
+			if (transforms != null)
+			{
+				this._eai.SetTarget(transforms, true);
+				this._entered = true;
 			}
 		}
-		else if (_eai.Target == null || (_eai.Target.CompareTag("Player") && (_playerMoveC.isInvisible || (_entered && Vector3.SqrMagnitude(base.transform.position - _player.transform.position) > _soundClips.detectRadius * _soundClips.detectRadius))) || (_eai.Target.CompareTag("Turret") && _eai.Target.GetComponent<TurretController>().isKilled && _eai.Target.GetComponent<TurretController>().isRun))
+		else if (this._eai.Target == null || this._eai.Target.CompareTag("Player") && (this._playerMoveC.isInvisible || this._entered && Vector3.SqrMagnitude(base.transform.position - this._player.transform.position) > this._soundClips.detectRadius * this._soundClips.detectRadius) || this._eai.Target.CompareTag("Turret") && this._eai.Target.GetComponent<TurretController>().isKilled && this._eai.Target.GetComponent<TurretController>().isRun)
 		{
-			_eai.SetTarget(null, false);
-			_entered = false;
+			this._eai.SetTarget(null, false);
+			this._entered = false;
 		}
 	}
 }

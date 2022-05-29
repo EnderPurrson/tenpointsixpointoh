@@ -1,9 +1,11 @@
+using System;
+
 namespace FyberPlugin
 {
 	public enum UserGender
 	{
-		male = 0,
-		female = 1,
-		other = 2
+		male,
+		female,
+		other
 	}
 }

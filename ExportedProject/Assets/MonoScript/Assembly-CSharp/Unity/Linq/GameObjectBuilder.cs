@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,8 +11,7 @@ namespace Unity.Linq
 
 		private readonly IEnumerable<GameObjectBuilder> children;
 
-		public GameObjectBuilder(GameObject original, params GameObjectBuilder[] children)
-			: this(original, (IEnumerable<GameObjectBuilder>)children)
+		public GameObjectBuilder(GameObject original, params GameObjectBuilder[] children) : this(original, (IEnumerable<GameObjectBuilder>)children)
 		{
 		}
 
@@ -22,34 +23,46 @@ namespace Unity.Linq
 
 		public GameObject Instantiate()
 		{
-			return Instantiate(TransformCloneType.KeepOriginal);
+			return this.Instantiate(TransformCloneType.KeepOriginal);
 		}
 
 		public GameObject Instantiate(bool setActive)
 		{
-			return Instantiate(TransformCloneType.KeepOriginal);
+			return this.Instantiate(TransformCloneType.KeepOriginal);
 		}
 
 		public GameObject Instantiate(TransformCloneType cloneType)
 		{
-			GameObject gameObject = Object.Instantiate(original);
-			InstantiateChildren(gameObject, cloneType, null);
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.original);
+			this.InstantiateChildren(gameObject, cloneType, null);
 			return gameObject;
 		}
 
 		public GameObject Instantiate(TransformCloneType cloneType, bool setActive)
 		{
-			GameObject gameObject = Object.Instantiate(original);
-			InstantiateChildren(gameObject, cloneType, setActive);
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.original);
+			this.InstantiateChildren(gameObject, cloneType, new bool?(setActive));
 			return gameObject;
 		}
 
 		private void InstantiateChildren(GameObject root, TransformCloneType cloneType, bool? setActive)
 		{
-			foreach (GameObjectBuilder child in children)
+			IEnumerator<GameObjectBuilder> enumerator = this.children.GetEnumerator();
+			try
 			{
-				GameObject root2 = root.Add(child.original, cloneType, setActive);
-				child.InstantiateChildren(root2, cloneType, setActive);
+				while (enumerator.MoveNext())
+				{
+					GameObjectBuilder current = enumerator.Current;
+					GameObject gameObject = root.Add(current.original, cloneType, setActive, null);
+					current.InstantiateChildren(gameObject, cloneType, setActive);
+				}
+			}
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
 			}
 		}
 	}

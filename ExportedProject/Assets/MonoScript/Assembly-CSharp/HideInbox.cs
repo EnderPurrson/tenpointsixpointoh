@@ -4,6 +4,10 @@ using UnityEngine;
 [Obsolete]
 public sealed class HideInbox : MonoBehaviour
 {
+	public HideInbox()
+	{
+	}
+
 	private void OnClick()
 	{
 		FriendsGUIController component = NGUITools.GetRoot(base.gameObject).GetComponent<FriendsGUIController>();

@@ -7,7 +7,7 @@ public class UIColorPicker : MonoBehaviour
 {
 	public static UIColorPicker current;
 
-	public Color value = Color.white;
+	public Color @value = Color.white;
 
 	public UIWidget selectionWidget;
 
@@ -40,52 +40,21 @@ public class UIColorPicker : MonoBehaviour
 
 	private static AnimationCurve mBlue;
 
-	private void Start()
+	public UIColorPicker()
 	{
-		mTrans = base.transform;
-		mUITex = GetComponent<UITexture>();
-		mCam = UICamera.FindCameraForLayer(base.gameObject.layer);
-		mWidth = mUITex.width;
-		mHeight = mUITex.height;
-		Color[] array = new Color[mWidth * mHeight];
-		for (int i = 0; i < mHeight; i++)
-		{
-			float y = ((float)i - 1f) / (float)mHeight;
-			for (int j = 0; j < mWidth; j++)
-			{
-				float x = ((float)j - 1f) / (float)mWidth;
-				int num = j + i * mWidth;
-				array[num] = Sample(x, y);
-			}
-		}
-		mTex = new Texture2D(mWidth, mHeight, TextureFormat.RGB24, false);
-		mTex.SetPixels(array);
-		mTex.filterMode = FilterMode.Trilinear;
-		mTex.wrapMode = TextureWrapMode.Clamp;
-		mTex.Apply();
-		mUITex.mainTexture = mTex;
-		Select(value);
 	}
 
 	private void OnDestroy()
 	{
-		UnityEngine.Object.Destroy(mTex);
-		mTex = null;
-	}
-
-	private void OnPress(bool pressed)
-	{
-		if (base.enabled && pressed && UICamera.currentScheme != UICamera.ControlScheme.Controller)
-		{
-			Sample();
-		}
+		UnityEngine.Object.Destroy(this.mTex);
+		this.mTex = null;
 	}
 
 	private void OnDrag(Vector2 delta)
 	{
 		if (base.enabled)
 		{
-			Sample();
+			this.Sample();
 		}
 	}
 
@@ -93,117 +62,151 @@ public class UIColorPicker : MonoBehaviour
 	{
 		if (base.enabled)
 		{
-			mPos.x = Mathf.Clamp01(mPos.x + delta.x);
-			mPos.y = Mathf.Clamp01(mPos.y + delta.y);
-			Select(mPos);
+			this.mPos.x = Mathf.Clamp01(this.mPos.x + delta.x);
+			this.mPos.y = Mathf.Clamp01(this.mPos.y + delta.y);
+			this.Select(this.mPos);
+		}
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (base.enabled && pressed && UICamera.currentScheme != UICamera.ControlScheme.Controller)
+		{
+			this.Sample();
 		}
 	}
 
 	private void Sample()
 	{
-		Vector3 position = UICamera.lastEventPosition;
-		position = mCam.cachedCamera.ScreenToWorldPoint(position);
-		position = mTrans.InverseTransformPoint(position);
-		Vector3[] localCorners = mUITex.localCorners;
-		mPos.x = Mathf.Clamp01((position.x - localCorners[0].x) / (localCorners[2].x - localCorners[0].x));
-		mPos.y = Mathf.Clamp01((position.y - localCorners[0].y) / (localCorners[2].y - localCorners[0].y));
-		if (selectionWidget != null)
+		Vector3 worldPoint = UICamera.lastEventPosition;
+		worldPoint = this.mCam.cachedCamera.ScreenToWorldPoint(worldPoint);
+		worldPoint = this.mTrans.InverseTransformPoint(worldPoint);
+		Vector3[] vector3Array = this.mUITex.localCorners;
+		this.mPos.x = Mathf.Clamp01((worldPoint.x - vector3Array[0].x) / (vector3Array[2].x - vector3Array[0].x));
+		this.mPos.y = Mathf.Clamp01((worldPoint.y - vector3Array[0].y) / (vector3Array[2].y - vector3Array[0].y));
+		if (this.selectionWidget != null)
 		{
-			position.x = Mathf.Lerp(localCorners[0].x, localCorners[2].x, mPos.x);
-			position.y = Mathf.Lerp(localCorners[0].y, localCorners[2].y, mPos.y);
-			position = mTrans.TransformPoint(position);
-			selectionWidget.transform.OverlayPosition(position, mCam.cachedCamera);
+			worldPoint.x = Mathf.Lerp(vector3Array[0].x, vector3Array[2].x, this.mPos.x);
+			worldPoint.y = Mathf.Lerp(vector3Array[0].y, vector3Array[2].y, this.mPos.y);
+			worldPoint = this.mTrans.TransformPoint(worldPoint);
+			this.selectionWidget.transform.OverlayPosition(worldPoint, this.mCam.cachedCamera);
 		}
-		value = Sample(mPos.x, mPos.y);
-		current = this;
-		EventDelegate.Execute(onChange);
-		current = null;
+		this.@value = UIColorPicker.Sample(this.mPos.x, this.mPos.y);
+		UIColorPicker.current = this;
+		EventDelegate.Execute(this.onChange);
+		UIColorPicker.current = null;
+	}
+
+	public static Color Sample(float x, float y)
+	{
+		if (UIColorPicker.mRed == null)
+		{
+			UIColorPicker.mRed = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 1f), new Keyframe(0.14285715f, 1f), new Keyframe(0.2857143f, 0f), new Keyframe(0.42857143f, 0f), new Keyframe(0.5714286f, 0f), new Keyframe(0.71428573f, 1f), new Keyframe(0.85714287f, 1f), new Keyframe(1f, 0.5f) });
+			UIColorPicker.mGreen = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(0.14285715f, 1f), new Keyframe(0.2857143f, 1f), new Keyframe(0.42857143f, 1f), new Keyframe(0.5714286f, 0f), new Keyframe(0.71428573f, 0f), new Keyframe(0.85714287f, 0f), new Keyframe(1f, 0.5f) });
+			UIColorPicker.mBlue = new AnimationCurve(new Keyframe[] { new Keyframe(0f, 0f), new Keyframe(0.14285715f, 0f), new Keyframe(0.2857143f, 0f), new Keyframe(0.42857143f, 1f), new Keyframe(0.5714286f, 1f), new Keyframe(0.71428573f, 1f), new Keyframe(0.85714287f, 0f), new Keyframe(1f, 0.5f) });
+		}
+		Vector3 vector3 = new Vector3(UIColorPicker.mRed.Evaluate(x), UIColorPicker.mGreen.Evaluate(x), UIColorPicker.mBlue.Evaluate(x));
+		if (y >= 0.5f)
+		{
+			vector3 = Vector3.Lerp(vector3, Vector3.one, y * 2f - 1f);
+		}
+		else
+		{
+			y *= 2f;
+			vector3.x *= y;
+			vector3.y *= y;
+			vector3.z *= y;
+		}
+		return new Color(vector3.x, vector3.y, vector3.z, 1f);
 	}
 
 	public void Select(Vector2 v)
 	{
 		v.x = Mathf.Clamp01(v.x);
 		v.y = Mathf.Clamp01(v.y);
-		mPos = v;
-		if (selectionWidget != null)
+		this.mPos = v;
+		if (this.selectionWidget != null)
 		{
-			Vector3[] localCorners = mUITex.localCorners;
-			v.x = Mathf.Lerp(localCorners[0].x, localCorners[2].x, mPos.x);
-			v.y = Mathf.Lerp(localCorners[0].y, localCorners[2].y, mPos.y);
-			v = mTrans.TransformPoint(v);
-			selectionWidget.transform.OverlayPosition(v, mCam.cachedCamera);
+			Vector3[] vector3Array = this.mUITex.localCorners;
+			v.x = Mathf.Lerp(vector3Array[0].x, vector3Array[2].x, this.mPos.x);
+			v.y = Mathf.Lerp(vector3Array[0].y, vector3Array[2].y, this.mPos.y);
+			v = this.mTrans.TransformPoint(v);
+			this.selectionWidget.transform.OverlayPosition(v, this.mCam.cachedCamera);
 		}
-		value = Sample(mPos.x, mPos.y);
-		current = this;
-		EventDelegate.Execute(onChange);
-		current = null;
+		this.@value = UIColorPicker.Sample(this.mPos.x, this.mPos.y);
+		UIColorPicker.current = this;
+		EventDelegate.Execute(this.onChange);
+		UIColorPicker.current = null;
 	}
 
 	public Vector2 Select(Color c)
 	{
-		if (mUITex == null)
+		Vector3 vector3 = new Vector3();
+		if (this.mUITex == null)
 		{
-			value = c;
-			return mPos;
+			this.@value = c;
+			return this.mPos;
 		}
-		float num = float.MaxValue;
-		for (int i = 0; i < mHeight; i++)
+		float single = Single.MaxValue;
+		for (int i = 0; i < this.mHeight; i++)
 		{
-			float y = ((float)i - 1f) / (float)mHeight;
-			for (int j = 0; j < mWidth; j++)
+			float single1 = ((float)i - 1f) / (float)this.mHeight;
+			for (int j = 0; j < this.mWidth; j++)
 			{
-				float x = ((float)j - 1f) / (float)mWidth;
-				Color color = Sample(x, y);
-				Color color2 = color;
-				color2.r -= c.r;
-				color2.g -= c.g;
-				color2.b -= c.b;
-				float num2 = color2.r * color2.r + color2.g * color2.g + color2.b * color2.b;
-				if (num2 < num)
+				float single2 = ((float)j - 1f) / (float)this.mWidth;
+				Color color = UIColorPicker.Sample(single2, single1);
+				color.r -= c.r;
+				color.g -= c.g;
+				color.b -= c.b;
+				float single3 = color.r * color.r + color.g * color.g + color.b * color.b;
+				if (single3 < single)
 				{
-					num = num2;
-					mPos.x = x;
-					mPos.y = y;
+					single = single3;
+					this.mPos.x = single2;
+					this.mPos.y = single1;
 				}
 			}
 		}
-		if (selectionWidget != null)
+		if (this.selectionWidget != null)
 		{
-			Vector3[] localCorners = mUITex.localCorners;
-			Vector3 position = default(Vector3);
-			position.x = Mathf.Lerp(localCorners[0].x, localCorners[2].x, mPos.x);
-			position.y = Mathf.Lerp(localCorners[0].y, localCorners[2].y, mPos.y);
-			position.z = 0f;
-			position = mTrans.TransformPoint(position);
-			selectionWidget.transform.OverlayPosition(position, mCam.cachedCamera);
+			Vector3[] vector3Array = this.mUITex.localCorners;
+			vector3.x = Mathf.Lerp(vector3Array[0].x, vector3Array[2].x, this.mPos.x);
+			vector3.y = Mathf.Lerp(vector3Array[0].y, vector3Array[2].y, this.mPos.y);
+			vector3.z = 0f;
+			vector3 = this.mTrans.TransformPoint(vector3);
+			this.selectionWidget.transform.OverlayPosition(vector3, this.mCam.cachedCamera);
 		}
-		value = c;
-		current = this;
-		EventDelegate.Execute(onChange);
-		current = null;
-		return mPos;
+		this.@value = c;
+		UIColorPicker.current = this;
+		EventDelegate.Execute(this.onChange);
+		UIColorPicker.current = null;
+		return this.mPos;
 	}
 
-	public static Color Sample(float x, float y)
+	private void Start()
 	{
-		if (mRed == null)
+		this.mTrans = base.transform;
+		this.mUITex = base.GetComponent<UITexture>();
+		this.mCam = UICamera.FindCameraForLayer(base.gameObject.layer);
+		this.mWidth = this.mUITex.width;
+		this.mHeight = this.mUITex.height;
+		Color[] colorArray = new Color[this.mWidth * this.mHeight];
+		for (int i = 0; i < this.mHeight; i++)
 		{
-			mRed = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f / 7f, 1f), new Keyframe(0.2857143f, 0f), new Keyframe(0.42857143f, 0f), new Keyframe(0.5714286f, 0f), new Keyframe(0.71428573f, 1f), new Keyframe(0.85714287f, 1f), new Keyframe(1f, 0.5f));
-			mGreen = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f / 7f, 1f), new Keyframe(0.2857143f, 1f), new Keyframe(0.42857143f, 1f), new Keyframe(0.5714286f, 0f), new Keyframe(0.71428573f, 0f), new Keyframe(0.85714287f, 0f), new Keyframe(1f, 0.5f));
-			mBlue = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1f / 7f, 0f), new Keyframe(0.2857143f, 0f), new Keyframe(0.42857143f, 1f), new Keyframe(0.5714286f, 1f), new Keyframe(0.71428573f, 1f), new Keyframe(0.85714287f, 0f), new Keyframe(1f, 0.5f));
+			float single = ((float)i - 1f) / (float)this.mHeight;
+			for (int j = 0; j < this.mWidth; j++)
+			{
+				float single1 = ((float)j - 1f) / (float)this.mWidth;
+				int num = j + i * this.mWidth;
+				colorArray[num] = UIColorPicker.Sample(single1, single);
+			}
 		}
-		Vector3 a = new Vector3(mRed.Evaluate(x), mGreen.Evaluate(x), mBlue.Evaluate(x));
-		if (y < 0.5f)
-		{
-			y *= 2f;
-			a.x *= y;
-			a.y *= y;
-			a.z *= y;
-		}
-		else
-		{
-			a = Vector3.Lerp(a, Vector3.one, y * 2f - 1f);
-		}
-		return new Color(a.x, a.y, a.z, 1f);
+		this.mTex = new Texture2D(this.mWidth, this.mHeight, TextureFormat.RGB24, false);
+		this.mTex.SetPixels(colorArray);
+		this.mTex.filterMode = FilterMode.Trilinear;
+		this.mTex.wrapMode = TextureWrapMode.Clamp;
+		this.mTex.Apply();
+		this.mUITex.mainTexture = this.mTex;
+		this.Select(this.@value);
 	}
 }

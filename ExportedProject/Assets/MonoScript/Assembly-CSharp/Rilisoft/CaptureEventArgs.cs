@@ -1,23 +1,33 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public sealed class CaptureEventArgs : EventArgs
 	{
-		public ConnectSceneNGUIController.RegimGame Mode { get; set; }
+		public ConnectSceneNGUIController.RegimGame Mode
+		{
+			get;
+			set;
+		}
+
+		public CaptureEventArgs()
+		{
+		}
 
 		public Dictionary<string, object> ToJson()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("mode", Mode);
-			return dictionary;
+			return new Dictionary<string, object>()
+			{
+				{ "mode", this.Mode }
+			};
 		}
 
 		public override string ToString()
 		{
-			return Json.Serialize(ToJson());
+			return Json.Serialize(this.ToJson());
 		}
 	}
 }

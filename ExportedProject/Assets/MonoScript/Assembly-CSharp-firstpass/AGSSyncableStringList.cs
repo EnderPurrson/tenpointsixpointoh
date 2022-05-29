@@ -3,30 +3,28 @@ using UnityEngine;
 
 public class AGSSyncableStringList : AGSSyncableList
 {
-	public AGSSyncableStringList(AmazonJavaWrapper javaObject)
-		: base(javaObject)
+	public AGSSyncableStringList(AmazonJavaWrapper javaObject) : base(javaObject)
 	{
 	}
 
-	public AGSSyncableStringList(AndroidJavaObject javaObject)
-		: base(javaObject)
+	public AGSSyncableStringList(AndroidJavaObject javaObject) : base(javaObject)
 	{
 	}
 
 	public AGSSyncableString[] GetValues()
 	{
 		AndroidJNI.PushLocalFrame(10);
-		AndroidJavaObject[] array = javaObject.Call<AndroidJavaObject[]>("getValues", new object[0]);
-		if (array == null || array.Length == 0)
+		AndroidJavaObject[] androidJavaObjectArray = this.javaObject.Call<AndroidJavaObject[]>("getValues", new object[0]);
+		if (androidJavaObjectArray == null || (int)androidJavaObjectArray.Length == 0)
 		{
 			return null;
 		}
-		AGSSyncableString[] array2 = new AGSSyncableString[array.Length];
-		for (int i = 0; i < array.Length; i++)
+		AGSSyncableString[] aGSSyncableString = new AGSSyncableString[(int)androidJavaObjectArray.Length];
+		for (int i = 0; i < (int)androidJavaObjectArray.Length; i++)
 		{
-			array2[i] = new AGSSyncableString(array[i]);
+			aGSSyncableString[i] = new AGSSyncableString(androidJavaObjectArray[i]);
 		}
 		AndroidJNI.PopLocalFrame(IntPtr.Zero);
-		return array2;
+		return aGSSyncableString;
 	}
 }

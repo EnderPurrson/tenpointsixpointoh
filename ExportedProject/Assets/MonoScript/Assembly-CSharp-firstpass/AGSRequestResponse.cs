@@ -1,3 +1,5 @@
+using System;
+
 public class AGSRequestResponse
 {
 	protected const string PLATFORM_NOT_SUPPORTED_ERROR = "PLATFORM_NOT_SUPPORTED";
@@ -8,8 +10,12 @@ public class AGSRequestResponse
 
 	public int userData;
 
+	public AGSRequestResponse()
+	{
+	}
+
 	public bool IsError()
 	{
-		return !string.IsNullOrEmpty(error);
+		return !string.IsNullOrEmpty(this.error);
 	}
 }

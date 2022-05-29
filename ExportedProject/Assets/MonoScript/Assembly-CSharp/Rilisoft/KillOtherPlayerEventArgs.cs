@@ -1,38 +1,69 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
 	public sealed class KillOtherPlayerEventArgs : EventArgs
 	{
-		public ConnectSceneNGUIController.RegimGame Mode { get; set; }
+		public bool Grenade
+		{
+			get;
+			set;
+		}
 
-		public ShopNGUIController.CategoryNames WeaponSlot { get; set; }
+		public bool Headshot
+		{
+			get;
+			set;
+		}
 
-		public bool Headshot { get; set; }
+		public ConnectSceneNGUIController.RegimGame Mode
+		{
+			get;
+			set;
+		}
 
-		public bool Grenade { get; set; }
+		public bool Revenge
+		{
+			get;
+			set;
+		}
 
-		public bool Revenge { get; set; }
+		public bool VictimIsFlagCarrier
+		{
+			get;
+			set;
+		}
 
-		public bool VictimIsFlagCarrier { get; set; }
+		public ShopNGUIController.CategoryNames WeaponSlot
+		{
+			get;
+			set;
+		}
+
+		public KillOtherPlayerEventArgs()
+		{
+		}
 
 		public Dictionary<string, object> ToJson()
 		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary.Add("mode", Mode);
-			dictionary.Add("weaponSlot", WeaponSlot);
-			dictionary.Add("headshot", Headshot);
-			dictionary.Add("grenade", Grenade);
-			dictionary.Add("revenge", Revenge);
-			dictionary.Add("victimIsFlagCarrier", VictimIsFlagCarrier);
-			return dictionary;
+			Dictionary<string, object> strs = new Dictionary<string, object>()
+			{
+				{ "mode", this.Mode },
+				{ "weaponSlot", this.WeaponSlot },
+				{ "headshot", this.Headshot },
+				{ "grenade", this.Grenade },
+				{ "revenge", this.Revenge },
+				{ "victimIsFlagCarrier", this.VictimIsFlagCarrier }
+			};
+			return strs;
 		}
 
 		public override string ToString()
 		{
-			return Json.Serialize(ToJson());
+			return Json.Serialize(this.ToJson());
 		}
 	}
 }

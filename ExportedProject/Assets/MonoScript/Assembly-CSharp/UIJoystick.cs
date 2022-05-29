@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class UIJoystick : MonoBehaviour
@@ -8,7 +9,7 @@ public class UIJoystick : MonoBehaviour
 
 	public float radius;
 
-	public Vector2 value;
+	public Vector2 @value;
 
 	private HungerGameController _hungerGameController;
 
@@ -32,11 +33,11 @@ public class UIJoystick : MonoBehaviour
 	{
 		get
 		{
-			return (!_actualRadius.HasValue) ? radius : _actualRadius.Value;
+			return (!this._actualRadius.HasValue ? this.radius : this._actualRadius.Value);
 		}
 		set
 		{
-			_actualRadius = value;
+			this._actualRadius = new float?(value);
 		}
 	}
 
@@ -44,102 +45,119 @@ public class UIJoystick : MonoBehaviour
 	{
 		get
 		{
-			float actualRadius = ActualRadius;
+			float actualRadius = this.ActualRadius;
 			return actualRadius * actualRadius;
 		}
 	}
 
+	public UIJoystick()
+	{
+	}
+
 	private void Awake()
 	{
-		_joystickWidget = GetComponent<UIWidget>();
-		touchPadInJoystick = GetComponent<TouchPadInJoystick>();
-		_isHunger = Defs.isHunger;
+		this._joystickWidget = base.GetComponent<UIWidget>();
+		this.touchPadInJoystick = base.GetComponent<TouchPadInJoystick>();
+		this._isHunger = Defs.isHunger;
 	}
 
-	private void Start()
+	private void ChangeSide()
 	{
-		ChangeSide();
-		PauseNGUIController.PlayerHandUpdated += ChangeSide;
-		if (_isHunger)
-		{
-			_hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
-		}
-		UpdateVisibility();
-		Reset();
-	}
-
-	private void OnDestroy()
-	{
-		PauseNGUIController.PlayerHandUpdated -= ChangeSide;
-	}
-
-	private void Update()
-	{
-		ProcessInput();
-		UpdateVisibility();
-	}
-
-	private void ProcessInput()
-	{
-		if (_grabTouches)
-		{
-			ProcessTouches();
-		}
-		else if (!Defs.isMouseControl)
-		{
-			Reset();
-		}
-	}
-
-	private void ProcessTouches()
-	{
-		if (_touchId != -100)
-		{
-			Touch? touchById = GetTouchById(_touchId);
-			if (touchById.HasValue)
-			{
-				_touchWorldPos = touchById.Value.position;
-			}
-		}
-		if (_touchId != -100)
-		{
-			Vector2 delta = _touchPrevWorldPos - _touchWorldPos;
-			_touchPrevWorldPos = _touchWorldPos;
-			OnDrag2(delta);
-			if (touchPadInJoystick.isShooting)
-			{
-				value = Vector2.zero;
-				target.localPosition = Vector3.zero;
-			}
-		}
-		else
-		{
-			Reset();
-		}
+		base.transform.parent.GetComponent<UIAnchor>().side = (!GlobalGameController.LeftHanded ? UIAnchor.Side.BottomRight : UIAnchor.Side.BottomLeft);
+		this.Reset();
 	}
 
 	public static Touch? GetTouchById(int touchId)
 	{
-		Touch[] touches = Input.touches;
-		for (int i = 0; i < touches.Length; i++)
+		Touch[] touchArray = Input.touches;
+		for (int i = 0; i < (int)touchArray.Length; i++)
 		{
-			if (touches[i].fingerId == touchId && (touches[i].phase == TouchPhase.Began || touches[i].phase == TouchPhase.Moved || touches[i].phase == TouchPhase.Stationary))
+			if (touchArray[i].fingerId == touchId && (touchArray[i].phase == TouchPhase.Began || touchArray[i].phase == TouchPhase.Moved || touchArray[i].phase == TouchPhase.Stationary))
 			{
-				return touches[i];
+				return new Touch?(touchArray[i]);
 			}
 		}
 		return null;
 	}
 
+	private void OnDestroy()
+	{
+		PauseNGUIController.PlayerHandUpdated -= new Action(this.ChangeSide);
+	}
+
+	private void OnDrag2(Vector2 delta)
+	{
+		this.target.position = UICamera.currentCamera.ScreenToWorldPoint(this._touchWorldPos);
+		Transform vector3 = this.target;
+		float single = this.target.localPosition.x;
+		Vector3 vector31 = this.target.localPosition;
+		vector3.localPosition = new Vector3(single, vector31.y, 0f);
+		if (this.target.localPosition.magnitude > this.ActualRadius)
+		{
+			this.target.localPosition = Vector3.ClampMagnitude(this.target.localPosition, this.ActualRadius);
+		}
+		this.@value = this.target.localPosition;
+		this.@value = (this.@value / this.ActualRadius) * Mathf.InverseLerp(this.ActualRadius, 2f, 1f);
+	}
+
 	private void OnPress(bool isDown)
 	{
-		if ((isDown && _touchId == -100) || (!isDown && _touchId != -100))
+		if (isDown && this._touchId == -100 || !isDown && this._touchId != -100)
 		{
-			_grabTouches = isDown;
-			_touchId = ((!isDown) ? (-100) : UICamera.currentTouchID);
-			_touchWorldPos = ((!isDown) ? Vector2.zero : UICamera.currentTouch.pos);
-			_touchPrevWorldPos = _touchWorldPos;
+			this._grabTouches = isDown;
+			this._touchId = (!isDown ? -100 : UICamera.currentTouchID);
+			this._touchWorldPos = (!isDown ? Vector2.zero : UICamera.currentTouch.pos);
+			this._touchPrevWorldPos = this._touchWorldPos;
 		}
+	}
+
+	private void ProcessInput()
+	{
+		if (this._grabTouches)
+		{
+			this.ProcessTouches();
+		}
+		else if (!Defs.isMouseControl)
+		{
+			this.Reset();
+		}
+	}
+
+	private void ProcessTouches()
+	{
+		if (this._touchId != -100)
+		{
+			Touch? touchById = UIJoystick.GetTouchById(this._touchId);
+			if (touchById.HasValue)
+			{
+				this._touchWorldPos = touchById.Value.position;
+			}
+		}
+		if (this._touchId == -100)
+		{
+			this.Reset();
+		}
+		else
+		{
+			Vector2 vector2 = this._touchPrevWorldPos - this._touchWorldPos;
+			this._touchPrevWorldPos = this._touchWorldPos;
+			this.OnDrag2(vector2);
+			if (this.touchPadInJoystick.isShooting)
+			{
+				this.@value = Vector2.zero;
+				this.target.localPosition = Vector3.zero;
+			}
+		}
+	}
+
+	public void Reset()
+	{
+		this.@value = Vector2.zero;
+		this.target.localPosition = Vector3.zero;
+		this._grabTouches = false;
+		this._touchId = -100;
+		this._touchWorldPos = Vector2.zero;
+		this._touchPrevWorldPos = this._touchWorldPos;
 	}
 
 	public void SetJoystickActive(bool joyActive)
@@ -147,42 +165,30 @@ public class UIJoystick : MonoBehaviour
 		base.enabled = joyActive;
 		if (!joyActive)
 		{
-			Reset();
+			this.Reset();
 		}
+	}
+
+	private void Start()
+	{
+		this.ChangeSide();
+		PauseNGUIController.PlayerHandUpdated += new Action(this.ChangeSide);
+		if (this._isHunger)
+		{
+			this._hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
+		}
+		this.UpdateVisibility();
+		this.Reset();
+	}
+
+	private void Update()
+	{
+		this.ProcessInput();
+		this.UpdateVisibility();
 	}
 
 	private void UpdateVisibility()
 	{
-		bool flag = (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0 || TrainingController.stepTraining >= TrainingState.TapToMove) && (!_isHunger || _hungerGameController.isGo);
-		_joystickWidget.alpha = ((!flag) ? 0f : 1f);
-	}
-
-	private void ChangeSide()
-	{
-		base.transform.parent.GetComponent<UIAnchor>().side = ((!GlobalGameController.LeftHanded) ? UIAnchor.Side.BottomRight : UIAnchor.Side.BottomLeft);
-		Reset();
-	}
-
-	public void Reset()
-	{
-		value = Vector2.zero;
-		target.localPosition = Vector3.zero;
-		_grabTouches = false;
-		_touchId = -100;
-		_touchWorldPos = Vector2.zero;
-		_touchPrevWorldPos = _touchWorldPos;
-	}
-
-	private void OnDrag2(Vector2 delta)
-	{
-		target.position = UICamera.currentCamera.ScreenToWorldPoint(_touchWorldPos);
-		target.localPosition = new Vector3(target.localPosition.x, target.localPosition.y, 0f);
-		float magnitude = target.localPosition.magnitude;
-		if (magnitude > ActualRadius)
-		{
-			target.localPosition = Vector3.ClampMagnitude(target.localPosition, ActualRadius);
-		}
-		value = target.localPosition;
-		value = value / ActualRadius * Mathf.InverseLerp(ActualRadius, 2f, 1f);
+		this._joystickWidget.alpha = ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.None || TrainingController.stepTraining >= TrainingState.TapToMove ? (!this._isHunger ? 0 : (int)(!this._hungerGameController.isGo)) != 0 : true) ? 0f : 1f);
 	}
 }

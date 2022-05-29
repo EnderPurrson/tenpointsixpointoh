@@ -1,6 +1,9 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class SkinName : MonoBehaviour
@@ -101,30 +104,186 @@ public sealed class SkinName : MonoBehaviour
 
 	private AudioSource _audio;
 
-	public void MoveCamera(Vector2 delta)
+	public SkinName()
 	{
-		firstPersonControl.MoveCamera(delta);
+	}
+
+	[DebuggerHidden]
+	public IEnumerator _SetAndResetImpactedByTrampoline()
+	{
+		SkinName.u003c_SetAndResetImpactedByTrampolineu003ec__Iterator1B2 variable = null;
+		return variable;
+	}
+
+	private void Awake()
+	{
+		this.isLocal = !Defs.isInet;
+		this.firstPersonControl = base.GetComponent<FirstPersonControlSharp>();
+		this._audio = base.GetComponent<AudioSource>();
 	}
 
 	public void BlockFirstPersonController()
 	{
-		firstPersonControl.enabled = false;
+		this.firstPersonControl.enabled = false;
+	}
+
+	private void IncrementArmorPopularity(string currentArmor)
+	{
+		if (this.isInet && this.isMulti && this.isMine)
+		{
+			string itemNameNonLocalized = "None";
+			if (currentArmor != Defs.ArmorNewNoneEqupped)
+			{
+				itemNameNonLocalized = ItemDb.GetItemNameNonLocalized(currentArmor, currentArmor, ShopNGUIController.CategoryNames.ArmorCategory, "Unknown");
+			}
+			Statistics.Instance.IncrementArmorPopularity(itemNameNonLocalized, true);
+			this._armorPopularityCacheIsDirty = true;
+		}
+	}
+
+	public void MoveCamera(Vector2 delta)
+	{
+		this.firstPersonControl.MoveCamera(delta);
+	}
+
+	private void OnControllerColliderHit(ControllerColliderHit col)
+	{
+		bool flag;
+		this.onRink = false;
+		if ((!this.isMulti || this.isMine) && this._irt != null && !this._impactedByTramp)
+		{
+			UnityEngine.Object.Destroy(this._irt);
+			this._irt = null;
+		}
+		if (col.gameObject.tag == "Conveyor" && (!this.isMulti || this.isMine))
+		{
+			if (!this.onConveyor)
+			{
+				this.conveyorDirection = Vector3.zero;
+			}
+			this.onConveyor = true;
+			Conveyor component = col.transform.GetComponent<Conveyor>();
+			if (!component.accelerateSpeed)
+			{
+				this.conveyorDirection = col.transform.forward * component.maxspeed;
+			}
+			else
+			{
+				this.conveyorDirection = Vector3.Lerp(this.conveyorDirection, col.transform.forward * component.maxspeed, component.acceleration);
+			}
+			return;
+		}
+		this.onConveyor = false;
+		if (col.gameObject.tag == "Rink" && (!this.isMulti || this.isMine))
+		{
+			this.onRink = true;
+			return;
+		}
+		if (this._impactedByTramp || !(col.gameObject.tag == "Trampoline") && !(col.gameObject.tag == "ConveyorTrampoline") || this.isMulti && !this.isMine)
+		{
+			if (!this.isMulti || this.isLocal && base.GetComponent<NetworkView>().isMine)
+			{
+				flag = true;
+			}
+			else
+			{
+				flag = (!this.isInet || !this.photonView ? false : this.photonView.isMine);
+			}
+			if (flag && col.gameObject.name.Equals("DeadCollider") && !this.playerMoveC.isKilled)
+			{
+				this.isPlayDownSound = false;
+				this.playerMoveC.KillSelf();
+			}
+			return;
+		}
+		if (this._irt == null)
+		{
+			this._irt = base.gameObject.AddComponent<ImpactReceiverTrampoline>();
+		}
+		if (col.gameObject.tag != "Trampoline")
+		{
+			this._irt.AddImpact(col.transform.forward, this.conveyorDirection.magnitude * 1.4f);
+			this.conveyorDirection = Vector3.zero;
+		}
+		else
+		{
+			this._irt.AddImpact(col.transform.up, 45f);
+		}
+		if (Defs.isSoundFX)
+		{
+			AudioSource audioSource = col.gameObject.GetComponent<AudioSource>();
+			if (audioSource != null)
+			{
+				audioSource.Play();
+			}
+		}
+		base.StartCoroutine(this._SetAndResetImpactedByTrampoline());
+	}
+
+	private void OnDestroy()
+	{
+		if (this._armorPopularityCacheIsDirty)
+		{
+			Statistics.Instance.SaveArmorPopularity();
+			this._armorPopularityCacheIsDirty = false;
+		}
+		PhotonObjectCacher.RemoveObject(base.gameObject);
+	}
+
+	public void OnPhotonPlayerConnected(PhotonPlayer player)
+	{
+		if (this.photonView && this.photonView.isMine)
+		{
+			this.SetHat(player);
+			this.SetCape(player);
+			this.SetBoots(player);
+			this.SetArmor(player);
+			this.SetMask(player);
+		}
+	}
+
+	private void OnPlayerConnected(NetworkPlayer player)
+	{
+		if (base.GetComponent<NetworkView>().isMine)
+		{
+			this.SetHat(null);
+			this.SetCape(null);
+			this.SetBoots(null);
+			this.SetArmor(null);
+			this.SetMask(null);
+		}
+	}
+
+	private void OnTriggerEnter(Collider col)
+	{
+		if ((!this.isMulti || this.isMine) && col.gameObject.name.Equals("DamageCollider"))
+		{
+			col.gameObject.GetComponent<DamageCollider>().RegisterPlayer();
+		}
+	}
+
+	private void OnTriggerExit(Collider col)
+	{
+		if ((!this.isMulti || this.isMine) && col.gameObject.GetComponent<DamageCollider>() != null)
+		{
+			col.gameObject.GetComponent<DamageCollider>().UnregisterPlayer();
+		}
 	}
 
 	public void sendAnimJump()
 	{
-		int num = ((!character.isGrounded) ? 2 : 0);
-		if (interpolateScript.myAnim != num)
+		int num = (!this.character.isGrounded ? 2 : 0);
+		if (this.interpolateScript.myAnim != num)
 		{
 			if (Defs.isSoundFX && num == 2 && !EffectsController.WeAreStealth)
 			{
-				NGUITools.PlaySound(jumpAudio);
+				NGUITools.PlaySound(this.jumpAudio);
 			}
-			interpolateScript.myAnim = num;
-			interpolateScript.weAreSteals = EffectsController.WeAreStealth;
-			if (isMulti)
+			this.interpolateScript.myAnim = num;
+			this.interpolateScript.weAreSteals = EffectsController.WeAreStealth;
+			if (this.isMulti)
 			{
-				SetAnim(num, EffectsController.WeAreStealth);
+				this.SetAnim(num, EffectsController.WeAreStealth);
 			}
 		}
 	}
@@ -133,559 +292,116 @@ public sealed class SkinName : MonoBehaviour
 	[RPC]
 	public void SetAnim(int _typeAnim, bool stealth)
 	{
-		string animation = "Idle";
-		currentAnim = _typeAnim;
-		switch (_typeAnim)
+		string str = "Idle";
+		this.currentAnim = _typeAnim;
+		if (_typeAnim == 0)
 		{
-		case 0:
-			animation = "Idle";
+			str = "Idle";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
-			_playWalkSound = false;
-			break;
-		case 1:
-			animation = "Walk";
-			if (!stealth && Defs.isSoundFX)
-			{
-				_playWalkSound = true;
-			}
-			break;
-		case 2:
-			animation = "Jump";
-			if (Defs.isSoundFX)
-			{
-				_audio.Stop();
-			}
-			break;
+			this._playWalkSound = false;
 		}
-		switch (_typeAnim)
+		else if (_typeAnim == 1)
 		{
-		case 4:
-			animation = "Walk_Back";
+			str = "Walk";
 			if (!stealth && Defs.isSoundFX)
 			{
-				_playWalkSound = true;
+				this._playWalkSound = true;
 			}
-			break;
-		case 5:
-			animation = "Walk_Left";
+		}
+		else if (_typeAnim == 2)
+		{
+			str = "Jump";
+			if (Defs.isSoundFX)
+			{
+				this._audio.Stop();
+			}
+		}
+		if (_typeAnim == 4)
+		{
+			str = "Walk_Back";
 			if (!stealth && Defs.isSoundFX)
 			{
-				_playWalkSound = true;
+				this._playWalkSound = true;
 			}
-			break;
-		case 6:
-			animation = "Walk_Right";
+		}
+		else if (_typeAnim == 5)
+		{
+			str = "Walk_Left";
 			if (!stealth && Defs.isSoundFX)
 			{
-				_playWalkSound = true;
+				this._playWalkSound = true;
 			}
-			break;
+		}
+		else if (_typeAnim == 6)
+		{
+			str = "Walk_Right";
+			if (!stealth && Defs.isSoundFX)
+			{
+				this._playWalkSound = true;
+			}
 		}
 		if (_typeAnim == 7)
 		{
-			animation = "Jetpack_Run_Front";
+			str = "Jetpack_Run_Front";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
 		}
 		if (_typeAnim == 8)
 		{
-			animation = "Jetpack_Run_Back";
+			str = "Jetpack_Run_Back";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
 		}
 		if (_typeAnim == 9)
 		{
-			animation = "Jetpack_Run_Left";
+			str = "Jetpack_Run_Left";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
 		}
 		if (_typeAnim == 10)
 		{
-			animation = "Jetpack_Run_Righte";
+			str = "Jetpack_Run_Righte";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
 		}
 		if (_typeAnim == 11)
 		{
-			animation = "Jetpack_Idle";
+			str = "Jetpack_Idle";
 			if (Defs.isSoundFX)
 			{
-				_audio.Stop();
+				this._audio.Stop();
 			}
 		}
-		if (isMulti && !isMine)
+		if (this.isMulti && !this.isMine)
 		{
-			if (playerMoveC.isMechActive || playerMoveC.isBearActive)
+			if (this.playerMoveC.isMechActive || this.playerMoveC.isBearActive)
 			{
-				playerMoveC.mechBodyAnimation.Play(animation);
+				this.playerMoveC.mechBodyAnimation.Play(str);
 			}
-			FPSplayerObject.GetComponent<Animation>().Play(animation);
-			if (capesPoint.transform.childCount > 0 && capesPoint.transform.GetChild(0).GetComponent<Animation>().GetClip(animation) != null)
+			this.FPSplayerObject.GetComponent<Animation>().Play(str);
+			if (this.capesPoint.transform.childCount > 0 && this.capesPoint.transform.GetChild(0).GetComponent<Animation>().GetClip(str) != null)
 			{
-				capesPoint.transform.GetChild(0).GetComponent<Animation>().Play(animation);
+				this.capesPoint.transform.GetChild(0).GetComponent<Animation>().Play(str);
 			}
 		}
 	}
 
-	[RPC]
 	[PunRPC]
+	[RPC]
 	private void SetAnim(int _typeAnim)
 	{
-		SetAnim(_typeAnim, true);
-	}
-
-	[PunRPC]
-	[RPC]
-	private void setCapeCustomRPC(byte[] _skinByte)
-	{
-		if (capesPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < capesPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(capesPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
-		texture2D.LoadImage(_skinByte);
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.Apply();
-		if (texture2D.width == 12 && texture2D.height == 16)
-		{
-			UnityEngine.Object @object = Resources.Load("Capes/cape_Custom");
-			if (!(@object == null))
-			{
-				GameObject gameObject = UnityEngine.Object.Instantiate(@object) as GameObject;
-				Transform transform = gameObject.transform;
-				gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
-				transform.parent = capesPoint.transform;
-				transform.localPosition = Vector3.zero;
-				transform.localRotation = Quaternion.identity;
-				Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
-				currentCapeTex = texture2D;
-				currentCape = "cape_Custom";
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void setCapeCustomRPC(string str)
-	{
-		if (capesPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < capesPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(capesPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		byte[] data = Convert.FromBase64String(str);
-		Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
-		texture2D.LoadImage(data);
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.Apply();
-		if (texture2D.width != 12 || texture2D.height != 16)
-		{
-			return;
-		}
-		if (!Device.isPixelGunLow)
-		{
-			UnityEngine.Object @object = Resources.Load("Capes/cape_Custom");
-			if (@object == null)
-			{
-				return;
-			}
-			GameObject gameObject = UnityEngine.Object.Instantiate(@object) as GameObject;
-			Transform transform = gameObject.transform;
-			gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
-			transform.parent = capesPoint.transform;
-			transform.localPosition = Vector3.zero;
-			transform.localRotation = Quaternion.identity;
-			Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
-		}
-		currentCapeTex = texture2D;
-		currentCape = "cape_Custom";
-	}
-
-	private void UpdateEffectsOnPlayerMoveC()
-	{
-		if (playerMoveC != null)
-		{
-			playerMoveC.UpdateEffectsForCurrentWeapon(currentCape, currentMask, currentHat);
-		}
-		else
-		{
-			Debug.LogError("playerMoveC.UpdateEffectsForCurrentWeapon playerMoveC == null");
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void setCapeRPC(string _currentCape)
-	{
-		if (capesPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < capesPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(capesPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		currentCapeTex = null;
-		currentCape = _currentCape;
-		UpdateEffectsOnPlayerMoveC();
-		StartCoroutine(SetCapeModel());
-	}
-
-	private IEnumerator SetCapeModel()
-	{
-		if (!Device.isPixelGunLow)
-		{
-			LoadAsyncTool.ObjectRequest request = LoadAsyncTool.Get("Capes/" + currentCape);
-			while (!request.isDone)
-			{
-				yield return null;
-			}
-			GameObject _capPrefab = request.asset as GameObject;
-			if (!(_capPrefab == null))
-			{
-				GameObject _cap = UnityEngine.Object.Instantiate(_capPrefab);
-				Transform _capTransform = _cap.transform;
-				_capTransform.parent = capesPoint.transform;
-				_capTransform.localPosition = Vector3.zero;
-				_capTransform.localRotation = Quaternion.identity;
-			}
-		}
-	}
-
-	[RPC]
-	[PunRPC]
-	private void SetArmorVisInvisibleRPC(string _currentArmor, bool _isInviseble)
-	{
-		if (armorPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < armorPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(armorPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		currentArmor = _currentArmor;
-		StartCoroutine(SetArmorModel(_isInviseble));
-	}
-
-	private IEnumerator SetArmorModel(bool invisible)
-	{
-		GameObject _armPrefab = null;
-		if (Device.isPixelGunLow && !string.IsNullOrEmpty(currentArmor) && currentArmor != Defs.ArmorNewNoneEqupped)
-		{
-			_armPrefab = Resources.Load<GameObject>("Armor_Low");
-		}
-		else
-		{
-			LoadAsyncTool.ObjectRequest request = LoadAsyncTool.Get("Armor/" + currentArmor);
-			while (!request.isDone)
-			{
-				yield return null;
-			}
-			_armPrefab = request.asset as GameObject;
-		}
-		if (_armPrefab == null)
-		{
-			yield break;
-		}
-		GameObject _armor = UnityEngine.Object.Instantiate(_armPrefab);
-		Transform _armorTranform = _armor.transform;
-		if (Device.isPixelGunLow)
-		{
-			try
-			{
-				SkinnedMeshRenderer armorRendered = _armorTranform.GetChild(0).GetComponentInChildren<SkinnedMeshRenderer>();
-				armorRendered.material = Resources.Load<Material>("LowPolyArmorMaterials/" + currentArmor + "_low");
-			}
-			catch (Exception ex)
-			{
-				Exception e = ex;
-				Debug.LogError("Exception setting material for low armor: " + currentArmor + "   exception: " + e);
-			}
-		}
-		if (invisible)
-		{
-			ShopNGUIController.SetRenderersVisibleFromPoint(_armorTranform, false);
-		}
-		ArmorRefs ar = _armorTranform.GetChild(0).GetComponent<ArmorRefs>();
-		if (ar != null)
-		{
-			if (playerMoveC != null && playerMoveC.transform.childCount > 0)
-			{
-				WeaponSounds ws = playerMoveC.myCurrentWeaponSounds;
-				ar.leftBone.GetComponent<SetPosInArmor>().target = ws.LeftArmorHand;
-				ar.rightBone.GetComponent<SetPosInArmor>().target = ws.RightArmorHand;
-			}
-			_armorTranform.parent = armorPoint.transform;
-			_armorTranform.localPosition = Vector3.zero;
-			_armorTranform.localRotation = Quaternion.identity;
-			_armorTranform.localScale = new Vector3(1f, 1f, 1f);
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void setBootsRPC(string _currentBoots)
-	{
-		for (int i = 0; i < bootsPoint.transform.childCount; i++)
-		{
-			Transform child = bootsPoint.transform.GetChild(i);
-			if (child.gameObject.name.Equals(_currentBoots) && !Device.isPixelGunLow)
-			{
-				child.gameObject.SetActive(true);
-			}
-			else
-			{
-				child.gameObject.SetActive(false);
-			}
-		}
-		currentBoots = _currentBoots;
-	}
-
-	[PunRPC]
-	[RPC]
-	private void SetMaskRPC(string _currentMask)
-	{
-		if (maskPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < maskPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(maskPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		currentMask = _currentMask;
-		StartCoroutine(SetMaskModel());
-		UpdateEffectsOnPlayerMoveC();
-	}
-
-	private IEnumerator SetMaskModel()
-	{
-		if (!Device.isPixelGunLow)
-		{
-			LoadAsyncTool.ObjectRequest request = LoadAsyncTool.Get("Masks/" + currentMask);
-			while (!request.isDone)
-			{
-				yield return null;
-			}
-			GameObject maskPrefab = request.asset as GameObject;
-			if (maskPrefab != null)
-			{
-				GameObject maskInstance = UnityEngine.Object.Instantiate(maskPrefab);
-				Transform maskTransform = maskInstance.transform;
-				maskTransform.parent = maskPoint.transform;
-				maskTransform.localPosition = Vector3.zero;
-				maskTransform.localRotation = Quaternion.identity;
-				maskTransform.localScale = Vector3.one;
-			}
-		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void SetHatWithInvisebleRPC(string _currentHat, bool _isHatInviseble)
-	{
-		if (hatsPoint.transform.childCount > 0)
-		{
-			for (int i = 0; i < hatsPoint.transform.childCount; i++)
-			{
-				UnityEngine.Object.Destroy(hatsPoint.transform.GetChild(i).gameObject);
-			}
-		}
-		currentHat = _currentHat;
-		StartCoroutine(SetHatModel(_isHatInviseble));
-	}
-
-	private IEnumerator SetHatModel(bool invisible)
-	{
-		if (Device.isPixelGunLow)
-		{
-			yield break;
-		}
-		LoadAsyncTool.ObjectRequest request = LoadAsyncTool.Get("Hats/" + currentHat);
-		while (!request.isDone)
-		{
-			yield return null;
-		}
-		GameObject _hatPrefab = request.asset as GameObject;
-		if (!(_hatPrefab == null))
-		{
-			GameObject _hat = UnityEngine.Object.Instantiate(_hatPrefab);
-			Transform _hatTransform = _hat.transform;
-			if (invisible)
-			{
-				ShopNGUIController.SetRenderersVisibleFromPoint(_hatTransform, false);
-			}
-			_hatTransform.parent = hatsPoint.transform;
-			_hatTransform.localPosition = Vector3.zero;
-			_hatTransform.localRotation = Quaternion.identity;
-			_hatTransform.localScale = Vector3.one;
-		}
-	}
-
-	private void Awake()
-	{
-		isLocal = !Defs.isInet;
-		firstPersonControl = GetComponent<FirstPersonControlSharp>();
-		_audio = GetComponent<AudioSource>();
-	}
-
-	private void Start()
-	{
-		_weaponManager = WeaponManager.sharedManager;
-		playerMoveC = playerGameObject.GetComponent<Player_move_c>();
-		character = base.transform.GetComponent<CharacterController>();
-		isMulti = Defs.isMulti;
-		photonView = PhotonView.Get(this);
-		if ((bool)photonView && photonView.isMine)
-		{
-			PhotonObjectCacher.AddObject(base.gameObject);
-		}
-		isInet = Defs.isInet;
-		if (!isInet)
-		{
-			isMine = GetComponent<NetworkView>().isMine;
-		}
-		else
-		{
-			isMine = photonView.isMine;
-		}
-		if (((!Defs.isInet && !GetComponent<NetworkView>().isMine) || (Defs.isInet && !photonView.isMine)) && Defs.isMulti)
-		{
-			camPlayer.active = false;
-			character.enabled = false;
-		}
-		else
-		{
-			FPSplayerObject.SetActive(false);
-		}
-		if (!Defs.isMulti || (!Defs.isInet && GetComponent<NetworkView>().isMine) || (Defs.isInet && photonView.isMine))
-		{
-			base.gameObject.layer = 11;
-			bodyLayer.layer = 11;
-			headObj.layer = 11;
-		}
-		if (isMine)
-		{
-			SetCape();
-			SetHat();
-			SetBoots();
-			SetArmor();
-			SetMask();
-		}
-	}
-
-	private void OnDestroy()
-	{
-		if (_armorPopularityCacheIsDirty)
-		{
-			Statistics.Instance.SaveArmorPopularity();
-			_armorPopularityCacheIsDirty = false;
-		}
-		PhotonObjectCacher.RemoveObject(base.gameObject);
-	}
-
-	public void SetMask(PhotonPlayer player = null)
-	{
-		if (Defs.isHunger)
-		{
-			return;
-		}
-		string text = (currentMask = Storager.getString("MaskEquippedSN", false));
-		UpdateEffectsOnPlayerMoveC();
-		if (!Defs.isMulti)
-		{
-			return;
-		}
-		if (isInet)
-		{
-			if (player == null)
-			{
-				photonView.RPC("SetMaskRPC", PhotonTargets.Others, text);
-			}
-			else
-			{
-				photonView.RPC("SetMaskRPC", player, text);
-			}
-		}
-		else
-		{
-			GetComponent<NetworkView>().RPC("SetMaskRPC", RPCMode.Others, text);
-		}
-	}
-
-	public void SetCape(PhotonPlayer player = null)
-	{
-		if (Defs.isHunger)
-		{
-			return;
-		}
-		string text = (currentCape = Storager.getString(Defs.CapeEquppedSN, false));
-		UpdateEffectsOnPlayerMoveC();
-		if (!Defs.isMulti)
-		{
-			return;
-		}
-		if (!text.Equals("cape_Custom"))
-		{
-			if (isInet)
-			{
-				if (player == null)
-				{
-					photonView.RPC("setCapeRPC", PhotonTargets.Others, text);
-				}
-				else
-				{
-					photonView.RPC("setCapeRPC", player, text);
-				}
-			}
-			else
-			{
-				GetComponent<NetworkView>().RPC("setCapeRPC", RPCMode.Others, text);
-			}
-		}
-		else
-		{
-			if (!text.Equals("cape_Custom"))
-			{
-				return;
-			}
-			Texture2D capeUserTexture = SkinsController.capeUserTexture;
-			byte[] array = capeUserTexture.EncodeToPNG();
-			if (capeUserTexture.width != 12 || capeUserTexture.height != 16)
-			{
-				return;
-			}
-			if (isInet)
-			{
-				if (player == null)
-				{
-					photonView.RPC("setCapeCustomRPC", PhotonTargets.Others, array);
-				}
-				else
-				{
-					photonView.RPC("setCapeCustomRPC", player, array);
-				}
-			}
-			else
-			{
-				string text2 = Convert.ToBase64String(array);
-				GetComponent<NetworkView>().RPC("setCapeCustomRPC", RPCMode.Others, text2);
-			}
-		}
+		this.SetAnim(_typeAnim, true);
 	}
 
 	public void SetArmor(PhotonPlayer player = null)
@@ -694,80 +410,244 @@ public sealed class SkinName : MonoBehaviour
 		{
 			return;
 		}
-		string text = (currentArmor = Storager.getString(Defs.ArmorNewEquppedSN, false));
+		string str = Storager.getString(Defs.ArmorNewEquppedSN, false);
+		this.currentArmor = str;
 		if (!Defs.isMulti)
 		{
 			return;
 		}
-		bool flag = !ShopNGUIController.ShowArmor;
-		if (isInet)
+		bool showArmor = !ShopNGUIController.ShowArmor;
+		if (!this.isInet)
 		{
-			if (player == null)
-			{
-				photonView.RPC("SetArmorVisInvisibleRPC", PhotonTargets.Others, text, flag);
-			}
-			else
-			{
-				photonView.RPC("SetArmorVisInvisibleRPC", player, text, flag);
-			}
+			base.GetComponent<NetworkView>().RPC("SetArmorVisInvisibleRPC", RPCMode.Others, new object[] { str, showArmor });
+		}
+		else if (player != null)
+		{
+			this.photonView.RPC("SetArmorVisInvisibleRPC", player, new object[] { str, showArmor });
 		}
 		else
 		{
-			GetComponent<NetworkView>().RPC("SetArmorVisInvisibleRPC", RPCMode.Others, text, flag);
+			this.photonView.RPC("SetArmorVisInvisibleRPC", PhotonTargets.Others, new object[] { str, showArmor });
 		}
-		IncrementArmorPopularity(text);
+		this.IncrementArmorPopularity(str);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetArmorModel(bool invisible)
+	{
+		SkinName.u003cSetArmorModelu003ec__Iterator1AF variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SetArmorVisInvisibleRPC(string _currentArmor, bool _isInviseble)
+	{
+		if (this.armorPoint.transform.childCount > 0)
+		{
+			for (int i = 0; i < this.armorPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.armorPoint.transform.GetChild(i).gameObject);
+			}
+		}
+		this.currentArmor = _currentArmor;
+		base.StartCoroutine(this.SetArmorModel(_isInviseble));
 	}
 
 	public void SetBoots(PhotonPlayer player = null)
 	{
-		string text = (currentBoots = Storager.getString(Defs.BootsEquppedSN, false));
+		string str = Storager.getString(Defs.BootsEquppedSN, false);
+		this.currentBoots = str;
 		if (Defs.isHunger)
 		{
-			currentBoots = string.Empty;
+			this.currentBoots = string.Empty;
 		}
 		if (!Defs.isMulti)
 		{
 			return;
 		}
-		if (isInet)
+		if (!this.isInet)
 		{
-			if (player == null)
-			{
-				photonView.RPC("setBootsRPC", PhotonTargets.Others, text);
-			}
-			else
-			{
-				photonView.RPC("setBootsRPC", player, text);
-			}
+			base.GetComponent<NetworkView>().RPC("setBootsRPC", RPCMode.Others, new object[] { str });
+		}
+		else if (player != null)
+		{
+			this.photonView.RPC("setBootsRPC", player, new object[] { str });
 		}
 		else
 		{
-			GetComponent<NetworkView>().RPC("setBootsRPC", RPCMode.Others, text);
+			this.photonView.RPC("setBootsRPC", PhotonTargets.Others, new object[] { str });
 		}
 	}
 
-	public void OnPhotonPlayerConnected(PhotonPlayer player)
+	[PunRPC]
+	[RPC]
+	private void setBootsRPC(string _currentBoots)
 	{
-		if ((bool)photonView && photonView.isMine)
+		for (int i = 0; i < this.bootsPoint.transform.childCount; i++)
 		{
-			SetHat(player);
-			SetCape(player);
-			SetBoots(player);
-			SetArmor(player);
-			SetMask(player);
+			Transform child = this.bootsPoint.transform.GetChild(i);
+			if (!child.gameObject.name.Equals(_currentBoots) || Device.isPixelGunLow)
+			{
+				child.gameObject.SetActive(false);
+			}
+			else
+			{
+				child.gameObject.SetActive(true);
+			}
+		}
+		this.currentBoots = _currentBoots;
+	}
+
+	public void SetCape(PhotonPlayer player = null)
+	{
+		if (Defs.isHunger)
+		{
+			return;
+		}
+		string str = Storager.getString(Defs.CapeEquppedSN, false);
+		this.currentCape = str;
+		this.UpdateEffectsOnPlayerMoveC();
+		if (!Defs.isMulti)
+		{
+			return;
+		}
+		if (!str.Equals("cape_Custom"))
+		{
+			if (!this.isInet)
+			{
+				base.GetComponent<NetworkView>().RPC("setCapeRPC", RPCMode.Others, new object[] { str });
+			}
+			else if (player != null)
+			{
+				this.photonView.RPC("setCapeRPC", player, new object[] { str });
+			}
+			else
+			{
+				this.photonView.RPC("setCapeRPC", PhotonTargets.Others, new object[] { str });
+			}
+			return;
+		}
+		if (str.Equals("cape_Custom"))
+		{
+			Texture2D texture2D = SkinsController.capeUserTexture;
+			byte[] pNG = texture2D.EncodeToPNG();
+			if (texture2D.width != 12 || texture2D.height != 16)
+			{
+				return;
+			}
+			if (!this.isInet)
+			{
+				string base64String = Convert.ToBase64String(pNG);
+				base.GetComponent<NetworkView>().RPC("setCapeCustomRPC", RPCMode.Others, new object[] { base64String });
+			}
+			else if (player != null)
+			{
+				this.photonView.RPC("setCapeCustomRPC", player, new object[] { pNG });
+			}
+			else
+			{
+				this.photonView.RPC("setCapeCustomRPC", PhotonTargets.Others, new object[] { pNG });
+			}
 		}
 	}
 
-	private void OnPlayerConnected(NetworkPlayer player)
+	[PunRPC]
+	[RPC]
+	private void setCapeCustomRPC(byte[] _skinByte)
 	{
-		if (GetComponent<NetworkView>().isMine)
+		if (this.capesPoint.transform.childCount > 0)
 		{
-			SetHat();
-			SetCape();
-			SetBoots();
-			SetArmor();
-			SetMask();
+			for (int i = 0; i < this.capesPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.capesPoint.transform.GetChild(i).gameObject);
+			}
 		}
+		Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
+		texture2D.LoadImage(_skinByte);
+		texture2D.filterMode = FilterMode.Point;
+		texture2D.Apply();
+		if (texture2D.width != 12 || texture2D.height != 16)
+		{
+			return;
+		}
+		UnityEngine.Object obj = Resources.Load("Capes/cape_Custom");
+		if (obj == null)
+		{
+			return;
+		}
+		GameObject gameObject = UnityEngine.Object.Instantiate(obj) as GameObject;
+		Transform transforms = gameObject.transform;
+		gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
+		transforms.parent = this.capesPoint.transform;
+		transforms.localPosition = Vector3.zero;
+		transforms.localRotation = Quaternion.identity;
+		Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
+		this.currentCapeTex = texture2D;
+		this.currentCape = "cape_Custom";
+	}
+
+	[PunRPC]
+	[RPC]
+	private void setCapeCustomRPC(string str)
+	{
+		if (this.capesPoint.transform.childCount > 0)
+		{
+			for (int i = 0; i < this.capesPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.capesPoint.transform.GetChild(i).gameObject);
+			}
+		}
+		byte[] numArray = Convert.FromBase64String(str);
+		Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
+		texture2D.LoadImage(numArray);
+		texture2D.filterMode = FilterMode.Point;
+		texture2D.Apply();
+		if (texture2D.width != 12 || texture2D.height != 16)
+		{
+			return;
+		}
+		if (!Device.isPixelGunLow)
+		{
+			UnityEngine.Object obj = Resources.Load("Capes/cape_Custom");
+			if (obj == null)
+			{
+				return;
+			}
+			GameObject gameObject = UnityEngine.Object.Instantiate(obj) as GameObject;
+			Transform transforms = gameObject.transform;
+			gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
+			transforms.parent = this.capesPoint.transform;
+			transforms.localPosition = Vector3.zero;
+			transforms.localRotation = Quaternion.identity;
+			Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
+		}
+		this.currentCapeTex = texture2D;
+		this.currentCape = "cape_Custom";
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetCapeModel()
+	{
+		SkinName.u003cSetCapeModelu003ec__Iterator1AE variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void setCapeRPC(string _currentCape)
+	{
+		if (this.capesPoint.transform.childCount > 0)
+		{
+			for (int i = 0; i < this.capesPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.capesPoint.transform.GetChild(i).gameObject);
+			}
+		}
+		this.currentCapeTex = null;
+		this.currentCape = _currentCape;
+		this.UpdateEffectsOnPlayerMoveC();
+		base.StartCoroutine(this.SetCapeModel());
 	}
 
 	public void SetHat(PhotonPlayer player = null)
@@ -776,198 +656,238 @@ public sealed class SkinName : MonoBehaviour
 		{
 			return;
 		}
-		string text = Storager.getString(Defs.HatEquppedSN, false);
-		if (text != null && (Defs.isHunger || Defs.isDaterRegim) && !Wear.NonArmorHat(text))
+		string str = Storager.getString(Defs.HatEquppedSN, false);
+		if (str != null && (Defs.isHunger || Defs.isDaterRegim) && !Wear.NonArmorHat(str))
 		{
-			text = "hat_NoneEquipped";
+			str = "hat_NoneEquipped";
 		}
-		currentHat = text;
+		this.currentHat = str;
 		if (!Defs.isMulti)
 		{
 			return;
 		}
-		bool flag = !ShopNGUIController.ShowHat && !Wear.NonArmorHat(text);
-		if (isInet)
+		bool flag = (ShopNGUIController.ShowHat ? false : !Wear.NonArmorHat(str));
+		if (!this.isInet)
 		{
-			if (player == null)
-			{
-				photonView.RPC("SetHatWithInvisebleRPC", PhotonTargets.Others, text, flag);
-			}
-			else
-			{
-				photonView.RPC("SetHatWithInvisebleRPC", player, text, flag);
-			}
+			base.GetComponent<NetworkView>().RPC("SetHatWithInvisebleRPC", RPCMode.Others, new object[] { str, flag });
+		}
+		else if (player != null)
+		{
+			this.photonView.RPC("SetHatWithInvisebleRPC", player, new object[] { str, flag });
 		}
 		else
 		{
-			GetComponent<NetworkView>().RPC("SetHatWithInvisebleRPC", RPCMode.Others, text, flag);
+			this.photonView.RPC("SetHatWithInvisebleRPC", PhotonTargets.Others, new object[] { str, flag });
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetHatModel(bool invisible)
+	{
+		SkinName.u003cSetHatModelu003ec__Iterator1B1 variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SetHatWithInvisebleRPC(string _currentHat, bool _isHatInviseble)
+	{
+		if (this.hatsPoint.transform.childCount > 0)
+		{
+			for (int i = 0; i < this.hatsPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.hatsPoint.transform.GetChild(i).gameObject);
+			}
+		}
+		this.currentHat = _currentHat;
+		base.StartCoroutine(this.SetHatModel(_isHatInviseble));
+	}
+
+	public void SetMask(PhotonPlayer player = null)
+	{
+		if (Defs.isHunger)
+		{
+			return;
+		}
+		string str = Storager.getString("MaskEquippedSN", false);
+		this.currentMask = str;
+		this.UpdateEffectsOnPlayerMoveC();
+		if (!Defs.isMulti)
+		{
+			return;
+		}
+		if (!this.isInet)
+		{
+			base.GetComponent<NetworkView>().RPC("SetMaskRPC", RPCMode.Others, new object[] { str });
+		}
+		else if (player != null)
+		{
+			this.photonView.RPC("SetMaskRPC", player, new object[] { str });
+		}
+		else
+		{
+			this.photonView.RPC("SetMaskRPC", PhotonTargets.Others, new object[] { str });
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetMaskModel()
+	{
+		SkinName.u003cSetMaskModelu003ec__Iterator1B0 variable = null;
+		return variable;
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SetMaskRPC(string _currentMask)
+	{
+		if (this.maskPoint.transform.childCount > 0)
+		{
+			for (int i = 0; i < this.maskPoint.transform.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(this.maskPoint.transform.GetChild(i).gameObject);
+			}
+		}
+		this.currentMask = _currentMask;
+		base.StartCoroutine(this.SetMaskModel());
+		this.UpdateEffectsOnPlayerMoveC();
+	}
+
+	private void Start()
+	{
+		this._weaponManager = WeaponManager.sharedManager;
+		this.playerMoveC = this.playerGameObject.GetComponent<Player_move_c>();
+		this.character = base.transform.GetComponent<CharacterController>();
+		this.isMulti = Defs.isMulti;
+		this.photonView = PhotonView.Get(this);
+		if (this.photonView && this.photonView.isMine)
+		{
+			PhotonObjectCacher.AddObject(base.gameObject);
+		}
+		this.isInet = Defs.isInet;
+		if (this.isInet)
+		{
+			this.isMine = this.photonView.isMine;
+		}
+		else
+		{
+			this.isMine = base.GetComponent<NetworkView>().isMine;
+		}
+		if ((Defs.isInet || base.GetComponent<NetworkView>().isMine) && (!Defs.isInet || this.photonView.isMine) || !Defs.isMulti)
+		{
+			this.FPSplayerObject.SetActive(false);
+		}
+		else
+		{
+			this.camPlayer.active = false;
+			this.character.enabled = false;
+		}
+		if (!Defs.isMulti || !Defs.isInet && base.GetComponent<NetworkView>().isMine || Defs.isInet && this.photonView.isMine)
+		{
+			base.gameObject.layer = 11;
+			this.bodyLayer.layer = 11;
+			this.headObj.layer = 11;
+		}
+		if (this.isMine)
+		{
+			this.SetCape(null);
+			this.SetHat(null);
+			this.SetBoots(null);
+			this.SetArmor(null);
+			this.SetMask(null);
 		}
 	}
 
 	private void Update()
 	{
-		if ((isMulti && isMine) || !isMulti)
+		if (this.isMulti && this.isMine || !this.isMulti)
 		{
-			if (playerMoveC.isKilled)
+			if (this.playerMoveC.isKilled)
 			{
-				isPlayDownSound = false;
+				this.isPlayDownSound = false;
 			}
 			int num = 0;
-			if ((character.velocity.y > 0.01f || character.velocity.y < -0.01f) && !character.isGrounded && !Defs.isJetpackEnabled)
+			if ((this.character.velocity.y > 0.01f || this.character.velocity.y < -0.01f) && !this.character.isGrounded && !Defs.isJetpackEnabled)
 			{
 				num = 2;
 			}
-			else if (character.velocity.x != 0f || character.velocity.z != 0f)
+			else if (this.character.velocity.x == 0f && this.character.velocity.z == 0f)
 			{
-				if (character.isGrounded)
+				if (Defs.isJetpackEnabled && !this.character.isGrounded)
 				{
-					float x = JoystickController.leftJoystick.value.x;
-					float y = JoystickController.leftJoystick.value.y;
-					num = ((Mathf.Abs(y) >= Mathf.Abs(x)) ? ((y >= 0f) ? 1 : 4) : ((!(x >= 0f)) ? 5 : 6));
-				}
-				else if (Defs.isJetpackEnabled)
-				{
-					float x2 = JoystickController.leftJoystick.value.x;
-					float y2 = JoystickController.leftJoystick.value.y;
-					num = ((Mathf.Abs(y2) >= Mathf.Abs(x2)) ? ((!(y2 >= 0f)) ? 8 : 7) : ((!(x2 >= 0f)) ? 9 : 10));
+					num = 11;
 				}
 			}
-			else if (Defs.isJetpackEnabled && !character.isGrounded)
+			else if (this.character.isGrounded)
 			{
-				num = 11;
+				float single = JoystickController.leftJoystick.@value.x;
+				float single1 = JoystickController.leftJoystick.@value.y;
+				if (Mathf.Abs(single1) < Mathf.Abs(single))
+				{
+					num = (single < 0f ? 5 : 6);
+				}
+				else
+				{
+					num = (single1 < 0f ? 4 : 1);
+				}
 			}
-			if (character.velocity.y < -2.5f && !character.isGrounded)
+			else if (Defs.isJetpackEnabled)
 			{
-				isPlayDownSound = true;
+				float single2 = JoystickController.leftJoystick.@value.x;
+				float single3 = JoystickController.leftJoystick.@value.y;
+				if (Mathf.Abs(single3) < Mathf.Abs(single2))
+				{
+					num = (single2 < 0f ? 9 : 10);
+				}
+				else
+				{
+					num = (single3 < 0f ? 8 : 7);
+				}
 			}
-			if (isPlayDownSound && character.isGrounded)
+			if (this.character.velocity.y < -2.5f && !this.character.isGrounded)
+			{
+				this.isPlayDownSound = true;
+			}
+			if (this.isPlayDownSound && this.character.isGrounded)
 			{
 				if (Defs.isSoundFX && !EffectsController.WeAreStealth)
 				{
-					NGUITools.PlaySound(jumpDownAudio);
+					NGUITools.PlaySound(this.jumpDownAudio);
 				}
-				isPlayDownSound = false;
+				this.isPlayDownSound = false;
 			}
-			if (num != typeAnim)
+			if (num != this.typeAnim)
 			{
-				typeAnim = num;
-				if (((isMulti && isMine) || !isMulti) && typeAnim != 2)
+				this.typeAnim = num;
+				if ((this.isMulti && this.isMine || !this.isMulti) && this.typeAnim != 2)
 				{
-					interpolateScript.myAnim = typeAnim;
-					interpolateScript.weAreSteals = EffectsController.WeAreStealth;
-					SetAnim(typeAnim, EffectsController.WeAreStealth);
+					this.interpolateScript.myAnim = this.typeAnim;
+					this.interpolateScript.weAreSteals = EffectsController.WeAreStealth;
+					this.SetAnim(this.typeAnim, EffectsController.WeAreStealth);
 				}
 			}
 		}
-		if (_playWalkSound)
+		if (this._playWalkSound)
 		{
-			AudioClip audioClip = ((!playerMoveC.isMechActive && !playerMoveC.isBearActive) ? walkAudio : walkMech);
-			if (!_audio.isPlaying || _audio.clip != audioClip)
+			AudioClip audioClip = (this.playerMoveC.isMechActive || this.playerMoveC.isBearActive ? this.walkMech : this.walkAudio);
+			if (!this._audio.isPlaying || this._audio.clip != audioClip)
 			{
-				_audio.loop = false;
-				_audio.clip = audioClip;
-				_audio.Play();
+				this._audio.loop = false;
+				this._audio.clip = audioClip;
+				this._audio.Play();
 			}
 		}
 	}
 
-	public IEnumerator _SetAndResetImpactedByTrampoline()
+	private void UpdateEffectsOnPlayerMoveC()
 	{
-		_impactedByTramp = true;
-		yield return new WaitForSeconds(0.1f);
-		_impactedByTramp = false;
-	}
-
-	private void OnControllerColliderHit(ControllerColliderHit col)
-	{
-		onRink = false;
-		if ((!isMulti || isMine) && _irt != null && !_impactedByTramp)
+		if (this.playerMoveC == null)
 		{
-			UnityEngine.Object.Destroy(_irt);
-			_irt = null;
+			UnityEngine.Debug.LogError("playerMoveC.UpdateEffectsForCurrentWeapon playerMoveC == null");
 		}
-		if (col.gameObject.tag == "Conveyor" && (!isMulti || isMine))
+		else
 		{
-			if (!onConveyor)
-			{
-				conveyorDirection = Vector3.zero;
-			}
-			onConveyor = true;
-			Conveyor component = col.transform.GetComponent<Conveyor>();
-			if (component.accelerateSpeed)
-			{
-				conveyorDirection = Vector3.Lerp(conveyorDirection, col.transform.forward * component.maxspeed, component.acceleration);
-			}
-			else
-			{
-				conveyorDirection = col.transform.forward * component.maxspeed;
-			}
-			return;
-		}
-		onConveyor = false;
-		if (col.gameObject.tag == "Rink" && (!isMulti || isMine))
-		{
-			onRink = true;
-		}
-		else if (!_impactedByTramp && (col.gameObject.tag == "Trampoline" || col.gameObject.tag == "ConveyorTrampoline") && (!isMulti || isMine))
-		{
-			if (_irt == null)
-			{
-				_irt = base.gameObject.AddComponent<ImpactReceiverTrampoline>();
-			}
-			if (col.gameObject.tag == "Trampoline")
-			{
-				_irt.AddImpact(col.transform.up, 45f);
-			}
-			else
-			{
-				_irt.AddImpact(col.transform.forward, conveyorDirection.magnitude * 1.4f);
-				conveyorDirection = Vector3.zero;
-			}
-			if (Defs.isSoundFX)
-			{
-				AudioSource component2 = col.gameObject.GetComponent<AudioSource>();
-				if (component2 != null)
-				{
-					component2.Play();
-				}
-			}
-			StartCoroutine(_SetAndResetImpactedByTrampoline());
-		}
-		else if ((!isMulti || (isLocal && GetComponent<NetworkView>().isMine) || (isInet && (bool)photonView && photonView.isMine)) && col.gameObject.name.Equals("DeadCollider") && !playerMoveC.isKilled)
-		{
-			isPlayDownSound = false;
-			playerMoveC.KillSelf();
-		}
-	}
-
-	private void OnTriggerEnter(Collider col)
-	{
-		if ((!isMulti || isMine) && col.gameObject.name.Equals("DamageCollider"))
-		{
-			col.gameObject.GetComponent<DamageCollider>().RegisterPlayer();
-		}
-	}
-
-	private void OnTriggerExit(Collider col)
-	{
-		if ((!isMulti || isMine) && col.gameObject.GetComponent<DamageCollider>() != null)
-		{
-			col.gameObject.GetComponent<DamageCollider>().UnregisterPlayer();
-		}
-	}
-
-	private void IncrementArmorPopularity(string currentArmor)
-	{
-		if (isInet && isMulti && isMine)
-		{
-			string key = "None";
-			if (currentArmor != Defs.ArmorNewNoneEqupped)
-			{
-				key = ItemDb.GetItemNameNonLocalized(currentArmor, currentArmor, ShopNGUIController.CategoryNames.ArmorCategory, "Unknown");
-			}
-			Statistics.Instance.IncrementArmorPopularity(key);
-			_armorPopularityCacheIsDirty = true;
+			this.playerMoveC.UpdateEffectsForCurrentWeapon(this.currentCape, this.currentMask, this.currentHat);
 		}
 	}
 }

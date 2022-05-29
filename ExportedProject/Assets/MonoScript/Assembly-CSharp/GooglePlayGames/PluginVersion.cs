@@ -1,3 +1,5 @@
+using System;
+
 namespace GooglePlayGames
 {
 	public class PluginVersion
@@ -21,5 +23,9 @@ namespace GooglePlayGames
 		public const int MinGmsCoreVersionCode = 8487000;
 
 		public const string PlayServicesVersionConstraint = "8.4+";
+
+		public PluginVersion()
+		{
+		}
 	}
 }

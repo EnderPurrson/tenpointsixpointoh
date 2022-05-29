@@ -12,51 +12,55 @@ namespace Rilisoft
 
 		private bool _showReport;
 
+		public CrashReporter()
+		{
+		}
+
+		private static void HandleException(object sender, UnhandledExceptionEventArgs e)
+		{
+			Exception exceptionObject = e.ExceptionObject as Exception;
+			if (exceptionObject != null)
+			{
+				string str = string.Format("Report_{0:s}.txt", DateTime.Now).Replace(':', '-');
+				string str1 = Path.Combine(Application.persistentDataPath, str);
+				File.WriteAllText(str1, exceptionObject.ToString());
+			}
+		}
+
 		internal void OnGUI()
 		{
-			float num = ((Screen.dpi != 0f) ? Screen.dpi : 160f);
-			if (GUILayout.Button("Simulate exception", GUILayout.Width(1f * num)))
+			float single = (Screen.dpi != 0f ? Screen.dpi : 160f);
+			if (GUILayout.Button("Simulate exception", new GUILayoutOption[] { GUILayout.Width(1f * single) }))
 			{
 				throw new InvalidOperationException(DateTime.Now.ToString("s"));
 			}
-			GUILayout.Label("Report path: " + Application.persistentDataPath);
-			if (!string.IsNullOrEmpty(_reportText))
+			GUILayout.Label(string.Concat("Report path: ", Application.persistentDataPath), new GUILayoutOption[0]);
+			if (!string.IsNullOrEmpty(this._reportText))
 			{
-				_showReport = GUILayout.Toggle(_showReport, "Show: " + _reportTime);
-				if (_showReport)
+				this._showReport = GUILayout.Toggle(this._showReport, string.Concat("Show: ", this._reportTime), new GUILayoutOption[0]);
+				if (this._showReport)
 				{
-					GUILayout.Label(_reportText);
+					GUILayout.Label(this._reportText, new GUILayoutOption[0]);
 				}
 			}
 		}
 
 		internal void Start()
 		{
-			if (Debug.isDebugBuild)
-			{
-				AppDomain.CurrentDomain.UnhandledException += HandleException;
-				string[] files = Directory.GetFiles(Application.persistentDataPath, "Report_*.txt", SearchOption.TopDirectoryOnly);
-				if (files.Length > 0)
-				{
-					string path = files[files.Length - 1];
-					_reportTime = Path.GetFileNameWithoutExtension(path);
-					_reportText = File.ReadAllText(path);
-				}
-			}
-			else
+			if (!Debug.isDebugBuild)
 			{
 				base.enabled = false;
 			}
-		}
-
-		private static void HandleException(object sender, UnhandledExceptionEventArgs e)
-		{
-			Exception ex = e.ExceptionObject as Exception;
-			if (ex != null)
+			else
 			{
-				string path = string.Format("Report_{0:s}.txt", DateTime.Now).Replace(':', '-');
-				string path2 = Path.Combine(Application.persistentDataPath, path);
-				File.WriteAllText(path2, ex.ToString());
+				AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CrashReporter.HandleException);
+				string[] files = Directory.GetFiles(Application.persistentDataPath, "Report_*.txt", SearchOption.TopDirectoryOnly);
+				if ((int)files.Length > 0)
+				{
+					string str = files[(int)files.Length - 1];
+					this._reportTime = Path.GetFileNameWithoutExtension(str);
+					this._reportText = File.ReadAllText(str);
+				}
 			}
 		}
 	}

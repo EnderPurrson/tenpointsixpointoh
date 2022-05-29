@@ -1,18 +1,25 @@
 using GooglePlayGames.BasicApi.SavedGame;
+using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace Rilisoft
 {
 	internal sealed class DummyConflictResolver : IConflictResolver
 	{
-		private static readonly DummyConflictResolver s_instance = new DummyConflictResolver();
+		private readonly static DummyConflictResolver s_instance;
 
 		internal static DummyConflictResolver Instance
 		{
 			get
 			{
-				return s_instance;
+				return DummyConflictResolver.s_instance;
 			}
+		}
+
+		static DummyConflictResolver()
+		{
+			DummyConflictResolver.s_instance = new DummyConflictResolver();
 		}
 
 		private DummyConflictResolver()
@@ -21,8 +28,8 @@ namespace Rilisoft
 
 		public void ChooseMetadata(ISavedGameMetadata chosenMetadata)
 		{
-			string text = ((chosenMetadata == null) ? string.Empty : chosenMetadata.Filename);
-			Debug.LogFormat("{0}('{1}').ChooseMetadata()", GetType().Name, text);
+			string str = (chosenMetadata == null ? string.Empty : chosenMetadata.Filename);
+			Debug.LogFormat("{0}('{1}').ChooseMetadata()", new object[] { this.GetType().Name, str });
 		}
 	}
 }

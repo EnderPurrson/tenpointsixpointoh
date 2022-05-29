@@ -1,11 +1,15 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class FontFilterer : MonoBehaviour
 {
+	public FontFilterer()
+	{
+	}
+
 	private void Start()
 	{
-		TextMesh component = GetComponent<TextMesh>();
-		component.font.material.mainTexture.filterMode = FilterMode.Point;
+		base.GetComponent<TextMesh>().font.material.mainTexture.filterMode = FilterMode.Point;
 	}
 }

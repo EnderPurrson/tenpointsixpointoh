@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,11 +12,11 @@ public class PhotonStream
 
 	internal byte currentItem;
 
-	public bool isWriting
+	public int Count
 	{
 		get
 		{
-			return write;
+			return (!this.isWriting ? (int)this.readData.Length : this.writeData.Count);
 		}
 	}
 
@@ -23,202 +24,211 @@ public class PhotonStream
 	{
 		get
 		{
-			return !write;
+			return !this.write;
 		}
 	}
 
-	public int Count
+	public bool isWriting
 	{
 		get
 		{
-			return (!isWriting) ? readData.Length : writeData.Count;
+			return this.write;
 		}
 	}
 
 	public PhotonStream(bool write, object[] incomingData)
 	{
 		this.write = write;
-		if (incomingData == null)
+		if (incomingData != null)
 		{
-			writeData = new Queue<object>(10);
+			this.readData = incomingData;
 		}
 		else
 		{
-			readData = incomingData;
+			this.writeData = new Queue<object>(10);
 		}
-	}
-
-	internal void ResetWriteStream()
-	{
-		writeData.Clear();
-	}
-
-	public object ReceiveNext()
-	{
-		if (write)
-		{
-			Debug.LogError("Error: you cannot read this stream that you are writing!");
-			return null;
-		}
-		object result = readData[currentItem];
-		currentItem++;
-		return result;
 	}
 
 	public object PeekNext()
 	{
-		if (write)
+		if (this.write)
 		{
 			Debug.LogError("Error: you cannot read this stream that you are writing!");
 			return null;
 		}
-		return readData[currentItem];
+		return this.readData[this.currentItem];
+	}
+
+	public object ReceiveNext()
+	{
+		if (this.write)
+		{
+			Debug.LogError("Error: you cannot read this stream that you are writing!");
+			return null;
+		}
+		object obj = this.readData[this.currentItem];
+		PhotonStream photonStream = this;
+		photonStream.currentItem = (byte)(photonStream.currentItem + 1);
+		return obj;
+	}
+
+	internal void ResetWriteStream()
+	{
+		this.writeData.Clear();
 	}
 
 	public void SendNext(object obj)
 	{
-		if (!write)
+		if (!this.write)
 		{
 			Debug.LogError("Error: you cannot write/send to this stream that you are reading!");
+			return;
 		}
-		else
-		{
-			writeData.Enqueue(obj);
-		}
-	}
-
-	public object[] ToArray()
-	{
-		return (!isWriting) ? readData : writeData.ToArray();
+		this.writeData.Enqueue(obj);
 	}
 
 	public void Serialize(ref bool myBool)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(myBool);
+			this.writeData.Enqueue(myBool);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			myBool = (bool)readData[currentItem];
-			currentItem++;
+			myBool = (bool)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref int myInt)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(myInt);
+			this.writeData.Enqueue(myInt);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			myInt = (int)readData[currentItem];
-			currentItem++;
+			myInt = (int)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref string value)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(value);
+			this.writeData.Enqueue(value);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			value = (string)readData[currentItem];
-			currentItem++;
+			value = (string)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref char value)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(value);
+			this.writeData.Enqueue((char)value);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			value = (char)readData[currentItem];
-			currentItem++;
+			value = (char)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref short value)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(value);
+			this.writeData.Enqueue(value);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			value = (short)readData[currentItem];
-			currentItem++;
+			value = (short)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref float obj)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(obj);
+			this.writeData.Enqueue(obj);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			obj = (float)readData[currentItem];
-			currentItem++;
+			obj = (float)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref PhotonPlayer obj)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(obj);
+			this.writeData.Enqueue(obj);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			obj = (PhotonPlayer)readData[currentItem];
-			currentItem++;
+			obj = (PhotonPlayer)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref Vector3 obj)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(obj);
+			this.writeData.Enqueue(obj);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			obj = (Vector3)readData[currentItem];
-			currentItem++;
+			obj = (Vector3)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref Vector2 obj)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(obj);
+			this.writeData.Enqueue(obj);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			obj = (Vector2)readData[currentItem];
-			currentItem++;
+			obj = (Vector2)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
 	}
 
 	public void Serialize(ref Quaternion obj)
 	{
-		if (write)
+		if (this.write)
 		{
-			writeData.Enqueue(obj);
+			this.writeData.Enqueue(obj);
 		}
-		else if (readData.Length > currentItem)
+		else if ((int)this.readData.Length > this.currentItem)
 		{
-			obj = (Quaternion)readData[currentItem];
-			currentItem++;
+			obj = (Quaternion)this.readData[this.currentItem];
+			PhotonStream photonStream = this;
+			photonStream.currentItem = (byte)(photonStream.currentItem + 1);
 		}
+	}
+
+	public object[] ToArray()
+	{
+		return (!this.isWriting ? this.readData : this.writeData.ToArray());
 	}
 }

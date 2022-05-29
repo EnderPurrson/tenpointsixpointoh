@@ -1,49 +1,42 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[RequireComponent(typeof(UIPopupList))]
 [AddComponentMenu("NGUI/Interaction/Language Selection")]
+[RequireComponent(typeof(UIPopupList))]
 public class LanguageSelection : MonoBehaviour
 {
 	private UIPopupList mList;
 
-	[CompilerGenerated]
-	private static EventDelegate.Callback _003C_003Ef__am_0024cache1;
+	public LanguageSelection()
+	{
+	}
 
 	private void Awake()
 	{
-		mList = GetComponent<UIPopupList>();
-		Refresh();
-	}
-
-	private void Start()
-	{
-		List<EventDelegate> onChange = mList.onChange;
-		if (_003C_003Ef__am_0024cache1 == null)
-		{
-			_003C_003Ef__am_0024cache1 = _003CStart_003Em__1CE;
-		}
-		EventDelegate.Add(onChange, _003C_003Ef__am_0024cache1);
+		this.mList = base.GetComponent<UIPopupList>();
+		this.Refresh();
 	}
 
 	public void Refresh()
 	{
-		if (mList != null && Localization.knownLanguages != null)
+		if (this.mList != null && Localization.knownLanguages != null)
 		{
-			mList.Clear();
-			int i = 0;
-			for (int num = Localization.knownLanguages.Length; i < num; i++)
+			this.mList.Clear();
+			int num = 0;
+			int length = (int)Localization.knownLanguages.Length;
+			while (num < length)
 			{
-				mList.items.Add(Localization.knownLanguages[i]);
+				this.mList.items.Add(Localization.knownLanguages[num]);
+				num++;
 			}
-			mList.value = Localization.language;
+			this.mList.@value = Localization.language;
 		}
 	}
 
-	[CompilerGenerated]
-	private static void _003CStart_003Em__1CE()
+	private void Start()
 	{
-		Localization.language = UIPopupList.current.value;
+		EventDelegate.Add(this.mList.onChange, () => Localization.language = UIPopupList.current.@value);
 	}
 }

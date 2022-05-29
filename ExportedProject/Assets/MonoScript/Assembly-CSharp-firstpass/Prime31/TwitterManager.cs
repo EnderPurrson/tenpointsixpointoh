@@ -1,37 +1,18 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Prime31
 {
 	public class TwitterManager : MonoBehaviour
 	{
-		public static event Action<string> loginSucceededEvent;
-
-		public static event Action<string> loginFailedEvent;
-
-		public static event Action<object> requestDidFinishEvent;
-
-		public static event Action<string> requestDidFailEvent;
-
-		public static event Action<bool> tweetSheetCompletedEvent;
-
-		public static event Action twitterInitializedEvent;
-
 		static TwitterManager()
 		{
 			AbstractManager.initialize(typeof(TwitterManager));
 		}
 
-		public static void noop()
+		public TwitterManager()
 		{
-		}
-
-		public void loginSucceeded(string screenname)
-		{
-			if (TwitterManager.loginSucceededEvent != null)
-			{
-				TwitterManager.loginSucceededEvent(screenname);
-			}
 		}
 
 		public void loginFailed(string error)
@@ -42,12 +23,16 @@ namespace Prime31
 			}
 		}
 
-		public void requestSucceeded(string results)
+		public void loginSucceeded(string screenname)
 		{
-			if (TwitterManager.requestDidFinishEvent != null)
+			if (TwitterManager.loginSucceededEvent != null)
 			{
-				TwitterManager.requestDidFinishEvent(Json.decode(results));
+				TwitterManager.loginSucceededEvent(screenname);
 			}
+		}
+
+		public static void noop()
+		{
 		}
 
 		public void requestFailed(string error)
@@ -55,6 +40,14 @@ namespace Prime31
 			if (TwitterManager.requestDidFailEvent != null)
 			{
 				TwitterManager.requestDidFailEvent(error);
+			}
+		}
+
+		public void requestSucceeded(string results)
+		{
+			if (TwitterManager.requestDidFinishEvent != null)
+			{
+				TwitterManager.requestDidFinishEvent(Json.decode(results));
 			}
 		}
 
@@ -73,5 +66,17 @@ namespace Prime31
 				TwitterManager.twitterInitializedEvent();
 			}
 		}
+
+		public static event Action<string> loginFailedEvent;
+
+		public static event Action<string> loginSucceededEvent;
+
+		public static event Action<string> requestDidFailEvent;
+
+		public static event Action<object> requestDidFinishEvent;
+
+		public static event Action<bool> tweetSheetCompletedEvent;
+
+		public static event Action twitterInitializedEvent;
 	}
 }

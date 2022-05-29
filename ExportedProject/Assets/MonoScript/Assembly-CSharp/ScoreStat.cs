@@ -1,9 +1,14 @@
+using System;
 using UnityEngine;
 
 public class ScoreStat : MonoBehaviour
 {
+	public ScoreStat()
+	{
+	}
+
 	private void Start()
 	{
-		GetComponent<UILabel>().text = GlobalGameController.Score.ToString();
+		base.GetComponent<UILabel>().text = GlobalGameController.Score.ToString();
 	}
 }

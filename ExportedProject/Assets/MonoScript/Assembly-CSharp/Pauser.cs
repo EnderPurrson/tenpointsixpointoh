@@ -13,34 +13,43 @@ internal sealed class Pauser : MonoBehaviour
 	{
 		get
 		{
-			return pausedVar;
+			return this.pausedVar;
 		}
 		set
 		{
-			pausedVar = value;
-			if (!(JoystickController.leftJoystick == null) && !(JoystickController.rightJoystick == null))
+			this.pausedVar = value;
+			if (JoystickController.leftJoystick == null || JoystickController.rightJoystick == null)
 			{
-				if (pausedVar)
-				{
-					JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
-					JoystickController.rightJoystick.gameObject.SetActive(false);
-				}
-				else
-				{
-					JoystickController.leftJoystick.transform.parent.gameObject.SetActive(true);
-					JoystickController.rightJoystick.gameObject.SetActive(true);
-				}
+				return;
+			}
+			if (!this.pausedVar)
+			{
+				JoystickController.leftJoystick.transform.parent.gameObject.SetActive(true);
+				JoystickController.rightJoystick.gameObject.SetActive(true);
+			}
+			else
+			{
+				JoystickController.leftJoystick.transform.parent.gameObject.SetActive(false);
+				JoystickController.rightJoystick.gameObject.SetActive(false);
 			}
 		}
 	}
 
-	private void Start()
+	static Pauser()
 	{
-		sharedPauser = this;
+	}
+
+	public Pauser()
+	{
 	}
 
 	private void OnDestroy()
 	{
-		sharedPauser = null;
+		Pauser.sharedPauser = null;
+	}
+
+	private void Start()
+	{
+		Pauser.sharedPauser = this;
 	}
 }

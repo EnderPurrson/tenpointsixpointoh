@@ -1,9 +1,13 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class CoinsUpdater : MonoBehaviour
 {
-	public static readonly string trainCoinsStub = "999";
+	public readonly static string trainCoinsStub;
 
 	private UILabel coinsLabel;
 
@@ -11,89 +15,85 @@ internal sealed class CoinsUpdater : MonoBehaviour
 
 	private bool _disposed;
 
-	private void Start()
+	static CoinsUpdater()
 	{
-		coinsLabel = GetComponent<UILabel>();
-		CoinsMessage.CoinsLabelDisappeared += _ReplaceMsgForTraining;
-		string text = Storager.getInt("Coins", false).ToString();
-		if (coinsLabel != null)
-		{
-			coinsLabel.text = text;
-		}
+		CoinsUpdater.trainCoinsStub = "999";
 	}
 
-	private void OnEnable()
+	public CoinsUpdater()
 	{
-		BankController.onUpdateMoney += UpdateMoney;
-		StartCoroutine(UpdateCoinsLabel());
-	}
-
-	private void OnDisable()
-	{
-		BankController.onUpdateMoney -= UpdateMoney;
 	}
 
 	private void _ReplaceMsgForTraining(bool isGems, int count)
 	{
 		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 		{
-			_trainingMsg = trainCoinsStub;
+			this._trainingMsg = CoinsUpdater.trainCoinsStub;
 		}
 	}
 
-	private IEnumerator UpdateCoinsLabel()
-	{
-		while (!_disposed)
-		{
-			if (!BankController.canShowIndication)
-			{
-				yield return null;
-				continue;
-			}
-			UpdateMoney();
-			yield return StartCoroutine(MyWaitForSeconds(1f));
-		}
-	}
-
-	private void UpdateMoney()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			if (coinsLabel != null)
-			{
-				if (ShopNGUIController.sharedShop != null && ShopNGUIController.GuiActive)
-				{
-					coinsLabel.text = "999";
-				}
-				else
-				{
-					coinsLabel.text = _trainingMsg;
-				}
-			}
-		}
-		else
-		{
-			string text = Storager.getInt("Coins", false).ToString();
-			if (coinsLabel != null)
-			{
-				coinsLabel.text = text;
-			}
-		}
-	}
-
+	[DebuggerHidden]
 	public IEnumerator MyWaitForSeconds(float tm)
 	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
+		CoinsUpdater.u003cMyWaitForSecondsu003ec__Iterator19 variable = null;
+		return variable;
 	}
 
 	private void OnDestroy()
 	{
-		CoinsMessage.CoinsLabelDisappeared -= _ReplaceMsgForTraining;
-		_disposed = true;
+		CoinsMessage.CoinsLabelDisappeared -= new CoinsMessage.CoinsLabelDisappearedDelegate(this._ReplaceMsgForTraining);
+		this._disposed = true;
+	}
+
+	private void OnDisable()
+	{
+		BankController.onUpdateMoney -= new Action(this.UpdateMoney);
+	}
+
+	private void OnEnable()
+	{
+		BankController.onUpdateMoney += new Action(this.UpdateMoney);
+		base.StartCoroutine(this.UpdateCoinsLabel());
+	}
+
+	private void Start()
+	{
+		this.coinsLabel = base.GetComponent<UILabel>();
+		CoinsMessage.CoinsLabelDisappeared += new CoinsMessage.CoinsLabelDisappearedDelegate(this._ReplaceMsgForTraining);
+		string str = Storager.getInt("Coins", false).ToString();
+		if (this.coinsLabel != null)
+		{
+			this.coinsLabel.text = str;
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator UpdateCoinsLabel()
+	{
+		CoinsUpdater.u003cUpdateCoinsLabelu003ec__Iterator18 variable = null;
+		return variable;
+	}
+
+	private void UpdateMoney()
+	{
+		if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != TrainingController.NewTrainingCompletedStage.None)
+		{
+			string str = Storager.getInt("Coins", false).ToString();
+			if (this.coinsLabel != null)
+			{
+				this.coinsLabel.text = str;
+			}
+		}
+		else if (this.coinsLabel != null)
+		{
+			if (!(ShopNGUIController.sharedShop != null) || !ShopNGUIController.GuiActive)
+			{
+				this.coinsLabel.text = this._trainingMsg;
+			}
+			else
+			{
+				this.coinsLabel.text = "999";
+			}
+		}
 	}
 }

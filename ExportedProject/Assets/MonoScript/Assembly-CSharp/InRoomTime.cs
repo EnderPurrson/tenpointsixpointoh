@@ -1,5 +1,9 @@
-using System.Collections;
 using ExitGames.Client.Photon;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class InRoomTime : MonoBehaviour
@@ -8,13 +12,19 @@ public class InRoomTime : MonoBehaviour
 
 	private int roomStartTimestamp;
 
+	public bool IsRoomTimeSet
+	{
+		get
+		{
+			return (!PhotonNetwork.inRoom ? false : PhotonNetwork.room.customProperties.ContainsKey("#rt"));
+		}
+	}
+
 	public double RoomTime
 	{
 		get
 		{
-			uint roomTimestamp = (uint)RoomTimestamp;
-			double num = roomTimestamp;
-			return num / 1000.0;
+			return (double)((float)this.RoomTimestamp) / 1000;
 		}
 	}
 
@@ -22,47 +32,36 @@ public class InRoomTime : MonoBehaviour
 	{
 		get
 		{
-			return PhotonNetwork.inRoom ? (PhotonNetwork.ServerTimestamp - roomStartTimestamp) : 0;
+			return (!PhotonNetwork.inRoom ? 0 : PhotonNetwork.ServerTimestamp - this.roomStartTimestamp);
 		}
 	}
 
-	public bool IsRoomTimeSet
+	public InRoomTime()
 	{
-		get
-		{
-			return PhotonNetwork.inRoom && PhotonNetwork.room.customProperties.ContainsKey("#rt");
-		}
-	}
-
-	internal IEnumerator SetRoomStartTimestamp()
-	{
-		if (!IsRoomTimeSet && PhotonNetwork.isMasterClient)
-		{
-			if (PhotonNetwork.ServerTimestamp == 0)
-			{
-				yield return 0;
-			}
-			ExitGames.Client.Photon.Hashtable startTimeProp = new ExitGames.Client.Photon.Hashtable();
-			startTimeProp["#rt"] = PhotonNetwork.ServerTimestamp;
-			PhotonNetwork.room.SetCustomProperties(startTimeProp);
-		}
 	}
 
 	public void OnJoinedRoom()
 	{
-		StartCoroutine("SetRoomStartTimestamp");
+		base.StartCoroutine("SetRoomStartTimestamp");
 	}
 
 	public void OnMasterClientSwitched(PhotonPlayer newMasterClient)
 	{
-		StartCoroutine("SetRoomStartTimestamp");
+		base.StartCoroutine("SetRoomStartTimestamp");
 	}
 
 	public void OnPhotonCustomRoomPropertiesChanged(ExitGames.Client.Photon.Hashtable propertiesThatChanged)
 	{
 		if (propertiesThatChanged.ContainsKey("#rt"))
 		{
-			roomStartTimestamp = (int)propertiesThatChanged["#rt"];
+			this.roomStartTimestamp = (int)propertiesThatChanged["#rt"];
 		}
+	}
+
+	[DebuggerHidden]
+	internal IEnumerator SetRoomStartTimestamp()
+	{
+		InRoomTime.u003cSetRoomStartTimestampu003ec__IteratorD4 variable = null;
+		return variable;
 	}
 }

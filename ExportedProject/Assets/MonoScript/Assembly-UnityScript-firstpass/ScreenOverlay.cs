@@ -1,23 +1,13 @@
 using System;
 using UnityEngine;
 
-[Serializable]
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("Image Effects/Screen Overlay")]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Camera))]
+[Serializable]
 public class ScreenOverlay : PostEffectsBase
 {
-	[Serializable]
-	public enum OverlayBlendMode
-	{
-		Additive = 0,
-		ScreenBlend = 1,
-		Multiply = 2,
-		Overlay = 3,
-		AlphaBlend = 4
-	}
-
-	public OverlayBlendMode blendMode;
+	public ScreenOverlay.OverlayBlendMode blendMode;
 
 	public float intensity;
 
@@ -29,34 +19,46 @@ public class ScreenOverlay : PostEffectsBase
 
 	public ScreenOverlay()
 	{
-		blendMode = OverlayBlendMode.Overlay;
-		intensity = 1f;
+		this.blendMode = ScreenOverlay.OverlayBlendMode.Overlay;
+		this.intensity = 1f;
 	}
 
 	public override bool CheckResources()
 	{
-		CheckSupport(false);
-		overlayMaterial = CheckShaderAndCreateMaterial(overlayShader, overlayMaterial);
-		if (!isSupported)
+		this.CheckSupport(false);
+		this.overlayMaterial = this.CheckShaderAndCreateMaterial(this.overlayShader, this.overlayMaterial);
+		if (!this.isSupported)
 		{
-			ReportAutoDisable();
+			this.ReportAutoDisable();
 		}
-		return isSupported;
-	}
-
-	public override void OnRenderImage(RenderTexture source, RenderTexture destination)
-	{
-		if (!CheckResources())
-		{
-			Graphics.Blit(source, destination);
-			return;
-		}
-		overlayMaterial.SetFloat("_Intensity", intensity);
-		overlayMaterial.SetTexture("_Overlay", texture);
-		Graphics.Blit(source, destination, overlayMaterial, (int)blendMode);
+		return this.isSupported;
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override void OnRenderImage(RenderTexture source, RenderTexture destination)
+	{
+		if (this.CheckResources())
+		{
+			this.overlayMaterial.SetFloat("_Intensity", this.intensity);
+			this.overlayMaterial.SetTexture("_Overlay", this.texture);
+			Graphics.Blit(source, destination, this.overlayMaterial, (int)this.blendMode);
+		}
+		else
+		{
+			Graphics.Blit(source, destination);
+		}
+	}
+
+	[Serializable]
+	public enum OverlayBlendMode
+	{
+		Additive,
+		ScreenBlend,
+		Multiply,
+		Overlay,
+		AlphaBlend
 	}
 }

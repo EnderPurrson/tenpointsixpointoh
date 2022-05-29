@@ -5,28 +5,11 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Table")]
 public class UITable : UIWidgetContainer
 {
-	public enum Direction
-	{
-		Down = 0,
-		Up = 1
-	}
-
-	public enum Sorting
-	{
-		None = 0,
-		Alphabetic = 1,
-		Horizontal = 2,
-		Vertical = 3,
-		Custom = 4
-	}
-
-	public delegate void OnReposition();
-
 	public int columns;
 
-	public Direction direction;
+	public UITable.Direction direction;
 
-	public Sorting sorting;
+	public UITable.Sorting sorting;
 
 	public UIWidget.Pivot pivot;
 
@@ -38,7 +21,7 @@ public class UITable : UIWidgetContainer
 
 	public Vector2 padding = Vector2.zero;
 
-	public OnReposition onReposition;
+	public UITable.OnReposition onReposition;
 
 	public Comparison<Transform> onCustomSort;
 
@@ -54,73 +37,65 @@ public class UITable : UIWidgetContainer
 		{
 			if (value)
 			{
-				mReposition = true;
+				this.mReposition = true;
 				base.enabled = true;
 			}
 		}
 	}
 
+	public UITable()
+	{
+	}
+
 	public List<Transform> GetChildList()
 	{
-		Transform transform = base.transform;
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < transform.childCount; i++)
+		Transform transforms = base.transform;
+		List<Transform> transforms1 = new List<Transform>();
+		for (int i = 0; i < transforms.childCount; i++)
 		{
-			Transform child = transform.GetChild(i);
-			if (!hideInactive || ((bool)child && NGUITools.GetActive(child.gameObject)))
+			Transform child = transforms.GetChild(i);
+			if (!this.hideInactive || child && NGUITools.GetActive(child.gameObject))
 			{
-				list.Add(child);
+				transforms1.Add(child);
 			}
 		}
-		if (sorting != 0)
+		if (this.sorting != UITable.Sorting.None)
 		{
-			if (sorting == Sorting.Alphabetic)
+			if (this.sorting == UITable.Sorting.Alphabetic)
 			{
-				list.Sort(UIGrid.SortByName);
+				transforms1.Sort(new Comparison<Transform>(UIGrid.SortByName));
 			}
-			else if (sorting == Sorting.Horizontal)
+			else if (this.sorting == UITable.Sorting.Horizontal)
 			{
-				list.Sort(UIGrid.SortHorizontal);
+				transforms1.Sort(new Comparison<Transform>(UIGrid.SortHorizontal));
 			}
-			else if (sorting == Sorting.Vertical)
+			else if (this.sorting == UITable.Sorting.Vertical)
 			{
-				list.Sort(UIGrid.SortVertical);
+				transforms1.Sort(new Comparison<Transform>(UIGrid.SortVertical));
 			}
-			else if (onCustomSort != null)
+			else if (this.onCustomSort == null)
 			{
-				list.Sort(onCustomSort);
+				this.Sort(transforms1);
 			}
 			else
 			{
-				Sort(list);
+				transforms1.Sort(this.onCustomSort);
 			}
 		}
-		return list;
-	}
-
-	protected virtual void Sort(List<Transform> list)
-	{
-		list.Sort(UIGrid.SortByName);
-	}
-
-	protected virtual void Start()
-	{
-		Init();
-		Reposition();
-		base.enabled = false;
+		return transforms1;
 	}
 
 	protected virtual void Init()
 	{
-		mInitDone = true;
-		mPanel = NGUITools.FindInParents<UIPanel>(base.gameObject);
+		this.mInitDone = true;
+		this.mPanel = NGUITools.FindInParents<UIPanel>(base.gameObject);
 	}
 
 	protected virtual void LateUpdate()
 	{
-		if (mReposition)
+		if (this.mReposition)
 		{
-			Reposition();
+			this.Reposition();
 		}
 		base.enabled = false;
 	}
@@ -129,123 +104,183 @@ public class UITable : UIWidgetContainer
 	{
 		if (!Application.isPlaying && NGUITools.GetActive(this))
 		{
-			Reposition();
-		}
-	}
-
-	protected void RepositionVariableSize(List<Transform> children)
-	{
-		float num = 0f;
-		float num2 = 0f;
-		int num3 = ((columns <= 0) ? 1 : (children.Count / columns + 1));
-		int num4 = ((columns <= 0) ? children.Count : columns);
-		Bounds[,] array = new Bounds[num3, num4];
-		Bounds[] array2 = new Bounds[num4];
-		Bounds[] array3 = new Bounds[num3];
-		int num5 = 0;
-		int num6 = 0;
-		int i = 0;
-		for (int count = children.Count; i < count; i++)
-		{
-			Transform transform = children[i];
-			Bounds bounds = NGUIMath.CalculateRelativeWidgetBounds(transform, !hideInactive);
-			Vector3 localScale = transform.localScale;
-			bounds.min = Vector3.Scale(bounds.min, localScale);
-			bounds.max = Vector3.Scale(bounds.max, localScale);
-			array[num6, num5] = bounds;
-			array2[num5].Encapsulate(bounds);
-			array3[num6].Encapsulate(bounds);
-			if (++num5 >= columns && columns > 0)
-			{
-				num5 = 0;
-				num6++;
-			}
-		}
-		num5 = 0;
-		num6 = 0;
-		Vector2 pivotOffset = NGUIMath.GetPivotOffset(cellAlignment);
-		int j = 0;
-		for (int count2 = children.Count; j < count2; j++)
-		{
-			Transform transform2 = children[j];
-			Bounds bounds2 = array[num6, num5];
-			Bounds bounds3 = array2[num5];
-			Bounds bounds4 = array3[num6];
-			Vector3 localPosition = transform2.localPosition;
-			localPosition.x = num + bounds2.extents.x - bounds2.center.x;
-			localPosition.x -= Mathf.Lerp(0f, bounds2.max.x - bounds2.min.x - bounds3.max.x + bounds3.min.x, pivotOffset.x) - padding.x;
-			if (direction == Direction.Down)
-			{
-				localPosition.y = 0f - num2 - bounds2.extents.y - bounds2.center.y;
-				localPosition.y += Mathf.Lerp(bounds2.max.y - bounds2.min.y - bounds4.max.y + bounds4.min.y, 0f, pivotOffset.y) - padding.y;
-			}
-			else
-			{
-				localPosition.y = num2 + bounds2.extents.y - bounds2.center.y;
-				localPosition.y -= Mathf.Lerp(0f, bounds2.max.y - bounds2.min.y - bounds4.max.y + bounds4.min.y, pivotOffset.y) - padding.y;
-			}
-			num += bounds3.size.x + padding.x * 2f;
-			transform2.localPosition = localPosition;
-			if (++num5 >= columns && columns > 0)
-			{
-				num5 = 0;
-				num6++;
-				num = 0f;
-				num2 += bounds4.size.y + padding.y * 2f;
-			}
-		}
-		if (pivot == UIWidget.Pivot.TopLeft)
-		{
-			return;
-		}
-		pivotOffset = NGUIMath.GetPivotOffset(pivot);
-		Bounds bounds5 = NGUIMath.CalculateRelativeWidgetBounds(base.transform);
-		float num7 = Mathf.Lerp(0f, bounds5.size.x, pivotOffset.x);
-		float num8 = Mathf.Lerp(0f - bounds5.size.y, 0f, pivotOffset.y);
-		Transform transform3 = base.transform;
-		for (int k = 0; k < transform3.childCount; k++)
-		{
-			Transform child = transform3.GetChild(k);
-			SpringPosition component = child.GetComponent<SpringPosition>();
-			if (component != null)
-			{
-				component.target.x -= num7;
-				component.target.y -= num8;
-				continue;
-			}
-			Vector3 localPosition2 = child.localPosition;
-			localPosition2.x -= num7;
-			localPosition2.y -= num8;
-			child.localPosition = localPosition2;
+			this.Reposition();
 		}
 	}
 
 	[ContextMenu("Execute")]
 	public virtual void Reposition()
 	{
-		if (Application.isPlaying && !mInitDone && NGUITools.GetActive(this))
+		if (Application.isPlaying && !this.mInitDone && NGUITools.GetActive(this))
 		{
-			Init();
+			this.Init();
 		}
-		mReposition = false;
-		Transform target = base.transform;
-		List<Transform> childList = GetChildList();
+		this.mReposition = false;
+		Transform transforms = base.transform;
+		List<Transform> childList = this.GetChildList();
 		if (childList.Count > 0)
 		{
-			RepositionVariableSize(childList);
+			this.RepositionVariableSize(childList);
 		}
-		if (keepWithinPanel && mPanel != null)
+		if (this.keepWithinPanel && this.mPanel != null)
 		{
-			mPanel.ConstrainTargetToBounds(target, true);
-			UIScrollView component = mPanel.GetComponent<UIScrollView>();
+			this.mPanel.ConstrainTargetToBounds(transforms, true);
+			UIScrollView component = this.mPanel.GetComponent<UIScrollView>();
 			if (component != null)
 			{
 				component.UpdateScrollbars(true);
 			}
 		}
-		if (onReposition != null)
+		if (this.onReposition != null)
 		{
-			onReposition();
+			this.onReposition();
 		}
+	}
+
+	protected void RepositionVariableSize(List<Transform> children)
+	{
+		float single = 0f;
+		float single1 = 0f;
+		int num = (this.columns <= 0 ? 1 : children.Count / this.columns + 1);
+		int num1 = (this.columns <= 0 ? children.Count : this.columns);
+		Bounds[,] boundsArray = new Bounds[num, num1];
+		Bounds[] boundsArray1 = new Bounds[num1];
+		Bounds[] boundsArray2 = new Bounds[num];
+		int num2 = 0;
+		int num3 = 0;
+		int num4 = 0;
+		int count = children.Count;
+		while (num4 < count)
+		{
+			Transform item = children[num4];
+			Bounds bound = NGUIMath.CalculateRelativeWidgetBounds(item, !this.hideInactive);
+			Vector3 vector3 = item.localScale;
+			bound.min = Vector3.Scale(bound.min, vector3);
+			bound.max = Vector3.Scale(bound.max, vector3);
+			boundsArray[num3, num2] = bound;
+			boundsArray1[num2].Encapsulate(bound);
+			boundsArray2[num3].Encapsulate(bound);
+			int num5 = num2 + 1;
+			num2 = num5;
+			if (num5 >= this.columns && this.columns > 0)
+			{
+				num2 = 0;
+				num3++;
+			}
+			num4++;
+		}
+		num2 = 0;
+		num3 = 0;
+		Vector2 pivotOffset = NGUIMath.GetPivotOffset(this.cellAlignment);
+		int num6 = 0;
+		int count1 = children.Count;
+		while (num6 < count1)
+		{
+			Transform transforms = children[num6];
+			Bounds bound1 = boundsArray[num3, num2];
+			Bounds bound2 = boundsArray1[num2];
+			Bounds bound3 = boundsArray2[num3];
+			Vector3 vector31 = transforms.localPosition;
+			Vector3 vector32 = bound1.extents;
+			vector31.x = single + vector32.x - bound1.center.x;
+			float single2 = vector31.x;
+			float single3 = bound1.max.x;
+			Vector3 vector33 = bound1.min;
+			float single4 = single3 - vector33.x - bound2.max.x;
+			Vector3 vector34 = bound2.min;
+			vector31.x = single2 - (Mathf.Lerp(0f, single4 + vector34.x, pivotOffset.x) - this.padding.x);
+			if (this.direction != UITable.Direction.Down)
+			{
+				Vector3 vector35 = bound1.extents;
+				vector31.y = single1 + vector35.y - bound1.center.y;
+				float single5 = vector31.y;
+				float single6 = bound1.max.y;
+				Vector3 vector36 = bound1.min;
+				float single7 = single6 - vector36.y - bound3.max.y;
+				Vector3 vector37 = bound3.min;
+				vector31.y = single5 - (Mathf.Lerp(0f, single7 + vector37.y, pivotOffset.y) - this.padding.y);
+			}
+			else
+			{
+				Vector3 vector38 = bound1.extents;
+				vector31.y = -single1 - vector38.y - bound1.center.y;
+				float single8 = vector31.y;
+				float single9 = bound1.max.y;
+				Vector3 vector39 = bound1.min;
+				float single10 = single9 - vector39.y - bound3.max.y;
+				Vector3 vector310 = bound3.min;
+				vector31.y = single8 + (Mathf.Lerp(single10 + vector310.y, 0f, pivotOffset.y) - this.padding.y);
+			}
+			Vector3 vector311 = bound2.size;
+			single = single + (vector311.x + this.padding.x * 2f);
+			transforms.localPosition = vector31;
+			int num7 = num2 + 1;
+			num2 = num7;
+			if (num7 >= this.columns && this.columns > 0)
+			{
+				num2 = 0;
+				num3++;
+				single = 0f;
+				Vector3 vector312 = bound3.size;
+				single1 = single1 + (vector312.y + this.padding.y * 2f);
+			}
+			num6++;
+		}
+		if (this.pivot != UIWidget.Pivot.TopLeft)
+		{
+			pivotOffset = NGUIMath.GetPivotOffset(this.pivot);
+			Bounds bound4 = NGUIMath.CalculateRelativeWidgetBounds(base.transform);
+			Vector3 vector313 = bound4.size;
+			float single11 = Mathf.Lerp(0f, vector313.x, pivotOffset.x);
+			Vector3 vector314 = bound4.size;
+			float single12 = Mathf.Lerp(-vector314.y, 0f, pivotOffset.y);
+			Transform transforms1 = base.transform;
+			for (int i = 0; i < transforms1.childCount; i++)
+			{
+				Transform child = transforms1.GetChild(i);
+				SpringPosition component = child.GetComponent<SpringPosition>();
+				if (component == null)
+				{
+					Vector3 vector315 = child.localPosition;
+					vector315.x -= single11;
+					vector315.y -= single12;
+					child.localPosition = vector315;
+				}
+				else
+				{
+					component.target.x -= single11;
+					component.target.y -= single12;
+				}
+			}
+		}
+	}
+
+	protected virtual void Sort(List<Transform> list)
+	{
+		list.Sort(new Comparison<Transform>(UIGrid.SortByName));
+	}
+
+	protected virtual void Start()
+	{
+		this.Init();
+		this.Reposition();
+		base.enabled = false;
+	}
+
+	public enum Direction
+	{
+		Down,
+		Up
+	}
+
+	public delegate void OnReposition();
+
+	public enum Sorting
+	{
+		None,
+		Alphabetic,
+		Horizontal,
+		Vertical,
+		Custom
 	}
 }

@@ -1,7 +1,12 @@
+using System;
 using UnityEngine;
 
 public class InboxPresser : MonoBehaviour
 {
+	public InboxPresser()
+	{
+	}
+
 	private void OnClick()
 	{
 		ButtonClickSound.Instance.PlayClick();

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MultyKill : MonoBehaviour
@@ -10,13 +11,17 @@ public class MultyKill : MonoBehaviour
 
 	private string scorePictTempName;
 
+	public MultyKill()
+	{
+	}
+
 	private void OnEnable()
 	{
 		if (Defs.isSoundFX)
 		{
-			multikillSound.Play();
+			this.multikillSound.Play();
 		}
-		multikillTween.Play(true);
+		this.multikillTween.Play(true);
 	}
 
 	public void PlayTween()
@@ -25,9 +30,9 @@ public class MultyKill : MonoBehaviour
 		base.transform.GetChild(0).gameObject.SetActive(true);
 		if (Defs.isSoundFX)
 		{
-			multikillSound.Stop();
-			multikillSound.Play();
+			this.multikillSound.Stop();
+			this.multikillSound.Play();
 		}
-		multikillTween.Play(true);
+		this.multikillTween.Play(true);
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace I2.Loc
@@ -6,17 +7,21 @@ namespace I2.Loc
 	{
 		public LanguageSource Source;
 
-		private void Start()
+		public LanguagePopup()
 		{
-			UIPopupList component = GetComponent<UIPopupList>();
-			component.items = Source.GetLanguages();
-			EventDelegate.Add(component.onChange, OnValueChange);
-			component.value = LocalizationManager.CurrentLanguage;
 		}
 
 		public void OnValueChange()
 		{
-			LocalizationStore.CurrentLanguage = UIPopupList.current.value;
+			LocalizationStore.CurrentLanguage = UIPopupList.current.@value;
+		}
+
+		private void Start()
+		{
+			UIPopupList component = base.GetComponent<UIPopupList>();
+			component.items = this.Source.GetLanguages();
+			EventDelegate.Add(component.onChange, new EventDelegate.Callback(this.OnValueChange));
+			component.@value = LocalizationManager.CurrentLanguage;
 		}
 	}
 }

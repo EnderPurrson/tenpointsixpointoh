@@ -1,3 +1,6 @@
+using Facebook.Unity;
+using System;
+
 namespace Facebook.Unity.Canvas
 {
 	internal class CanvasFacebookLoader : FB.CompiledFacebookLoader
@@ -6,13 +9,17 @@ namespace Facebook.Unity.Canvas
 		{
 			get
 			{
-				CanvasFacebookGameObject component = ComponentFactory.GetComponent<CanvasFacebookGameObject>();
+				CanvasFacebookGameObject component = ComponentFactory.GetComponent<CanvasFacebookGameObject>(ComponentFactory.IfNotExist.AddNew);
 				if (component.Facebook == null)
 				{
 					component.Facebook = new CanvasFacebook();
 				}
 				return component;
 			}
+		}
+
+		public CanvasFacebookLoader()
+		{
 		}
 	}
 }

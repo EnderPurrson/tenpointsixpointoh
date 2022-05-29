@@ -5,33 +5,12 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace LitJson
 {
 	public class JsonMapper
 	{
-		[CompilerGenerated]
-		private sealed class _003CRegisterExporter_003Ec__AnonStorey1F5<T>
-		{
-			internal ExporterFunc<T> exporter;
-
-			internal void _003C_003Em__75(object obj, JsonWriter writer)
-			{
-				exporter((T)obj, writer);
-			}
-		}
-
-		[CompilerGenerated]
-		private sealed class _003CRegisterImporter_003Ec__AnonStorey1F6<TJson, TValue>
-		{
-			internal ImporterFunc<TJson, TValue> importer;
-
-			internal object _003C_003Em__76(object input)
-			{
-				return importer((TJson)input);
-			}
-		}
-
 		private static int max_nesting_depth;
 
 		private static IFormatProvider datetime_format;
@@ -46,286 +25,175 @@ namespace LitJson
 
 		private static IDictionary<Type, ArrayMetadata> array_metadata;
 
-		private static readonly object array_metadata_lock;
+		private readonly static object array_metadata_lock;
 
 		private static IDictionary<Type, IDictionary<Type, MethodInfo>> conv_ops;
 
-		private static readonly object conv_ops_lock;
+		private readonly static object conv_ops_lock;
 
 		private static IDictionary<Type, ObjectMetadata> object_metadata;
 
-		private static readonly object object_metadata_lock;
+		private readonly static object object_metadata_lock;
 
 		private static IDictionary<Type, IList<PropertyMetadata>> type_properties;
 
-		private static readonly object type_properties_lock;
+		private readonly static object type_properties_lock;
 
 		private static JsonWriter static_writer;
 
-		private static readonly object static_writer_lock;
-
-		[CompilerGenerated]
-		private static WrapperFactory _003C_003Ef__am_0024cache10;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache11;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache12;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache13;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache14;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache15;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache16;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache17;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache18;
-
-		[CompilerGenerated]
-		private static ExporterFunc _003C_003Ef__am_0024cache19;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1A;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1B;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1C;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1D;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1E;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache1F;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache20;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache21;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache22;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache23;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache24;
-
-		[CompilerGenerated]
-		private static ImporterFunc _003C_003Ef__am_0024cache25;
-
-		[CompilerGenerated]
-		private static WrapperFactory _003C_003Ef__am_0024cache26;
-
-		[CompilerGenerated]
-		private static WrapperFactory _003C_003Ef__am_0024cache27;
-
-		[CompilerGenerated]
-		private static WrapperFactory _003C_003Ef__am_0024cache28;
+		private readonly static object static_writer_lock;
 
 		static JsonMapper()
 		{
-			array_metadata_lock = new object();
-			conv_ops_lock = new object();
-			object_metadata_lock = new object();
-			type_properties_lock = new object();
-			static_writer_lock = new object();
-			max_nesting_depth = 100;
-			array_metadata = new Dictionary<Type, ArrayMetadata>();
-			conv_ops = new Dictionary<Type, IDictionary<Type, MethodInfo>>();
-			object_metadata = new Dictionary<Type, ObjectMetadata>();
-			type_properties = new Dictionary<Type, IList<PropertyMetadata>>();
-			static_writer = new JsonWriter();
-			datetime_format = DateTimeFormatInfo.InvariantInfo;
-			base_exporters_table = new Dictionary<Type, ExporterFunc>();
-			custom_exporters_table = new Dictionary<Type, ExporterFunc>();
-			base_importers_table = new Dictionary<Type, IDictionary<Type, ImporterFunc>>();
-			custom_importers_table = new Dictionary<Type, IDictionary<Type, ImporterFunc>>();
-			RegisterBaseExporters();
-			RegisterBaseImporters();
+			JsonMapper.array_metadata_lock = new object();
+			JsonMapper.conv_ops_lock = new object();
+			JsonMapper.object_metadata_lock = new object();
+			JsonMapper.type_properties_lock = new object();
+			JsonMapper.static_writer_lock = new object();
+			JsonMapper.max_nesting_depth = 100;
+			JsonMapper.array_metadata = new Dictionary<Type, ArrayMetadata>();
+			JsonMapper.conv_ops = new Dictionary<Type, IDictionary<Type, MethodInfo>>();
+			JsonMapper.object_metadata = new Dictionary<Type, ObjectMetadata>();
+			JsonMapper.type_properties = new Dictionary<Type, IList<PropertyMetadata>>();
+			JsonMapper.static_writer = new JsonWriter();
+			JsonMapper.datetime_format = DateTimeFormatInfo.InvariantInfo;
+			JsonMapper.base_exporters_table = new Dictionary<Type, ExporterFunc>();
+			JsonMapper.custom_exporters_table = new Dictionary<Type, ExporterFunc>();
+			JsonMapper.base_importers_table = new Dictionary<Type, IDictionary<Type, ImporterFunc>>();
+			JsonMapper.custom_importers_table = new Dictionary<Type, IDictionary<Type, ImporterFunc>>();
+			JsonMapper.RegisterBaseExporters();
+			JsonMapper.RegisterBaseImporters();
+		}
+
+		public JsonMapper()
+		{
 		}
 
 		private static void AddArrayMetadata(Type type)
 		{
-			//Discarded unreachable code: IL_00e0
-			if (array_metadata.ContainsKey(type))
-			{
-				return;
-			}
-			ArrayMetadata value = default(ArrayMetadata);
-			value.IsArray = type.IsArray;
-			if (type.GetInterface("System.Collections.IList") != null)
-			{
-				value.IsList = true;
-			}
-			PropertyInfo[] properties = type.GetProperties();
-			PropertyInfo[] array = properties;
-			foreach (PropertyInfo propertyInfo in array)
-			{
-				if (!(propertyInfo.Name != "Item"))
-				{
-					ParameterInfo[] indexParameters = propertyInfo.GetIndexParameters();
-					if (indexParameters.Length == 1 && indexParameters[0].ParameterType == typeof(int))
-					{
-						value.ElementType = propertyInfo.PropertyType;
-					}
-				}
-			}
-			lock (array_metadata_lock)
-			{
-				try
-				{
-					array_metadata.Add(type, value);
-				}
-				catch (ArgumentException)
-				{
-				}
-			}
+			// 
+			// Current member / type: System.Void LitJson.JsonMapper::AddArrayMetadata(System.Type)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void AddArrayMetadata(System.Type)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
 		}
 
 		private static void AddObjectMetadata(Type type)
 		{
-			//Discarded unreachable code: IL_0177
-			if (object_metadata.ContainsKey(type))
-			{
-				return;
-			}
-			ObjectMetadata value = default(ObjectMetadata);
-			if (type.GetInterface("System.Collections.IDictionary") != null)
-			{
-				value.IsDictionary = true;
-			}
-			PropertyInfo[] properties = type.GetProperties();
-			value.Properties = new Dictionary<string, PropertyMetadata>();
-			PropertyInfo[] array = properties;
-			foreach (PropertyInfo propertyInfo in array)
-			{
-				if (propertyInfo.Name == "Item")
-				{
-					ParameterInfo[] indexParameters = propertyInfo.GetIndexParameters();
-					if (indexParameters.Length == 1 && indexParameters[0].ParameterType == typeof(string))
-					{
-						value.ElementType = propertyInfo.PropertyType;
-					}
-				}
-				else
-				{
-					PropertyMetadata value2 = default(PropertyMetadata);
-					value2.Info = propertyInfo;
-					value2.Type = propertyInfo.PropertyType;
-					value.Properties.Add(propertyInfo.Name, value2);
-				}
-			}
-			FieldInfo[] fields = type.GetFields();
-			FieldInfo[] array2 = fields;
-			foreach (FieldInfo fieldInfo in array2)
-			{
-				PropertyMetadata value3 = default(PropertyMetadata);
-				value3.Info = fieldInfo;
-				value3.IsField = true;
-				value3.Type = fieldInfo.FieldType;
-				value.Properties.Add(fieldInfo.Name, value3);
-			}
-			lock (object_metadata_lock)
-			{
-				try
-				{
-					object_metadata.Add(type, value);
-				}
-				catch (ArgumentException)
-				{
-				}
-			}
+			// 
+			// Current member / type: System.Void LitJson.JsonMapper::AddObjectMetadata(System.Type)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void AddObjectMetadata(System.Type)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
 		}
 
 		private static void AddTypeProperties(Type type)
 		{
-			//Discarded unreachable code: IL_00e9
-			if (type_properties.ContainsKey(type))
-			{
-				return;
-			}
-			IList<PropertyMetadata> list = new List<PropertyMetadata>();
-			PropertyInfo[] properties = type.GetProperties();
-			PropertyInfo[] array = properties;
-			foreach (PropertyInfo propertyInfo in array)
-			{
-				if (!(propertyInfo.Name == "Item"))
-				{
-					PropertyMetadata item = default(PropertyMetadata);
-					item.Info = propertyInfo;
-					item.IsField = false;
-					list.Add(item);
-				}
-			}
-			FieldInfo[] fields = type.GetFields();
-			FieldInfo[] array2 = fields;
-			foreach (FieldInfo info in array2)
-			{
-				PropertyMetadata item2 = default(PropertyMetadata);
-				item2.Info = info;
-				item2.IsField = true;
-				list.Add(item2);
-			}
-			lock (type_properties_lock)
-			{
-				try
-				{
-					type_properties.Add(type, list);
-				}
-				catch (ArgumentException)
-				{
-				}
-			}
+			// 
+			// Current member / type: System.Void LitJson.JsonMapper::AddTypeProperties(System.Type)
+			// File path: c:\Users\lbert\Downloads\AF3DWBexsd0viV96e5U9-SkM_V5zvgedtPgl0ckOW0viY3BQRpH0nOQr2srRNskocOff7lYXZtSb-RdgwIBSTEfKABF0f2FHtkSZj0j6yPgtI2YdrQdKtFI\assets\bin\Data\Managed\Assembly-CSharp.dll
+			// 
+			// Product version: 0.9.2.0
+			// Exception in: System.Void AddTypeProperties(System.Type)
+			// 
+			// Object reference not set to an instance of an object.
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.get_Lock() in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 93
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.VisitBlockStatement(BlockStatement node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 24
+			//    at Telerik.JustDecompiler.Ast.BaseCodeVisitor.Visit(ICodeNode node) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Ast\BaseCodeVisitor.cs:line 69
+			//    at Telerik.JustDecompiler.Steps.RebuildLockStatements.Process(DecompilationContext context, BlockStatement body) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Steps\RebuildLockStatements.cs:line 18
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.RunInternal(MethodBody body, BlockStatement block, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 81
+			//    at Telerik.JustDecompiler.Decompiler.DecompilationPipeline.Run(MethodBody body, ILanguage language) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\DecompilationPipeline.cs:line 70
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.RunPipeline(DecompilationPipeline pipeline, ILanguage language, MethodBody body, DecompilationContext& context) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 95
+			//    at Telerik.JustDecompiler.Decompiler.Extensions.Decompile(MethodBody body, ILanguage language, DecompilationContext& context, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\Extensions.cs:line 61
+			//    at Telerik.JustDecompiler.Decompiler.WriterContextServices.BaseWriterContextService.DecompileMethod(ILanguage language, MethodDefinition method, TypeSpecificContext typeContext) in D:\a\CodemerxDecompile\CodemerxDecompile\engine\JustDecompiler.Shared\Decompiler\WriterContextServices\BaseWriterContextService.cs:line 118
+			// 
+			// mailto: JustDecompilePublicFeedback@telerik.com
+
 		}
 
 		private static MethodInfo GetConvOp(Type t1, Type t2)
 		{
-			//Discarded unreachable code: IL_00b1
-			lock (conv_ops_lock)
+			MethodInfo item;
+			object convOpsLock = JsonMapper.conv_ops_lock;
+			Monitor.Enter(convOpsLock);
+			try
 			{
-				if (!conv_ops.ContainsKey(t1))
+				if (!JsonMapper.conv_ops.ContainsKey(t1))
 				{
-					conv_ops.Add(t1, new Dictionary<Type, MethodInfo>());
+					JsonMapper.conv_ops.Add(t1, new Dictionary<Type, MethodInfo>());
 				}
 			}
-			if (conv_ops[t1].ContainsKey(t2))
+			finally
 			{
-				return conv_ops[t1][t2];
+				Monitor.Exit(convOpsLock);
 			}
-			MethodInfo method = t1.GetMethod("op_Implicit", new Type[1] { t2 });
-			lock (conv_ops_lock)
+			if (JsonMapper.conv_ops[t1].ContainsKey(t2))
+			{
+				return JsonMapper.conv_ops[t1][t2];
+			}
+			MethodInfo method = t1.GetMethod("op_Implicit", new Type[] { t2 });
+			object obj = JsonMapper.conv_ops_lock;
+			Monitor.Enter(obj);
+			try
 			{
 				try
 				{
-					conv_ops[t1].Add(t2, method);
-					return method;
+					JsonMapper.conv_ops[t1].Add(t2, method);
 				}
-				catch (ArgumentException)
+				catch (ArgumentException argumentException)
 				{
-					return conv_ops[t1][t2];
+					item = JsonMapper.conv_ops[t1][t2];
+					return item;
 				}
+				return method;
 			}
+			finally
+			{
+				Monitor.Exit(obj);
+			}
+			return item;
+		}
+
+		private static void ReadSkip(JsonReader reader)
+		{
+			JsonMapper.ToWrapper(() => new JsonMockWrapper(), reader);
 		}
 
 		private static object ReadValue(Type inst_type, JsonReader reader)
 		{
+			IList arrayLists;
+			Type elementType;
+			string value;
 			reader.Read();
 			if (reader.Token == JsonToken.ArrayEnd)
 			{
@@ -346,115 +214,117 @@ namespace LitJson
 				{
 					return reader.Value;
 				}
-				if (custom_importers_table.ContainsKey(type) && custom_importers_table[type].ContainsKey(inst_type))
+				if (JsonMapper.custom_importers_table.ContainsKey(type) && JsonMapper.custom_importers_table[type].ContainsKey(inst_type))
 				{
-					ImporterFunc importerFunc = custom_importers_table[type][inst_type];
-					return importerFunc(reader.Value);
+					ImporterFunc item = JsonMapper.custom_importers_table[type][inst_type];
+					return item(reader.Value);
 				}
-				if (base_importers_table.ContainsKey(type) && base_importers_table[type].ContainsKey(inst_type))
+				if (JsonMapper.base_importers_table.ContainsKey(type) && JsonMapper.base_importers_table[type].ContainsKey(inst_type))
 				{
-					ImporterFunc importerFunc2 = base_importers_table[type][inst_type];
-					return importerFunc2(reader.Value);
+					ImporterFunc importerFunc = JsonMapper.base_importers_table[type][inst_type];
+					return importerFunc(reader.Value);
 				}
 				if (inst_type.IsEnum)
 				{
 					return Enum.ToObject(inst_type, reader.Value);
 				}
-				MethodInfo convOp = GetConvOp(inst_type, type);
-				if (convOp != null)
+				MethodInfo convOp = JsonMapper.GetConvOp(inst_type, type);
+				if (convOp == null)
 				{
-					return convOp.Invoke(null, new object[1] { reader.Value });
+					throw new JsonException(string.Format("Can't assign value '{0}' (type {1}) to type {2}", reader.Value, type, inst_type));
 				}
-				throw new JsonException(string.Format("Can't assign value '{0}' (type {1}) to type {2}", reader.Value, type, inst_type));
+				return convOp.Invoke(null, new object[] { reader.Value });
 			}
 			object obj = null;
 			if (reader.Token == JsonToken.ArrayStart)
 			{
-				AddArrayMetadata(inst_type);
-				ArrayMetadata arrayMetadata = array_metadata[inst_type];
-				if (!arrayMetadata.IsArray && !arrayMetadata.IsList)
+				JsonMapper.AddArrayMetadata(inst_type);
+				ArrayMetadata arrayMetadatum = JsonMapper.array_metadata[inst_type];
+				if (!arrayMetadatum.IsArray && !arrayMetadatum.IsList)
 				{
 					throw new JsonException(string.Format("Type {0} can't act as an array", inst_type));
 				}
-				IList list;
-				Type elementType;
-				if (!arrayMetadata.IsArray)
+				if (arrayMetadatum.IsArray)
 				{
-					list = (IList)Activator.CreateInstance(inst_type);
-					elementType = arrayMetadata.ElementType;
+					arrayLists = new ArrayList();
+					elementType = inst_type.GetElementType();
 				}
 				else
 				{
-					list = new ArrayList();
-					elementType = inst_type.GetElementType();
+					arrayLists = (IList)Activator.CreateInstance(inst_type);
+					elementType = arrayMetadatum.ElementType;
 				}
 				while (true)
 				{
-					object obj2 = ReadValue(elementType, reader);
-					if (obj2 == null && reader.Token == JsonToken.ArrayEnd)
+					object obj1 = JsonMapper.ReadValue(elementType, reader);
+					if (obj1 == null && reader.Token == JsonToken.ArrayEnd)
 					{
 						break;
 					}
-					list.Add(obj2);
+					arrayLists.Add(obj1);
 				}
-				if (arrayMetadata.IsArray)
+				if (!arrayMetadatum.IsArray)
 				{
-					int count = list.Count;
-					obj = Array.CreateInstance(elementType, count);
-					for (int i = 0; i < count; i++)
-					{
-						((Array)obj).SetValue(list[i], i);
-					}
+					obj = arrayLists;
 				}
 				else
 				{
-					obj = list;
+					int count = arrayLists.Count;
+					obj = Array.CreateInstance(elementType, count);
+					for (int i = 0; i < count; i++)
+					{
+						((Array)obj).SetValue(arrayLists[i], i);
+					}
 				}
 			}
 			else if (reader.Token == JsonToken.ObjectStart)
 			{
-				AddObjectMetadata(inst_type);
-				ObjectMetadata objectMetadata = object_metadata[inst_type];
+				JsonMapper.AddObjectMetadata(inst_type);
+				ObjectMetadata objectMetadatum = JsonMapper.object_metadata[inst_type];
 				obj = Activator.CreateInstance(inst_type);
 				while (true)
 				{
 					reader.Read();
 					if (reader.Token == JsonToken.ObjectEnd)
 					{
-						break;
+						return obj;
 					}
-					string text = (string)reader.Value;
-					if (objectMetadata.Properties.ContainsKey(text))
+					value = (string)reader.Value;
+					if (objectMetadatum.Properties.ContainsKey(value))
 					{
-						PropertyMetadata propertyMetadata = objectMetadata.Properties[text];
-						if (propertyMetadata.IsField)
+						PropertyMetadata propertyMetadatum = objectMetadatum.Properties[value];
+						if (!propertyMetadatum.IsField)
 						{
-							((FieldInfo)propertyMetadata.Info).SetValue(obj, ReadValue(propertyMetadata.Type, reader));
-							continue;
-						}
-						PropertyInfo propertyInfo = (PropertyInfo)propertyMetadata.Info;
-						if (propertyInfo.CanWrite)
-						{
-							propertyInfo.SetValue(obj, ReadValue(propertyMetadata.Type, reader), null);
+							PropertyInfo info = (PropertyInfo)propertyMetadatum.Info;
+							if (!info.CanWrite)
+							{
+								JsonMapper.ReadValue(propertyMetadatum.Type, reader);
+							}
+							else
+							{
+								info.SetValue(obj, JsonMapper.ReadValue(propertyMetadatum.Type, reader), null);
+							}
 						}
 						else
 						{
-							ReadValue(propertyMetadata.Type, reader);
+							((FieldInfo)propertyMetadatum.Info).SetValue(obj, JsonMapper.ReadValue(propertyMetadatum.Type, reader));
 						}
 					}
-					else if (!objectMetadata.IsDictionary)
+					else if (objectMetadatum.IsDictionary)
 					{
-						if (!reader.SkipNonMembers)
-						{
-							throw new JsonException(string.Format("The type {0} doesn't have the property '{1}'", inst_type, text));
-						}
-						ReadSkip(reader);
+						((IDictionary)obj).Add(value, JsonMapper.ReadValue(objectMetadatum.ElementType, reader));
 					}
 					else
 					{
-						((IDictionary)obj).Add(text, ReadValue(objectMetadata.ElementType, reader));
+						if (!reader.SkipNonMembers)
+						{
+							break;
+						}
+						JsonMapper.ReadSkip(reader);
+						continue;
 					}
 				}
+				throw new JsonException(string.Format("The type {0} doesn't have the property '{1}'", inst_type, value));
 			}
 			return obj;
 		}
@@ -466,48 +336,48 @@ namespace LitJson
 			{
 				return null;
 			}
-			IJsonWrapper jsonWrapper = factory();
+			IJsonWrapper jsonWrappers = factory();
 			if (reader.Token == JsonToken.String)
 			{
-				jsonWrapper.SetString((string)reader.Value);
-				return jsonWrapper;
+				jsonWrappers.SetString((string)reader.Value);
+				return jsonWrappers;
 			}
 			if (reader.Token == JsonToken.Double)
 			{
-				jsonWrapper.SetDouble((double)reader.Value);
-				return jsonWrapper;
+				jsonWrappers.SetDouble((double)reader.Value);
+				return jsonWrappers;
 			}
 			if (reader.Token == JsonToken.Int)
 			{
-				jsonWrapper.SetInt((int)reader.Value);
-				return jsonWrapper;
+				jsonWrappers.SetInt((int)reader.Value);
+				return jsonWrappers;
 			}
 			if (reader.Token == JsonToken.Long)
 			{
-				jsonWrapper.SetLong((long)reader.Value);
-				return jsonWrapper;
+				jsonWrappers.SetLong((long)reader.Value);
+				return jsonWrappers;
 			}
 			if (reader.Token == JsonToken.Boolean)
 			{
-				jsonWrapper.SetBoolean((bool)reader.Value);
-				return jsonWrapper;
+				jsonWrappers.SetBoolean((bool)reader.Value);
+				return jsonWrappers;
 			}
 			if (reader.Token == JsonToken.ArrayStart)
 			{
-				jsonWrapper.SetJsonType(JsonType.Array);
+				jsonWrappers.SetJsonType(JsonType.Array);
 				while (true)
 				{
-					IJsonWrapper jsonWrapper2 = ReadValue(factory, reader);
-					if (jsonWrapper2 == null && reader.Token == JsonToken.ArrayEnd)
+					IJsonWrapper jsonWrappers1 = JsonMapper.ReadValue(factory, reader);
+					if (jsonWrappers1 == null && reader.Token == JsonToken.ArrayEnd)
 					{
 						break;
 					}
-					jsonWrapper.Add(jsonWrapper2);
+					jsonWrappers.Add(jsonWrappers1);
 				}
 			}
 			else if (reader.Token == JsonToken.ObjectStart)
 			{
-				jsonWrapper.SetJsonType(JsonType.Object);
+				jsonWrappers.SetJsonType(JsonType.Object);
 				while (true)
 				{
 					reader.Read();
@@ -515,163 +385,58 @@ namespace LitJson
 					{
 						break;
 					}
-					string key = (string)reader.Value;
-					jsonWrapper[key] = ReadValue(factory, reader);
+					string value = (string)reader.Value;
+					jsonWrappers[value] = JsonMapper.ReadValue(factory, reader);
 				}
 			}
-			return jsonWrapper;
-		}
-
-		private static void ReadSkip(JsonReader reader)
-		{
-			if (_003C_003Ef__am_0024cache10 == null)
-			{
-				_003C_003Ef__am_0024cache10 = _003CReadSkip_003Em__5C;
-			}
-			ToWrapper(_003C_003Ef__am_0024cache10, reader);
+			return jsonWrappers;
 		}
 
 		private static void RegisterBaseExporters()
 		{
-			IDictionary<Type, ExporterFunc> dictionary = base_exporters_table;
-			Type typeFromHandle = typeof(byte);
-			if (_003C_003Ef__am_0024cache11 == null)
-			{
-				_003C_003Ef__am_0024cache11 = _003CRegisterBaseExporters_003Em__5D;
-			}
-			dictionary[typeFromHandle] = _003C_003Ef__am_0024cache11;
-			IDictionary<Type, ExporterFunc> dictionary2 = base_exporters_table;
-			Type typeFromHandle2 = typeof(char);
-			if (_003C_003Ef__am_0024cache12 == null)
-			{
-				_003C_003Ef__am_0024cache12 = _003CRegisterBaseExporters_003Em__5E;
-			}
-			dictionary2[typeFromHandle2] = _003C_003Ef__am_0024cache12;
-			IDictionary<Type, ExporterFunc> dictionary3 = base_exporters_table;
-			Type typeFromHandle3 = typeof(DateTime);
-			if (_003C_003Ef__am_0024cache13 == null)
-			{
-				_003C_003Ef__am_0024cache13 = _003CRegisterBaseExporters_003Em__5F;
-			}
-			dictionary3[typeFromHandle3] = _003C_003Ef__am_0024cache13;
-			IDictionary<Type, ExporterFunc> dictionary4 = base_exporters_table;
-			Type typeFromHandle4 = typeof(decimal);
-			if (_003C_003Ef__am_0024cache14 == null)
-			{
-				_003C_003Ef__am_0024cache14 = _003CRegisterBaseExporters_003Em__60;
-			}
-			dictionary4[typeFromHandle4] = _003C_003Ef__am_0024cache14;
-			IDictionary<Type, ExporterFunc> dictionary5 = base_exporters_table;
-			Type typeFromHandle5 = typeof(sbyte);
-			if (_003C_003Ef__am_0024cache15 == null)
-			{
-				_003C_003Ef__am_0024cache15 = _003CRegisterBaseExporters_003Em__61;
-			}
-			dictionary5[typeFromHandle5] = _003C_003Ef__am_0024cache15;
-			IDictionary<Type, ExporterFunc> dictionary6 = base_exporters_table;
-			Type typeFromHandle6 = typeof(short);
-			if (_003C_003Ef__am_0024cache16 == null)
-			{
-				_003C_003Ef__am_0024cache16 = _003CRegisterBaseExporters_003Em__62;
-			}
-			dictionary6[typeFromHandle6] = _003C_003Ef__am_0024cache16;
-			IDictionary<Type, ExporterFunc> dictionary7 = base_exporters_table;
-			Type typeFromHandle7 = typeof(ushort);
-			if (_003C_003Ef__am_0024cache17 == null)
-			{
-				_003C_003Ef__am_0024cache17 = _003CRegisterBaseExporters_003Em__63;
-			}
-			dictionary7[typeFromHandle7] = _003C_003Ef__am_0024cache17;
-			IDictionary<Type, ExporterFunc> dictionary8 = base_exporters_table;
-			Type typeFromHandle8 = typeof(uint);
-			if (_003C_003Ef__am_0024cache18 == null)
-			{
-				_003C_003Ef__am_0024cache18 = _003CRegisterBaseExporters_003Em__64;
-			}
-			dictionary8[typeFromHandle8] = _003C_003Ef__am_0024cache18;
-			IDictionary<Type, ExporterFunc> dictionary9 = base_exporters_table;
-			Type typeFromHandle9 = typeof(ulong);
-			if (_003C_003Ef__am_0024cache19 == null)
-			{
-				_003C_003Ef__am_0024cache19 = _003CRegisterBaseExporters_003Em__65;
-			}
-			dictionary9[typeFromHandle9] = _003C_003Ef__am_0024cache19;
+			JsonMapper.base_exporters_table[typeof(byte)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToInt32((byte)obj));
+			JsonMapper.base_exporters_table[typeof(char)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToString((char)obj));
+			JsonMapper.base_exporters_table[typeof(DateTime)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToString((DateTime)obj, JsonMapper.datetime_format));
+			JsonMapper.base_exporters_table[typeof(decimal)] = (object obj, JsonWriter writer) => writer.Write((decimal)obj);
+			JsonMapper.base_exporters_table[typeof(sbyte)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToInt32((sbyte)obj));
+			JsonMapper.base_exporters_table[typeof(short)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToInt32((short)obj));
+			JsonMapper.base_exporters_table[typeof(ushort)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToInt32((ushort)obj));
+			JsonMapper.base_exporters_table[typeof(uint)] = (object obj, JsonWriter writer) => writer.Write(Convert.ToUInt64((uint)obj));
+			JsonMapper.base_exporters_table[typeof(ulong)] = (object obj, JsonWriter writer) => writer.Write((ulong)obj);
 		}
 
 		private static void RegisterBaseImporters()
 		{
-			if (_003C_003Ef__am_0024cache1A == null)
-			{
-				_003C_003Ef__am_0024cache1A = _003CRegisterBaseImporters_003Em__66;
-			}
-			ImporterFunc importer = _003C_003Ef__am_0024cache1A;
-			RegisterImporter(base_importers_table, typeof(int), typeof(byte), importer);
-			if (_003C_003Ef__am_0024cache1B == null)
-			{
-				_003C_003Ef__am_0024cache1B = _003CRegisterBaseImporters_003Em__67;
-			}
-			importer = _003C_003Ef__am_0024cache1B;
-			RegisterImporter(base_importers_table, typeof(int), typeof(ulong), importer);
-			if (_003C_003Ef__am_0024cache1C == null)
-			{
-				_003C_003Ef__am_0024cache1C = _003CRegisterBaseImporters_003Em__68;
-			}
-			importer = _003C_003Ef__am_0024cache1C;
-			RegisterImporter(base_importers_table, typeof(int), typeof(sbyte), importer);
-			if (_003C_003Ef__am_0024cache1D == null)
-			{
-				_003C_003Ef__am_0024cache1D = _003CRegisterBaseImporters_003Em__69;
-			}
-			importer = _003C_003Ef__am_0024cache1D;
-			RegisterImporter(base_importers_table, typeof(int), typeof(short), importer);
-			if (_003C_003Ef__am_0024cache1E == null)
-			{
-				_003C_003Ef__am_0024cache1E = _003CRegisterBaseImporters_003Em__6A;
-			}
-			importer = _003C_003Ef__am_0024cache1E;
-			RegisterImporter(base_importers_table, typeof(int), typeof(ushort), importer);
-			if (_003C_003Ef__am_0024cache1F == null)
-			{
-				_003C_003Ef__am_0024cache1F = _003CRegisterBaseImporters_003Em__6B;
-			}
-			importer = _003C_003Ef__am_0024cache1F;
-			RegisterImporter(base_importers_table, typeof(int), typeof(uint), importer);
-			if (_003C_003Ef__am_0024cache20 == null)
-			{
-				_003C_003Ef__am_0024cache20 = _003CRegisterBaseImporters_003Em__6C;
-			}
-			importer = _003C_003Ef__am_0024cache20;
-			RegisterImporter(base_importers_table, typeof(int), typeof(float), importer);
-			if (_003C_003Ef__am_0024cache21 == null)
-			{
-				_003C_003Ef__am_0024cache21 = _003CRegisterBaseImporters_003Em__6D;
-			}
-			importer = _003C_003Ef__am_0024cache21;
-			RegisterImporter(base_importers_table, typeof(int), typeof(double), importer);
-			if (_003C_003Ef__am_0024cache22 == null)
-			{
-				_003C_003Ef__am_0024cache22 = _003CRegisterBaseImporters_003Em__6E;
-			}
-			importer = _003C_003Ef__am_0024cache22;
-			RegisterImporter(base_importers_table, typeof(double), typeof(decimal), importer);
-			if (_003C_003Ef__am_0024cache23 == null)
-			{
-				_003C_003Ef__am_0024cache23 = _003CRegisterBaseImporters_003Em__6F;
-			}
-			importer = _003C_003Ef__am_0024cache23;
-			RegisterImporter(base_importers_table, typeof(long), typeof(uint), importer);
-			if (_003C_003Ef__am_0024cache24 == null)
-			{
-				_003C_003Ef__am_0024cache24 = _003CRegisterBaseImporters_003Em__70;
-			}
-			importer = _003C_003Ef__am_0024cache24;
-			RegisterImporter(base_importers_table, typeof(string), typeof(char), importer);
-			if (_003C_003Ef__am_0024cache25 == null)
-			{
-				_003C_003Ef__am_0024cache25 = _003CRegisterBaseImporters_003Em__71;
-			}
-			importer = _003C_003Ef__am_0024cache25;
-			RegisterImporter(base_importers_table, typeof(string), typeof(DateTime), importer);
+			ImporterFunc num = (object input) => Convert.ToByte((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(byte), num);
+			num = (object input) => Convert.ToUInt64((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(ulong), num);
+			num = (object input) => Convert.ToSByte((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(sbyte), num);
+			num = (object input) => Convert.ToInt16((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(short), num);
+			num = (object input) => Convert.ToUInt16((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(ushort), num);
+			num = (object input) => Convert.ToUInt32((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(uint), num);
+			num = (object input) => Convert.ToSingle((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(float), num);
+			num = (object input) => Convert.ToDouble((int)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(int), typeof(double), num);
+			num = (object input) => Convert.ToDecimal((double)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(double), typeof(decimal), num);
+			num = (object input) => Convert.ToUInt32((long)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(long), typeof(uint), num);
+			num = (object input) => Convert.ToChar((string)input);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(string), typeof(char), num);
+			num = (object input) => Convert.ToDateTime((string)input, JsonMapper.datetime_format);
+			JsonMapper.RegisterImporter(JsonMapper.base_importers_table, typeof(string), typeof(DateTime), num);
+		}
+
+		public static void RegisterExporter<T>(ExporterFunc<T> exporter)
+		{
+			ExporterFunc exporterFunc = (object obj, JsonWriter writer) => exporter((T)obj, writer);
+			JsonMapper.custom_exporters_table[typeof(T)] = exporterFunc;
 		}
 
 		private static void RegisterImporter(IDictionary<Type, IDictionary<Type, ImporterFunc>> table, Type json_type, Type value_type, ImporterFunc importer)
@@ -683,9 +448,91 @@ namespace LitJson
 			table[json_type][value_type] = importer;
 		}
 
+		public static void RegisterImporter<TJson, TValue>(ImporterFunc<TJson, TValue> importer)
+		{
+			ImporterFunc importerFunc = (object input) => importer((TJson)input);
+			JsonMapper.RegisterImporter(JsonMapper.custom_importers_table, typeof(TJson), typeof(TValue), importerFunc);
+		}
+
+		public static string ToJson(object obj)
+		{
+			string str;
+			object staticWriterLock = JsonMapper.static_writer_lock;
+			Monitor.Enter(staticWriterLock);
+			try
+			{
+				JsonMapper.static_writer.Reset();
+				JsonMapper.WriteValue(obj, JsonMapper.static_writer, true, 0);
+				str = JsonMapper.static_writer.ToString();
+			}
+			finally
+			{
+				Monitor.Exit(staticWriterLock);
+			}
+			return str;
+		}
+
+		public static void ToJson(object obj, JsonWriter writer)
+		{
+			JsonMapper.WriteValue(obj, writer, false, 0);
+		}
+
+		public static JsonData ToObject(JsonReader reader)
+		{
+			return (JsonData)JsonMapper.ToWrapper(() => new JsonData(), reader);
+		}
+
+		public static JsonData ToObject(TextReader reader)
+		{
+			JsonReader jsonReader = new JsonReader(reader);
+			return (JsonData)JsonMapper.ToWrapper(() => new JsonData(), jsonReader);
+		}
+
+		public static JsonData ToObject(string json)
+		{
+			return (JsonData)JsonMapper.ToWrapper(() => new JsonData(), json);
+		}
+
+		public static T ToObject<T>(JsonReader reader)
+		{
+			return (T)JsonMapper.ReadValue(typeof(T), reader);
+		}
+
+		public static T ToObject<T>(TextReader reader)
+		{
+			JsonReader jsonReader = new JsonReader(reader);
+			return (T)JsonMapper.ReadValue(typeof(T), jsonReader);
+		}
+
+		public static T ToObject<T>(string json)
+		{
+			JsonReader jsonReader = new JsonReader(json);
+			return (T)JsonMapper.ReadValue(typeof(T), jsonReader);
+		}
+
+		public static IJsonWrapper ToWrapper(WrapperFactory factory, JsonReader reader)
+		{
+			return JsonMapper.ReadValue(factory, reader);
+		}
+
+		public static IJsonWrapper ToWrapper(WrapperFactory factory, string json)
+		{
+			return JsonMapper.ReadValue(factory, new JsonReader(json));
+		}
+
+		public static void UnregisterExporters()
+		{
+			JsonMapper.custom_exporters_table.Clear();
+		}
+
+		public static void UnregisterImporters()
+		{
+			JsonMapper.custom_importers_table.Clear();
+		}
+
 		private static void WriteValue(object obj, JsonWriter writer, bool writer_is_private, int depth)
 		{
-			if (depth > max_nesting_depth)
+			if (depth > JsonMapper.max_nesting_depth)
 			{
 				throw new JsonException(string.Format("Max allowed object depth reached while trying to export from type {0}", obj.GetType()));
 			}
@@ -696,13 +543,13 @@ namespace LitJson
 			}
 			if (obj is IJsonWrapper)
 			{
-				if (writer_is_private)
+				if (!writer_is_private)
 				{
-					writer.TextWriter.Write(((IJsonWrapper)obj).ToJson());
+					((IJsonWrapper)obj).ToJson(writer);
 				}
 				else
 				{
-					((IJsonWrapper)obj).ToJson(writer);
+					writer.TextWriter.Write(((IJsonWrapper)obj).ToJson());
 				}
 				return;
 			}
@@ -734,9 +581,22 @@ namespace LitJson
 			if (obj is Array)
 			{
 				writer.WriteArrayStart();
-				foreach (object item in (Array)obj)
+				IEnumerator enumerator = ((Array)obj).GetEnumerator();
+				try
 				{
-					WriteValue(item, writer, writer_is_private, depth + 1);
+					while (enumerator.MoveNext())
+					{
+						object current = enumerator.Current;
+						JsonMapper.WriteValue(current, writer, writer_is_private, depth + 1);
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 				writer.WriteArrayEnd();
 				return;
@@ -744,9 +604,22 @@ namespace LitJson
 			if (obj is IList)
 			{
 				writer.WriteArrayStart();
-				foreach (object item2 in (IList)obj)
+				IEnumerator enumerator1 = ((IList)obj).GetEnumerator();
+				try
 				{
-					WriteValue(item2, writer, writer_is_private, depth + 1);
+					while (enumerator1.MoveNext())
+					{
+						object current1 = enumerator1.Current;
+						JsonMapper.WriteValue(current1, writer, writer_is_private, depth + 1);
+					}
+				}
+				finally
+				{
+					IDisposable disposable1 = enumerator1 as IDisposable;
+					if (disposable1 == null)
+					{
+					}
+					disposable1.Dispose();
 				}
 				writer.WriteArrayEnd();
 				return;
@@ -754,25 +627,36 @@ namespace LitJson
 			if (obj is IDictionary)
 			{
 				writer.WriteObjectStart();
-				foreach (DictionaryEntry item3 in (IDictionary)obj)
+				IDictionaryEnumerator dictionaryEnumerator = ((IDictionary)obj).GetEnumerator();
+				try
 				{
-					writer.WritePropertyName((string)item3.Key);
-					WriteValue(item3.Value, writer, writer_is_private, depth + 1);
+					while (dictionaryEnumerator.MoveNext())
+					{
+						DictionaryEntry dictionaryEntry = (DictionaryEntry)dictionaryEnumerator.Current;
+						writer.WritePropertyName((string)dictionaryEntry.Key);
+						JsonMapper.WriteValue(dictionaryEntry.Value, writer, writer_is_private, depth + 1);
+					}
+				}
+				finally
+				{
+					IDisposable disposable2 = dictionaryEnumerator as IDisposable;
+					if (disposable2 == null)
+					{
+					}
+					disposable2.Dispose();
 				}
 				writer.WriteObjectEnd();
 				return;
 			}
 			Type type = obj.GetType();
-			if (custom_exporters_table.ContainsKey(type))
+			if (JsonMapper.custom_exporters_table.ContainsKey(type))
 			{
-				ExporterFunc exporterFunc = custom_exporters_table[type];
-				exporterFunc(obj, writer);
+				JsonMapper.custom_exporters_table[type](obj, writer);
 				return;
 			}
-			if (base_exporters_table.ContainsKey(type))
+			if (JsonMapper.base_exporters_table.ContainsKey(type))
 			{
-				ExporterFunc exporterFunc2 = base_exporters_table[type];
-				exporterFunc2(obj, writer);
+				JsonMapper.base_exporters_table[type](obj, writer);
 				return;
 			}
 			if (obj is Enum)
@@ -788,273 +672,40 @@ namespace LitJson
 				}
 				return;
 			}
-			AddTypeProperties(type);
-			IList<PropertyMetadata> list = type_properties[type];
+			JsonMapper.AddTypeProperties(type);
+			IList<PropertyMetadata> item = JsonMapper.type_properties[type];
 			writer.WriteObjectStart();
-			foreach (PropertyMetadata item4 in list)
+			IEnumerator<PropertyMetadata> enumerator2 = item.GetEnumerator();
+			try
 			{
-				if (item4.IsField)
+				while (enumerator2.MoveNext())
 				{
-					writer.WritePropertyName(item4.Info.Name);
-					WriteValue(((FieldInfo)item4.Info).GetValue(obj), writer, writer_is_private, depth + 1);
-					continue;
+					PropertyMetadata propertyMetadatum = enumerator2.Current;
+					if (!propertyMetadatum.IsField)
+					{
+						PropertyInfo info = (PropertyInfo)propertyMetadatum.Info;
+						if (!info.CanRead)
+						{
+							continue;
+						}
+						writer.WritePropertyName(propertyMetadatum.Info.Name);
+						JsonMapper.WriteValue(info.GetValue(obj, null), writer, writer_is_private, depth + 1);
+					}
+					else
+					{
+						writer.WritePropertyName(propertyMetadatum.Info.Name);
+						JsonMapper.WriteValue(((FieldInfo)propertyMetadatum.Info).GetValue(obj), writer, writer_is_private, depth + 1);
+					}
 				}
-				PropertyInfo propertyInfo = (PropertyInfo)item4.Info;
-				if (propertyInfo.CanRead)
+			}
+			finally
+			{
+				if (enumerator2 == null)
 				{
-					writer.WritePropertyName(item4.Info.Name);
-					WriteValue(propertyInfo.GetValue(obj, null), writer, writer_is_private, depth + 1);
 				}
+				enumerator2.Dispose();
 			}
 			writer.WriteObjectEnd();
-		}
-
-		public static string ToJson(object obj)
-		{
-			//Discarded unreachable code: IL_0033
-			lock (static_writer_lock)
-			{
-				static_writer.Reset();
-				WriteValue(obj, static_writer, true, 0);
-				return static_writer.ToString();
-			}
-		}
-
-		public static void ToJson(object obj, JsonWriter writer)
-		{
-			WriteValue(obj, writer, false, 0);
-		}
-
-		public static JsonData ToObject(JsonReader reader)
-		{
-			if (_003C_003Ef__am_0024cache26 == null)
-			{
-				_003C_003Ef__am_0024cache26 = _003CToObject_003Em__72;
-			}
-			return (JsonData)ToWrapper(_003C_003Ef__am_0024cache26, reader);
-		}
-
-		public static JsonData ToObject(TextReader reader)
-		{
-			JsonReader reader2 = new JsonReader(reader);
-			if (_003C_003Ef__am_0024cache27 == null)
-			{
-				_003C_003Ef__am_0024cache27 = _003CToObject_003Em__73;
-			}
-			return (JsonData)ToWrapper(_003C_003Ef__am_0024cache27, reader2);
-		}
-
-		public static JsonData ToObject(string json)
-		{
-			if (_003C_003Ef__am_0024cache28 == null)
-			{
-				_003C_003Ef__am_0024cache28 = _003CToObject_003Em__74;
-			}
-			return (JsonData)ToWrapper(_003C_003Ef__am_0024cache28, json);
-		}
-
-		public static T ToObject<T>(JsonReader reader)
-		{
-			return (T)ReadValue(typeof(T), reader);
-		}
-
-		public static T ToObject<T>(TextReader reader)
-		{
-			JsonReader reader2 = new JsonReader(reader);
-			return (T)ReadValue(typeof(T), reader2);
-		}
-
-		public static T ToObject<T>(string json)
-		{
-			JsonReader reader = new JsonReader(json);
-			return (T)ReadValue(typeof(T), reader);
-		}
-
-		public static IJsonWrapper ToWrapper(WrapperFactory factory, JsonReader reader)
-		{
-			return ReadValue(factory, reader);
-		}
-
-		public static IJsonWrapper ToWrapper(WrapperFactory factory, string json)
-		{
-			JsonReader reader = new JsonReader(json);
-			return ReadValue(factory, reader);
-		}
-
-		public static void RegisterExporter<T>(ExporterFunc<T> exporter)
-		{
-			_003CRegisterExporter_003Ec__AnonStorey1F5<T> _003CRegisterExporter_003Ec__AnonStorey1F = new _003CRegisterExporter_003Ec__AnonStorey1F5<T>();
-			_003CRegisterExporter_003Ec__AnonStorey1F.exporter = exporter;
-			ExporterFunc value = _003CRegisterExporter_003Ec__AnonStorey1F._003C_003Em__75;
-			custom_exporters_table[typeof(T)] = value;
-		}
-
-		public static void RegisterImporter<TJson, TValue>(ImporterFunc<TJson, TValue> importer)
-		{
-			_003CRegisterImporter_003Ec__AnonStorey1F6<TJson, TValue> _003CRegisterImporter_003Ec__AnonStorey1F = new _003CRegisterImporter_003Ec__AnonStorey1F6<TJson, TValue>();
-			_003CRegisterImporter_003Ec__AnonStorey1F.importer = importer;
-			ImporterFunc importer2 = _003CRegisterImporter_003Ec__AnonStorey1F._003C_003Em__76;
-			RegisterImporter(custom_importers_table, typeof(TJson), typeof(TValue), importer2);
-		}
-
-		public static void UnregisterExporters()
-		{
-			custom_exporters_table.Clear();
-		}
-
-		public static void UnregisterImporters()
-		{
-			custom_importers_table.Clear();
-		}
-
-		[CompilerGenerated]
-		private static IJsonWrapper _003CReadSkip_003Em__5C()
-		{
-			return new JsonMockWrapper();
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__5D(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToInt32((byte)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__5E(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToString((char)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__5F(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToString((DateTime)obj, datetime_format));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__60(object obj, JsonWriter writer)
-		{
-			writer.Write((decimal)obj);
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__61(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToInt32((sbyte)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__62(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToInt32((short)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__63(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToInt32((ushort)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__64(object obj, JsonWriter writer)
-		{
-			writer.Write(Convert.ToUInt64((uint)obj));
-		}
-
-		[CompilerGenerated]
-		private static void _003CRegisterBaseExporters_003Em__65(object obj, JsonWriter writer)
-		{
-			writer.Write((ulong)obj);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__66(object input)
-		{
-			return Convert.ToByte((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__67(object input)
-		{
-			return Convert.ToUInt64((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__68(object input)
-		{
-			return Convert.ToSByte((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__69(object input)
-		{
-			return Convert.ToInt16((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6A(object input)
-		{
-			return Convert.ToUInt16((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6B(object input)
-		{
-			return Convert.ToUInt32((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6C(object input)
-		{
-			return Convert.ToSingle((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6D(object input)
-		{
-			return Convert.ToDouble((int)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6E(object input)
-		{
-			return Convert.ToDecimal((double)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__6F(object input)
-		{
-			return Convert.ToUInt32((long)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__70(object input)
-		{
-			return Convert.ToChar((string)input);
-		}
-
-		[CompilerGenerated]
-		private static object _003CRegisterBaseImporters_003Em__71(object input)
-		{
-			return Convert.ToDateTime((string)input, datetime_format);
-		}
-
-		[CompilerGenerated]
-		private static IJsonWrapper _003CToObject_003Em__72()
-		{
-			return new JsonData();
-		}
-
-		[CompilerGenerated]
-		private static IJsonWrapper _003CToObject_003Em__73()
-		{
-			return new JsonData();
-		}
-
-		[CompilerGenerated]
-		private static IJsonWrapper _003CToObject_003Em__74()
-		{
-			return new JsonData();
 		}
 	}
 }

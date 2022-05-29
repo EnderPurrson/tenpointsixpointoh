@@ -1,6 +1,10 @@
-using System.Collections;
 using Prime31;
 using Rilisoft;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class MainMenu : MonoBehaviour
@@ -55,9 +59,9 @@ public sealed class MainMenu : MonoBehaviour
 
 	public bool isShowAvard;
 
-	public static readonly string iTunesEnderManID = "811995374";
+	public readonly static string iTunesEnderManID;
 
-	private static bool firstEnterLobbyAtThisLaunch = true;
+	private static bool firstEnterLobbyAtThisLaunch;
 
 	private bool _skinsMakerQuerySucceeded;
 
@@ -66,6 +70,20 @@ public sealed class MainMenu : MonoBehaviour
 		get
 		{
 			return Mathf.RoundToInt((float)Screen.height * 0.03f);
+		}
+	}
+
+	public static float iOSVersion
+	{
+		get
+		{
+			float single = -1f;
+			if (Application.platform == RuntimePlatform.IPhonePlayer)
+			{
+				string str = SystemInfo.operatingSystem.Replace("iPhone OS ", string.Empty);
+				float.TryParse(str.Substring(0, 1), out single);
+			}
+			return single;
 		}
 	}
 
@@ -81,17 +99,50 @@ public sealed class MainMenu : MonoBehaviour
 		}
 	}
 
-	public static float iOSVersion
+	static MainMenu()
 	{
-		get
+		MainMenu.iTunesEnderManID = "811995374";
+		MainMenu.firstEnterLobbyAtThisLaunch = true;
+	}
+
+	public MainMenu()
+	{
+	}
+
+	private void Awake()
+	{
+		if (!MainMenu.firstEnterLobbyAtThisLaunch)
 		{
-			float result = -1f;
-			if (Application.platform == RuntimePlatform.IPhonePlayer)
+			using (StopwatchLogger stopwatchLogger = new StopwatchLogger("MainMenu.Awake()"))
 			{
-				string text = SystemInfo.operatingSystem.Replace("iPhone OS ", string.Empty);
-				float.TryParse(text.Substring(0, 1), out result);
+				GlobalGameController.SetMultiMode();
+				if (WeaponManager.sharedManager != null)
+				{
+					WeaponManager.sharedManager.Reset(0);
+				}
+				else if (!WeaponManager.sharedManager && this.weaponManagerPrefab)
+				{
+					GameObject gameObject = UnityEngine.Object.Instantiate(this.weaponManagerPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+					gameObject.GetComponent<WeaponManager>().Reset(0);
+				}
 			}
-			return result;
+		}
+		else
+		{
+			MainMenu.firstEnterLobbyAtThisLaunch = false;
+			GlobalGameController.SetMultiMode();
+		}
+	}
+
+	private void completionHandler(string error, object result)
+	{
+		if (error == null)
+		{
+			Utils.logObject(result);
+		}
+		else
+		{
+			UnityEngine.Debug.LogError(error);
 		}
 	}
 
@@ -101,62 +152,63 @@ public sealed class MainMenu : MonoBehaviour
 		{
 			return "https://itunes.apple.com/app/apple-store/id811995374?pt=1579002&ct=pgapp&mt=8-";
 		}
-		if (Application.platform == RuntimePlatform.Android)
+		if (Application.platform != RuntimePlatform.Android)
 		{
-			return (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon) ? "https://play.google.com/store/apps/details?id=com.slender.android" : "http://www.amazon.com/Pocket-Slenderman-Rising-your-virtual/dp/B00I6IXU5A/ref=sr_1_5?s=mobile-apps&ie=UTF8&qid=1395990920&sr=1-5&keywords=slendy";
+			return string.Empty;
 		}
-		return string.Empty;
+		return (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon ? "https://play.google.com/store/apps/details?id=com.slender.android" : "http://www.amazon.com/Pocket-Slenderman-Rising-your-virtual/dp/B00I6IXU5A/ref=sr_1_5?s=mobile-apps&ie=UTF8&qid=1395990920&sr=1-5&keywords=slendy");
 	}
 
-	private void completionHandler(string error, object result)
+	private void OnDestroy()
 	{
-		if (error != null)
+		MainMenu.sharedMenu = null;
+		if (this.expController != null)
 		{
-			Debug.LogError(error);
+			this.expController.isShowRanks = false;
+			this.expController.isMenu = false;
+		}
+	}
+
+	private void SetInApp()
+	{
+		this.isInappWinOpen = !this.isInappWinOpen;
+		if (this.expController != null)
+		{
+			this.expController.isShowRanks = !this.isInappWinOpen;
+			this.expController.isMenu = !this.isInappWinOpen;
+		}
+		if (!this.isInappWinOpen)
+		{
+			ActivityIndicator.IsActiveIndicator = false;
 		}
 		else
 		{
-			Utils.logObject(result);
-		}
-	}
-
-	private void Awake()
-	{
-		if (firstEnterLobbyAtThisLaunch)
-		{
-			firstEnterLobbyAtThisLaunch = false;
-			GlobalGameController.SetMultiMode();
-			return;
-		}
-		using (new StopwatchLogger("MainMenu.Awake()"))
-		{
-			GlobalGameController.SetMultiMode();
-			if (WeaponManager.sharedManager != null)
+			if (StoreKitEventListener.restoreInProcess)
 			{
-				WeaponManager.sharedManager.Reset();
+				ActivityIndicator.IsActiveIndicator = true;
 			}
-			else if (!WeaponManager.sharedManager && (bool)weaponManagerPrefab)
+			if (!Defs.isMulti)
 			{
-				GameObject gameObject = Object.Instantiate(weaponManagerPrefab, Vector3.zero, Quaternion.identity) as GameObject;
-				gameObject.GetComponent<WeaponManager>().Reset();
+				Time.timeScale = 0f;
 			}
 		}
 	}
 
-	private IEnumerator WaitForExperienceGuiAndAdd(ExperienceController legacyExperienceController, int addend)
+	public static bool SkinsMakerSupproted()
 	{
-		while (ExpController.Instance == null)
+		bool buildTargetPlatform = BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64;
+		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
 		{
-			yield return null;
+			buildTargetPlatform = Defs.AndroidEdition != Defs.RuntimeAndroidEdition.GoogleLite;
 		}
-		legacyExperienceController.addExperience(addend);
+		return buildTargetPlatform;
 	}
 
 	private void Start()
 	{
-		using (new StopwatchLogger("MainMenu.Start()"))
+		using (StopwatchLogger stopwatchLogger = new StopwatchLogger("MainMenu.Start()"))
 		{
-			sharedMenu = this;
+			MainMenu.sharedMenu = this;
 			StoreKitEventListener.State.Mode = "In_main_menu";
 			StoreKitEventListener.State.PurchaseKey = "In shop";
 			StoreKitEventListener.State.Parameters.Clear();
@@ -172,115 +224,87 @@ public sealed class MainMenu : MonoBehaviour
 			}
 			if (NotificationController.isGetEveryDayMoney)
 			{
-				isShowAvard = true;
+				this.isShowAvard = true;
 			}
 			bool flag = false;
-			expController = ExperienceController.sharedController;
-			if (expController == null)
+			this.expController = ExperienceController.sharedController;
+			if (this.expController == null)
 			{
-				Debug.LogError("MainMenu.Start():    expController == null");
+				UnityEngine.Debug.LogError("MainMenu.Start():    expController == null");
 			}
-			if (expController != null)
+			if (this.expController != null)
 			{
-				expController.isMenu = true;
+				this.expController.isMenu = true;
 			}
 			float coef = Defs.Coef;
-			if (expController != null)
+			if (this.expController != null)
 			{
-				expController.posRanks = new Vector2(21f * Defs.Coef, 21f * Defs.Coef);
+				this.expController.posRanks = new Vector2(21f * Defs.Coef, 21f * Defs.Coef);
 			}
-			string @string = PlayerPrefs.GetString(Defs.ShouldReoeatActionSett, string.Empty);
-			if (@string.Equals(Defs.GoToProfileAction))
+			if (PlayerPrefs.GetString(Defs.ShouldReoeatActionSett, string.Empty).Equals(Defs.GoToProfileAction))
 			{
 				PlayerPrefs.SetString(Defs.ShouldReoeatActionSett, string.Empty);
 				PlayerPrefs.Save();
 			}
 			Storager.setInt(Defs.EarnedCoins, 0, false);
-			Invoke("setEnabledGUI", 0.1f);
+			base.Invoke("setEnabledGUI", 0.1f);
 			ActivityIndicator.IsActiveIndicator = true;
 			PlayerPrefs.SetInt("typeConnect__", -1);
-			if (!GameObject.FindGameObjectWithTag("SkinsManager") && (bool)skinsManagerPrefab)
+			if (!GameObject.FindGameObjectWithTag("SkinsManager") && this.skinsManagerPrefab)
 			{
-				Object.Instantiate(skinsManagerPrefab, Vector3.zero, Quaternion.identity);
+				UnityEngine.Object.Instantiate(this.skinsManagerPrefab, Vector3.zero, Quaternion.identity);
 			}
-			if (!WeaponManager.sharedManager && (bool)weaponManagerPrefab)
+			if (!WeaponManager.sharedManager && this.weaponManagerPrefab)
 			{
-				Object.Instantiate(weaponManagerPrefab, Vector3.zero, Quaternion.identity);
+				UnityEngine.Object.Instantiate(this.weaponManagerPrefab, Vector3.zero, Quaternion.identity);
 			}
 			GlobalGameController.ResetParameters();
 			GlobalGameController.Score = 0;
-			bool flag2 = false;
+			bool flag1 = false;
 			if (PlayerPrefs.GetInt(Defs.ShouldEnableShopSN, 0) == 1)
 			{
-				flag2 = true;
+				flag1 = true;
 				PlayerPrefs.SetInt(Defs.ShouldEnableShopSN, 0);
 				PlayerPrefs.Save();
 			}
-			if (Tools.RuntimePlatform != RuntimePlatform.MetroPlayerX64 && (Application.platform != RuntimePlatform.Android || Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon) && Defs.EnderManAvailable && !flag2 && !flag && !isShowAvard && PlayerPrefs.GetInt(Defs.ShowEnder_SN, 0) == 1)
+			if (Tools.RuntimePlatform != RuntimePlatform.MetroPlayerX64 && (Application.platform != RuntimePlatform.Android || Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon) && Defs.EnderManAvailable && !flag1 && !flag && !this.isShowAvard && PlayerPrefs.GetInt(Defs.ShowEnder_SN, 0) == 1)
 			{
-				float @float = PlayerPrefs.GetFloat(Defs.TimeFromWhichShowEnder_SN, 0f);
-				float num = Switcher.SecondsFrom1970() - @float;
-				Debug.Log("diff mainmenu: " + num);
-				if (num >= ((!Application.isEditor && !Debug.isDebugBuild) ? 86400f : 0f))
+				float num = PlayerPrefs.GetFloat(Defs.TimeFromWhichShowEnder_SN, 0f);
+				float single = Switcher.SecondsFrom1970() - num;
+				UnityEngine.Debug.Log(string.Concat("diff mainmenu: ", single));
+				if (single >= (Application.isEditor || UnityEngine.Debug.isDebugBuild ? 0f : 86400f))
 				{
 					PlayerPrefs.SetInt(Defs.ShowEnder_SN, 0);
-					Object.Instantiate(Resources.Load("Ender") as GameObject);
+					UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Ender") as GameObject);
 				}
 			}
 		}
 	}
 
-	private void SetInApp()
+	private void Update()
 	{
-		isInappWinOpen = !isInappWinOpen;
-		if (expController != null)
+		object obj;
+		float coef = (float)Screen.width - 42f * Defs.Coef;
+		float single = Defs.Coef;
+		if (!MainMenu.SkinsMakerSupproted())
 		{
-			expController.isShowRanks = !isInappWinOpen;
-			expController.isMenu = !isInappWinOpen;
-		}
-		if (isInappWinOpen)
-		{
-			if (StoreKitEventListener.restoreInProcess)
-			{
-				ActivityIndicator.IsActiveIndicator = true;
-			}
-			if (!Defs.isMulti)
-			{
-				Time.timeScale = 0f;
-			}
+			obj = null;
 		}
 		else
 		{
-			ActivityIndicator.IsActiveIndicator = false;
+			obj = 262;
+		}
+		float single1 = (coef - single * (672f + (float)obj)) / (!MainMenu.SkinsMakerSupproted() ? 2f : 3f);
+		if (this.expController != null)
+		{
+			this.expController.posRanks = new Vector2(21f * Defs.Coef, 21f * Defs.Coef);
 		}
 	}
 
-	public static bool SkinsMakerSupproted()
+	[DebuggerHidden]
+	private IEnumerator WaitForExperienceGuiAndAdd(ExperienceController legacyExperienceController, int addend)
 	{
-		bool result = BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64;
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-		{
-			result = Defs.AndroidEdition != Defs.RuntimeAndroidEdition.GoogleLite;
-		}
-		return result;
-	}
-
-	private void Update()
-	{
-		float num = ((float)Screen.width - 42f * Defs.Coef - Defs.Coef * (672f + (float)(SkinsMakerSupproted() ? 262 : 0))) / ((!SkinsMakerSupproted()) ? 2f : 3f);
-		if (expController != null)
-		{
-			expController.posRanks = new Vector2(21f * Defs.Coef, 21f * Defs.Coef);
-		}
-	}
-
-	private void OnDestroy()
-	{
-		sharedMenu = null;
-		if (expController != null)
-		{
-			expController.isShowRanks = false;
-			expController.isMenu = false;
-		}
+		MainMenu.u003cWaitForExperienceGuiAndAddu003ec__IteratorA9 variable = null;
+		return variable;
 	}
 }

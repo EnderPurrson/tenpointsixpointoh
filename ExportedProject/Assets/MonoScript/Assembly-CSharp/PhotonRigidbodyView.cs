@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(PhotonView))]
 [AddComponentMenu("Photon Networking/Photon Rigidbody View")]
+[RequireComponent(typeof(PhotonView))]
+[RequireComponent(typeof(Rigidbody))]
 public class PhotonRigidbodyView : MonoBehaviour
 {
 	[SerializeField]
@@ -13,33 +14,37 @@ public class PhotonRigidbodyView : MonoBehaviour
 
 	private Rigidbody m_Body;
 
+	public PhotonRigidbodyView()
+	{
+	}
+
 	private void Awake()
 	{
-		m_Body = GetComponent<Rigidbody>();
+		this.m_Body = base.GetComponent<Rigidbody>();
 	}
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			if (m_SynchronizeVelocity)
+			if (this.m_SynchronizeVelocity)
 			{
-				stream.SendNext(m_Body.velocity);
+				this.m_Body.velocity = (Vector3)stream.ReceiveNext();
 			}
-			if (m_SynchronizeAngularVelocity)
+			if (this.m_SynchronizeAngularVelocity)
 			{
-				stream.SendNext(m_Body.angularVelocity);
+				this.m_Body.angularVelocity = (Vector3)stream.ReceiveNext();
 			}
 		}
 		else
 		{
-			if (m_SynchronizeVelocity)
+			if (this.m_SynchronizeVelocity)
 			{
-				m_Body.velocity = (Vector3)stream.ReceiveNext();
+				stream.SendNext(this.m_Body.velocity);
 			}
-			if (m_SynchronizeAngularVelocity)
+			if (this.m_SynchronizeAngularVelocity)
 			{
-				m_Body.angularVelocity = (Vector3)stream.ReceiveNext();
+				stream.SendNext(this.m_Body.angularVelocity);
 			}
 		}
 	}

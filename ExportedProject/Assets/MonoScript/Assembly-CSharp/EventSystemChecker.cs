@@ -1,17 +1,22 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public class EventSystemChecker : MonoBehaviour
 {
 	public GameObject eventSystem;
 
+	public EventSystemChecker()
+	{
+	}
+
+	[DebuggerHidden]
 	private IEnumerator Start()
 	{
-		yield return new WaitForEndOfFrame();
-		if (!Object.FindObjectOfType<EventSystem>())
-		{
-			Object.Instantiate(eventSystem);
-		}
+		EventSystemChecker.u003cStartu003ec__Iterator104 variable = null;
+		return variable;
 	}
 }

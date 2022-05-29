@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DeadExplosionController : MonoBehaviour
@@ -10,22 +11,26 @@ public class DeadExplosionController : MonoBehaviour
 
 	private float timeAnim = -1f;
 
+	public DeadExplosionController()
+	{
+	}
+
 	public void StartAnim()
 	{
-		timeAnim = startTimerAnim + timeAfteAnim;
+		this.timeAnim = this.startTimerAnim + this.timeAfteAnim;
 	}
 
 	private void Update()
 	{
-		if (timeAnim > 0f)
+		if (this.timeAnim > 0f)
 		{
-			float value = 1.25f;
-			timeAnim -= Time.deltaTime;
-			if (timeAnim < startTimerAnim)
+			float single = 1.25f;
+			this.timeAnim -= Time.deltaTime;
+			if (this.timeAnim < this.startTimerAnim)
 			{
-				value = -0.25f + 1.5f * timeAnim / startTimerAnim;
+				single = -0.25f + 1.5f * this.timeAnim / this.startTimerAnim;
 			}
-			mySkinRenderer.material.SetFloat("_Burn", value);
+			this.mySkinRenderer.material.SetFloat("_Burn", single);
 		}
 	}
 }

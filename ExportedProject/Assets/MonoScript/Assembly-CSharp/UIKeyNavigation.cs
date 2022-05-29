@@ -4,17 +4,9 @@ using UnityEngine;
 [AddComponentMenu("NGUI/Interaction/Key Navigation")]
 public class UIKeyNavigation : MonoBehaviour
 {
-	public enum Constraint
-	{
-		None = 0,
-		Vertical = 1,
-		Horizontal = 2,
-		Explicit = 3
-	}
+	public static BetterList<UIKeyNavigation> list;
 
-	public static BetterList<UIKeyNavigation> list = new BetterList<UIKeyNavigation>();
-
-	public Constraint constraint;
+	public UIKeyNavigation.Constraint constraint;
 
 	public GameObject onUp;
 
@@ -33,18 +25,18 @@ public class UIKeyNavigation : MonoBehaviour
 	[NonSerialized]
 	private bool mStarted;
 
-	public static int mLastFrame = 0;
+	public static int mLastFrame;
 
 	public static UIKeyNavigation current
 	{
 		get
 		{
-			GameObject hoveredObject = UICamera.hoveredObject;
-			if (hoveredObject == null)
+			GameObject gameObject = UICamera.hoveredObject;
+			if (gameObject == null)
 			{
 				return null;
 			}
-			return hoveredObject.GetComponent<UIKeyNavigation>();
+			return gameObject.GetComponent<UIKeyNavigation>();
 		}
 	}
 
@@ -52,263 +44,294 @@ public class UIKeyNavigation : MonoBehaviour
 	{
 		get
 		{
-			if (base.enabled && base.gameObject.activeInHierarchy)
+			if (!base.enabled || !base.gameObject.activeInHierarchy)
 			{
-				Collider component = GetComponent<Collider>();
-				if (component != null)
-				{
-					return component.enabled;
-				}
-				Collider2D component2 = GetComponent<Collider2D>();
-				return component2 != null && component2.enabled;
+				return false;
 			}
-			return false;
-		}
-	}
-
-	protected virtual void OnEnable()
-	{
-		list.Add(this);
-		if (mStarted)
-		{
-			Start();
-		}
-	}
-
-	private void Start()
-	{
-		mStarted = true;
-		if (startsSelected && isColliderEnabled)
-		{
-			UICamera.hoveredObject = base.gameObject;
-		}
-	}
-
-	protected virtual void OnDisable()
-	{
-		list.Remove(this);
-	}
-
-	private static bool IsActive(GameObject go)
-	{
-		if ((bool)go && go.activeInHierarchy)
-		{
-			Collider component = go.GetComponent<Collider>();
+			Collider component = base.GetComponent<Collider>();
 			if (component != null)
 			{
 				return component.enabled;
 			}
-			Collider2D component2 = go.GetComponent<Collider2D>();
-			return component2 != null && component2.enabled;
+			Collider2D collider2D = base.GetComponent<Collider2D>();
+			return (collider2D == null ? false : collider2D.enabled);
 		}
-		return false;
 	}
 
-	public GameObject GetLeft()
+	static UIKeyNavigation()
 	{
-		if (IsActive(onLeft))
-		{
-			return onLeft;
-		}
-		if (constraint == Constraint.Vertical || constraint == Constraint.Explicit)
-		{
-			return null;
-		}
-		return Get(Vector3.left, 1f, 2f);
+		UIKeyNavigation.list = new BetterList<UIKeyNavigation>();
+		UIKeyNavigation.mLastFrame = 0;
 	}
 
-	public GameObject GetRight()
+	public UIKeyNavigation()
 	{
-		if (IsActive(onRight))
-		{
-			return onRight;
-		}
-		if (constraint == Constraint.Vertical || constraint == Constraint.Explicit)
-		{
-			return null;
-		}
-		return Get(Vector3.right, 1f, 2f);
-	}
-
-	public GameObject GetUp()
-	{
-		if (IsActive(onUp))
-		{
-			return onUp;
-		}
-		if (constraint == Constraint.Horizontal || constraint == Constraint.Explicit)
-		{
-			return null;
-		}
-		return Get(Vector3.up, 2f);
-	}
-
-	public GameObject GetDown()
-	{
-		if (IsActive(onDown))
-		{
-			return onDown;
-		}
-		if (constraint == Constraint.Horizontal || constraint == Constraint.Explicit)
-		{
-			return null;
-		}
-		return Get(Vector3.down, 2f);
 	}
 
 	public GameObject Get(Vector3 myDir, float x = 1f, float y = 1f)
 	{
-		Transform transform = base.transform;
-		myDir = transform.TransformDirection(myDir);
-		Vector3 center = GetCenter(base.gameObject);
-		float num = float.MaxValue;
-		GameObject result = null;
-		for (int i = 0; i < list.size; i++)
+		Transform transforms = base.transform;
+		myDir = transforms.TransformDirection(myDir);
+		Vector3 center = UIKeyNavigation.GetCenter(base.gameObject);
+		float single = Single.MaxValue;
+		GameObject gameObject = null;
+		for (int i = 0; i < UIKeyNavigation.list.size; i++)
 		{
-			UIKeyNavigation uIKeyNavigation = list[i];
-			if (uIKeyNavigation == this || uIKeyNavigation.constraint == Constraint.Explicit || !uIKeyNavigation.isColliderEnabled)
+			UIKeyNavigation item = UIKeyNavigation.list[i];
+			if (!(item == this) && item.constraint != UIKeyNavigation.Constraint.Explicit && item.isColliderEnabled)
 			{
-				continue;
-			}
-			UIWidget component = uIKeyNavigation.GetComponent<UIWidget>();
-			if (component != null && component.alpha == 0f)
-			{
-				continue;
-			}
-			Vector3 direction = GetCenter(uIKeyNavigation.gameObject) - center;
-			float num2 = Vector3.Dot(myDir, direction.normalized);
-			if (!(num2 < 0.707f))
-			{
-				direction = transform.InverseTransformDirection(direction);
-				direction.x *= x;
-				direction.y *= y;
-				float sqrMagnitude = direction.sqrMagnitude;
-				if (!(sqrMagnitude > num))
+				UIWidget component = item.GetComponent<UIWidget>();
+				if (!(component != null) || component.alpha != 0f)
 				{
-					result = uIKeyNavigation.gameObject;
-					num = sqrMagnitude;
+					Vector3 vector3 = UIKeyNavigation.GetCenter(item.gameObject) - center;
+					if (Vector3.Dot(myDir, vector3.normalized) >= 0.707f)
+					{
+						vector3 = transforms.InverseTransformDirection(vector3);
+						vector3.x *= x;
+						vector3.y *= y;
+						float single1 = vector3.sqrMagnitude;
+						if (single1 <= single)
+						{
+							gameObject = item.gameObject;
+							single = single1;
+						}
+					}
 				}
 			}
 		}
-		return result;
+		return gameObject;
 	}
 
 	protected static Vector3 GetCenter(GameObject go)
 	{
 		UIWidget component = go.GetComponent<UIWidget>();
 		UICamera uICamera = UICamera.FindCameraForLayer(go.layer);
-		if (uICamera != null)
+		if (uICamera == null)
 		{
-			Vector3 position = go.transform.position;
-			if (component != null)
+			if (component == null)
 			{
-				Vector3[] worldCorners = component.worldCorners;
-				position = (worldCorners[0] + worldCorners[2]) * 0.5f;
+				return go.transform.position;
 			}
-			position = uICamera.cachedCamera.WorldToScreenPoint(position);
-			position.z = 0f;
-			return position;
+			Vector3[] vector3Array = component.worldCorners;
+			return (vector3Array[0] + vector3Array[2]) * 0.5f;
 		}
+		Vector3 screenPoint = go.transform.position;
 		if (component != null)
 		{
-			Vector3[] worldCorners2 = component.worldCorners;
-			return (worldCorners2[0] + worldCorners2[2]) * 0.5f;
+			Vector3[] vector3Array1 = component.worldCorners;
+			screenPoint = (vector3Array1[0] + vector3Array1[2]) * 0.5f;
 		}
-		return go.transform.position;
+		screenPoint = uICamera.cachedCamera.WorldToScreenPoint(screenPoint);
+		screenPoint.z = 0f;
+		return screenPoint;
 	}
 
-	public virtual void OnNavigate(KeyCode key)
+	public GameObject GetDown()
 	{
-		if (!UIPopupList.isOpen && mLastFrame != Time.frameCount)
+		if (UIKeyNavigation.IsActive(this.onDown))
 		{
-			mLastFrame = Time.frameCount;
-			GameObject gameObject = null;
-			switch (key)
-			{
-			case KeyCode.LeftArrow:
-				gameObject = GetLeft();
-				break;
-			case KeyCode.RightArrow:
-				gameObject = GetRight();
-				break;
-			case KeyCode.UpArrow:
-				gameObject = GetUp();
-				break;
-			case KeyCode.DownArrow:
-				gameObject = GetDown();
-				break;
-			}
-			if (gameObject != null)
-			{
-				UICamera.hoveredObject = gameObject;
-			}
+			return this.onDown;
+		}
+		if (this.constraint == UIKeyNavigation.Constraint.Horizontal || this.constraint == UIKeyNavigation.Constraint.Explicit)
+		{
+			return null;
+		}
+		return this.Get(Vector3.down, 2f, 1f);
+	}
+
+	public GameObject GetLeft()
+	{
+		if (UIKeyNavigation.IsActive(this.onLeft))
+		{
+			return this.onLeft;
+		}
+		if (this.constraint == UIKeyNavigation.Constraint.Vertical || this.constraint == UIKeyNavigation.Constraint.Explicit)
+		{
+			return null;
+		}
+		return this.Get(Vector3.left, 1f, 2f);
+	}
+
+	public GameObject GetRight()
+	{
+		if (UIKeyNavigation.IsActive(this.onRight))
+		{
+			return this.onRight;
+		}
+		if (this.constraint == UIKeyNavigation.Constraint.Vertical || this.constraint == UIKeyNavigation.Constraint.Explicit)
+		{
+			return null;
+		}
+		return this.Get(Vector3.right, 1f, 2f);
+	}
+
+	public GameObject GetUp()
+	{
+		if (UIKeyNavigation.IsActive(this.onUp))
+		{
+			return this.onUp;
+		}
+		if (this.constraint == UIKeyNavigation.Constraint.Horizontal || this.constraint == UIKeyNavigation.Constraint.Explicit)
+		{
+			return null;
+		}
+		return this.Get(Vector3.up, 2f, 1f);
+	}
+
+	private static bool IsActive(GameObject go)
+	{
+		if (!go || !go.activeInHierarchy)
+		{
+			return false;
+		}
+		Collider component = go.GetComponent<Collider>();
+		if (component != null)
+		{
+			return component.enabled;
+		}
+		Collider2D collider2D = go.GetComponent<Collider2D>();
+		return (collider2D == null ? false : collider2D.enabled);
+	}
+
+	protected virtual void OnClick()
+	{
+		if (NGUITools.GetActive(this.onClick))
+		{
+			UICamera.hoveredObject = this.onClick;
+		}
+	}
+
+	protected virtual void OnDisable()
+	{
+		UIKeyNavigation.list.Remove(this);
+	}
+
+	protected virtual void OnEnable()
+	{
+		UIKeyNavigation.list.Add(this);
+		if (this.mStarted)
+		{
+			this.Start();
 		}
 	}
 
 	public virtual void OnKey(KeyCode key)
 	{
-		if (UIPopupList.isOpen || mLastFrame == Time.frameCount)
+		if (UIPopupList.isOpen)
 		{
 			return;
 		}
-		mLastFrame = Time.frameCount;
-		if (key != KeyCode.Tab)
+		if (UIKeyNavigation.mLastFrame == Time.frameCount)
 		{
 			return;
 		}
-		GameObject gameObject = onTab;
-		if (gameObject == null)
+		UIKeyNavigation.mLastFrame = Time.frameCount;
+		if (key == KeyCode.Tab)
 		{
-			if (UICamera.GetKey(KeyCode.LeftShift) || UICamera.GetKey(KeyCode.RightShift))
+			GameObject left = this.onTab;
+			if (left == null)
 			{
-				gameObject = GetLeft();
-				if (gameObject == null)
+				if (UICamera.GetKey(304) || UICamera.GetKey(303))
 				{
-					gameObject = GetUp();
+					left = this.GetLeft();
+					if (left == null)
+					{
+						left = this.GetUp();
+					}
+					if (left == null)
+					{
+						left = this.GetDown();
+					}
+					if (left == null)
+					{
+						left = this.GetRight();
+					}
 				}
-				if (gameObject == null)
+				else
 				{
-					gameObject = GetDown();
-				}
-				if (gameObject == null)
-				{
-					gameObject = GetRight();
+					left = this.GetRight();
+					if (left == null)
+					{
+						left = this.GetDown();
+					}
+					if (left == null)
+					{
+						left = this.GetUp();
+					}
+					if (left == null)
+					{
+						left = this.GetLeft();
+					}
 				}
 			}
-			else
+			if (left != null)
 			{
-				gameObject = GetRight();
-				if (gameObject == null)
+				UICamera.currentScheme = UICamera.ControlScheme.Controller;
+				UICamera.hoveredObject = left;
+				UIInput component = left.GetComponent<UIInput>();
+				if (component != null)
 				{
-					gameObject = GetDown();
+					component.isSelected = true;
 				}
-				if (gameObject == null)
-				{
-					gameObject = GetUp();
-				}
-				if (gameObject == null)
-				{
-					gameObject = GetLeft();
-				}
-			}
-		}
-		if (gameObject != null)
-		{
-			UICamera.currentScheme = UICamera.ControlScheme.Controller;
-			UICamera.hoveredObject = gameObject;
-			UIInput component = gameObject.GetComponent<UIInput>();
-			if (component != null)
-			{
-				component.isSelected = true;
 			}
 		}
 	}
 
-	protected virtual void OnClick()
+	public virtual void OnNavigate(KeyCode key)
 	{
-		if (NGUITools.GetActive(onClick))
+		if (UIPopupList.isOpen)
 		{
-			UICamera.hoveredObject = onClick;
+			return;
 		}
+		if (UIKeyNavigation.mLastFrame == Time.frameCount)
+		{
+			return;
+		}
+		UIKeyNavigation.mLastFrame = Time.frameCount;
+		GameObject up = null;
+		switch (key)
+		{
+			case KeyCode.UpArrow:
+			{
+				up = this.GetUp();
+				break;
+			}
+			case KeyCode.DownArrow:
+			{
+				up = this.GetDown();
+				break;
+			}
+			case KeyCode.RightArrow:
+			{
+				up = this.GetRight();
+				break;
+			}
+			case KeyCode.LeftArrow:
+			{
+				up = this.GetLeft();
+				break;
+			}
+		}
+		if (up != null)
+		{
+			UICamera.hoveredObject = up;
+		}
+	}
+
+	private void Start()
+	{
+		this.mStarted = true;
+		if (this.startsSelected && this.isColliderEnabled)
+		{
+			UICamera.hoveredObject = base.gameObject;
+		}
+	}
+
+	public enum Constraint
+	{
+		None,
+		Vertical,
+		Horizontal,
+		Explicit
 	}
 }

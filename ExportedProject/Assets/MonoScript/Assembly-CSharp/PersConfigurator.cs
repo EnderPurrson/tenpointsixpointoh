@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public sealed class PersConfigurator : MonoBehaviour
@@ -28,313 +31,203 @@ public sealed class PersConfigurator : MonoBehaviour
 
 	private AnimationClip profile;
 
-	private void Awake()
+	public PersConfigurator()
 	{
-		currentConfigurator = this;
-	}
-
-	private IEnumerator Start()
-	{
-		WeaponManager weaponManager = WeaponManager.sharedManager;
-		int maxCost = 0;
-		GameObject pref = null;
-		List<Weapon> boughtWeapons = new List<Weapon>();
-		foreach (Weapon pw2 in weaponManager.allAvailablePlayerWeapons)
-		{
-			if (WeaponManager.tagToStoreIDMapping.ContainsKey(ItemDb.GetByPrefabName(pw2.weaponPrefab.name.Replace("(Clone)", string.Empty)).Tag))
-			{
-				boughtWeapons.Add(pw2);
-			}
-		}
-		if (boughtWeapons.Count == 0)
-		{
-			foreach (Weapon pw in weaponManager.allAvailablePlayerWeapons)
-			{
-				if (pw.weaponPrefab.name.Replace("(Clone)", string.Empty) == WeaponManager.PistolWN)
-				{
-					pref = pw.weaponPrefab;
-					break;
-				}
-			}
-		}
-		else
-		{
-			pref = boughtWeapons[Random.Range(0, boughtWeapons.Count)].weaponPrefab;
-		}
-		if (pref == null)
-		{
-			Debug.LogWarning("pref == null");
-		}
-		else
-		{
-			Debug.Log("ProfileAnims/" + pref.name + "_Profile");
-			profile = Resources.Load<AnimationClip>("ProfileAnimClips/" + pref.name + "_Profile");
-			GameObject w = Object.Instantiate(pref);
-			w.transform.parent = body.transform;
-			weapon = w;
-			weapon.transform.localPosition = Vector3.zero;
-			weapon.transform.localRotation = Quaternion.identity;
-			if (profile != null)
-			{
-				weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>().AddClip(profile, "Profile");
-				weapon.GetComponent<WeaponSounds>().animationObject.GetComponent<Animation>().Play("Profile");
-			}
-			gun = w.GetComponent<WeaponSounds>().bonusPrefab;
-		}
-		GameObject[] gunflashes = Object.FindObjectsOfType<GameObject>();
-		GameObject[] array = gunflashes;
-		foreach (GameObject go in array)
-		{
-			if (go.name.Equals("GunFlash"))
-			{
-				go.SetActive(false);
-			}
-		}
-		SetCurrentSkin();
-		ShopNGUIController.sharedShop.onEquipSkinAction = ((_003CStart_003Ec__IteratorD1)(object)this)._003C_003Em__1EC;
-		yield return new WaitForEndOfFrame();
-		_AddCapeAndHat();
-		ShopNGUIController.sharedShop.wearEquipAction = ((_003CStart_003Ec__IteratorD1)(object)this)._003C_003Em__1ED;
-		ShopNGUIController.sharedShop.wearUnequipAction = ((_003CStart_003Ec__IteratorD1)(object)this)._003C_003Em__1EE;
-		ShopNGUIController.ShowArmorChanged += HandleShowArmorChanged;
-		while (NickLabelStack.sharedStack == null)
-		{
-			yield return null;
-		}
-		NickLabelController.currentCamera = Camera.main;
-		_label = NickLabelStack.sharedStack.GetNextCurrentLabel();
-		_label.StartShow(NickLabelController.TypeNickLabel.PlayerLobby, base.transform);
-		MainMenuController.sharedController.persNickLabel = _label;
-	}
-
-	private void HandleShowArmorChanged()
-	{
-		_AddCapeAndHat();
-	}
-
-	private void SetCurrentSkin()
-	{
-		Texture currentSkinForPers = SkinsController.currentSkinForPers;
-		if (!(currentSkinForPers != null))
-		{
-			return;
-		}
-		currentSkinForPers.filterMode = FilterMode.Point;
-		GameObject[] collection = new GameObject[6] { gun, cape.gameObject, hat.gameObject, boots.gameObject, armorPoint.gameObject, maskPoint.gameObject };
-		List<GameObject> list = new List<GameObject>(collection);
-		if (weapon != null)
-		{
-			WeaponSounds component = weapon.GetComponent<WeaponSounds>();
-			if (component.LeftArmorHand != null)
-			{
-				list.Add(component.LeftArmorHand.gameObject);
-			}
-			if (component.RightArmorHand != null)
-			{
-				list.Add(component.RightArmorHand.gameObject);
-			}
-			if (component.grenatePoint != null)
-			{
-				list.Add(component.grenatePoint.gameObject);
-			}
-			List<GameObject> listWeaponAnimEffects = component.GetListWeaponAnimEffects();
-			if (listWeaponAnimEffects != null)
-			{
-				list.AddRange(listWeaponAnimEffects);
-			}
-		}
-		Player_move_c.SetTextureRecursivelyFrom(base.gameObject, currentSkinForPers, list.ToArray());
 	}
 
 	public void _AddCapeAndHat()
 	{
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < cape.childCount; i++)
+		List<Transform> transforms = new List<Transform>();
+		for (int i = 0; i < this.cape.childCount; i++)
 		{
-			list.Add(cape.GetChild(i));
+			transforms.Add(this.cape.GetChild(i));
 		}
-		foreach (Transform item in list)
+		foreach (Transform transform in transforms)
 		{
-			Object.Destroy(item.gameObject);
+			UnityEngine.Object.Destroy(transform.gameObject);
 		}
-		string @string = Storager.getString(Defs.CapeEquppedSN, false);
-		if (!@string.Equals(Defs.CapeNoneEqupped))
+		string str = Storager.getString(Defs.CapeEquppedSN, false);
+		if (!str.Equals(Defs.CapeNoneEqupped))
 		{
-			GameObject gameObject = Resources.Load(ResPath.Combine(Defs.CapesDir, @string)) as GameObject;
-			if (gameObject != null)
+			GameObject gameObject = Resources.Load(ResPath.Combine(Defs.CapesDir, str)) as GameObject;
+			if (gameObject == null)
 			{
-				GameObject gameObject2 = Object.Instantiate(gameObject, Vector3.zero, Quaternion.identity) as GameObject;
-				gameObject2.transform.parent = cape;
-				gameObject2.transform.localPosition = new Vector3(0f, -0.8f, 0f);
-				gameObject2.transform.localRotation = Quaternion.identity;
-				gameObject2.GetComponent<Animation>().Play("Profile");
+				UnityEngine.Debug.LogWarning("capePrefab == null");
 			}
 			else
 			{
-				Debug.LogWarning("capePrefab == null");
+				GameObject vector3 = UnityEngine.Object.Instantiate(gameObject, Vector3.zero, Quaternion.identity) as GameObject;
+				vector3.transform.parent = this.cape;
+				vector3.transform.localPosition = new Vector3(0f, -0.8f, 0f);
+				vector3.transform.localRotation = Quaternion.identity;
+				vector3.GetComponent<Animation>().Play("Profile");
 			}
 		}
-		list = new List<Transform>();
-		for (int j = 0; j < maskPoint.childCount; j++)
+		transforms = new List<Transform>();
+		for (int j = 0; j < this.maskPoint.childCount; j++)
 		{
-			list.Add(maskPoint.GetChild(j));
+			transforms.Add(this.maskPoint.GetChild(j));
 		}
-		foreach (Transform item2 in list)
+		foreach (Transform transform1 in transforms)
 		{
-			Object.Destroy(item2.gameObject);
+			UnityEngine.Object.Destroy(transform1.gameObject);
 		}
-		string string2 = Storager.getString("MaskEquippedSN", false);
-		if (!string2.Equals("MaskNoneEquipped"))
+		string str1 = Storager.getString("MaskEquippedSN", false);
+		if (!str1.Equals("MaskNoneEquipped"))
 		{
-			GameObject gameObject3 = Resources.Load(ResPath.Combine("Masks", string2)) as GameObject;
-			if (gameObject3 != null)
+			GameObject gameObject1 = Resources.Load(ResPath.Combine("Masks", str1)) as GameObject;
+			if (gameObject1 == null)
 			{
-				GameObject gameObject4 = Object.Instantiate(gameObject3, Vector3.zero, Quaternion.identity) as GameObject;
-				gameObject4.transform.parent = maskPoint;
-				gameObject4.transform.localPosition = new Vector3(0f, 0f, 0f);
-				gameObject4.transform.localRotation = Quaternion.identity;
+				UnityEngine.Debug.LogWarning("maskPrefab == null");
 			}
 			else
 			{
-				Debug.LogWarning("maskPrefab == null");
+				GameObject vector31 = UnityEngine.Object.Instantiate(gameObject1, Vector3.zero, Quaternion.identity) as GameObject;
+				vector31.transform.parent = this.maskPoint;
+				vector31.transform.localPosition = new Vector3(0f, 0f, 0f);
+				vector31.transform.localRotation = Quaternion.identity;
 			}
 		}
-		list = new List<Transform>();
-		for (int k = 0; k < hat.childCount; k++)
+		transforms = new List<Transform>();
+		for (int k = 0; k < this.hat.childCount; k++)
 		{
-			list.Add(hat.GetChild(k));
+			transforms.Add(this.hat.GetChild(k));
 		}
-		foreach (Transform item3 in list)
+		foreach (Transform transforms1 in transforms)
 		{
-			item3.parent = null;
-			Object.Destroy(item3.gameObject);
+			transforms1.parent = null;
+			UnityEngine.Object.Destroy(transforms1.gameObject);
 		}
-		string text = Storager.getString(Defs.HatEquppedSN, false);
-		string string3 = Storager.getString(Defs.VisualHatArmor, false);
-		if (!string.IsNullOrEmpty(string3) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(text) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(text) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(string3))
+		string str2 = Storager.getString(Defs.HatEquppedSN, false);
+		string str3 = Storager.getString(Defs.VisualHatArmor, false);
+		if (!string.IsNullOrEmpty(str3) && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str2) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str2) < Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(str3))
 		{
-			text = string3;
+			str2 = str3;
 		}
-		if (!text.Equals(Defs.HatNoneEqupped))
+		if (!str2.Equals(Defs.HatNoneEqupped))
 		{
-			GameObject gameObject5 = Resources.Load(ResPath.Combine(Defs.HatsDir, text)) as GameObject;
-			if (gameObject5 != null)
+			GameObject gameObject2 = Resources.Load(ResPath.Combine(Defs.HatsDir, str2)) as GameObject;
+			if (gameObject2 == null)
 			{
-				GameObject gameObject6 = Object.Instantiate(gameObject5, Vector3.zero, Quaternion.identity) as GameObject;
-				gameObject6.transform.parent = hat;
-				gameObject6.transform.localPosition = Vector3.zero;
-				gameObject6.transform.localRotation = Quaternion.identity;
+				UnityEngine.Debug.LogWarning("hatPrefab == null");
 			}
 			else
 			{
-				Debug.LogWarning("hatPrefab == null");
+				GameObject gameObject3 = UnityEngine.Object.Instantiate(gameObject2, Vector3.zero, Quaternion.identity) as GameObject;
+				gameObject3.transform.parent = this.hat;
+				gameObject3.transform.localPosition = Vector3.zero;
+				gameObject3.transform.localRotation = Quaternion.identity;
 			}
 		}
-		list = new List<Transform>();
-		for (int l = 0; l < boots.childCount; l++)
+		transforms = new List<Transform>();
+		for (int l = 0; l < this.boots.childCount; l++)
 		{
-			boots.GetChild(l).gameObject.SetActive(false);
+			this.boots.GetChild(l).gameObject.SetActive(false);
 		}
-		string string4 = Storager.getString(Defs.BootsEquppedSN, false);
-		if (!string4.Equals(Defs.BootsNoneEqupped))
+		string str4 = Storager.getString(Defs.BootsEquppedSN, false);
+		if (!str4.Equals(Defs.BootsNoneEqupped))
 		{
-			foreach (Transform boot in boots)
+			IEnumerator enumerator = this.boots.GetEnumerator();
+			try
 			{
-				if (boot.gameObject.name.Equals(string4))
+				while (enumerator.MoveNext())
 				{
-					boot.gameObject.SetActive(true);
-				}
-				else
-				{
-					boot.gameObject.SetActive(false);
+					Transform current = (Transform)enumerator.Current;
+					if (!current.gameObject.name.Equals(str4))
+					{
+						current.gameObject.SetActive(false);
+					}
+					else
+					{
+						current.gameObject.SetActive(true);
+					}
 				}
 			}
-		}
-		list = new List<Transform>();
-		for (int m = 0; m < armorPoint.childCount; m++)
-		{
-			list.Add(armorPoint.GetChild(m));
-		}
-		foreach (Transform item4 in list)
-		{
-			ArmorRefs component = item4.GetChild(0).GetComponent<ArmorRefs>();
-			if (component != null)
+			finally
 			{
-				if (component.leftBone != null)
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable == null)
 				{
-					component.leftBone.parent = item4.GetChild(0);
 				}
-				if (component.rightBone != null)
-				{
-					component.rightBone.parent = item4.GetChild(0);
-				}
-				item4.parent = null;
-				Object.Destroy(item4.gameObject);
+				disposable.Dispose();
 			}
 		}
-		string text2 = Storager.getString(Defs.ArmorNewEquppedSN, false);
-		string string5 = Storager.getString(Defs.VisualArmor, false);
-		if (!string.IsNullOrEmpty(string5) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(text2) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(text2) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(string5))
+		transforms = new List<Transform>();
+		for (int m = 0; m < this.armorPoint.childCount; m++)
 		{
-			text2 = string5;
+			transforms.Add(this.armorPoint.GetChild(m));
 		}
-		if (!text2.Equals(Defs.ArmorNewNoneEqupped))
+		foreach (Transform transform2 in transforms)
 		{
-			GameObject gameObject7 = Resources.Load("Armor/" + text2) as GameObject;
-			if (gameObject7 == null)
+			ArmorRefs component = transform2.GetChild(0).GetComponent<ArmorRefs>();
+			if (component == null)
+			{
+				continue;
+			}
+			if (component.leftBone != null)
+			{
+				component.leftBone.parent = transform2.GetChild(0);
+			}
+			if (component.rightBone != null)
+			{
+				component.rightBone.parent = transform2.GetChild(0);
+			}
+			transform2.parent = null;
+			UnityEngine.Object.Destroy(transform2.gameObject);
+		}
+		string str5 = Storager.getString(Defs.ArmorNewEquppedSN, false);
+		string str6 = Storager.getString(Defs.VisualArmor, false);
+		if (!string.IsNullOrEmpty(str6) && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str5) >= 0 && Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str5) < Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(str6))
+		{
+			str5 = str6;
+		}
+		if (!str5.Equals(Defs.ArmorNewNoneEqupped))
+		{
+			GameObject gameObject4 = Resources.Load(string.Concat("Armor/", str5)) as GameObject;
+			if (gameObject4 == null)
 			{
 				return;
 			}
-			GameObject gameObject8 = Object.Instantiate(gameObject7);
-			ArmorRefs component2 = gameObject8.transform.GetChild(0).GetComponent<ArmorRefs>();
-			if (component2 != null)
+			GameObject vector32 = UnityEngine.Object.Instantiate<GameObject>(gameObject4);
+			ArmorRefs leftArmorHand = vector32.transform.GetChild(0).GetComponent<ArmorRefs>();
+			if (leftArmorHand != null)
 			{
-				if (weapon != null)
+				if (this.weapon != null)
 				{
-					WeaponSounds component3 = weapon.GetComponent<WeaponSounds>();
-					if (component3 != null && component2.leftBone != null && component3.LeftArmorHand != null)
+					WeaponSounds weaponSound = this.weapon.GetComponent<WeaponSounds>();
+					if (weaponSound != null && leftArmorHand.leftBone != null && weaponSound.LeftArmorHand != null)
 					{
-						component2.leftBone.parent = component3.LeftArmorHand;
-						component2.leftBone.localPosition = Vector3.zero;
-						component2.leftBone.localRotation = Quaternion.identity;
-						component2.leftBone.localScale = new Vector3(1f, 1f, 1f);
+						leftArmorHand.leftBone.parent = weaponSound.LeftArmorHand;
+						leftArmorHand.leftBone.localPosition = Vector3.zero;
+						leftArmorHand.leftBone.localRotation = Quaternion.identity;
+						leftArmorHand.leftBone.localScale = new Vector3(1f, 1f, 1f);
 					}
-					if (component3 != null && component2.rightBone != null && component3.RightArmorHand != null)
+					if (weaponSound != null && leftArmorHand.rightBone != null && weaponSound.RightArmorHand != null)
 					{
-						component2.rightBone.parent = component3.RightArmorHand;
-						component2.rightBone.localPosition = Vector3.zero;
-						component2.rightBone.localRotation = Quaternion.identity;
-						component2.rightBone.localScale = new Vector3(1f, 1f, 1f);
+						leftArmorHand.rightBone.parent = weaponSound.RightArmorHand;
+						leftArmorHand.rightBone.localPosition = Vector3.zero;
+						leftArmorHand.rightBone.localRotation = Quaternion.identity;
+						leftArmorHand.rightBone.localScale = new Vector3(1f, 1f, 1f);
 					}
 				}
-				gameObject8.transform.parent = armorPoint.transform;
-				gameObject8.transform.localPosition = Vector3.zero;
-				gameObject8.transform.localRotation = Quaternion.identity;
-				gameObject8.transform.localScale = new Vector3(1f, 1f, 1f);
+				vector32.transform.parent = this.armorPoint.transform;
+				vector32.transform.localPosition = Vector3.zero;
+				vector32.transform.localRotation = Quaternion.identity;
+				vector32.transform.localScale = new Vector3(1f, 1f, 1f);
 			}
 		}
-		ShopNGUIController.SetPersHatVisible(hat);
-		ShopNGUIController.SetPersArmorVisible(armorPoint);
+		ShopNGUIController.SetPersHatVisible(this.hat);
+		ShopNGUIController.SetPersArmorVisible(this.armorPoint);
 	}
 
-	private void Update()
+	private void Awake()
 	{
-		if (!(Camera.main != null))
-		{
-			return;
-		}
-		Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0f));
-		Touch[] touches = Input.touches;
-		foreach (Touch touch in touches)
-		{
-			RaycastHit hitInfo;
-			if (touch.phase == TouchPhase.Began && Physics.Raycast(ray, out hitInfo, 1000f, -5) && hitInfo.collider.gameObject.name.Equals("MainMenu_Pers"))
-			{
-				PlayerPrefs.SetInt(Defs.ProfileEnteredFromMenu, 1);
-				ConnectSceneNGUIController.GoToProfile();
-				break;
-			}
-		}
+		PersConfigurator.currentConfigurator = this;
+	}
+
+	private void HandleShowArmorChanged()
+	{
+		this._AddCapeAndHat();
 	}
 
 	private void OnDestroy()
@@ -345,11 +238,69 @@ public sealed class PersConfigurator : MonoBehaviour
 			ShopNGUIController.sharedShop.wearEquipAction = null;
 			ShopNGUIController.sharedShop.wearUnequipAction = null;
 		}
-		if (profile != null)
+		if (this.profile != null)
 		{
-			Resources.UnloadAsset(profile);
+			Resources.UnloadAsset(this.profile);
 		}
-		ShopNGUIController.ShowArmorChanged -= HandleShowArmorChanged;
-		currentConfigurator = null;
+		ShopNGUIController.ShowArmorChanged -= new Action(this.HandleShowArmorChanged);
+		PersConfigurator.currentConfigurator = null;
+	}
+
+	private void SetCurrentSkin()
+	{
+		Texture texture = SkinsController.currentSkinForPers;
+		if (texture != null)
+		{
+			texture.filterMode = FilterMode.Point;
+			List<GameObject> gameObjects = new List<GameObject>(new GameObject[] { this.gun, this.cape.gameObject, this.hat.gameObject, this.boots.gameObject, this.armorPoint.gameObject, this.maskPoint.gameObject });
+			if (this.weapon != null)
+			{
+				WeaponSounds component = this.weapon.GetComponent<WeaponSounds>();
+				if (component.LeftArmorHand != null)
+				{
+					gameObjects.Add(component.LeftArmorHand.gameObject);
+				}
+				if (component.RightArmorHand != null)
+				{
+					gameObjects.Add(component.RightArmorHand.gameObject);
+				}
+				if (component.grenatePoint != null)
+				{
+					gameObjects.Add(component.grenatePoint.gameObject);
+				}
+				List<GameObject> listWeaponAnimEffects = component.GetListWeaponAnimEffects();
+				if (listWeaponAnimEffects != null)
+				{
+					gameObjects.AddRange(listWeaponAnimEffects);
+				}
+			}
+			Player_move_c.SetTextureRecursivelyFrom(base.gameObject, texture, gameObjects.ToArray());
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		PersConfigurator.u003cStartu003ec__IteratorD1 variable = null;
+		return variable;
+	}
+
+	private void Update()
+	{
+		RaycastHit raycastHit;
+		if (Camera.main != null)
+		{
+			Ray ray = Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f));
+			Touch[] touchArray = Input.touches;
+			for (int i = 0; i < (int)touchArray.Length; i++)
+			{
+				if (touchArray[i].phase == TouchPhase.Began && Physics.Raycast(ray, out raycastHit, 1000f, -5) && raycastHit.collider.gameObject.name.Equals("MainMenu_Pers"))
+				{
+					PlayerPrefs.SetInt(Defs.ProfileEnteredFromMenu, 1);
+					ConnectSceneNGUIController.GoToProfile();
+					return;
+				}
+			}
+		}
 	}
 }

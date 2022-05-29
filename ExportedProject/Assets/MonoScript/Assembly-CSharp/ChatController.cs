@@ -1,13 +1,337 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
-using Rilisoft;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ChatController : MonoBehaviour
 {
+	public static ChatController sharedController;
+
+	public static int countNewPrivateMessage;
+
+	private static string privateMessageKey;
+
+	private static string privateMessageSendKey;
+
+	public static float timerToUpdateMessage;
+
+	public static bool fastSendMessage;
+
+	public static float maxTimerToUpdateMessage;
+
+	public static Dictionary<string, List<ChatController.PrivateMessage>> privateMessages;
+
+	public static Dictionary<string, List<ChatController.PrivateMessage>> privateMessagesForSend;
+
+	private Action _backButtonCallback;
+
+	static ChatController()
+	{
+		ChatController.sharedController = null;
+		ChatController.countNewPrivateMessage = 0;
+		ChatController.privateMessageKey = "PrivateMessageKey";
+		ChatController.privateMessageSendKey = "PrivateMessageSendKey";
+		ChatController.maxTimerToUpdateMessage = 10f;
+		ChatController.privateMessages = new Dictionary<string, List<ChatController.PrivateMessage>>();
+		ChatController.privateMessagesForSend = new Dictionary<string, List<ChatController.PrivateMessage>>();
+	}
+
+	public ChatController()
+	{
+	}
+
+	public static void AddPrivateMessage(string _playerIdChating, ChatController.PrivateMessage _message)
+	{
+		if (!ChatController.privateMessages.ContainsKey(_playerIdChating))
+		{
+			ChatController.privateMessages.Add(_playerIdChating, new List<ChatController.PrivateMessage>());
+		}
+		ChatController.privateMessages[_playerIdChating].Add(_message);
+		while (ChatController.privateMessages[_playerIdChating].Count > Defs.historyPrivateMessageLength)
+		{
+			if (!ChatController.privateMessages[_playerIdChating][0].isRead)
+			{
+				ChatController.countNewPrivateMessage--;
+			}
+			ChatController.privateMessages[_playerIdChating].RemoveAt(0);
+		}
+	}
+
+	public void BackButtonClick()
+	{
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		if (this._backButtonCallback != null)
+		{
+			this._backButtonCallback();
+			return;
+		}
+		Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene, LoadSceneMode.Single);
+	}
+
+	public static void FillPrivateMessageForSendFromPrefs()
+	{
+		ChatController.privateMessagesForSend.Clear();
+		string str = PlayerPrefs.GetString(ChatController.privateMessageSendKey, "[]");
+		List<object> objs = null;
+		objs = Json.Deserialize(str) as List<object>;
+		if (objs != null && objs.Count > 0)
+		{
+			foreach (object obj in objs)
+			{
+				Dictionary<string, string> strs = obj as Dictionary<string, string>;
+				string item = strs["to"];
+				string item1 = strs["text"];
+				double num = double.Parse(strs["timeStamp"], NumberStyles.Number, CultureInfo.InvariantCulture);
+				bool flag = true;
+				bool flag1 = false;
+				if (!ChatController.privateMessagesForSend.ContainsKey(item))
+				{
+					ChatController.privateMessagesForSend.Add(item, new List<ChatController.PrivateMessage>());
+				}
+				ChatController.privateMessagesForSend[item].Add(new ChatController.PrivateMessage(item, item1, num, flag, flag1));
+			}
+		}
+	}
+
+	public static void FillPrivatMessageFromPrefs()
+	{
+		double num;
+		ChatController.privateMessages.Clear();
+		int num1 = 0;
+		string str = PlayerPrefs.GetString(ChatController.privateMessageKey, "{}");
+		Dictionary<string, object> strs = null;
+		strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null && strs.Count > 0)
+		{
+			foreach (KeyValuePair<string, object> keyValuePair in strs)
+			{
+				foreach (object value in keyValuePair.Value as List<object>)
+				{
+					Dictionary<string, object> strs1 = value as Dictionary<string, object>;
+					string item = strs1["playerIDFrom"] as string;
+					string item1 = strs1["message"] as string;
+					double currentUnixTime = (double)Tools.CurrentUnixTime;
+					if (!double.TryParse(strs1["timeStamp"].ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+					{
+						UnityEngine.Debug.LogWarning(string.Format("Could not parse timestamp {0}", keyValuePair.Value));
+					}
+					else
+					{
+						currentUnixTime = num;
+					}
+					bool flag = bool.Parse(strs1["isRead"] as string);
+					if (!flag)
+					{
+						num1++;
+					}
+					bool flag1 = bool.Parse(strs1["isSending"] as string);
+					ChatController.PrivateMessage privateMessage = new ChatController.PrivateMessage(item, item1, currentUnixTime, flag1, flag);
+					ChatController.AddPrivateMessage(keyValuePair.Key, privateMessage);
+				}
+			}
+		}
+		ChatController.countNewPrivateMessage = num1;
+	}
+
+	public static string GetPrivateChatJsonForSend()
+	{
+		return PlayerPrefs.GetString(ChatController.privateMessageSendKey, "[]");
+	}
+
+	[DebuggerHidden]
+	public IEnumerator MyWaitForSeconds(float tm)
+	{
+		ChatController.u003cMyWaitForSecondsu003ec__IteratorE variable = null;
+		return variable;
+	}
+
+	private void OnDestroy()
+	{
+		ChatController.sharedController = null;
+		base.StopAllCoroutines();
+	}
+
+	public void ParseUpdateChatMessageResponse(string response)
+	{
+		double num;
+		double num1;
+		Dictionary<string, object> strs = Json.Deserialize(response) as Dictionary<string, object>;
+		bool flag = false;
+		if (strs != null && strs.Count > 0)
+		{
+			if (strs.ContainsKey("user_messages_added"))
+			{
+				foreach (KeyValuePair<string, object> item in strs["user_messages_added"] as Dictionary<string, object>)
+				{
+					if (double.TryParse(item.Key, NumberStyles.Number, CultureInfo.InvariantCulture, out num))
+					{
+						foreach (KeyValuePair<string, List<ChatController.PrivateMessage>> keyValuePair in ChatController.privateMessagesForSend)
+						{
+							int num2 = -1;
+							int num3 = 0;
+							while (num3 < keyValuePair.Value.Count)
+							{
+								ChatController.PrivateMessage privateMessage = keyValuePair.Value[num3];
+								if (privateMessage.timeStamp != num)
+								{
+									num3++;
+								}
+								else
+								{
+									num2 = num3;
+									if (double.TryParse(item.Value.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out num1))
+									{
+										privateMessage.timeStamp = num1;
+									}
+									string key = keyValuePair.Key;
+									ChatController.PrivateMessage privateMessage1 = new ChatController.PrivateMessage(FriendsController.sharedController.id, privateMessage.message, privateMessage.timeStamp, true, true);
+									ChatController.AddPrivateMessage(key, privateMessage1);
+									flag = true;
+									break;
+								}
+							}
+							if (num2 < 0)
+							{
+								continue;
+							}
+							keyValuePair.Value.RemoveAt(num2);
+							break;
+						}
+					}
+					else
+					{
+						UnityEngine.Debug.LogWarning(string.Format("Could not parse timestamp {0}    Current culture: {1}, current UI culture: {2}", item.Value, CultureInfo.CurrentCulture.Name, CultureInfo.CurrentUICulture.Name));
+					}
+				}
+			}
+			if (strs.ContainsKey("user_messages"))
+			{
+				foreach (object obj in strs["user_messages"] as List<object>)
+				{
+					foreach (KeyValuePair<string, object> keyValuePair1 in obj as Dictionary<string, object>)
+					{
+						Dictionary<string, object> value = keyValuePair1.Value as Dictionary<string, object>;
+						string str = value["from"] as string;
+						string item1 = value["text"] as string;
+						double currentUnixTime = (double)Tools.CurrentUnixTime;
+						if (!double.TryParse(keyValuePair1.Key, NumberStyles.Number, CultureInfo.InvariantCulture, out currentUnixTime))
+						{
+							UnityEngine.Debug.LogWarning(string.Format("Could not parse message body key {0};    full response: {1}", keyValuePair1.Key, response));
+						}
+						double num4 = currentUnixTime;
+						ChatController.AddPrivateMessage(str, new ChatController.PrivateMessage(str, item1, num4, true, false));
+						ChatController.countNewPrivateMessage++;
+						if (PrivateChatController.sharedController != null)
+						{
+							PrivateChatController.sharedController.UpdateFriendItemsInfoAndSort();
+						}
+						flag = true;
+					}
+				}
+			}
+			if (ChatController.privateMessages != null)
+			{
+				List<string> strs1 = new List<string>();
+				foreach (KeyValuePair<string, List<ChatController.PrivateMessage>> privateMessage2 in ChatController.privateMessages)
+				{
+					if (FriendsController.sharedController.friends.Contains(privateMessage2.Key))
+					{
+						continue;
+					}
+					foreach (ChatController.PrivateMessage value1 in privateMessage2.Value)
+					{
+						if (value1.isRead)
+						{
+							continue;
+						}
+						ChatController.countNewPrivateMessage--;
+					}
+					strs1.Add(privateMessage2.Key);
+					flag = true;
+				}
+				foreach (string str1 in strs1)
+				{
+					ChatController.privateMessages.Remove(str1);
+				}
+			}
+		}
+		if (flag)
+		{
+			ChatController.SavePrivatMessageInPrefs();
+			if (PrivateChatController.sharedController != null)
+			{
+				PrivateChatController.sharedController.UpdateMessageForSelectedUsers(false);
+			}
+		}
+	}
+
+	public static void SavePrivatMessageInPrefs()
+	{
+		Dictionary<string, List<Dictionary<string, string>>> strs = new Dictionary<string, List<Dictionary<string, string>>>();
+		foreach (KeyValuePair<string, List<ChatController.PrivateMessage>> privateMessage in ChatController.privateMessages)
+		{
+			List<Dictionary<string, string>> dictionaries = new List<Dictionary<string, string>>();
+			foreach (ChatController.PrivateMessage value in privateMessage.Value)
+			{
+				Dictionary<string, string> strs1 = new Dictionary<string, string>()
+				{
+					{ "playerIDFrom", value.playerIDFrom },
+					{ "message", value.message },
+					{ "timeStamp", value.timeStamp.ToString("F8", CultureInfo.InvariantCulture) },
+					{ "isRead", value.isRead.ToString() },
+					{ "isSending", value.isSending.ToString() }
+				};
+				dictionaries.Add(strs1);
+			}
+			strs.Add(privateMessage.Key, dictionaries);
+		}
+		string str = Json.Serialize(strs);
+		PlayerPrefs.SetString(ChatController.privateMessageKey, str ?? "{}");
+		List<Dictionary<string, string>> dictionaries1 = new List<Dictionary<string, string>>();
+		foreach (KeyValuePair<string, List<ChatController.PrivateMessage>> keyValuePair in ChatController.privateMessagesForSend)
+		{
+			List<Dictionary<string, string>> dictionaries2 = new List<Dictionary<string, string>>();
+			foreach (ChatController.PrivateMessage value1 in keyValuePair.Value)
+			{
+				Dictionary<string, string> strs2 = new Dictionary<string, string>()
+				{
+					{ "to", keyValuePair.Key },
+					{ "text", value1.message },
+					{ "timeStamp", value1.timeStamp.ToString("F8", CultureInfo.InvariantCulture) }
+				};
+				dictionaries1.Add(strs2);
+			}
+		}
+		string str1 = Json.Serialize(dictionaries1);
+		PlayerPrefs.SetString(ChatController.privateMessageSendKey, str1 ?? "[]");
+		PlayerPrefs.Save();
+	}
+
+	public void SelectPrivateChatMode()
+	{
+	}
+
+	public void Show(Action exitCallback)
+	{
+		base.gameObject.SetActive(true);
+		this._backButtonCallback = exitCallback;
+	}
+
+	private void Start()
+	{
+		ChatController.sharedController = this;
+		ChatController.FillPrivatMessageFromPrefs();
+	}
+
 	public struct PrivateMessage
 	{
 		public string playerIDFrom;
@@ -22,313 +346,11 @@ public class ChatController : MonoBehaviour
 
 		public PrivateMessage(string _playerIDFrom, string _message, double _timeStamp, bool _isSending, bool _isRead)
 		{
-			playerIDFrom = _playerIDFrom;
-			message = _message;
-			timeStamp = _timeStamp;
-			isSending = _isSending;
-			isRead = _isRead;
+			this.playerIDFrom = _playerIDFrom;
+			this.message = _message;
+			this.timeStamp = _timeStamp;
+			this.isSending = _isSending;
+			this.isRead = _isRead;
 		}
-	}
-
-	public static ChatController sharedController = null;
-
-	public static int countNewPrivateMessage = 0;
-
-	private static string privateMessageKey = "PrivateMessageKey";
-
-	private static string privateMessageSendKey = "PrivateMessageSendKey";
-
-	public static float timerToUpdateMessage;
-
-	public static bool fastSendMessage;
-
-	public static float maxTimerToUpdateMessage = 10f;
-
-	public static Dictionary<string, List<PrivateMessage>> privateMessages = new Dictionary<string, List<PrivateMessage>>();
-
-	public static Dictionary<string, List<PrivateMessage>> privateMessagesForSend = new Dictionary<string, List<PrivateMessage>>();
-
-	private Action _backButtonCallback;
-
-	public static void FillPrivatMessageFromPrefs()
-	{
-		privateMessages.Clear();
-		int num = 0;
-		string @string = PlayerPrefs.GetString(privateMessageKey, "{}");
-		Dictionary<string, object> dictionary = null;
-		dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary != null && dictionary.Count > 0)
-		{
-			foreach (KeyValuePair<string, object> item in dictionary)
-			{
-				List<object> list = item.Value as List<object>;
-				foreach (object item2 in list)
-				{
-					Dictionary<string, object> dictionary2 = item2 as Dictionary<string, object>;
-					string playerIDFrom = dictionary2["playerIDFrom"] as string;
-					string message = dictionary2["message"] as string;
-					double timeStamp = Tools.CurrentUnixTime;
-					double result;
-					if (double.TryParse(dictionary2["timeStamp"].ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out result))
-					{
-						timeStamp = result;
-					}
-					else
-					{
-						Debug.LogWarning(string.Format("Could not parse timestamp {0}", item.Value));
-					}
-					bool flag = bool.Parse(dictionary2["isRead"] as string);
-					if (!flag)
-					{
-						num++;
-					}
-					bool isSending = bool.Parse(dictionary2["isSending"] as string);
-					AddPrivateMessage(_message: new PrivateMessage(playerIDFrom, message, timeStamp, isSending, flag), _playerIdChating: item.Key);
-				}
-			}
-		}
-		countNewPrivateMessage = num;
-	}
-
-	public static void FillPrivateMessageForSendFromPrefs()
-	{
-		privateMessagesForSend.Clear();
-		string @string = PlayerPrefs.GetString(privateMessageSendKey, "[]");
-		List<object> list = null;
-		list = Json.Deserialize(@string) as List<object>;
-		if (list == null || list.Count <= 0)
-		{
-			return;
-		}
-		foreach (object item in list)
-		{
-			Dictionary<string, string> dictionary = item as Dictionary<string, string>;
-			string text = dictionary["to"];
-			string message = dictionary["text"];
-			double timeStamp = double.Parse(dictionary["timeStamp"], NumberStyles.Number, CultureInfo.InvariantCulture);
-			bool isSending = true;
-			bool isRead = false;
-			if (!privateMessagesForSend.ContainsKey(text))
-			{
-				privateMessagesForSend.Add(text, new List<PrivateMessage>());
-			}
-			privateMessagesForSend[text].Add(new PrivateMessage(text, message, timeStamp, isSending, isRead));
-		}
-	}
-
-	public static void SavePrivatMessageInPrefs()
-	{
-		Dictionary<string, List<Dictionary<string, string>>> dictionary = new Dictionary<string, List<Dictionary<string, string>>>();
-		foreach (KeyValuePair<string, List<PrivateMessage>> privateMessage in privateMessages)
-		{
-			List<Dictionary<string, string>> list = new List<Dictionary<string, string>>();
-			foreach (PrivateMessage item in privateMessage.Value)
-			{
-				Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
-				dictionary2.Add("playerIDFrom", item.playerIDFrom);
-				dictionary2.Add("message", item.message);
-				dictionary2.Add("timeStamp", item.timeStamp.ToString("F8", CultureInfo.InvariantCulture));
-				dictionary2.Add("isRead", item.isRead.ToString());
-				dictionary2.Add("isSending", item.isSending.ToString());
-				list.Add(dictionary2);
-			}
-			dictionary.Add(privateMessage.Key, list);
-		}
-		string text = Json.Serialize(dictionary);
-		PlayerPrefs.SetString(privateMessageKey, text ?? "{}");
-		List<Dictionary<string, string>> list2 = new List<Dictionary<string, string>>();
-		foreach (KeyValuePair<string, List<PrivateMessage>> item2 in privateMessagesForSend)
-		{
-			List<Dictionary<string, string>> list3 = new List<Dictionary<string, string>>();
-			foreach (PrivateMessage item3 in item2.Value)
-			{
-				Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
-				dictionary3.Add("to", item2.Key);
-				dictionary3.Add("text", item3.message);
-				dictionary3.Add("timeStamp", item3.timeStamp.ToString("F8", CultureInfo.InvariantCulture));
-				list2.Add(dictionary3);
-			}
-		}
-		string text2 = Json.Serialize(list2);
-		PlayerPrefs.SetString(privateMessageSendKey, text2 ?? "[]");
-		PlayerPrefs.Save();
-	}
-
-	public static string GetPrivateChatJsonForSend()
-	{
-		return PlayerPrefs.GetString(privateMessageSendKey, "[]");
-	}
-
-	public void ParseUpdateChatMessageResponse(string response)
-	{
-		Dictionary<string, object> dictionary = Json.Deserialize(response) as Dictionary<string, object>;
-		bool flag = false;
-		if (dictionary != null && dictionary.Count > 0)
-		{
-			if (dictionary.ContainsKey("user_messages_added"))
-			{
-				Dictionary<string, object> dictionary2 = dictionary["user_messages_added"] as Dictionary<string, object>;
-				foreach (KeyValuePair<string, object> item in dictionary2)
-				{
-					double result;
-					if (!double.TryParse(item.Key, NumberStyles.Number, CultureInfo.InvariantCulture, out result))
-					{
-						Debug.LogWarning(string.Format("Could not parse timestamp {0}    Current culture: {1}, current UI culture: {2}", item.Value, CultureInfo.CurrentCulture.Name, CultureInfo.CurrentUICulture.Name));
-						continue;
-					}
-					foreach (KeyValuePair<string, List<PrivateMessage>> item2 in privateMessagesForSend)
-					{
-						int num = -1;
-						for (int i = 0; i < item2.Value.Count; i++)
-						{
-							PrivateMessage privateMessage = item2.Value[i];
-							if (privateMessage.timeStamp == result)
-							{
-								num = i;
-								double result2;
-								if (double.TryParse(item.Value.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out result2))
-								{
-									privateMessage.timeStamp = result2;
-								}
-								string key = item2.Key;
-								PrivateMessage message = new PrivateMessage(FriendsController.sharedController.id, privateMessage.message, privateMessage.timeStamp, true, true);
-								AddPrivateMessage(key, message);
-								flag = true;
-								break;
-							}
-						}
-						if (num >= 0)
-						{
-							item2.Value.RemoveAt(num);
-							break;
-						}
-					}
-				}
-			}
-			if (dictionary.ContainsKey("user_messages"))
-			{
-				List<object> list = dictionary["user_messages"] as List<object>;
-				foreach (object item3 in list)
-				{
-					Dictionary<string, object> dictionary3 = item3 as Dictionary<string, object>;
-					foreach (KeyValuePair<string, object> item4 in dictionary3)
-					{
-						Dictionary<string, object> dictionary4 = item4.Value as Dictionary<string, object>;
-						string text = dictionary4["from"] as string;
-						string message2 = dictionary4["text"] as string;
-						double result3 = Tools.CurrentUnixTime;
-						if (!double.TryParse(item4.Key, NumberStyles.Number, CultureInfo.InvariantCulture, out result3))
-						{
-							Debug.LogWarning(string.Format("Could not parse message body key {0};    full response: {1}", item4.Key, response));
-						}
-						double timeStamp = result3;
-						AddPrivateMessage(text, new PrivateMessage(text, message2, timeStamp, true, false));
-						countNewPrivateMessage++;
-						if (PrivateChatController.sharedController != null)
-						{
-							PrivateChatController.sharedController.UpdateFriendItemsInfoAndSort();
-						}
-						flag = true;
-					}
-				}
-			}
-			if (privateMessages != null)
-			{
-				List<string> list2 = new List<string>();
-				foreach (KeyValuePair<string, List<PrivateMessage>> privateMessage2 in privateMessages)
-				{
-					if (FriendsController.sharedController.friends.Contains(privateMessage2.Key))
-					{
-						continue;
-					}
-					foreach (PrivateMessage item5 in privateMessage2.Value)
-					{
-						if (!item5.isRead)
-						{
-							countNewPrivateMessage--;
-						}
-					}
-					list2.Add(privateMessage2.Key);
-					flag = true;
-				}
-				foreach (string item6 in list2)
-				{
-					privateMessages.Remove(item6);
-				}
-			}
-		}
-		if (flag)
-		{
-			SavePrivatMessageInPrefs();
-			if (PrivateChatController.sharedController != null)
-			{
-				PrivateChatController.sharedController.UpdateMessageForSelectedUsers();
-			}
-		}
-	}
-
-	public static void AddPrivateMessage(string _playerIdChating, PrivateMessage _message)
-	{
-		if (!privateMessages.ContainsKey(_playerIdChating))
-		{
-			privateMessages.Add(_playerIdChating, new List<PrivateMessage>());
-		}
-		privateMessages[_playerIdChating].Add(_message);
-		while (privateMessages[_playerIdChating].Count > Defs.historyPrivateMessageLength)
-		{
-			if (!privateMessages[_playerIdChating][0].isRead)
-			{
-				countNewPrivateMessage--;
-			}
-			privateMessages[_playerIdChating].RemoveAt(0);
-		}
-	}
-
-	private void Start()
-	{
-		sharedController = this;
-		FillPrivatMessageFromPrefs();
-	}
-
-	private void OnDestroy()
-	{
-		sharedController = null;
-		StopAllCoroutines();
-	}
-
-	public void SelectPrivateChatMode()
-	{
-	}
-
-	public void BackButtonClick()
-	{
-		if (ButtonClickSound.Instance != null)
-		{
-			ButtonClickSound.Instance.PlayClick();
-		}
-		if (_backButtonCallback != null)
-		{
-			_backButtonCallback();
-		}
-		else
-		{
-			Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene);
-		}
-	}
-
-	public IEnumerator MyWaitForSeconds(float tm)
-	{
-		float startTime = Time.realtimeSinceStartup;
-		do
-		{
-			yield return null;
-		}
-		while (Time.realtimeSinceStartup - startTime < tm);
-	}
-
-	public void Show(Action exitCallback)
-	{
-		base.gameObject.SetActive(true);
-		_backButtonCallback = exitCallback;
 	}
 }

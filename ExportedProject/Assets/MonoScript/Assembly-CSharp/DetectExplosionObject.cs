@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DetectExplosionObject : BaseExplosionObject
@@ -7,48 +8,58 @@ public class DetectExplosionObject : BaseExplosionObject
 
 	private bool _isEnter;
 
-	private void SetEnableDetectCollider(bool enable)
+	public DetectExplosionObject()
 	{
-		if (!(GetComponent<Collider>() == null))
-		{
-			GetComponent<Collider>().enabled = enable;
-		}
 	}
 
 	private void Awake()
 	{
-		SetEnableDetectCollider(false);
-	}
-
-	private void OnTriggerEnter(Collider collisionObj)
-	{
-		CollisionEvent(collisionObj.gameObject);
-	}
-
-	private void OnCollisionEnter(Collision collisionObj)
-	{
-		CollisionEvent(collisionObj.gameObject);
+		this.SetEnableDetectCollider(false);
 	}
 
 	private void CollisionEvent(GameObject collisionObj)
 	{
-		if (IsTargetAvailable(collisionObj.transform.root) && !_isEnter)
+		if (!base.IsTargetAvailable(collisionObj.transform.root))
 		{
-			_isEnter = true;
-			if (durationBeforeExplosion != 0f)
-			{
-				Invoke("RunExplosion", durationBeforeExplosion);
-			}
-			else
-			{
-				RunExplosion();
-			}
+			return;
+		}
+		if (this._isEnter)
+		{
+			return;
+		}
+		this._isEnter = true;
+		if (this.durationBeforeExplosion == 0f)
+		{
+			base.RunExplosion();
+		}
+		else
+		{
+			base.Invoke("RunExplosion", this.durationBeforeExplosion);
 		}
 	}
 
 	protected override void InitializeData()
 	{
 		base.InitializeData();
-		SetEnableDetectCollider(true);
+		this.SetEnableDetectCollider(true);
+	}
+
+	private void OnCollisionEnter(Collision collisionObj)
+	{
+		this.CollisionEvent(collisionObj.gameObject);
+	}
+
+	private void OnTriggerEnter(Collider collisionObj)
+	{
+		this.CollisionEvent(collisionObj.gameObject);
+	}
+
+	private void SetEnableDetectCollider(bool enable)
+	{
+		if (base.GetComponent<Collider>() == null)
+		{
+			return;
+		}
+		base.GetComponent<Collider>().enabled = enable;
 	}
 }

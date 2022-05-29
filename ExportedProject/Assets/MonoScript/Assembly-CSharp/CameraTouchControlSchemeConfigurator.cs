@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,5 +51,13 @@ public sealed class CameraTouchControlSchemeConfigurator : MonoBehaviour
 
 	public InputField mouseLookAccelerationThreshold;
 
-	public static CameraTouchControlSchemeConfigurator Instance { get; private set; }
+	public static CameraTouchControlSchemeConfigurator Instance
+	{
+		get;
+		private set;
+	}
+
+	public CameraTouchControlSchemeConfigurator()
+	{
+	}
 }

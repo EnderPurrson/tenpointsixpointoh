@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class HoleBulletStackController : MonoBehaviour
@@ -8,21 +9,8 @@ public class HoleBulletStackController : MonoBehaviour
 
 	private int currentIndexHole;
 
-	private void Start()
+	public HoleBulletStackController()
 	{
-		if (Device.isPixelGunLow)
-		{
-			Object.Destroy(base.gameObject);
-		}
-		sharedController = this;
-		base.transform.position = Vector3.zero;
-		GameObject[] array = GameObject.FindGameObjectsWithTag("HoleBullet");
-		holes = new HoleScript[array.Length];
-		for (int i = 0; i < array.Length; i++)
-		{
-			holes[i] = array[i].GetComponent<HoleScript>();
-			holes[i].Init();
-		}
 	}
 
 	public HoleScript GetCurrentHole(bool _isUseMine)
@@ -30,23 +18,41 @@ public class HoleBulletStackController : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexHole++;
-			if (currentIndexHole >= holes.Length)
+			this.currentIndexHole++;
+			if (this.currentIndexHole < (int)this.holes.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexHole = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexHole = 0;
+			flag = false;
 		}
-		while (holes[currentIndexHole].isUseMine && !_isUseMine);
-		return holes[currentIndexHole];
+		while (this.holes[this.currentIndexHole].isUseMine && !_isUseMine);
+		return this.holes[this.currentIndexHole];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		HoleBulletStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		if (Device.isPixelGunLow)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+		}
+		HoleBulletStackController.sharedController = this;
+		base.transform.position = Vector3.zero;
+		GameObject[] gameObjectArray = GameObject.FindGameObjectsWithTag("HoleBullet");
+		this.holes = new HoleScript[(int)gameObjectArray.Length];
+		for (int i = 0; i < (int)gameObjectArray.Length; i++)
+		{
+			this.holes[i] = gameObjectArray[i].GetComponent<HoleScript>();
+			this.holes[i].Init();
+		}
 	}
 }

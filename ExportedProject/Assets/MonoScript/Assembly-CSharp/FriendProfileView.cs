@@ -1,56 +1,17 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using Holoville.HOTween;
 using Holoville.HOTween.Plugins;
 using Rilisoft;
 using Rilisoft.NullExtensions;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class FriendProfileView : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CSetOnlineState_003Ec__AnonStorey2A8
-	{
-		internal bool isStateOffline;
-
-		internal bool isStateInFriends;
-
-		internal bool isStatePlaying;
-
-		internal void _003C_003Em__2A0(UILabel l)
-		{
-			l.gameObject.SetActive(isStateOffline);
-		}
-
-		internal void _003C_003Em__2A1(UILabel l)
-		{
-			l.gameObject.SetActive(isStateInFriends);
-		}
-
-		internal void _003C_003Em__2A2(UILabel l)
-		{
-			l.gameObject.SetActive(isStatePlaying);
-		}
-
-		internal void _003C_003Em__2A3(UISprite l)
-		{
-			l.gameObject.SetActive(isStateOffline);
-		}
-
-		internal void _003C_003Em__2A4(UISprite l)
-		{
-			l.gameObject.SetActive(isStateInFriends);
-		}
-
-		internal void _003C_003Em__2A5(UISprite l)
-		{
-			l.gameObject.SetActive(isStatePlaying);
-		}
-	}
-
 	private const string DefaultStatisticString = "-";
 
 	public Transform pers;
@@ -145,466 +106,150 @@ internal sealed class FriendProfileView : MonoBehaviour
 
 	private float idleTimerLastTime;
 
-	private readonly Lazy<Rect> _touchZone;
+	private readonly Lazy<Rect> _touchZone = new Lazy<Rect>(new Func<Rect>(() => new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height)));
 
-	[CompilerGenerated]
-	private static Func<Rect> _003C_003Ef__am_0024cache42;
+	private Action BackButtonClickEvent;
 
-	[CompilerGenerated]
-	private static Func<byte[], Texture2D> _003C_003Ef__am_0024cache43;
+	private Action JoinButtonClickEvent;
 
-	public bool IsCanConnectToFriend { get; set; }
+	private Action CopyMyIdButtonClickEvent;
 
-	public string FriendLocation { get; set; }
+	private Action ChatButtonClickEvent;
 
-	public int FriendCount { get; set; }
+	private Action AddButtonClickEvent;
 
-	public string FriendName { get; set; }
+	private Action RemoveButtonClickEvent;
 
-	public OnlineState Online { get; set; }
+	private Action InviteToClanButtonClickEvent;
 
-	public int Rank { get; set; }
+	private Action UpdateRequested;
 
-	public int SurvivalScore { get; set; }
+	public int FriendCount
+	{
+		get;
+		set;
+	}
 
-	public string Username { get; set; }
+	public string FriendGameMode
+	{
+		get;
+		set;
+	}
 
-	public int WinCount { get; set; }
+	public string FriendId
+	{
+		get;
+		set;
+	}
 
-	public int TotalWinCount { get; set; }
+	public string FriendLocation
+	{
+		get;
+		set;
+	}
 
-	public string FriendGameMode { get; set; }
+	public string FriendName
+	{
+		get;
+		set;
+	}
 
-	public string FriendId { get; set; }
+	public bool IsCanConnectToFriend
+	{
+		get;
+		set;
+	}
 
-	public string NotConnectCondition { get; set; }
+	public string NotConnectCondition
+	{
+		get;
+		set;
+	}
 
-	public event Action BackButtonClickEvent;
+	public OnlineState Online
+	{
+		get;
+		set;
+	}
 
-	public event Action JoinButtonClickEvent;
+	public int Rank
+	{
+		get;
+		set;
+	}
 
-	public event Action CopyMyIdButtonClickEvent;
+	public int SurvivalScore
+	{
+		get;
+		set;
+	}
 
-	public event Action ChatButtonClickEvent;
+	public int TotalWinCount
+	{
+		get;
+		set;
+	}
 
-	public event Action AddButtonClickEvent;
+	public string Username
+	{
+		get;
+		set;
+	}
 
-	public event Action RemoveButtonClickEvent;
-
-	public event Action InviteToClanButtonClickEvent;
-
-	public event Action UpdateRequested;
+	public int WinCount
+	{
+		get;
+		set;
+	}
 
 	public FriendProfileView()
 	{
-		if (_003C_003Ef__am_0024cache42 == null)
-		{
-			_003C_003Ef__am_0024cache42 = _003C_touchZone_003Em__29F;
-		}
-		_touchZone = new Lazy<Rect>(_003C_003Ef__am_0024cache42);
-		base._002Ector();
-	}
-
-	public void Reset()
-	{
-		IsCanConnectToFriend = false;
-		FriendLocation = string.Empty;
-		FriendCount = 0;
-		FriendName = string.Empty;
-		Online = ((!FriendsController.IsPlayerOurFriend(FriendId)) ? OnlineState.none : OnlineState.offline);
-		Rank = 0;
-		SurvivalScore = 0;
-		Username = string.Empty;
-		WinCount = 0;
-		if (characterModel != null)
-		{
-			Texture texture = Resources.Load<Texture>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1"));
-			if (texture != null)
-			{
-				GameObject[] stopObjs = new GameObject[7]
-				{
-					(bootsPoint == null || bootsPoint.Length <= 0) ? null : bootsPoint[0].transform.parent.gameObject,
-					hatPoint,
-					capePoint,
-					armorPoint,
-					armorLeftPl,
-					armorRightPl,
-					maskPoint
-				};
-				Player_move_c.SetTextureRecursivelyFrom(characterModel, texture, stopObjs);
-			}
-		}
-		SetOnlineState(Online);
-		if (bootsPoint != null && bootsPoint.Length > 0)
-		{
-			GameObject[] array = bootsPoint;
-			foreach (GameObject gameObject in array)
-			{
-				gameObject.SetActive(false);
-			}
-		}
-		if (hatPoint != null)
-		{
-			Transform transform = hatPoint.transform;
-			for (int j = 0; j != transform.childCount; j++)
-			{
-				Transform child = transform.GetChild(j);
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-		}
-		if (maskPoint != null)
-		{
-			Transform transform2 = maskPoint.transform;
-			for (int k = 0; k != transform2.childCount; k++)
-			{
-				UnityEngine.Object.Destroy(transform2.GetChild(k).gameObject);
-			}
-		}
-		if (capePoint != null)
-		{
-			Transform transform3 = capePoint.transform;
-			for (int l = 0; l != transform3.childCount; l++)
-			{
-				Transform child2 = transform3.GetChild(l);
-				UnityEngine.Object.Destroy(child2.gameObject);
-			}
-		}
-		if (armorPoint != null)
-		{
-			Transform transform4 = armorPoint.transform;
-			for (int m = 0; m != transform4.childCount; m++)
-			{
-				Transform child3 = transform4.GetChild(m);
-				UnityEngine.Object.Destroy(child3.gameObject);
-			}
-		}
-		SetEnableAddButton(true);
-		SetEnableInviteClanButton(true);
-	}
-
-	public void SetBoots(string name)
-	{
-		if (string.IsNullOrEmpty(name))
-		{
-			Debug.LogWarning("Name of boots should not be empty.");
-		}
-		else if (bootsPoint != null && bootsPoint.Length > 0)
-		{
-			for (int i = 0; i != bootsPoint.Length; i++)
-			{
-				bootsPoint[i].SetActive(bootsPoint[i].name.Equals(name));
-			}
-		}
-	}
-
-	private void SetOnlineState(OnlineState onlineState)
-	{
-		_003CSetOnlineState_003Ec__AnonStorey2A8 _003CSetOnlineState_003Ec__AnonStorey2A = new _003CSetOnlineState_003Ec__AnonStorey2A8();
-		_003CSetOnlineState_003Ec__AnonStorey2A.isStateOffline = onlineState == OnlineState.offline;
-		_003CSetOnlineState_003Ec__AnonStorey2A.isStateInFriends = onlineState == OnlineState.inFriends;
-		_003CSetOnlineState_003Ec__AnonStorey2A.isStatePlaying = onlineState == OnlineState.playing;
-		offlineStateLabel.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A0);
-		inFriendStateLabel.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A1);
-		playingStateLabel.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A2);
-		offlineState.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A3);
-		inFriendState.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A4);
-		playingState.Do(_003CSetOnlineState_003Ec__AnonStorey2A._003C_003Em__2A5);
-		if (playingStateInfoContainer != null)
-		{
-			playingStateInfoContainer.SetActive(_003CSetOnlineState_003Ec__AnonStorey2A.isStatePlaying);
-		}
-	}
-
-	public void SetStockCape(string capeName)
-	{
-		if (string.IsNullOrEmpty(capeName))
-		{
-			Debug.LogWarning("Name of cape should not be empty.");
-		}
-		else if (capePoint != null)
-		{
-			Transform transform = capePoint.transform;
-			for (int i = 0; i != transform.childCount; i++)
-			{
-				Transform child = transform.GetChild(i);
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-			UnityEngine.Object @object = Resources.Load("Capes/" + capeName);
-			if (@object != null)
-			{
-				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(@object);
-				gameObject.transform.parent = transform;
-				gameObject.transform.localPosition = Vector3.zero;
-				gameObject.transform.localRotation = Quaternion.identity;
-				gameObject.transform.localScale = Vector3.one;
-				Player_move_c.SetLayerRecursively(gameObject, capePoint.layer);
-			}
-		}
-	}
-
-	public void SetCustomCape(byte[] capeBytes)
-	{
-		if (capePoint != null)
-		{
-			Transform transform = capePoint.transform;
-			for (int i = 0; i != transform.childCount; i++)
-			{
-				Transform child = transform.GetChild(i);
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-			UnityEngine.Object @object = Resources.Load("Capes/cape_Custom");
-			if (@object != null)
-			{
-				capeBytes = capeBytes ?? new byte[0];
-				Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
-				texture2D.LoadImage(capeBytes);
-				texture2D.filterMode = FilterMode.Point;
-				texture2D.Apply();
-				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(@object);
-				gameObject.transform.parent = transform;
-				gameObject.transform.localPosition = Vector3.zero;
-				gameObject.transform.localRotation = Quaternion.identity;
-				gameObject.transform.localScale = Vector3.one;
-				Player_move_c.SetLayerRecursively(gameObject, capePoint.layer);
-				gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
-				Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
-			}
-		}
-	}
-
-	public void SetArmor(string armorName)
-	{
-		if (string.IsNullOrEmpty(armorName))
-		{
-			Debug.LogWarning("Name of armor should not be empty.");
-			return;
-		}
-		List<Transform> list = new List<Transform>();
-		for (int i = 0; i < armorPoint.transform.childCount; i++)
-		{
-			list.Add(armorPoint.transform.GetChild(i));
-		}
-		foreach (Transform item in list)
-		{
-			ArmorRefs component = item.GetChild(0).GetComponent<ArmorRefs>();
-			if (component != null)
-			{
-				if (component.leftBone != null)
-				{
-					component.leftBone.parent = item.GetChild(0);
-				}
-				if (component.rightBone != null)
-				{
-					component.rightBone.parent = item.GetChild(0);
-				}
-				item.parent = null;
-				UnityEngine.Object.Destroy(item.gameObject);
-			}
-		}
-		if (armorName.Equals(Defs.ArmorNewNoneEqupped))
-		{
-			return;
-		}
-		UnityEngine.Object @object = Resources.Load("Armor/" + armorName);
-		if (!(@object == null))
-		{
-			GameObject gameObject = UnityEngine.Object.Instantiate(@object) as GameObject;
-			ArmorRefs component2 = gameObject.transform.GetChild(0).GetComponent<ArmorRefs>();
-			if (component2 != null)
-			{
-				component2.leftBone.parent = armorLeftPl.transform;
-				component2.leftBone.localPosition = Vector3.zero;
-				component2.leftBone.localRotation = Quaternion.identity;
-				component2.leftBone.localScale = Vector3.one;
-				component2.rightBone.parent = armorRightPl.transform;
-				component2.rightBone.localPosition = Vector3.zero;
-				component2.rightBone.localRotation = Quaternion.identity;
-				component2.rightBone.localScale = Vector3.one;
-				gameObject.transform.parent = armorPoint.transform;
-				gameObject.transform.localPosition = Vector3.zero;
-				gameObject.transform.localRotation = Quaternion.identity;
-				gameObject.transform.localScale = Vector3.one;
-				Player_move_c.SetLayerRecursively(gameObject, armorPoint.layer);
-			}
-		}
-	}
-
-	public void SetHat(string hatName)
-	{
-		if (string.IsNullOrEmpty(hatName))
-		{
-			Debug.LogWarning("Name of hat should not be empty.");
-		}
-		else if (hatPoint != null)
-		{
-			Transform transform = hatPoint.transform;
-			for (int i = 0; i != transform.childCount; i++)
-			{
-				Transform child = transform.GetChild(i);
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-			UnityEngine.Object @object = Resources.Load("Hats/" + hatName);
-			if (@object != null)
-			{
-				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(@object);
-				gameObject.transform.parent = transform;
-				gameObject.transform.localPosition = Vector3.zero;
-				gameObject.transform.localRotation = Quaternion.identity;
-				gameObject.transform.localScale = Vector3.one;
-				Player_move_c.SetLayerRecursively(gameObject, hatPoint.layer);
-			}
-		}
-	}
-
-	public void SetMask(string maskName)
-	{
-		if (string.IsNullOrEmpty(maskName))
-		{
-			Debug.LogWarning("Name of mask should not be empty.");
-		}
-		else if (maskPoint != null)
-		{
-			Transform transform = maskPoint.transform;
-			for (int i = 0; i != transform.childCount; i++)
-			{
-				Transform child = transform.GetChild(i);
-				UnityEngine.Object.Destroy(child.gameObject);
-			}
-			UnityEngine.Object @object = Resources.Load("Masks/" + maskName);
-			if (@object != null)
-			{
-				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(@object);
-				gameObject.transform.parent = transform;
-				gameObject.transform.localPosition = Vector3.zero;
-				gameObject.transform.localRotation = Quaternion.identity;
-				gameObject.transform.localScale = Vector3.one;
-				Player_move_c.SetLayerRecursively(gameObject, maskPoint.layer);
-			}
-		}
-	}
-
-	public void SetSkin(byte[] skinBytes)
-	{
-		skinBytes = skinBytes ?? new byte[0];
-		if (characterModel != null)
-		{
-			if (_003C_003Ef__am_0024cache43 == null)
-			{
-				_003C_003Ef__am_0024cache43 = _003CSetSkin_003Em__2A6;
-			}
-			Func<byte[], Texture2D> func = _003C_003Ef__am_0024cache43;
-			Texture2D txt = ((skinBytes.Length <= 0) ? Resources.Load<Texture2D>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1")) : func(skinBytes));
-			GameObject[] stopObjs = new GameObject[7]
-			{
-				(bootsPoint == null || bootsPoint.Length <= 0) ? null : bootsPoint[0].transform.parent.gameObject,
-				hatPoint,
-				capePoint,
-				armorPoint,
-				armorLeftPl,
-				armorRightPl,
-				maskPoint
-			};
-			Player_move_c.SetTextureRecursivelyFrom(characterModel, txt, stopObjs);
-		}
 	}
 
 	private void Awake()
 	{
 		HOTween.Init(true, true, true);
-		HOTween.EnableOverwriteManager();
-		Reset();
-		if (backButton != null)
+		HOTween.EnableOverwriteManager(true);
+		this.Reset();
+		if (this.backButton != null)
 		{
-			EventDelegate.Add(backButton.onClick, OnBackButtonClick);
+			EventDelegate.Add(this.backButton.onClick, new EventDelegate.Callback(this.OnBackButtonClick));
 		}
-		if (joinButton != null)
+		if (this.joinButton != null)
 		{
-			EventDelegate.Add(joinButton.onClick, OnJoinButtonClick);
+			EventDelegate.Add(this.joinButton.onClick, new EventDelegate.Callback(this.OnJoinButtonClick));
 		}
-		if (sendMyIdButton != null)
+		if (this.sendMyIdButton != null)
 		{
-			EventDelegate.Add(sendMyIdButton.onClick, OnSendMyIdButtonClick);
+			EventDelegate.Add(this.sendMyIdButton.onClick, new EventDelegate.Callback(this.OnSendMyIdButtonClick));
 			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
 			{
-				sendMyIdButton.gameObject.SetActive(false);
+				this.sendMyIdButton.gameObject.SetActive(false);
 			}
 		}
-		if (chatButton != null)
+		if (this.chatButton != null)
 		{
-			EventDelegate.Add(chatButton.onClick, OnChatButtonClick);
+			EventDelegate.Add(this.chatButton.onClick, new EventDelegate.Callback(this.OnChatButtonClick));
 		}
-		if (addFriendButton != null)
+		if (this.addFriendButton != null)
 		{
-			EventDelegate.Add(addFriendButton.onClick, OnAddButtonClick);
+			EventDelegate.Add(this.addFriendButton.onClick, new EventDelegate.Callback(this.OnAddButtonClick));
 		}
-		if (removeFriendButton != null)
+		if (this.removeFriendButton != null)
 		{
-			EventDelegate.Add(removeFriendButton.onClick, OnRemoveButtonClick);
+			EventDelegate.Add(this.removeFriendButton.onClick, new EventDelegate.Callback(this.OnRemoveButtonClick));
 		}
-		if (inviteToClanButton != null)
+		if (this.inviteToClanButton != null)
 		{
-			EventDelegate.Add(inviteToClanButton.onClick, OnInviteToClanButtonClick);
+			EventDelegate.Add(this.inviteToClanButton.onClick, new EventDelegate.Callback(this.OnInviteToClanButtonClick));
 		}
-	}
-
-	private void OnDisable()
-	{
-		StopCoroutine("RequestUpdate");
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
-	}
-
-	private void OnEnable()
-	{
-		StartCoroutine("RequestUpdate");
-		idleTimerLastTime = Time.realtimeSinceStartup;
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(HandleEscape, "Friend Profile");
 	}
 
 	private void HandleEscape()
 	{
 		if (!InfoWindowController.IsActive)
 		{
-			_escapePressed = true;
-		}
-	}
-
-	private void OnBackButtonClick()
-	{
-		if (this.BackButtonClickEvent != null)
-		{
-			this.BackButtonClickEvent();
-		}
-	}
-
-	private void OnJoinButtonClick()
-	{
-		if (this.JoinButtonClickEvent != null)
-		{
-			this.JoinButtonClickEvent();
-		}
-	}
-
-	private void OnSendMyIdButtonClick()
-	{
-		if (this.CopyMyIdButtonClickEvent != null)
-		{
-			this.CopyMyIdButtonClickEvent();
-		}
-	}
-
-	private void OnChatButtonClick()
-	{
-		if (this.ChatButtonClickEvent != null)
-		{
-			this.ChatButtonClickEvent();
+			this._escapePressed = true;
 		}
 	}
 
@@ -616,12 +261,41 @@ internal sealed class FriendProfileView : MonoBehaviour
 		}
 	}
 
-	private void OnRemoveButtonClick()
+	private void OnBackButtonClick()
 	{
-		if (this.RemoveButtonClickEvent != null)
+		if (this.BackButtonClickEvent != null)
 		{
-			this.RemoveButtonClickEvent();
+			this.BackButtonClickEvent();
 		}
+	}
+
+	private void OnChatButtonClick()
+	{
+		if (this.ChatButtonClickEvent != null)
+		{
+			this.ChatButtonClickEvent();
+		}
+	}
+
+	private void OnDisable()
+	{
+		base.StopCoroutine("RequestUpdate");
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		base.StartCoroutine("RequestUpdate");
+		this.idleTimerLastTime = Time.realtimeSinceStartup;
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(this.HandleEscape), "Friend Profile");
 	}
 
 	private void OnInviteToClanButtonClick()
@@ -632,204 +306,632 @@ internal sealed class FriendProfileView : MonoBehaviour
 		}
 	}
 
-	[Obfuscation(Exclude = true)]
-	private IEnumerator RequestUpdate()
+	private void OnJoinButtonClick()
 	{
-		while (true)
+		if (this.JoinButtonClickEvent != null)
 		{
-			if (this.UpdateRequested != null)
-			{
-				this.UpdateRequested();
-			}
-			yield return new WaitForSeconds(5f);
+			this.JoinButtonClickEvent();
 		}
 	}
 
-	private void Update()
+	private void OnRemoveButtonClick()
 	{
-		if (_escapePressed)
+		if (this.RemoveButtonClickEvent != null)
 		{
-			_escapePressed = false;
-			OnBackButtonClick();
-			return;
+			this.RemoveButtonClickEvent();
 		}
-		UpdateLightweight();
-		float num = -120f;
-		num *= ((BuildSettings.BuildTargetPlatform != RuntimePlatform.Android) ? 0.5f : 2f);
-		Rect value = _touchZone.Value;
-		if (Input.touchCount > 0)
+	}
+
+	private void OnSendMyIdButtonClick()
+	{
+		if (this.CopyMyIdButtonClickEvent != null)
 		{
-			Touch touch = Input.GetTouch(0);
-			if (touch.phase == TouchPhase.Moved && value.Contains(touch.position))
+			this.CopyMyIdButtonClickEvent();
+		}
+	}
+
+	[DebuggerHidden]
+	[Obfuscation(Exclude=true)]
+	private IEnumerator RequestUpdate()
+	{
+		FriendProfileView.u003cRequestUpdateu003ec__Iterator13D variable = null;
+		return variable;
+	}
+
+	public void Reset()
+	{
+		GameObject gameObject;
+		this.IsCanConnectToFriend = false;
+		this.FriendLocation = string.Empty;
+		this.FriendCount = 0;
+		this.FriendName = string.Empty;
+		this.Online = (!FriendsController.IsPlayerOurFriend(this.FriendId) ? OnlineState.none : OnlineState.offline);
+		this.Rank = 0;
+		this.SurvivalScore = 0;
+		this.Username = string.Empty;
+		this.WinCount = 0;
+		if (this.characterModel != null)
+		{
+			Texture texture = Resources.Load<Texture>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1"));
+			if (texture != null)
 			{
-				idleTimerLastTime = Time.realtimeSinceStartup;
-				pers.Rotate(Vector3.up, touch.deltaPosition.x * num * 0.5f * (Time.realtimeSinceStartup - lastTime));
+				GameObject[] gameObjectArray = new GameObject[7];
+				if (this.bootsPoint == null || (int)this.bootsPoint.Length <= 0)
+				{
+					gameObject = null;
+				}
+				else
+				{
+					gameObject = this.bootsPoint[0].transform.parent.gameObject;
+				}
+				gameObjectArray[0] = gameObject;
+				gameObjectArray[1] = this.hatPoint;
+				gameObjectArray[2] = this.capePoint;
+				gameObjectArray[3] = this.armorPoint;
+				gameObjectArray[4] = this.armorLeftPl;
+				gameObjectArray[5] = this.armorRightPl;
+				gameObjectArray[6] = this.maskPoint;
+				Player_move_c.SetTextureRecursivelyFrom(this.characterModel, texture, gameObjectArray);
 			}
 		}
-		if (Application.isEditor)
+		this.SetOnlineState(this.Online);
+		if (this.bootsPoint != null && (int)this.bootsPoint.Length > 0)
 		{
-			float num2 = Input.GetAxis("Mouse ScrollWheel") * 3f * num * (Time.realtimeSinceStartup - lastTime);
-			pers.Rotate(Vector3.up, num2);
-			if (num2 != 0f)
+			GameObject[] gameObjectArray1 = this.bootsPoint;
+			for (int i = 0; i < (int)gameObjectArray1.Length; i++)
 			{
-				idleTimerLastTime = Time.realtimeSinceStartup;
+				gameObjectArray1[i].SetActive(false);
 			}
 		}
-		if (Time.realtimeSinceStartup - idleTimerLastTime > ShopNGUIController.IdleTimeoutPers)
+		if (this.hatPoint != null)
 		{
-			ReturnPersTonNormState();
+			Transform transforms = this.hatPoint.transform;
+			for (int j = 0; j != transforms.childCount; j++)
+			{
+				UnityEngine.Object.Destroy(transforms.GetChild(j).gameObject);
+			}
 		}
-		lastTime = Time.realtimeSinceStartup;
+		if (this.maskPoint != null)
+		{
+			Transform transforms1 = this.maskPoint.transform;
+			for (int k = 0; k != transforms1.childCount; k++)
+			{
+				UnityEngine.Object.Destroy(transforms1.GetChild(k).gameObject);
+			}
+		}
+		if (this.capePoint != null)
+		{
+			Transform transforms2 = this.capePoint.transform;
+			for (int l = 0; l != transforms2.childCount; l++)
+			{
+				UnityEngine.Object.Destroy(transforms2.GetChild(l).gameObject);
+			}
+		}
+		if (this.armorPoint != null)
+		{
+			Transform transforms3 = this.armorPoint.transform;
+			for (int m = 0; m != transforms3.childCount; m++)
+			{
+				UnityEngine.Object.Destroy(transforms3.GetChild(m).gameObject);
+			}
+		}
+		this.SetEnableAddButton(true);
+		this.SetEnableInviteClanButton(true);
 	}
 
 	private void ReturnPersTonNormState()
 	{
-		HOTween.Kill(pers);
-		Vector3 p_endVal = new Vector3(0f, -180f, 0f);
-		idleTimerLastTime = Time.realtimeSinceStartup;
-		HOTween.To(pers, 0.5f, new TweenParms().Prop("localRotation", new PlugQuaternion(p_endVal)).Ease(EaseType.Linear).OnComplete(_003CReturnPersTonNormState_003Em__2A7));
+		HOTween.Kill(this.pers);
+		Vector3 vector3 = new Vector3(0f, -180f, 0f);
+		this.idleTimerLastTime = Time.realtimeSinceStartup;
+		HOTween.To(this.pers, 0.5f, (new TweenParms()).Prop("localRotation", new PlugQuaternion(vector3)).Ease(EaseType.Linear).OnComplete(() => this.idleTimerLastTime = Time.realtimeSinceStartup));
 	}
 
-	private void UpdateLightweight()
+	public void SetActiveAddButton(bool isActive)
 	{
-		if (friendLocationLabel != null)
-		{
-			friendLocationLabel.text = FriendLocation ?? string.Empty;
-		}
-		if (friendCountLabel != null)
-		{
-			friendCountLabel.text = ((FriendCount >= 0) ? FriendCount.ToString() : "-");
-		}
-		if (friendNameLabel != null)
-		{
-			friendNameLabel.text = FriendName ?? string.Empty;
-		}
-		SetOnlineState(Online);
-		notConnectJoinButtonSprite.alpha = ((!IsCanConnectToFriend) ? 1f : 0f);
-		if (rankSprite != null)
-		{
-			string text = "Rank_" + Rank;
-			if (!rankSprite.spriteName.Equals(text))
-			{
-				rankSprite.spriteName = text;
-			}
-		}
-		if (survivalScoreLabel != null)
-		{
-			survivalScoreLabel.text = ((SurvivalScore >= 0) ? SurvivalScore.ToString() : "-");
-		}
-		if (winCountLabel != null)
-		{
-			winCountLabel.text = ((WinCount >= 0) ? WinCount.ToString() : "-");
-		}
-		if (totalWinCountLabel != null)
-		{
-			totalWinCountLabel.text = ((TotalWinCount >= 0) ? TotalWinCount.ToString() : "-");
-		}
-		if (friendGameModeLabel != null)
-		{
-			friendGameModeLabel.text = FriendGameMode;
-		}
-		if (friendIdLabel != null)
-		{
-			friendIdLabel.text = FriendId;
-		}
+		this.SetActiveAndRepositionButtons(this.addFriendButton.gameObject, isActive);
 	}
 
-	public void SetTitle(string titleText)
+	public void SetActiveAddButtonSent(bool isActive)
 	{
-		for (int i = 0; i < titlesLabel.Length; i++)
-		{
-			titlesLabel[i].text = titleText;
-		}
+		this.SetActiveAndRepositionButtons(this.addFrienButtonSentState.gameObject, isActive);
+	}
+
+	public void SetActiveAddClanButtonSent(bool isActive)
+	{
+		this.SetActiveAndRepositionButtons(this.addClanButtonSentState.gameObject, isActive);
 	}
 
 	private void SetActiveAndRepositionButtons(GameObject button, bool isActive)
 	{
-		bool activeSelf = button.activeSelf;
+		bool flag = button.activeSelf;
 		button.SetActive(isActive);
-		if (activeSelf != isActive)
+		if (flag != isActive)
 		{
-			buttonAlignContainer.Reposition();
-			buttonAlignContainer.repositionNow = true;
+			this.buttonAlignContainer.Reposition();
+			this.buttonAlignContainer.repositionNow = true;
 		}
 	}
 
 	public void SetActiveChatButton(bool isActive)
 	{
-		SetActiveAndRepositionButtons(chatButton.gameObject, isActive);
+		this.SetActiveAndRepositionButtons(this.chatButton.gameObject, isActive);
 	}
 
 	public void SetActiveInviteButton(bool isActive)
 	{
-		SetActiveAndRepositionButtons(inviteToClanButton.gameObject, isActive);
-	}
-
-	public void SetActiveAddButton(bool isActive)
-	{
-		SetActiveAndRepositionButtons(addFriendButton.gameObject, isActive);
-	}
-
-	public void SetActiveAddButtonSent(bool isActive)
-	{
-		SetActiveAndRepositionButtons(addFrienButtonSentState.gameObject, isActive);
-	}
-
-	public void SetActiveAddClanButtonSent(bool isActive)
-	{
-		SetActiveAndRepositionButtons(addClanButtonSentState.gameObject, isActive);
+		this.SetActiveAndRepositionButtons(this.inviteToClanButton.gameObject, isActive);
 	}
 
 	public void SetActiveRemoveButton(bool isActive)
 	{
-		SetActiveAndRepositionButtons(removeFriendButton.gameObject, isActive);
+		this.SetActiveAndRepositionButtons(this.removeFriendButton.gameObject, isActive);
+	}
+
+	public void SetArmor(string armorName)
+	{
+		if (string.IsNullOrEmpty(armorName))
+		{
+			UnityEngine.Debug.LogWarning("Name of armor should not be empty.");
+			return;
+		}
+		List<Transform> transforms = new List<Transform>();
+		for (int i = 0; i < this.armorPoint.transform.childCount; i++)
+		{
+			transforms.Add(this.armorPoint.transform.GetChild(i));
+		}
+		foreach (Transform transform in transforms)
+		{
+			ArmorRefs component = transform.GetChild(0).GetComponent<ArmorRefs>();
+			if (component == null)
+			{
+				continue;
+			}
+			if (component.leftBone != null)
+			{
+				component.leftBone.parent = transform.GetChild(0);
+			}
+			if (component.rightBone != null)
+			{
+				component.rightBone.parent = transform.GetChild(0);
+			}
+			transform.parent = null;
+			UnityEngine.Object.Destroy(transform.gameObject);
+		}
+		if (!armorName.Equals(Defs.ArmorNewNoneEqupped))
+		{
+			UnityEngine.Object obj = Resources.Load(string.Concat("Armor/", armorName));
+			if (obj == null)
+			{
+				return;
+			}
+			GameObject gameObject = UnityEngine.Object.Instantiate(obj) as GameObject;
+			ArmorRefs armorRef = gameObject.transform.GetChild(0).GetComponent<ArmorRefs>();
+			if (armorRef != null)
+			{
+				armorRef.leftBone.parent = this.armorLeftPl.transform;
+				armorRef.leftBone.localPosition = Vector3.zero;
+				armorRef.leftBone.localRotation = Quaternion.identity;
+				armorRef.leftBone.localScale = Vector3.one;
+				armorRef.rightBone.parent = this.armorRightPl.transform;
+				armorRef.rightBone.localPosition = Vector3.zero;
+				armorRef.rightBone.localRotation = Quaternion.identity;
+				armorRef.rightBone.localScale = Vector3.one;
+				gameObject.transform.parent = this.armorPoint.transform;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+				Player_move_c.SetLayerRecursively(gameObject, this.armorPoint.layer);
+			}
+		}
+	}
+
+	public void SetBoots(string name)
+	{
+		if (string.IsNullOrEmpty(name))
+		{
+			UnityEngine.Debug.LogWarning("Name of boots should not be empty.");
+			return;
+		}
+		if (this.bootsPoint != null && (int)this.bootsPoint.Length > 0)
+		{
+			for (int i = 0; i != (int)this.bootsPoint.Length; i++)
+			{
+				this.bootsPoint[i].SetActive(this.bootsPoint[i].name.Equals(name));
+			}
+		}
+	}
+
+	public void SetCustomCape(byte[] capeBytes)
+	{
+		if (this.capePoint != null)
+		{
+			Transform transforms = this.capePoint.transform;
+			for (int i = 0; i != transforms.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(transforms.GetChild(i).gameObject);
+			}
+			UnityEngine.Object obj = Resources.Load("Capes/cape_Custom");
+			if (obj != null)
+			{
+				capeBytes = capeBytes ?? new byte[0];
+				Texture2D texture2D = new Texture2D(12, 16, TextureFormat.ARGB32, false);
+				texture2D.LoadImage(capeBytes);
+				texture2D.filterMode = FilterMode.Point;
+				texture2D.Apply();
+				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(obj);
+				gameObject.transform.parent = transforms;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+				Player_move_c.SetLayerRecursively(gameObject, this.capePoint.layer);
+				gameObject.GetComponent<CustomCapePicker>().shouldLoadTexture = false;
+				Player_move_c.SetTextureRecursivelyFrom(gameObject, texture2D, new GameObject[0]);
+			}
+		}
 	}
 
 	public void SetEnableAddButton(bool enable)
 	{
-		if (addFriendButton != null)
+		if (this.addFriendButton != null)
 		{
-			addFriendButton.isEnabled = enable;
-		}
-	}
-
-	public void SetEnableRemoveButton(bool enable)
-	{
-		if (removeFriendButton != null)
-		{
-			removeFriendButton.isEnabled = enable;
+			this.addFriendButton.isEnabled = enable;
 		}
 	}
 
 	public void SetEnableInviteClanButton(bool enable)
 	{
-		if (inviteToClanButton != null)
+		if (this.inviteToClanButton != null)
 		{
-			inviteToClanButton.isEnabled = enable;
+			this.inviteToClanButton.isEnabled = enable;
 		}
 	}
 
-	[CompilerGenerated]
-	private static Rect _003C_touchZone_003Em__29F()
+	public void SetEnableRemoveButton(bool enable)
 	{
-		return new Rect(0f, 0.1f * (float)Screen.height, 0.5f * (float)Screen.width, 0.8f * (float)Screen.height);
-	}
-
-	[CompilerGenerated]
-	private static Texture2D _003CSetSkin_003Em__2A6(byte[] bytes)
-	{
-		Texture2D texture2D = new Texture2D(64, 32)
+		if (this.removeFriendButton != null)
 		{
-			filterMode = FilterMode.Point
-		};
-		texture2D.LoadImage(bytes);
-		texture2D.Apply();
-		return texture2D;
+			this.removeFriendButton.isEnabled = enable;
+		}
 	}
 
-	[CompilerGenerated]
-	private void _003CReturnPersTonNormState_003Em__2A7()
+	public void SetHat(string hatName)
 	{
-		idleTimerLastTime = Time.realtimeSinceStartup;
+		if (string.IsNullOrEmpty(hatName))
+		{
+			UnityEngine.Debug.LogWarning("Name of hat should not be empty.");
+			return;
+		}
+		if (this.hatPoint != null)
+		{
+			Transform transforms = this.hatPoint.transform;
+			for (int i = 0; i != transforms.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(transforms.GetChild(i).gameObject);
+			}
+			UnityEngine.Object obj = Resources.Load(string.Concat("Hats/", hatName));
+			if (obj != null)
+			{
+				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(obj);
+				gameObject.transform.parent = transforms;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+				Player_move_c.SetLayerRecursively(gameObject, this.hatPoint.layer);
+			}
+		}
+	}
+
+	public void SetMask(string maskName)
+	{
+		if (string.IsNullOrEmpty(maskName))
+		{
+			UnityEngine.Debug.LogWarning("Name of mask should not be empty.");
+			return;
+		}
+		if (this.maskPoint != null)
+		{
+			Transform transforms = this.maskPoint.transform;
+			for (int i = 0; i != transforms.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(transforms.GetChild(i).gameObject);
+			}
+			UnityEngine.Object obj = Resources.Load(string.Concat("Masks/", maskName));
+			if (obj != null)
+			{
+				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(obj);
+				gameObject.transform.parent = transforms;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+				Player_move_c.SetLayerRecursively(gameObject, this.maskPoint.layer);
+			}
+		}
+	}
+
+	private void SetOnlineState(OnlineState onlineState)
+	{
+		bool flag = onlineState == OnlineState.offline;
+		bool flag1 = onlineState == OnlineState.inFriends;
+		bool flag2 = onlineState == OnlineState.playing;
+		this.offlineStateLabel.Do<UILabel>((UILabel l) => l.gameObject.SetActive(flag));
+		this.inFriendStateLabel.Do<UILabel>((UILabel l) => l.gameObject.SetActive(flag1));
+		this.playingStateLabel.Do<UILabel>((UILabel l) => l.gameObject.SetActive(flag2));
+		this.offlineState.Do<UISprite>((UISprite l) => l.gameObject.SetActive(flag));
+		this.inFriendState.Do<UISprite>((UISprite l) => l.gameObject.SetActive(flag1));
+		this.playingState.Do<UISprite>((UISprite l) => l.gameObject.SetActive(flag2));
+		if (this.playingStateInfoContainer != null)
+		{
+			this.playingStateInfoContainer.SetActive(flag2);
+		}
+	}
+
+	public void SetSkin(byte[] skinBytes)
+	{
+		GameObject gameObject;
+		skinBytes = skinBytes ?? new byte[0];
+		if (this.characterModel != null)
+		{
+			Func<byte[], Texture2D> func = (byte[] bytes) => {
+				Texture2D texture2D = new Texture2D(64, 32)
+				{
+					filterMode = FilterMode.Point
+				};
+				texture2D.LoadImage(bytes);
+				texture2D.Apply();
+				return texture2D;
+			};
+			Texture2D texture2D1 = ((int)skinBytes.Length <= 0 ? Resources.Load<Texture2D>(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1")) : func(skinBytes));
+			GameObject[] gameObjectArray = new GameObject[7];
+			if (this.bootsPoint == null || (int)this.bootsPoint.Length <= 0)
+			{
+				gameObject = null;
+			}
+			else
+			{
+				gameObject = this.bootsPoint[0].transform.parent.gameObject;
+			}
+			gameObjectArray[0] = gameObject;
+			gameObjectArray[1] = this.hatPoint;
+			gameObjectArray[2] = this.capePoint;
+			gameObjectArray[3] = this.armorPoint;
+			gameObjectArray[4] = this.armorLeftPl;
+			gameObjectArray[5] = this.armorRightPl;
+			gameObjectArray[6] = this.maskPoint;
+			Player_move_c.SetTextureRecursivelyFrom(this.characterModel, texture2D1, gameObjectArray);
+		}
+	}
+
+	public void SetStockCape(string capeName)
+	{
+		if (string.IsNullOrEmpty(capeName))
+		{
+			UnityEngine.Debug.LogWarning("Name of cape should not be empty.");
+			return;
+		}
+		if (this.capePoint != null)
+		{
+			Transform transforms = this.capePoint.transform;
+			for (int i = 0; i != transforms.childCount; i++)
+			{
+				UnityEngine.Object.Destroy(transforms.GetChild(i).gameObject);
+			}
+			UnityEngine.Object obj = Resources.Load(string.Concat("Capes/", capeName));
+			if (obj != null)
+			{
+				GameObject gameObject = (GameObject)UnityEngine.Object.Instantiate(obj);
+				gameObject.transform.parent = transforms;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+				Player_move_c.SetLayerRecursively(gameObject, this.capePoint.layer);
+			}
+		}
+	}
+
+	public void SetTitle(string titleText)
+	{
+		for (int i = 0; i < (int)this.titlesLabel.Length; i++)
+		{
+			this.titlesLabel[i].text = titleText;
+		}
+	}
+
+	private void Update()
+	{
+		if (this._escapePressed)
+		{
+			this._escapePressed = false;
+			this.OnBackButtonClick();
+			return;
+		}
+		this.UpdateLightweight();
+		float single = -120f;
+		single = single * (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android ? 0.5f : 2f);
+		Rect value = this._touchZone.Value;
+		if (Input.touchCount > 0)
+		{
+			Touch touch = Input.GetTouch(0);
+			if (touch.phase == TouchPhase.Moved && value.Contains(touch.position))
+			{
+				this.idleTimerLastTime = Time.realtimeSinceStartup;
+				Transform transforms = this.pers;
+				Vector3 vector3 = Vector3.up;
+				Vector2 vector2 = touch.deltaPosition;
+				transforms.Rotate(vector3, vector2.x * single * 0.5f * (Time.realtimeSinceStartup - this.lastTime));
+			}
+		}
+		if (Application.isEditor)
+		{
+			float axis = Input.GetAxis("Mouse ScrollWheel") * 3f * single * (Time.realtimeSinceStartup - this.lastTime);
+			this.pers.Rotate(Vector3.up, axis);
+			if (axis != 0f)
+			{
+				this.idleTimerLastTime = Time.realtimeSinceStartup;
+			}
+		}
+		if (Time.realtimeSinceStartup - this.idleTimerLastTime > ShopNGUIController.IdleTimeoutPers)
+		{
+			this.ReturnPersTonNormState();
+		}
+		this.lastTime = Time.realtimeSinceStartup;
+	}
+
+	private void UpdateLightweight()
+	{
+		if (this.friendLocationLabel != null)
+		{
+			this.friendLocationLabel.text = this.FriendLocation ?? string.Empty;
+		}
+		if (this.friendCountLabel != null)
+		{
+			this.friendCountLabel.text = (this.FriendCount >= 0 ? this.FriendCount.ToString() : "-");
+		}
+		if (this.friendNameLabel != null)
+		{
+			this.friendNameLabel.text = this.FriendName ?? string.Empty;
+		}
+		this.SetOnlineState(this.Online);
+		this.notConnectJoinButtonSprite.alpha = (!this.IsCanConnectToFriend ? 1f : 0f);
+		if (this.rankSprite != null)
+		{
+			string str = string.Concat("Rank_", this.Rank);
+			if (!this.rankSprite.spriteName.Equals(str))
+			{
+				this.rankSprite.spriteName = str;
+			}
+		}
+		if (this.survivalScoreLabel != null)
+		{
+			this.survivalScoreLabel.text = (this.SurvivalScore >= 0 ? this.SurvivalScore.ToString() : "-");
+		}
+		if (this.winCountLabel != null)
+		{
+			this.winCountLabel.text = (this.WinCount >= 0 ? this.WinCount.ToString() : "-");
+		}
+		if (this.totalWinCountLabel != null)
+		{
+			this.totalWinCountLabel.text = (this.TotalWinCount >= 0 ? this.TotalWinCount.ToString() : "-");
+		}
+		if (this.friendGameModeLabel != null)
+		{
+			this.friendGameModeLabel.text = this.FriendGameMode;
+		}
+		if (this.friendIdLabel != null)
+		{
+			this.friendIdLabel.text = this.FriendId;
+		}
+	}
+
+	public event Action AddButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.AddButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.AddButtonClickEvent -= value;
+		}
+	}
+
+	public event Action BackButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.BackButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.BackButtonClickEvent -= value;
+		}
+	}
+
+	public event Action ChatButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.ChatButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.ChatButtonClickEvent -= value;
+		}
+	}
+
+	public event Action CopyMyIdButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.CopyMyIdButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.CopyMyIdButtonClickEvent -= value;
+		}
+	}
+
+	public event Action InviteToClanButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.InviteToClanButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.InviteToClanButtonClickEvent -= value;
+		}
+	}
+
+	public event Action JoinButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.JoinButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.JoinButtonClickEvent -= value;
+		}
+	}
+
+	public event Action RemoveButtonClickEvent
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.RemoveButtonClickEvent += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.RemoveButtonClickEvent -= value;
+		}
+	}
+
+	public event Action UpdateRequested
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.UpdateRequested += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.UpdateRequested -= value;
+		}
 	}
 }

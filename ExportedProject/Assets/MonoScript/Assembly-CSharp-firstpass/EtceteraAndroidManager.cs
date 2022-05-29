@@ -1,109 +1,19 @@
+using Prime31;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Prime31;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class EtceteraAndroidManager : AbstractManager
 {
-	public static event Action<string> alertButtonClickedEvent;
-
-	public static event Action alertCancelledEvent;
-
-	public static event Action<string> promptFinishedWithTextEvent;
-
-	public static event Action promptCancelledEvent;
-
-	public static event Action<string, string> twoFieldPromptFinishedWithTextEvent;
-
-	public static event Action twoFieldPromptCancelledEvent;
-
-	public static event Action webViewCancelledEvent;
-
-	public static event Action albumChooserCancelledEvent;
-
-	public static event Action<string> albumChooserSucceededEvent;
-
-	public static event Action photoChooserCancelledEvent;
-
-	public static event Action<string> photoChooserSucceededEvent;
-
-	public static event Action<string> videoRecordingSucceededEvent;
-
-	public static event Action videoRecordingCancelledEvent;
-
-	public static event Action ttsInitializedEvent;
-
-	public static event Action ttsFailedToInitializeEvent;
-
-	public static event Action askForReviewWillOpenMarketEvent;
-
-	public static event Action askForReviewRemindMeLaterEvent;
-
-	public static event Action askForReviewDontAskAgainEvent;
-
-	public static event Action<string> inlineWebViewJSCallbackEvent;
-
-	public static event Action<string> notificationReceivedEvent;
-
-	public static event Action<List<EtceteraAndroid.Contact>> contactsLoadedEvent;
-
 	static EtceteraAndroidManager()
 	{
 		AbstractManager.initialize(typeof(EtceteraAndroidManager));
 	}
 
-	public void alertButtonClicked(string positiveButton)
+	public EtceteraAndroidManager()
 	{
-		if (EtceteraAndroidManager.alertButtonClickedEvent != null)
-		{
-			EtceteraAndroidManager.alertButtonClickedEvent(positiveButton);
-		}
-	}
-
-	public void alertCancelled(string empty)
-	{
-		if (EtceteraAndroidManager.alertCancelledEvent != null)
-		{
-			EtceteraAndroidManager.alertCancelledEvent();
-		}
-	}
-
-	public void promptFinishedWithText(string text)
-	{
-		string[] array = text.Split(new string[1] { "|||" }, StringSplitOptions.None);
-		if (array.Length == 1 && EtceteraAndroidManager.promptFinishedWithTextEvent != null)
-		{
-			EtceteraAndroidManager.promptFinishedWithTextEvent(array[0]);
-		}
-		if (array.Length == 2 && EtceteraAndroidManager.twoFieldPromptFinishedWithTextEvent != null)
-		{
-			EtceteraAndroidManager.twoFieldPromptFinishedWithTextEvent(array[0], array[1]);
-		}
-	}
-
-	public void promptCancelled(string empty)
-	{
-		if (EtceteraAndroidManager.promptCancelledEvent != null)
-		{
-			EtceteraAndroidManager.promptCancelledEvent();
-		}
-	}
-
-	public void twoFieldPromptCancelled(string empty)
-	{
-		if (EtceteraAndroidManager.twoFieldPromptCancelledEvent != null)
-		{
-			EtceteraAndroidManager.twoFieldPromptCancelledEvent();
-		}
-	}
-
-	public void webViewCancelled(string empty)
-	{
-		if (EtceteraAndroidManager.webViewCancelledEvent != null)
-		{
-			EtceteraAndroidManager.webViewCancelledEvent();
-		}
 	}
 
 	public void albumChooserCancelled(string empty)
@@ -129,6 +39,65 @@ public class EtceteraAndroidManager : AbstractManager
 		}
 	}
 
+	public void alertButtonClicked(string positiveButton)
+	{
+		if (EtceteraAndroidManager.alertButtonClickedEvent != null)
+		{
+			EtceteraAndroidManager.alertButtonClickedEvent(positiveButton);
+		}
+	}
+
+	public void alertCancelled(string empty)
+	{
+		if (EtceteraAndroidManager.alertCancelledEvent != null)
+		{
+			EtceteraAndroidManager.alertCancelledEvent();
+		}
+	}
+
+	public void askForReviewDontAskAgain(string empty)
+	{
+		if (EtceteraAndroidManager.askForReviewDontAskAgainEvent != null)
+		{
+			EtceteraAndroidManager.askForReviewDontAskAgainEvent();
+		}
+	}
+
+	public void askForReviewRemindMeLater(string empty)
+	{
+		if (EtceteraAndroidManager.askForReviewRemindMeLaterEvent != null)
+		{
+			EtceteraAndroidManager.askForReviewRemindMeLaterEvent();
+		}
+	}
+
+	public void askForReviewWillOpenMarket(string empty)
+	{
+		if (EtceteraAndroidManager.askForReviewWillOpenMarketEvent != null)
+		{
+			EtceteraAndroidManager.askForReviewWillOpenMarketEvent();
+		}
+	}
+
+	private void contactsLoaded(string json)
+	{
+		if (EtceteraAndroidManager.contactsLoadedEvent != null)
+		{
+			List<EtceteraAndroid.Contact> contacts = Json.decode<List<EtceteraAndroid.Contact>>(json, null);
+			EtceteraAndroidManager.contactsLoadedEvent(contacts);
+		}
+	}
+
+	public void inlineWebViewJSCallback(string message)
+	{
+		EtceteraAndroidManager.inlineWebViewJSCallbackEvent.fire<string>(message);
+	}
+
+	public void notificationReceived(string extraData)
+	{
+		EtceteraAndroidManager.notificationReceivedEvent.fire<string>(extraData);
+	}
+
 	public void photoChooserCancelled(string empty)
 	{
 		if (EtceteraAndroidManager.photoChooserCancelledEvent != null)
@@ -152,19 +121,24 @@ public class EtceteraAndroidManager : AbstractManager
 		}
 	}
 
-	public void videoRecordingSucceeded(string path)
+	public void promptCancelled(string empty)
 	{
-		if (EtceteraAndroidManager.videoRecordingSucceededEvent != null)
+		if (EtceteraAndroidManager.promptCancelledEvent != null)
 		{
-			EtceteraAndroidManager.videoRecordingSucceededEvent(path);
+			EtceteraAndroidManager.promptCancelledEvent();
 		}
 	}
 
-	public void videoRecordingCancelled(string empty)
+	public void promptFinishedWithText(string text)
 	{
-		if (EtceteraAndroidManager.videoRecordingCancelledEvent != null)
+		string[] strArrays = text.Split(new string[] { "|||" }, StringSplitOptions.None);
+		if ((int)strArrays.Length == 1 && EtceteraAndroidManager.promptFinishedWithTextEvent != null)
 		{
-			EtceteraAndroidManager.videoRecordingCancelledEvent();
+			EtceteraAndroidManager.promptFinishedWithTextEvent(strArrays[0]);
+		}
+		if ((int)strArrays.Length == 2 && EtceteraAndroidManager.twoFieldPromptFinishedWithTextEvent != null)
+		{
+			EtceteraAndroidManager.twoFieldPromptFinishedWithTextEvent(strArrays[0], strArrays[1]);
 		}
 	}
 
@@ -183,49 +157,80 @@ public class EtceteraAndroidManager : AbstractManager
 
 	public void ttsUtteranceCompleted(string utteranceId)
 	{
-		Debug.Log("utterance completed: " + utteranceId);
+		Debug.Log(string.Concat("utterance completed: ", utteranceId));
 	}
 
-	public void askForReviewWillOpenMarket(string empty)
+	public void twoFieldPromptCancelled(string empty)
 	{
-		if (EtceteraAndroidManager.askForReviewWillOpenMarketEvent != null)
+		if (EtceteraAndroidManager.twoFieldPromptCancelledEvent != null)
 		{
-			EtceteraAndroidManager.askForReviewWillOpenMarketEvent();
+			EtceteraAndroidManager.twoFieldPromptCancelledEvent();
 		}
 	}
 
-	public void askForReviewRemindMeLater(string empty)
+	public void videoRecordingCancelled(string empty)
 	{
-		if (EtceteraAndroidManager.askForReviewRemindMeLaterEvent != null)
+		if (EtceteraAndroidManager.videoRecordingCancelledEvent != null)
 		{
-			EtceteraAndroidManager.askForReviewRemindMeLaterEvent();
+			EtceteraAndroidManager.videoRecordingCancelledEvent();
 		}
 	}
 
-	public void askForReviewDontAskAgain(string empty)
+	public void videoRecordingSucceeded(string path)
 	{
-		if (EtceteraAndroidManager.askForReviewDontAskAgainEvent != null)
+		if (EtceteraAndroidManager.videoRecordingSucceededEvent != null)
 		{
-			EtceteraAndroidManager.askForReviewDontAskAgainEvent();
+			EtceteraAndroidManager.videoRecordingSucceededEvent(path);
 		}
 	}
 
-	public void inlineWebViewJSCallback(string message)
+	public void webViewCancelled(string empty)
 	{
-		EtceteraAndroidManager.inlineWebViewJSCallbackEvent.fire(message);
-	}
-
-	public void notificationReceived(string extraData)
-	{
-		EtceteraAndroidManager.notificationReceivedEvent.fire(extraData);
-	}
-
-	private void contactsLoaded(string json)
-	{
-		if (EtceteraAndroidManager.contactsLoadedEvent != null)
+		if (EtceteraAndroidManager.webViewCancelledEvent != null)
 		{
-			List<EtceteraAndroid.Contact> obj = Json.decode<List<EtceteraAndroid.Contact>>(json);
-			EtceteraAndroidManager.contactsLoadedEvent(obj);
+			EtceteraAndroidManager.webViewCancelledEvent();
 		}
 	}
+
+	public static event Action albumChooserCancelledEvent;
+
+	public static event Action<string> albumChooserSucceededEvent;
+
+	public static event Action<string> alertButtonClickedEvent;
+
+	public static event Action alertCancelledEvent;
+
+	public static event Action askForReviewDontAskAgainEvent;
+
+	public static event Action askForReviewRemindMeLaterEvent;
+
+	public static event Action askForReviewWillOpenMarketEvent;
+
+	public static event Action<List<EtceteraAndroid.Contact>> contactsLoadedEvent;
+
+	public static event Action<string> inlineWebViewJSCallbackEvent;
+
+	public static event Action<string> notificationReceivedEvent;
+
+	public static event Action photoChooserCancelledEvent;
+
+	public static event Action<string> photoChooserSucceededEvent;
+
+	public static event Action promptCancelledEvent;
+
+	public static event Action<string> promptFinishedWithTextEvent;
+
+	public static event Action ttsFailedToInitializeEvent;
+
+	public static event Action ttsInitializedEvent;
+
+	public static event Action twoFieldPromptCancelledEvent;
+
+	public static event Action<string, string> twoFieldPromptFinishedWithTextEvent;
+
+	public static event Action videoRecordingCancelledEvent;
+
+	public static event Action<string> videoRecordingSucceededEvent;
+
+	public static event Action webViewCancelledEvent;
 }

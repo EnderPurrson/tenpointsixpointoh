@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 public class BackButtonFromEnterPasswordInFriensJoin : MonoBehaviour
 {
-	private void Start()
+	public BackButtonFromEnterPasswordInFriensJoin()
 	{
 	}
 
@@ -12,5 +13,9 @@ public class BackButtonFromEnterPasswordInFriensJoin : MonoBehaviour
 		{
 			JoinRoomFromFrends.sharedJoinRoomFromFrends.BackFromPasswordButton();
 		}
+	}
+
+	private void Start()
+	{
 	}
 }

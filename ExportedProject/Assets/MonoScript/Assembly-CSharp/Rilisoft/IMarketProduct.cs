@@ -1,15 +1,32 @@
+using System;
+
 namespace Rilisoft
 {
 	internal interface IMarketProduct
 	{
-		string Id { get; }
+		string Description
+		{
+			get;
+		}
 
-		string Title { get; }
+		string Id
+		{
+			get;
+		}
 
-		string Description { get; }
+		object PlatformProduct
+		{
+			get;
+		}
 
-		string Price { get; }
+		string Price
+		{
+			get;
+		}
 
-		object PlatformProduct { get; }
+		string Title
+		{
+			get;
+		}
 	}
 }

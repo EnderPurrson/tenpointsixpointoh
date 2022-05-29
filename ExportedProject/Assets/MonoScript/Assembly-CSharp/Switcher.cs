@@ -1,3 +1,7 @@
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+using Prime31;
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,11 +10,9 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-using Prime31;
-using Rilisoft;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(FrameStopwatchScript))]
 internal sealed class Switcher : MonoBehaviour
@@ -93,1669 +95,111 @@ internal sealed class Switcher : MonoBehaviour
 
 	private static AbuseMetod? _abuseMethod;
 
-	[CompilerGenerated]
-	private static Func<byte[], IEnumerable<byte>> _003C_003Ef__am_0024cache26;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache27;
-
-	[CompilerGenerated]
-	private static Func<string, IEnumerable<byte>> _003C_003Ef__am_0024cache28;
-
-	[CompilerGenerated]
-	private static Func<string[]> _003C_003Ef__am_0024cache29;
-
-	[CompilerGenerated]
-	private static Func<string[]> _003C_003Ef__am_0024cache2A;
-
-	[CompilerGenerated]
-	private static Func<string[]> _003C_003Ef__am_0024cache2B;
-
-	[CompilerGenerated]
-	private static Func<string[]> _003C_003Ef__am_0024cache2C;
-
-	[CompilerGenerated]
-	private static Func<string[]> _003C_003Ef__am_0024cache2D;
+	internal static AbuseMetod AbuseMethod
+	{
+		get
+		{
+			if (!Switcher._abuseMethod.HasValue)
+			{
+				Switcher._abuseMethod = new AbuseMetod?((AbuseMetod)Storager.getInt("AbuseMethod", false));
+			}
+			return Switcher._abuseMethod.Value;
+		}
+	}
 
 	public static string InitialAppVersion
 	{
 		get
 		{
-			if (!_initialAppVersionInitialized)
+			if (!Switcher._initialAppVersionInitialized)
 			{
-				_InitialAppVersion = PlayerPrefs.GetString(Defs.InitialAppVersionKey);
-				_initialAppVersionInitialized = true;
+				Switcher._InitialAppVersion = PlayerPrefs.GetString(Defs.InitialAppVersionKey);
+				Switcher._initialAppVersionInitialized = true;
 			}
-			return _InitialAppVersion;
+			return Switcher._InitialAppVersion;
 		}
 		private set
 		{
-			_InitialAppVersion = value;
-			_initialAppVersionInitialized = true;
-		}
-	}
-
-	internal static AbuseMetod AbuseMethod
-	{
-		get
-		{
-			if (!_abuseMethod.HasValue)
-			{
-				_abuseMethod = (AbuseMetod)Storager.getInt("AbuseMethod", false);
-			}
-			return _abuseMethod.Value;
+			Switcher._InitialAppVersion = value;
+			Switcher._initialAppVersionInitialized = true;
 		}
 	}
 
 	static Switcher()
 	{
-		sceneNameToGameNum = new Dictionary<string, int>();
-		counCreateMobsInLevel = new Dictionary<string, int>();
-		LoadingInResourcesPath = "LevelLoadings";
-		loadingNames = new string[17]
-		{
-			"Loading_coliseum", "loading_Cementery", "Loading_Maze", "Loading_City", "Loading_Hospital", "Loading_Jail", "Loading_end_world_2", "Loading_Arena", "Loading_Area52", "Loading_Slender",
-			"Loading_Hell", "Loading_bloody_farm", "Loading_most", "Loading_school", "Loading_utopia", "Loading_sky", "Loading_winter"
-		};
-		timer = new Stopwatch();
-		_initialAppVersionInitialized = false;
-		_InitialAppVersion = string.Empty;
-		sceneNameToGameNum.Add("Training", 0);
-		sceneNameToGameNum.Add("Cementery", 1);
-		sceneNameToGameNum.Add("Maze", 2);
-		sceneNameToGameNum.Add("City", 3);
-		sceneNameToGameNum.Add("Hospital", 4);
-		sceneNameToGameNum.Add("Jail", 5);
-		sceneNameToGameNum.Add("Gluk_2", 6);
-		sceneNameToGameNum.Add("Arena", 7);
-		sceneNameToGameNum.Add("Area52", 8);
-		sceneNameToGameNum.Add("Slender", 9);
-		sceneNameToGameNum.Add("Castle", 10);
-		sceneNameToGameNum.Add("Farm", 11);
-		sceneNameToGameNum.Add("Bridge", 12);
-		sceneNameToGameNum.Add("School", 13);
-		sceneNameToGameNum.Add("Utopia", 14);
-		sceneNameToGameNum.Add("Sky_islands", 15);
-		sceneNameToGameNum.Add("Winter", 16);
-		sceneNameToGameNum.Add("Swamp_campaign3", 17);
-		sceneNameToGameNum.Add("Castle_campaign3", 18);
-		sceneNameToGameNum.Add("Space_campaign3", 19);
-		sceneNameToGameNum.Add("Parkour", 20);
-		sceneNameToGameNum.Add("Code_campaign3", 21);
-		counCreateMobsInLevel.Add("Farm", 10);
-		counCreateMobsInLevel.Add("Cementery", 15);
-		counCreateMobsInLevel.Add("City", 20);
-		counCreateMobsInLevel.Add("Hospital", 25);
-		counCreateMobsInLevel.Add("Bridge", 25);
-		counCreateMobsInLevel.Add("Jail", 30);
-		counCreateMobsInLevel.Add("Slender", 30);
-		counCreateMobsInLevel.Add("Area52", 35);
-		counCreateMobsInLevel.Add("School", 35);
-		counCreateMobsInLevel.Add("Utopia", 25);
-		counCreateMobsInLevel.Add("Maze", 30);
-		counCreateMobsInLevel.Add("Sky_islands", 30);
-		counCreateMobsInLevel.Add("Winter", 30);
-		counCreateMobsInLevel.Add("Castle", 35);
-		counCreateMobsInLevel.Add("Gluk_2", 35);
-		counCreateMobsInLevel.Add("Swamp_campaign3", 30);
-		counCreateMobsInLevel.Add("Castle_campaign3", 35);
-		counCreateMobsInLevel.Add("Space_campaign3", 25);
-		counCreateMobsInLevel.Add("Parkour", 15);
-		counCreateMobsInLevel.Add("Code_campaign3", 35);
+		Switcher.sceneNameToGameNum = new Dictionary<string, int>();
+		Switcher.counCreateMobsInLevel = new Dictionary<string, int>();
+		Switcher.LoadingInResourcesPath = "LevelLoadings";
+		Switcher.loadingNames = new string[] { "Loading_coliseum", "loading_Cementery", "Loading_Maze", "Loading_City", "Loading_Hospital", "Loading_Jail", "Loading_end_world_2", "Loading_Arena", "Loading_Area52", "Loading_Slender", "Loading_Hell", "Loading_bloody_farm", "Loading_most", "Loading_school", "Loading_utopia", "Loading_sky", "Loading_winter" };
+		Switcher.timer = new Stopwatch();
+		Switcher._initialAppVersionInitialized = false;
+		Switcher._InitialAppVersion = string.Empty;
+		Switcher.sceneNameToGameNum.Add("Training", 0);
+		Switcher.sceneNameToGameNum.Add("Cementery", 1);
+		Switcher.sceneNameToGameNum.Add("Maze", 2);
+		Switcher.sceneNameToGameNum.Add("City", 3);
+		Switcher.sceneNameToGameNum.Add("Hospital", 4);
+		Switcher.sceneNameToGameNum.Add("Jail", 5);
+		Switcher.sceneNameToGameNum.Add("Gluk_2", 6);
+		Switcher.sceneNameToGameNum.Add("Arena", 7);
+		Switcher.sceneNameToGameNum.Add("Area52", 8);
+		Switcher.sceneNameToGameNum.Add("Slender", 9);
+		Switcher.sceneNameToGameNum.Add("Castle", 10);
+		Switcher.sceneNameToGameNum.Add("Farm", 11);
+		Switcher.sceneNameToGameNum.Add("Bridge", 12);
+		Switcher.sceneNameToGameNum.Add("School", 13);
+		Switcher.sceneNameToGameNum.Add("Utopia", 14);
+		Switcher.sceneNameToGameNum.Add("Sky_islands", 15);
+		Switcher.sceneNameToGameNum.Add("Winter", 16);
+		Switcher.sceneNameToGameNum.Add("Swamp_campaign3", 17);
+		Switcher.sceneNameToGameNum.Add("Castle_campaign3", 18);
+		Switcher.sceneNameToGameNum.Add("Space_campaign3", 19);
+		Switcher.sceneNameToGameNum.Add("Parkour", 20);
+		Switcher.sceneNameToGameNum.Add("Code_campaign3", 21);
+		Switcher.counCreateMobsInLevel.Add("Farm", 10);
+		Switcher.counCreateMobsInLevel.Add("Cementery", 15);
+		Switcher.counCreateMobsInLevel.Add("City", 20);
+		Switcher.counCreateMobsInLevel.Add("Hospital", 25);
+		Switcher.counCreateMobsInLevel.Add("Bridge", 25);
+		Switcher.counCreateMobsInLevel.Add("Jail", 30);
+		Switcher.counCreateMobsInLevel.Add("Slender", 30);
+		Switcher.counCreateMobsInLevel.Add("Area52", 35);
+		Switcher.counCreateMobsInLevel.Add("School", 35);
+		Switcher.counCreateMobsInLevel.Add("Utopia", 25);
+		Switcher.counCreateMobsInLevel.Add("Maze", 30);
+		Switcher.counCreateMobsInLevel.Add("Sky_islands", 30);
+		Switcher.counCreateMobsInLevel.Add("Winter", 30);
+		Switcher.counCreateMobsInLevel.Add("Castle", 35);
+		Switcher.counCreateMobsInLevel.Add("Gluk_2", 35);
+		Switcher.counCreateMobsInLevel.Add("Swamp_campaign3", 30);
+		Switcher.counCreateMobsInLevel.Add("Castle_campaign3", 35);
+		Switcher.counCreateMobsInLevel.Add("Space_campaign3", 25);
+		Switcher.counCreateMobsInLevel.Add("Parkour", 15);
+		Switcher.counCreateMobsInLevel.Add("Code_campaign3", 35);
 	}
 
-	internal static IEnumerable<float> InitializeStorager()
+	public Switcher()
 	{
-		float progress3 = 0f;
-		if (Application.isEditor)
-		{
-			if (!PlayerPrefs.HasKey(Defs.initValsInKeychain15))
-			{
-				Storager.setString(Defs.CapeEquppedSN, Defs.CapeNoneEqupped, false);
-				Storager.setString(Defs.HatEquppedSN, Defs.HatNoneEqupped, false);
-				yield return progress3;
-			}
-			if (!PlayerPrefs.HasKey(Defs.initValsInKeychain46))
-			{
-				Storager.setString("MaskEquippedSN", "MaskNoneEquipped", false);
-				yield return progress3;
-			}
-		}
-		if (!Storager.hasKey(Defs.initValsInKeychain15))
-		{
-			Storager.setInt(Defs.initValsInKeychain15, 0, false);
-			Storager.setInt(Defs.LobbyLevelApplied, 1, false);
-			Storager.setString(Defs.CapeEquppedSN, Defs.CapeNoneEqupped, false);
-			Storager.setString(Defs.HatEquppedSN, Defs.HatNoneEqupped, false);
-			Storager.setInt(Defs.IsFirstLaunchFreshInstall, 1, false);
-			yield return progress3;
-		}
-		else if (Storager.getInt(Defs.LobbyLevelApplied, false) == 0)
-		{
-			Storager.setInt(Defs.ShownLobbyLevelSN, 3, false);
-		}
-		try
-		{
-			string hat = Storager.getString(Defs.HatEquppedSN, false);
-			if (hat != null && (TempItemsController.PriceCoefs.ContainsKey(hat) || Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(hat)))
-			{
-				Storager.setString(Defs.HatEquppedSN, Defs.HatNoneEqupped, false);
-			}
-		}
-		catch (Exception e)
-		{
-			UnityEngine.Debug.LogError("Exception in Trying to unequip armor hat or temp armor hat (mistakenly got from gocha as a gift): " + e);
-		}
-		if (!Storager.hasKey(Defs.IsFirstLaunchFreshInstall))
-		{
-			Storager.setInt(Defs.IsFirstLaunchFreshInstall, 0, false);
-		}
-		progress3 = 0.25f;
-		if (Application.isEditor || (Application.platform == RuntimePlatform.IPhonePlayer && UnityEngine.Debug.isDebugBuild) || (Application.platform == RuntimePlatform.IPhonePlayer && !Storager.hasKey(Defs.initValsInKeychain17)))
-		{
-			Storager.setInt(Defs.initValsInKeychain17, 0, false);
-			PlayerPrefs.SetFloat(value: SecondsFrom1970(), key: Defs.TimeFromWhichShowEnder_SN);
-		}
-		if (Application.isEditor && !PlayerPrefs.HasKey(Defs.initValsInKeychain27))
-		{
-			Storager.setString(Defs.BootsEquppedSN, Defs.BootsNoneEqupped, false);
-		}
-		if (!Storager.hasKey(Defs.initValsInKeychain27))
-		{
-			Storager.setInt(Defs.initValsInKeychain27, 0, false);
-			Storager.setString(Defs.BootsEquppedSN, Defs.BootsNoneEqupped, false);
-			yield return progress3;
-		}
-		progress3 = 0.5f;
-		yield return progress3;
-		if (!Storager.hasKey(Defs.initValsInKeychain40))
-		{
-			Storager.setInt(Defs.initValsInKeychain40, 0, false);
-			Storager.setString(Defs.ArmorNewEquppedSN, Defs.ArmorNewNoneEqupped, false);
-			Storager.setInt("GrenadeID", 5, false);
-			yield return progress3;
-		}
-		if (!Storager.IsInitialized(Defs.initValsInKeychain41))
-		{
-			Storager.setInt(Defs.initValsInKeychain41, 0, false);
-			string hatBought = null;
-			string visualHatArmor = null;
-			if (Storager.getInt("hat_Almaz_1", false) > 0)
-			{
-				hatBought = "hat_Army_3";
-				Storager.setInt("hat_Almaz_1", 0, false);
-				Storager.setInt("hat_Royal_1", 0, false);
-				Storager.setInt("hat_Steel_1", 0, false);
-				visualHatArmor = "hat_Almaz_1";
-				yield return progress3;
-			}
-			else if (Storager.getInt("hat_Royal_1", false) > 0)
-			{
-				hatBought = "hat_Army_2";
-				Storager.setInt("hat_Royal_1", 0, false);
-				Storager.setInt("hat_Steel_1", 0, false);
-				visualHatArmor = "hat_Royal_1";
-				yield return progress3;
-			}
-			else if (Storager.getInt("hat_Steel_1", false) > 0)
-			{
-				hatBought = "hat_Army_1";
-				Storager.setInt("hat_Steel_1", 0, false);
-				visualHatArmor = "hat_Steel_1";
-				yield return progress3;
-			}
-			if (hatBought != null)
-			{
-				string hatEquipped = Storager.getString(Defs.HatEquppedSN, false);
-				if (hatEquipped.Equals("hat_Almaz_1") || hatEquipped.Equals("hat_Royal_1") || hatEquipped.Equals("hat_Steel_1"))
-				{
-					Storager.setString(Defs.HatEquppedSN, hatBought, false);
-				}
-				for (int j = 0; j <= Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].IndexOf(hatBought); j++)
-				{
-					Storager.setInt(Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0][j], 1, false);
-					yield return progress3;
-				}
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-			{
-				Storager.setString(Defs.VisualHatArmor, string.Empty, false);
-			}
-			if (visualHatArmor != null)
-			{
-				Storager.setString(Defs.VisualHatArmor, visualHatArmor, false);
-			}
-			if (!Storager.hasKey("LikeID"))
-			{
-				Storager.setInt("LikeID", 5, false);
-			}
-			yield return progress3;
-			string armorBought = null;
-			string visualArmor = null;
-			if (Storager.getInt("Armor_Almaz_1", false) > 0)
-			{
-				armorBought = "Armor_Army_3";
-				Storager.setInt("Armor_Almaz_1", 0, false);
-				Storager.setInt("Armor_Royal_1", 0, false);
-				Storager.setInt("Armor_Steel_1", 0, false);
-				visualArmor = "Armor_Almaz_1";
-				yield return progress3;
-			}
-			else if (Storager.getInt("Armor_Royal_1", false) > 0)
-			{
-				armorBought = "Armor_Army_2";
-				Storager.setInt("Armor_Royal_1", 0, false);
-				Storager.setInt("Armor_Steel_1", 0, false);
-				visualArmor = "Armor_Royal_1";
-				yield return progress3;
-			}
-			else if (Storager.getInt("Armor_Steel_1", false) > 0)
-			{
-				armorBought = "Armor_Army_1";
-				Storager.setInt("Armor_Steel_1", 0, false);
-				visualArmor = "Armor_Steel_1";
-				yield return progress3;
-			}
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-			{
-				Storager.setString(Defs.VisualArmor, string.Empty, false);
-			}
-			if (visualArmor != null)
-			{
-				Storager.setString(Defs.VisualArmor, visualArmor, false);
-			}
-			yield return progress3;
-			if (armorBought != null)
-			{
-				string armorEquipped = Storager.getString(Defs.ArmorNewEquppedSN, false);
-				if (armorEquipped.Equals("Armor_Almaz_1") || armorEquipped.Equals("Armor_Royal_1") || armorEquipped.Equals("Armor_Steel_1"))
-				{
-					Storager.setString(Defs.ArmorNewEquppedSN, armorBought, false);
-					yield return progress3;
-				}
-				for (int i = 0; i <= Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0].IndexOf(armorBought); i++)
-				{
-					Storager.setInt(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0][i], 1, false);
-					yield return progress3;
-				}
-			}
-		}
-		progress3 = 0.75f;
-		if (!Storager.IsInitialized(Defs.initValsInKeychain43))
-		{
-			Storager.SetInitialized(Defs.initValsInKeychain43);
-			PlayerPrefs.SetString(Defs.StartTimeShowBannersKey, DateTimeOffset.UtcNow.ToString("s"));
-			PlayerPrefs.Save();
-			yield return progress3;
-			if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-			{
-				Storager.setInt(Defs.NeedTakeMarathonBonus, 0, false);
-				Storager.setInt(Defs.NextMarafonBonusIndex, 0, false);
-				yield return progress3;
-			}
-		}
-		if (!Storager.hasKey(GearManager.MusicBox))
-		{
-			Storager.setInt(GearManager.MusicBox, 2, false);
-			Storager.setInt(GearManager.Wings, 2, false);
-			Storager.setInt(GearManager.Bear, 2, false);
-			Storager.setInt(GearManager.BigHeadPotion, 2, false);
-		}
-		Defs.StartTimeShowBannersString = PlayerPrefs.GetString(Defs.StartTimeShowBannersKey, string.Empty);
-		UnityEngine.Debug.Log(" StartTimeShowBannersString=" + Defs.StartTimeShowBannersString);
-		if (!Storager.IsInitialized(Defs.initValsInKeychain44))
-		{
-			Storager.SetInitialized(Defs.initValsInKeychain44);
-			if (Storager.hasKey(Defs.NextMarafonBonusIndex) && Storager.getInt(Defs.NextMarafonBonusIndex, false) == -1)
-			{
-				Storager.setInt(Defs.NextMarafonBonusIndex, 0, false);
-			}
-			yield return progress3;
-		}
-		if (!Storager.IsInitialized(Defs.initValsInKeychain45))
-		{
-			Storager.SetInitialized(Defs.initValsInKeychain45);
-			Storager.setInt(Defs.PremiumEnabledFromServer, 0, false);
-			if (Storager.getInt("currentLevel2", true) == 0)
-			{
-				PlayerPrefs.SetString(Defs.DateOfInstallAppForInAppPurchases041215, DateTime.UtcNow.ToString("s"));
-			}
-			yield return progress3;
-		}
-		if (!Storager.IsInitialized(Defs.initValsInKeychain46))
-		{
-			Storager.SetInitialized(Defs.initValsInKeychain46);
-			Storager.setString("MaskEquippedSN", "MaskNoneEquipped", false);
-			yield return progress3;
-		}
-		if (!Storager.hasKey("Win Count Timestamp"))
-		{
-			Storager.setString("Win Count Timestamp", "{ \"1970-01-01\": 0 }", false);
-		}
-		if (!Storager.hasKey("StartTimeShowStarterPack"))
-		{
-			Storager.setString("StartTimeShowStarterPack", string.Empty, false);
-			yield return progress3;
-		}
-		if (!Storager.hasKey("TimeEndStarterPack"))
-		{
-			Storager.setString("TimeEndStarterPack", string.Empty, false);
-			yield return progress3;
-		}
-		if (!Storager.hasKey("NextNumberStarterPack"))
-		{
-			Storager.setInt("NextNumberStarterPack", 0, false);
-			yield return progress3;
-		}
-		if (!Storager.hasKey(Defs.ArmorEquppedSN))
-		{
-			Storager.setString(Defs.ArmorEquppedSN, Defs.ArmorNoneEqupped, false);
-		}
-		if (!Storager.hasKey(Defs.ShowSorryWeaponAndArmor))
-		{
-			Storager.setInt(Defs.ShowSorryWeaponAndArmor, 0, false);
-		}
-		if (Storager.getInt(Defs.IsFirstLaunchFreshInstall, false) > 0)
-		{
-			Storager.setInt(Defs.IsFirstLaunchFreshInstall, 0, false);
-		}
-		if (!Storager.hasKey(Defs.NewbieEventX3StartTime))
-		{
-			Storager.setString(Defs.NewbieEventX3StartTime, 0L.ToString(), false);
-			Storager.setString(Defs.NewbieEventX3StartTimeAdditional, 0L.ToString(), false);
-			Storager.setString(Defs.NewbieEventX3LastLoggedTime, 0L.ToString(), false);
-			PlayerPrefs.SetInt(Defs.WasNewbieEventX3, 0);
-		}
-		if (!PlayerPrefs.HasKey(Defs.LastTimeUpdateAvailableShownSN))
-		{
-			DateTime myDate1 = new DateTime(1970, 1, 9, 0, 0, 0);
-			PlayerPrefs.SetString(value: new DateTimeOffset(myDate1).ToString("s"), key: Defs.LastTimeUpdateAvailableShownSN);
-			PlayerPrefs.Save();
-		}
-		string lastTimeUpdateShownString = PlayerPrefs.GetString(Defs.LastTimeUpdateAvailableShownSN);
-		DateTimeOffset lastTimeUpdateShown = default(DateTimeOffset);
-		if (!DateTimeOffset.TryParse(lastTimeUpdateShownString, out lastTimeUpdateShown) && UnityEngine.Debug.isDebugBuild)
-		{
-			UnityEngine.Debug.LogWarning("Cannot parse " + lastTimeUpdateShownString);
-		}
-		if (DateTimeOffset.Now - lastTimeUpdateShown > TimeSpan.FromHours(12.0))
-		{
-			PlayerPrefs.SetInt(Defs.UpdateAvailableShownTimesSN, 3);
-			PlayerPrefs.SetString(Defs.LastTimeUpdateAvailableShownSN, DateTimeOffset.Now.ToString("s"));
-			yield return progress3;
-		}
-		float eventX3ShowTimeoutHours = 12f;
-		if (!PlayerPrefs.HasKey(Defs.EventX3WindowShownLastTime))
-		{
-			PlayerPrefs.SetInt(Defs.EventX3WindowShownCount, 1);
-			PlayerPrefs.SetString(Defs.EventX3WindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
-			yield return progress3;
-		}
-		long eventX3WindowShownLastTime;
-		long.TryParse(PlayerPrefs.GetString(Defs.EventX3WindowShownLastTime), out eventX3WindowShownLastTime);
-		if (PromoActionsManager.CurrentUnixTime - eventX3WindowShownLastTime > (long)TimeSpan.FromHours(eventX3ShowTimeoutHours).TotalSeconds)
-		{
-			PlayerPrefs.SetInt(Defs.EventX3WindowShownCount, 1);
-			PlayerPrefs.SetString(Defs.EventX3WindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
-		}
-		PlayerPrefs.Save();
-		yield return progress3;
-		float advertShowTimeoutHours = 12f;
-		if (!PlayerPrefs.HasKey(Defs.AdvertWindowShownLastTime))
-		{
-			PlayerPrefs.SetInt(Defs.AdvertWindowShownCount, 3);
-			PlayerPrefs.SetString(Defs.AdvertWindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
-		}
-		long advertWindowShownLastTime;
-		long.TryParse(PlayerPrefs.GetString(Defs.AdvertWindowShownLastTime), out advertWindowShownLastTime);
-		if (PromoActionsManager.CurrentUnixTime - advertWindowShownLastTime > (long)TimeSpan.FromHours(advertShowTimeoutHours).TotalSeconds)
-		{
-			PlayerPrefs.SetInt(Defs.AdvertWindowShownCount, 3);
-			PlayerPrefs.SetString(Defs.AdvertWindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
-		}
-		yield return progress3;
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-		{
-			if (!Storager.hasKey(Defs.LevelsWhereGetCoinS))
-			{
-				CoinBonus.SetLevelsWhereGotBonus(string.Empty, VirtualCurrencyBonusType.Coin);
-			}
-			if (!Storager.hasKey(Defs.LevelsWhereGotGems))
-			{
-				CoinBonus.SetLevelsWhereGotBonus("[]", VirtualCurrencyBonusType.Gem);
-			}
-			if (!Storager.hasKey(Defs.RatingFlag))
-			{
-				Storager.setInt(Defs.RatingDeathmatch, 0, false);
-				Storager.setInt(Defs.RatingTeamBattle, 0, false);
-				Storager.setInt(Defs.RatingHunger, 0, false);
-				Storager.setInt(Defs.RatingFlag, 0, false);
-			}
-			if (!Storager.hasKey(Defs.RatingCapturePoint))
-			{
-				Storager.setInt(Defs.RatingCapturePoint, 0, false);
-			}
-		}
-		PlayerPrefs.Save();
-		yield return 1f;
 	}
 
-	private static double Hypot(double x, double y)
+	internal static void AppendAbuseMethod(AbuseMetod f)
 	{
-		x = Math.Abs(x);
-		y = Math.Abs(y);
-		double num = Math.Max(x, y);
-		double num2 = Math.Min(x, y) / num;
-		return num * Math.Sqrt(1.0 + num2 * num2);
-	}
-
-	private IEnumerator ParseConfigsCoroutine()
-	{
-		float start2 = Time.realtimeSinceStartup;
-		ScopeLogger scopeLogger = new ScopeLogger("Switcher.Start()", "Parsing balance config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("abTestBalansConfigKey"))
-			{
-				FriendsController.ParseABTestBalansConfig();
-			}
-			else
-			{
-				Storager.setString("abTestBalansConfigKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-		ScopeLogger scopeLogger2 = new ScopeLogger("Switcher.Start()", "Parsing buff config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("abTestBuffSystemKey"))
-			{
-				FriendsController.ParseABTestBuffSystemConfig();
-			}
-			else
-			{
-				Storager.setString("abTestBuffSystemKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger2.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-		ScopeLogger scopeLogger3 = new ScopeLogger("Switcher.Start()", "Parsing rating config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("rSCKey"))
-			{
-				FriendsController.ParseRatingSystemConfig();
-			}
-			else
-			{
-				Storager.setString("rSCKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger3.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-		ScopeLogger scopeLogger4 = new ScopeLogger("Switcher.Start()", "Parsing rating config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("abTestSandBoxConfigKey"))
-			{
-				FriendsController.ParseABTestSandBoxConfig();
-			}
-			else
-			{
-				Storager.setString("abTestSandBoxConfigKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger4.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-		ScopeLogger scopeLogger5 = new ScopeLogger("Switcher.Start()", "Parsing rating config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("abTestQuestSystemConfigKey"))
-			{
-				FriendsController.ParseABTestQuestSystemConfig();
-			}
-			else
-			{
-				Storager.setString("abTestQuestSystemConfigKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger5.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-		ScopeLogger scopeLogger6 = new ScopeLogger("Switcher.Start()", "Parsing rating config", Defs.IsDeveloperBuild);
-		try
-		{
-			if (Storager.hasKey("abTestSpecialOffersConfigKey"))
-			{
-				FriendsController.ParseABTestSpecialOffersConfig();
-			}
-			else
-			{
-				Storager.setString("abTestSpecialOffersConfigKey", string.Empty, false);
-			}
-		}
-		finally
-		{
-			scopeLogger6.Dispose();
-		}
-		if (Time.realtimeSinceStartup - start2 > 1f / 60f)
-		{
-			start2 = Time.realtimeSinceStartup;
-			yield return null;
-		}
-	}
-
-	private IEnumerator Start()
-	{
-		UnityEngine.Debug.LogFormat("> Switcher.Start(): {0:f3}, {1}", Time.realtimeSinceStartup, Time.frameCount);
-		yield return StartCoroutine(ParseConfigsCoroutine());
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			PlayComicsSound();
-		}
-		UnityEngine.Debug.Log("Switcher.Start() > InitializeSwitcher()");
-		bool armyArmor1ComesFromCloud = false;
-		foreach (float item in InitializeSwitcher(((_003CStart_003Ec__Iterator1CB)(object)this)._003C_003Em__56E))
-		{
-			float step2 = item;
-			ActivityIndicator.LoadingProgress = _progress;
-			yield return step2;
-		}
-		ScopeLogger scopeLogger = new ScopeLogger("Switcher.Start()", "Loading main menu asynchronously", Defs.IsDeveloperBuild);
-		try
-		{
-			foreach (float item2 in LoadMainMenu(armyArmor1ComesFromCloud))
-			{
-				float step = item2;
-				ActivityIndicator.LoadingProgress = _progress;
-				yield return step;
-			}
-		}
-		finally
-		{
-			scopeLogger.Dispose();
-		}
-		UnityEngine.Debug.LogFormat("< Switcher.Start(): {0:f3}, {1}", Time.realtimeSinceStartup, Time.frameCount);
-	}
-
-	public static string LoadingCupTexture(int number)
-	{
-		return "loading_cups_" + number + ((!Device.isRetinaAndStrong) ? string.Empty : "-hd");
-	}
-
-	public IEnumerable<float> InitializeSwitcher(Action setArmorArmy1ComesFromCloud = null)
-	{
-		UnityEngine.Debug.Log("> InitializeSwitcher()");
-		Stopwatch _stopwatch = new Stopwatch();
-		ProgressBounds bounds = new ProgressBounds();
-		if (_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4C == null)
-		{
-			_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4C = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Em__56F;
-		}
-		Action logBounds = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4C;
-		if (_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4D == null)
-		{
-			_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4D = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Em__570;
-		}
-		Action<string> log = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4D;
-		if (_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4E == null)
-		{
-			_003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4E = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Em__571;
-		}
-		Func<float, long, string> format = _003CInitializeSwitcher_003Ec__Iterator1CC._003C_003Ef__am_0024cache4E;
-		if (Defs.IsDeveloperBuild && CoroutineRunner.Instance.gameObject.GetComponent<HandmadeProfiler>() == null)
-		{
-			CoroutineRunner.Instance.gameObject.AddComponent<HandmadeProfiler>();
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			string bgTextureName = LoadingCupTexture(1);
-			fonToDraw = Resources.Load<Texture>(bgTextureName);
-			ActivityIndicator.instance.legendLabel.text = LocalizationStore.Get("Key_1925");
-			ActivityIndicator.instance.legendLabel.gameObject.SetActive(true);
-		}
-		else
-		{
-			string bgTextureName2 = ConnectSceneNGUIController.MainLoadingTexture();
-			fonToDraw = Resources.Load<Texture>(bgTextureName2);
-		}
-		ActivityIndicator.SetLoadingFon(fonToDraw);
-		ActivityIndicator.IsShowWindowLoading = true;
-		ActivityIndicator.instance.panelProgress.SetActive(true);
-		bounds.SetBounds(0f, 0.09f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		if (!PlayerPrefs.HasKey("First Launch (Advertisement)"))
-		{
-			PlayerPrefs.SetString("First Launch (Advertisement)", DateTimeOffset.UtcNow.ToString("s"));
-		}
-		if (!PlayerPrefs.HasKey(Defs.InitialAppVersionKey))
-		{
-			if (!PlayerPrefs.HasKey("NamePlayer"))
-			{
-				PlayerPrefs.SetString(Defs.InitialAppVersionKey, GlobalGameController.AppVersion);
-			}
-			else
-			{
-				PlayerPrefs.SetString(Defs.InitialAppVersionKey, "1.0.0");
-			}
-		}
-		InitialAppVersion = PlayerPrefs.GetString(Defs.InitialAppVersionKey);
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.Android)
-		{
-			AbstractManager.initialize(typeof(GoogleIABManager));
-		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-		{
-			try
-			{
-				if (Defs.IsDeveloperBuild)
-				{
-					UnityEngine.Debug.Log("Switcher: Trying to initialize Google Play Games...");
-				}
-				PlayGamesClientConfiguration config = new PlayGamesClientConfiguration.Builder().EnableSavedGames().Build();
-				PlayGamesPlatform.InitializeInstance(config);
-				PlayGamesPlatform.DebugLogEnabled = Defs.IsDeveloperBuild && BuildSettings.BuildTargetPlatform == RuntimePlatform.Android;
-				PlayGamesPlatform.Activate();
-			}
-			catch (Exception ex3)
-			{
-				Exception ex = ex3;
-				UnityEngine.Debug.LogException(ex);
-			}
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (sponsorPayPluginHolderPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(sponsorPayPluginHolderPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		GlobalGameController.LeftHanded = PlayerPrefs.GetInt(Defs.LeftHandedSN, 1) == 1;
-		if (!PlayerPrefs.HasKey(Defs.SwitchingWeaponsSwipeRegimSN))
-		{
-			double diagonalInPixels = Hypot(Screen.width, Screen.height);
-			int switchingWeaponMode = 0;
-			if (Screen.dpi > 0f)
-			{
-				double diagonalInInches = diagonalInPixels / (double)Screen.dpi;
-				if (UnityEngine.Debug.isDebugBuild)
-				{
-					UnityEngine.Debug.Log(string.Format("Device dpi: {0},    diagonal: {1} px ({2}\")", Screen.dpi, diagonalInPixels, diagonalInInches));
-				}
-				switchingWeaponMode = ((!(diagonalInInches < 6.8)) ? 1 : 0);
-			}
-			else if (UnityEngine.Debug.isDebugBuild)
-			{
-				UnityEngine.Debug.Log(string.Format("Device dpi: {0},    diagonal: {1} px", Screen.dpi, diagonalInPixels));
-			}
-			PlayerPrefs.SetInt(Defs.SwitchingWeaponsSwipeRegimSN, switchingWeaponMode);
-		}
-		GlobalGameController.switchingWeaponSwipe = PlayerPrefs.GetInt(Defs.SwitchingWeaponsSwipeRegimSN, 0) == 1;
-		GlobalGameController.ShowRec = PlayerPrefs.GetInt(Defs.ShowRecSN, 1) == 1;
-		string oldV = Load.LoadString("keyOldVersion");
-		string curV = GlobalGameController.AppVersion;
-		if (oldV != curV)
-		{
-			PlayerPrefs.SetInt("countSessionDayOnStartCorrentVersion", PlayerPrefs.GetInt(Defs.SessionDayNumberKey, 1));
-			ReviewController.IsSendReview = false;
-			ReviewController.ExistReviewForSend = false;
-			ReviewController.CheckActiveReview();
-			Save.SaveString("keyOldVersion", curV);
-		}
-		Tools.AddSessionNumber();
-		if (!Storager.hasKey(Defs.WeaponsGotInCampaign))
-		{
-			Storager.setString(Defs.WeaponsGotInCampaign, string.Empty, false);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		Screen.sleepTimeout = 180;
-		if (PromoActionsManager.sharedManager == null && promoActionsManagerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(promoActionsManagerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (nickStackPrefab == null)
-		{
-			UnityEngine.Debug.LogError("Switcher.InitializeSwitcher():    nickStackPrefab == null");
-		}
-		else if (NickLabelStack.sharedStack == null)
-		{
-			UnityEngine.Object nicklabelStack = UnityEngine.Object.Instantiate(nickStackPrefab, Vector3.zero, Quaternion.identity);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (sceneInfoController == null)
-		{
-			UnityEngine.Debug.LogError("Switcher.InitializeSwitcher():    sceneInfoController == null");
-		}
-		else
-		{
-			UnityEngine.Object.Instantiate(sceneInfoController, Vector3.zero, Quaternion.identity);
-		}
-		if (ExperienceControllerPrefab == null)
-		{
-			UnityEngine.Debug.LogError("Switcher.InitializeSwitcher():    ExperienceControllerPrefab == null");
-		}
-		else if (ExperienceController.sharedController == null)
-		{
-			UnityEngine.Object experienceController = UnityEngine.Object.Instantiate(ExperienceControllerPrefab, Vector3.zero, Quaternion.identity);
-			_progress = bounds.Lerp(_progress, 0.6f);
-			yield return _progress;
-			foreach (float item2 in ExperienceController.sharedController.InitController())
-			{
-				float step5 = item2;
-				_progress = bounds.Clamp(_progress + 0.01f);
-				yield return _progress;
-			}
-		}
-		bounds.SetBounds(0.1f, 0.19f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		if (experienceGuiPrefab != null)
-		{
-			if (ExpController.Instance == null)
-			{
-				UnityEngine.Object expGui = UnityEngine.Object.Instantiate(experienceGuiPrefab, Vector3.zero, Quaternion.identity);
-				UnityEngine.Object.DontDestroyOnLoad(expGui);
-			}
-		}
-		else
-		{
-			UnityEngine.Debug.LogWarning("ExperienceGuiPrefab == null");
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (bankGuiPrefab != null)
-		{
-			if (BankController.Instance == null)
-			{
-				UnityEngine.Object bankGui = UnityEngine.Object.Instantiate(bankGuiPrefab, Vector3.zero, Quaternion.identity);
-				UnityEngine.Object.DontDestroyOnLoad(bankGui);
-			}
-		}
-		else
-		{
-			UnityEngine.Debug.LogWarning("BankGuiPrefab == null");
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (freeAwardGuiPrefab != null)
-		{
-			if (FreeAwardController.Instance == null)
-			{
-				UnityEngine.Object freeAwardGui = UnityEngine.Object.Instantiate(freeAwardGuiPrefab, Vector3.zero, Quaternion.identity);
-				UnityEngine.Object.DontDestroyOnLoad(freeAwardGui);
-			}
-		}
-		else
-		{
-			UnityEngine.Debug.LogWarning("freeAwardGuiPrefab == null");
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		AnalyticsFacade.Initialize();
-		if (!GameObject.FindGameObjectWithTag("Flurry") && (bool)flurryPrefab)
-		{
-			UnityEngine.Object.Instantiate(flurryPrefab, Vector3.zero, Quaternion.identity);
-		}
-		PersistentCache persistentCache = PersistentCache.Instance;
-		if (Defs.IsDeveloperBuild)
-		{
-			UnityEngine.Debug.LogFormat("Persistent cache: '{0}'", persistentCache.PersistentDataPath);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (RemotePushNotificationController.Instance == null && (bool)remotePushNotificationControllerPrefab)
-		{
-			UnityEngine.Object.Instantiate(remotePushNotificationControllerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (Application.platform == RuntimePlatform.Android)
-		{
-			try
-			{
-				float startLoadingDex = Time.realtimeSinceStartup;
-				if (Defs.IsDeveloperBuild)
-				{
-					UnityEngine.Debug.LogFormat("[Rilisoft] Loading classes.dex, frame: {0}, time: {1:0.000}s", Time.frameCount, startLoadingDex);
-				}
-				if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
-				{
-					loaddex.loadDex();
-				}
-				if (Defs.IsDeveloperBuild)
-				{
-					UnityEngine.Debug.LogFormat("[Rilisoft] Loaded classes.dex in {0:0.000}s", Time.realtimeSinceStartup - startLoadingDex);
-				}
-			}
-			catch (Exception ex4)
-			{
-				Exception ex2 = ex4;
-				UnityEngine.Debug.LogWarningFormat("[Rilisoft] Failed loading classes.dex: {0}", ex2.Message);
-			}
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (ShopNGUIController.sharedShop == null)
-		{
-			ResourceRequest shopTask = Resources.LoadAsync("ShopNGUI");
-			while (!shopTask.isDone)
-			{
-				yield return _progress;
-			}
-			UnityEngine.Object shopP = shopTask.asset;
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			UnityEngine.Object.Instantiate(shopP, Vector3.zero, Quaternion.identity);
-		}
-		bounds.SetBounds(0.2f, 0.29f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		if (SkinsController.sharedController == null && (bool)skinsManagerPrefab)
-		{
-			UnityEngine.Object.Instantiate(skinsManagerPrefab, Vector3.zero, Quaternion.identity);
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			foreach (float item3 in SkinsController.sharedController.LoadSkinsInTexture())
-			{
-				float step4 = item3;
-				yield return _progress;
-			}
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (FriendsController.sharedController == null)
-		{
-			ResourceRequest friendsControllerTask = Resources.LoadAsync("FriendsController");
-			while (!friendsControllerTask.isDone)
-			{
-				yield return _progress;
-			}
-			UnityEngine.Object fcp = friendsControllerTask.asset;
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			UnityEngine.Object.Instantiate(fcp, Vector3.zero, Quaternion.identity);
-			yield return _progress;
-			foreach (float item4 in FriendsController.sharedController.InitController())
-			{
-				float step3 = item4;
-				yield return _progress;
-			}
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		object token = new object();
-		Storager.Initialize(token != null);
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			fonToDraw = Resources.Load<Texture>(LoadingCupTexture(2));
-			foreach (float item5 in ActivityIndicator.instance.ReplaceLoadingFon(fonToDraw, 0.3f))
-			{
-				float step2 = item5;
-				yield return _progress;
-			}
-			ActivityIndicator.instance.legendLabel.text = LocalizationStore.Get("Key_1926");
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		_stopwatch.Start();
-		foreach (float item6 in InitializeStorager())
-		{
-			float storagerInitProgress = item6;
-			if (_stopwatch.ElapsedMilliseconds > 100)
-			{
-				_stopwatch.Reset();
-				_stopwatch.Start();
-				yield return _progress;
-			}
-		}
-		_stopwatch.Reset();
-		BankController.GiveInitialNumOfCoins();
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (disabler != null)
-		{
-			UnityEngine.Object.Instantiate(disabler);
-		}
-		bounds.SetBounds(0.3f, 0.39f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer)
-		{
-			List<string> weaponsForWhichSetRememberedTier = new List<string>();
-			bool armorArmy1Comes;
-			Storager.SynchronizeIosWithCloud(ref weaponsForWhichSetRememberedTier, out armorArmy1Comes);
-			if (armorArmy1Comes && setArmorArmy1ComesFromCloud != null)
-			{
-				setArmorArmy1ComesFromCloud();
-			}
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			Storager.SyncWithCloud(Defs.SkinsMakerInProfileBought);
-			Storager.SyncWithCloud(Defs.code010110_Key);
-			Storager.SyncWithCloud(Defs.smallAsAntKey);
-			Storager.SyncWithCloud(Defs.UnderwaterKey);
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			foreach (KeyValuePair<ShopNGUIController.CategoryNames, List<List<string>>> item7 in Wear.wear)
-			{
-				foreach (List<string> ll in item7.Value)
-				{
-					foreach (string item in ll)
-					{
-						Storager.SyncWithCloud(item);
-					}
-				}
-			}
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			foreach (KeyValuePair<string, string> kvp in InAppData.inAppData.Values)
-			{
-				if (Storager.getInt(kvp.Value, true) > 0)
-				{
-					Storager.setInt(kvp.Value, Storager.getInt(kvp.Value, true), true);
-				}
-			}
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			int levelBefore = ((!(ExperienceController.sharedController != null)) ? 1 : ExperienceController.sharedController.currentLevel);
-			WeaponManager.RefreshExpControllers();
-			ExperienceController.SendAnalyticsForLevelsFromCloud(levelBefore);
-			try
-			{
-				WeaponManager.SetRememberedTiersForWeaponsComesFromCloud(weaponsForWhichSetRememberedTier);
-			}
-			catch (Exception e)
-			{
-				UnityEngine.Debug.LogError("SetRememberedTiersForWeaponsComesFromCloud exception: " + e);
-			}
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			List<string> canBuyWeaponStorageIds = ItemDb.GetCanBuyWeaponStorageIds(true);
-			_progress = bounds.Clamp(_progress + 0.01f);
-			yield return _progress;
-			_stopwatch.Start();
-			for (int j = 0; j < canBuyWeaponStorageIds.Count; j++)
-			{
-				string storageId = canBuyWeaponStorageIds[j];
-				if (!string.IsNullOrEmpty(storageId))
-				{
-					Storager.SyncWithCloud(storageId);
-				}
-				if (j % 100 == 0)
-				{
-					_progress = bounds.Clamp(_progress + 0.01f);
-					yield return _progress;
-					_stopwatch.Reset();
-					_stopwatch.Start();
-				}
-				if (_stopwatch.ElapsedMilliseconds > 100)
-				{
-					yield return _progress;
-					_stopwatch.Reset();
-					_stopwatch.Start();
-				}
-			}
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Started);
-			AnalyticsStuff.TrySendOnceToAppsFlyer("first_launch");
-		}
-		bounds.SetBounds(0.4f, 0.49f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		CountMoneyForRemovedGear();
-		_progress = bounds.Clamp(_progress + 0.001f);
-		yield return _progress;
-		CountMoneyForArmorHats();
-		if (Storager.hasKey(Defs.HatEquppedSN) && Storager.getString(Defs.HatEquppedSN, false) == "hat_ManiacMask")
-		{
-			Storager.setString(Defs.HatEquppedSN, ShopNGUIController.NoneEquippedForWearCategory(ShopNGUIController.CategoryNames.HatsCategory), false);
-			Storager.setString("MaskEquippedSN", "hat_ManiacMask", false);
-		}
-		_progress = bounds.Clamp(_progress + 0.001f);
-		yield return _progress;
-		WeaponManager.ActualizeWeaponsForCampaignProgress();
-		_progress = bounds.Clamp(0.41f);
-		yield return _progress;
-		if (coinsShop.thisScript == null && (bool)coinsShopPrefab)
-		{
-			UnityEngine.Object.Instantiate(coinsShopPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (FacebookController.sharedController == null && FacebookController.FacebookSupported && faceBookControllerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(faceBookControllerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (ButtonClickSound.Instance == null && buttonClickSoundPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(buttonClickSoundPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.005f);
-		yield return _progress;
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		bool needInstantiateLicenseVerification = licenseVerificationControllerPrefab != null;
-		if (Defs.IsDeveloperBuild)
-		{
-			UnityEngine.Debug.LogFormat("Loading {0:P1} > Instantiate License Verification Controller: {1}", _progress, needInstantiateLicenseVerification);
-		}
-		if (needInstantiateLicenseVerification)
-		{
-			UnityEngine.Object.Instantiate(licenseVerificationControllerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		bool needInstantiateTempItems = TempItemsController.sharedController == null && tempItemsControllerPrefab != null;
-		if (Defs.IsDeveloperBuild)
-		{
-			UnityEngine.Debug.LogFormat("Loading {0:P1} > Instantiate Temp Items: {1}", _progress, needInstantiateTempItems);
-		}
-		if (needInstantiateTempItems)
-		{
-			UnityEngine.Object.Instantiate(tempItemsControllerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (updateCheckerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(updateCheckerPrefab);
-		}
-		bounds.SetBounds(0.5f, 0.52f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			yield return _progress;
-			fonToDraw = Resources.Load<Texture>(LoadingCupTexture(3));
-			foreach (float item8 in ActivityIndicator.instance.ReplaceLoadingFon(fonToDraw, 0.3f))
-			{
-				float step = item8;
-				yield return _progress;
-			}
-			ActivityIndicator.instance.legendLabel.text = LocalizationStore.Get("Key_1927");
-		}
-		yield return _progress;
-		_progress = bounds.Clamp(_progress + 0.01f);
-		if (Defs.IsDeveloperBuild)
-		{
-			UnityEngine.Debug.LogFormat("Loading {0:P1} > Instantiate TwitterController.", _progress);
-		}
-		if (TwitterController.Instance == null && twitterControllerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(twitterControllerPrefab);
-		}
-		yield return _progress;
-		_progress = bounds.Clamp(_progress + 0.01f);
-		WeaponManager wm = null;
-		ScopeLogger scopeLogger = new ScopeLogger("Loading " + _progress.ToString("P1", CultureInfo.InvariantCulture), "Instantiate WeaponManager.", Defs.IsDeveloperBuild);
-		try
-		{
-			GameObject o = (GameObject)UnityEngine.Object.Instantiate(weaponManagerPrefab, Vector3.zero, Quaternion.identity);
-			wm = o.GetComponent<WeaponManager>();
-		}
-		finally
-		{
-			scopeLogger.Dispose();
-		}
-		bounds.SetBounds(0.52f, 0.88f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		if (wm != null)
-		{
-			int i = 0;
-			while (!wm.Initialized)
-			{
-				_progress = bounds.Clamp(_progress + 0.01f);
-				yield return _progress;
-				if (Launcher.UsingNewLauncher)
-				{
-					yield return -1f;
-				}
-				i++;
-			}
-		}
-		yield return _progress;
-		bounds.SetBounds(0.89f, 0.99f);
-		logBounds();
-		_progress = bounds.LowerBound;
-		yield return _progress;
-		SetUpPhoton(MiscAppsMenu.Instance.misc);
-		MiscAppsMenu.Instance.UnloadMisc();
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		CheckHugeUpgrade();
-		PerformEssentialInitialization("Coins", AbuseMetod.Coins);
-		PerformEssentialInitialization("GemsCurrency", AbuseMetod.Gems);
-		PerformExpendablesInitialization();
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		CampaignProgress.OpenNewBoxIfPossible();
-		if (StarterPackController.Get == null && starterPackManagerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(starterPackManagerPrefab);
-		}
-		if (PotionsController.sharedController == null && potionsControllerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(potionsControllerPrefab);
-		}
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		QuestSystem.Instance.Initialize();
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		if (PremiumAccountController.Instance == null && premiumAccountControllerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(premiumAccountControllerPrefab);
-		}
-		string lastLoggedDateString = PlayerPrefs.GetString("Statistics.WeaponPopularityTimestamp", "1970-01-01");
-		DateTime lastLoggedDate;
-		if (!DateTime.TryParse(lastLoggedDateString, out lastLoggedDate))
-		{
-			lastLoggedDate = new DateTime(1970, 1, 1);
-		}
-		DateTime now = DateTime.UtcNow.Date;
-		if (now > lastLoggedDate)
-		{
-			string[] mostPopularWeapons = Statistics.Instance.GetMostPopularWeapons();
-			if (mostPopularWeapons.Length > 0)
-			{
-				string eventName = FlurryPluginWrapper.GetEventName("Weapon Popularity");
-				string[] array = mostPopularWeapons;
-				foreach (string w in array)
-				{
-					Dictionary<string, string> parameters = new Dictionary<string, string> { { "Favorite Weapon", w } };
-					FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-				}
-				PlayerPrefs.SetString("Statistics.WeaponPopularityTimestamp", now.ToString("yyyy-MM-dd"));
-			}
-		}
-		LogWeaponAndArmorPopularityToFlurry();
-		_progress = bounds.Clamp(_progress + 0.01f);
-		yield return _progress;
-		Storager.SyncWithCloud("PayingUser");
-		Storager.SyncWithCloud(Defs.IsFacebookLoginRewardaGained);
-		Storager.SyncWithCloud(Defs.IsTwitterLoginRewardaGained);
-		foreach (string gochaGun in WeaponManager.GotchaGuns)
-		{
-			Storager.SyncWithCloud(gochaGun);
-		}
-		if (GiftController.Instance == null && giftControllerPrefab != null)
-		{
-			UnityEngine.Object.Instantiate(giftControllerPrefab);
-		}
-		Screen.sleepTimeout = 180;
-		_progress = 0.95f;
-		yield return _progress;
-	}
-
-	private void SetUpPhoton(HiddenSettings settings)
-	{
-		string text = SelectPhotonAppId(settings);
-		if (Defs.IsDeveloperBuild)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("appId", text);
-			dictionary.Add("defaultAppId", PhotonNetwork.PhotonServerSettings.AppID);
-			Dictionary<string, string> dictionary2 = dictionary;
-		}
-		PhotonNetwork.PhotonServerSettings.AppID = text;
-	}
-
-	private static string SelectPhotonAppId(HiddenSettings settings)
-	{
-		byte[] bytes = Convert.FromBase64String(settings.PhotonAppIdSignaturePad);
-		byte[] array = Convert.FromBase64String(settings.PhotonAppIdSignatureEncoded);
-		byte[] signatureHash = AndroidSystem.Instance.GetSignatureHash();
-		IEnumerable<byte[]> source = Enumerable.Repeat(signatureHash, int.MaxValue);
-		if (_003C_003Ef__am_0024cache26 == null)
-		{
-			_003C_003Ef__am_0024cache26 = _003CSelectPhotonAppId_003Em__566;
-		}
-		byte[] bytes2 = source.SelectMany(_003C_003Ef__am_0024cache26).Take(array.Length).ToArray();
-		byte[] array2 = new byte[36];
-		new BitArray(bytes).Xor(new BitArray(array)).Xor(new BitArray(bytes2)).CopyTo(array2, 0);
-		return Encoding.UTF8.GetString(array2, 0, array2.Length);
-	}
-
-	public static void PlayComicsSound()
-	{
-		if (!(comicsSound != null))
-		{
-			GameObject gameObject = Resources.Load<GameObject>("BackgroundMusic/Background_Comics");
-			if (gameObject == null)
-			{
-				UnityEngine.Debug.LogWarning("ComicsSoundPrefab is null.");
-				return;
-			}
-			comicsSound = UnityEngine.Object.Instantiate(gameObject);
-			UnityEngine.Object.DontDestroyOnLoad(comicsSound);
-		}
+		Switcher._abuseMethod = new AbuseMetod?(Switcher.AbuseMethod | f);
+		Storager.setInt("AbuseMethod", (int)Switcher._abuseMethod.Value, false);
 	}
 
 	private static void CheckHugeUpgrade()
 	{
 		bool flag = Storager.hasKey("Coins");
-		bool flag2 = Storager.hasKey(Defs.ArmorNewEquppedSN);
-		if (flag && !flag2)
+		if (flag && !Storager.hasKey(Defs.ArmorNewEquppedSN))
 		{
-			AppendAbuseMethod(AbuseMetod.UpgradeFromVulnerableVersion);
-			UnityEngine.Debug.LogError("Upgrade tampering detected: " + AbuseMethod);
-		}
-	}
-
-	private static void PerformEssentialInitialization(string currencyKey, AbuseMetod abuseMethod)
-	{
-		if (!Storager.hasKey(currencyKey))
-		{
-			return;
-		}
-		int @int = Storager.getInt(currencyKey, false);
-		if (DigestStorager.Instance.ContainsKey(currencyKey))
-		{
-			if (!DigestStorager.Instance.Verify(currencyKey, @int))
-			{
-				AppendAbuseMethod(abuseMethod);
-				UnityEngine.Debug.LogError("Currency tampering detected: " + AbuseMethod);
-			}
-		}
-		else
-		{
-			DigestStorager.Instance.Set(currencyKey, @int);
-		}
-	}
-
-	[Obsolete("Because of issues with CryptoPlayerPrefs")]
-	private static void PerformWeaponInitialization()
-	{
-		Dictionary<string, string>.ValueCollection values = WeaponManager.storeIDtoDefsSNMapping.Values;
-		if (_003C_003Ef__am_0024cache27 == null)
-		{
-			_003C_003Ef__am_0024cache27 = _003CPerformWeaponInitialization_003Em__567;
-		}
-		IEnumerable<string> source = values.Where(_003C_003Ef__am_0024cache27);
-		int value = source.Count();
-		if (DigestStorager.Instance.ContainsKey("WeaponsCount"))
-		{
-			if (!DigestStorager.Instance.Verify("WeaponsCount", value))
-			{
-				AppendAbuseMethod(AbuseMetod.Weapons);
-				UnityEngine.Debug.LogError("Weapon tampering detected: " + AbuseMethod);
-			}
-		}
-		else
-		{
-			DigestStorager.Instance.Set("WeaponsCount", value);
-		}
-	}
-
-	private static void PerformExpendablesInitialization()
-	{
-		string[] source = new string[4]
-		{
-			GearManager.InvisibilityPotion,
-			GearManager.Jetpack,
-			GearManager.Turret,
-			GearManager.Mech
-		};
-		if (_003C_003Ef__am_0024cache28 == null)
-		{
-			_003C_003Ef__am_0024cache28 = _003CPerformExpendablesInitialization_003Em__568;
-		}
-		byte[] value = source.SelectMany(_003C_003Ef__am_0024cache28).ToArray();
-		if (DigestStorager.Instance.ContainsKey("ExpendablesCount"))
-		{
-			if (!DigestStorager.Instance.Verify("ExpendablesCount", value))
-			{
-				AppendAbuseMethod(AbuseMetod.Expendables);
-				UnityEngine.Debug.LogError("Expendables tampering detected: " + AbuseMethod);
-			}
-		}
-		else
-		{
-			DigestStorager.Instance.Set("ExpendablesCount", value);
+			Switcher.AppendAbuseMethod(AbuseMetod.UpgradeFromVulnerableVersion);
+			UnityEngine.Debug.LogError(string.Concat("Upgrade tampering detected: ", Switcher.AbuseMethod));
 		}
 	}
 
 	private static void ClearProgress()
 	{
-	}
-
-	public IEnumerable<float> LoadMainMenu(bool armyArmor1ComesFromCloud = false)
-	{
-		if ((ExperienceController.sharedController != null && ExperienceController.sharedController.currentLevel > 1) || armyArmor1ComesFromCloud)
-		{
-			if (!TrainingController.TrainingCompleted)
-			{
-				TrainingController.OnGetProgress();
-			}
-			else if (Storager.getInt("Training.ShouldRemoveNoviceArmorInShopKey", false) == 1 && armyArmor1ComesFromCloud)
-			{
-				if (ShopNGUIController.NoviceArmorAvailable)
-				{
-					ShopNGUIController.UnequipCurrentWearInCategory(ShopNGUIController.CategoryNames.ArmorCategory, false);
-					ShopNGUIController.ProvideShopItemOnStarterPackBoguht(ShopNGUIController.CategoryNames.ArmorCategory, "Armor_Army_1", 1, false, 0, null, null, true, false, false);
-				}
-				Storager.setInt("Training.ShouldRemoveNoviceArmorInShopKey", 0, false);
-			}
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			Defs.isFlag = false;
-			Defs.isCOOP = false;
-			Defs.isMulti = false;
-			Defs.isHunger = false;
-			Defs.isCompany = false;
-			Defs.IsSurvival = false;
-			Defs.isCapturePoints = false;
-			GlobalGameController.Score = 0;
-			WeaponManager sharedManager = WeaponManager.sharedManager;
-			List<Weapon> list = WeaponManager.sharedManager.playerWeapons.OfType<Weapon>().ToList();
-			if (_003CLoadMainMenu_003Ec__Iterator1CD._003C_003Ef__am_0024cache7 == null)
-			{
-				_003CLoadMainMenu_003Ec__Iterator1CD._003C_003Ef__am_0024cache7 = _003CLoadMainMenu_003Ec__Iterator1CD._003C_003Em__572;
-			}
-			sharedManager.CurrentWeaponIndex = list.FindIndex(_003CLoadMainMenu_003Ec__Iterator1CD._003C_003Ef__am_0024cache7);
-		}
-		string sceneName = ((TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0) ? DetermineSceneName() : Defs.TrainingSceneName);
-		_progress = 0.96f;
-		yield return _progress;
-		AsyncOperation loadLevelTask = Singleton<SceneLoader>.Instance.LoadSceneAsync(sceneName);
-		while (!loadLevelTask.isDone)
-		{
-			_progress = 0.96f + loadLevelTask.progress / 50f;
-			yield return _progress;
-		}
-	}
-
-	private static void LogWeaponAndArmorPopularityToFlurry()
-	{
-		if (_003C_003Ef__am_0024cache29 == null)
-		{
-			_003C_003Ef__am_0024cache29 = _003CLogWeaponAndArmorPopularityToFlurry_003Em__569;
-		}
-		LogPopularityToFlurry("Statistics.WeaponPopularityTimestamp", _003C_003Ef__am_0024cache29, LogWeaponPopularityToFlurry);
-		if (_003C_003Ef__am_0024cache2A == null)
-		{
-			_003C_003Ef__am_0024cache2A = _003CLogWeaponAndArmorPopularityToFlurry_003Em__56A;
-		}
-		LogPopularityToFlurry("Statistics.WeaponPopularityForTierTimestamp", _003C_003Ef__am_0024cache2A, LogWeaponPopularityForTierToFlurry);
-		if (_003C_003Ef__am_0024cache2B == null)
-		{
-			_003C_003Ef__am_0024cache2B = _003CLogWeaponAndArmorPopularityToFlurry_003Em__56B;
-		}
-		LogPopularityToFlurry("Statistics.ArmorPopularityTimestamp", _003C_003Ef__am_0024cache2B, LogArmorPopularityToFlurry);
-		if (_003C_003Ef__am_0024cache2C == null)
-		{
-			_003C_003Ef__am_0024cache2C = _003CLogWeaponAndArmorPopularityToFlurry_003Em__56C;
-		}
-		LogPopularityToFlurry("Statistics.ArmorPopularityForTierTimestamp", _003C_003Ef__am_0024cache2C, LogArmorPopularityForTierToFlurry);
-		if (_003C_003Ef__am_0024cache2D == null)
-		{
-			_003C_003Ef__am_0024cache2D = _003CLogWeaponAndArmorPopularityToFlurry_003Em__56D;
-		}
-		LogPopularityToFlurry("Statistics.ArmorPopularityForLevelTimestamp", _003C_003Ef__am_0024cache2D, LogArmorPopularityForLevelToFlurry);
-	}
-
-	private static void LogPopularityToFlurry(string loggedDateTimestampKey, Func<string[]> getMostPopular, Action<string[]> logMostPopular)
-	{
-		DateTime date = DateTime.UtcNow.Date;
-		if (IsLastLoggedDateExpired(loggedDateTimestampKey, date))
-		{
-			string[] array = getMostPopular();
-			if (array.Length > 0)
-			{
-				logMostPopular(array);
-				PlayerPrefs.SetString(loggedDateTimestampKey, date.ToString("yyyy-MM-dd"));
-			}
-		}
-	}
-
-	private static bool IsLastLoggedDateExpired(string timestampKey, DateTime nowDate)
-	{
-		string @string = PlayerPrefs.GetString(timestampKey, "1970-01-01");
-		DateTime result;
-		if (!DateTime.TryParse(@string, out result))
-		{
-			result = new DateTime(1970, 1, 1);
-		}
-		return nowDate > result;
-	}
-
-	private static void LogWeaponPopularityToFlurry(string[] mostPopular)
-	{
-		string eventName = FlurryPluginWrapper.GetEventName("Weapon Popularity");
-		foreach (string value in mostPopular)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Favorite Weapon", value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		}
-	}
-
-	private static void LogWeaponPopularityForTierToFlurry(string[] mostPopular)
-	{
-		int ourTier = ExpController.Instance.OurTier;
-		string eventName = FlurryPluginWrapper.GetEventName("Weapon Popularity Tier");
-		foreach (string value in mostPopular)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Tier " + ourTier, value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		}
-	}
-
-	private static void LogArmorPopularityToFlurry(string[] mostPopular)
-	{
-		string eventName = FlurryPluginWrapper.GetEventName("Armor Popularity");
-		foreach (string value in mostPopular)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Name", value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		}
-	}
-
-	private static void LogArmorPopularityForTierToFlurry(string[] mostPopular)
-	{
-		int ourTier = ExpController.Instance.OurTier;
-		string eventName = FlurryPluginWrapper.GetEventName("Armor Popularity Tier");
-		foreach (string value in mostPopular)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Tier " + ourTier, value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		}
-	}
-
-	private static void LogArmorPopularityForLevelToFlurry(string[] mostPopular)
-	{
-		int currentLevel = ExperienceController.sharedController.currentLevel;
-		string payingSuffix = FlurryPluginWrapper.GetPayingSuffix();
-		int num = (currentLevel - 1) / 9;
-		string arg = string.Format("[{0}, {1})", num * 9 + 1, (num + 1) * 9 + 1);
-		string eventName = string.Format("Armor Popularity Level {0}{1}", arg, payingSuffix);
-		foreach (string value in mostPopular)
-		{
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			dictionary.Add("Level " + currentLevel, value);
-			Dictionary<string, string> parameters = dictionary;
-			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
-		}
-	}
-
-	private static bool IsWeaponBought(string weaponTag)
-	{
-		string value;
-		string value2;
-		return WeaponManager.tagToStoreIDMapping.TryGetValue(weaponTag, out value) && value != null && WeaponManager.storeIDtoDefsSNMapping.TryGetValue(value, out value2) && value2 != null && Storager.hasKey(value2) && Storager.getInt(value2, true) > 0;
-	}
-
-	private static void CountMoneyForRemovedGear()
-	{
-		Storager.hasKey(Defs.GemsGivenRemovedGear);
-		if (Storager.getInt(Defs.GemsGivenRemovedGear, false) != 0)
-		{
-			return;
-		}
-		int num = 0;
-		Dictionary<string, int> dictionary = new Dictionary<string, int>();
-		dictionary.Add(GearManager.Turret, 5);
-		dictionary.Add(GearManager.Mech, 7);
-		dictionary.Add(GearManager.InvisibilityPotion, 3);
-		dictionary.Add(GearManager.Jetpack, 4);
-		Dictionary<string, int> dictionary2 = dictionary;
-		foreach (string key in dictionary2.Keys)
-		{
-			num += Storager.getInt(key, false) * dictionary2[key];
-		}
-		Storager.setInt(Defs.GemsGivenRemovedGear, 1, false);
-		foreach (string key2 in dictionary2.Keys)
-		{
-			Storager.setInt(key2, 0, false);
-		}
-	}
-
-	private static void CountMoneyForGunsFrom831To901()
-	{
-		Storager.hasKey(Defs.MoneyGiven831to901);
-		Storager.SyncWithCloud(Defs.MoneyGiven831to901);
-		Storager.hasKey(Defs.Weapons831to901);
-		if (Storager.getInt(Defs.Weapons831to901, false) != 0)
-		{
-			return;
-		}
-		bool flag = Storager.getInt(Defs.MoneyGiven831to901, true) == 0;
-		int num = 0;
-		int num2 = 0;
-		if (flag)
-		{
-			Dictionary<string, int> dictionary = new Dictionary<string, int>();
-			dictionary.Add(WeaponTags.CrossbowTag, 120);
-			dictionary.Add(WeaponTags.CrystalCrossbowTag, 155);
-			dictionary.Add(WeaponTags.SteelCrossbowTag, 120);
-			dictionary.Add(WeaponTags.Bow_3_Tag, 185);
-			dictionary.Add(WeaponTags.WoodenBowTag, 100);
-			dictionary.Add(WeaponTags.Staff2Tag, 200);
-			dictionary.Add(WeaponTags.Staff_3_Tag, 235);
-			Dictionary<string, int> dictionary2 = dictionary;
-			foreach (KeyValuePair<string, int> item in dictionary2)
-			{
-				string key = item.Key;
-				int value = item.Value;
-				if (IsWeaponBought(key))
-				{
-					num += value;
-				}
-			}
-			dictionary = new Dictionary<string, int>();
-			dictionary.Add(WeaponTags.AutoShotgun_Tag, 255);
-			dictionary.Add(WeaponTags.TwoRevolvers_Tag, 267);
-			dictionary.Add(WeaponTags.TwoBolters_Tag, 249);
-			dictionary.Add(WeaponTags.SnowballGun_Tag, 281);
-			Dictionary<string, int> dictionary3 = dictionary;
-			foreach (KeyValuePair<string, int> item2 in dictionary3)
-			{
-				string key2 = item2.Key;
-				int value2 = item2.Value;
-				if (IsWeaponBought(key2))
-				{
-					num2 += value2;
-				}
-			}
-			dictionary = new Dictionary<string, int>();
-			dictionary.Add("cape_EliteCrafter", 50);
-			dictionary.Add("cape_Archimage", 65);
-			dictionary.Add("cape_BloodyDemon", 50);
-			dictionary.Add("cape_SkeletonLord", 75);
-			dictionary.Add("cape_RoyalKnight", 65);
-			Dictionary<string, int> dictionary4 = dictionary;
-			foreach (KeyValuePair<string, int> item3 in dictionary4)
-			{
-				string key3 = item3.Key;
-				int value3 = item3.Value;
-				if (Storager.hasKey(key3) && Storager.getInt(key3, false) != 0)
-				{
-					num += value3;
-				}
-			}
-			dictionary = new Dictionary<string, int>();
-			dictionary.Add("boots_gray", 50);
-			dictionary.Add("boots_red", 50);
-			dictionary.Add("boots_black", 100);
-			dictionary.Add("boots_blue", 50);
-			dictionary.Add("boots_green", 75);
-			Dictionary<string, int> dictionary5 = dictionary;
-			foreach (KeyValuePair<string, int> item4 in dictionary5)
-			{
-				string key4 = item4.Key;
-				int value4 = item4.Value;
-				if (Storager.hasKey(key4) && Storager.getInt(key4, false) != 0)
-				{
-					num += value4;
-				}
-			}
-		}
-		Storager.setInt(Defs.Weapons831to901, 1, false);
-		Storager.setInt(Defs.MoneyGiven831to901, 1, true);
 	}
 
 	private static void CountMoneyForArmorHats()
@@ -1767,21 +211,22 @@ internal sealed class Switcher : MonoBehaviour
 		{
 			return;
 		}
-		bool flag = Storager.getInt("MoneyGivenRemovedArmorHat", true) == 0;
-		int num = 0;
-		if (flag)
+		bool num = Storager.getInt("MoneyGivenRemovedArmorHat", true) == 0;
+		int price = 0;
+		if (num)
 		{
-			foreach (string item2 in Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0])
+			foreach (string item in Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0])
 			{
-				if (Storager.getInt(item2, true) > 0)
+				if (Storager.getInt(item, true) <= 0)
 				{
-					num += VirtualCurrencyHelper.Price(item2).Price;
+					continue;
 				}
+				price += VirtualCurrencyHelper.Price(item).Price;
 			}
 		}
 		Storager.hasKey(Defs.HatEquppedSN);
-		string item = Storager.getString(Defs.HatEquppedSN, false) ?? string.Empty;
-		if (Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(item))
+		string str = Storager.getString(Defs.HatEquppedSN, false) ?? string.Empty;
+		if (Wear.wear[ShopNGUIController.CategoryNames.HatsCategory][0].Contains(str))
 		{
 			Storager.setString(Defs.HatEquppedSN, ShopNGUIController.NoneEquippedForWearCategory(ShopNGUIController.CategoryNames.HatsCategory), false);
 		}
@@ -1789,11 +234,339 @@ internal sealed class Switcher : MonoBehaviour
 		Storager.setInt("MoneyGivenRemovedArmorHat", 1, true);
 	}
 
-	public static float SecondsFrom1970()
+	private static void CountMoneyForGunsFrom831To901()
 	{
-		DateTime dateTime = new DateTime(1970, 1, 9, 0, 0, 0);
-		DateTime now = DateTime.Now;
-		return (float)(now - dateTime).TotalSeconds;
+		Storager.hasKey(Defs.MoneyGiven831to901);
+		Storager.SyncWithCloud(Defs.MoneyGiven831to901);
+		Storager.hasKey(Defs.Weapons831to901);
+		if (Storager.getInt(Defs.Weapons831to901, false) != 0)
+		{
+			return;
+		}
+		bool num = Storager.getInt(Defs.MoneyGiven831to901, true) == 0;
+		int num1 = 0;
+		int num2 = 0;
+		if (num)
+		{
+			Dictionary<string, int> strs = new Dictionary<string, int>()
+			{
+				{ WeaponTags.CrossbowTag, 120 },
+				{ WeaponTags.CrystalCrossbowTag, 155 },
+				{ WeaponTags.SteelCrossbowTag, 120 },
+				{ WeaponTags.Bow_3_Tag, 185 },
+				{ WeaponTags.WoodenBowTag, 100 },
+				{ WeaponTags.Staff2Tag, 200 },
+				{ WeaponTags.Staff_3_Tag, 235 }
+			};
+			foreach (KeyValuePair<string, int> str in strs)
+			{
+				string key = str.Key;
+				int value = str.Value;
+				if (!Switcher.IsWeaponBought(key))
+				{
+					continue;
+				}
+				num1 += value;
+			}
+			strs = new Dictionary<string, int>()
+			{
+				{ WeaponTags.AutoShotgun_Tag, 255 },
+				{ WeaponTags.TwoRevolvers_Tag, 267 },
+				{ WeaponTags.TwoBolters_Tag, 249 },
+				{ WeaponTags.SnowballGun_Tag, 281 }
+			};
+			foreach (KeyValuePair<string, int> keyValuePair in strs)
+			{
+				string key1 = keyValuePair.Key;
+				int value1 = keyValuePair.Value;
+				if (!Switcher.IsWeaponBought(key1))
+				{
+					continue;
+				}
+				num2 += value1;
+			}
+			strs = new Dictionary<string, int>()
+			{
+				{ "cape_EliteCrafter", 50 },
+				{ "cape_Archimage", 65 },
+				{ "cape_BloodyDemon", 50 },
+				{ "cape_SkeletonLord", 75 },
+				{ "cape_RoyalKnight", 65 }
+			};
+			foreach (KeyValuePair<string, int> str1 in strs)
+			{
+				string key2 = str1.Key;
+				int value2 = str1.Value;
+				if (Storager.hasKey(key2) && Storager.getInt(key2, false) != 0)
+				{
+					num1 += value2;
+				}
+			}
+			strs = new Dictionary<string, int>()
+			{
+				{ "boots_gray", 50 },
+				{ "boots_red", 50 },
+				{ "boots_black", 100 },
+				{ "boots_blue", 50 },
+				{ "boots_green", 75 }
+			};
+			foreach (KeyValuePair<string, int> keyValuePair1 in strs)
+			{
+				string str2 = keyValuePair1.Key;
+				int value3 = keyValuePair1.Value;
+				if (Storager.hasKey(str2) && Storager.getInt(str2, false) != 0)
+				{
+					num1 += value3;
+				}
+			}
+		}
+		Storager.setInt(Defs.Weapons831to901, 1, false);
+		Storager.setInt(Defs.MoneyGiven831to901, 1, true);
+	}
+
+	private static void CountMoneyForRemovedGear()
+	{
+		Storager.hasKey(Defs.GemsGivenRemovedGear);
+		if (Storager.getInt(Defs.GemsGivenRemovedGear, false) != 0)
+		{
+			return;
+		}
+		int num = 0;
+		Dictionary<string, int> strs = new Dictionary<string, int>()
+		{
+			{ GearManager.Turret, 5 },
+			{ GearManager.Mech, 7 },
+			{ GearManager.InvisibilityPotion, 3 },
+			{ GearManager.Jetpack, 4 }
+		};
+		Dictionary<string, int> strs1 = strs;
+		foreach (string key in strs1.Keys)
+		{
+			num = num + Storager.getInt(key, false) * strs1[key];
+		}
+		Storager.setInt(Defs.GemsGivenRemovedGear, 1, false);
+		foreach (string str in strs1.Keys)
+		{
+			Storager.setInt(str, 0, false);
+		}
+	}
+
+	private static string DetermineSceneName()
+	{
+		int num = GlobalGameController.currentLevel;
+		switch (num)
+		{
+			case -1:
+			{
+				return Defs.MainMenuScene;
+			}
+			case 0:
+			{
+				return "Cementery";
+			}
+			case 1:
+			{
+				return "Maze";
+			}
+			case 2:
+			{
+				return "City";
+			}
+			case 3:
+			{
+				return "Hospital";
+			}
+			case 4:
+			{
+				return "Jail";
+			}
+			case 5:
+			{
+				return "Gluk_2";
+			}
+			case 6:
+			{
+				return "Arena";
+			}
+			case 7:
+			{
+				return "Area52";
+			}
+			case 8:
+			{
+				return "Slender";
+			}
+			case 9:
+			{
+				return "Castle";
+			}
+			default:
+			{
+				if (num == 101)
+				{
+					break;
+				}
+				else
+				{
+					return Defs.MainMenuScene;
+				}
+			}
+		}
+		return "Training";
+	}
+
+	private static double Hypot(double x, double y)
+	{
+		x = Math.Abs(x);
+		y = Math.Abs(y);
+		double num = Math.Max(x, y);
+		double num1 = Math.Min(x, y) / num;
+		return num * Math.Sqrt(1 + num1 * num1);
+	}
+
+	[DebuggerHidden]
+	internal static IEnumerable<float> InitializeStorager()
+	{
+		Switcher.u003cInitializeStorageru003ec__Iterator1C9 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	public IEnumerable<float> InitializeSwitcher(Action setArmorArmy1ComesFromCloud = null)
+	{
+		Switcher.u003cInitializeSwitcheru003ec__Iterator1CC variable = null;
+		return variable;
+	}
+
+	private static bool IsLastLoggedDateExpired(string timestampKey, DateTime nowDate)
+	{
+		DateTime dateTime;
+		if (!DateTime.TryParse(PlayerPrefs.GetString(timestampKey, "1970-01-01"), out dateTime))
+		{
+			dateTime = new DateTime(1970, 1, 1);
+		}
+		return nowDate > dateTime;
+	}
+
+	private static bool IsWeaponBought(string weaponTag)
+	{
+		string str;
+		string str1;
+		return (!WeaponManager.tagToStoreIDMapping.TryGetValue(weaponTag, out str) || str == null || !WeaponManager.storeIDtoDefsSNMapping.TryGetValue(str, out str1) || str1 == null || !Storager.hasKey(str1) ? false : Storager.getInt(str1, true) > 0);
+	}
+
+	public static string LoadingCupTexture(int number)
+	{
+		return string.Concat("loading_cups_", number.ToString(), (!Device.isRetinaAndStrong ? string.Empty : "-hd"));
+	}
+
+	[DebuggerHidden]
+	public IEnumerable<float> LoadMainMenu(bool armyArmor1ComesFromCloud = false)
+	{
+		Switcher.u003cLoadMainMenuu003ec__Iterator1CD variable = null;
+		return variable;
+	}
+
+	private static void LogArmorPopularityForLevelToFlurry(string[] mostPopular)
+	{
+		int num = ExperienceController.sharedController.currentLevel;
+		string payingSuffix = FlurryPluginWrapper.GetPayingSuffix();
+		int num1 = (num - 1) / 9;
+		string str = string.Format("[{0}, {1})", num1 * 9 + 1, (num1 + 1) * 9 + 1);
+		string str1 = string.Format("Armor Popularity Level {0}{1}", str, payingSuffix);
+		string[] strArrays = mostPopular;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			string str2 = strArrays[i];
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ string.Concat("Level ", num), str2 }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(str1, strs, true);
+		}
+	}
+
+	private static void LogArmorPopularityForTierToFlurry(string[] mostPopular)
+	{
+		int ourTier = ExpController.Instance.OurTier;
+		string eventName = FlurryPluginWrapper.GetEventName("Armor Popularity Tier");
+		string[] strArrays = mostPopular;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			string str = strArrays[i];
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ string.Concat("Tier ", ourTier), str }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, strs, true);
+		}
+	}
+
+	private static void LogArmorPopularityToFlurry(string[] mostPopular)
+	{
+		string eventName = FlurryPluginWrapper.GetEventName("Armor Popularity");
+		string[] strArrays = mostPopular;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Name", strArrays[i] }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, strs, true);
+		}
+	}
+
+	private static void LogPopularityToFlurry(string loggedDateTimestampKey, Func<string[]> getMostPopular, Action<string[]> logMostPopular)
+	{
+		DateTime date = DateTime.UtcNow.Date;
+		if (Switcher.IsLastLoggedDateExpired(loggedDateTimestampKey, date))
+		{
+			string[] strArrays = getMostPopular();
+			if ((int)strArrays.Length > 0)
+			{
+				logMostPopular(strArrays);
+				PlayerPrefs.SetString(loggedDateTimestampKey, date.ToString("yyyy-MM-dd"));
+			}
+		}
+	}
+
+	private static void LogWeaponAndArmorPopularityToFlurry()
+	{
+		Switcher.LogPopularityToFlurry("Statistics.WeaponPopularityTimestamp", () => Statistics.Instance.GetMostPopularWeapons(), new Action<string[]>(Switcher.LogWeaponPopularityToFlurry));
+		Switcher.LogPopularityToFlurry("Statistics.WeaponPopularityForTierTimestamp", () => Statistics.Instance.GetMostPopularWeaponsForTier(ExpController.Instance.OurTier), new Action<string[]>(Switcher.LogWeaponPopularityForTierToFlurry));
+		Switcher.LogPopularityToFlurry("Statistics.ArmorPopularityTimestamp", () => Statistics.Instance.GetMostPopularArmors(), new Action<string[]>(Switcher.LogArmorPopularityToFlurry));
+		Switcher.LogPopularityToFlurry("Statistics.ArmorPopularityForTierTimestamp", () => Statistics.Instance.GetMostPopularArmorsForTier(ExpController.Instance.OurTier), new Action<string[]>(Switcher.LogArmorPopularityForTierToFlurry));
+		Switcher.LogPopularityToFlurry("Statistics.ArmorPopularityForLevelTimestamp", () => Statistics.Instance.GetMostPopularArmorsForLevel(ExperienceController.sharedController.currentLevel), new Action<string[]>(Switcher.LogArmorPopularityForLevelToFlurry));
+	}
+
+	private static void LogWeaponPopularityForTierToFlurry(string[] mostPopular)
+	{
+		int ourTier = ExpController.Instance.OurTier;
+		string eventName = FlurryPluginWrapper.GetEventName("Weapon Popularity Tier");
+		string[] strArrays = mostPopular;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			string str = strArrays[i];
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ string.Concat("Tier ", ourTier), str }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, strs, true);
+		}
+	}
+
+	private static void LogWeaponPopularityToFlurry(string[] mostPopular)
+	{
+		string eventName = FlurryPluginWrapper.GetEventName("Weapon Popularity");
+		string[] strArrays = mostPopular;
+		for (int i = 0; i < (int)strArrays.Length; i++)
+		{
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "Favorite Weapon", strArrays[i] }
+			};
+			FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, strs, true);
+		}
 	}
 
 	private void OnDestroy()
@@ -1801,91 +574,114 @@ internal sealed class Switcher : MonoBehaviour
 		ActivityIndicator.IsShowWindowLoading = false;
 	}
 
-	private static string DetermineSceneName()
+	[DebuggerHidden]
+	private IEnumerator ParseConfigsCoroutine()
 	{
-		switch (GlobalGameController.currentLevel)
+		return new Switcher.u003cParseConfigsCoroutineu003ec__Iterator1CA();
+	}
+
+	private static void PerformEssentialInitialization(string currencyKey, AbuseMetod abuseMethod)
+	{
+		if (Storager.hasKey(currencyKey))
 		{
-		case -1:
-			return Defs.MainMenuScene;
-		case 0:
-			return "Cementery";
-		case 1:
-			return "Maze";
-		case 2:
-			return "City";
-		case 3:
-			return "Hospital";
-		case 4:
-			return "Jail";
-		case 5:
-			return "Gluk_2";
-		case 6:
-			return "Arena";
-		case 7:
-			return "Area52";
-		case 101:
-			return "Training";
-		case 8:
-			return "Slender";
-		case 9:
-			return "Castle";
-		default:
-			return Defs.MainMenuScene;
+			int num = Storager.getInt(currencyKey, false);
+			if (!DigestStorager.Instance.ContainsKey(currencyKey))
+			{
+				DigestStorager.Instance.Set(currencyKey, num);
+			}
+			else if (!DigestStorager.Instance.Verify(currencyKey, num))
+			{
+				Switcher.AppendAbuseMethod(abuseMethod);
+				UnityEngine.Debug.LogError(string.Concat("Currency tampering detected: ", Switcher.AbuseMethod));
+			}
 		}
 	}
 
-	internal static void AppendAbuseMethod(AbuseMetod f)
+	private static void PerformExpendablesInitialization()
 	{
-		_abuseMethod = AbuseMethod | f;
-		AbuseMetod? abuseMethod = _abuseMethod;
-		Storager.setInt("AbuseMethod", (int)abuseMethod.Value, false);
+		byte[] array = (new string[] { GearManager.InvisibilityPotion, GearManager.Jetpack, GearManager.Turret, GearManager.Mech }).SelectMany<string, byte>((string key) => BitConverter.GetBytes(Storager.getInt(key, false))).ToArray<byte>();
+		if (!DigestStorager.Instance.ContainsKey("ExpendablesCount"))
+		{
+			DigestStorager.Instance.Set("ExpendablesCount", array);
+		}
+		else if (!DigestStorager.Instance.Verify("ExpendablesCount", array))
+		{
+			Switcher.AppendAbuseMethod(AbuseMetod.Expendables);
+			UnityEngine.Debug.LogError(string.Concat("Expendables tampering detected: ", Switcher.AbuseMethod));
+		}
 	}
 
-	[CompilerGenerated]
-	private static IEnumerable<byte> _003CSelectPhotonAppId_003Em__566(byte[] bs)
+	[Obsolete("Because of issues with CryptoPlayerPrefs")]
+	private static void PerformWeaponInitialization()
 	{
-		return bs;
+		IEnumerable<string> values = 
+			from w in WeaponManager.storeIDtoDefsSNMapping.Values
+			where Storager.getInt(w, false) == 1
+			select w;
+		int num = values.Count<string>();
+		if (!DigestStorager.Instance.ContainsKey("WeaponsCount"))
+		{
+			DigestStorager.Instance.Set("WeaponsCount", num);
+		}
+		else if (!DigestStorager.Instance.Verify("WeaponsCount", num))
+		{
+			Switcher.AppendAbuseMethod(AbuseMetod.Weapons);
+			UnityEngine.Debug.LogError(string.Concat("Weapon tampering detected: ", Switcher.AbuseMethod));
+		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CPerformWeaponInitialization_003Em__567(string w)
+	public static void PlayComicsSound()
 	{
-		return Storager.getInt(w, false) == 1;
+		if (Switcher.comicsSound != null)
+		{
+			return;
+		}
+		GameObject gameObject = Resources.Load<GameObject>("BackgroundMusic/Background_Comics");
+		if (gameObject == null)
+		{
+			UnityEngine.Debug.LogWarning("ComicsSoundPrefab is null.");
+			return;
+		}
+		Switcher.comicsSound = UnityEngine.Object.Instantiate<GameObject>(gameObject);
+		UnityEngine.Object.DontDestroyOnLoad(Switcher.comicsSound);
 	}
 
-	[CompilerGenerated]
-	private static IEnumerable<byte> _003CPerformExpendablesInitialization_003Em__568(string key)
+	public static float SecondsFrom1970()
 	{
-		return BitConverter.GetBytes(Storager.getInt(key, false));
+		DateTime dateTime = new DateTime(1970, 1, 9, 0, 0, 0);
+		return (float)(DateTime.Now - dateTime).TotalSeconds;
 	}
 
-	[CompilerGenerated]
-	private static string[] _003CLogWeaponAndArmorPopularityToFlurry_003Em__569()
+	private static string SelectPhotonAppId(HiddenSettings settings)
 	{
-		return Statistics.Instance.GetMostPopularWeapons();
+		byte[] numArray = Convert.FromBase64String(settings.PhotonAppIdSignaturePad);
+		byte[] numArray1 = Convert.FromBase64String(settings.PhotonAppIdSignatureEncoded);
+		byte[] signatureHash = AndroidSystem.Instance.GetSignatureHash();
+		byte[] array = Enumerable.Repeat<byte[]>(signatureHash, 2147483647).SelectMany<byte[], byte>((byte[] bs) => bs).Take<byte>((int)numArray1.Length).ToArray<byte>();
+		byte[] numArray2 = new byte[36];
+		(new BitArray(numArray)).Xor(new BitArray(numArray1)).Xor(new BitArray(array)).CopyTo(numArray2, 0);
+		string str = Encoding.UTF8.GetString(numArray2, 0, (int)numArray2.Length);
+		return str;
 	}
 
-	[CompilerGenerated]
-	private static string[] _003CLogWeaponAndArmorPopularityToFlurry_003Em__56A()
+	private void SetUpPhoton(HiddenSettings settings)
 	{
-		return Statistics.Instance.GetMostPopularWeaponsForTier(ExpController.Instance.OurTier);
+		string str = Switcher.SelectPhotonAppId(settings);
+		if (Defs.IsDeveloperBuild)
+		{
+			Dictionary<string, string> strs = new Dictionary<string, string>()
+			{
+				{ "appId", str },
+				{ "defaultAppId", PhotonNetwork.PhotonServerSettings.AppID }
+			};
+		}
+		PhotonNetwork.PhotonServerSettings.AppID = str;
 	}
 
-	[CompilerGenerated]
-	private static string[] _003CLogWeaponAndArmorPopularityToFlurry_003Em__56B()
+	[DebuggerHidden]
+	private IEnumerator Start()
 	{
-		return Statistics.Instance.GetMostPopularArmors();
-	}
-
-	[CompilerGenerated]
-	private static string[] _003CLogWeaponAndArmorPopularityToFlurry_003Em__56C()
-	{
-		return Statistics.Instance.GetMostPopularArmorsForTier(ExpController.Instance.OurTier);
-	}
-
-	[CompilerGenerated]
-	private static string[] _003CLogWeaponAndArmorPopularityToFlurry_003Em__56D()
-	{
-		return Statistics.Instance.GetMostPopularArmorsForLevel(ExperienceController.sharedController.currentLevel);
+		Switcher.u003cStartu003ec__Iterator1CB variable = null;
+		return variable;
 	}
 }

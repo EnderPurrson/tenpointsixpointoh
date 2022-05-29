@@ -9,45 +9,58 @@ namespace Facebook.Unity
 
 		private int nextAsyncId;
 
-		public string AddFacebookDelegate<T>(FacebookDelegate<T> callback) where T : IResult
+		public CallbackManager()
+		{
+		}
+
+		public string AddFacebookDelegate<T>(FacebookDelegate<T> callback)
+		where T : IResult
 		{
 			if (callback == null)
 			{
 				return null;
 			}
-			nextAsyncId++;
-			facebookDelegates.Add(nextAsyncId.ToString(), callback);
-			return nextAsyncId.ToString();
-		}
-
-		public void OnFacebookResponse(IInternalResult result)
-		{
-			object value;
-			if (result != null && result.CallbackId != null && facebookDelegates.TryGetValue(result.CallbackId, out value))
-			{
-				CallCallback(value, result);
-				facebookDelegates.Remove(result.CallbackId);
-			}
+			this.nextAsyncId++;
+			this.facebookDelegates.Add(this.nextAsyncId.ToString(), callback);
+			return this.nextAsyncId.ToString();
 		}
 
 		private static void CallCallback(object callback, IResult result)
 		{
-			if (callback == null || result == null || TryCallCallback<IAppRequestResult>(callback, result) || TryCallCallback<IShareResult>(callback, result) || TryCallCallback<IGroupCreateResult>(callback, result) || TryCallCallback<IGroupJoinResult>(callback, result) || TryCallCallback<IPayResult>(callback, result) || TryCallCallback<IAppInviteResult>(callback, result) || TryCallCallback<IAppLinkResult>(callback, result) || TryCallCallback<ILoginResult>(callback, result) || TryCallCallback<IAccessTokenRefreshResult>(callback, result))
+			if (callback == null || result == null)
 			{
 				return;
 			}
-			throw new NotSupportedException("Unexpected result type: " + callback.GetType().FullName);
+			if (!CallbackManager.TryCallCallback<IAppRequestResult>(callback, result) && !CallbackManager.TryCallCallback<IShareResult>(callback, result) && !CallbackManager.TryCallCallback<IGroupCreateResult>(callback, result) && !CallbackManager.TryCallCallback<IGroupJoinResult>(callback, result) && !CallbackManager.TryCallCallback<IPayResult>(callback, result) && !CallbackManager.TryCallCallback<IAppInviteResult>(callback, result) && !CallbackManager.TryCallCallback<IAppLinkResult>(callback, result) && !CallbackManager.TryCallCallback<ILoginResult>(callback, result) && !CallbackManager.TryCallCallback<IAccessTokenRefreshResult>(callback, result))
+			{
+				throw new NotSupportedException(string.Concat("Unexpected result type: ", callback.GetType().FullName));
+			}
 		}
 
-		private static bool TryCallCallback<T>(object callback, IResult result) where T : IResult
+		public void OnFacebookResponse(IInternalResult result)
+		{
+			object obj;
+			if (result == null || result.CallbackId == null)
+			{
+				return;
+			}
+			if (this.facebookDelegates.TryGetValue(result.CallbackId, out obj))
+			{
+				CallbackManager.CallCallback(obj, result);
+				this.facebookDelegates.Remove(result.CallbackId);
+			}
+		}
+
+		private static bool TryCallCallback<T>(object callback, IResult result)
+		where T : IResult
 		{
 			FacebookDelegate<T> facebookDelegate = callback as FacebookDelegate<T>;
-			if (facebookDelegate != null)
+			if (facebookDelegate == null)
 			{
-				facebookDelegate((T)result);
-				return true;
+				return false;
 			}
-			return false;
+			facebookDelegate((T)result);
+			return true;
 		}
 	}
 }

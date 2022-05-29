@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ShopPositionParams : MonoBehaviour
@@ -18,7 +19,16 @@ public class ShopPositionParams : MonoBehaviour
 	{
 		get
 		{
-			return FriendsController.isUseRatingSystem ? (league - 1) : (base.name.Contains("league") ? 100000 : 0);
+			int num;
+			if (!FriendsController.isUseRatingSystem)
+			{
+				num = (!base.name.Contains("league") ? 0 : 100000);
+			}
+			else
+			{
+				num = this.league - 1;
+			}
+			return num;
 		}
 	}
 
@@ -26,7 +36,7 @@ public class ShopPositionParams : MonoBehaviour
 	{
 		get
 		{
-			return LocalizationStore.Get(localizeKey);
+			return LocalizationStore.Get(this.localizeKey);
 		}
 	}
 
@@ -34,7 +44,11 @@ public class ShopPositionParams : MonoBehaviour
 	{
 		get
 		{
-			return LocalizationStore.GetByDefault(localizeKey);
+			return LocalizationStore.GetByDefault(this.localizeKey);
 		}
+	}
+
+	public ShopPositionParams()
+	{
 	}
 }

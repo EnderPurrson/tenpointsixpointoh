@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace I2.Loc
@@ -7,17 +8,21 @@ namespace I2.Loc
 	{
 		public string _Language;
 
-		private void OnClick()
+		public SetLanguage()
 		{
-			ApplyLanguage();
 		}
 
 		public void ApplyLanguage()
 		{
-			if (LocalizationManager.HasLanguage(_Language))
+			if (LocalizationManager.HasLanguage(this._Language, true))
 			{
-				LocalizationManager.CurrentLanguage = _Language;
+				LocalizationManager.CurrentLanguage = this._Language;
 			}
+		}
+
+		private void OnClick()
+		{
+			this.ApplyLanguage();
 		}
 	}
 }

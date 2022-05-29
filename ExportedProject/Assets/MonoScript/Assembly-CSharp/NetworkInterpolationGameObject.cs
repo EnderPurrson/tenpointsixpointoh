@@ -1,8 +1,13 @@
+using System;
 using UnityEngine;
 
 public class NetworkInterpolationGameObject : MonoBehaviour
 {
 	private Quaternion correctPlayerRot = Quaternion.identity;
+
+	public NetworkInterpolationGameObject()
+	{
+	}
 
 	private void Awake()
 	{
@@ -14,24 +19,24 @@ public class NetworkInterpolationGameObject : MonoBehaviour
 
 	private void OnSerializeNetworkView(BitStream stream, NetworkMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			Quaternion value = base.transform.localRotation;
-			stream.Serialize(ref value);
+			Quaternion quaternion = Quaternion.identity;
+			stream.Serialize(ref quaternion);
+			this.correctPlayerRot = quaternion;
 		}
 		else
 		{
-			Quaternion value2 = Quaternion.identity;
-			stream.Serialize(ref value2);
-			correctPlayerRot = value2;
+			Quaternion quaternion1 = base.transform.localRotation;
+			stream.Serialize(ref quaternion1);
 		}
 	}
 
 	private void Update()
 	{
-		if (!GetComponent<NetworkView>().isMine)
+		if (!base.GetComponent<NetworkView>().isMine)
 		{
-			base.transform.localRotation = correctPlayerRot;
+			base.transform.localRotation = this.correctPlayerRot;
 		}
 	}
 }

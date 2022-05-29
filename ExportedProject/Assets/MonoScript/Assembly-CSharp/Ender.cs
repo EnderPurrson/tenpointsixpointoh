@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -24,46 +28,34 @@ public class Ender : MonoBehaviour
 
 	private readonly float _pauseBetweenTexts = 3f;
 
-	private IEnumerator Start()
+	public Ender()
 	{
-		MainMenu.BlockInterface = true;
-		_camera = cam.GetComponent<Camera>();
-		_text = text.GetComponent<GUIText>();
-		float animLength = enderPers.GetComponent<Animation>().GetComponent<Animation>()["Ender_AD"].length;
-		yield return new WaitForSeconds(_pauseBeforeClouds);
-		for (int i = 0; i < clouds.Length; i++)
-		{
-			clouds[i].SetActive(true);
-			if (i == clouds.Length - 1)
-			{
-				text.SetActive(true);
-			}
-			yield return new WaitForSeconds(_pauseBetweenClouds);
-		}
-		yield return new WaitForSeconds(_pauseBetweenTexts);
-		text.transform.localPosition = new Vector3(0.375f, text.transform.localPosition.y, text.transform.localPosition.z);
-		_text.text = "See you!\nYou can\nfind me in\nFree Coins!";
-		yield return new WaitForSeconds(animLength - _pauseBeforeClouds - (float)clouds.Length * _pauseBetweenClouds - _pauseBetweenTexts);
-		MainMenu.BlockInterface = false;
-		Object.Destroy(base.gameObject);
 	}
 
 	private void OnGUI()
 	{
-		if (!(MainMenuController.sharedController != null) || !MainMenuController.sharedController.stubLoading.activeSelf)
+		if (MainMenuController.sharedController != null && MainMenuController.sharedController.stubLoading.activeSelf)
 		{
-			GUI.enabled = true;
-			GUI.depth = -10000;
-			Rect position = new Rect(0f, (float)Screen.height - (float)_camera.targetTexture.height * Defs.Coef, (float)_camera.targetTexture.width * Defs.Coef, (float)_camera.targetTexture.height * Defs.Coef);
-			GUI.DrawTexture(position, _camera.targetTexture);
-			position.width /= 2f;
-			if (GUI.Button(position, string.Empty, buttonStyle))
-			{
-				MainMenu.BlockInterface = false;
-				FlurryPluginWrapper.LogEvent("Ender3D");
-				Object.Destroy(base.gameObject);
-				Application.OpenURL(MainMenu.GetEndermanUrl());
-			}
+			return;
 		}
+		GUI.enabled = true;
+		GUI.depth = -10000;
+		Rect rect = new Rect(0f, (float)Screen.height - (float)this._camera.targetTexture.height * Defs.Coef, (float)this._camera.targetTexture.width * Defs.Coef, (float)this._camera.targetTexture.height * Defs.Coef);
+		GUI.DrawTexture(rect, this._camera.targetTexture);
+		rect.width = rect.width / 2f;
+		if (GUI.Button(rect, string.Empty, this.buttonStyle))
+		{
+			MainMenu.BlockInterface = false;
+			FlurryPluginWrapper.LogEvent("Ender3D");
+			UnityEngine.Object.Destroy(base.gameObject);
+			Application.OpenURL(MainMenu.GetEndermanUrl());
+		}
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		Ender.u003cStartu003ec__Iterator23 variable = null;
+		return variable;
 	}
 }

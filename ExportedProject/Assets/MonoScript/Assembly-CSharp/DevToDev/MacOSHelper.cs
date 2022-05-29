@@ -1,23 +1,19 @@
+using System;
+
 namespace DevToDev
 {
 	public class MacOSHelper
 	{
-		public static string dtd_g()
+		public MacOSHelper()
 		{
-			return null;
-		}
-
-		public static string dtd_o()
-		{
-			return null;
-		}
-
-		public static string dtd_p()
-		{
-			return null;
 		}
 
 		public static string dtd_a()
+		{
+			return null;
+		}
+
+		public static string dtd_d()
 		{
 			return null;
 		}
@@ -32,13 +28,9 @@ namespace DevToDev
 			return null;
 		}
 
-		public static string dtd_d()
+		public static string dtd_g()
 		{
 			return null;
-		}
-
-		public static void dtd_z()
-		{
 		}
 
 		public static string dtd_i(string a)
@@ -47,6 +39,20 @@ namespace DevToDev
 		}
 
 		public static void dtd_j(string a)
+		{
+		}
+
+		public static string dtd_o()
+		{
+			return null;
+		}
+
+		public static string dtd_p()
+		{
+			return null;
+		}
+
+		public static void dtd_z()
 		{
 		}
 	}

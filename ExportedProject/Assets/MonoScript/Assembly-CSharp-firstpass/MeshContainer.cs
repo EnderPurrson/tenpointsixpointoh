@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MeshContainer
@@ -10,14 +11,14 @@ public class MeshContainer
 
 	public MeshContainer(Mesh m)
 	{
-		mesh = m;
-		vertices = m.vertices;
-		normals = m.normals;
+		this.mesh = m;
+		this.vertices = m.vertices;
+		this.normals = m.normals;
 	}
 
 	public void Update()
 	{
-		mesh.vertices = vertices;
-		mesh.normals = normals;
+		this.mesh.vertices = this.vertices;
+		this.mesh.normals = this.normals;
 	}
 }

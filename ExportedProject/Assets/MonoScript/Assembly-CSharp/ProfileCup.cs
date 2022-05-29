@@ -1,8 +1,10 @@
 using Rilisoft;
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 
-[RequireComponent(typeof(UISprite))]
 [RequireComponent(typeof(UICenterOnPanelComponent))]
+[RequireComponent(typeof(UISprite))]
 public class ProfileCup : MonoBehaviour
 {
 	private UISprite _cup;
@@ -20,26 +22,38 @@ public class ProfileCup : MonoBehaviour
 	{
 		get
 		{
-			return _cup ?? (_cup = GetComponent<UISprite>());
+			UISprite uISprite = this._cup;
+			if (uISprite == null)
+			{
+				UISprite component = base.GetComponent<UISprite>();
+				UISprite uISprite1 = component;
+				this._cup = component;
+				uISprite = uISprite1;
+			}
+			return uISprite;
 		}
 	}
 
-	private void Start()
+	public ProfileCup()
 	{
-		_controller = base.gameObject.GetComponentInParents<LeaguesGUIController>();
-		_centerMonitor = GetComponent<UICenterOnPanelComponent>();
-		_centerMonitor.OnCentered.RemoveListener(OnCentered);
-		_centerMonitor.OnCentered.AddListener(OnCentered);
 	}
 
 	private void OnCentered()
 	{
-		_controller.CupCentered(this);
+		this._controller.CupCentered(this);
 	}
 
 	private void OnEnable()
 	{
-		Outline.SetActive(League == RatingSystem.instance.currentLeague);
-		Cup.spriteName = string.Format("{0} {1}", League, 3 - RatingSystem.instance.DivisionInLeague(League));
+		this.Outline.SetActive(this.League == RatingSystem.instance.currentLeague);
+		this.Cup.spriteName = string.Format("{0} {1}", this.League, 3 - RatingSystem.instance.DivisionInLeague(this.League));
+	}
+
+	private void Start()
+	{
+		this._controller = base.gameObject.GetComponentInParents<LeaguesGUIController>();
+		this._centerMonitor = base.GetComponent<UICenterOnPanelComponent>();
+		this._centerMonitor.OnCentered.RemoveListener(new UnityAction(this.OnCentered));
+		this._centerMonitor.OnCentered.AddListener(new UnityAction(this.OnCentered));
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DisableObjectFromTimer : MonoBehaviour
@@ -6,26 +7,29 @@ public class DisableObjectFromTimer : MonoBehaviour
 
 	public bool isDestroy;
 
+	public DisableObjectFromTimer()
+	{
+	}
+
 	private void Start()
 	{
 	}
 
 	private void Update()
 	{
-		if (!(timer >= 0f))
+		if (this.timer >= 0f)
 		{
-			return;
-		}
-		timer -= Time.deltaTime;
-		if (timer < 0f)
-		{
-			if (isDestroy)
+			this.timer -= Time.deltaTime;
+			if (this.timer < 0f)
 			{
-				Object.Destroy(base.gameObject);
-			}
-			else
-			{
-				base.gameObject.SetActive(false);
+				if (!this.isDestroy)
+				{
+					base.gameObject.SetActive(false);
+				}
+				else
+				{
+					UnityEngine.Object.Destroy(base.gameObject);
+				}
 			}
 		}
 	}

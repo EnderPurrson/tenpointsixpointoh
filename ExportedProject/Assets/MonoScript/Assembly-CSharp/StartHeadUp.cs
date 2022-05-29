@@ -1,28 +1,35 @@
+using ExitGames.Client.Photon;
+using System;
 using UnityEngine;
 
 public class StartHeadUp : MonoBehaviour
 {
+	public StartHeadUp()
+	{
+	}
+
 	private void Start()
 	{
 		if (Defs.isDaterRegim)
 		{
-			GetComponent<UILabel>().text = string.Empty;
+			base.GetComponent<UILabel>().text = string.Empty;
+			return;
 		}
-		else if (!Defs.isInet || (Defs.isInet && PhotonNetwork.room != null && !PhotonNetwork.room.customProperties[ConnectSceneNGUIController.passwordProperty].Equals(string.Empty)))
+		if (!Defs.isInet || Defs.isInet && PhotonNetwork.room != null && !PhotonNetwork.room.customProperties[ConnectSceneNGUIController.passwordProperty].Equals(string.Empty))
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0560;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0560;
 		}
 		else if (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0561;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0561;
 		}
-		else if (Defs.isCOOP)
+		else if (!Defs.isCOOP)
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0562;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0563;
 		}
 		else
 		{
-			GetComponent<UILabel>().text = LocalizationStore.Key_0563;
+			base.GetComponent<UILabel>().text = LocalizationStore.Key_0562;
 		}
 	}
 }

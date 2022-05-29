@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ChestBonusItem : MonoBehaviour
@@ -8,13 +9,24 @@ public class ChestBonusItem : MonoBehaviour
 
 	public UITexture itemImageHolder;
 
+	public ChestBonusItem()
+	{
+	}
+
 	public void SetData(ChestBonusItemData itemData)
 	{
 		string empty = string.Empty;
-		empty = ((itemData.timeLife != -1) ? itemData.GetTimeLabel() : ((itemData.count <= 1) ? LocalizationStore.Get("Key_1059") : string.Format("{0} {1}", itemData.count, LocalizationStore.Get("Key_1230"))));
-		timeLifeLabel.text = empty;
-		itemImageHolder.mainTexture = ItemDb.GetTextureForShopItem(itemData.tag);
-		itemNameLabel.text = ItemDb.GetItemNameByTag(itemData.tag);
+		if (itemData.timeLife != -1)
+		{
+			empty = itemData.GetTimeLabel(false);
+		}
+		else
+		{
+			empty = (itemData.count <= 1 ? LocalizationStore.Get("Key_1059") : string.Format("{0} {1}", itemData.count, LocalizationStore.Get("Key_1230")));
+		}
+		this.timeLifeLabel.text = empty;
+		this.itemImageHolder.mainTexture = ItemDb.GetTextureForShopItem(itemData.tag);
+		this.itemNameLabel.text = ItemDb.GetItemNameByTag(itemData.tag);
 	}
 
 	public void SetVisible(bool visible)

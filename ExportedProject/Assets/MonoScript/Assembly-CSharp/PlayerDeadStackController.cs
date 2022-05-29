@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerDeadStackController : MonoBehaviour
@@ -12,20 +13,8 @@ public class PlayerDeadStackController : MonoBehaviour
 
 	private int currentIndexHole;
 
-	private void Start()
+	public PlayerDeadStackController()
 	{
-		sharedController = this;
-		Transform transform = base.transform;
-		transform.position = Vector3.zero;
-		playerDeads = new PlayerDeadController[10];
-		for (int i = 0; i < playerDeads.Length; i++)
-		{
-			GameObject gameObject = ((!Device.isPixelGunLow) ? Object.Instantiate(playerDeadObject) : Object.Instantiate(playerDeadObjectLow));
-			gameObject.transform.parent = base.transform;
-			playerDeads[i] = gameObject.GetComponent<PlayerDeadController>();
-		}
-		Object.Destroy(playerDeadObjectLow);
-		Object.Destroy(playerDeadObject);
 	}
 
 	public PlayerDeadController GetCurrentParticle(bool _isUseMine)
@@ -33,23 +22,40 @@ public class PlayerDeadStackController : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexHole++;
-			if (currentIndexHole >= playerDeads.Length)
+			this.currentIndexHole++;
+			if (this.currentIndexHole < (int)this.playerDeads.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexHole = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexHole = 0;
+			flag = false;
 		}
-		while (playerDeads[currentIndexHole].isUseMine && !_isUseMine);
-		return playerDeads[currentIndexHole];
+		while (this.playerDeads[this.currentIndexHole].isUseMine && !_isUseMine);
+		return this.playerDeads[this.currentIndexHole];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		PlayerDeadStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		GameObject gameObject;
+		PlayerDeadStackController.sharedController = this;
+		base.transform.position = Vector3.zero;
+		this.playerDeads = new PlayerDeadController[10];
+		for (int i = 0; i < (int)this.playerDeads.Length; i++)
+		{
+			gameObject = (!Device.isPixelGunLow ? UnityEngine.Object.Instantiate<GameObject>(this.playerDeadObject) : UnityEngine.Object.Instantiate<GameObject>(this.playerDeadObjectLow));
+			gameObject.transform.parent = base.transform;
+			this.playerDeads[i] = gameObject.GetComponent<PlayerDeadController>();
+		}
+		UnityEngine.Object.Destroy(this.playerDeadObjectLow);
+		UnityEngine.Object.Destroy(this.playerDeadObject);
 	}
 }

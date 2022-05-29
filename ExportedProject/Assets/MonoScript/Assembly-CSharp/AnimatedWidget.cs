@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -9,18 +10,22 @@ public class AnimatedWidget : MonoBehaviour
 
 	private UIWidget mWidget;
 
-	private void OnEnable()
+	public AnimatedWidget()
 	{
-		mWidget = GetComponent<UIWidget>();
-		LateUpdate();
 	}
 
 	private void LateUpdate()
 	{
-		if (mWidget != null)
+		if (this.mWidget != null)
 		{
-			mWidget.width = Mathf.RoundToInt(width);
-			mWidget.height = Mathf.RoundToInt(height);
+			this.mWidget.width = Mathf.RoundToInt(this.width);
+			this.mWidget.height = Mathf.RoundToInt(this.height);
 		}
+	}
+
+	private void OnEnable()
+	{
+		this.mWidget = base.GetComponent<UIWidget>();
+		this.LateUpdate();
 	}
 }

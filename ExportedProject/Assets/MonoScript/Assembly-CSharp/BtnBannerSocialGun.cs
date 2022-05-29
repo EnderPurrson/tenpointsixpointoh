@@ -1,8 +1,18 @@
+using System;
+
 public class BtnBannerSocialGun : ButtonBannerBase
 {
+	public BtnBannerSocialGun()
+	{
+	}
+
 	public override bool BannerIsActive()
 	{
 		return FacebookController.sharedController.SocialGunEventActive;
+	}
+
+	public override void OnChangeLocalize()
+	{
 	}
 
 	public override void OnClickButton()
@@ -15,10 +25,6 @@ public class BtnBannerSocialGun : ButtonBannerBase
 	}
 
 	public override void OnShow()
-	{
-	}
-
-	public override void OnChangeLocalize()
 	{
 	}
 }

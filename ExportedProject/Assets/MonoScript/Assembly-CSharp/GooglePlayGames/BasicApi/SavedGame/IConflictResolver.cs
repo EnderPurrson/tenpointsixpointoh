@@ -1,3 +1,5 @@
+using System;
+
 namespace GooglePlayGames.BasicApi.SavedGame
 {
 	public interface IConflictResolver

@@ -1,119 +1,168 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class PurchaseResponse : Jsonable
 	{
-		public string RequestId { get; set; }
-
-		public AmazonUserData AmazonUserData { get; set; }
-
-		public PurchaseReceipt PurchaseReceipt { get; set; }
-
-		public string Status { get; set; }
-
-		public string ToJson()
+		public com.amazon.device.iap.cpt.AmazonUserData AmazonUserData
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public com.amazon.device.iap.cpt.PurchaseReceipt PurchaseReceipt
 		{
-			//Discarded unreachable code: IL_007d, IL_008f
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("requestId", RequestId);
-				dictionary.Add("amazonUserData", (AmazonUserData == null) ? null : AmazonUserData.GetObjectDictionary());
-				dictionary.Add("purchaseReceipt", (PurchaseReceipt == null) ? null : PurchaseReceipt.GetObjectDictionary());
-				dictionary.Add("status", Status);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			get;
+			set;
+		}
+
+		public string RequestId
+		{
+			get;
+			set;
+		}
+
+		public string Status
+		{
+			get;
+			set;
+		}
+
+		public PurchaseResponse()
+		{
 		}
 
 		public static PurchaseResponse CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_00bc, IL_00ce
+			PurchaseResponse purchaseResponse;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					PurchaseResponse item = new PurchaseResponse();
+					if (jsonMap.ContainsKey("requestId"))
+					{
+						item.RequestId = (string)jsonMap["requestId"];
+					}
+					if (jsonMap.ContainsKey("amazonUserData"))
+					{
+						item.AmazonUserData = com.amazon.device.iap.cpt.AmazonUserData.CreateFromDictionary(jsonMap["amazonUserData"] as Dictionary<string, object>);
+					}
+					if (jsonMap.ContainsKey("purchaseReceipt"))
+					{
+						item.PurchaseReceipt = com.amazon.device.iap.cpt.PurchaseReceipt.CreateFromDictionary(jsonMap["purchaseReceipt"] as Dictionary<string, object>);
+					}
+					if (jsonMap.ContainsKey("status"))
+					{
+						item.Status = (string)jsonMap["status"];
+					}
+					purchaseResponse = item;
 				}
-				PurchaseResponse purchaseResponse = new PurchaseResponse();
-				if (jsonMap.ContainsKey("requestId"))
+				else
 				{
-					purchaseResponse.RequestId = (string)jsonMap["requestId"];
+					purchaseResponse = null;
 				}
-				if (jsonMap.ContainsKey("amazonUserData"))
-				{
-					purchaseResponse.AmazonUserData = AmazonUserData.CreateFromDictionary(jsonMap["amazonUserData"] as Dictionary<string, object>);
-				}
-				if (jsonMap.ContainsKey("purchaseReceipt"))
-				{
-					purchaseResponse.PurchaseReceipt = PurchaseReceipt.CreateFromDictionary(jsonMap["purchaseReceipt"] as Dictionary<string, object>);
-				}
-				if (jsonMap.ContainsKey("status"))
-				{
-					purchaseResponse.Status = (string)jsonMap["status"];
-				}
-				return purchaseResponse;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return purchaseResponse;
 		}
 
 		public static PurchaseResponse CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			PurchaseResponse purchaseResponse;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				purchaseResponse = PurchaseResponse.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return purchaseResponse;
 		}
 
-		public static Dictionary<string, PurchaseResponse> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, PurchaseResponse> dictionary = new Dictionary<string, PurchaseResponse>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			object objectDictionary;
+			object obj;
+			try
 			{
-				PurchaseResponse value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				Dictionary<string, object> strs1 = new Dictionary<string, object>()
+				{
+					{ "requestId", this.RequestId }
+				};
+				Dictionary<string, object> strs2 = strs1;
+				if (this.AmazonUserData == null)
+				{
+					objectDictionary = null;
+				}
+				else
+				{
+					objectDictionary = this.AmazonUserData.GetObjectDictionary();
+				}
+				strs2.Add("amazonUserData", objectDictionary);
+				Dictionary<string, object> strs3 = strs1;
+				if (this.PurchaseReceipt == null)
+				{
+					obj = null;
+				}
+				else
+				{
+					obj = this.PurchaseReceipt.GetObjectDictionary();
+				}
+				strs3.Add("purchaseReceipt", obj);
+				strs1.Add("status", this.Status);
+				strs = strs1;
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<PurchaseResponse> ListFromJson(List<object> array)
 		{
-			List<PurchaseResponse> list = new List<PurchaseResponse>();
-			foreach (object item in array)
+			List<PurchaseResponse> purchaseResponses = new List<PurchaseResponse>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				purchaseResponses.Add(PurchaseResponse.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return purchaseResponses;
+		}
+
+		public static Dictionary<string, PurchaseResponse> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, PurchaseResponse> strs = new Dictionary<string, PurchaseResponse>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				PurchaseResponse purchaseResponse = PurchaseResponse.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, purchaseResponse);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

@@ -1,18 +1,18 @@
+using com.amazon.device.iap.cpt;
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using com.amazon.device.iap.cpt;
-using Rilisoft;
 using UnityEngine;
 
 internal sealed class coinsShop : MonoBehaviour
 {
 	public static coinsShop thisScript;
 
-	public static bool showPlashkuPriExit = false;
+	public static bool showPlashkuPriExit;
 
 	public Action onReturnAction;
 
@@ -28,57 +28,17 @@ internal sealed class coinsShop : MonoBehaviour
 
 	private bool itemBought;
 
-	private static readonly HashSet<string> _loggedPackages = new HashSet<string>();
+	private readonly static HashSet<string> _loggedPackages;
 
 	private static DateTime? _etcFileTimestamp;
 
 	private Action _drawInnerInterface;
 
-	[CompilerGenerated]
-	private static Func<GoogleSkuInfo, bool> _003C_003Ef__am_0024cacheE;
-
-	[CompilerGenerated]
-	private static Func<GoogleSkuInfo, string> _003C_003Ef__am_0024cacheF;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache10;
-
-	[CompilerGenerated]
-	private static Func<string, bool> _003C_003Ef__am_0024cache11;
-
-	[CompilerGenerated]
-	private static Func<byte[], bool> _003C_003Ef__am_0024cache12;
-
-	[CompilerGenerated]
-	private static Func<byte[], string> _003C_003Ef__am_0024cache13;
-
-	public string notEnoughCurrency { get; set; }
-
-	public bool ProductPurchasedRecently
+	internal static bool HasTamperedProducts
 	{
-		get
-		{
-			return productPurchased;
-		}
+		private get;
+		set;
 	}
-
-	public static bool IsStoreAvailable
-	{
-		get
-		{
-			return !IsWideLayoutAvailable && !IsNoConnection;
-		}
-	}
-
-	public static bool IsWideLayoutAvailable
-	{
-		get
-		{
-			return CheckAndroidHostsTampering() || CheckLuckyPatcherInstalled() || FlurryPluginWrapper.IsLoggingFlurryAnalyticsSupported() || HasTamperedProducts;
-		}
-	}
-
-	internal static bool HasTamperedProducts { private get; set; }
 
 	public static bool IsBillingSupported
 	{
@@ -96,287 +56,126 @@ internal sealed class coinsShop : MonoBehaviour
 	{
 		get
 		{
-			if (thisScript != null)
+			bool flag;
+			if (coinsShop.thisScript == null)
 			{
-				return (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon) ? (!thisScript.productsReceived) : (!thisScript.productsReceived || !IsBillingSupported);
+				return true;
 			}
-			return true;
-		}
-	}
-
-	private void HandleQueryInventorySucceededEvent(List<GooglePurchase> purchases, List<GoogleSkuInfo> skus)
-	{
-		if (_003C_003Ef__am_0024cacheE == null)
-		{
-			_003C_003Ef__am_0024cacheE = _003CHandleQueryInventorySucceededEvent_003Em__4BE;
-		}
-		if (!skus.Any(_003C_003Ef__am_0024cacheE))
-		{
-			if (_003C_003Ef__am_0024cacheF == null)
+			if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 			{
-				_003C_003Ef__am_0024cacheF = _003CHandleQueryInventorySucceededEvent_003Em__4BF;
+				flag = (!coinsShop.thisScript.productsReceived ? true : !coinsShop.IsBillingSupported);
 			}
-			string[] value = skus.Select(_003C_003Ef__am_0024cacheF).ToArray();
-			string arg = string.Join(", ", value);
-			string message = string.Format("Google: Query inventory succeeded;\tPurchases count: {0}, Skus: [{1}]", purchases.Count, arg);
-			Debug.Log(message);
-			productsReceived = true;
-		}
-	}
-
-	private void HandleItemDataRequestFinishedEvent(GetProductDataResponse response)
-	{
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
-		{
-			Debug.LogWarning("Amazon GetProductDataResponse (CoinsShop): " + response.Status);
-			return;
-		}
-		Debug.Log("Amazon GetProductDataResponse (CoinsShop): " + response.ToJson());
-		productsReceived = true;
-	}
-
-	private void OnEnable()
-	{
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.AddPurchaseResponseListener(HandlePurchaseSuccessfulEvent);
-		}
-		else
-		{
-			GoogleIABManager.purchaseSucceededEvent += HandlePurchaseSucceededEvent;
-		}
-		if (Application.loadedLevelName != "Loading")
-		{
-			ActivityIndicator.IsActiveIndicator = false;
-		}
-		itemBought = false;
-		currenciesBought.Clear();
-	}
-
-	private void OnDisable()
-	{
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(HandlePurchaseSuccessfulEvent);
-		}
-		else
-		{
-			GoogleIABManager.purchaseSucceededEvent -= HandlePurchaseSucceededEvent;
-		}
-		ActivityIndicator.IsActiveIndicator = false;
-		itemBought = false;
-		currenciesBought.Clear();
-	}
-
-	private void Update()
-	{
-		if (Time.realtimeSinceStartup - _timeWhenPurchShown >= 1.25f)
-		{
-			productPurchased = false;
-		}
-	}
-
-	private void OnDestroy()
-	{
-		thisScript = null;
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			AmazonIapV2Impl.Instance.RemoveGetProductDataResponseListener(HandleItemDataRequestFinishedEvent);
-		}
-		else
-		{
-			GoogleIABManager.queryInventorySucceededEvent -= HandleQueryInventorySucceededEvent;
-		}
-	}
-
-	private void HandlePurchaseSuccessfullCore()
-	{
-		try
-		{
-			if (itemBought)
+			else
 			{
-				itemBought = false;
-				productPurchased = true;
-				_timeWhenPurchShown = Time.realtimeSinceStartup;
+				flag = !coinsShop.thisScript.productsReceived;
 			}
-		}
-		catch (Exception message)
-		{
-			Debug.LogError(message);
+			return flag;
 		}
 	}
 
-	private void HandlePurchaseSucceededEvent(GooglePurchase purchase)
+	public static bool IsStoreAvailable
 	{
-		HandlePurchaseSuccessfullCore();
+		get
+		{
+			return (coinsShop.IsWideLayoutAvailable ? false : !coinsShop.IsNoConnection);
+		}
 	}
 
-	private void HandlePurchaseSuccessfulEvent(PurchaseResponse response)
+	public static bool IsWideLayoutAvailable
 	{
-		string message = "Amazon PurchaseResponse (CoinsShop): " + response.Status;
-		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		get
 		{
-			Debug.LogWarning(message);
-			return;
+			return (coinsShop.CheckAndroidHostsTampering() || coinsShop.CheckLuckyPatcherInstalled() || FlurryPluginWrapper.IsLoggingFlurryAnalyticsSupported() ? true : coinsShop.HasTamperedProducts);
 		}
-		Debug.Log(message);
-		HandlePurchaseSuccessfullCore();
+	}
+
+	public string notEnoughCurrency
+	{
+		get;
+		set;
+	}
+
+	public bool ProductPurchasedRecently
+	{
+		get
+		{
+			return this.productPurchased;
+		}
+	}
+
+	static coinsShop()
+	{
+		coinsShop.showPlashkuPriExit = false;
+		coinsShop._loggedPackages = new HashSet<string>();
+	}
+
+	public coinsShop()
+	{
 	}
 
 	private void Awake()
 	{
 		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
-		notEnoughCurrency = null;
+		this.notEnoughCurrency = null;
 		if (Application.isEditor)
 		{
-			productsReceived = true;
+			this.productsReceived = true;
 		}
-		thisScript = this;
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
+		coinsShop.thisScript = this;
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
 		{
-			AmazonIapV2Impl.Instance.AddGetProductDataResponseListener(HandleItemDataRequestFinishedEvent);
+			GoogleIABManager.queryInventorySucceededEvent += new Action<List<GooglePurchase>, List<GoogleSkuInfo>>(this.HandleQueryInventorySucceededEvent);
 		}
 		else
 		{
-			GoogleIABManager.queryInventorySucceededEvent += HandleQueryInventorySucceededEvent;
+			AmazonIapV2Impl.Instance.AddGetProductDataResponseListener(new GetProductDataResponseDelegate(this.HandleItemDataRequestFinishedEvent));
 		}
-		RefreshProductsIfNeed();
-	}
-
-	public static void TryToFireCurrenciesAddEvent(string currency)
-	{
-		try
-		{
-			CoinsMessage.FireCoinsAddedEvent(currency == "GemsCurrency");
-		}
-		catch (Exception ex)
-		{
-			Debug.LogError("coinsShop.TryToFireCurrenciesAddEvent: FireCoinsAddedEvent( currency == Defs.Gems ): " + ex);
-		}
-	}
-
-	public void HandlePurchaseButton(int i, string currency = "Coins")
-	{
-		ButtonClickSound.Instance.PlayClick();
-		if ((currency.Equals("Coins") && (i >= StoreKitEventListener.coinIds.Length || i >= VirtualCurrencyHelper.coinInappsQuantity.Length)) || (currency.Equals("GemsCurrency") && (i >= StoreKitEventListener.gemsIds.Length || i >= VirtualCurrencyHelper.gemsInappsQuantity.Length)))
-		{
-			Debug.LogWarning("Index of purchase is out of range: " + i);
-			return;
-		}
-		currenciesBought.Add(currency);
-		itemBought = true;
-		StoreKitEventListener.purchaseInProcess = true;
-		string text;
-		if ("Coins".Equals(currency))
-		{
-			text = StoreKitEventListener.coinIds[i];
-		}
-		else
-		{
-			if (!"GemsCurrency".Equals(currency))
-			{
-				Debug.LogError("Unknown currency: " + currency);
-				return;
-			}
-			text = StoreKitEventListener.gemsIds[i];
-		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			SkuInput skuInput = new SkuInput();
-			skuInput.Sku = text;
-			SkuInput skuInput2 = skuInput;
-			Debug.Log("Amazon Purchase (HandlePurchaseButton): " + skuInput2.ToJson());
-			AmazonIapV2Impl.Instance.Purchase(skuInput2);
-			MobileAdManager.Instance.SuppressShowOnReturnFromPause = true;
-		}
-		else
-		{
-			_etcFileTimestamp = GetHostsTimestamp();
-			FlurryPluginWrapper.LogEventToAppsFlyer("af_initiated_checkout", new Dictionary<string, string> { { "af_content_id", text } });
-			GoogleIAB.purchaseProduct(text);
-			MobileAdManager.Instance.SuppressShowOnReturnFromPause = true;
-		}
-	}
-
-	public static void showCoinsShop()
-	{
-		thisScript.enabled = true;
-		coinsPlashka.hideButtonCoins = true;
-		coinsPlashka.showPlashka();
-	}
-
-	public static void hideCoinsShop()
-	{
-		if (thisScript != null)
-		{
-			thisScript.enabled = false;
-			thisScript.notEnoughCurrency = null;
-			Resources.UnloadUnusedAssets();
-		}
-	}
-
-	public static void ExitFromShop(bool performOnExitActs)
-	{
-		hideCoinsShop();
-		if (showPlashkuPriExit)
-		{
-			coinsPlashka.hidePlashka();
-		}
-		coinsPlashka.hideButtonCoins = false;
-		if (performOnExitActs)
-		{
-			if (thisScript.onReturnAction != null && thisScript.notEnoughCurrency != null && thisScript.currenciesBought.Contains(thisScript.notEnoughCurrency))
-			{
-				thisScript.currenciesBought.Clear();
-				thisScript.onReturnAction();
-			}
-			else
-			{
-				thisScript.onReturnAction = null;
-			}
-			if (thisScript.onResumeFronNGUI != null)
-			{
-				thisScript.onResumeFronNGUI();
-				thisScript.onResumeFronNGUI = null;
-				coinsPlashka.hidePlashka();
-			}
-		}
+		this.RefreshProductsIfNeed(false);
 	}
 
 	internal static bool CheckAndroidHostsTampering()
 	{
-		//Discarded unreachable code: IL_0082, IL_0095
+		bool flag;
 		if (BuildSettings.BuildTargetPlatform != RuntimePlatform.Android)
 		{
 			return false;
 		}
-		if (Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.GoogleLite)
 		{
-			if (!File.Exists("/etc/hosts"))
+			return false;
+		}
+		if (!File.Exists("/etc/hosts"))
+		{
+			return false;
+		}
+		try
+		{
+			IEnumerable<string> strs = 
+				from l in File.ReadAllLines("/etc/hosts")
+				where l.TrimStart(new char[0]).StartsWith("127.")
+				select l;
+			flag = strs.Any<string>((string l) => (l.Contains("android.clients.google.com") ? true : l.Contains("mtalk.google.com ")));
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(exception);
+			flag = false;
+		}
+		return flag;
+	}
+
+	internal static bool CheckHostsTimestamp()
+	{
+		if (coinsShop._etcFileTimestamp.HasValue)
+		{
+			DateTime? hostsTimestamp = coinsShop.GetHostsTimestamp();
+			if (hostsTimestamp.HasValue && coinsShop._etcFileTimestamp.Value != hostsTimestamp.Value)
 			{
-				return false;
-			}
-			try
-			{
-				string[] source = File.ReadAllLines("/etc/hosts");
-				if (_003C_003Ef__am_0024cache10 == null)
-				{
-					_003C_003Ef__am_0024cache10 = _003CCheckAndroidHostsTampering_003Em__4C0;
-				}
-				IEnumerable<string> source2 = source.Where(_003C_003Ef__am_0024cache10);
-				if (_003C_003Ef__am_0024cache11 == null)
-				{
-					_003C_003Ef__am_0024cache11 = _003CCheckAndroidHostsTampering_003Em__4C1;
-				}
-				return source2.Any(_003C_003Ef__am_0024cache11);
-			}
-			catch (Exception message)
-			{
-				Debug.LogError(message);
+				Debug.LogError(string.Format("Timestamp check failed: {0:s} expcted, but actual value is {1:s}.", coinsShop._etcFileTimestamp.Value, hostsTimestamp.Value));
 				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	internal static bool CheckLuckyPatcherInstalled()
@@ -385,24 +184,232 @@ internal sealed class coinsShop : MonoBehaviour
 		{
 			return false;
 		}
-		string[] source = new string[3] { "Y29tLmRpbW9udmlkZW8ubHVja3lwYXRjaGVy", "Y29tLmNoZWxwdXMubGFja3lwYXRjaA==", "Y29tLmZvcnBkYS5scA==" };
-		IEnumerable<byte[]> source2 = source.Select(Convert.FromBase64String);
-		if (_003C_003Ef__am_0024cache12 == null)
+		string[] strArrays = new string[] { "Y29tLmRpbW9udmlkZW8ubHVja3lwYXRjaGVy", "Y29tLmNoZWxwdXMubGFja3lwYXRjaA==", "Y29tLmZvcnBkYS5scA==" };
+		IEnumerable<string> strs = strArrays.Select<string, byte[]>(new Func<string, byte[]>(Convert.FromBase64String)).Where<byte[]>((byte[] bytes) => bytes != null).Select<byte[], string>((byte[] bytes) => Encoding.UTF8.GetString(bytes, 0, (int)bytes.Length));
+		return strs.Any<string>(new Func<string, bool>(coinsShop.PackageExists));
+	}
+
+	public static void ExitFromShop(bool performOnExitActs)
+	{
+		coinsShop.hideCoinsShop();
+		if (coinsShop.showPlashkuPriExit)
 		{
-			_003C_003Ef__am_0024cache12 = _003CCheckLuckyPatcherInstalled_003Em__4C2;
+			coinsPlashka.hidePlashka();
 		}
-		IEnumerable<byte[]> source3 = source2.Where(_003C_003Ef__am_0024cache12);
-		if (_003C_003Ef__am_0024cache13 == null)
+		coinsPlashka.hideButtonCoins = false;
+		if (!performOnExitActs)
 		{
-			_003C_003Ef__am_0024cache13 = _003CCheckLuckyPatcherInstalled_003Em__4C3;
+			return;
 		}
-		IEnumerable<string> source4 = source3.Select(_003C_003Ef__am_0024cache13);
-		return source4.Any(PackageExists);
+		if (coinsShop.thisScript.onReturnAction == null || coinsShop.thisScript.notEnoughCurrency == null || !coinsShop.thisScript.currenciesBought.Contains(coinsShop.thisScript.notEnoughCurrency))
+		{
+			coinsShop.thisScript.onReturnAction = null;
+		}
+		else
+		{
+			coinsShop.thisScript.currenciesBought.Clear();
+			coinsShop.thisScript.onReturnAction();
+		}
+		if (coinsShop.thisScript.onResumeFronNGUI != null)
+		{
+			coinsShop.thisScript.onResumeFronNGUI();
+			coinsShop.thisScript.onResumeFronNGUI = null;
+			coinsPlashka.hidePlashka();
+		}
+	}
+
+	private static DateTime? GetHostsTimestamp()
+	{
+		DateTime? nullable;
+		try
+		{
+			Debug.Log("Trying to get /ets/hosts timestamp...");
+			DateTime lastWriteTimeUtc = (new FileInfo("/etc/hosts")).LastWriteTimeUtc;
+			Debug.Log(string.Concat("/ets/hosts timestamp: ", lastWriteTimeUtc.ToString("s")));
+			nullable = new DateTime?(lastWriteTimeUtc);
+		}
+		catch (Exception exception)
+		{
+			Debug.LogException(exception);
+			nullable = null;
+		}
+		return nullable;
+	}
+
+	private void HandleItemDataRequestFinishedEvent(GetProductDataResponse response)
+	{
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			Debug.LogWarning(string.Concat("Amazon GetProductDataResponse (CoinsShop): ", response.Status));
+			return;
+		}
+		Debug.Log(string.Concat("Amazon GetProductDataResponse (CoinsShop): ", response.ToJson()));
+		this.productsReceived = true;
+	}
+
+	public void HandlePurchaseButton(int i, string currency = "Coins")
+	{
+		string str;
+		ButtonClickSound.Instance.PlayClick();
+		if (currency.Equals("Coins") && (i >= (int)StoreKitEventListener.coinIds.Length || i >= (int)VirtualCurrencyHelper.coinInappsQuantity.Length) || currency.Equals("GemsCurrency") && (i >= (int)StoreKitEventListener.gemsIds.Length || i >= (int)VirtualCurrencyHelper.gemsInappsQuantity.Length))
+		{
+			Debug.LogWarning(string.Concat("Index of purchase is out of range: ", i));
+			return;
+		}
+		this.currenciesBought.Add(currency);
+		this.itemBought = true;
+		StoreKitEventListener.purchaseInProcess = true;
+		if (!"Coins".Equals(currency))
+		{
+			if (!"GemsCurrency".Equals(currency))
+			{
+				Debug.LogError(string.Concat("Unknown currency: ", currency));
+				return;
+			}
+			str = StoreKitEventListener.gemsIds[i];
+		}
+		else
+		{
+			str = StoreKitEventListener.coinIds[i];
+		}
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+		{
+			coinsShop._etcFileTimestamp = coinsShop.GetHostsTimestamp();
+			FlurryPluginWrapper.LogEventToAppsFlyer("af_initiated_checkout", new Dictionary<string, string>()
+			{
+				{ "af_content_id", str }
+			});
+			GoogleIAB.purchaseProduct(str);
+			MobileAdManager.Instance.SuppressShowOnReturnFromPause = true;
+		}
+		else
+		{
+			SkuInput skuInput = new SkuInput()
+			{
+				Sku = str
+			};
+			Debug.Log(string.Concat("Amazon Purchase (HandlePurchaseButton): ", skuInput.ToJson()));
+			AmazonIapV2Impl.Instance.Purchase(skuInput);
+			MobileAdManager.Instance.SuppressShowOnReturnFromPause = true;
+		}
+	}
+
+	private void HandlePurchaseSucceededEvent(GooglePurchase purchase)
+	{
+		this.HandlePurchaseSuccessfullCore();
+	}
+
+	private void HandlePurchaseSuccessfulEvent(PurchaseResponse response)
+	{
+		string str = string.Concat("Amazon PurchaseResponse (CoinsShop): ", response.Status);
+		if (!"SUCCESSFUL".Equals(response.Status, StringComparison.OrdinalIgnoreCase))
+		{
+			Debug.LogWarning(str);
+			return;
+		}
+		Debug.Log(str);
+		this.HandlePurchaseSuccessfullCore();
+	}
+
+	private void HandlePurchaseSuccessfullCore()
+	{
+		try
+		{
+			if (this.itemBought)
+			{
+				this.itemBought = false;
+				this.productPurchased = true;
+				this._timeWhenPurchShown = Time.realtimeSinceStartup;
+			}
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(exception);
+		}
+	}
+
+	private void HandleQueryInventorySucceededEvent(List<GooglePurchase> purchases, List<GoogleSkuInfo> skus)
+	{
+		if (skus.Any<GoogleSkuInfo>((GoogleSkuInfo s) => s.productId == "skinsmaker"))
+		{
+			return;
+		}
+		string[] array = (
+			from sku in skus
+			select sku.productId).ToArray<string>();
+		string str = string.Join(", ", array);
+		string str1 = string.Format("Google: Query inventory succeeded;\tPurchases count: {0}, Skus: [{1}]", purchases.Count, str);
+		Debug.Log(str1);
+		this.productsReceived = true;
+	}
+
+	public static void hideCoinsShop()
+	{
+		if (coinsShop.thisScript != null)
+		{
+			coinsShop.thisScript.enabled = false;
+			coinsShop.thisScript.notEnoughCurrency = null;
+			Resources.UnloadUnusedAssets();
+		}
+	}
+
+	private void OnApplicationPause(bool pause)
+	{
+		if (!pause)
+		{
+			this.RefreshProductsIfNeed(false);
+		}
+	}
+
+	private void OnDestroy()
+	{
+		coinsShop.thisScript = null;
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+		{
+			GoogleIABManager.queryInventorySucceededEvent -= new Action<List<GooglePurchase>, List<GoogleSkuInfo>>(this.HandleQueryInventorySucceededEvent);
+		}
+		else
+		{
+			AmazonIapV2Impl.Instance.RemoveGetProductDataResponseListener(new GetProductDataResponseDelegate(this.HandleItemDataRequestFinishedEvent));
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+		{
+			GoogleIABManager.purchaseSucceededEvent -= new Action<GooglePurchase>(this.HandlePurchaseSucceededEvent);
+		}
+		else
+		{
+			AmazonIapV2Impl.Instance.RemovePurchaseResponseListener(new PurchaseResponseDelegate(this.HandlePurchaseSuccessfulEvent));
+		}
+		ActivityIndicator.IsActiveIndicator = false;
+		this.itemBought = false;
+		this.currenciesBought.Clear();
+	}
+
+	private void OnEnable()
+	{
+		if (Defs.AndroidEdition != Defs.RuntimeAndroidEdition.Amazon)
+		{
+			GoogleIABManager.purchaseSucceededEvent += new Action<GooglePurchase>(this.HandlePurchaseSucceededEvent);
+		}
+		else
+		{
+			AmazonIapV2Impl.Instance.AddPurchaseResponseListener(new PurchaseResponseDelegate(this.HandlePurchaseSuccessfulEvent));
+		}
+		if (Application.loadedLevelName != "Loading")
+		{
+			ActivityIndicator.IsActiveIndicator = false;
+		}
+		this.itemBought = false;
+		this.currenciesBought.Clear();
 	}
 
 	private static bool PackageExists(string packageName)
 	{
-		//Discarded unreachable code: IL_00a9
+		bool flag;
 		if (packageName == null)
 		{
 			throw new ArgumentNullException("packageName");
@@ -414,122 +421,83 @@ internal sealed class coinsShop : MonoBehaviour
 		try
 		{
 			AndroidJavaObject currentActivity = AndroidSystem.Instance.CurrentActivity;
-			if (currentActivity == null)
+			if (currentActivity != null)
+			{
+				AndroidJavaObject androidJavaObject = currentActivity.Call<AndroidJavaObject>("getPackageManager", new object[0]);
+				if (androidJavaObject == null)
+				{
+					Debug.LogWarning("manager == null");
+					flag = false;
+				}
+				else if (androidJavaObject.Call<AndroidJavaObject>("getPackageInfo", new object[] { packageName, 0 }) != null)
+				{
+					flag = true;
+				}
+				else
+				{
+					Debug.LogWarning("packageInfo == null");
+					flag = false;
+				}
+			}
+			else
 			{
 				Debug.LogWarning("activity == null");
-				return false;
+				flag = false;
 			}
-			AndroidJavaObject androidJavaObject = currentActivity.Call<AndroidJavaObject>("getPackageManager", new object[0]);
-			if (androidJavaObject == null)
-			{
-				Debug.LogWarning("manager == null");
-				return false;
-			}
-			AndroidJavaObject androidJavaObject2 = androidJavaObject.Call<AndroidJavaObject>("getPackageInfo", new object[2] { packageName, 0 });
-			if (androidJavaObject2 == null)
-			{
-				Debug.LogWarning("packageInfo == null");
-				return false;
-			}
-			return true;
 		}
-		catch (Exception arg)
+		catch (Exception exception1)
 		{
-			if (_loggedPackages.Contains(packageName))
+			Exception exception = exception1;
+			if (!coinsShop._loggedPackages.Contains(packageName))
 			{
+				string str = string.Format("Error while retrieving Android package info:    {0}", exception);
+				if (Defs.IsDeveloperBuild)
+				{
+					Debug.LogWarning(str);
+					coinsShop._loggedPackages.Add(packageName);
+				}
 				return false;
 			}
-			string message = string.Format("Error while retrieving Android package info:    {0}", arg);
-			if (Defs.IsDeveloperBuild)
+			else
 			{
-				Debug.LogWarning(message);
-				_loggedPackages.Add(packageName);
+				flag = false;
 			}
 		}
-		return false;
-	}
-
-	private static DateTime? GetHostsTimestamp()
-	{
-		//Discarded unreachable code: IL_0043, IL_005f
-		try
-		{
-			Debug.Log("Trying to get /ets/hosts timestamp...");
-			FileInfo fileInfo = new FileInfo("/etc/hosts");
-			DateTime lastWriteTimeUtc = fileInfo.LastWriteTimeUtc;
-			Debug.Log("/ets/hosts timestamp: " + lastWriteTimeUtc.ToString("s"));
-			return lastWriteTimeUtc;
-		}
-		catch (Exception exception)
-		{
-			Debug.LogException(exception);
-			return null;
-		}
-	}
-
-	internal static bool CheckHostsTimestamp()
-	{
-		if (_etcFileTimestamp.HasValue)
-		{
-			DateTime? hostsTimestamp = GetHostsTimestamp();
-			if (hostsTimestamp.HasValue && _etcFileTimestamp.Value != hostsTimestamp.Value)
-			{
-				Debug.LogError(string.Format("Timestamp check failed: {0:s} expcted, but actual value is {1:s}.", _etcFileTimestamp.Value, hostsTimestamp.Value));
-				return false;
-			}
-		}
-		return true;
+		return flag;
 	}
 
 	public void RefreshProductsIfNeed(bool force = false)
 	{
-		if (!productsReceived || force)
+		if (!this.productsReceived || force)
 		{
 			StoreKitEventListener.RefreshProducts();
 		}
 	}
 
-	private void OnApplicationPause(bool pause)
+	public static void showCoinsShop()
 	{
-		if (!pause)
+		coinsShop.thisScript.enabled = true;
+		coinsPlashka.hideButtonCoins = true;
+		coinsPlashka.showPlashka();
+	}
+
+	public static void TryToFireCurrenciesAddEvent(string currency)
+	{
+		try
 		{
-			RefreshProductsIfNeed();
+			CoinsMessage.FireCoinsAddedEvent(currency == "GemsCurrency", 2);
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError(string.Concat("coinsShop.TryToFireCurrenciesAddEvent: FireCoinsAddedEvent( currency == Defs.Gems ): ", exception));
 		}
 	}
 
-	[CompilerGenerated]
-	private static bool _003CHandleQueryInventorySucceededEvent_003Em__4BE(GoogleSkuInfo s)
+	private void Update()
 	{
-		return s.productId == "skinsmaker";
-	}
-
-	[CompilerGenerated]
-	private static string _003CHandleQueryInventorySucceededEvent_003Em__4BF(GoogleSkuInfo sku)
-	{
-		return sku.productId;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CCheckAndroidHostsTampering_003Em__4C0(string l)
-	{
-		return l.TrimStart().StartsWith("127.");
-	}
-
-	[CompilerGenerated]
-	private static bool _003CCheckAndroidHostsTampering_003Em__4C1(string l)
-	{
-		return l.Contains("android.clients.google.com") || l.Contains("mtalk.google.com ");
-	}
-
-	[CompilerGenerated]
-	private static bool _003CCheckLuckyPatcherInstalled_003Em__4C2(byte[] bytes)
-	{
-		return bytes != null;
-	}
-
-	[CompilerGenerated]
-	private static string _003CCheckLuckyPatcherInstalled_003Em__4C3(byte[] bytes)
-	{
-		return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+		if (Time.realtimeSinceStartup - this._timeWhenPurchShown >= 1.25f)
+		{
+			this.productPurchased = false;
+		}
 	}
 }

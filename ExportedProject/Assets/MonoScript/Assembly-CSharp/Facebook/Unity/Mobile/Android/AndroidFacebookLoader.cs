@@ -1,3 +1,6 @@
+using Facebook.Unity;
+using System;
+
 namespace Facebook.Unity.Mobile.Android
 {
 	internal class AndroidFacebookLoader : FB.CompiledFacebookLoader
@@ -6,13 +9,17 @@ namespace Facebook.Unity.Mobile.Android
 		{
 			get
 			{
-				AndroidFacebookGameObject component = ComponentFactory.GetComponent<AndroidFacebookGameObject>();
+				AndroidFacebookGameObject component = ComponentFactory.GetComponent<AndroidFacebookGameObject>(ComponentFactory.IfNotExist.AddNew);
 				if (component.Facebook == null)
 				{
 					component.Facebook = new AndroidFacebook();
 				}
 				return component;
 			}
+		}
+
+		public AndroidFacebookLoader()
+		{
 		}
 	}
 }

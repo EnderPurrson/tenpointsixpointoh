@@ -1,65 +1,77 @@
 using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public static class TurnExtensions
 {
-	public static readonly string TurnPropKey = "Turn";
+	public readonly static string TurnPropKey;
 
-	public static readonly string TurnStartPropKey = "TStart";
+	public readonly static string TurnStartPropKey;
 
-	public static readonly string FinishedTurnPropKey = "FToA";
+	public readonly static string FinishedTurnPropKey;
 
-	public static void SetTurn(this Room room, int turn, bool setStartTime = false)
+	static TurnExtensions()
 	{
-		if (room != null && room.customProperties != null)
-		{
-			Hashtable hashtable = new Hashtable();
-			hashtable[TurnPropKey] = turn;
-			if (setStartTime)
-			{
-				hashtable[TurnStartPropKey] = PhotonNetwork.ServerTimestamp;
-			}
-			room.SetCustomProperties(hashtable);
-		}
-	}
-
-	public static int GetTurn(this RoomInfo room)
-	{
-		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnPropKey))
-		{
-			return 0;
-		}
-		return (int)room.customProperties[TurnPropKey];
-	}
-
-	public static int GetTurnStart(this RoomInfo room)
-	{
-		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnStartPropKey))
-		{
-			return 0;
-		}
-		return (int)room.customProperties[TurnStartPropKey];
+		TurnExtensions.TurnPropKey = "Turn";
+		TurnExtensions.TurnStartPropKey = "TStart";
+		TurnExtensions.FinishedTurnPropKey = "FToA";
 	}
 
 	public static int GetFinishedTurn(this PhotonPlayer player)
 	{
 		Room room = PhotonNetwork.room;
-		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnPropKey))
+		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnExtensions.TurnPropKey))
 		{
 			return 0;
 		}
-		string key = FinishedTurnPropKey + player.ID;
-		return (int)room.customProperties[key];
+		string str = string.Concat(TurnExtensions.FinishedTurnPropKey, player.ID);
+		return (int)room.customProperties[str];
+	}
+
+	public static int GetTurn(this RoomInfo room)
+	{
+		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnExtensions.TurnPropKey))
+		{
+			return 0;
+		}
+		return (int)room.customProperties[TurnExtensions.TurnPropKey];
+	}
+
+	public static int GetTurnStart(this RoomInfo room)
+	{
+		if (room == null || room.customProperties == null || !room.customProperties.ContainsKey(TurnExtensions.TurnStartPropKey))
+		{
+			return 0;
+		}
+		return (int)room.customProperties[TurnExtensions.TurnStartPropKey];
 	}
 
 	public static void SetFinishedTurn(this PhotonPlayer player, int turn)
 	{
 		Room room = PhotonNetwork.room;
-		if (room != null && room.customProperties != null)
+		if (room == null || room.customProperties == null)
 		{
-			string key = FinishedTurnPropKey + player.ID;
-			Hashtable hashtable = new Hashtable();
-			hashtable[key] = turn;
-			room.SetCustomProperties(hashtable);
+			return;
 		}
+		string str = string.Concat(TurnExtensions.FinishedTurnPropKey, player.ID);
+		Hashtable hashtable = new Hashtable();
+		hashtable[str] = turn;
+		room.SetCustomProperties(hashtable, null, false);
+	}
+
+	public static void SetTurn(this Room room, int turn, bool setStartTime = false)
+	{
+		if (room == null || room.customProperties == null)
+		{
+			return;
+		}
+		Hashtable hashtable = new Hashtable();
+		hashtable[TurnExtensions.TurnPropKey] = turn;
+		if (setStartTime)
+		{
+			hashtable[TurnExtensions.TurnStartPropKey] = PhotonNetwork.ServerTimestamp;
+		}
+		room.SetCustomProperties(hashtable, null, false);
 	}
 }

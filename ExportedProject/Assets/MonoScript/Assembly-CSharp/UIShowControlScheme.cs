@@ -11,32 +11,37 @@ public class UIShowControlScheme : MonoBehaviour
 
 	public bool controller = true;
 
-	private void OnEnable()
+	public UIShowControlScheme()
 	{
-		UICamera.onSchemeChange = (UICamera.OnSchemeChange)Delegate.Combine(UICamera.onSchemeChange, new UICamera.OnSchemeChange(OnScheme));
-		OnScheme();
 	}
 
 	private void OnDisable()
 	{
-		UICamera.onSchemeChange = (UICamera.OnSchemeChange)Delegate.Remove(UICamera.onSchemeChange, new UICamera.OnSchemeChange(OnScheme));
+		UICamera.onSchemeChange -= new UICamera.OnSchemeChange(this.OnScheme);
+	}
+
+	private void OnEnable()
+	{
+		UICamera.onSchemeChange += new UICamera.OnSchemeChange(this.OnScheme);
+		this.OnScheme();
 	}
 
 	private void OnScheme()
 	{
-		if (target != null)
+		if (this.target != null)
 		{
-			switch (UICamera.currentScheme)
+			UICamera.ControlScheme controlScheme = UICamera.currentScheme;
+			if (controlScheme == UICamera.ControlScheme.Mouse)
 			{
-			case UICamera.ControlScheme.Mouse:
-				target.SetActive(mouse);
-				break;
-			case UICamera.ControlScheme.Touch:
-				target.SetActive(touch);
-				break;
-			case UICamera.ControlScheme.Controller:
-				target.SetActive(controller);
-				break;
+				this.target.SetActive(this.mouse);
+			}
+			else if (controlScheme == UICamera.ControlScheme.Touch)
+			{
+				this.target.SetActive(this.touch);
+			}
+			else if (controlScheme == UICamera.ControlScheme.Controller)
+			{
+				this.target.SetActive(this.controller);
 			}
 		}
 	}

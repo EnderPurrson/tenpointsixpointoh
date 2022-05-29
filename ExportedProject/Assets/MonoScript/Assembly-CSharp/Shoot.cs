@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class Shoot : MonoBehaviour
@@ -12,30 +13,33 @@ internal sealed class Shoot : MonoBehaviour
 
 	public int lives = 100;
 
-	private void Start()
+	public Shoot()
 	{
-		_bulletSpawnPoint = GameObject.Find("BulletSpawnPoint");
 	}
 
-	[RPC]
 	[PunRPC]
+	[RPC]
 	private void Popal(NetworkViewID Popal, NetworkMessageInfo info)
 	{
-		Debug.Log(string.Concat(Popal, " ", base.gameObject.transform.GetComponent<NetworkView>().viewID, " ", info.sender));
+		Debug.Log(string.Concat(new object[] { Popal, " ", base.gameObject.transform.GetComponent<NetworkView>().viewID, " ", info.sender }));
 	}
 
 	public void shootS()
 	{
-		Debug.Log("Shot!!" + base.transform.position);
-		Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0f));
-		RaycastHit hitInfo;
-		if (Physics.Raycast(ray, out hitInfo, 100f, Player_move_c._ShootRaycastLayerMask))
+		RaycastHit raycastHit;
+		Debug.Log(string.Concat("Shot!!", base.transform.position));
+		if (Physics.Raycast(Camera.main.ScreenPointToRay(new Vector3((float)(Screen.width / 2), (float)(Screen.height / 2), 0f)), out raycastHit, 100f, Player_move_c._ShootRaycastLayerMask))
 		{
 			Debug.Log("Hit!");
-			if (hitInfo.collider.gameObject.transform.CompareTag("Enemy") && Defs.isMulti)
+			if (raycastHit.collider.gameObject.transform.CompareTag("Enemy") && Defs.isMulti)
 			{
-				GetComponent<NetworkView>().RPC("Popal", RPCMode.All, hitInfo.collider.gameObject.transform.GetComponent<NetworkView>().viewID);
+				base.GetComponent<NetworkView>().RPC("Popal", RPCMode.All, new object[] { raycastHit.collider.gameObject.transform.GetComponent<NetworkView>().viewID });
 			}
 		}
+	}
+
+	private void Start()
+	{
+		this._bulletSpawnPoint = GameObject.Find("BulletSpawnPoint");
 	}
 }

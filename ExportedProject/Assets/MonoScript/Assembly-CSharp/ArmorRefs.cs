@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ArmorRefs : MonoBehaviour
@@ -7,4 +8,8 @@ public class ArmorRefs : MonoBehaviour
 	public Transform leftBone;
 
 	public Transform rightBone;
+
+	public ArmorRefs()
+	{
+	}
 }

@@ -1,28 +1,11 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public sealed class FriendPreview : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CStart_003Ec__AnonStorey1F1
-	{
-		internal ClansGUIController.State previousState;
-
-		internal FriendPreview _003C_003Ef__this;
-
-		internal void _003C_003Em__4F(bool needUpdateFriendList)
-		{
-			if (_003C_003Ef__this._clansGuiController.Value != null)
-			{
-				_003C_003Ef__this._clansGuiController.Value.CurrentState = previousState;
-				_003C_003Ef__this._clansGuiController.Value.ShowAddMembersScreen();
-			}
-		}
-	}
-
 	public UILabel nm;
 
 	public UITexture preview;
@@ -39,7 +22,7 @@ public sealed class FriendPreview : MonoBehaviour
 
 	public GameObject avatarButton;
 
-	public GameObject join;
+	public GameObject @join;
 
 	public GameObject delete;
 
@@ -75,179 +58,21 @@ public sealed class FriendPreview : MonoBehaviour
 
 	private bool _disableButtons;
 
-	[CompilerGenerated]
-	private static Action<bool> _003C_003Ef__am_0024cache1A;
-
 	public FriendPreview()
 	{
-		_clansGuiController = new Lazy<ClansGUIController>(base.GetComponentInParent<ClansGUIController>);
+		this._clansGuiController = new Lazy<ClansGUIController>(new Func<ClansGUIController>(this.GetComponentInParent<ClansGUIController>));
 	}
 
-	public void HandleAvatarClick()
+	public void DisableButtons()
 	{
-		if (_003C_003Ef__am_0024cache1A == null)
+		this._disableButtons = true;
+		this.delete.SetActive(false);
+		if (this.facebookFriend)
 		{
-			_003C_003Ef__am_0024cache1A = _003CHandleAvatarClick_003Em__4D;
+			this.addFacebookFriend.SetActive(false);
 		}
-		Action<bool> onCloseEvent = _003C_003Ef__am_0024cache1A;
-		FriendsController.ShowProfile(id, ProfileWindowType.other, onCloseEvent);
-	}
-
-	private void Start()
-	{
-		if (!facebookFriend && !ClanMember && !ClanInvite)
-		{
-			FriendsGUIController.UpdaeOnlineEvent = (Action)Delegate.Combine(FriendsGUIController.UpdaeOnlineEvent, new Action(UpdateOnline));
-		}
-		if (isInviteFromUs && preview != null)
-		{
-			preview.alpha = 0.4f;
-		}
-		join.SetActive(join.activeSelf && (!facebookFriend || ClanMember) && !ClanInvite);
-		delete.SetActive(delete.activeSelf && !facebookFriend && !ClanInvite);
-		join.GetComponent<UIButton>().isEnabled = false;
-		if (onlineStateContainer != null)
-		{
-			onlineStateContainer.SetActive(!facebookFriend);
-		}
-		addFacebookFriend.SetActive(facebookFriend || ClanInvite);
-		if (ClanInvite)
-		{
-			addFacebookFriend.GetComponent<UIButton>().isEnabled = !FriendsController.sharedController.ClanLimitReached;
-			UIButton component = avatarButton.GetComponent<UIButton>();
-			if (component != null)
-			{
-				EventDelegate.Callback call = _003CStart_003Em__4E;
-				EventDelegate item = new EventDelegate(call);
-				component.onClick.Add(item);
-			}
-		}
-		bool flag = true;
-		cancel.SetActive(ClanInvite && flag);
-		avatarButton.GetComponent<UIButton>().enabled = !facebookFriend;
-		if (facebookFriend || ClanInvite)
-		{
-			UnityEngine.Object.Destroy(avatarButton.GetComponent<FriendPreviewClicker>());
-		}
-		UpdateInfo();
-	}
-
-	public void SetSkin(string skinStr)
-	{
-		bool flag = true;
-		if (!string.IsNullOrEmpty(skinStr) && !skinStr.Equals("empty"))
-		{
-			byte[] data = Convert.FromBase64String(skinStr);
-			Texture2D texture2D = new Texture2D(64, 32);
-			texture2D.LoadImage(data);
-			texture2D.filterMode = FilterMode.Point;
-			texture2D.Apply();
-			mySkin = texture2D;
-		}
-		else
-		{
-			mySkin = Resources.Load(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1")) as Texture2D;
-			flag = false;
-		}
-		Texture2D texture2D2 = new Texture2D(20, 20, TextureFormat.ARGB32, false);
-		for (int i = 0; i < 20; i++)
-		{
-			for (int j = 0; j < 20; j++)
-			{
-				texture2D2.SetPixel(i, j, Color.clear);
-			}
-		}
-		texture2D2.SetPixels(6, 6, 8, 8, GetPixelsByRect(mySkin, new Rect(8f, 16f, 8f, 8f)));
-		texture2D2.SetPixels(6, 0, 8, 6, GetPixelsByRect(mySkin, new Rect(20f, 6f, 8f, 6f)));
-		texture2D2.SetPixels(2, 0, 4, 6, GetPixelsByRect(mySkin, new Rect(44f, 6f, 4f, 6f)));
-		texture2D2.SetPixels(14, 0, 4, 6, GetPixelsByRect(mySkin, new Rect(44f, 6f, 4f, 6f)));
-		texture2D2.anisoLevel = 1;
-		texture2D2.mipMapBias = -0.5f;
-		texture2D2.Apply();
-		texture2D2.filterMode = FilterMode.Point;
-		if (flag)
-		{
-			UnityEngine.Object.Destroy(mySkin);
-		}
-		Texture mainTexture = preview.mainTexture;
-		preview.mainTexture = texture2D2;
-		if (mainTexture != null && !mainTexture.name.Equals("dude") && !mainTexture.name.Equals("multi_skin_1"))
-		{
-			UnityEngine.Object.Destroy(mainTexture);
-		}
-	}
-
-	private void UpdateInfo()
-	{
-		if (facebookFriend || id == null)
-		{
-			return;
-		}
-		if (!ClanMember)
-		{
-			Dictionary<string, object> value;
-			object value2;
-			if (!FriendsController.sharedController.playersInfo.TryGetValue(id, out value) || !value.TryGetValue("player", out value2))
-			{
-				return;
-			}
-			Dictionary<string, object> dictionary = value2 as Dictionary<string, object>;
-			nm.text = dictionary["nick"] as string;
-			rank.spriteName = "Rank_" + Convert.ToString(dictionary["rank"]);
-			string skin = dictionary["skin"] as string;
-			SetSkin(skin);
-			Dictionary<string, string> dictionary2 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item in dictionary)
-			{
-				dictionary2.Add(item.Key, Convert.ToString(item.Value));
-			}
-			FillClanAttrs(dictionary2);
-			return;
-		}
-		foreach (Dictionary<string, string> clanMember in FriendsController.sharedController.clanMembers)
-		{
-			string value3;
-			if (!clanMember.TryGetValue("id", out value3) || !id.Equals(value3))
-			{
-				continue;
-			}
-			if (clanMember.ContainsKey("nick"))
-			{
-				nm.text = clanMember["nick"];
-			}
-			if (clanMember.ContainsKey("rank"))
-			{
-				rank.spriteName = "Rank_" + clanMember["rank"];
-			}
-			if (clanMember.ContainsKey("skin"))
-			{
-				string skin2 = clanMember["skin"];
-				SetSkin(skin2);
-			}
-			Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
-			object value4;
-			if (FriendsController.sharedController.playersInfo.ContainsKey(value3) && FriendsController.sharedController.playersInfo[value3].TryGetValue("player", out value4))
-			{
-				Dictionary<string, object> dictionary4 = value4 as Dictionary<string, object>;
-				foreach (KeyValuePair<string, object> item2 in dictionary4)
-				{
-					dictionary3.Add(item2.Key, Convert.ToString(item2.Value));
-				}
-			}
-			else
-			{
-				if (!string.IsNullOrEmpty(FriendsController.sharedController.clanName))
-				{
-					dictionary3.Add("clan_name", FriendsController.sharedController.clanName);
-				}
-				if (!string.IsNullOrEmpty(FriendsController.sharedController.clanLeaderID))
-				{
-					dictionary3.Add("clan_creator_id", FriendsController.sharedController.clanLeaderID);
-				}
-			}
-			FillClanAttrs(dictionary3);
-			break;
-		}
+		this.inactivityStartTm = Time.realtimeSinceStartup;
+		this.UpdateOnline();
 	}
 
 	public void FillClanAttrs(Dictionary<string, string> plDict)
@@ -256,110 +81,100 @@ public sealed class FriendPreview : MonoBehaviour
 		{
 			return;
 		}
-		if (ClanMember)
+		if (this.ClanMember)
 		{
-			string text = null;
+			string item = null;
 			if (!string.IsNullOrEmpty(FriendsController.sharedController.clanLogo))
 			{
-				text = FriendsController.sharedController.clanLogo;
+				item = FriendsController.sharedController.clanLogo;
 			}
 			else if (plDict.ContainsKey("clan_logo") && plDict["clan_logo"] != null && plDict["clan_logo"] != null && !plDict["clan_logo"].Equals("null"))
 			{
-				text = plDict["clan_logo"];
+				item = plDict["clan_logo"];
 			}
-			if (text != null)
+			if (item != null)
 			{
-				ClanLogo.gameObject.SetActive(true);
+				this.ClanLogo.gameObject.SetActive(true);
 				try
 				{
-					byte[] data = Convert.FromBase64String(text);
+					byte[] numArray = Convert.FromBase64String(item);
 					Texture2D texture2D = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-					texture2D.LoadImage(data);
+					texture2D.LoadImage(numArray);
 					texture2D.filterMode = FilterMode.Point;
 					texture2D.Apply();
-					Texture mainTexture = ClanLogo.mainTexture;
-					ClanLogo.mainTexture = texture2D;
-					if (mainTexture != null)
+					Texture clanLogo = this.ClanLogo.mainTexture;
+					this.ClanLogo.mainTexture = texture2D;
+					if (clanLogo != null)
 					{
-						UnityEngine.Object.Destroy(mainTexture);
+						UnityEngine.Object.Destroy(clanLogo);
 					}
 				}
-				catch (Exception)
+				catch (Exception exception)
 				{
-					Texture mainTexture2 = ClanLogo.mainTexture;
-					ClanLogo.mainTexture = null;
-					if (mainTexture2 != null)
+					Texture texture = this.ClanLogo.mainTexture;
+					this.ClanLogo.mainTexture = null;
+					if (texture != null)
 					{
-						UnityEngine.Object.Destroy(mainTexture2);
+						UnityEngine.Object.Destroy(texture);
 					}
 				}
 			}
 		}
-		else if (plDict.ContainsKey("clan_logo") && !string.IsNullOrEmpty(plDict["clan_logo"]) && !plDict["clan_logo"].Equals("null"))
+		else if (!plDict.ContainsKey("clan_logo") || string.IsNullOrEmpty(plDict["clan_logo"]) || plDict["clan_logo"].Equals("null"))
 		{
-			ClanLogo.gameObject.SetActive(true);
+			this.ClanLogo.gameObject.SetActive(false);
+		}
+		else
+		{
+			this.ClanLogo.gameObject.SetActive(true);
 			try
 			{
-				byte[] data2 = Convert.FromBase64String(plDict["clan_logo"]);
-				Texture2D texture2D2 = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
-				texture2D2.LoadImage(data2);
-				texture2D2.filterMode = FilterMode.Point;
-				texture2D2.Apply();
-				Texture mainTexture3 = ClanLogo.mainTexture;
-				ClanLogo.mainTexture = texture2D2;
-				if (mainTexture3 != null)
+				byte[] numArray1 = Convert.FromBase64String(plDict["clan_logo"]);
+				Texture2D texture2D1 = new Texture2D(Defs.LogoWidth, Defs.LogoHeight, TextureFormat.ARGB32, false);
+				texture2D1.LoadImage(numArray1);
+				texture2D1.filterMode = FilterMode.Point;
+				texture2D1.Apply();
+				Texture clanLogo1 = this.ClanLogo.mainTexture;
+				this.ClanLogo.mainTexture = texture2D1;
+				if (clanLogo1 != null)
 				{
-					UnityEngine.Object.Destroy(mainTexture3);
+					UnityEngine.Object.Destroy(clanLogo1);
 				}
 			}
-			catch (Exception)
+			catch (Exception exception1)
 			{
-				Texture mainTexture4 = ClanLogo.mainTexture;
-				ClanLogo.mainTexture = null;
-				if (mainTexture4 != null)
+				Texture texture1 = this.ClanLogo.mainTexture;
+				this.ClanLogo.mainTexture = null;
+				if (texture1 != null)
 				{
-					UnityEngine.Object.Destroy(mainTexture4);
+					UnityEngine.Object.Destroy(texture1);
 				}
 			}
+		}
+		if (!plDict.ContainsKey("clan_name") || plDict["clan_name"] == null || plDict["clan_name"].Equals("null"))
+		{
+			this.clanName.gameObject.SetActive(false);
 		}
 		else
 		{
-			ClanLogo.gameObject.SetActive(false);
-		}
-		if (plDict.ContainsKey("clan_name") && plDict["clan_name"] != null && !plDict["clan_name"].Equals("null"))
-		{
-			clanName.gameObject.SetActive(true);
-			string text2 = plDict["clan_name"];
+			this.clanName.gameObject.SetActive(true);
+			string str = plDict["clan_name"];
 			int num = 12;
-			if (text2 != null && text2.Length > num)
+			if (str != null && str.Length > num)
 			{
-				text2 = string.Format("{0}..{1}", text2.Substring(0, (num - 2) / 2), text2.Substring(text2.Length - (num - 2) / 2, (num - 2) / 2));
+				str = string.Format("{0}..{1}", str.Substring(0, (num - 2) / 2), str.Substring(str.Length - (num - 2) / 2, (num - 2) / 2));
 			}
-			if (text2 != null)
+			if (str != null)
 			{
-				clanName.text = text2;
+				this.clanName.text = str;
 			}
 		}
-		else
+		if (plDict.ContainsKey("clan_creator_id") && plDict["clan_creator_id"] != null && this.id != null)
 		{
-			clanName.gameObject.SetActive(false);
+			bool flag = plDict["clan_creator_id"].Equals(this.id);
+			this.leader.SetActive(flag);
+			this.avatarButton.GetComponent<UIButton>().normalSprite = (!flag ? "avatar_frame" : "avatar_leader_frame");
 		}
-		if (plDict.ContainsKey("clan_creator_id") && plDict["clan_creator_id"] != null && id != null)
-		{
-			bool flag = plDict["clan_creator_id"].Equals(id);
-			leader.SetActive(flag);
-			avatarButton.GetComponent<UIButton>().normalSprite = ((!flag) ? "avatar_frame" : "avatar_leader_frame");
-		}
-	}
-
-	private Texture2D getTexFromTexByRect(Texture2D texForCut, Rect rectForCut)
-	{
-		Color[] pixels = texForCut.GetPixels((int)rectForCut.x, (int)rectForCut.y, (int)rectForCut.width, (int)rectForCut.height);
-		Texture2D texture2D = new Texture2D((int)rectForCut.width, (int)rectForCut.height);
-		texture2D.filterMode = FilterMode.Point;
-		texture2D.SetPixels(pixels);
-		texture2D.Apply();
-		return texture2D;
 	}
 
 	private Color[] GetPixelsByRect(Texture2D texture, Rect rect)
@@ -367,200 +182,362 @@ public sealed class FriendPreview : MonoBehaviour
 		return texture.GetPixels((int)rect.x, (int)rect.y, (int)rect.width, (int)rect.height);
 	}
 
-	private void UpdateOnline()
+	private Texture2D getTexFromTexByRect(Texture2D texForCut, Rect rectForCut)
 	{
-		if (facebookFriend)
+		Color[] pixels = texForCut.GetPixels((int)rectForCut.x, (int)rectForCut.y, (int)rectForCut.width, (int)rectForCut.height);
+		Texture2D texture2D = new Texture2D((int)rectForCut.width, (int)rectForCut.height)
 		{
-			return;
-		}
-		if (FriendsController.sharedController.onlineInfo.ContainsKey(id))
-		{
-			string text = FriendsController.sharedController.onlineInfo[id]["game_mode"];
-			string s = FriendsController.sharedController.onlineInfo[id]["delta"];
-			string text2 = FriendsController.sharedController.onlineInfo[id]["protocol"];
-			int num = int.Parse(text);
-			num = ((num <= 99) ? (-1) : (num / 100));
-			int result;
-			if (!int.TryParse(text, out result))
-			{
-				result = -1;
-			}
-			else
-			{
-				if (result > 99)
-				{
-					result -= num * 100;
-				}
-				result /= 10;
-			}
-			int result2;
-			if (!int.TryParse(s, out result2))
-			{
-				return;
-			}
-			if ((float)result2 > FriendsController.onlineDelta || (num != 3 && ((num != (int)ConnectSceneNGUIController.myPlatformConnect && num != -1) || ExpController.GetOurTier() != result)))
-			{
-				offline.gameObject.SetActive(true);
-				onlineLab.gameObject.SetActive(false);
-				playing.gameObject.SetActive(false);
-				join.GetComponent<UIButton>().isEnabled = false;
-				return;
-			}
-			string text3 = text2;
-			string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
-			int result3;
-			if (text == null || !int.TryParse(text, out result3))
-			{
-				return;
-			}
-			if (result3 == -1)
-			{
-				offline.gameObject.SetActive(false);
-				onlineLab.gameObject.SetActive(true);
-				playing.gameObject.SetActive(false);
-				join.GetComponent<UIButton>().isEnabled = false;
-				return;
-			}
-			offline.gameObject.SetActive(false);
-			onlineLab.gameObject.SetActive(false);
-			playing.gameObject.SetActive(true);
-			join.GetComponent<UIButton>().isEnabled = !_disableButtons && multiplayerProtocolVersion == text3;
-			string value;
-			if (FriendsController.sharedController.onlineInfo[id].TryGetValue("map", out value))
-			{
-				SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(int.Parse(value));
-				if (infoScene == null)
-				{
-					join.GetComponent<UIButton>().isEnabled = false;
-				}
-			}
-		}
-		else
-		{
-			offline.gameObject.SetActive(true);
-			onlineLab.gameObject.SetActive(false);
-			playing.gameObject.SetActive(false);
-			join.GetComponent<UIButton>().isEnabled = false;
-		}
+			filterMode = FilterMode.Point
+		};
+		texture2D.SetPixels(pixels);
+		texture2D.Apply();
+		return texture2D;
 	}
 
-	public void DisableButtons()
+	public void HandleAvatarClick()
 	{
-		_disableButtons = true;
-		delete.SetActive(false);
-		if (facebookFriend)
-		{
-			addFacebookFriend.SetActive(false);
-		}
-		inactivityStartTm = Time.realtimeSinceStartup;
-		UpdateOnline();
+		Action<bool> action = (bool needUpdate) => {
+		};
+		FriendsController.ShowProfile(this.id, ProfileWindowType.other, action);
 	}
 
 	private bool IsFriendInClan()
 	{
-		Dictionary<string, Dictionary<string, object>> playersInfo = FriendsController.sharedController.playersInfo;
-		if (playersInfo == null)
+		Dictionary<string, Dictionary<string, object>> strs = FriendsController.sharedController.playersInfo;
+		if (strs == null)
 		{
 			return false;
 		}
-		if (!playersInfo.ContainsKey(id))
+		if (!strs.ContainsKey(this.id))
 		{
 			return false;
 		}
-		if (!playersInfo[id].ContainsKey("player"))
+		if (!strs[this.id].ContainsKey("player"))
 		{
 			return false;
 		}
-		Dictionary<string, object> dictionary = playersInfo[id]["player"] as Dictionary<string, object>;
-		if (dictionary == null)
+		Dictionary<string, object> item = strs[this.id]["player"] as Dictionary<string, object>;
+		if (item == null)
 		{
 			return false;
 		}
-		if (!dictionary.ContainsKey("clan_creator_id"))
+		if (!item.ContainsKey("clan_creator_id"))
 		{
 			return false;
 		}
-		string value = Convert.ToString(dictionary["clan_creator_id"]);
-		return !string.IsNullOrEmpty(value);
-	}
-
-	private void Update()
-	{
-		if (ClanInvite)
-		{
-			addFacebookFriend.SetActive(!FriendsController.sharedController.ClanSentInvites.Contains(id) && !FriendsController.sharedController.clanSentInvitesLocal.Contains(id) && !FriendsController.sharedController.friendsDeletedLocal.Contains(id));
-			addFacebookFriend.GetComponent<UIButton>().isEnabled = !FriendsController.sharedController.ClanLimitReached;
-			cancel.SetActive(FriendsController.sharedController.ClanSentInvites.Contains(id) && !FriendsController.sharedController.clanCancelledInvitesLocal.Contains(id) && !FriendsController.sharedController.friendsDeletedLocal.Contains(id));
-		}
-		if (ClanMember)
-		{
-			bool flag = false;
-			foreach (Dictionary<string, string> clanMember in FriendsController.sharedController.clanMembers)
-			{
-				if (clanMember.ContainsKey("id") && clanMember["id"].Equals(id))
-				{
-					flag = true;
-					break;
-				}
-			}
-			delete.SetActive(flag && !FriendsController.sharedController.clanDeletedLocal.Contains(id) && FriendsController.sharedController.id != null && FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID));
-		}
-		if (Time.realtimeSinceStartup - inactivityStartTm > 25f)
-		{
-			inactivityStartTm = float.PositiveInfinity;
-			if (!isInviteFromUs)
-			{
-				_disableButtons = false;
-				UpdateOnline();
-			}
-			delete.SetActive(!facebookFriend && !ClanInvite);
-		}
-		if (Time.realtimeSinceStartup - timeLastCheck > 1f)
-		{
-			timeLastCheck = Time.realtimeSinceStartup;
-			UpdateOnline();
-			UpdateInfo();
-		}
-		if (!facebookFriend || _disableButtons)
-		{
-			return;
-		}
-		bool flag2 = false;
-		if (FriendsController.sharedController.friends != null)
-		{
-			foreach (string friend in FriendsController.sharedController.friends)
-			{
-				if (friend.Equals(id))
-				{
-					flag2 = true;
-					break;
-				}
-			}
-		}
-		addFacebookFriend.SetActive(!flag2);
+		string str = Convert.ToString(item["clan_creator_id"]);
+		return !string.IsNullOrEmpty(str);
 	}
 
 	private void OnDestroy()
 	{
-		FriendsGUIController.UpdaeOnlineEvent = (Action)Delegate.Remove(FriendsGUIController.UpdaeOnlineEvent, new Action(UpdateOnline));
+		FriendsGUIController.UpdaeOnlineEvent -= new Action(this.UpdateOnline);
 	}
 
-	[CompilerGenerated]
-	private static void _003CHandleAvatarClick_003Em__4D(bool needUpdate)
+	public void SetSkin(string skinStr)
 	{
-	}
-
-	[CompilerGenerated]
-	private void _003CStart_003Em__4E()
-	{
-		if (_clansGuiController.Value != null)
+		bool flag = true;
+		if (string.IsNullOrEmpty(skinStr) || skinStr.Equals("empty"))
 		{
-			_003CStart_003Ec__AnonStorey1F1 _003CStart_003Ec__AnonStorey1F = new _003CStart_003Ec__AnonStorey1F1();
-			_003CStart_003Ec__AnonStorey1F._003C_003Ef__this = this;
-			_003CStart_003Ec__AnonStorey1F.previousState = _clansGuiController.Value.CurrentState;
-			Action<bool> onCloseEvent = _003CStart_003Ec__AnonStorey1F._003C_003Em__4F;
-			FriendsController.ShowProfile(id, ProfileWindowType.other, onCloseEvent);
-			_clansGuiController.Value.CurrentState = ClansGUIController.State.ProfileDetails;
+			this.mySkin = Resources.Load(ResPath.Combine(Defs.MultSkinsDirectoryName, "multi_skin_1")) as Texture2D;
+			flag = false;
+		}
+		else
+		{
+			byte[] numArray = Convert.FromBase64String(skinStr);
+			Texture2D texture2D = new Texture2D(64, 32);
+			texture2D.LoadImage(numArray);
+			texture2D.filterMode = FilterMode.Point;
+			texture2D.Apply();
+			this.mySkin = texture2D;
+		}
+		Texture2D texture2D1 = new Texture2D(20, 20, TextureFormat.ARGB32, false);
+		for (int i = 0; i < 20; i++)
+		{
+			for (int j = 0; j < 20; j++)
+			{
+				texture2D1.SetPixel(i, j, Color.clear);
+			}
+		}
+		texture2D1.SetPixels(6, 6, 8, 8, this.GetPixelsByRect(this.mySkin, new Rect(8f, 16f, 8f, 8f)));
+		texture2D1.SetPixels(6, 0, 8, 6, this.GetPixelsByRect(this.mySkin, new Rect(20f, 6f, 8f, 6f)));
+		texture2D1.SetPixels(2, 0, 4, 6, this.GetPixelsByRect(this.mySkin, new Rect(44f, 6f, 4f, 6f)));
+		texture2D1.SetPixels(14, 0, 4, 6, this.GetPixelsByRect(this.mySkin, new Rect(44f, 6f, 4f, 6f)));
+		texture2D1.anisoLevel = 1;
+		texture2D1.mipMapBias = -0.5f;
+		texture2D1.Apply();
+		texture2D1.filterMode = FilterMode.Point;
+		if (flag)
+		{
+			UnityEngine.Object.Destroy(this.mySkin);
+		}
+		Texture texture = this.preview.mainTexture;
+		this.preview.mainTexture = texture2D1;
+		if (texture != null && !texture.name.Equals("dude") && !texture.name.Equals("multi_skin_1"))
+		{
+			UnityEngine.Object.Destroy(texture);
+		}
+	}
+
+	private void Start()
+	{
+		if (!this.facebookFriend && !this.ClanMember && !this.ClanInvite)
+		{
+			FriendsGUIController.UpdaeOnlineEvent += new Action(this.UpdateOnline);
+		}
+		if (this.isInviteFromUs && this.preview != null)
+		{
+			this.preview.alpha = 0.4f;
+		}
+		this.@join.SetActive((!this.@join.activeSelf || this.facebookFriend && !this.ClanMember ? false : !this.ClanInvite));
+		this.delete.SetActive((!this.delete.activeSelf || this.facebookFriend ? false : !this.ClanInvite));
+		this.@join.GetComponent<UIButton>().isEnabled = false;
+		if (this.onlineStateContainer != null)
+		{
+			this.onlineStateContainer.SetActive(!this.facebookFriend);
+		}
+		this.addFacebookFriend.SetActive((this.facebookFriend ? true : this.ClanInvite));
+		if (this.ClanInvite)
+		{
+			this.addFacebookFriend.GetComponent<UIButton>().isEnabled = !FriendsController.sharedController.ClanLimitReached;
+			UIButton component = this.avatarButton.GetComponent<UIButton>();
+			if (component != null)
+			{
+				EventDelegate eventDelegate = new EventDelegate(() => {
+					if (this._clansGuiController.Value != null)
+					{
+						ClansGUIController.State currentState = this._clansGuiController.Value.CurrentState;
+						Action<bool> value = (bool needUpdateFriendList) => {
+							if (this._clansGuiController.Value != null)
+							{
+								this._clansGuiController.Value.CurrentState = currentState;
+								this._clansGuiController.Value.ShowAddMembersScreen();
+							}
+						};
+						FriendsController.ShowProfile(this.id, ProfileWindowType.other, value);
+						this._clansGuiController.Value.CurrentState = ClansGUIController.State.ProfileDetails;
+					}
+				});
+				component.onClick.Add(eventDelegate);
+			}
+		}
+		bool flag = true;
+		this.cancel.SetActive((!this.ClanInvite ? false : flag));
+		this.avatarButton.GetComponent<UIButton>().enabled = !this.facebookFriend;
+		if (this.facebookFriend || this.ClanInvite)
+		{
+			UnityEngine.Object.Destroy(this.avatarButton.GetComponent<FriendPreviewClicker>());
+		}
+		this.UpdateInfo();
+	}
+
+	private void Update()
+	{
+		if (this.ClanInvite)
+		{
+			this.addFacebookFriend.SetActive((FriendsController.sharedController.ClanSentInvites.Contains(this.id) || FriendsController.sharedController.clanSentInvitesLocal.Contains(this.id) ? false : !FriendsController.sharedController.friendsDeletedLocal.Contains(this.id)));
+			this.addFacebookFriend.GetComponent<UIButton>().isEnabled = !FriendsController.sharedController.ClanLimitReached;
+			this.cancel.SetActive((!FriendsController.sharedController.ClanSentInvites.Contains(this.id) || FriendsController.sharedController.clanCancelledInvitesLocal.Contains(this.id) ? false : !FriendsController.sharedController.friendsDeletedLocal.Contains(this.id)));
+		}
+		if (this.ClanMember)
+		{
+			bool flag = false;
+			foreach (Dictionary<string, string> clanMember in FriendsController.sharedController.clanMembers)
+			{
+				if (!clanMember.ContainsKey("id") || !clanMember["id"].Equals(this.id))
+				{
+					continue;
+				}
+				flag = true;
+				break;
+			}
+			this.delete.SetActive((!flag || FriendsController.sharedController.clanDeletedLocal.Contains(this.id) || FriendsController.sharedController.id == null ? false : FriendsController.sharedController.id.Equals(FriendsController.sharedController.clanLeaderID)));
+		}
+		if (Time.realtimeSinceStartup - this.inactivityStartTm > 25f)
+		{
+			this.inactivityStartTm = Single.PositiveInfinity;
+			if (!this.isInviteFromUs)
+			{
+				this._disableButtons = false;
+				this.UpdateOnline();
+			}
+			this.delete.SetActive((this.facebookFriend ? false : !this.ClanInvite));
+		}
+		if (Time.realtimeSinceStartup - this.timeLastCheck > 1f)
+		{
+			this.timeLastCheck = Time.realtimeSinceStartup;
+			this.UpdateOnline();
+			this.UpdateInfo();
+		}
+		if (this.facebookFriend && !this._disableButtons)
+		{
+			bool flag1 = false;
+			if (FriendsController.sharedController.friends != null)
+			{
+				foreach (string friend in FriendsController.sharedController.friends)
+				{
+					if (!friend.Equals(this.id))
+					{
+						continue;
+					}
+					flag1 = true;
+					break;
+				}
+			}
+			this.addFacebookFriend.SetActive(!flag1);
+		}
+	}
+
+	private void UpdateInfo()
+	{
+		Dictionary<string, object> strs;
+		object obj;
+		string str;
+		object obj1;
+		if (this.facebookFriend)
+		{
+			return;
+		}
+		if (this.id != null)
+		{
+			if (this.ClanMember)
+			{
+				foreach (Dictionary<string, string> clanMember in FriendsController.sharedController.clanMembers)
+				{
+					if (!clanMember.TryGetValue("id", out str) || !this.id.Equals(str))
+					{
+						continue;
+					}
+					if (clanMember.ContainsKey("nick"))
+					{
+						this.nm.text = clanMember["nick"];
+					}
+					if (clanMember.ContainsKey("rank"))
+					{
+						this.rank.spriteName = string.Concat("Rank_", clanMember["rank"]);
+					}
+					if (clanMember.ContainsKey("skin"))
+					{
+						this.SetSkin(clanMember["skin"]);
+					}
+					Dictionary<string, string> strs1 = new Dictionary<string, string>();
+					if (!FriendsController.sharedController.playersInfo.ContainsKey(str) || !FriendsController.sharedController.playersInfo[str].TryGetValue("player", out obj1))
+					{
+						if (!string.IsNullOrEmpty(FriendsController.sharedController.clanName))
+						{
+							strs1.Add("clan_name", FriendsController.sharedController.clanName);
+						}
+						if (!string.IsNullOrEmpty(FriendsController.sharedController.clanLeaderID))
+						{
+							strs1.Add("clan_creator_id", FriendsController.sharedController.clanLeaderID);
+						}
+					}
+					else
+					{
+						foreach (KeyValuePair<string, object> keyValuePair in obj1 as Dictionary<string, object>)
+						{
+							strs1.Add(keyValuePair.Key, Convert.ToString(keyValuePair.Value));
+						}
+					}
+					this.FillClanAttrs(strs1);
+					break;
+				}
+			}
+			else if (FriendsController.sharedController.playersInfo.TryGetValue(this.id, out strs) && strs.TryGetValue("player", out obj))
+			{
+				Dictionary<string, object> strs2 = obj as Dictionary<string, object>;
+				this.nm.text = strs2["nick"] as string;
+				this.rank.spriteName = string.Concat("Rank_", Convert.ToString(strs2["rank"]));
+				this.SetSkin(strs2["skin"] as string);
+				Dictionary<string, string> strs3 = new Dictionary<string, string>();
+				foreach (KeyValuePair<string, object> keyValuePair1 in strs2)
+				{
+					strs3.Add(keyValuePair1.Key, Convert.ToString(keyValuePair1.Value));
+				}
+				this.FillClanAttrs(strs3);
+			}
+		}
+	}
+
+	private void UpdateOnline()
+	{
+		int num;
+		int num1;
+		int num2;
+		string str;
+		if (this.facebookFriend)
+		{
+			return;
+		}
+		if (!FriendsController.sharedController.onlineInfo.ContainsKey(this.id))
+		{
+			this.offline.gameObject.SetActive(true);
+			this.onlineLab.gameObject.SetActive(false);
+			this.playing.gameObject.SetActive(false);
+			this.@join.GetComponent<UIButton>().isEnabled = false;
+		}
+		else
+		{
+			string item = FriendsController.sharedController.onlineInfo[this.id]["game_mode"];
+			string item1 = FriendsController.sharedController.onlineInfo[this.id]["delta"];
+			string str1 = FriendsController.sharedController.onlineInfo[this.id]["protocol"];
+			int num3 = int.Parse(item);
+			if (num3 <= 99)
+			{
+				num3 = -1;
+			}
+			else
+			{
+				num3 /= 100;
+			}
+			if (int.TryParse(item, out num1))
+			{
+				if (num1 > 99)
+				{
+					num1 = num1 - num3 * 100;
+				}
+				num1 /= 10;
+			}
+			else
+			{
+				num1 = -1;
+			}
+			if (int.TryParse(item1, out num))
+			{
+				if ((float)num > FriendsController.onlineDelta || num3 != 3 && (num3 != (int)ConnectSceneNGUIController.myPlatformConnect && num3 != -1 || ExpController.GetOurTier() != num1))
+				{
+					this.offline.gameObject.SetActive(true);
+					this.onlineLab.gameObject.SetActive(false);
+					this.playing.gameObject.SetActive(false);
+					this.@join.GetComponent<UIButton>().isEnabled = false;
+				}
+				else
+				{
+					string str2 = str1;
+					string multiplayerProtocolVersion = GlobalGameController.MultiplayerProtocolVersion;
+					if (item != null && int.TryParse(item, out num2))
+					{
+						if (num2 != -1)
+						{
+							this.offline.gameObject.SetActive(false);
+							this.onlineLab.gameObject.SetActive(false);
+							this.playing.gameObject.SetActive(true);
+							this.@join.GetComponent<UIButton>().isEnabled = (this._disableButtons ? false : multiplayerProtocolVersion == str2);
+							if (FriendsController.sharedController.onlineInfo[this.id].TryGetValue("map", out str) && SceneInfoController.instance.GetInfoScene(int.Parse(str)) == null)
+							{
+								this.@join.GetComponent<UIButton>().isEnabled = false;
+							}
+						}
+						else
+						{
+							this.offline.gameObject.SetActive(false);
+							this.onlineLab.gameObject.SetActive(true);
+							this.playing.gameObject.SetActive(false);
+							this.@join.GetComponent<UIButton>().isEnabled = false;
+						}
+					}
+				}
+			}
 		}
 	}
 }

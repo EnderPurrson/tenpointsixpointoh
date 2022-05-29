@@ -42,170 +42,179 @@ public class ThirdPersonCamera : MonoBehaviour
 
 	public ThirdPersonCamera()
 	{
-		distance = 7f;
-		height = 3f;
-		angularSmoothLag = 0.3f;
-		angularMaxSpeed = 15f;
-		heightSmoothLag = 0.3f;
-		snapSmoothLag = 0.2f;
-		snapMaxSpeed = 720f;
-		clampHeadPositionScreenSpace = 0.75f;
-		lockCameraTimeout = 0.2f;
-		headOffset = Vector3.zero;
-		centerOffset = Vector3.zero;
-		targetHeight = 100000f;
-	}
-
-	public override void Awake()
-	{
-		if (!cameraTransform && (bool)Camera.main)
-		{
-			cameraTransform = Camera.main.transform;
-		}
-		if (!cameraTransform)
-		{
-			Debug.Log("Please assign a camera to the ThirdPersonCamera script.");
-			enabled = false;
-		}
-		_target = transform;
-		if ((bool)_target)
-		{
-			controller = (ThirdPersonController)_target.GetComponent(typeof(ThirdPersonController));
-		}
-		if ((bool)controller)
-		{
-			CharacterController characterController = (CharacterController)_target.GetComponent<Collider>();
-			centerOffset = characterController.bounds.center - _target.position;
-			headOffset = centerOffset;
-			headOffset.y = characterController.bounds.max.y - _target.position.y;
-		}
-		else
-		{
-			Debug.Log("Please assign a target to the camera that has a ThirdPersonController script attached.");
-		}
-		Cut(_target, centerOffset);
-	}
-
-	public override void DebugDrawStuff()
-	{
-		Debug.DrawLine(_target.position, _target.position + headOffset);
+		this.distance = 7f;
+		this.height = 3f;
+		this.angularSmoothLag = 0.3f;
+		this.angularMaxSpeed = 15f;
+		this.heightSmoothLag = 0.3f;
+		this.snapSmoothLag = 0.2f;
+		this.snapMaxSpeed = 720f;
+		this.clampHeadPositionScreenSpace = 0.75f;
+		this.lockCameraTimeout = 0.2f;
+		this.headOffset = Vector3.zero;
+		this.centerOffset = Vector3.zero;
+		this.targetHeight = 100000f;
 	}
 
 	public override float AngleDistance(float a, float b)
 	{
-		a = Mathf.Repeat(a, 360f);
-		b = Mathf.Repeat(b, 360f);
+		a = Mathf.Repeat(a, (float)360);
+		b = Mathf.Repeat(b, (float)360);
 		return Mathf.Abs(b - a);
 	}
 
 	public override void Apply(Transform dummyTarget, Vector3 dummyCenter)
 	{
-		if (!controller)
+		if (this.controller)
 		{
-			return;
-		}
-		Vector3 vector = _target.position + centerOffset;
-		Vector3 headPos = _target.position + headOffset;
-		float y = _target.eulerAngles.y;
-		float y2 = cameraTransform.eulerAngles.y;
-		float num = y;
-		if (Input.GetButton("Fire2"))
-		{
-			snap = true;
-		}
-		if (snap)
-		{
-			if (!(AngleDistance(y2, y) >= 3f))
+			Vector3 vector3 = this._target.position + this.centerOffset;
+			Vector3 vector31 = this._target.position + this.headOffset;
+			float single = this._target.eulerAngles.y;
+			float single1 = this.cameraTransform.eulerAngles.y;
+			float single2 = single;
+			if (Input.GetButton("Fire2"))
 			{
-				snap = false;
+				this.snap = true;
 			}
-			y2 = Mathf.SmoothDampAngle(y2, num, ref angleVelocity, snapSmoothLag, snapMaxSpeed);
-		}
-		else
-		{
-			if (!(controller.GetLockCameraTimer() >= lockCameraTimeout))
+			if (!this.snap)
 			{
-				num = y2;
+				if (this.controller.GetLockCameraTimer() < this.lockCameraTimeout)
+				{
+					single2 = single1;
+				}
+				if (this.AngleDistance(single1, single2) > (float)160 && this.controller.IsMovingBackwards())
+				{
+					single2 += (float)180;
+				}
+				single1 = Mathf.SmoothDampAngle(single1, single2, ref this.angleVelocity, this.angularSmoothLag, this.angularMaxSpeed);
 			}
-			if (!(AngleDistance(y2, num) <= 160f) && controller.IsMovingBackwards())
+			else
 			{
-				num += 180f;
+				if (this.AngleDistance(single1, single) < 3f)
+				{
+					this.snap = false;
+				}
+				single1 = Mathf.SmoothDampAngle(single1, single2, ref this.angleVelocity, this.snapSmoothLag, this.snapMaxSpeed);
 			}
-			y2 = Mathf.SmoothDampAngle(y2, num, ref angleVelocity, angularSmoothLag, angularMaxSpeed);
-		}
-		if (controller.IsJumping())
-		{
-			float num2 = vector.y + height;
-			if (num2 < targetHeight || !(num2 - targetHeight <= 5f))
+			if (!this.controller.IsJumping())
 			{
-				targetHeight = vector.y + height;
+				this.targetHeight = vector3.y + this.height;
 			}
+			else
+			{
+				float single3 = vector3.y + this.height;
+				if (single3 < this.targetHeight || single3 - this.targetHeight > (float)5)
+				{
+					this.targetHeight = vector3.y + this.height;
+				}
+			}
+			float single4 = this.cameraTransform.position.y;
+			single4 = Mathf.SmoothDamp(single4, this.targetHeight, ref this.heightVelocity, this.heightSmoothLag);
+			Quaternion quaternion = Quaternion.Euler((float)0, single1, (float)0);
+			this.cameraTransform.position = vector3;
+			this.cameraTransform.position = this.cameraTransform.position + ((quaternion * Vector3.back) * this.distance);
+			float single5 = single4;
+			float single6 = single5;
+			Vector3 vector32 = this.cameraTransform.position;
+			Vector3 vector33 = vector32;
+			float single7 = single6;
+			float single8 = single7;
+			vector33.y = single7;
+			Vector3 vector34 = vector33;
+			Vector3 vector35 = vector34;
+			this.cameraTransform.position = vector34;
+			this.SetUpRotation(vector3, vector31);
 		}
-		else
-		{
-			targetHeight = vector.y + height;
-		}
-		float y3 = cameraTransform.position.y;
-		y3 = Mathf.SmoothDamp(y3, targetHeight, ref heightVelocity, heightSmoothLag);
-		Quaternion quaternion = Quaternion.Euler(0f, y2, 0f);
-		cameraTransform.position = vector;
-		cameraTransform.position += quaternion * Vector3.back * distance;
-		float y4 = y3;
-		Vector3 position = cameraTransform.position;
-		float num3 = (position.y = y4);
-		Vector3 vector3 = (cameraTransform.position = position);
-		SetUpRotation(vector, headPos);
 	}
 
-	public override void LateUpdate()
+	public override void Awake()
 	{
-		Apply(transform, Vector3.zero);
+		if (!this.cameraTransform && Camera.main)
+		{
+			this.cameraTransform = Camera.main.transform;
+		}
+		if (!this.cameraTransform)
+		{
+			Debug.Log("Please assign a camera to the ThirdPersonCamera script.");
+			this.enabled = false;
+		}
+		this._target = this.transform;
+		if (this._target)
+		{
+			this.controller = (ThirdPersonController)this._target.GetComponent(typeof(ThirdPersonController));
+		}
+		if (!this.controller)
+		{
+			Debug.Log("Please assign a target to the camera that has a ThirdPersonController script attached.");
+		}
+		else
+		{
+			CharacterController component = (CharacterController)this._target.GetComponent<Collider>();
+			Bounds bound = component.bounds;
+			this.centerOffset = bound.center - this._target.position;
+			this.headOffset = this.centerOffset;
+			float single = component.bounds.max.y;
+			Vector3 vector3 = this._target.position;
+			this.headOffset.y = single - vector3.y;
+		}
+		this.Cut(this._target, this.centerOffset);
 	}
 
 	public override void Cut(Transform dummyTarget, Vector3 dummyCenter)
 	{
-		float num = heightSmoothLag;
-		float num2 = snapMaxSpeed;
-		float num3 = snapSmoothLag;
-		snapMaxSpeed = 10000f;
-		snapSmoothLag = 0.001f;
-		heightSmoothLag = 0.001f;
-		snap = true;
-		Apply(transform, Vector3.zero);
-		heightSmoothLag = num;
-		snapMaxSpeed = num2;
-		snapSmoothLag = num3;
+		float single = this.heightSmoothLag;
+		float single1 = this.snapMaxSpeed;
+		float single2 = this.snapSmoothLag;
+		this.snapMaxSpeed = (float)10000;
+		this.snapSmoothLag = 0.001f;
+		this.heightSmoothLag = 0.001f;
+		this.snap = true;
+		this.Apply(this.transform, Vector3.zero);
+		this.heightSmoothLag = single;
+		this.snapMaxSpeed = single1;
+		this.snapSmoothLag = single2;
 	}
 
-	public override void SetUpRotation(Vector3 centerPos, Vector3 headPos)
+	public override void DebugDrawStuff()
 	{
-		Vector3 position = cameraTransform.position;
-		Vector3 vector = centerPos - position;
-		Quaternion quaternion = Quaternion.LookRotation(new Vector3(vector.x, 0f, vector.z));
-		Vector3 forward = Vector3.forward * distance + Vector3.down * height;
-		cameraTransform.rotation = quaternion * Quaternion.LookRotation(forward);
-		Ray ray = cameraTransform.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, 0.5f, 1f));
-		Ray ray2 = cameraTransform.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, clampHeadPositionScreenSpace, 1f));
-		Vector3 point = ray.GetPoint(distance);
-		Vector3 point2 = ray2.GetPoint(distance);
-		float num = Vector3.Angle(ray.direction, ray2.direction);
-		float num2 = num / (point.y - point2.y);
-		float num3 = num2 * (point.y - centerPos.y);
-		if (!(num3 >= num))
-		{
-			num3 = 0f;
-			return;
-		}
-		num3 -= num;
-		cameraTransform.rotation *= Quaternion.Euler(0f - num3, 0f, 0f);
+		Debug.DrawLine(this._target.position, this._target.position + this.headOffset);
 	}
 
 	public override Vector3 GetCenterOffset()
 	{
-		return centerOffset;
+		return this.centerOffset;
+	}
+
+	public override void LateUpdate()
+	{
+		this.Apply(this.transform, Vector3.zero);
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override void SetUpRotation(Vector3 centerPos, Vector3 headPos)
+	{
+		Vector3 vector3 = centerPos - this.cameraTransform.position;
+		Quaternion quaternion = Quaternion.LookRotation(new Vector3(vector3.x, (float)0, vector3.z));
+		Vector3 vector31 = (Vector3.forward * this.distance) + (Vector3.down * this.height);
+		this.cameraTransform.rotation = quaternion * Quaternion.LookRotation(vector31);
+		Ray ray = this.cameraTransform.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, 0.5f, (float)1));
+		Ray ray1 = this.cameraTransform.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f, this.clampHeadPositionScreenSpace, (float)1));
+		Vector3 point = ray.GetPoint(this.distance);
+		Vector3 point1 = ray1.GetPoint(this.distance);
+		float single = Vector3.Angle(ray.direction, ray1.direction);
+		float single1 = single / (point.y - point1.y);
+		float single2 = single1 * (point.y - centerPos.y);
+		if (single2 >= single)
+		{
+			single2 -= single;
+			this.cameraTransform.rotation = this.cameraTransform.rotation * Quaternion.Euler(-single2, (float)0, (float)0);
+		}
+		else
+		{
+			single2 = (float)0;
+		}
 	}
 }

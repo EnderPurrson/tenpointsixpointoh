@@ -15,19 +15,19 @@ namespace Rilisoft
 
 		private int? _capeHashCode;
 
-		public long Id
-		{
-			get
-			{
-				return id;
-			}
-		}
-
 		public string Cape
 		{
 			get
 			{
-				return cape ?? string.Empty;
+				return this.cape ?? string.Empty;
+			}
+		}
+
+		public long Id
+		{
+			get
+			{
+				return this.id;
 			}
 		}
 
@@ -35,20 +35,37 @@ namespace Rilisoft
 		{
 			this.id = id;
 			this.cape = cape ?? string.Empty;
-			_capeHashCode = null;
+			this._capeHashCode = null;
+		}
+
+		internal static CapeMemento ChooseCape(CapeMemento left, CapeMemento right)
+		{
+			if (string.IsNullOrEmpty(left.Cape) && string.IsNullOrEmpty(right.Cape))
+			{
+				return (left.Id > right.Id ? left : right);
+			}
+			if (string.IsNullOrEmpty(left.Cape) || string.IsNullOrEmpty(right.Cape))
+			{
+				if (!string.IsNullOrEmpty(left.Cape))
+				{
+					return left;
+				}
+				return right;
+			}
+			return (left.Id > right.Id ? left : right);
 		}
 
 		public bool Equals(CapeMemento other)
 		{
-			if (Id != other.Id)
+			if (this.Id != other.Id)
 			{
 				return false;
 			}
-			if (GetCapeHashCode() != other.GetCapeHashCode())
+			if (this.GetCapeHashCode() != other.GetCapeHashCode())
 			{
 				return false;
 			}
-			if (Cape != other.Cape)
+			if (this.Cape != other.Cape)
 			{
 				return false;
 			}
@@ -61,45 +78,27 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			SkinMemento skinMemento = (SkinMemento)obj;
-			return Equals(skinMemento);
-		}
-
-		public override int GetHashCode()
-		{
-			return Id.GetHashCode() ^ GetCapeHashCode();
-		}
-
-		public override string ToString()
-		{
-			string text = ((Cape.Length > 4) ? Cape.Substring(Cape.Length - 4) : Cape);
-			return string.Format(CultureInfo.InvariantCulture, "{{ \"id\":{0},\"cape\":\"{1}\" }}", Id, text);
-		}
-
-		internal static CapeMemento ChooseCape(CapeMemento left, CapeMemento right)
-		{
-			if (string.IsNullOrEmpty(left.Cape) && string.IsNullOrEmpty(right.Cape))
-			{
-				return (left.Id > right.Id) ? left : right;
-			}
-			if (!string.IsNullOrEmpty(left.Cape) && !string.IsNullOrEmpty(right.Cape))
-			{
-				return (left.Id > right.Id) ? left : right;
-			}
-			if (!string.IsNullOrEmpty(left.Cape))
-			{
-				return left;
-			}
-			return right;
+			return this.Equals((SkinMemento)obj);
 		}
 
 		private int GetCapeHashCode()
 		{
-			if (!_capeHashCode.HasValue)
+			if (!this._capeHashCode.HasValue)
 			{
-				_capeHashCode = Cape.GetHashCode();
+				this._capeHashCode = new int?(this.Cape.GetHashCode());
 			}
-			return _capeHashCode.Value;
+			return this._capeHashCode.Value;
+		}
+
+		public override int GetHashCode()
+		{
+			return this.Id.GetHashCode() ^ this.GetCapeHashCode();
+		}
+
+		public override string ToString()
+		{
+			string str = (this.Cape.Length > 4 ? this.Cape.Substring(this.Cape.Length - 4) : this.Cape);
+			return string.Format(CultureInfo.InvariantCulture, "{{ \"id\":{0},\"cape\":\"{1}\" }}", new object[] { this.Id, str });
 		}
 	}
 }

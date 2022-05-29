@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class HeadShotStackController : MonoBehaviour
@@ -10,27 +11,8 @@ public class HeadShotStackController : MonoBehaviour
 
 	private int currentIndexHole;
 
-	private void Start()
+	public HeadShotStackController()
 	{
-		if (Device.isPixelGunLow)
-		{
-			Object.Destroy(base.gameObject);
-			return;
-		}
-		sharedController = this;
-		Transform transform = base.transform;
-		transform.position = Vector3.zero;
-		int childCount = transform.childCount;
-		particles = new HitParticle[childCount];
-		for (int i = 0; i < childCount; i++)
-		{
-			particles[i] = transform.GetChild(i).GetComponent<HitParticle>();
-			if (!Defs.isMulti || Defs.isCOOP)
-			{
-				ParticleSystem myParticleSystem = particles[i].myParticleSystem;
-				myParticleSystem.GetComponent<Renderer>().material = mobHeadShotMaterial;
-			}
-		}
 	}
 
 	public HitParticle GetCurrentParticle(bool _isUseMine)
@@ -38,23 +20,47 @@ public class HeadShotStackController : MonoBehaviour
 		bool flag = true;
 		do
 		{
-			currentIndexHole++;
-			if (currentIndexHole >= particles.Length)
+			this.currentIndexHole++;
+			if (this.currentIndexHole < (int)this.particles.Length)
 			{
-				if (!flag)
-				{
-					return null;
-				}
-				currentIndexHole = 0;
-				flag = false;
+				continue;
 			}
+			if (!flag)
+			{
+				return null;
+			}
+			this.currentIndexHole = 0;
+			flag = false;
 		}
-		while (particles[currentIndexHole].isUseMine && !_isUseMine);
-		return particles[currentIndexHole];
+		while (this.particles[this.currentIndexHole].isUseMine && !_isUseMine);
+		return this.particles[this.currentIndexHole];
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		HeadShotStackController.sharedController = null;
+	}
+
+	private void Start()
+	{
+		if (Device.isPixelGunLow)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+			return;
+		}
+		HeadShotStackController.sharedController = this;
+		Transform transforms = base.transform;
+		transforms.position = Vector3.zero;
+		int num = transforms.childCount;
+		this.particles = new HitParticle[num];
+		for (int i = 0; i < num; i++)
+		{
+			this.particles[i] = transforms.GetChild(i).GetComponent<HitParticle>();
+			if (!Defs.isMulti || Defs.isCOOP)
+			{
+				ParticleSystem particleSystem = this.particles[i].myParticleSystem;
+				particleSystem.GetComponent<Renderer>().material = this.mobHeadShotMaterial;
+			}
+		}
 	}
 }

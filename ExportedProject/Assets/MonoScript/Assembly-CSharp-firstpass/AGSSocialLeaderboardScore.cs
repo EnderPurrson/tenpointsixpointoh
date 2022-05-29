@@ -1,13 +1,10 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine.SocialPlatforms;
 
 public class AGSSocialLeaderboardScore : IScore
 {
 	private readonly AGSScore score;
-
-	public string leaderboardID { get; set; }
-
-	public long value { get; set; }
 
 	public DateTime date
 	{
@@ -22,11 +19,29 @@ public class AGSSocialLeaderboardScore : IScore
 	{
 		get
 		{
-			if (score == null)
+			if (this.score == null)
 			{
 				return null;
 			}
-			return score.scoreString;
+			return this.score.scoreString;
+		}
+	}
+
+	public string leaderboardID
+	{
+		get;
+		set;
+	}
+
+	public int rank
+	{
+		get
+		{
+			if (this.score == null)
+			{
+				return 0;
+			}
+			return this.score.rank;
 		}
 	}
 
@@ -34,24 +49,18 @@ public class AGSSocialLeaderboardScore : IScore
 	{
 		get
 		{
-			if (score == null)
+			if (this.score == null)
 			{
 				return null;
 			}
-			return score.player.alias;
+			return this.score.player.@alias;
 		}
 	}
 
-	public int rank
+	public long @value
 	{
-		get
-		{
-			if (score == null)
-			{
-				return 0;
-			}
-			return score.rank;
-		}
+		get;
+		set;
 	}
 
 	public AGSSocialLeaderboardScore(AGSScore score, AGSLeaderboard leaderboard)
@@ -67,19 +76,19 @@ public class AGSSocialLeaderboardScore : IScore
 			return;
 		}
 		this.score = score;
-		leaderboardID = leaderboard.id;
-		value = score.scoreValue;
+		this.leaderboardID = leaderboard.id;
+		this.@value = score.scoreValue;
 	}
 
 	public AGSSocialLeaderboardScore()
 	{
-		score = null;
-		leaderboardID = null;
+		this.score = null;
+		this.leaderboardID = null;
 	}
 
 	public void ReportScore(Action<bool> callback)
 	{
-		GameCircleSocial.Instance.ReportScore(value, leaderboardID, callback);
-		AGSLeaderboardsClient.SubmitScore(leaderboardID, value);
+		GameCircleSocial.Instance.ReportScore(this.@value, this.leaderboardID, callback);
+		AGSLeaderboardsClient.SubmitScore(this.leaderboardID, this.@value, 0);
 	}
 }

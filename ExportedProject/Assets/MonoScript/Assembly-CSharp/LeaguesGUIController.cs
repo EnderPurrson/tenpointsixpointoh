@@ -1,9 +1,10 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class LeaguesGUIController : MonoBehaviour
@@ -29,8 +30,8 @@ public class LeaguesGUIController : MonoBehaviour
 	[SerializeField]
 	private UILabel _progressTextLabel;
 
-	[SerializeField]
 	[ReadOnly]
+	[SerializeField]
 	private List<ProfileCup> _cups;
 
 	[ReadOnly]
@@ -39,113 +40,78 @@ public class LeaguesGUIController : MonoBehaviour
 
 	private ProfileCup _selectedCup;
 
-	private readonly Dictionary<RatingSystem.RatingLeague, string> _leaguesLKeys = new Dictionary<RatingSystem.RatingLeague, string>
+	private readonly Dictionary<RatingSystem.RatingLeague, string> _leaguesLKeys = new Dictionary<RatingSystem.RatingLeague, string>()
 	{
-		{
-			RatingSystem.RatingLeague.Wood,
-			"Key_1953"
-		},
-		{
-			RatingSystem.RatingLeague.Steel,
-			"Key_1954"
-		},
-		{
-			RatingSystem.RatingLeague.Gold,
-			"Key_1955"
-		},
-		{
-			RatingSystem.RatingLeague.Crystal,
-			"Key_1956"
-		},
-		{
-			RatingSystem.RatingLeague.Ruby,
-			"Key_1957"
-		},
-		{
-			RatingSystem.RatingLeague.Adamant,
-			"Key_1958"
-		}
+		{ RatingSystem.RatingLeague.Wood, "Key_1953" },
+		{ RatingSystem.RatingLeague.Steel, "Key_1954" },
+		{ RatingSystem.RatingLeague.Gold, "Key_1955" },
+		{ RatingSystem.RatingLeague.Crystal, "Key_1956" },
+		{ RatingSystem.RatingLeague.Ruby, "Key_1957" },
+		{ RatingSystem.RatingLeague.Adamant, "Key_1958" }
 	};
 
-	[CompilerGenerated]
-	private static Func<ProfileCup, bool> _003C_003Ef__am_0024cacheB;
-
-	private void OnEnable()
+	public LeaguesGUIController()
 	{
-		_cups = GetComponentsInChildren<ProfileCup>(true).ToList();
-		_itemsView = GetComponentInChildren<LeagueItemsView>(true);
-		Reposition();
-	}
-
-	private void Reposition()
-	{
-		List<ProfileCup> cups = _cups;
-		if (_003C_003Ef__am_0024cacheB == null)
-		{
-			_003C_003Ef__am_0024cacheB = _003CReposition_003Em__397;
-		}
-		_selectedCup = cups.FirstOrDefault(_003C_003Ef__am_0024cacheB);
-		StartCoroutine(PositionToCurrentLeagueCoroutine());
-	}
-
-	private IEnumerator PositionToCurrentLeagueCoroutine()
-	{
-		yield return null;
-		List<ProfileCup> cups = _cups;
-		if (_003CPositionToCurrentLeagueCoroutine_003Ec__Iterator17B._003C_003Ef__am_0024cache4 == null)
-		{
-			_003CPositionToCurrentLeagueCoroutine_003Ec__Iterator17B._003C_003Ef__am_0024cache4 = _003CPositionToCurrentLeagueCoroutine_003Ec__Iterator17B._003C_003Em__398;
-		}
-		ProfileCup to = cups.FirstOrDefault(_003CPositionToCurrentLeagueCoroutine_003Ec__Iterator17B._003C_003Ef__am_0024cache4);
-		_centerOnChild.CenterOn(to.gameObject.transform);
-		yield return null;
-		SetInfoFromLeague(to.League);
 	}
 
 	public void CupCentered(ProfileCup cup)
 	{
-		_selectedCup = cup;
-		SetInfoFromLeague(cup.League);
-		_itemsView.Repaint(cup.League);
+		this._selectedCup = cup;
+		this.SetInfoFromLeague(cup.League);
+		this._itemsView.Repaint(cup.League);
+	}
+
+	private void OnEnable()
+	{
+		this._cups = base.GetComponentsInChildren<ProfileCup>(true).ToList<ProfileCup>();
+		this._itemsView = base.GetComponentInChildren<LeagueItemsView>(true);
+		this.Reposition();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator PositionToCurrentLeagueCoroutine()
+	{
+		LeaguesGUIController.u003cPositionToCurrentLeagueCoroutineu003ec__Iterator17B variable = null;
+		return variable;
+	}
+
+	private void Reposition()
+	{
+		this._selectedCup = this._cups.FirstOrDefault<ProfileCup>((ProfileCup c) => c.League == RatingSystem.instance.currentLeague);
+		base.StartCoroutine(this.PositionToCurrentLeagueCoroutine());
 	}
 
 	private void SetInfoFromLeague(RatingSystem.RatingLeague league)
 	{
-		string text = LocalizationStore.Get(_leaguesLKeys[league]);
-		_lblLeagueName.text = text;
-		_lblLeagueNameOutline.text = text;
+		string str = LocalizationStore.Get(this._leaguesLKeys[league]);
+		this._lblLeagueName.text = str;
+		this._lblLeagueNameOutline.text = str;
 		if (league < RatingSystem.instance.currentLeague)
 		{
-			_progressGO.SetActive(false);
-			_progressTextLabel.gameObject.SetActive(true);
-			_progressTextLabel.text = LocalizationStore.Get("Key_2173");
+			this._progressGO.SetActive(false);
+			this._progressTextLabel.gameObject.SetActive(true);
+			this._progressTextLabel.text = LocalizationStore.Get("Key_2173");
 		}
 		else if (league > RatingSystem.instance.currentLeague)
 		{
-			_progressGO.SetActive(false);
-			_progressTextLabel.gameObject.SetActive(true);
-			int num = RatingSystem.instance.MaxRatingInLeague(league - 1) - RatingSystem.instance.currentRating;
-			_progressTextLabel.text = string.Format(LocalizationStore.Get("Key_2172"), num);
+			this._progressGO.SetActive(false);
+			this._progressTextLabel.gameObject.SetActive(true);
+			int num = RatingSystem.instance.MaxRatingInLeague((int)league - (int)RatingSystem.RatingLeague.Steel) - RatingSystem.instance.currentRating;
+			this._progressTextLabel.text = string.Format(LocalizationStore.Get("Key_2172"), num);
 		}
-		else if (league == (RatingSystem.RatingLeague)RiliExtensions.EnumNumbers<RatingSystem.RatingLeague>().Max())
+		else if ((int)league != RiliExtensions.EnumNumbers<RatingSystem.RatingLeague>().Max())
 		{
-			_progressGO.SetActive(false);
-			_progressTextLabel.gameObject.SetActive(true);
-			_progressTextLabel.text = LocalizationStore.Get("Key_2249");
+			this._progressGO.SetActive(true);
+			this._progressTextLabel.gameObject.SetActive(false);
+			int num1 = RatingSystem.instance.MaxRatingInLeague(league);
+			this._lblScore.text = string.Format("{0}/{1}", RatingSystem.instance.currentRating, num1);
+			this._sprScoreBar.fillAmount = (float)RatingSystem.instance.currentRating / (float)num1;
 		}
 		else
 		{
-			_progressGO.SetActive(true);
-			_progressTextLabel.gameObject.SetActive(false);
-			int num2 = RatingSystem.instance.MaxRatingInLeague(league);
-			_lblScore.text = string.Format("{0}/{1}", RatingSystem.instance.currentRating, num2);
-			_sprScoreBar.fillAmount = (float)RatingSystem.instance.currentRating / (float)num2;
+			this._progressGO.SetActive(false);
+			this._progressTextLabel.gameObject.SetActive(true);
+			this._progressTextLabel.text = LocalizationStore.Get("Key_2249");
 		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003CReposition_003Em__397(ProfileCup c)
-	{
-		return c.League == RatingSystem.instance.currentLeague;
 	}
 }

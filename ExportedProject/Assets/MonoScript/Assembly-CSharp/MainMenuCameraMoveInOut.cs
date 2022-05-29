@@ -1,76 +1,91 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Camera))]
 internal sealed class MainMenuCameraMoveInOut : MonoBehaviour
 {
-	public abstract class State
-	{
-	}
-
-	public sealed class IdleState : State
-	{
-	}
-
-	public sealed class ActiveState : State
-	{
-	}
-
-	public sealed class TransitionState : State
-	{
-	}
-
 	private Vector3 _initialPosition;
 
 	private Quaternion _initialRotation;
 
-	private State _currentState = new IdleState();
+	private MainMenuCameraMoveInOut.State _currentState = new MainMenuCameraMoveInOut.IdleState();
 
-	internal State CurrentState
+	internal MainMenuCameraMoveInOut.State CurrentState
 	{
 		get
 		{
-			return _currentState;
+			return this._currentState;
+		}
+	}
+
+	public MainMenuCameraMoveInOut()
+	{
+	}
+
+	private void Awake()
+	{
+		this._initialPosition = base.gameObject.transform.position;
+		this._initialRotation = base.gameObject.transform.rotation;
+	}
+
+	public void HandleBackRequest()
+	{
+		if (!(this.CurrentState is MainMenuCameraMoveInOut.ActiveState))
+		{
+			Debug.LogWarning(string.Format("Ignoring click while in {0} state.", this._currentState));
+		}
+		else
+		{
+			this._currentState = new MainMenuCameraMoveInOut.TransitionState();
+			this._currentState = new MainMenuCameraMoveInOut.IdleState();
 		}
 	}
 
 	public void HandleClickTrigger()
 	{
-		if (CurrentState is IdleState)
+		if (!(this.CurrentState is MainMenuCameraMoveInOut.IdleState))
 		{
-			_currentState = new TransitionState();
-			_currentState = new ActiveState();
+			Debug.Log(string.Format("Ignoring click while in {0} state.", this._currentState));
 		}
 		else
 		{
-			string message = string.Format("Ignoring click while in {0} state.", _currentState);
-			Debug.Log(message);
-		}
-	}
-
-	public void HandleBackRequest()
-	{
-		if (CurrentState is ActiveState)
-		{
-			_currentState = new TransitionState();
-			_currentState = new IdleState();
-		}
-		else
-		{
-			string message = string.Format("Ignoring click while in {0} state.", _currentState);
-			Debug.LogWarning(message);
+			this._currentState = new MainMenuCameraMoveInOut.TransitionState();
+			this._currentState = new MainMenuCameraMoveInOut.ActiveState();
 		}
 	}
 
 	public void Reset()
 	{
-		base.gameObject.transform.position = _initialPosition;
-		base.gameObject.transform.rotation = _initialRotation;
-		_currentState = new IdleState();
+		base.gameObject.transform.position = this._initialPosition;
+		base.gameObject.transform.rotation = this._initialRotation;
+		this._currentState = new MainMenuCameraMoveInOut.IdleState();
 	}
 
-	private void Awake()
+	public sealed class ActiveState : MainMenuCameraMoveInOut.State
 	{
-		_initialPosition = base.gameObject.transform.position;
-		_initialRotation = base.gameObject.transform.rotation;
+		public ActiveState()
+		{
+		}
+	}
+
+	public sealed class IdleState : MainMenuCameraMoveInOut.State
+	{
+		public IdleState()
+		{
+		}
+	}
+
+	public abstract class State
+	{
+		protected State()
+		{
+		}
+	}
+
+	public sealed class TransitionState : MainMenuCameraMoveInOut.State
+	{
+		public TransitionState()
+		{
+		}
 	}
 }

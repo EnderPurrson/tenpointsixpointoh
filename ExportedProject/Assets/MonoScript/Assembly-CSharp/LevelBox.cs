@@ -6,17 +6,6 @@ using UnityEngine;
 
 public class LevelBox
 {
-	[CompilerGenerated]
-	private sealed class _003CGetLevelBySceneName_003Ec__AnonStorey2C2
-	{
-		internal string sceneName;
-
-		internal bool _003C_003Em__36F(CampaignLevel level)
-		{
-			return level.sceneName == sceneName;
-		}
-	}
-
 	public static List<LevelBox> campaignBoxes;
 
 	public List<CampaignLevel> levels = new List<CampaignLevel>(6);
@@ -35,24 +24,26 @@ public class LevelBox
 
 	public static Dictionary<string, string> weaponsFromBosses;
 
-	[CompilerGenerated]
-	private static Func<LevelBox, IEnumerable<CampaignLevel>> _003C_003Ef__am_0024cacheA;
-
-	public int CompletionExperienceAward { get; set; }
+	public int CompletionExperienceAward
+	{
+		get;
+		set;
+	}
 
 	static LevelBox()
 	{
-		campaignBoxes = new List<LevelBox>(4);
-		weaponsFromBosses = new Dictionary<string, string>(20);
-		InitializeWeaponsFromBosses(weaponsFromBosses);
-		LevelBox item = new LevelBox
+		LevelBox.campaignBoxes = new List<LevelBox>(4);
+		LevelBox.weaponsFromBosses = new Dictionary<string, string>(20);
+		LevelBox.InitializeWeaponsFromBosses(LevelBox.weaponsFromBosses);
+		LevelBox levelBox = new LevelBox()
 		{
-			starsToOpen = int.MaxValue,
+			starsToOpen = 2147483647,
 			PreviewNAme = "Box_coming_soon",
 			name = "coming soon",
 			CompletionExperienceAward = 0
 		};
-		LevelBox levelBox = new LevelBox
+		LevelBox levelBox1 = levelBox;
+		levelBox = new LevelBox()
 		{
 			starsToOpen = 30,
 			name = "Crossed",
@@ -62,12 +53,13 @@ public class LevelBox
 			gems = 15,
 			coins = 20
 		};
-		levelBox.levels.Add(new CampaignLevel("Swamp_campaign3", "Key_0471"));
-		levelBox.levels.Add(new CampaignLevel("Castle_campaign3", "Key_1317"));
-		levelBox.levels.Add(new CampaignLevel("Space_campaign3", "Key_0519"));
-		levelBox.levels.Add(new CampaignLevel("Parkour", "Key_1318"));
-		levelBox.levels.Add(new CampaignLevel("Code_campaign3", "Key_0845"));
-		LevelBox levelBox2 = new LevelBox
+		LevelBox levelBox2 = levelBox;
+		levelBox2.levels.Add(new CampaignLevel("Swamp_campaign3", "Key_0471", "in"));
+		levelBox2.levels.Add(new CampaignLevel("Castle_campaign3", "Key_1317", "in"));
+		levelBox2.levels.Add(new CampaignLevel("Space_campaign3", "Key_0519", "in"));
+		levelBox2.levels.Add(new CampaignLevel("Parkour", "Key_1318", "in"));
+		levelBox2.levels.Add(new CampaignLevel("Code_campaign3", "Key_0845", "in"));
+		levelBox = new LevelBox()
 		{
 			starsToOpen = 20,
 			name = "minecraft",
@@ -77,49 +69,56 @@ public class LevelBox
 			gems = 10,
 			coins = 15
 		};
-		CampaignLevel item2 = new CampaignLevel
+		LevelBox levelBox3 = levelBox;
+		CampaignLevel campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Utopia",
 			localizeKeyForLevelMap = "Key_0841",
 			predlog = "in"
 		};
-		CampaignLevel item3 = new CampaignLevel
+		CampaignLevel campaignLevel1 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Maze",
 			localizeKeyForLevelMap = "Key_0842",
 			predlog = "in"
 		};
-		CampaignLevel item4 = new CampaignLevel
+		CampaignLevel campaignLevel2 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Sky_islands",
 			localizeKeyForLevelMap = "Key_0843",
 			predlog = "on"
 		};
-		CampaignLevel item5 = new CampaignLevel
+		CampaignLevel campaignLevel3 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Winter",
 			localizeKeyForLevelMap = "Key_0844",
 			predlog = "on"
 		};
-		CampaignLevel item6 = new CampaignLevel
+		CampaignLevel campaignLevel4 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Castle",
 			localizeKeyForLevelMap = "Key_0845",
 			predlog = "in"
 		};
-		CampaignLevel item7 = new CampaignLevel
+		CampaignLevel campaignLevel5 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Gluk_2",
 			localizeKeyForLevelMap = "Key_0846",
 			predlog = "in"
 		};
-		levelBox2.levels.Add(item2);
-		levelBox2.levels.Add(item3);
-		levelBox2.levels.Add(item4);
-		levelBox2.levels.Add(item5);
-		levelBox2.levels.Add(item6);
-		levelBox2.levels.Add(item7);
-		LevelBox levelBox3 = new LevelBox
+		CampaignLevel campaignLevel6 = campaignLevel;
+		levelBox3.levels.Add(campaignLevel1);
+		levelBox3.levels.Add(campaignLevel2);
+		levelBox3.levels.Add(campaignLevel3);
+		levelBox3.levels.Add(campaignLevel4);
+		levelBox3.levels.Add(campaignLevel5);
+		levelBox3.levels.Add(campaignLevel6);
+		levelBox = new LevelBox()
 		{
 			starsToOpen = 0,
 			name = "Real",
@@ -129,94 +128,102 @@ public class LevelBox
 			gems = 5,
 			coins = 15
 		};
-		CampaignLevel item8 = new CampaignLevel
+		LevelBox levelBox4 = levelBox;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Farm",
 			localizeKeyForLevelMap = "Key_0832",
 			predlog = "at"
 		};
-		CampaignLevel item9 = new CampaignLevel
+		CampaignLevel campaignLevel7 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Cementery",
 			localizeKeyForLevelMap = "Key_0833",
 			predlog = "in"
 		};
-		CampaignLevel item10 = new CampaignLevel
+		CampaignLevel campaignLevel8 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "City",
 			localizeKeyForLevelMap = "Key_0834",
 			predlog = "in"
 		};
-		CampaignLevel item11 = new CampaignLevel
+		CampaignLevel campaignLevel9 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Hospital",
 			localizeKeyForLevelMap = "Key_0835",
 			predlog = "in"
 		};
-		CampaignLevel item12 = new CampaignLevel
+		CampaignLevel campaignLevel10 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Bridge",
 			localizeKeyForLevelMap = "Key_0836",
 			predlog = "on"
 		};
-		CampaignLevel item13 = new CampaignLevel
+		CampaignLevel campaignLevel11 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Jail",
 			localizeKeyForLevelMap = "Key_0837",
 			predlog = "at"
 		};
-		CampaignLevel item14 = new CampaignLevel
+		CampaignLevel campaignLevel12 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Slender",
 			localizeKeyForLevelMap = "Key_0838",
 			predlog = "in"
 		};
-		CampaignLevel item15 = new CampaignLevel
+		CampaignLevel campaignLevel13 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "Area52",
 			localizeKeyForLevelMap = "Key_0839",
 			predlog = "at"
 		};
-		CampaignLevel item16 = new CampaignLevel
+		CampaignLevel campaignLevel14 = campaignLevel;
+		campaignLevel = new CampaignLevel()
 		{
 			sceneName = "School",
 			localizeKeyForLevelMap = "Key_0840",
 			predlog = "in"
 		};
-		levelBox3.levels.Add(item8);
-		levelBox3.levels.Add(item9);
-		levelBox3.levels.Add(item10);
-		levelBox3.levels.Add(item11);
-		levelBox3.levels.Add(item12);
-		levelBox3.levels.Add(item13);
-		levelBox3.levels.Add(item14);
-		levelBox3.levels.Add(item15);
-		levelBox3.levels.Add(item16);
-		campaignBoxes.Add(levelBox3);
-		campaignBoxes.Add(levelBox2);
-		campaignBoxes.Add(levelBox);
-		campaignBoxes.Add(item);
+		CampaignLevel campaignLevel15 = campaignLevel;
+		levelBox4.levels.Add(campaignLevel7);
+		levelBox4.levels.Add(campaignLevel8);
+		levelBox4.levels.Add(campaignLevel9);
+		levelBox4.levels.Add(campaignLevel10);
+		levelBox4.levels.Add(campaignLevel11);
+		levelBox4.levels.Add(campaignLevel12);
+		levelBox4.levels.Add(campaignLevel13);
+		levelBox4.levels.Add(campaignLevel14);
+		levelBox4.levels.Add(campaignLevel15);
+		LevelBox.campaignBoxes.Add(levelBox4);
+		LevelBox.campaignBoxes.Add(levelBox3);
+		LevelBox.campaignBoxes.Add(levelBox2);
+		LevelBox.campaignBoxes.Add(levelBox1);
+	}
+
+	public LevelBox()
+	{
 	}
 
 	public static CampaignLevel GetLevelBySceneName(string sceneName)
 	{
-		//Discarded unreachable code: IL_004b, IL_0073
-		_003CGetLevelBySceneName_003Ec__AnonStorey2C2 _003CGetLevelBySceneName_003Ec__AnonStorey2C = new _003CGetLevelBySceneName_003Ec__AnonStorey2C2();
-		_003CGetLevelBySceneName_003Ec__AnonStorey2C.sceneName = sceneName;
+		CampaignLevel item;
 		try
 		{
-			List<LevelBox> source = campaignBoxes;
-			if (_003C_003Ef__am_0024cacheA == null)
-			{
-				_003C_003Ef__am_0024cacheA = _003CGetLevelBySceneName_003Em__36E;
-			}
-			return source.SelectMany(_003C_003Ef__am_0024cacheA).FirstOrDefault(_003CGetLevelBySceneName_003Ec__AnonStorey2C._003C_003Em__36F);
+			item = LevelBox.campaignBoxes.SelectMany<LevelBox, CampaignLevel>((LevelBox levelBox) => levelBox.levels).FirstOrDefault<CampaignLevel>((CampaignLevel level) => level.sceneName == sceneName);
 		}
 		catch (Exception exception)
 		{
 			Debug.LogException(exception);
-			return campaignBoxes[0].levels[0];
+			item = LevelBox.campaignBoxes[0].levels[0];
 		}
+		return item;
 	}
 
 	private static void InitializeWeaponsFromBosses(Dictionary<string, string> weaponsFromBosses)
@@ -233,11 +240,5 @@ public class LevelBox
 		weaponsFromBosses.Add("Maze", WeaponManager.SimpleFlamethrower_WN);
 		weaponsFromBosses.Add("Sky_islands", WeaponManager.Rocketnitza_WN);
 		weaponsFromBosses.Add("Code_campaign3", WeaponManager.BugGunWN);
-	}
-
-	[CompilerGenerated]
-	private static IEnumerable<CampaignLevel> _003CGetLevelBySceneName_003Em__36E(LevelBox levelBox)
-	{
-		return levelBox.levels;
 	}
 }

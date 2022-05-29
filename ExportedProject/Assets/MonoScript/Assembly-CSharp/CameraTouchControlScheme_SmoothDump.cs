@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class CameraTouchControlScheme_SmoothDump : CameraTouchControlScheme
@@ -34,117 +35,134 @@ public sealed class CameraTouchControlScheme_SmoothDump : CameraTouchControlSche
 
 	private Vector2? _targetPitchYaw;
 
+	public CameraTouchControlScheme_SmoothDump()
+	{
+	}
+
+	public override void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
+	{
+		if (!this._isTouchInputValid)
+		{
+			this._followPitchYaw = this._targetPitchYaw;
+			this._followPitchYawVelocity = Vector2.zero;
+			this._targetPitchYaw = null;
+		}
+		else
+		{
+			if (!this._followPitchYaw.HasValue)
+			{
+				this._originalRotationPitch = pitchTransform.localRotation;
+				this._originalRotationYaw = yawTransform.rotation;
+				this._followPitchYaw = new Vector2?(Vector2.zero);
+				this._targetPitchYaw = new Vector2?(Vector2.zero);
+			}
+			Vector2 value = this._followPitchYaw.Value;
+			Vector2 vector2 = this._targetPitchYaw.Value;
+			if (vector2.x > 180f)
+			{
+				vector2.x -= 360f;
+				value.x -= 360f;
+			}
+			if (vector2.y > 180f)
+			{
+				vector2.y -= 360f;
+				value.y -= 360f;
+			}
+			if (vector2.x < -180f)
+			{
+				vector2.x += 360f;
+				value.x += 360f;
+			}
+			if (vector2.y < -180f)
+			{
+				vector2.y += 360f;
+				value.y += 360f;
+			}
+			vector2.x = vector2.x + deltaPosition.y * sensitivity * this.senseModifier * this.senseModifierByAxis.y;
+			vector2.y = vector2.y + deltaPosition.x * sensitivity * this.senseModifier * this.senseModifierByAxis.x;
+			vector2.x = Mathf.Clamp(vector2.x, -65f, 80f);
+			value.x = Mathf.SmoothDamp(value.x, vector2.x, ref this._followPitchYawVelocity.x, this.dampingTime);
+			value.y = Mathf.SmoothDamp(value.y, vector2.y, ref this._followPitchYawVelocity.y, this.dampingTime);
+			this._followPitchYaw = new Vector2?(value);
+			this._targetPitchYaw = new Vector2?(vector2);
+		}
+		if (this._followPitchYaw.HasValue)
+		{
+			Quaternion quaternion = this._originalRotationYaw;
+			Vector2 value1 = this._followPitchYaw.Value;
+			yawTransform.rotation = quaternion * Quaternion.Euler(0f, value1.y, 0f);
+			Transform transforms = pitchTransform;
+			Quaternion quaternion1 = this._originalRotationPitch;
+			Vector2 vector21 = this._followPitchYaw.Value;
+			transforms.localRotation = quaternion1 * Quaternion.Euler(vector21.x * (!invert ? -1f : 1f), 0f, 0f);
+		}
+		if (!this._isTouchInputValid)
+		{
+			this._followPitchYaw = null;
+		}
+	}
+
 	public override void OnPress(bool isDown)
 	{
-		if ((isDown && _touchId == -100) || (!isDown && _touchId != -100))
+		if (isDown && this._touchId == -100 || !isDown && this._touchId != -100)
 		{
-			_grabTouches = isDown;
-			_touchId = ((!isDown) ? (-100) : UICamera.currentTouchID);
-			_firstTouchPosition = UICamera.currentTouch.pos;
-			_previousTouchPosition = _firstTouchPosition;
-			_currentTouchPosition = _firstTouchPosition;
-			_isTouchMoving = false;
+			this._grabTouches = isDown;
+			this._touchId = (!isDown ? -100 : UICamera.currentTouchID);
+			this._firstTouchPosition = UICamera.currentTouch.pos;
+			this._previousTouchPosition = this._firstTouchPosition;
+			this._currentTouchPosition = this._firstTouchPosition;
+			this._isTouchMoving = false;
 		}
 	}
 
 	public override void OnUpdate()
 	{
-		_isTouchInputValid = false;
-		Touch? touch = null;
-		if (_grabTouches)
+		this._isTouchInputValid = false;
+		Touch? nullable = null;
+		if (this._grabTouches)
 		{
-			Touch[] touches = Input.touches;
-			for (int i = 0; i < touches.Length; i++)
+			Touch[] touchArray = Input.touches;
+			int num = 0;
+			while (num < (int)touchArray.Length)
 			{
-				Touch value = touches[i];
-				if (value.fingerId == _touchId && (value.phase == TouchPhase.Moved || value.phase == TouchPhase.Stationary))
+				Touch touch = touchArray[num];
+				if (touch.fingerId != this._touchId || touch.phase != TouchPhase.Moved && touch.phase != TouchPhase.Stationary)
 				{
-					_isTouchInputValid = true;
-					_previousTouchPosition = _currentTouchPosition;
-					_currentTouchPosition = value.position;
-					touch = value;
+					num++;
+				}
+				else
+				{
+					this._isTouchInputValid = true;
+					this._previousTouchPosition = this._currentTouchPosition;
+					this._currentTouchPosition = touch.position;
+					nullable = new Touch?(touch);
 					break;
 				}
 			}
 		}
-		_deltaPosition = Vector2.zero;
-		if (_isTouchInputValid && (_isTouchMoving || !((_currentTouchPosition - _firstTouchPosition).sqrMagnitude < startMovingThresholdSq)))
+		this._deltaPosition = Vector2.zero;
+		if (this._isTouchInputValid)
 		{
-			if (!_isTouchMoving)
+			if (this._isTouchMoving || (this._currentTouchPosition - this._firstTouchPosition).sqrMagnitude >= this.startMovingThresholdSq)
 			{
-				_isTouchMoving = true;
-			}
-			else
-			{
-				_deltaPosition = _currentTouchPosition - _previousTouchPosition;
+				if (this._isTouchMoving)
+				{
+					this._deltaPosition = this._currentTouchPosition - this._previousTouchPosition;
+				}
+				else
+				{
+					this._isTouchMoving = true;
+				}
 			}
 		}
 	}
 
 	public override void Reset()
 	{
-		_deltaPosition = Vector2.zero;
-		_grabTouches = false;
-		_touchId = -100;
-		_isTouchInputValid = false;
-		_isTouchMoving = false;
-	}
-
-	public override void ApplyDeltaTo(Vector2 deltaPosition, Transform yawTransform, Transform pitchTransform, float sensitivity, bool invert)
-	{
-		if (_isTouchInputValid)
-		{
-			if (!_followPitchYaw.HasValue)
-			{
-				_originalRotationPitch = pitchTransform.localRotation;
-				_originalRotationYaw = yawTransform.rotation;
-				_followPitchYaw = Vector2.zero;
-				_targetPitchYaw = Vector2.zero;
-			}
-			Vector2 value = _followPitchYaw.Value;
-			Vector2 value2 = _targetPitchYaw.Value;
-			if (value2.x > 180f)
-			{
-				value2.x -= 360f;
-				value.x -= 360f;
-			}
-			if (value2.y > 180f)
-			{
-				value2.y -= 360f;
-				value.y -= 360f;
-			}
-			if (value2.x < -180f)
-			{
-				value2.x += 360f;
-				value.x += 360f;
-			}
-			if (value2.y < -180f)
-			{
-				value2.y += 360f;
-				value.y += 360f;
-			}
-			value2.x += deltaPosition.y * sensitivity * senseModifier * senseModifierByAxis.y;
-			value2.y += deltaPosition.x * sensitivity * senseModifier * senseModifierByAxis.x;
-			value2.x = Mathf.Clamp(value2.x, -65f, 80f);
-			value.x = Mathf.SmoothDamp(value.x, value2.x, ref _followPitchYawVelocity.x, dampingTime);
-			value.y = Mathf.SmoothDamp(value.y, value2.y, ref _followPitchYawVelocity.y, dampingTime);
-			_followPitchYaw = value;
-			_targetPitchYaw = value2;
-		}
-		else
-		{
-			_followPitchYaw = _targetPitchYaw;
-			_followPitchYawVelocity = Vector2.zero;
-			_targetPitchYaw = null;
-		}
-		if (_followPitchYaw.HasValue)
-		{
-			yawTransform.rotation = _originalRotationYaw * Quaternion.Euler(0f, _followPitchYaw.Value.y, 0f);
-			pitchTransform.localRotation = _originalRotationPitch * Quaternion.Euler(_followPitchYaw.Value.x * ((!invert) ? (-1f) : 1f), 0f, 0f);
-		}
-		if (!_isTouchInputValid)
-		{
-			_followPitchYaw = null;
-		}
+		this._deltaPosition = Vector2.zero;
+		this._grabTouches = false;
+		this._touchId = -100;
+		this._isTouchInputValid = false;
+		this._isTouchMoving = false;
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(UISprite))]
@@ -14,34 +15,38 @@ public class RilisoftAlphaToggle : MonoBehaviour
 
 	private UISprite _toggledSprite;
 
-	private void Start()
+	public RilisoftAlphaToggle()
 	{
-		_toggle = GetComponent<UIToggle>();
-		_toggledSprite = _toggle.GetComponent<UISprite>();
-		if (_toggle != null && _toggledSprite != null)
-		{
-			OnAlphaChange();
-			EventDelegate.Add(_toggle.onChange, OnAlphaChange);
-		}
 	}
 
 	public void OnAlphaChange()
 	{
-		if (_toggle.value)
+		if (!this._toggle.@value)
 		{
-			_toggledSprite.alpha = alphaOnState;
+			this._toggledSprite.alpha = this.alphaOffState;
 		}
 		else
 		{
-			_toggledSprite.alpha = alphaOffState;
+			this._toggledSprite.alpha = this.alphaOnState;
 		}
 	}
 
 	private void OnDestroy()
 	{
-		if (_toggle != null)
+		if (this._toggle != null)
 		{
-			EventDelegate.Remove(_toggle.onChange, OnAlphaChange);
+			EventDelegate.Remove(this._toggle.onChange, new EventDelegate.Callback(this.OnAlphaChange));
+		}
+	}
+
+	private void Start()
+	{
+		this._toggle = base.GetComponent<UIToggle>();
+		this._toggledSprite = this._toggle.GetComponent<UISprite>();
+		if (this._toggle != null && this._toggledSprite != null)
+		{
+			this.OnAlphaChange();
+			EventDelegate.Add(this._toggle.onChange, new EventDelegate.Callback(this.OnAlphaChange));
 		}
 	}
 }

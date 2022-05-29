@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class StarReview : MonoBehaviour
@@ -11,28 +12,32 @@ public class StarReview : MonoBehaviour
 
 	public GameObject objActiveStar;
 
-	public void SetActiveStar(bool val)
+	public StarReview()
 	{
-		if ((bool)objActiveStar)
-		{
-			objActiveStar.SetActive(val);
-		}
-	}
-
-	private void OnPress(bool isDown)
-	{
-		if (isDown)
-		{
-			ReviewHUDWindow.Instance.SelectStar(this);
-		}
-		else
-		{
-			ReviewHUDWindow.Instance.SelectStar(null);
-		}
 	}
 
 	private void OnClick()
 	{
 		ReviewHUDWindow.Instance.OnClickStarRating();
+	}
+
+	private void OnPress(bool isDown)
+	{
+		if (!isDown)
+		{
+			ReviewHUDWindow.Instance.SelectStar(null);
+		}
+		else
+		{
+			ReviewHUDWindow.Instance.SelectStar(this);
+		}
+	}
+
+	public void SetActiveStar(bool val)
+	{
+		if (this.objActiveStar)
+		{
+			this.objActiveStar.SetActive(val);
+		}
 	}
 }

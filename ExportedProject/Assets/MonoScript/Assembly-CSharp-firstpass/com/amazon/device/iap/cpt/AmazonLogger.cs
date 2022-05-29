@@ -1,3 +1,5 @@
+using System;
+
 namespace com.amazon.device.iap.cpt
 {
 	public class AmazonLogger
@@ -11,12 +13,12 @@ namespace com.amazon.device.iap.cpt
 
 		public void Debug(string msg)
 		{
-			AmazonLogging.Log(AmazonLogging.AmazonLoggingLevel.Verbose, tag, msg);
+			AmazonLogging.Log(AmazonLogging.AmazonLoggingLevel.Verbose, this.tag, msg);
 		}
 
 		public string getTag()
 		{
-			return tag;
+			return this.tag;
 		}
 	}
 }

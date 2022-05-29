@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -10,22 +11,26 @@ public class AnimatedAlpha : MonoBehaviour
 
 	private UIPanel mPanel;
 
-	private void OnEnable()
+	public AnimatedAlpha()
 	{
-		mWidget = GetComponent<UIWidget>();
-		mPanel = GetComponent<UIPanel>();
-		LateUpdate();
 	}
 
 	private void LateUpdate()
 	{
-		if (mWidget != null)
+		if (this.mWidget != null)
 		{
-			mWidget.alpha = alpha;
+			this.mWidget.alpha = this.alpha;
 		}
-		if (mPanel != null)
+		if (this.mPanel != null)
 		{
-			mPanel.alpha = alpha;
+			this.mPanel.alpha = this.alpha;
 		}
+	}
+
+	private void OnEnable()
+	{
+		this.mWidget = base.GetComponent<UIWidget>();
+		this.mPanel = base.GetComponent<UIPanel>();
+		this.LateUpdate();
 	}
 }

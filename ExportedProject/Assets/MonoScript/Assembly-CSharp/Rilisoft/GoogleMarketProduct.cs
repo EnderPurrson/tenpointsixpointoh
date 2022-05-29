@@ -1,38 +1,24 @@
+using System;
+
 namespace Rilisoft
 {
 	internal sealed class GoogleMarketProduct : IMarketProduct
 	{
 		private readonly GoogleSkuInfo _marketProduct;
 
-		public string Id
-		{
-			get
-			{
-				return _marketProduct.productId;
-			}
-		}
-
-		public string Title
-		{
-			get
-			{
-				return _marketProduct.title;
-			}
-		}
-
 		public string Description
 		{
 			get
 			{
-				return _marketProduct.description;
+				return this._marketProduct.description;
 			}
 		}
 
-		public string Price
+		public string Id
 		{
 			get
 			{
-				return _marketProduct.price;
+				return this._marketProduct.productId;
 			}
 		}
 
@@ -40,13 +26,29 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _marketProduct;
+				return this._marketProduct;
+			}
+		}
+
+		public string Price
+		{
+			get
+			{
+				return this._marketProduct.price;
+			}
+		}
+
+		public string Title
+		{
+			get
+			{
+				return this._marketProduct.title;
 			}
 		}
 
 		public GoogleMarketProduct(GoogleSkuInfo googleSkuInfo)
 		{
-			_marketProduct = googleSkuInfo;
+			this._marketProduct = googleSkuInfo;
 		}
 
 		public override bool Equals(object obj)
@@ -56,18 +58,18 @@ namespace Rilisoft
 			{
 				return false;
 			}
-			GoogleSkuInfo marketProduct = googleMarketProduct._marketProduct;
-			return _marketProduct.Equals(marketProduct);
+			GoogleSkuInfo googleSkuInfo = googleMarketProduct._marketProduct;
+			return this._marketProduct.Equals(googleSkuInfo);
 		}
 
 		public override int GetHashCode()
 		{
-			return _marketProduct.GetHashCode();
+			return this._marketProduct.GetHashCode();
 		}
 
 		public override string ToString()
 		{
-			return _marketProduct.ToString();
+			return this._marketProduct.ToString();
 		}
 	}
 }

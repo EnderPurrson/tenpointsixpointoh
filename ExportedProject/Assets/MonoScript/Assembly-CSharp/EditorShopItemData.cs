@@ -1,3 +1,5 @@
+using System;
+
 public class EditorShopItemData
 {
 	public string localizeKey;
@@ -13,4 +15,8 @@ public class EditorShopItemData
 	public bool isNew;
 
 	public int discount;
+
+	public EditorShopItemData()
+	{
+	}
 }

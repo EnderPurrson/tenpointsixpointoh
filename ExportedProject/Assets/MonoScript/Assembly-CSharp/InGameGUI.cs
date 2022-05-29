@@ -1,133 +1,19 @@
+using Holoville.HOTween;
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Holoville.HOTween;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class InGameGUI : MonoBehaviour
 {
-	public delegate float GetFloatVAlue();
-
-	public delegate string GetString();
-
-	public delegate int GetIntVAlue();
-
-	[CompilerGenerated]
-	private sealed class _003CRunCircularSpriteOn_003Ec__AnonStorey279
-	{
-		internal UITexture sprite;
-
-		internal Action onComplete;
-
-		internal void _003C_003Em__17E()
-		{
-			sprite.fillAmount = 0f;
-			if (onComplete != null)
-			{
-				onComplete();
-			}
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A
-	{
-		internal int priceAmount;
-
-		internal string priceCurrency;
-
-		internal string parameterValue;
-
-		internal void _003C_003Em__180()
-		{
-			if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
-			{
-				WeaponManager.sharedManager.myPlayerMoveC.GrenadeCount++;
-			}
-			FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, GearManager.Like, 1, true);
-			FlurryPluginWrapper.LogGearPurchases(GearManager.Like, 1, true);
-			AnalyticsStuff.LogSales(GearManager.Like, "Gear");
-			AnalyticsFacade.InAppPurchase(GearManager.Like, "Gear", 1, priceAmount, priceCurrency);
-			Dictionary<string, string> parameters = new Dictionary<string, string> { { "Succeeded", parameterValue } };
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-			FlurryPluginWrapper.LogFastPurchase(parameterValue);
-		}
-
-		internal void _003C_003Em__181()
-		{
-			JoystickController.leftJoystick.Reset();
-			Dictionary<string, string> parameters = new Dictionary<string, string> { { "Failed", parameterValue } };
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-		}
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CClickPotionButton_003Ec__AnonStorey27B
-	{
-		internal string myStaragerKey;
-
-		internal UIButton myButton;
-
-		internal ElexirInGameButtonController myController;
-
-		internal UIButton myButton2;
-
-		internal ElexirInGameButtonController myController2;
-	}
-
-	[CompilerGenerated]
-	private sealed class _003CClickPotionButton_003Ec__AnonStorey27C
-	{
-		internal int priceAmount;
-
-		internal string priceCurrency;
-
-		internal string parameterValue;
-
-		internal _003CClickPotionButton_003Ec__AnonStorey27B _003C_003Ef__ref_0024635;
-
-		internal void _003C_003Em__182()
-		{
-			Storager.setInt(_003C_003Ef__ref_0024635.myStaragerKey, Storager.getInt(_003C_003Ef__ref_0024635.myStaragerKey, false) + 1, false);
-			_003C_003Ef__ref_0024635.myButton.normalSprite = "game_clear";
-			_003C_003Ef__ref_0024635.myButton.pressedSprite = "game_clear_n";
-			_003C_003Ef__ref_0024635.myController.myLabelCount.gameObject.SetActive(true);
-			_003C_003Ef__ref_0024635.myController.plusSprite.SetActive(false);
-			_003C_003Ef__ref_0024635.myController.priceLabel.SetActive(false);
-			_003C_003Ef__ref_0024635.myController.myLabelCount.text = Storager.getInt(_003C_003Ef__ref_0024635.myStaragerKey, false).ToString();
-			_003C_003Ef__ref_0024635.myButton2.normalSprite = "game_clear";
-			_003C_003Ef__ref_0024635.myButton2.pressedSprite = "game_clear_n";
-			_003C_003Ef__ref_0024635.myController2.myLabelCount.gameObject.SetActive(true);
-			_003C_003Ef__ref_0024635.myController2.plusSprite.SetActive(false);
-			_003C_003Ef__ref_0024635.myController2.priceLabel.SetActive(false);
-			_003C_003Ef__ref_0024635.myController2.myLabelCount.text = Storager.getInt(_003C_003Ef__ref_0024635.myStaragerKey, false).ToString();
-			if (_003C_003Ef__ref_0024635.myStaragerKey != null)
-			{
-				FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, GearManager.HolderQuantityForID(_003C_003Ef__ref_0024635.myStaragerKey), 1, true);
-				FlurryPluginWrapper.LogGearPurchases(GearManager.HolderQuantityForID(_003C_003Ef__ref_0024635.myStaragerKey), 1, true);
-				AnalyticsStuff.LogSales(GearManager.HolderQuantityForID(_003C_003Ef__ref_0024635.myStaragerKey), "Gear");
-				AnalyticsFacade.InAppPurchase(GearManager.HolderQuantityForID(_003C_003Ef__ref_0024635.myStaragerKey), "Gear", 1, priceAmount, priceCurrency);
-			}
-			Dictionary<string, string> parameters = new Dictionary<string, string> { { "Succeeded", parameterValue } };
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-			FlurryPluginWrapper.LogFastPurchase(parameterValue);
-		}
-
-		internal void _003C_003Em__183()
-		{
-			JoystickController.leftJoystick.Reset();
-			Dictionary<string, string> parameters = new Dictionary<string, string> { { "Failed", parameterValue } };
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-		}
-	}
-
 	private const string weaponCat = "WeaponCat_";
 
 	public UILabel Wave1_And_Counter;
@@ -326,15 +212,15 @@ public sealed class InGameGUI : MonoBehaviour
 
 	public GameObject bottomAnchor;
 
-	public GetFloatVAlue health;
+	public InGameGUI.GetFloatVAlue health;
 
-	public GetFloatVAlue armor;
+	public InGameGUI.GetFloatVAlue armor;
 
-	public GetIntVAlue armorType;
+	public InGameGUI.GetIntVAlue armorType;
 
-	public GetString killsToMaxKills;
+	public InGameGUI.GetString killsToMaxKills;
 
-	public GetString timeLeft;
+	public InGameGUI.GetString timeLeft;
 
 	public UIButton gearToogle;
 
@@ -552,21 +438,15 @@ public sealed class InGameGUI : MonoBehaviour
 
 	private bool mechInAnim;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cacheCC;
-
-	[CompilerGenerated]
-	private static Func<GameObject, UISprite> _003C_003Ef__am_0024cacheCD;
-
 	public RespawnWindow respawnWindow
 	{
 		get
 		{
-			if (_lazyRespWindow == null)
+			if (this._lazyRespWindow == null)
 			{
-				_lazyRespWindow = new LazyObject<RespawnWindow>(_respawnWindowPrefab.ResourcePath, SubpanelsContainer);
+				this._lazyRespWindow = new LazyObject<RespawnWindow>(this._respawnWindowPrefab.ResourcePath, this.SubpanelsContainer);
 			}
-			return _lazyRespWindow.Value;
+			return this._lazyRespWindow.Value;
 		}
 	}
 
@@ -574,192 +454,203 @@ public sealed class InGameGUI : MonoBehaviour
 	{
 		get
 		{
-			return _subpanelsContainer;
+			return this._subpanelsContainer;
 		}
 	}
 
-	public void ShowCircularIndicatorOnReload(float length)
+	public InGameGUI()
 	{
-		StopAllCircularIndicators();
-		reloadBar.SetActive(true);
-		reloadLabel.gameObject.SetActive(true);
-		Invoke("ReloadAmmo", length);
-		if (playerMoveC != null)
+	}
+
+	[DebuggerHidden]
+	public IEnumerator _DisableSwiping(float tm)
+	{
+		InGameGUI.u003c_DisableSwipingu003ec__Iterator8B variable = null;
+		return variable;
+	}
+
+	public void AddDamageTaken(float alpha)
+	{
+		this.curDamageTakenController++;
+		if (this.curDamageTakenController >= (int)this.damageTakenControllers.Length)
 		{
-			playerMoveC.isReloading = true;
+			this.curDamageTakenController = 0;
 		}
-		UITexture sprite = reloadCircularSprite;
-		if (_003C_003Ef__am_0024cacheCC == null)
+		this.damageTakenControllers[this.curDamageTakenController].reset(alpha);
+	}
+
+	private void AdjustToPlayerHands()
+	{
+		float single = (float)((!GlobalGameController.LeftHanded ? -1 : 1));
+		Vector3[] vector3Array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
+		if (vector3Array == null || (int)vector3Array.Length < 7)
 		{
-			_003C_003Ef__am_0024cacheCC = _003CShowCircularIndicatorOnReload_003Em__17D;
+			Defs.InitCoordsIphone();
+			Transform vector3 = this.zoomButton.transform;
+			float zoomButtonY = (float)Defs.ZoomButtonY;
+			Vector3 vector31 = this.zoomButton.transform.localPosition;
+			vector3.localPosition = new Vector3((float)Defs.ZoomButtonX * single, zoomButtonY, vector31.z);
+			Transform transforms = this.reloadButton.transform;
+			float reloadButtonY = (float)Defs.ReloadButtonY;
+			Vector3 vector32 = this.reloadButton.transform.localPosition;
+			transforms.localPosition = new Vector3((float)Defs.ReloadButtonX * single, reloadButtonY, vector32.z);
+			Transform transforms1 = this.jumpButton.transform;
+			float jumpButtonY = (float)Defs.JumpButtonY;
+			Vector3 vector33 = this.jumpButton.transform.localPosition;
+			transforms1.localPosition = new Vector3((float)Defs.JumpButtonX * single, jumpButtonY, vector33.z);
+			Transform transforms2 = this.fireButton.transform;
+			float fireButtonY = (float)Defs.FireButtonY;
+			Vector3 vector34 = this.fireButton.transform.localPosition;
+			transforms2.localPosition = new Vector3((float)Defs.FireButtonX * single, fireButtonY, vector34.z);
+			Transform transforms3 = this.joystick.transform;
+			float joyStickY = (float)Defs.JoyStickY;
+			Vector3 vector35 = this.joystick.transform.localPosition;
+			transforms3.localPosition = new Vector3((float)Defs.JoyStickX * single, joyStickY, vector35.z);
+			Transform transforms4 = this.grenadeButton.transform;
+			float grenadeY = (float)Defs.GrenadeY;
+			Vector3 vector36 = this.grenadeButton.transform.localPosition;
+			transforms4.localPosition = new Vector3((float)Defs.GrenadeX * single, grenadeY, vector36.z);
+			Transform transforms5 = this.fireButtonInJoystick.transform;
+			float fireButton2Y = (float)Defs.FireButton2Y;
+			Vector3 vector37 = this.fireButtonInJoystick.transform.localPosition;
+			transforms5.localPosition = new Vector3((float)Defs.FireButton2X * single, fireButton2Y, vector37.z);
 		}
-		RunCircularSpriteOn(sprite, length, _003C_003Ef__am_0024cacheCC);
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void ReloadAmmo()
-	{
-		reloadLabel.gameObject.SetActive(false);
-		reloadBar.SetActive(false);
-		WeaponManager.sharedManager.ReloadAmmo();
-	}
-
-	public void StartFireCircularIndicators(float length)
-	{
-		StopAllCircularIndicators();
-		RunCircularSpriteOn(fireCircularSprite, length);
-		RunCircularSpriteOn(fireAdditionalCrcualrSprite, length);
-	}
-
-	private void RunCircularSpriteOn(UITexture sprite, float length, Action onComplete = null)
-	{
-		_003CRunCircularSpriteOn_003Ec__AnonStorey279 _003CRunCircularSpriteOn_003Ec__AnonStorey = new _003CRunCircularSpriteOn_003Ec__AnonStorey279();
-		_003CRunCircularSpriteOn_003Ec__AnonStorey.sprite = sprite;
-		_003CRunCircularSpriteOn_003Ec__AnonStorey.onComplete = onComplete;
-		_003CRunCircularSpriteOn_003Ec__AnonStorey.sprite.fillAmount = 0f;
-		HOTween.To(_003CRunCircularSpriteOn_003Ec__AnonStorey.sprite, length, new TweenParms().Prop("fillAmount", 1f).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear)
-			.OnComplete(_003CRunCircularSpriteOn_003Ec__AnonStorey._003C_003Em__17E));
-	}
-
-	public void StopAllCircularIndicators()
-	{
-		CancelInvoke("ReloadAmmo");
-		if (playerMoveC != null)
+		else
 		{
-			playerMoveC.isReloading = false;
-		}
-		if (circularSprites == null)
-		{
-			Debug.LogWarning("Circular sprites is null!");
-			return;
-		}
-		UITexture[] array = circularSprites;
-		foreach (UITexture uITexture in array)
-		{
-			HOTween.Kill(uITexture);
-			uITexture.fillAmount = 0f;
-		}
-		reloadLabel.gameObject.SetActive(false);
-		reloadBar.SetActive(false);
-	}
-
-	public void PlayLowResourceBeep(int count)
-	{
-		StopPlayingLowResourceBeep();
-		_lowResourceBeepRoutine = PlayLowResourceBeepCoroutine(count);
-		StartCoroutine(_lowResourceBeepRoutine);
-	}
-
-	public void SetEnablePerfectLabel(bool enabled)
-	{
-		if (!(perfectLabels == null))
-		{
-			perfectLabels.gameObject.SetActive(enabled);
-		}
-	}
-
-	public void PlayLowResourceBeepIfNotPlaying(int count)
-	{
-		if (_lowResourceBeepRoutine == null)
-		{
-			PlayLowResourceBeep(count);
-		}
-	}
-
-	public void StopPlayingLowResourceBeep()
-	{
-		if (_lowResourceBeepRoutine != null)
-		{
-			StopCoroutine(_lowResourceBeepRoutine);
-			_lowResourceBeepRoutine = null;
-		}
-	}
-
-	private IEnumerator PlayLowResourceBeepCoroutine(int count)
-	{
-		for (int i = 0; i < count; i++)
-		{
-			if (Defs.isSoundFX)
+			for (int i = 0; i < (int)vector3Array.Length; i++)
 			{
-				NGUITools.PlaySound(lowResourceBeep);
+				vector3Array[i].x *= single;
 			}
-			yield return new WaitForSeconds(1f);
+			this.zoomButton.transform.localPosition = vector3Array[0];
+			this.reloadButton.transform.localPosition = vector3Array[1];
+			this.jumpButton.transform.localPosition = vector3Array[2];
+			this.fireButton.transform.localPosition = vector3Array[3];
+			this.joystick.transform.localPosition = vector3Array[4];
+			this.grenadeButton.transform.localPosition = vector3Array[5];
+			this.fireButtonInJoystick.transform.localPosition = vector3Array[6];
 		}
-		_lowResourceBeepRoutine = null;
+		UISprite[] array = (
+			from go in (IEnumerable<GameObject>)(new GameObject[] { this.zoomButton, this.reloadButton, this.jumpButton, this.fireButton, this.joystick, this.grenadeButton, this.fireButtonInJoystick })
+			select go.GetComponent<UISprite>()).ToArray<UISprite>();
+		object obj = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]"));
+		List<object> objs = obj as List<object>;
+		if (objs == null)
+		{
+			objs = new List<object>((int)array.Length);
+			UnityEngine.Debug.LogWarning(objs.GetType().FullName);
+		}
+		int num = Math.Min(objs.Count, (int)array.Length);
+		for (int j = 0; j != num; j++)
+		{
+			int num1 = Convert.ToInt32(objs[j]);
+			if (num1 > 0)
+			{
+				UISprite uISprite = array[j];
+				if (uISprite != null)
+				{
+					array[j].keepAspectRatio = UIWidget.AspectRatioSource.BasedOnWidth;
+					array[j].width = num1;
+					if (uISprite.gameObject == this.joystick)
+					{
+						UIJoystick component = uISprite.GetComponent<UIJoystick>();
+						if (component != null)
+						{
+							component.ActualRadius = component.radius / 144f * (float)num1;
+						}
+					}
+				}
+			}
+		}
 	}
 
-	private void HandleChatSettUpdated()
+	[DebuggerHidden]
+	private IEnumerator AnimateArmor()
 	{
-		isChatOn = Defs.IsChatOn;
+		InGameGUI.u003cAnimateArmoru003ec__Iterator8D variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AnimateHealth()
+	{
+		InGameGUI.u003cAnimateHealthu003ec__Iterator8C variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator AnimateMechHealth()
+	{
+		InGameGUI.u003cAnimateMechHealthu003ec__Iterator8E variable = null;
+		return variable;
 	}
 
 	private void Awake()
 	{
-		string callee = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", GetType().Name);
-		ScopeLogger scopeLogger = new ScopeLogger(callee, Defs.IsDeveloperBuild);
+		string str = string.Format(CultureInfo.InvariantCulture, "{0}.Awake()", new object[] { base.GetType().Name });
+		ScopeLogger scopeLogger = new ScopeLogger(str, Defs.IsDeveloperBuild);
 		try
 		{
-			sharedInGameGUI = this;
-			circularSprites = new UITexture[3] { reloadCircularSprite, fireCircularSprite, fireAdditionalCrcualrSprite };
-			changeWeaponScroll.GetComponent<UIPanel>().baseClipRegion = new Vector4(0f, 0f, (float)widthWeaponScrollPreview * 1.3f, (float)widthWeaponScrollPreview * 1.3f);
-			changeWeaponWrap.itemSize = widthWeaponScrollPreview;
-			HandleChatSettUpdated();
-			PauseNGUIController.ChatSettUpdated += HandleChatSettUpdated;
-			ControlsSettingsBase.ControlsChanged += AdjustToPlayerHands;
+			InGameGUI.sharedInGameGUI = this;
+			this.circularSprites = new UITexture[] { this.reloadCircularSprite, this.fireCircularSprite, this.fireAdditionalCrcualrSprite };
+			this.changeWeaponScroll.GetComponent<UIPanel>().baseClipRegion = new Vector4(0f, 0f, (float)this.widthWeaponScrollPreview * 1.3f, (float)this.widthWeaponScrollPreview * 1.3f);
+			this.changeWeaponWrap.itemSize = this.widthWeaponScrollPreview;
+			this.HandleChatSettUpdated();
+			PauseNGUIController.ChatSettUpdated += new Action(this.HandleChatSettUpdated);
+			ControlsSettingsBase.ControlsChanged += new Action(this.AdjustToPlayerHands);
 			if (Defs.isDaterRegim)
 			{
-				shopPanelForTap = shopPanelForTapDater;
-				shopPanelForSwipe = shopPanelForSwipeDater;
-				ammoAddButton = ammoAddButtonDater;
-				healthAddButton = healthAddButtonDater;
-				for (int i = 0; i < weaponCategoriesButtons.Length; i++)
+				this.shopPanelForTap = this.shopPanelForTapDater;
+				this.shopPanelForSwipe = this.shopPanelForSwipeDater;
+				this.ammoAddButton = this.ammoAddButtonDater;
+				this.healthAddButton = this.healthAddButtonDater;
+				for (int i = 0; i < (int)this.weaponCategoriesButtons.Length; i++)
 				{
-					weaponCategoriesButtons[i] = weaponCategoriesButtonsDater[i];
+					this.weaponCategoriesButtons[i] = this.weaponCategoriesButtonsDater[i];
 				}
-				for (int j = 0; j < ammoCategoriesLabels.Length; j++)
+				for (int j = 0; j < (int)this.ammoCategoriesLabels.Length; j++)
 				{
-					ammoCategoriesLabels[j] = ammoCategoriesLabelsDater[j];
+					this.ammoCategoriesLabels[j] = this.ammoCategoriesLabelsDater[j];
 				}
-				for (int k = 0; k < weaponIcons.Length; k++)
+				for (int k = 0; k < (int)this.weaponIcons.Length; k++)
 				{
-					weaponIcons[k] = weaponIconsDater[k];
+					this.weaponIcons[k] = this.weaponIconsDater[k];
 				}
 			}
-			shopPanelForTap.gameObject.SetActive(true);
-			shopPanelForSwipe.gameObject.SetActive(true);
-			swipeWeaponPanelPos = swipeWeaponPanel.localPosition;
-			shopPanelForTapPos = shopPanelForTap.localPosition;
-			shopPanelForSwipePos = shopPanelForSwipe.localPosition;
-			SetSwitchingWeaponPanel();
-			isMulti = Defs.isMulti;
+			this.shopPanelForTap.gameObject.SetActive(true);
+			this.shopPanelForSwipe.gameObject.SetActive(true);
+			InGameGUI.swipeWeaponPanelPos = this.swipeWeaponPanel.localPosition;
+			InGameGUI.shopPanelForTapPos = this.shopPanelForTap.localPosition;
+			InGameGUI.shopPanelForSwipePos = this.shopPanelForSwipe.localPosition;
+			this.SetSwitchingWeaponPanel();
+			this.isMulti = Defs.isMulti;
 			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 			{
-				centerAnhor.SetActive(false);
+				this.centerAnhor.SetActive(false);
 			}
-			isInet = Defs.isInet;
-			isHunger = Defs.isHunger;
-			if (isHunger)
+			this.isInet = Defs.isInet;
+			this.isHunger = Defs.isHunger;
+			if (this.isHunger)
 			{
 				HungerGameController instance = HungerGameController.Instance;
-				if (instance == null)
+				if (instance != null)
 				{
-					Debug.LogError("hungerGameControllerObject == null");
+					this.hungerGameController = instance.GetComponent<HungerGameController>();
 				}
 				else
 				{
-					hungerGameController = instance.GetComponent<HungerGameController>();
+					UnityEngine.Debug.LogError("hungerGameControllerObject == null");
 				}
 			}
-			aimUpSprite = aimUp.GetComponent<UISprite>();
-			aimDownSprite = aimDown.GetComponent<UISprite>();
-			aimRightSprite = aimRight.GetComponent<UISprite>();
-			aimLeftSprite = aimLeft.GetComponent<UISprite>();
-			aimCenterSprite = aimCenter.GetComponent<UISprite>();
-			aimUpLeftSprite = aimUpLeft.GetComponent<UISprite>();
-			aimDownLeftSprite = aimDownLeft.GetComponent<UISprite>();
-			aimDownRightSprite = aimDownRight.GetComponent<UISprite>();
-			aimUpRightSprite = aimUpRight.GetComponent<UISprite>();
-			impactTween.gameObject.SetActive(false);
+			this.aimUpSprite = this.aimUp.GetComponent<UISprite>();
+			this.aimDownSprite = this.aimDown.GetComponent<UISprite>();
+			this.aimRightSprite = this.aimRight.GetComponent<UISprite>();
+			this.aimLeftSprite = this.aimLeft.GetComponent<UISprite>();
+			this.aimCenterSprite = this.aimCenter.GetComponent<UISprite>();
+			this.aimUpLeftSprite = this.aimUpLeft.GetComponent<UISprite>();
+			this.aimDownLeftSprite = this.aimDownLeft.GetComponent<UISprite>();
+			this.aimDownRightSprite = this.aimDownRight.GetComponent<UISprite>();
+			this.aimUpRightSprite = this.aimUpRight.GetComponent<UISprite>();
+			this.impactTween.gameObject.SetActive(false);
 		}
 		finally
 		{
@@ -767,468 +658,428 @@ public sealed class InGameGUI : MonoBehaviour
 		}
 	}
 
-	public void ShowImpact()
+	public void BlinkNoAmmo(int count)
 	{
-		impactTween.gameObject.SetActive(true);
-		impactTween.Play(true);
-		if (Defs.isSoundFX)
+		if (count == 0)
 		{
-			impactTween.GetComponent<UIPlaySound>().Play();
+			this.StopPlayingLowResourceBeep();
 		}
-	}
-
-	public void SetSwipeWeaponPanelVisibility(bool visible)
-	{
-		swipeWeaponPanel.localPosition = ((!visible) ? (swipeWeaponPanelPos + new Vector3(10000f, 0f, 0f)) : swipeWeaponPanelPos);
-	}
-
-	public void SetSwitchingWeaponPanel()
-	{
-		if (GlobalGameController.switchingWeaponSwipe)
-		{
-			sharedInGameGUI.swipeWeaponPanel.localPosition = swipeWeaponPanelPos;
-			sharedInGameGUI.shopPanelForTap.gameObject.SetActive(false);
-			sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(true);
-			return;
-		}
-		sharedInGameGUI.swipeWeaponPanel.localPosition = new Vector3(10000f, sharedInGameGUI.swipeWeaponPanel.localPosition.y, sharedInGameGUI.swipeWeaponPanel.localPosition.z);
-		sharedInGameGUI.shopPanelForTap.gameObject.SetActive(true);
-		sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(false);
-		for (int i = 0; i < sharedInGameGUI.upButtonsInShopPanel.Length; i++)
-		{
-			if (!PotionsController.sharedController.PotionIsActive(sharedInGameGUI.upButtonsInShopPanel[i].GetComponent<ElexirInGameButtonController>().myPotion.name))
-			{
-				sharedInGameGUI.upButtonsInShopPanel[i].GetComponent<ElexirInGameButtonController>().myLabelTime.gameObject.SetActive(false);
-			}
-		}
-	}
-
-	public void AddDamageTaken(float alpha)
-	{
-		curDamageTakenController++;
-		if (curDamageTakenController >= damageTakenControllers.Length)
-		{
-			curDamageTakenController = 0;
-		}
-		damageTakenControllers[curDamageTakenController].reset(alpha);
-	}
-
-	public void ResetDamageTaken()
-	{
-		for (int i = 0; i < damageTakenControllers.Length; i++)
-		{
-			damageTakenControllers[i].Remove();
-		}
-	}
-
-	private void AdjustToPlayerHands()
-	{
-		float num = (GlobalGameController.LeftHanded ? 1 : (-1));
-		Vector3[] array = Load.LoadVector3Array(ControlsSettingsBase.JoystickSett);
-		if (array == null || array.Length < 7)
-		{
-			Defs.InitCoordsIphone();
-			zoomButton.transform.localPosition = new Vector3((float)Defs.ZoomButtonX * num, Defs.ZoomButtonY, zoomButton.transform.localPosition.z);
-			reloadButton.transform.localPosition = new Vector3((float)Defs.ReloadButtonX * num, Defs.ReloadButtonY, reloadButton.transform.localPosition.z);
-			jumpButton.transform.localPosition = new Vector3((float)Defs.JumpButtonX * num, Defs.JumpButtonY, jumpButton.transform.localPosition.z);
-			fireButton.transform.localPosition = new Vector3((float)Defs.FireButtonX * num, Defs.FireButtonY, fireButton.transform.localPosition.z);
-			joystick.transform.localPosition = new Vector3((float)Defs.JoyStickX * num, Defs.JoyStickY, joystick.transform.localPosition.z);
-			grenadeButton.transform.localPosition = new Vector3((float)Defs.GrenadeX * num, Defs.GrenadeY, grenadeButton.transform.localPosition.z);
-			fireButtonInJoystick.transform.localPosition = new Vector3((float)Defs.FireButton2X * num, Defs.FireButton2Y, fireButtonInJoystick.transform.localPosition.z);
-		}
-		else
-		{
-			for (int i = 0; i < array.Length; i++)
-			{
-				array[i].x *= num;
-			}
-			zoomButton.transform.localPosition = array[0];
-			reloadButton.transform.localPosition = array[1];
-			jumpButton.transform.localPosition = array[2];
-			fireButton.transform.localPosition = array[3];
-			joystick.transform.localPosition = array[4];
-			grenadeButton.transform.localPosition = array[5];
-			fireButtonInJoystick.transform.localPosition = array[6];
-		}
-		GameObject[] source = new GameObject[7] { zoomButton, reloadButton, jumpButton, fireButton, joystick, grenadeButton, fireButtonInJoystick };
-		if (_003C_003Ef__am_0024cacheCD == null)
-		{
-			_003C_003Ef__am_0024cacheCD = _003CAdjustToPlayerHands_003Em__17F;
-		}
-		UISprite[] array2 = source.Select(_003C_003Ef__am_0024cacheCD).ToArray();
-		object obj = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]"));
-		List<object> list = obj as List<object>;
-		if (list == null)
-		{
-			list = new List<object>(array2.Length);
-			Debug.LogWarning(list.GetType().FullName);
-		}
-		int num2 = Math.Min(list.Count, array2.Length);
-		for (int j = 0; j != num2; j++)
-		{
-			int num3 = Convert.ToInt32(list[j]);
-			if (num3 <= 0)
-			{
-				continue;
-			}
-			UISprite uISprite = array2[j];
-			if (uISprite == null)
-			{
-				continue;
-			}
-			array2[j].keepAspectRatio = UIWidget.AspectRatioSource.BasedOnWidth;
-			array2[j].width = num3;
-			if (uISprite.gameObject == joystick)
-			{
-				UIJoystick component = uISprite.GetComponent<UIJoystick>();
-				if (!(component == null))
-				{
-					float radius = component.radius;
-					float num4 = radius / 144f;
-					component.ActualRadius = num4 * (float)num3;
-				}
-			}
-		}
-	}
-
-	private void Start()
-	{
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			SetSwipeWeaponPanelVisibility(false);
-		}
-		bankView.SetActive(!Device.isPixelGunLow);
-		bankViewLow.SetActive(Device.isPixelGunLow);
-		HOTween.Init(true, true, true);
-		HOTween.EnableOverwriteManager();
-		if (!Defs.isMulti && !Defs.IsSurvival)
-		{
-			CampaignContainer.SetActive(true);
-		}
-		if (!Defs.isMulti && Defs.IsSurvival)
-		{
-			survivalContainer.SetActive(true);
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch)
-		{
-			if (Defs.isDaterRegim)
-			{
-				daterContainer.SetActive(true);
-			}
-			else
-			{
-				deathmatchContainer.SetActive(true);
-			}
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
-		{
-			timeBattleContainer.SetActive(true);
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
-		{
-			teamBattleContainer.SetActive(true);
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
-		{
-			flagCaptureContainer.SetActive(true);
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
-		{
-			deadlygamesContainer.SetActive(true);
-		}
-		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
-		{
-			CapturePointContainer.SetActive(true);
-		}
-		turretPanel.SetActive(false);
-		if (runTurrelButton != null)
-		{
-			runTurrelButton.Clicked += RunTurret;
-		}
-		if (cancelTurrelButton != null)
-		{
-			cancelTurrelButton.Clicked += CancelTurret;
-		}
-		if (isMulti)
-		{
-			enemiesLeftLabel.SetActive(false);
-		}
-		else
-		{
-			zombieCreator = ZombieCreator.sharedCreator;
-		}
-		AdjustToPlayerHands();
-		PauseNGUIController.PlayerHandUpdated += AdjustToPlayerHands;
-		PauseNGUIController.SwitchingWeaponsUpdated += SetSwitchingWeaponPanel;
-		WeaponManager.WeaponEquipped += HandleWeaponEquipped;
-		int num = ((!isMulti) ? WeaponManager.sharedManager.CurrentWeaponIndex : WeaponManager.sharedManager.CurrentIndexOfLastUsedWeaponInPlayerWeapons());
-		HandleWeaponEquipped(((Weapon)WeaponManager.sharedManager.playerWeapons[num]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1);
-		if (num < changeWeaponWrap.transform.childCount)
-		{
-			changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 1E+11f;
-			changeWeaponWrap.GetComponent<MyCenterOnChild>().CenterOn(changeWeaponWrap.transform.GetChild(num));
-			changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 8f;
-		}
-		else
-		{
-			Debug.LogError("InGameGUI: not weapon icon with index " + (((Weapon)WeaponManager.sharedManager.playerWeapons[num]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1));
-		}
-		if (gearToogle != null)
-		{
-			gearToogle.gameObject.GetComponent<ButtonHandler>().Clicked += HandleGearToogleClicked;
-		}
-		if (weaponCategoriesButtons[0] != null)
-		{
-			weaponCategoriesButtons[0].gameObject.GetComponent<ButtonHandler>().Clicked += HandlePrimaryToogleClicked;
-		}
-		if (weaponCategoriesButtons[1] != null)
-		{
-			weaponCategoriesButtons[1].gameObject.GetComponent<ButtonHandler>().Clicked += HandleBackupToogleClicked;
-		}
-		if (weaponCategoriesButtons[2] != null)
-		{
-			weaponCategoriesButtons[2].gameObject.GetComponent<ButtonHandler>().Clicked += HandleMeleeToogleClicked;
-		}
-		if (weaponCategoriesButtons[3] != null)
-		{
-			weaponCategoriesButtons[3].gameObject.GetComponent<ButtonHandler>().Clicked += HandleSpecialToogleClicked;
-		}
-		if (weaponCategoriesButtons[4] != null)
-		{
-			weaponCategoriesButtons[4].gameObject.GetComponent<ButtonHandler>().Clicked += HandleSniperToogleClicked;
-		}
-		if (weaponCategoriesButtons[5] != null)
-		{
-			weaponCategoriesButtons[5].gameObject.GetComponent<ButtonHandler>().Clicked += HandlePremiumToogleClicked;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			gearToogle.GetComponent<UIToggle>().value = false;
-			HandleGearToogleClicked(null, null);
-		}
-		for (int i = 0; i < upButtonsInShopPanel.Length; i++)
-		{
-			StartUpdatePotionButton(upButtonsInShopPanel[i]);
-		}
-		for (int j = 0; j < upButtonsInShopPanelSwipeRegim.Length; j++)
-		{
-			StartUpdatePotionButton(upButtonsInShopPanelSwipeRegim[j]);
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			fastShopPanel.transform.localPosition = new Vector3(-1000f, -1000f, -1f);
-			gearToogle.isEnabled = false;
-		}
-		SetNGUITouchDragThreshold(1f);
-	}
-
-	public void ShowTurretInterface()
-	{
-		swipeWeaponPanel.gameObject.SetActive(false);
-		shopPanelForSwipe.gameObject.SetActive(false);
-		shopPanelForTap.gameObject.SetActive(false);
-		runTurrelButton.GetComponent<UIButton>().isEnabled = false;
-		turretPanel.SetActive(true);
-		if (playerMoveC != null)
-		{
-			playerMoveC.ChangeWeapon(1001, false);
-		}
-		_kBlockPauseShopButton = true;
-	}
-
-	public void HideTurretInterface()
-	{
-		if (GlobalGameController.switchingWeaponSwipe)
-		{
-			shopPanelForSwipe.gameObject.SetActive(true);
-		}
-		else
-		{
-			shopPanelForTap.gameObject.SetActive(true);
-		}
-		swipeWeaponPanel.gameObject.SetActive(true);
-		turretPanel.SetActive(false);
-		_kBlockPauseShopButton = false;
-	}
-
-	private void RunTurret(object sender, EventArgs e)
-	{
-		if (playerMoveC != null)
-		{
-			playerMoveC.RunTurret();
-		}
-		HideTurretInterface();
+		this.timerBlinkNoAmmo = (float)count * this.periodBlink;
+		UILabel color = this.blinkNoAmmoLabel;
+		float single = this.blinkNoAmmoLabel.color.r;
+		float single1 = this.blinkNoAmmoLabel.color.g;
+		Color color1 = this.blinkNoAmmoLabel.color;
+		color.color = new Color(single, single1, color1.b, 0f);
 	}
 
 	private void CancelTurret(object sender, EventArgs e)
 	{
-		if (playerMoveC != null)
+		if (this.playerMoveC != null)
 		{
-			playerMoveC.CancelTurret();
+			this.playerMoveC.CancelTurret();
 		}
-		HideTurretInterface();
+		this.HideTurretInterface();
 	}
 
-	private void StartUpdatePotionButton(GameObject potionButton)
+	private void CheckWeaponScrollChanged()
 	{
-		if (potionButton != null)
+		if (this._disabled)
 		{
-			potionButton.gameObject.GetComponent<ButtonHandler>().Clicked += HandlePotionClicked;
-			ElexirInGameButtonController component = potionButton.GetComponent<ElexirInGameButtonController>();
-			string text = component.myPotion.name;
-			string key = ((!Defs.isDaterRegim) ? text : GearManager.HolderQuantityForID(component.idForPriceInDaterRegim));
-			if (PotionsController.sharedController.PotionIsActive(text))
-			{
-				UIButton component2 = potionButton.GetComponent<UIButton>();
-				component.isActivePotion = true;
-				component.myLabelTime.gameObject.SetActive(true);
-				component.myLabelTime.enabled = true;
-				component.priceLabel.SetActive(false);
+			return;
+		}
+		if (this.changeWeaponScroll.transform.localPosition.x <= 0f)
+		{
+			float single = this.changeWeaponScroll.transform.localPosition.x;
+			Vector3 vector3 = this.changeWeaponScroll.transform.localPosition;
+			this.weaponIndexInScroll = -1 * Mathf.RoundToInt((single - (float)(Mathf.CeilToInt(vector3.x / (float)this.widthWeaponScrollPreview / (float)this.changeWeaponWrap.transform.childCount) * this.widthWeaponScrollPreview * this.changeWeaponWrap.transform.childCount)) / (float)this.widthWeaponScrollPreview);
+		}
+		else
+		{
+			float single1 = this.changeWeaponScroll.transform.localPosition.x;
+			Vector3 vector31 = this.changeWeaponScroll.transform.localPosition;
+			this.weaponIndexInScroll = Mathf.RoundToInt((single1 - (float)(Mathf.FloorToInt(vector31.x / (float)this.widthWeaponScrollPreview / (float)this.changeWeaponWrap.transform.childCount) * this.widthWeaponScrollPreview * this.changeWeaponWrap.transform.childCount)) / (float)this.widthWeaponScrollPreview);
+			this.weaponIndexInScroll = this.changeWeaponWrap.transform.childCount - this.weaponIndexInScroll;
+		}
+		if (this.weaponIndexInScroll == this.changeWeaponWrap.transform.childCount)
+		{
+			this.weaponIndexInScroll = 0;
+		}
+		if (this.weaponIndexInScroll != this.weaponIndexInScrollOld)
+		{
+			this.SelectWeaponFromCategory(((Weapon)WeaponManager.sharedManager.playerWeapons[this.weaponIndexInScroll]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor, false);
+		}
+		this.weaponIndexInScrollOld = this.weaponIndexInScroll;
+	}
+
+	private void ClickPotionButton(int index)
+	{
+		this.timerShowPotion = this.timerShowPotionMax;
+		ElexirInGameButtonController component = this.upButtonsInShopPanel[index].GetComponent<ElexirInGameButtonController>();
+		ElexirInGameButtonController str = this.upButtonsInShopPanelSwipeRegim[index].GetComponent<ElexirInGameButtonController>();
+		UIButton uIButton = this.upButtonsInShopPanel[index].GetComponent<UIButton>();
+		UIButton component1 = this.upButtonsInShopPanelSwipeRegim[index].GetComponent<UIButton>();
+		string str1 = component.myPotion.name;
+		string str2 = (!Defs.isDaterRegim ? str1 : GearManager.HolderQuantityForID(component.idForPriceInDaterRegim));
+		if (Storager.getInt(str2, false) <= 0)
+		{
+			string str3 = GearManager.AnalyticsIDForOneItemOfGear(str2 ?? "Potion", true);
+			ItemPrice priceByShopId = ItemDb.GetPriceByShopId(GearManager.OneItemIDForGear(str2, GearManager.CurrentNumberOfUphradesForGear(str2)));
+			int price = priceByShopId.Price;
+			string currency = priceByShopId.Currency;
+			ShopNGUIController.TryToBuy(base.gameObject, priceByShopId, () => {
+				Storager.setInt(str2, Storager.getInt(str2, false) + 1, false);
+				uIButton.normalSprite = "game_clear";
+				uIButton.pressedSprite = "game_clear_n";
 				component.myLabelCount.gameObject.SetActive(true);
 				component.plusSprite.SetActive(false);
-				component.myLabelCount.text = Storager.getInt(key, false).ToString();
-				component2.isEnabled = false;
-			}
+				component.priceLabel.SetActive(false);
+				component.myLabelCount.text = Storager.getInt(str2, false).ToString();
+				component1.normalSprite = "game_clear";
+				component1.pressedSprite = "game_clear_n";
+				str.myLabelCount.gameObject.SetActive(true);
+				str.plusSprite.SetActive(false);
+				str.priceLabel.SetActive(false);
+				str.myLabelCount.text = Storager.getInt(str2, false).ToString();
+				if (str2 != null)
+				{
+					FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, GearManager.HolderQuantityForID(str2), 1, true);
+					FlurryPluginWrapper.LogGearPurchases(GearManager.HolderQuantityForID(str2), 1, true);
+					AnalyticsStuff.LogSales(GearManager.HolderQuantityForID(str2), "Gear", false);
+					AnalyticsFacade.InAppPurchase(GearManager.HolderQuantityForID(str2), "Gear", 1, price, currency);
+				}
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+				{
+					{ "Succeeded", str3 }
+				}, true);
+				FlurryPluginWrapper.LogFastPurchase(str3);
+			}, () => {
+				JoystickController.leftJoystick.Reset();
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+				{
+					{ "Failed", str3 }
+				}, true);
+			}, null, null, null, null);
 		}
+		else
+		{
+			if (!str1.Equals(GearManager.Turret))
+			{
+				if (Defs.isDaterRegim)
+				{
+					Storager.setInt(str2, Storager.getInt(str2, false) - 1, false);
+				}
+				PotionsController.sharedController.ActivatePotion(str1, this.playerMoveC, new Dictionary<string, object>(), false);
+			}
+			else
+			{
+				this.ShowTurretInterface();
+			}
+			string str4 = Storager.getInt(str2, false).ToString();
+			component.myLabelCount.gameObject.SetActive(true);
+			component.plusSprite.SetActive(false);
+			component.myLabelCount.text = str4;
+			component.isActivePotion = true;
+			uIButton.isEnabled = false;
+			component.myLabelTime.enabled = true;
+			component.myLabelTime.gameObject.SetActive(true);
+			str.myLabelCount.gameObject.SetActive(true);
+			str.plusSprite.SetActive(false);
+			str.myLabelCount.text = str4;
+			str.isActivePotion = true;
+			component1.isEnabled = false;
+			str.myLabelTime.enabled = true;
+			str.myLabelTime.gameObject.SetActive(true);
+		}
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void GenerateMiganie()
+	{
+		CoinsMessage.FireCoinsAddedEvent(false, 2);
+	}
+
+	private void HandleBackupToogleClicked(object sender, EventArgs e)
+	{
+		this.SelectWeaponFromCategory(2, true);
 	}
 
 	public void HandleBuyGrenadeClicked(object sender, EventArgs e)
 	{
 		if (Defs.isDaterRegim)
 		{
-			_003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A _003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A = new _003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A();
-			_003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A.parameterValue = GearManager.AnalyticsIDForOneItemOfGear(GearManager.Like, true);
+			string str = GearManager.AnalyticsIDForOneItemOfGear(GearManager.Like, true);
 			ItemPrice priceByShopId = ItemDb.GetPriceByShopId(GearManager.OneItemIDForGear("LikeID", GearManager.CurrentNumberOfUphradesForGear("LikeID")));
 			ItemPrice itemPrice = new ItemPrice(priceByShopId.Price * 1, priceByShopId.Currency);
-			_003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A.priceAmount = itemPrice.Price;
-			_003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A.priceCurrency = itemPrice.Currency;
-			ShopNGUIController.TryToBuy(base.gameObject, itemPrice, _003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A._003C_003Em__180, _003CHandleBuyGrenadeClicked_003Ec__AnonStorey27A._003C_003Em__181);
-		}
-	}
-
-	private void ClickPotionButton(int index)
-	{
-		_003CClickPotionButton_003Ec__AnonStorey27B _003CClickPotionButton_003Ec__AnonStorey27B = new _003CClickPotionButton_003Ec__AnonStorey27B();
-		timerShowPotion = timerShowPotionMax;
-		_003CClickPotionButton_003Ec__AnonStorey27B.myController = upButtonsInShopPanel[index].GetComponent<ElexirInGameButtonController>();
-		_003CClickPotionButton_003Ec__AnonStorey27B.myController2 = upButtonsInShopPanelSwipeRegim[index].GetComponent<ElexirInGameButtonController>();
-		_003CClickPotionButton_003Ec__AnonStorey27B.myButton = upButtonsInShopPanel[index].GetComponent<UIButton>();
-		_003CClickPotionButton_003Ec__AnonStorey27B.myButton2 = upButtonsInShopPanelSwipeRegim[index].GetComponent<UIButton>();
-		string text = _003CClickPotionButton_003Ec__AnonStorey27B.myController.myPotion.name;
-		_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey = ((!Defs.isDaterRegim) ? text : GearManager.HolderQuantityForID(_003CClickPotionButton_003Ec__AnonStorey27B.myController.idForPriceInDaterRegim));
-		int @int = Storager.getInt(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey, false);
-		if (@int > 0)
-		{
-			if (text.Equals(GearManager.Turret))
-			{
-				ShowTurretInterface();
-			}
-			else
-			{
-				if (Defs.isDaterRegim)
+			int price = itemPrice.Price;
+			string currency = itemPrice.Currency;
+			ShopNGUIController.TryToBuy(base.gameObject, itemPrice, () => {
+				if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
 				{
-					Storager.setInt(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey, Storager.getInt(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey, false) - 1, false);
+					Player_move_c grenadeCount = WeaponManager.sharedManager.myPlayerMoveC;
+					grenadeCount.GrenadeCount = grenadeCount.GrenadeCount + 1;
 				}
-				PotionsController.sharedController.ActivatePotion(text, playerMoveC, new Dictionary<string, object>());
-			}
-			string text2 = Storager.getInt(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey, false).ToString();
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.myLabelCount.gameObject.SetActive(true);
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.plusSprite.SetActive(false);
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.myLabelCount.text = text2;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.isActivePotion = true;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myButton.isEnabled = false;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.myLabelTime.enabled = true;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController.myLabelTime.gameObject.SetActive(true);
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.myLabelCount.gameObject.SetActive(true);
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.plusSprite.SetActive(false);
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.myLabelCount.text = text2;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.isActivePotion = true;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myButton2.isEnabled = false;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.myLabelTime.enabled = true;
-			_003CClickPotionButton_003Ec__AnonStorey27B.myController2.myLabelTime.gameObject.SetActive(true);
-		}
-		else
-		{
-			_003CClickPotionButton_003Ec__AnonStorey27C _003CClickPotionButton_003Ec__AnonStorey27C = new _003CClickPotionButton_003Ec__AnonStorey27C();
-			_003CClickPotionButton_003Ec__AnonStorey27C._003C_003Ef__ref_0024635 = _003CClickPotionButton_003Ec__AnonStorey27B;
-			_003CClickPotionButton_003Ec__AnonStorey27C.parameterValue = GearManager.AnalyticsIDForOneItemOfGear(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey ?? "Potion", true);
-			ItemPrice priceByShopId = ItemDb.GetPriceByShopId(GearManager.OneItemIDForGear(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey, GearManager.CurrentNumberOfUphradesForGear(_003CClickPotionButton_003Ec__AnonStorey27B.myStaragerKey)));
-			_003CClickPotionButton_003Ec__AnonStorey27C.priceAmount = priceByShopId.Price;
-			_003CClickPotionButton_003Ec__AnonStorey27C.priceCurrency = priceByShopId.Currency;
-			ShopNGUIController.TryToBuy(base.gameObject, priceByShopId, _003CClickPotionButton_003Ec__AnonStorey27C._003C_003Em__182, _003CClickPotionButton_003Ec__AnonStorey27C._003C_003Em__183);
+				FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, GearManager.Like, 1, true);
+				FlurryPluginWrapper.LogGearPurchases(GearManager.Like, 1, true);
+				AnalyticsStuff.LogSales(GearManager.Like, "Gear", false);
+				AnalyticsFacade.InAppPurchase(GearManager.Like, "Gear", 1, price, currency);
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+				{
+					{ "Succeeded", str }
+				}, true);
+				FlurryPluginWrapper.LogFastPurchase(str);
+			}, () => {
+				JoystickController.leftJoystick.Reset();
+				FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+				{
+					{ "Failed", str }
+				}, true);
+			}, null, null, null, null);
 		}
 	}
 
-	private void HandlePotionClicked(object sender, EventArgs e)
+	private void HandleChatSettUpdated()
 	{
-		int index = 0;
-		for (int i = 0; i < upButtonsInShopPanel.Length; i++)
-		{
-			if (upButtonsInShopPanel[i].name.Equals(((ButtonHandler)sender).gameObject.name))
-			{
-				index = i;
-				break;
-			}
-		}
-		ClickPotionButton(index);
+		this.isChatOn = Defs.IsChatOn;
 	}
 
 	private void HandleGearToogleClicked(object sender, EventArgs e)
 	{
-		bool value = gearToogle.GetComponent<UIToggle>().value;
-		fonBig.SetActive(value);
-		if (value)
+		bool component = this.gearToogle.GetComponent<UIToggle>().@value;
+		this.fonBig.SetActive(component);
+		if (!component)
 		{
-			timerShowPotion = timerShowPotionMax;
+			this.timerShowPotion = -1f;
 		}
 		else
 		{
-			timerShowPotion = -1f;
+			this.timerShowPotion = this.timerShowPotionMax;
 		}
-		for (int i = 0; i < upButtonsInShopPanel.Length; i++)
+		for (int i = 0; i < (int)this.upButtonsInShopPanel.Length; i++)
 		{
-			upButtonsInShopPanel[i].SetActive(value);
+			this.upButtonsInShopPanel[i].SetActive(component);
 		}
-	}
-
-	private void HandlePrimaryToogleClicked(object sender, EventArgs e)
-	{
-		SelectWeaponFromCategory(1);
-	}
-
-	private void HandleBackupToogleClicked(object sender, EventArgs e)
-	{
-		SelectWeaponFromCategory(2);
 	}
 
 	private void HandleMeleeToogleClicked(object sender, EventArgs e)
 	{
-		SelectWeaponFromCategory(3);
+		this.SelectWeaponFromCategory(3, true);
 	}
 
-	private void HandleSpecialToogleClicked(object sender, EventArgs e)
+	private void HandlePotionClicked(object sender, EventArgs e)
 	{
-		SelectWeaponFromCategory(4);
-	}
-
-	private void HandleSniperToogleClicked(object sender, EventArgs e)
-	{
-		SelectWeaponFromCategory(5);
+		int num = 0;
+		int num1 = 0;
+		while (num1 < (int)this.upButtonsInShopPanel.Length)
+		{
+			if (!this.upButtonsInShopPanel[num1].name.Equals(((ButtonHandler)sender).gameObject.name))
+			{
+				num1++;
+			}
+			else
+			{
+				num = num1;
+				break;
+			}
+		}
+		this.ClickPotionButton(num);
 	}
 
 	private void HandlePremiumToogleClicked(object sender, EventArgs e)
 	{
-		SelectWeaponFromCategory(6);
+		this.SelectWeaponFromCategory(6, true);
+	}
+
+	private void HandlePrimaryToogleClicked(object sender, EventArgs e)
+	{
+		this.SelectWeaponFromCategory(1, true);
+	}
+
+	private void HandleSniperToogleClicked(object sender, EventArgs e)
+	{
+		this.SelectWeaponFromCategory(5, true);
+	}
+
+	private void HandleSpecialToogleClicked(object sender, EventArgs e)
+	{
+		this.SelectWeaponFromCategory(4, true);
+	}
+
+	public void HandleWeaponEquipped(int catNabor)
+	{
+		int num = 0;
+		IEnumerator enumerator = WeaponManager.sharedManager.playerWeapons.GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				Weapon current = (Weapon)enumerator.Current;
+				num++;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		for (int i = this.changeWeaponWrap.transform.childCount; i < num; i++)
+		{
+			GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(this.weaponPreviewPrefab);
+			vector3.name = string.Concat("WeaponCat_", i.ToString());
+			vector3.transform.parent = this.changeWeaponWrap.transform;
+			vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+			vector3.GetComponent<UITexture>().width = Mathf.RoundToInt((float)this.widthWeaponScrollPreview * 0.7f);
+			vector3.GetComponent<UITexture>().height = Mathf.RoundToInt((float)this.widthWeaponScrollPreview * 0.7f);
+			vector3.GetComponent<BoxCollider>().size = new Vector3((float)this.widthWeaponScrollPreview * 1.3f, (float)this.widthWeaponScrollPreview * 1.3f, 1f);
+		}
+		this.changeWeaponWrap.SortAlphabetically();
+		this.changeWeaponWrap.GetComponent<MyCenterOnChild>().enabled = false;
+		this.changeWeaponWrap.GetComponent<MyCenterOnChild>().enabled = true;
+		int num1 = 0;
+		for (int j = 0; j < 6; j++)
+		{
+			Texture texture = ShopNGUIController.TextureForCat(j);
+			if (texture != null)
+			{
+				this.weaponIcons[j].mainTexture = texture;
+				IEnumerator enumerator1 = this.changeWeaponWrap.transform.GetEnumerator();
+				try
+				{
+					while (enumerator1.MoveNext())
+					{
+						Transform transforms = (Transform)enumerator1.Current;
+						if (!transforms.name.Equals(string.Concat("WeaponCat_", num1)))
+						{
+							continue;
+						}
+						transforms.GetComponent<UITexture>().mainTexture = texture;
+						break;
+					}
+				}
+				finally
+				{
+					IDisposable disposable1 = enumerator1 as IDisposable;
+					if (disposable1 == null)
+					{
+					}
+					disposable1.Dispose();
+				}
+				num1++;
+			}
+		}
+		for (int k = 0; k < WeaponManager.sharedManager.playerWeapons.Count; k++)
+		{
+			this.changeWeaponWrap.transform.GetChild(k).GetComponent<WeaponIconController>().myWeaponSounds = ((Weapon)WeaponManager.sharedManager.playerWeapons[k]).weaponPrefab.GetComponent<WeaponSounds>();
+		}
+		this.SelectWeaponFromCategory(catNabor + 1, true);
+	}
+
+	public void HideTurretInterface()
+	{
+		if (!GlobalGameController.switchingWeaponSwipe)
+		{
+			this.shopPanelForTap.gameObject.SetActive(true);
+		}
+		else
+		{
+			this.shopPanelForSwipe.gameObject.SetActive(true);
+		}
+		this.swipeWeaponPanel.gameObject.SetActive(true);
+		this.turretPanel.SetActive(false);
+		this._kBlockPauseShopButton = false;
+	}
+
+	private void OnDestroy()
+	{
+		this.SetNGUITouchDragThreshold(40f);
+		InGameGUI.sharedInGameGUI = null;
+		WeaponManager.WeaponEquipped -= new Action<int>(this.HandleWeaponEquipped);
+		PauseNGUIController.ChatSettUpdated -= new Action(this.HandleChatSettUpdated);
+		PauseNGUIController.PlayerHandUpdated -= new Action(this.AdjustToPlayerHands);
+		ControlsSettingsBase.ControlsChanged -= new Action(this.AdjustToPlayerHands);
+		PauseNGUIController.SwitchingWeaponsUpdated -= new Action(this.SetSwitchingWeaponPanel);
+	}
+
+	public void PlayLowResourceBeep(int count)
+	{
+		this.StopPlayingLowResourceBeep();
+		this._lowResourceBeepRoutine = this.PlayLowResourceBeepCoroutine(count);
+		base.StartCoroutine(this._lowResourceBeepRoutine);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator PlayLowResourceBeepCoroutine(int count)
+	{
+		InGameGUI.u003cPlayLowResourceBeepCoroutineu003ec__Iterator8A variable = null;
+		return variable;
+	}
+
+	public void PlayLowResourceBeepIfNotPlaying(int count)
+	{
+		if (this._lowResourceBeepRoutine != null)
+		{
+			return;
+		}
+		this.PlayLowResourceBeep(count);
+	}
+
+	[Obfuscation(Exclude=true)]
+	private void ReloadAmmo()
+	{
+		this.reloadLabel.gameObject.SetActive(false);
+		this.reloadBar.SetActive(false);
+		WeaponManager.sharedManager.ReloadAmmo();
+	}
+
+	public void ResetDamageTaken()
+	{
+		for (int i = 0; i < (int)this.damageTakenControllers.Length; i++)
+		{
+			this.damageTakenControllers[i].Remove();
+		}
+	}
+
+	public void ResetScope()
+	{
+		this.scopeText.GetComponent<UITexture>().mainTexture = null;
+		this.scopeText.SetActive(false);
+	}
+
+	private void RunCircularSpriteOn(UITexture sprite, float length, Action onComplete = null)
+	{
+		sprite.fillAmount = 0f;
+		HOTween.To(sprite, length, (new TweenParms()).Prop("fillAmount", 1f).UpdateType(UpdateType.TimeScaleIndependentUpdate).Ease(EaseType.Linear).OnComplete(() => {
+			sprite.fillAmount = 0f;
+			if (onComplete != null)
+			{
+				onComplete();
+			}
+		}));
+	}
+
+	private void RunTurret(object sender, EventArgs e)
+	{
+		if (this.playerMoveC != null)
+		{
+			this.playerMoveC.RunTurret();
+		}
+		this.HideTurretInterface();
 	}
 
 	private void SelectWeaponFromCategory(int category, bool isUpdateSwipe = true)
 	{
-		for (int i = 0; i < WeaponManager.sharedManager.playerWeapons.Count; i++)
+		int num = 0;
+		while (num < WeaponManager.sharedManager.playerWeapons.Count)
 		{
-			Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[i];
-			if (weapon.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor == category)
+			if (((Weapon)WeaponManager.sharedManager.playerWeapons[num]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor != category)
 			{
-				SelectWeaponFromIndex(i, isUpdateSwipe);
+				num++;
+			}
+			else
+			{
+				this.SelectWeaponFromIndex(num, isUpdateSwipe);
 				break;
 			}
 		}
@@ -1236,46 +1087,68 @@ public sealed class InGameGUI : MonoBehaviour
 
 	private void SelectWeaponFromIndex(int _index, bool updateSwipe = true)
 	{
-		bool[] array = new bool[6];
-		for (int i = 0; i < array.Length; i++)
+		bool[] flagArray = new bool[6];
+		for (int i = 0; i < (int)flagArray.Length; i++)
 		{
-			array[i] = false;
+			flagArray[i] = false;
 		}
 		int num = 0;
-		foreach (Weapon playerWeapon in WeaponManager.sharedManager.playerWeapons)
+		IEnumerator enumerator = WeaponManager.sharedManager.playerWeapons.GetEnumerator();
+		try
 		{
-			int num2 = playerWeapon.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1;
-			array[num2] = true;
-			num++;
-		}
-		for (int j = 0; j < weaponCategoriesButtons.Length; j++)
-		{
-			weaponCategoriesButtons[j].isEnabled = array[j];
-			if (j == ((Weapon)WeaponManager.sharedManager.playerWeapons[_index]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1)
+			while (enumerator.MoveNext())
 			{
-				weaponCategoriesButtons[j].GetComponent<UIToggle>().value = true;
+				Weapon current = (Weapon)enumerator.Current;
+				int component = current.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1;
+				flagArray[component] = true;
+				num++;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable == null)
+			{
+			}
+			disposable.Dispose();
+		}
+		for (int j = 0; j < (int)this.weaponCategoriesButtons.Length; j++)
+		{
+			this.weaponCategoriesButtons[j].isEnabled = flagArray[j];
+			if (j != ((Weapon)WeaponManager.sharedManager.playerWeapons[_index]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1)
+			{
+				this.weaponCategoriesButtons[j].GetComponent<UIToggle>().@value = false;
 			}
 			else
 			{
-				weaponCategoriesButtons[j].GetComponent<UIToggle>().value = false;
+				this.weaponCategoriesButtons[j].GetComponent<UIToggle>().@value = true;
 			}
 		}
-		SetChangeWeapon(_index, updateSwipe);
+		this.SetChangeWeapon(_index, updateSwipe);
+	}
+
+	private void SetArmor()
+	{
+		this.currentArmorStep = Mathf.FloorToInt(this.pastArmor);
+		for (int i = 0; i < (int)this.armorShields.Length; i++)
+		{
+			this.armorShields[i].SetIndex(Mathf.CeilToInt((this.pastArmor - (float)i) / 9f), HeartEffect.IndicatorType.Armor);
+		}
 	}
 
 	private void SetChangeWeapon(int index, bool isUpdateSwipe)
 	{
 		if (isUpdateSwipe)
 		{
-			if (index < changeWeaponWrap.transform.childCount)
+			if (index >= this.changeWeaponWrap.transform.childCount)
 			{
-				changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 1E+11f;
-				changeWeaponWrap.GetComponent<MyCenterOnChild>().CenterOn(changeWeaponWrap.transform.GetChild(index));
-				changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 8f;
+				UnityEngine.Debug.LogError(string.Concat("InGameGUI: not weapon icon with index ", index));
 			}
 			else
 			{
-				Debug.LogError("InGameGUI: not weapon icon with index " + index);
+				this.changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 1E+11f;
+				this.changeWeaponWrap.GetComponent<MyCenterOnChild>().CenterOn(this.changeWeaponWrap.transform.GetChild(index));
+				this.changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 8f;
 			}
 		}
 		if (WeaponManager.sharedManager.CurrentWeaponIndex == index)
@@ -1284,849 +1157,905 @@ public sealed class InGameGUI : MonoBehaviour
 		}
 		WeaponManager.sharedManager.CurrentWeaponIndex = index;
 		WeaponManager.sharedManager.SaveWeaponAsLastUsed(WeaponManager.sharedManager.CurrentWeaponIndex);
-		if (playerMoveC != null)
+		if (this.playerMoveC != null)
 		{
-			if (playerMoveC.currentWeaponBeforeTurret >= 0)
+			if (this.playerMoveC.currentWeaponBeforeTurret >= 0)
 			{
-				playerMoveC.currentWeaponBeforeTurret = index;
+				this.playerMoveC.currentWeaponBeforeTurret = index;
 				return;
 			}
-			playerMoveC.ChangeWeapon(index, false);
-			playerMoveC.HideChangeWeaponTrainingHint();
-		}
-	}
-
-	[Obfuscation(Exclude = true)]
-	private void GenerateMiganie()
-	{
-		CoinsMessage.FireCoinsAddedEvent();
-	}
-
-	private void CheckWeaponScrollChanged()
-	{
-		if (!_disabled)
-		{
-			if (changeWeaponScroll.transform.localPosition.x > 0f)
-			{
-				weaponIndexInScroll = Mathf.RoundToInt((changeWeaponScroll.transform.localPosition.x - (float)(Mathf.FloorToInt(changeWeaponScroll.transform.localPosition.x / (float)widthWeaponScrollPreview / (float)changeWeaponWrap.transform.childCount) * widthWeaponScrollPreview * changeWeaponWrap.transform.childCount)) / (float)widthWeaponScrollPreview);
-				weaponIndexInScroll = changeWeaponWrap.transform.childCount - weaponIndexInScroll;
-			}
-			else
-			{
-				weaponIndexInScroll = -1 * Mathf.RoundToInt((changeWeaponScroll.transform.localPosition.x - (float)(Mathf.CeilToInt(changeWeaponScroll.transform.localPosition.x / (float)widthWeaponScrollPreview / (float)changeWeaponWrap.transform.childCount) * widthWeaponScrollPreview * changeWeaponWrap.transform.childCount)) / (float)widthWeaponScrollPreview);
-			}
-			if (weaponIndexInScroll == changeWeaponWrap.transform.childCount)
-			{
-				weaponIndexInScroll = 0;
-			}
-			if (weaponIndexInScroll != weaponIndexInScrollOld)
-			{
-				SelectWeaponFromCategory(((Weapon)WeaponManager.sharedManager.playerWeapons[weaponIndexInScroll]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor, false);
-			}
-			weaponIndexInScrollOld = weaponIndexInScroll;
-		}
-	}
-
-	public IEnumerator _DisableSwiping(float tm)
-	{
-		MyCenterOnChild _center = changeWeaponWrap.GetComponent<MyCenterOnChild>();
-		int bef;
-		if (_center == null || _center.centeredObject == null || !int.TryParse(_center.centeredObject.name.Replace("WeaponCat_", string.Empty), out bef))
-		{
-			yield break;
-		}
-		_disabled = true;
-		yield return new WaitForSeconds(tm);
-		_disabled = false;
-		if (_center.centeredObject == null || _center.centeredObject.name.Equals("WeaponCat_" + bef))
-		{
-			yield break;
-		}
-		Transform goToCent = null;
-		foreach (Transform t in _center.transform)
-		{
-			if (t.gameObject.name.Equals("WeaponCat_" + bef))
-			{
-				goToCent = t;
-				break;
-			}
-		}
-		if (goToCent != null)
-		{
-			_center.CenterOn(goToCent);
-		}
-	}
-
-	private void UpdateCrosshairPositions()
-	{
-		if (playerMoveC == null || !playerMoveC.isMechActive)
-		{
-			float num = WeaponManager.sharedManager.currentWeaponSounds.tekKoof * WeaponManager.sharedManager.currentWeaponSounds.startZone.y * 0.5f;
-			aimDown.transform.localPosition = new Vector3(0f, 0f - aimPositions[1].y - num, 0f);
-			aimUp.transform.localPosition = new Vector3(0f, aimPositions[2].y + num, 0f);
-			aimLeft.transform.localPosition = new Vector3(0f - aimPositions[3].x - num, 0f, 0f);
-			aimDownLeft.transform.localPosition = new Vector3(0f - aimPositions[4].x - num, 0f - aimPositions[4].y - num, 0f);
-			aimUpLeft.transform.localPosition = new Vector3(0f - aimPositions[5].x - num, aimPositions[5].y + num, 0f);
-			aimRight.transform.localPosition = new Vector3(aimPositions[3].x + num, 0f, 0f);
-			aimDownRight.transform.localPosition = new Vector3(aimPositions[4].x + num, 0f - aimPositions[4].y - num, 0f);
-			aimUpRight.transform.localPosition = new Vector3(aimPositions[5].x + num, aimPositions[5].y + num, 0f);
-		}
-		else
-		{
-			float num = 12f + playerMoveC.mechWeaponSounds.tekKoof * playerMoveC.mechWeaponSounds.startZone.y * 0.5f;
-			aimUp.transform.localPosition = new Vector3(0f, num, 0f);
-			aimUpRight.transform.localPosition = new Vector3(num, num, 0f);
-			aimRight.transform.localPosition = new Vector3(num, 0f, 0f);
-			aimDownRight.transform.localPosition = new Vector3(num, 0f - num, 0f);
-			aimDown.transform.localPosition = new Vector3(0f, 0f - num, 0f);
-			aimDownLeft.transform.localPosition = new Vector3(0f - num, 0f - num, 0f);
-			aimLeft.transform.localPosition = new Vector3(0f - num, 0f, 0f);
-			aimUpLeft.transform.localPosition = new Vector3(0f - num, num, 0f);
-		}
-	}
-
-	private void SetCrosshairVisibility(bool visible)
-	{
-		if (crosshairVisible != visible)
-		{
-			crosshairVisible = visible;
-			aimCenterSprite.enabled = visible;
-			aimDownSprite.enabled = visible;
-			aimUpSprite.enabled = visible;
-			aimLeftSprite.enabled = visible;
-			aimRightSprite.enabled = visible;
-			aimUpLeftSprite.enabled = visible;
-			aimUpRightSprite.enabled = visible;
-			aimDownLeftSprite.enabled = visible;
-			aimDownRightSprite.enabled = visible;
-		}
-	}
-
-	private void SetCrosshairPart(UISprite sprite, CrosshairData.aimSprite param, bool mirror = false)
-	{
-		if (!string.IsNullOrEmpty(param.spriteName))
-		{
-			sprite.gameObject.SetActive(true);
-			sprite.spriteName = param.spriteName;
-			sprite.width = Mathf.RoundToInt(param.spriteSize.x);
-			sprite.height = Mathf.RoundToInt(param.spriteSize.y);
-			sprite.transform.localPosition = ((!mirror) ? param.offset : new Vector2(param.offset.x, 0f - param.offset.y));
-		}
-		else
-		{
-			sprite.gameObject.SetActive(false);
+			this.playerMoveC.ChangeWeapon(index, false);
+			this.playerMoveC.HideChangeWeaponTrainingHint();
 		}
 	}
 
 	public void SetCrosshair(WeaponSounds weaponSounds)
 	{
 		WeaponCustomCrosshair component = weaponSounds.GetComponent<WeaponCustomCrosshair>();
-		if (component != null)
+		if (component == null)
 		{
-			SetCrosshairPart(aimCenterSprite, component.Data.center);
-			SetCrosshairPart(aimDownSprite, component.Data.down);
-			SetCrosshairPart(aimUpSprite, component.Data.up);
-			SetCrosshairPart(aimLeftSprite, component.Data.left);
-			SetCrosshairPart(aimRightSprite, component.Data.left, true);
-			SetCrosshairPart(aimUpLeftSprite, component.Data.leftUp);
-			SetCrosshairPart(aimUpRightSprite, component.Data.leftUp, true);
-			SetCrosshairPart(aimDownLeftSprite, component.Data.leftDown);
-			SetCrosshairPart(aimDownRightSprite, component.Data.leftDown, true);
-			aimPositions[0] = component.Data.center.offset;
-			aimPositions[1] = component.Data.down.offset;
-			aimPositions[2] = component.Data.up.offset;
-			aimPositions[3] = component.Data.left.offset;
-			aimPositions[4] = component.Data.leftDown.offset;
-			aimPositions[5] = component.Data.leftUp.offset;
+			this.SetCrosshairPart(this.aimCenterSprite, this.defaultAimCenter, false);
+			this.SetCrosshairPart(this.aimDownSprite, this.defaultAimDown, false);
+			this.SetCrosshairPart(this.aimUpSprite, this.defaultAimUp, false);
+			this.SetCrosshairPart(this.aimLeftSprite, this.defaultAimLeftCenter, false);
+			this.SetCrosshairPart(this.aimRightSprite, this.defaultAimLeftCenter, true);
+			this.SetCrosshairPart(this.aimUpLeftSprite, this.defaultAimLeftUp, false);
+			this.SetCrosshairPart(this.aimUpRightSprite, this.defaultAimLeftUp, true);
+			this.SetCrosshairPart(this.aimDownLeftSprite, this.defaultAimLeftDown, false);
+			this.SetCrosshairPart(this.aimDownRightSprite, this.defaultAimLeftDown, true);
+			this.aimPositions[0] = this.defaultAimCenter.offset;
+			this.aimPositions[1] = this.defaultAimDown.offset;
+			this.aimPositions[2] = this.defaultAimUp.offset;
+			this.aimPositions[3] = this.defaultAimLeftCenter.offset;
+			this.aimPositions[4] = this.defaultAimLeftDown.offset;
+			this.aimPositions[5] = this.defaultAimLeftUp.offset;
 		}
 		else
 		{
-			SetCrosshairPart(aimCenterSprite, defaultAimCenter);
-			SetCrosshairPart(aimDownSprite, defaultAimDown);
-			SetCrosshairPart(aimUpSprite, defaultAimUp);
-			SetCrosshairPart(aimLeftSprite, defaultAimLeftCenter);
-			SetCrosshairPart(aimRightSprite, defaultAimLeftCenter, true);
-			SetCrosshairPart(aimUpLeftSprite, defaultAimLeftUp);
-			SetCrosshairPart(aimUpRightSprite, defaultAimLeftUp, true);
-			SetCrosshairPart(aimDownLeftSprite, defaultAimLeftDown);
-			SetCrosshairPart(aimDownRightSprite, defaultAimLeftDown, true);
-			aimPositions[0] = defaultAimCenter.offset;
-			aimPositions[1] = defaultAimDown.offset;
-			aimPositions[2] = defaultAimUp.offset;
-			aimPositions[3] = defaultAimLeftCenter.offset;
-			aimPositions[4] = defaultAimLeftDown.offset;
-			aimPositions[5] = defaultAimLeftUp.offset;
+			this.SetCrosshairPart(this.aimCenterSprite, component.Data.center, false);
+			this.SetCrosshairPart(this.aimDownSprite, component.Data.down, false);
+			this.SetCrosshairPart(this.aimUpSprite, component.Data.up, false);
+			this.SetCrosshairPart(this.aimLeftSprite, component.Data.left, false);
+			this.SetCrosshairPart(this.aimRightSprite, component.Data.left, true);
+			this.SetCrosshairPart(this.aimUpLeftSprite, component.Data.leftUp, false);
+			this.SetCrosshairPart(this.aimUpRightSprite, component.Data.leftUp, true);
+			this.SetCrosshairPart(this.aimDownLeftSprite, component.Data.leftDown, false);
+			this.SetCrosshairPart(this.aimDownRightSprite, component.Data.leftDown, true);
+			this.aimPositions[0] = component.Data.center.offset;
+			this.aimPositions[1] = component.Data.down.offset;
+			this.aimPositions[2] = component.Data.up.offset;
+			this.aimPositions[3] = component.Data.left.offset;
+			this.aimPositions[4] = component.Data.leftDown.offset;
+			this.aimPositions[5] = component.Data.leftUp.offset;
 		}
-		UpdateCrosshairPositions();
+		this.UpdateCrosshairPositions();
 	}
 
-	private void Update()
+	private void SetCrosshairPart(UISprite sprite, CrosshairData.aimSprite param, bool mirror = false)
 	{
-		CheckWeaponScrollChanged();
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToSelectWeapon)
+		if (string.IsNullOrEmpty(param.spriteName))
 		{
-			fastShopPanel.transform.localPosition = new Vector3(0f, 0f, -1f);
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
-		{
-			fastShopPanel.transform.localPosition = new Vector3(0f, 0f, -1f);
-		}
-		if (timerBlinkNoAmmo > 0f)
-		{
-			timerBlinkNoAmmo -= Time.deltaTime;
-		}
-		if (timerBlinkNoAmmo > 0f && playerMoveC != null && !playerMoveC.isMechActive)
-		{
-			blinkNoAmmoLabel.gameObject.SetActive(true);
-			float num = timerBlinkNoAmmo % periodBlink / periodBlink;
-			blinkNoAmmoLabel.color = new Color(blinkNoAmmoLabel.color.r, blinkNoAmmoLabel.color.g, blinkNoAmmoLabel.color.b, (!(num < 0.5f)) ? ((1f - num) * 2f) : (num * 2f));
-		}
-		if ((timerBlinkNoAmmo < 0f || (playerMoveC != null && playerMoveC.isMechActive)) && blinkNoAmmoLabel.gameObject.activeSelf)
-		{
-			blinkNoAmmoLabel.gameObject.SetActive(false);
-		}
-		if (playerMoveC != null)
-		{
-			int num2 = Mathf.FloorToInt(playerMoveC.CurHealth);
-			if (num2 < oldCountHeath && timerBlinkNoHeath < 0f && num2 < 3)
-			{
-				timerBlinkNoHeath = periodBlink * 3f;
-			}
-			if (num2 > 2)
-			{
-				timerBlinkNoHeath = -1f;
-			}
-			oldCountHeath = num2;
-			if (timerBlinkNoHeath > 0f)
-			{
-				timerBlinkNoHeath -= Time.deltaTime;
-			}
-			if (timerBlinkNoHeath > 0f && !playerMoveC.isMechActive)
-			{
-				if (num2 > 0)
-				{
-					PlayLowResourceBeepIfNotPlaying(1);
-				}
-				blinkNoHeathLabel.gameObject.SetActive(true);
-				float num3 = timerBlinkNoHeath % periodBlink / periodBlink;
-				float a = ((!(num3 < 0.5f)) ? ((1f - num3) * 2f) : (num3 * 2f));
-				blinkNoHeathLabel.color = new Color(blinkNoHeathLabel.color.r, blinkNoHeathLabel.color.g, blinkNoHeathLabel.color.b, a);
-				for (int i = 0; i < blinkNoHeathFrames.Length; i++)
-				{
-					blinkNoHeathFrames[i].gameObject.SetActive(true);
-					blinkNoHeathFrames[i].color = new Color(1f, 1f, 1f, a);
-				}
-			}
-		}
-		if ((timerBlinkNoHeath < 0f || playerMoveC == null || (playerMoveC != null && playerMoveC.isMechActive)) && blinkNoHeathLabel.gameObject.activeSelf)
-		{
-			blinkNoHeathLabel.gameObject.SetActive(false);
-			for (int j = 0; j < blinkNoHeathFrames.Length; j++)
-			{
-				blinkNoHeathFrames[j].gameObject.SetActive(false);
-			}
-		}
-		for (int k = 0; k < ammoCategoriesLabels.Length; k++)
-		{
-			if (!(ammoCategoriesLabels[k] != null))
-			{
-				continue;
-			}
-			bool flag = false;
-			if (weaponCategoriesButtons[k].isEnabled)
-			{
-				for (int l = 0; l < WeaponManager.sharedManager.playerWeapons.Count; l++)
-				{
-					Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[l];
-					if ((!weapon.weaponPrefab.GetComponent<WeaponSounds>().isMelee || weapon.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) && weapon.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor == k + 1)
-					{
-						ammoCategoriesLabels[k].text = ((!weapon.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) ? (weapon.currentAmmoInClip + "/" + weapon.currentAmmoInBackpack) : (weapon.currentAmmoInClip + weapon.currentAmmoInBackpack).ToString());
-						flag = true;
-						break;
-					}
-				}
-			}
-			if (!flag)
-			{
-				ammoCategoriesLabels[k].text = string.Empty;
-			}
-		}
-		if (timerShowNow > 0f)
-		{
-			timerShowNow -= Time.deltaTime;
-			if (!message_now.activeSelf)
-			{
-				message_now.SetActive(true);
-			}
-		}
-		else if (message_now.activeSelf)
-		{
-			message_now.SetActive(false);
-		}
-		if (isMulti && playerMoveC == null && WeaponManager.sharedManager.myPlayer != null)
-		{
-			playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
-		}
-		if (!isMulti && playerMoveC == null)
-		{
-			playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
-		}
-		if (isMulti && playerMoveC != null)
-		{
-			for (int m = 0; m < 3; m++)
-			{
-				messageAddScore[m].GetComponent<UIPlaySound>().volume = (Defs.isSoundFX ? 1 : 0);
-				float num4 = 0.3f;
-				float num5 = 0.2f;
-				if (m == 0)
-				{
-					float num6 = 1f;
-					if (playerMoveC.myScoreController.maxTimerSumMessage - playerMoveC.myScoreController.timerAddScoreShow[m] < num4)
-					{
-						num6 = 1f + num5 * (playerMoveC.myScoreController.maxTimerSumMessage - playerMoveC.myScoreController.timerAddScoreShow[m]) / num4;
-					}
-					if (playerMoveC.myScoreController.maxTimerSumMessage - playerMoveC.myScoreController.timerAddScoreShow[m] - num4 < num4)
-					{
-						num6 = 1f + num5 * (1f - (playerMoveC.myScoreController.maxTimerSumMessage - playerMoveC.myScoreController.timerAddScoreShow[m] - num4) / num4);
-					}
-					messageAddScore[m].transform.localScale = new Vector3(num6, num6, num6);
-				}
-				if (playerMoveC.timerShow[m] > 0f)
-				{
-					killLabels[m].gameObject.SetActive(true);
-					killLabels[m].SetChatLabelText(playerMoveC.killedSpisok[m]);
-				}
-				else
-				{
-					killLabels[m].gameObject.SetActive(false);
-				}
-				if (playerMoveC.myScoreController.timerAddScoreShow[m] > 0f)
-				{
-					if (!messageAddScore[m].gameObject.activeSelf)
-					{
-						messageAddScore[m].gameObject.SetActive(true);
-					}
-					messageAddScore[m].text = playerMoveC.myScoreController.addScoreString[m];
-					messageAddScore[m].color = new Color(1f, 1f, 1f, (!(playerMoveC.myScoreController.timerAddScoreShow[m] > 1f)) ? playerMoveC.myScoreController.timerAddScoreShow[m] : 1f);
-				}
-				else if (messageAddScore[m].gameObject.activeSelf)
-				{
-					messageAddScore[m].gameObject.SetActive(false);
-				}
-			}
-			if (isChatOn)
-			{
-				int num7 = 0;
-				int num8 = playerMoveC.messages.Count - 1;
-				while (num8 >= 0 && playerMoveC.messages.Count - num8 - 1 < 3)
-				{
-					if (Time.time - playerMoveC.messages[num8].time < 10f)
-					{
-						if ((!isInet && playerMoveC.messages[num8].IDLocal == WeaponManager.sharedManager.myPlayer.GetComponent<NetworkView>().viewID) || (isInet && playerMoveC.messages[num8].ID == WeaponManager.sharedManager.myPlayer.GetComponent<PhotonView>().viewID))
-						{
-							chatLabels[num7].GetComponent<UILabel>().color = new Color(0f, 1f, 0.15f, 1f);
-						}
-						else
-						{
-							if (playerMoveC.messages[num8].command == 0)
-							{
-								chatLabels[num7].GetComponent<UILabel>().color = new Color(1f, 1f, 0.15f, 1f);
-							}
-							if (playerMoveC.messages[num8].command == 1)
-							{
-								chatLabels[num7].GetComponent<UILabel>().color = new Color(0f, 0f, 0.9f, 1f);
-							}
-							if (playerMoveC.messages[num8].command == 2)
-							{
-								chatLabels[num7].GetComponent<UILabel>().color = new Color(1f, 0f, 0f, 1f);
-							}
-						}
-						ChatLabel component = chatLabels[num7].GetComponent<ChatLabel>();
-						component.nickLabel.text = playerMoveC.messages[num8].text;
-						component.iconSprite.spriteName = playerMoveC.messages[num8].iconName;
-						Transform transform = component.iconSprite.transform;
-						transform.localPosition = new Vector3(component.nickLabel.width + 20, transform.localPosition.y, transform.localPosition.z);
-						component.clanTexture.mainTexture = playerMoveC.messages[num8].clanLogo;
-						chatLabels[num7].SetActive(true);
-					}
-					else
-					{
-						chatLabels[num7].SetActive(false);
-					}
-					num7++;
-					num8--;
-				}
-				for (int n = num7; n < 3; n++)
-				{
-					chatLabels[num7].SetActive(false);
-				}
-			}
-			if (timerShowScorePict > 0f)
-			{
-				timerShowScorePict -= Time.deltaTime;
-			}
-			if (isHunger && Initializer.players.Count == 2 && hungerGameController.isGo && playerMoveC.timeHingerGame > 10f)
-			{
-				duel.SetActive(true);
-				multyKillPanel.gameObject.SetActive(false);
-			}
-			else
-			{
-				if (duel.activeSelf)
-				{
-					duel.SetActive(false);
-				}
-				if (timerShowScorePict > 0f)
-				{
-					if ((!multyKillPanel.gameObject.activeSelf || scorePictName != multyKillSprite.spriteName) && (PauseGUIController.Instance == null || !PauseGUIController.Instance.IsPaused))
-					{
-						multyKillSprite.spriteName = scorePictName;
-						multyKillPanel.gameObject.SetActive(true);
-						multyKillPanel.GetComponent<MultyKill>().PlayTween();
-					}
-				}
-				else if (multyKillPanel.gameObject.activeSelf)
-				{
-					multyKillPanel.gameObject.SetActive(false);
-				}
-			}
-			if (isHunger && !hungerGameController.isGo)
-			{
-				timerStartHungerLabel.gameObject.SetActive(true);
-				int num9 = Mathf.FloorToInt(hungerGameController.goTimer);
-				string text;
-				if (num9 == 0)
-				{
-					text = "GO!";
-					timerStartHungerLabel.color = new Color(0f, 1f, 0f, 1f);
-				}
-				else
-				{
-					text = string.Empty + num9;
-					timerStartHungerLabel.color = new Color(1f, 0f, 0f, 1f);
-				}
-				timerStartHungerLabel.text = text;
-			}
-			else if (isHunger && hungerGameController.isGo && hungerGameController.isShowGo)
-			{
-				timerStartHungerLabel.gameObject.SetActive(true);
-				timerStartHungerLabel.text = "GO!";
-			}
-			else
-			{
-				timerStartHungerLabel.gameObject.SetActive(false);
-			}
-		}
-		if (playerMoveC != null)
-		{
-			if (playerMoveC.timerShowDown > 0f && playerMoveC.timerShowDown < playerMoveC.maxTimeSetTimerShow - 0.03f)
-			{
-				downBloodTexture.SetActive(true);
-			}
-			else
-			{
-				downBloodTexture.SetActive(false);
-			}
-			if (playerMoveC.timerShowUp > 0f && playerMoveC.timerShowUp < playerMoveC.maxTimeSetTimerShow - 0.03f)
-			{
-				upBloodTexture.SetActive(true);
-			}
-			else
-			{
-				upBloodTexture.SetActive(false);
-			}
-			if (playerMoveC.timerShowLeft > 0f && playerMoveC.timerShowLeft < playerMoveC.maxTimeSetTimerShow - 0.03f)
-			{
-				leftBloodTexture.SetActive(true);
-			}
-			else
-			{
-				leftBloodTexture.SetActive(false);
-			}
-			if (playerMoveC.timerShowRight > 0f && playerMoveC.timerShowRight < playerMoveC.maxTimeSetTimerShow - 0.03f)
-			{
-				rightBloodTexture.SetActive(true);
-			}
-			else
-			{
-				rightBloodTexture.SetActive(false);
-			}
-			if (!playerMoveC.isZooming && (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage != 0 || !TrainingController.isPressSkip))
-			{
-				SetCrosshairVisibility(true);
-				UpdateCrosshairPositions();
-			}
-			else
-			{
-				SetCrosshairVisibility(false);
-			}
-		}
-		bool flag2 = true;
-		if (SceneManager.GetActiveScene().name == Defs.TrainingSceneName)
-		{
-			flag2 = false;
-		}
-		shopButton.GetComponent<UIButton>().isEnabled = flag2 && !turretPanel.activeSelf;
-		shopButtonInPause.GetComponent<UIButton>().isEnabled = flag2 && !_kBlockPauseShopButton;
-		if (!isMulti && zombieCreator != null)
-		{
-			int num10 = GlobalGameController.EnemiesToKill - zombieCreator.NumOfDeadZombies;
-			if (!Defs.IsSurvival && num10 == 0)
-			{
-				string text2 = ((!LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName)) ? LocalizationStore.Get("Key_0854") : LocalizationStore.Get("Key_0192"));
-				if (zombieCreator.bossShowm)
-				{
-					text2 = LocalizationStore.Get("Key_0855");
-				}
-				enemiesLeftLabel.SetActive(perfectLabels == null || !perfectLabels.gameObject.activeInHierarchy);
-				enemiesLeftLabel.GetComponent<UILabel>().text = text2;
-			}
-			else
-			{
-				enemiesLeftLabel.SetActive(false);
-			}
-		}
-		if (playerMoveC != null && playerMoveC.isMechActive)
-		{
-			if (!mechWasActive)
-			{
-				currentHealthStep = Mathf.CeilToInt(health());
-				currentArmorStep = Mathf.CeilToInt(armor());
-				pastMechHealth = playerMoveC.liveMech;
-				SetMechHealth();
-				mechWasActive = true;
-			}
-			else if (!mechInAnim && pastMechHealth != playerMoveC.liveMech)
-			{
-				StartCoroutine(AnimateMechHealth());
-			}
-			pastMechHealth = playerMoveC.liveMech;
+			sprite.gameObject.SetActive(false);
 		}
 		else
 		{
-			if (Defs.isDaterRegim)
-			{
-				for (int num11 = 0; num11 < Player_move_c.MaxPlayerGUIHealth; num11++)
-				{
-					hearts[num11].gameObject.SetActive(false);
-				}
-			}
-			else
-			{
-				if (playerMoveC.respawnedForGUI || mechWasActive)
-				{
-					currentMechHealthStep = Mathf.CeilToInt(playerMoveC.liveMech);
-					pastHealth = health();
-					SetHealth();
-				}
-				else if (!healthInAnim && pastHealth != health())
-				{
-					StartCoroutine(AnimateHealth());
-				}
-				pastHealth = health();
-			}
-			if (TrainingController.TrainingCompleted || TrainingController.CompletedTrainingStage > TrainingController.NewTrainingCompletedStage.None)
-			{
-				if (Defs.isDaterRegim)
-				{
-					for (int num12 = 0; num12 < Player_move_c.MaxPlayerGUIHealth; num12++)
-					{
-						armorShields[num12].gameObject.SetActive(false);
-					}
-					pastArmor = 0f;
-				}
-				else
-				{
-					if (playerMoveC.respawnedForGUI || mechWasActive)
-					{
-						currentMechHealthStep = Mathf.CeilToInt(playerMoveC.liveMech);
-						pastArmor = armor();
-						SetArmor();
-					}
-					else if (!armorInAnim && pastArmor != armor())
-					{
-						StartCoroutine(AnimateArmor());
-					}
-					pastArmor = armor();
-				}
-			}
-			else
-			{
-				for (int num13 = 0; num13 < Player_move_c.MaxPlayerGUIHealth; num13++)
-				{
-					armorShields[num13].gameObject.SetActive(false);
-				}
-			}
-			mechWasActive = false;
-			playerMoveC.respawnedForGUI = false;
-		}
-		if (Defs.isMulti && (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight))
-		{
-			int winningTeam = WeaponManager.sharedManager.myNetworkStartTable.GetWinningTeam();
-			mineBlue.SetActive(WeaponManager.sharedManager.myNetworkStartTable.myCommand > 0);
-			bool flag3 = WeaponManager.sharedManager.myNetworkStartTable.myCommand == winningTeam;
-			winningBlue.SetActive(winningTeam != 0 && flag3);
-			winningRed.SetActive(winningTeam != 0 && !flag3);
-		}
-		if (!Defs.isDaterRegim && Defs.isMulti && (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle))
-		{
-			int placeInTable = WeaponManager.sharedManager.myNetworkStartTable.GetPlaceInTable();
-			placeDeathmatchLabel.text = (placeInTable + 1).ToString();
-			placeCoopLabel.text = (placeInTable + 1).ToString();
-			firstPlaceGO.SetActive(placeInTable == 0);
-			firstPlaceCoop.SetActive(placeInTable == 0);
-		}
-		if (PauseGUIController.Instance != null)
-		{
-			bool flag4 = !PauseGUIController.Instance.IsPaused;
-			if (leftAnchor != null && leftAnchor.activeInHierarchy != flag4)
-			{
-				leftAnchor.SetActive(flag4);
-			}
-			if (swipeWeaponPanel != null && swipeWeaponPanel.gameObject.activeInHierarchy != flag4)
-			{
-				swipeWeaponPanel.gameObject.SetActive(flag4);
-			}
+			sprite.gameObject.SetActive(true);
+			sprite.spriteName = param.spriteName;
+			sprite.width = Mathf.RoundToInt(param.spriteSize.x);
+			sprite.height = Mathf.RoundToInt(param.spriteSize.y);
+			sprite.transform.localPosition = (!mirror ? param.offset : new Vector2(param.offset.x, -param.offset.y));
 		}
 	}
 
-	private void SetMechHealth()
+	private void SetCrosshairVisibility(bool visible)
 	{
-		currentHealthStep = Mathf.FloorToInt(pastMechHealth);
-		for (int i = 0; i < mechShields.Length; i++)
+		if (this.crosshairVisible == visible)
 		{
-			mechShields[i].SetIndex(Mathf.CeilToInt((pastMechHealth - (float)i) / 18f), HeartEffect.IndicatorType.Mech);
+			return;
 		}
+		this.crosshairVisible = visible;
+		this.aimCenterSprite.enabled = visible;
+		this.aimDownSprite.enabled = visible;
+		this.aimUpSprite.enabled = visible;
+		this.aimLeftSprite.enabled = visible;
+		this.aimRightSprite.enabled = visible;
+		this.aimUpLeftSprite.enabled = visible;
+		this.aimUpRightSprite.enabled = visible;
+		this.aimDownLeftSprite.enabled = visible;
+		this.aimDownRightSprite.enabled = visible;
+	}
+
+	public void SetEnablePerfectLabel(bool enabled)
+	{
+		if (this.perfectLabels == null)
+		{
+			return;
+		}
+		this.perfectLabels.gameObject.SetActive(enabled);
 	}
 
 	private void SetHealth()
 	{
-		currentHealthStep = Mathf.FloorToInt(pastHealth);
-		for (int i = 0; i < hearts.Length; i++)
+		this.currentHealthStep = Mathf.FloorToInt(this.pastHealth);
+		for (int i = 0; i < (int)this.hearts.Length; i++)
 		{
-			hearts[i].SetIndex(Mathf.CeilToInt((pastHealth - (float)i) / 9f), HeartEffect.IndicatorType.Hearts);
+			this.hearts[i].SetIndex(Mathf.CeilToInt((this.pastHealth - (float)i) / 9f), HeartEffect.IndicatorType.Hearts);
 		}
 	}
 
-	private void SetArmor()
+	public void SetInterfaceVisible(bool visible)
 	{
-		currentArmorStep = Mathf.FloorToInt(pastArmor);
-		for (int i = 0; i < armorShields.Length; i++)
-		{
-			armorShields[i].SetIndex(Mathf.CeilToInt((pastArmor - (float)i) / 9f), HeartEffect.IndicatorType.Armor);
-		}
-	}
-
-	private IEnumerator AnimateHealth()
-	{
-		healthInAnim = true;
-		currentHealthStep = Mathf.CeilToInt(pastHealth);
-		WaitForSeconds awaiter = new WaitForSeconds(0.05f);
-		while (currentHealthStep != Mathf.CeilToInt(health()))
-		{
-			int heartsStart = currentHealthStep - 9 * Mathf.FloorToInt((float)currentHealthStep / 9f);
-			int currentHealth = Mathf.CeilToInt(health());
-			if (currentHealth < 0)
-			{
-				currentHealth = 0;
-			}
-			bool minus = currentHealthStep > currentHealth;
-			if (minus)
-			{
-				heartsStart--;
-				if (heartsStart < 0)
-				{
-					heartsStart = 8;
-				}
-			}
-			currentHealthStep += ((!minus) ? 1 : (-1));
-			hearts[heartsStart].Animate((!minus) ? Mathf.CeilToInt((float)currentHealthStep / 9f) : Mathf.FloorToInt((float)currentHealthStep / 9f), HeartEffect.IndicatorType.Hearts);
-			yield return awaiter;
-		}
-		healthInAnim = false;
-	}
-
-	private IEnumerator AnimateArmor()
-	{
-		armorInAnim = true;
-		currentArmorStep = Mathf.CeilToInt(pastArmor);
-		WaitForSeconds awaiter = new WaitForSeconds(0.05f);
-		while (currentArmorStep != Mathf.CeilToInt(armor()))
-		{
-			int armorStart = currentArmorStep - 9 * Mathf.FloorToInt((float)currentArmorStep / 9f);
-			int currentArmor = Mathf.CeilToInt(armor());
-			if (currentArmor < 0)
-			{
-				currentArmor = 0;
-			}
-			bool minus = currentArmorStep > currentArmor;
-			if (minus)
-			{
-				armorStart--;
-				if (armorStart < 0)
-				{
-					armorStart = 8;
-				}
-			}
-			currentArmorStep += ((!minus) ? 1 : (-1));
-			armorShields[armorStart].Animate((!minus) ? Mathf.CeilToInt((float)currentArmorStep / 9f) : Mathf.FloorToInt((float)currentArmorStep / 9f), HeartEffect.IndicatorType.Armor);
-			yield return awaiter;
-		}
-		armorInAnim = false;
-	}
-
-	private IEnumerator AnimateMechHealth()
-	{
-		mechInAnim = true;
-		currentMechHealthStep = Mathf.CeilToInt(pastMechHealth);
-		WaitForSeconds awaiter = new WaitForSeconds(0.05f);
-		while (currentMechHealthStep != Mathf.CeilToInt(playerMoveC.liveMech))
-		{
-			int mechStart = currentMechHealthStep - 18 * Mathf.FloorToInt((float)currentMechHealthStep / 18f);
-			int currentMech = Mathf.CeilToInt(playerMoveC.liveMech);
-			if (currentMech < 0)
-			{
-				currentMech = 0;
-			}
-			bool minus = currentMechHealthStep > currentMech;
-			if (minus)
-			{
-				mechStart--;
-				if (mechStart < 0)
-				{
-					mechStart = 17;
-				}
-			}
-			currentMechHealthStep += ((!minus) ? 1 : (-1));
-			mechShields[mechStart].Animate((!minus) ? Mathf.CeilToInt((float)currentMechHealthStep / 18f) : Mathf.FloorToInt((float)currentMechHealthStep / 18f), HeartEffect.IndicatorType.Mech);
-			yield return awaiter;
-		}
-		mechInAnim = false;
-	}
-
-	public void SetScopeForWeapon(string num)
-	{
-		scopeText.SetActive(true);
-		string path = ((!Device.isWeakDevice && BuildSettings.BuildTargetPlatform != RuntimePlatform.MetroPlayerX64) ? ResPath.Combine("Scopes", "Scope_" + num) : ResPath.Combine("Scopes", "Scope_" + num + "_small"));
-		scopeText.GetComponent<UITexture>().mainTexture = Resources.Load<Texture>(path);
-	}
-
-	public void ResetScope()
-	{
-		scopeText.GetComponent<UITexture>().mainTexture = null;
-		scopeText.SetActive(false);
-	}
-
-	public void HandleWeaponEquipped(int catNabor)
-	{
-		int num = 0;
-		foreach (Weapon playerWeapon in WeaponManager.sharedManager.playerWeapons)
-		{
-			int num2 = playerWeapon.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1;
-			num++;
-		}
-		int childCount = changeWeaponWrap.transform.childCount;
-		for (int i = childCount; i < num; i++)
-		{
-			GameObject gameObject = UnityEngine.Object.Instantiate(weaponPreviewPrefab);
-			gameObject.name = "WeaponCat_" + i;
-			gameObject.transform.parent = changeWeaponWrap.transform;
-			gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-			gameObject.GetComponent<UITexture>().width = Mathf.RoundToInt((float)widthWeaponScrollPreview * 0.7f);
-			gameObject.GetComponent<UITexture>().height = Mathf.RoundToInt((float)widthWeaponScrollPreview * 0.7f);
-			gameObject.GetComponent<BoxCollider>().size = new Vector3((float)widthWeaponScrollPreview * 1.3f, (float)widthWeaponScrollPreview * 1.3f, 1f);
-		}
-		changeWeaponWrap.SortAlphabetically();
-		changeWeaponWrap.GetComponent<MyCenterOnChild>().enabled = false;
-		changeWeaponWrap.GetComponent<MyCenterOnChild>().enabled = true;
-		int num3 = 0;
-		for (int j = 0; j < 6; j++)
-		{
-			Texture texture = ShopNGUIController.TextureForCat(j);
-			if (!(texture != null))
-			{
-				continue;
-			}
-			weaponIcons[j].mainTexture = texture;
-			foreach (Transform item in changeWeaponWrap.transform)
-			{
-				if (item.name.Equals("WeaponCat_" + num3))
-				{
-					item.GetComponent<UITexture>().mainTexture = texture;
-					break;
-				}
-			}
-			num3++;
-		}
-		for (int k = 0; k < WeaponManager.sharedManager.playerWeapons.Count; k++)
-		{
-			changeWeaponWrap.transform.GetChild(k).GetComponent<WeaponIconController>().myWeaponSounds = ((Weapon)WeaponManager.sharedManager.playerWeapons[k]).weaponPrefab.GetComponent<WeaponSounds>();
-		}
-		SelectWeaponFromCategory(catNabor + 1);
-	}
-
-	public void BlinkNoAmmo(int count)
-	{
-		if (count == 0)
-		{
-			StopPlayingLowResourceBeep();
-		}
-		timerBlinkNoAmmo = (float)count * periodBlink;
-		blinkNoAmmoLabel.color = new Color(blinkNoAmmoLabel.color.r, blinkNoAmmoLabel.color.g, blinkNoAmmoLabel.color.b, 0f);
+		this.interfacePanel.GetComponent<UIPanel>().gameObject.SetActive(visible);
+		this.joystikPanel.gameObject.SetActive(visible);
+		this.shopPanel.gameObject.SetActive(visible);
+		this.bloodPanel.gameObject.SetActive(visible);
 	}
 
 	public static void SetLayerRecursively(GameObject go, int layerNumber)
 	{
 		Transform[] componentsInChildren = go.GetComponentsInChildren<Transform>(true);
-		foreach (Transform transform in componentsInChildren)
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
 		{
-			transform.gameObject.layer = layerNumber;
+			componentsInChildren[i].gameObject.layer = layerNumber;
 		}
 	}
 
-	private void OnDestroy()
+	private void SetMechHealth()
 	{
-		SetNGUITouchDragThreshold(40f);
-		sharedInGameGUI = null;
-		WeaponManager.WeaponEquipped -= HandleWeaponEquipped;
-		PauseNGUIController.ChatSettUpdated -= HandleChatSettUpdated;
-		PauseNGUIController.PlayerHandUpdated -= AdjustToPlayerHands;
-		ControlsSettingsBase.ControlsChanged -= AdjustToPlayerHands;
-		PauseNGUIController.SwitchingWeaponsUpdated -= SetSwitchingWeaponPanel;
-	}
-
-	public void SetInterfaceVisible(bool visible)
-	{
-		interfacePanel.GetComponent<UIPanel>().gameObject.SetActive(visible);
-		joystikPanel.gameObject.SetActive(visible);
-		shopPanel.gameObject.SetActive(visible);
-		bloodPanel.gameObject.SetActive(visible);
+		this.currentHealthStep = Mathf.FloorToInt(this.pastMechHealth);
+		for (int i = 0; i < (int)this.mechShields.Length; i++)
+		{
+			this.mechShields[i].SetIndex(Mathf.CeilToInt((this.pastMechHealth - (float)i) / 18f), HeartEffect.IndicatorType.Mech);
+		}
 	}
 
 	private void SetNGUITouchDragThreshold(float newValue)
 	{
-		if (UICamera.mainCamera != null && UICamera.mainCamera.GetComponent<UICamera>() != null)
+		if (!(UICamera.mainCamera != null) || !(UICamera.mainCamera.GetComponent<UICamera>() != null))
 		{
-			UICamera.mainCamera.GetComponent<UICamera>().touchDragThreshold = newValue;
+			UnityEngine.Debug.LogWarning("UICamera.mainCamera is null");
 		}
 		else
 		{
-			Debug.LogWarning("UICamera.mainCamera is null");
+			UICamera.mainCamera.GetComponent<UICamera>().touchDragThreshold = newValue;
 		}
+	}
+
+	public void SetScopeForWeapon(string num)
+	{
+		string str;
+		this.scopeText.SetActive(true);
+		str = (Device.isWeakDevice || BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64 ? ResPath.Combine("Scopes", string.Concat("Scope_", num, "_small")) : ResPath.Combine("Scopes", string.Concat("Scope_", num)));
+		this.scopeText.GetComponent<UITexture>().mainTexture = Resources.Load<Texture>(str);
+	}
+
+	public void SetSwipeWeaponPanelVisibility(bool visible)
+	{
+		this.swipeWeaponPanel.localPosition = (!visible ? InGameGUI.swipeWeaponPanelPos + new Vector3(10000f, 0f, 0f) : InGameGUI.swipeWeaponPanelPos);
+	}
+
+	public void SetSwitchingWeaponPanel()
+	{
+		if (!GlobalGameController.switchingWeaponSwipe)
+		{
+			Transform vector3 = InGameGUI.sharedInGameGUI.swipeWeaponPanel;
+			float single = InGameGUI.sharedInGameGUI.swipeWeaponPanel.localPosition.y;
+			Vector3 vector31 = InGameGUI.sharedInGameGUI.swipeWeaponPanel.localPosition;
+			vector3.localPosition = new Vector3(10000f, single, vector31.z);
+			InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(true);
+			InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(false);
+			for (int i = 0; i < (int)InGameGUI.sharedInGameGUI.upButtonsInShopPanel.Length; i++)
+			{
+				if (!PotionsController.sharedController.PotionIsActive(InGameGUI.sharedInGameGUI.upButtonsInShopPanel[i].GetComponent<ElexirInGameButtonController>().myPotion.name))
+				{
+					InGameGUI.sharedInGameGUI.upButtonsInShopPanel[i].GetComponent<ElexirInGameButtonController>().myLabelTime.gameObject.SetActive(false);
+				}
+			}
+		}
+		else
+		{
+			InGameGUI.sharedInGameGUI.swipeWeaponPanel.localPosition = InGameGUI.swipeWeaponPanelPos;
+			InGameGUI.sharedInGameGUI.shopPanelForTap.gameObject.SetActive(false);
+			InGameGUI.sharedInGameGUI.shopPanelForSwipe.gameObject.SetActive(true);
+		}
+	}
+
+	public void ShowCircularIndicatorOnReload(float length)
+	{
+		this.StopAllCircularIndicators();
+		this.reloadBar.SetActive(true);
+		this.reloadLabel.gameObject.SetActive(true);
+		base.Invoke("ReloadAmmo", length);
+		if (this.playerMoveC != null)
+		{
+			this.playerMoveC.isReloading = true;
+		}
+		this.RunCircularSpriteOn(this.reloadCircularSprite, length, () => {
+		});
 	}
 
 	public void ShowControlSchemeConfigurator()
 	{
 	}
 
-	[CompilerGenerated]
-	private static void _003CShowCircularIndicatorOnReload_003Em__17D()
+	public void ShowImpact()
 	{
+		this.impactTween.gameObject.SetActive(true);
+		this.impactTween.Play(true);
+		if (Defs.isSoundFX)
+		{
+			this.impactTween.GetComponent<UIPlaySound>().Play();
+		}
 	}
 
-	[CompilerGenerated]
-	private static UISprite _003CAdjustToPlayerHands_003Em__17F(GameObject go)
+	public void ShowTurretInterface()
 	{
-		return go.GetComponent<UISprite>();
+		this.swipeWeaponPanel.gameObject.SetActive(false);
+		this.shopPanelForSwipe.gameObject.SetActive(false);
+		this.shopPanelForTap.gameObject.SetActive(false);
+		this.runTurrelButton.GetComponent<UIButton>().isEnabled = false;
+		this.turretPanel.SetActive(true);
+		if (this.playerMoveC != null)
+		{
+			this.playerMoveC.ChangeWeapon(1001, false);
+		}
+		this._kBlockPauseShopButton = true;
 	}
+
+	private void Start()
+	{
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			this.SetSwipeWeaponPanelVisibility(false);
+		}
+		this.bankView.SetActive(!Device.isPixelGunLow);
+		this.bankViewLow.SetActive(Device.isPixelGunLow);
+		HOTween.Init(true, true, true);
+		HOTween.EnableOverwriteManager(true);
+		if (!Defs.isMulti && !Defs.IsSurvival)
+		{
+			this.CampaignContainer.SetActive(true);
+		}
+		if (!Defs.isMulti && Defs.IsSurvival)
+		{
+			this.survivalContainer.SetActive(true);
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch)
+		{
+			if (!Defs.isDaterRegim)
+			{
+				this.deathmatchContainer.SetActive(true);
+			}
+			else
+			{
+				this.daterContainer.SetActive(true);
+			}
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle)
+		{
+			this.timeBattleContainer.SetActive(true);
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight)
+		{
+			this.teamBattleContainer.SetActive(true);
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture)
+		{
+			this.flagCaptureContainer.SetActive(true);
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.DeadlyGames)
+		{
+			this.deadlygamesContainer.SetActive(true);
+		}
+		if (Defs.isMulti && ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints)
+		{
+			this.CapturePointContainer.SetActive(true);
+		}
+		this.turretPanel.SetActive(false);
+		if (this.runTurrelButton != null)
+		{
+			this.runTurrelButton.Clicked += new EventHandler(this.RunTurret);
+		}
+		if (this.cancelTurrelButton != null)
+		{
+			this.cancelTurrelButton.Clicked += new EventHandler(this.CancelTurret);
+		}
+		if (!this.isMulti)
+		{
+			this.zombieCreator = ZombieCreator.sharedCreator;
+		}
+		else
+		{
+			this.enemiesLeftLabel.SetActive(false);
+		}
+		this.AdjustToPlayerHands();
+		PauseNGUIController.PlayerHandUpdated += new Action(this.AdjustToPlayerHands);
+		PauseNGUIController.SwitchingWeaponsUpdated += new Action(this.SetSwitchingWeaponPanel);
+		WeaponManager.WeaponEquipped += new Action<int>(this.HandleWeaponEquipped);
+		int num = (!this.isMulti ? WeaponManager.sharedManager.CurrentWeaponIndex : WeaponManager.sharedManager.CurrentIndexOfLastUsedWeaponInPlayerWeapons());
+		this.HandleWeaponEquipped(((Weapon)WeaponManager.sharedManager.playerWeapons[num]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1);
+		if (num >= this.changeWeaponWrap.transform.childCount)
+		{
+			UnityEngine.Debug.LogError(string.Concat("InGameGUI: not weapon icon with index ", ((Weapon)WeaponManager.sharedManager.playerWeapons[num]).weaponPrefab.GetComponent<WeaponSounds>().categoryNabor - 1));
+		}
+		else
+		{
+			this.changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 1E+11f;
+			this.changeWeaponWrap.GetComponent<MyCenterOnChild>().CenterOn(this.changeWeaponWrap.transform.GetChild(num));
+			this.changeWeaponWrap.GetComponent<MyCenterOnChild>().springStrength = 8f;
+		}
+		if (this.gearToogle != null)
+		{
+			this.gearToogle.gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleGearToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[0] != null)
+		{
+			this.weaponCategoriesButtons[0].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandlePrimaryToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[1] != null)
+		{
+			this.weaponCategoriesButtons[1].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleBackupToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[2] != null)
+		{
+			this.weaponCategoriesButtons[2].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleMeleeToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[3] != null)
+		{
+			this.weaponCategoriesButtons[3].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleSpecialToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[4] != null)
+		{
+			this.weaponCategoriesButtons[4].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandleSniperToogleClicked);
+		}
+		if (this.weaponCategoriesButtons[5] != null)
+		{
+			this.weaponCategoriesButtons[5].gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandlePremiumToogleClicked);
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			this.gearToogle.GetComponent<UIToggle>().@value = false;
+			this.HandleGearToogleClicked(null, null);
+		}
+		for (int i = 0; i < (int)this.upButtonsInShopPanel.Length; i++)
+		{
+			this.StartUpdatePotionButton(this.upButtonsInShopPanel[i]);
+		}
+		for (int j = 0; j < (int)this.upButtonsInShopPanelSwipeRegim.Length; j++)
+		{
+			this.StartUpdatePotionButton(this.upButtonsInShopPanelSwipeRegim[j]);
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
+		{
+			this.fastShopPanel.transform.localPosition = new Vector3(-1000f, -1000f, -1f);
+			this.gearToogle.isEnabled = false;
+		}
+		this.SetNGUITouchDragThreshold(1f);
+	}
+
+	public void StartFireCircularIndicators(float length)
+	{
+		this.StopAllCircularIndicators();
+		this.RunCircularSpriteOn(this.fireCircularSprite, length, null);
+		this.RunCircularSpriteOn(this.fireAdditionalCrcualrSprite, length, null);
+	}
+
+	private void StartUpdatePotionButton(GameObject potionButton)
+	{
+		if (potionButton != null)
+		{
+			potionButton.gameObject.GetComponent<ButtonHandler>().Clicked += new EventHandler(this.HandlePotionClicked);
+			ElexirInGameButtonController component = potionButton.GetComponent<ElexirInGameButtonController>();
+			string str = component.myPotion.name;
+			string str1 = (!Defs.isDaterRegim ? str : GearManager.HolderQuantityForID(component.idForPriceInDaterRegim));
+			if (PotionsController.sharedController.PotionIsActive(str))
+			{
+				UIButton uIButton = potionButton.GetComponent<UIButton>();
+				component.isActivePotion = true;
+				component.myLabelTime.gameObject.SetActive(true);
+				component.myLabelTime.enabled = true;
+				component.priceLabel.SetActive(false);
+				component.myLabelCount.gameObject.SetActive(true);
+				component.plusSprite.SetActive(false);
+				UILabel uILabel = component.myLabelCount;
+				int num = Storager.getInt(str1, false);
+				uILabel.text = num.ToString();
+				uIButton.isEnabled = false;
+			}
+		}
+	}
+
+	public void StopAllCircularIndicators()
+	{
+		base.CancelInvoke("ReloadAmmo");
+		if (this.playerMoveC != null)
+		{
+			this.playerMoveC.isReloading = false;
+		}
+		if (this.circularSprites == null)
+		{
+			UnityEngine.Debug.LogWarning("Circular sprites is null!");
+			return;
+		}
+		UITexture[] uITextureArray = this.circularSprites;
+		for (int i = 0; i < (int)uITextureArray.Length; i++)
+		{
+			UITexture uITexture = uITextureArray[i];
+			HOTween.Kill(uITexture);
+			uITexture.fillAmount = 0f;
+		}
+		this.reloadLabel.gameObject.SetActive(false);
+		this.reloadBar.SetActive(false);
+	}
+
+	public void StopPlayingLowResourceBeep()
+	{
+		if (this._lowResourceBeepRoutine != null)
+		{
+			base.StopCoroutine(this._lowResourceBeepRoutine);
+			this._lowResourceBeepRoutine = null;
+		}
+	}
+
+	private void Update()
+	{
+		string str;
+		string str1;
+		object obj;
+		this.CheckWeaponScrollChanged();
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToSelectWeapon)
+		{
+			this.fastShopPanel.transform.localPosition = new Vector3(0f, 0f, -1f);
+		}
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.stepTraining == TrainingState.TapToThrowGrenade)
+		{
+			this.fastShopPanel.transform.localPosition = new Vector3(0f, 0f, -1f);
+		}
+		if (this.timerBlinkNoAmmo > 0f)
+		{
+			this.timerBlinkNoAmmo -= Time.deltaTime;
+		}
+		if (this.timerBlinkNoAmmo > 0f && this.playerMoveC != null && !this.playerMoveC.isMechActive)
+		{
+			this.blinkNoAmmoLabel.gameObject.SetActive(true);
+			float single = this.timerBlinkNoAmmo % this.periodBlink / this.periodBlink;
+			this.blinkNoAmmoLabel.color = new Color(this.blinkNoAmmoLabel.color.r, this.blinkNoAmmoLabel.color.g, this.blinkNoAmmoLabel.color.b, (single >= 0.5f ? (1f - single) * 2f : single * 2f));
+		}
+		if ((this.timerBlinkNoAmmo < 0f || this.playerMoveC != null && this.playerMoveC.isMechActive) && this.blinkNoAmmoLabel.gameObject.activeSelf)
+		{
+			this.blinkNoAmmoLabel.gameObject.SetActive(false);
+		}
+		if (this.playerMoveC != null)
+		{
+			int num = Mathf.FloorToInt(this.playerMoveC.CurHealth);
+			if (num < this.oldCountHeath && this.timerBlinkNoHeath < 0f && num < 3)
+			{
+				this.timerBlinkNoHeath = this.periodBlink * 3f;
+			}
+			if (num > 2)
+			{
+				this.timerBlinkNoHeath = -1f;
+			}
+			this.oldCountHeath = num;
+			if (this.timerBlinkNoHeath > 0f)
+			{
+				this.timerBlinkNoHeath -= Time.deltaTime;
+			}
+			if (this.timerBlinkNoHeath > 0f && !this.playerMoveC.isMechActive)
+			{
+				if (num > 0)
+				{
+					this.PlayLowResourceBeepIfNotPlaying(1);
+				}
+				this.blinkNoHeathLabel.gameObject.SetActive(true);
+				float single1 = this.timerBlinkNoHeath % this.periodBlink / this.periodBlink;
+				float single2 = (single1 >= 0.5f ? (1f - single1) * 2f : single1 * 2f);
+				UILabel color = this.blinkNoHeathLabel;
+				float single3 = this.blinkNoHeathLabel.color.r;
+				float single4 = this.blinkNoHeathLabel.color.g;
+				Color color1 = this.blinkNoHeathLabel.color;
+				color.color = new Color(single3, single4, color1.b, single2);
+				for (int i = 0; i < (int)this.blinkNoHeathFrames.Length; i++)
+				{
+					this.blinkNoHeathFrames[i].gameObject.SetActive(true);
+					this.blinkNoHeathFrames[i].color = new Color(1f, 1f, 1f, single2);
+				}
+			}
+		}
+		if ((this.timerBlinkNoHeath < 0f || this.playerMoveC == null || this.playerMoveC != null && this.playerMoveC.isMechActive) && this.blinkNoHeathLabel.gameObject.activeSelf)
+		{
+			this.blinkNoHeathLabel.gameObject.SetActive(false);
+			for (int j = 0; j < (int)this.blinkNoHeathFrames.Length; j++)
+			{
+				this.blinkNoHeathFrames[j].gameObject.SetActive(false);
+			}
+		}
+		for (int k = 0; k < (int)this.ammoCategoriesLabels.Length; k++)
+		{
+			if (this.ammoCategoriesLabels[k] != null)
+			{
+				bool flag = false;
+				if (this.weaponCategoriesButtons[k].isEnabled)
+				{
+					int num1 = 0;
+					while (num1 < WeaponManager.sharedManager.playerWeapons.Count)
+					{
+						Weapon item = (Weapon)WeaponManager.sharedManager.playerWeapons[num1];
+						if ((!item.weaponPrefab.GetComponent<WeaponSounds>().isMelee || item.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) && item.weaponPrefab.GetComponent<WeaponSounds>().categoryNabor == k + 1)
+						{
+							this.ammoCategoriesLabels[k].text = (!item.weaponPrefab.GetComponent<WeaponSounds>().isShotMelee ? string.Concat(item.currentAmmoInClip, "/", item.currentAmmoInBackpack) : (item.currentAmmoInClip + item.currentAmmoInBackpack).ToString());
+							flag = true;
+							break;
+						}
+						else
+						{
+							num1++;
+						}
+					}
+				}
+				if (!flag)
+				{
+					this.ammoCategoriesLabels[k].text = string.Empty;
+				}
+			}
+		}
+		if (this.timerShowNow > 0f)
+		{
+			this.timerShowNow -= Time.deltaTime;
+			if (!this.message_now.activeSelf)
+			{
+				this.message_now.SetActive(true);
+			}
+		}
+		else if (this.message_now.activeSelf)
+		{
+			this.message_now.SetActive(false);
+		}
+		if (this.isMulti && this.playerMoveC == null && WeaponManager.sharedManager.myPlayer != null)
+		{
+			this.playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
+		}
+		if (!this.isMulti && this.playerMoveC == null)
+		{
+			this.playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
+		}
+		if (this.isMulti && this.playerMoveC != null)
+		{
+			for (int l = 0; l < 3; l++)
+			{
+				UIPlaySound component = this.messageAddScore[l].GetComponent<UIPlaySound>();
+				if (!Defs.isSoundFX)
+				{
+					obj = null;
+				}
+				else
+				{
+					obj = 1;
+				}
+				component.volume = (float)obj;
+				float single5 = 0.3f;
+				float single6 = 0.2f;
+				if (l == 0)
+				{
+					float single7 = 1f;
+					if (this.playerMoveC.myScoreController.maxTimerSumMessage - this.playerMoveC.myScoreController.timerAddScoreShow[l] < single5)
+					{
+						single7 = 1f + single6 * (this.playerMoveC.myScoreController.maxTimerSumMessage - this.playerMoveC.myScoreController.timerAddScoreShow[l]) / single5;
+					}
+					if (this.playerMoveC.myScoreController.maxTimerSumMessage - this.playerMoveC.myScoreController.timerAddScoreShow[l] - single5 < single5)
+					{
+						single7 = 1f + single6 * (1f - (this.playerMoveC.myScoreController.maxTimerSumMessage - this.playerMoveC.myScoreController.timerAddScoreShow[l] - single5) / single5);
+					}
+					this.messageAddScore[l].transform.localScale = new Vector3(single7, single7, single7);
+				}
+				if (this.playerMoveC.timerShow[l] <= 0f)
+				{
+					this.killLabels[l].gameObject.SetActive(false);
+				}
+				else
+				{
+					this.killLabels[l].gameObject.SetActive(true);
+					this.killLabels[l].SetChatLabelText(this.playerMoveC.killedSpisok[l]);
+				}
+				if (this.playerMoveC.myScoreController.timerAddScoreShow[l] > 0f)
+				{
+					if (!this.messageAddScore[l].gameObject.activeSelf)
+					{
+						this.messageAddScore[l].gameObject.SetActive(true);
+					}
+					this.messageAddScore[l].text = this.playerMoveC.myScoreController.addScoreString[l];
+					this.messageAddScore[l].color = new Color(1f, 1f, 1f, (this.playerMoveC.myScoreController.timerAddScoreShow[l] <= 1f ? this.playerMoveC.myScoreController.timerAddScoreShow[l] : 1f));
+				}
+				else if (this.messageAddScore[l].gameObject.activeSelf)
+				{
+					this.messageAddScore[l].gameObject.SetActive(false);
+				}
+			}
+			if (this.isChatOn)
+			{
+				int num2 = 0;
+				for (int m = this.playerMoveC.messages.Count - 1; m >= 0 && this.playerMoveC.messages.Count - m - 1 < 3; m--)
+				{
+					if (Time.time - this.playerMoveC.messages[m].time >= 10f)
+					{
+						this.chatLabels[num2].SetActive(false);
+					}
+					else
+					{
+						if ((this.isInet || !(this.playerMoveC.messages[m].IDLocal == WeaponManager.sharedManager.myPlayer.GetComponent<NetworkView>().viewID)) && (!this.isInet || this.playerMoveC.messages[m].ID != WeaponManager.sharedManager.myPlayer.GetComponent<PhotonView>().viewID))
+						{
+							if (this.playerMoveC.messages[m].command == 0)
+							{
+								this.chatLabels[num2].GetComponent<UILabel>().color = new Color(1f, 1f, 0.15f, 1f);
+							}
+							if (this.playerMoveC.messages[m].command == 1)
+							{
+								this.chatLabels[num2].GetComponent<UILabel>().color = new Color(0f, 0f, 0.9f, 1f);
+							}
+							if (this.playerMoveC.messages[m].command == 2)
+							{
+								this.chatLabels[num2].GetComponent<UILabel>().color = new Color(1f, 0f, 0f, 1f);
+							}
+						}
+						else
+						{
+							this.chatLabels[num2].GetComponent<UILabel>().color = new Color(0f, 1f, 0.15f, 1f);
+						}
+						ChatLabel chatLabel = this.chatLabels[num2].GetComponent<ChatLabel>();
+						chatLabel.nickLabel.text = this.playerMoveC.messages[m].text;
+						chatLabel.iconSprite.spriteName = this.playerMoveC.messages[m].iconName;
+						Transform vector3 = chatLabel.iconSprite.transform;
+						float single8 = (float)(chatLabel.nickLabel.width + 20);
+						float single9 = vector3.localPosition.y;
+						Vector3 vector31 = vector3.localPosition;
+						vector3.localPosition = new Vector3(single8, single9, vector31.z);
+						chatLabel.clanTexture.mainTexture = this.playerMoveC.messages[m].clanLogo;
+						this.chatLabels[num2].SetActive(true);
+					}
+					num2++;
+				}
+				for (int n = num2; n < 3; n++)
+				{
+					this.chatLabels[num2].SetActive(false);
+				}
+			}
+			if (this.timerShowScorePict > 0f)
+			{
+				this.timerShowScorePict -= Time.deltaTime;
+			}
+			if (!this.isHunger || Initializer.players.Count != 2 || !this.hungerGameController.isGo || this.playerMoveC.timeHingerGame <= 10f)
+			{
+				if (this.duel.activeSelf)
+				{
+					this.duel.SetActive(false);
+				}
+				if (this.timerShowScorePict > 0f)
+				{
+					if ((!this.multyKillPanel.gameObject.activeSelf || this.scorePictName != this.multyKillSprite.spriteName) && (PauseGUIController.Instance == null || !PauseGUIController.Instance.IsPaused))
+					{
+						this.multyKillSprite.spriteName = this.scorePictName;
+						this.multyKillPanel.gameObject.SetActive(true);
+						this.multyKillPanel.GetComponent<MultyKill>().PlayTween();
+					}
+				}
+				else if (this.multyKillPanel.gameObject.activeSelf)
+				{
+					this.multyKillPanel.gameObject.SetActive(false);
+				}
+			}
+			else
+			{
+				this.duel.SetActive(true);
+				this.multyKillPanel.gameObject.SetActive(false);
+			}
+			if (this.isHunger && !this.hungerGameController.isGo)
+			{
+				this.timerStartHungerLabel.gameObject.SetActive(true);
+				int num3 = Mathf.FloorToInt(this.hungerGameController.goTimer);
+				if (num3 != 0)
+				{
+					str = string.Concat(string.Empty, num3);
+					this.timerStartHungerLabel.color = new Color(1f, 0f, 0f, 1f);
+				}
+				else
+				{
+					str = "GO!";
+					this.timerStartHungerLabel.color = new Color(0f, 1f, 0f, 1f);
+				}
+				this.timerStartHungerLabel.text = str;
+			}
+			else if (!this.isHunger || !this.hungerGameController.isGo || !this.hungerGameController.isShowGo)
+			{
+				this.timerStartHungerLabel.gameObject.SetActive(false);
+			}
+			else
+			{
+				this.timerStartHungerLabel.gameObject.SetActive(true);
+				this.timerStartHungerLabel.text = "GO!";
+			}
+		}
+		if (this.playerMoveC != null)
+		{
+			if (this.playerMoveC.timerShowDown <= 0f || this.playerMoveC.timerShowDown >= this.playerMoveC.maxTimeSetTimerShow - 0.03f)
+			{
+				this.downBloodTexture.SetActive(false);
+			}
+			else
+			{
+				this.downBloodTexture.SetActive(true);
+			}
+			if (this.playerMoveC.timerShowUp <= 0f || this.playerMoveC.timerShowUp >= this.playerMoveC.maxTimeSetTimerShow - 0.03f)
+			{
+				this.upBloodTexture.SetActive(false);
+			}
+			else
+			{
+				this.upBloodTexture.SetActive(true);
+			}
+			if (this.playerMoveC.timerShowLeft <= 0f || this.playerMoveC.timerShowLeft >= this.playerMoveC.maxTimeSetTimerShow - 0.03f)
+			{
+				this.leftBloodTexture.SetActive(false);
+			}
+			else
+			{
+				this.leftBloodTexture.SetActive(true);
+			}
+			if (this.playerMoveC.timerShowRight <= 0f || this.playerMoveC.timerShowRight >= this.playerMoveC.maxTimeSetTimerShow - 0.03f)
+			{
+				this.rightBloodTexture.SetActive(false);
+			}
+			else
+			{
+				this.rightBloodTexture.SetActive(true);
+			}
+			if (this.playerMoveC.isZooming || !TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None && TrainingController.isPressSkip)
+			{
+				this.SetCrosshairVisibility(false);
+			}
+			else
+			{
+				this.SetCrosshairVisibility(true);
+				this.UpdateCrosshairPositions();
+			}
+		}
+		bool flag1 = true;
+		if (SceneManager.GetActiveScene().name == Defs.TrainingSceneName)
+		{
+			flag1 = false;
+		}
+		this.shopButton.GetComponent<UIButton>().isEnabled = (!flag1 ? false : !this.turretPanel.activeSelf);
+		this.shopButtonInPause.GetComponent<UIButton>().isEnabled = (!flag1 ? false : !this._kBlockPauseShopButton);
+		if (!this.isMulti && this.zombieCreator != null)
+		{
+			int enemiesToKill = GlobalGameController.EnemiesToKill - this.zombieCreator.NumOfDeadZombies;
+			if (Defs.IsSurvival || enemiesToKill != 0)
+			{
+				this.enemiesLeftLabel.SetActive(false);
+			}
+			else
+			{
+				str1 = (!LevelBox.weaponsFromBosses.ContainsKey(Application.loadedLevelName) ? LocalizationStore.Get("Key_0854") : LocalizationStore.Get("Key_0192"));
+				if (this.zombieCreator.bossShowm)
+				{
+					str1 = LocalizationStore.Get("Key_0855");
+				}
+				this.enemiesLeftLabel.SetActive((this.perfectLabels == null ? true : !this.perfectLabels.gameObject.activeInHierarchy));
+				this.enemiesLeftLabel.GetComponent<UILabel>().text = str1;
+			}
+		}
+		if (!(this.playerMoveC != null) || !this.playerMoveC.isMechActive)
+		{
+			if (!Defs.isDaterRegim)
+			{
+				if (this.playerMoveC.respawnedForGUI || this.mechWasActive)
+				{
+					this.currentMechHealthStep = Mathf.CeilToInt(this.playerMoveC.liveMech);
+					this.pastHealth = this.health();
+					this.SetHealth();
+				}
+				else if (!this.healthInAnim && this.pastHealth != this.health())
+				{
+					base.StartCoroutine(this.AnimateHealth());
+				}
+				this.pastHealth = this.health();
+			}
+			else
+			{
+				for (int o = 0; o < Player_move_c.MaxPlayerGUIHealth; o++)
+				{
+					this.hearts[o].gameObject.SetActive(false);
+				}
+			}
+			if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage <= TrainingController.NewTrainingCompletedStage.None)
+			{
+				for (int p = 0; p < Player_move_c.MaxPlayerGUIHealth; p++)
+				{
+					this.armorShields[p].gameObject.SetActive(false);
+				}
+			}
+			else if (!Defs.isDaterRegim)
+			{
+				if (this.playerMoveC.respawnedForGUI || this.mechWasActive)
+				{
+					this.currentMechHealthStep = Mathf.CeilToInt(this.playerMoveC.liveMech);
+					this.pastArmor = this.armor();
+					this.SetArmor();
+				}
+				else if (!this.armorInAnim && this.pastArmor != this.armor())
+				{
+					base.StartCoroutine(this.AnimateArmor());
+				}
+				this.pastArmor = this.armor();
+			}
+			else
+			{
+				for (int q = 0; q < Player_move_c.MaxPlayerGUIHealth; q++)
+				{
+					this.armorShields[q].gameObject.SetActive(false);
+				}
+				this.pastArmor = 0f;
+			}
+			this.mechWasActive = false;
+			this.playerMoveC.respawnedForGUI = false;
+		}
+		else
+		{
+			if (!this.mechWasActive)
+			{
+				this.currentHealthStep = Mathf.CeilToInt(this.health());
+				this.currentArmorStep = Mathf.CeilToInt(this.armor());
+				this.pastMechHealth = this.playerMoveC.liveMech;
+				this.SetMechHealth();
+				this.mechWasActive = true;
+			}
+			else if (!this.mechInAnim && this.pastMechHealth != this.playerMoveC.liveMech)
+			{
+				base.StartCoroutine(this.AnimateMechHealth());
+			}
+			this.pastMechHealth = this.playerMoveC.liveMech;
+		}
+		if (Defs.isMulti && (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.CapturePoints || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.FlagCapture || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TeamFight))
+		{
+			int winningTeam = WeaponManager.sharedManager.myNetworkStartTable.GetWinningTeam();
+			this.mineBlue.SetActive(WeaponManager.sharedManager.myNetworkStartTable.myCommand > 0);
+			bool flag2 = WeaponManager.sharedManager.myNetworkStartTable.myCommand == winningTeam;
+			this.winningBlue.SetActive((winningTeam == 0 ? false : flag2));
+			this.winningRed.SetActive((winningTeam == 0 ? false : !flag2));
+		}
+		if (!Defs.isDaterRegim && Defs.isMulti && (ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.Deathmatch || ConnectSceneNGUIController.regim == ConnectSceneNGUIController.RegimGame.TimeBattle))
+		{
+			int placeInTable = WeaponManager.sharedManager.myNetworkStartTable.GetPlaceInTable();
+			this.placeDeathmatchLabel.text = (placeInTable + 1).ToString();
+			this.placeCoopLabel.text = (placeInTable + 1).ToString();
+			this.firstPlaceGO.SetActive(placeInTable == 0);
+			this.firstPlaceCoop.SetActive(placeInTable == 0);
+		}
+		if (PauseGUIController.Instance != null)
+		{
+			bool isPaused = !PauseGUIController.Instance.IsPaused;
+			if (this.leftAnchor != null && this.leftAnchor.activeInHierarchy != isPaused)
+			{
+				this.leftAnchor.SetActive(isPaused);
+			}
+			if (this.swipeWeaponPanel != null && this.swipeWeaponPanel.gameObject.activeInHierarchy != isPaused)
+			{
+				this.swipeWeaponPanel.gameObject.SetActive(isPaused);
+			}
+		}
+	}
+
+	private void UpdateCrosshairPositions()
+	{
+		float single;
+		if (this.playerMoveC == null || !this.playerMoveC.isMechActive)
+		{
+			single = WeaponManager.sharedManager.currentWeaponSounds.tekKoof * WeaponManager.sharedManager.currentWeaponSounds.startZone.y * 0.5f;
+			this.aimDown.transform.localPosition = new Vector3(0f, -this.aimPositions[1].y - single, 0f);
+			this.aimUp.transform.localPosition = new Vector3(0f, this.aimPositions[2].y + single, 0f);
+			this.aimLeft.transform.localPosition = new Vector3(-this.aimPositions[3].x - single, 0f, 0f);
+			this.aimDownLeft.transform.localPosition = new Vector3(-this.aimPositions[4].x - single, -this.aimPositions[4].y - single, 0f);
+			this.aimUpLeft.transform.localPosition = new Vector3(-this.aimPositions[5].x - single, this.aimPositions[5].y + single, 0f);
+			this.aimRight.transform.localPosition = new Vector3(this.aimPositions[3].x + single, 0f, 0f);
+			this.aimDownRight.transform.localPosition = new Vector3(this.aimPositions[4].x + single, -this.aimPositions[4].y - single, 0f);
+			this.aimUpRight.transform.localPosition = new Vector3(this.aimPositions[5].x + single, this.aimPositions[5].y + single, 0f);
+		}
+		else
+		{
+			single = 12f + this.playerMoveC.mechWeaponSounds.tekKoof * this.playerMoveC.mechWeaponSounds.startZone.y * 0.5f;
+			this.aimUp.transform.localPosition = new Vector3(0f, single, 0f);
+			this.aimUpRight.transform.localPosition = new Vector3(single, single, 0f);
+			this.aimRight.transform.localPosition = new Vector3(single, 0f, 0f);
+			this.aimDownRight.transform.localPosition = new Vector3(single, -single, 0f);
+			this.aimDown.transform.localPosition = new Vector3(0f, -single, 0f);
+			this.aimDownLeft.transform.localPosition = new Vector3(-single, -single, 0f);
+			this.aimLeft.transform.localPosition = new Vector3(-single, 0f, 0f);
+			this.aimUpLeft.transform.localPosition = new Vector3(-single, single, 0f);
+		}
+	}
+
+	public delegate float GetFloatVAlue();
+
+	public delegate int GetIntVAlue();
+
+	public delegate string GetString();
 }

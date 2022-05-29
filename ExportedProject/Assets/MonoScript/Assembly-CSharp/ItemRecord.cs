@@ -1,7 +1,7 @@
+using Rilisoft;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class ItemRecord
@@ -10,112 +10,159 @@ public class ItemRecord
 
 	private readonly SaltedInt _alternativePrice;
 
-	private static readonly System.Random _prng = new System.Random(1879142401);
+	private readonly static System.Random _prng;
 
 	private List<ItemPrice> _pricesForDifferentTiers;
 
-	public int Id { get; private set; }
-
-	public string Tag { get; private set; }
-
-	public string StorageId { get; private set; }
-
-	public string PrefabName { get; private set; }
-
-	public string ShopId { get; private set; }
-
-	public string ShopDisplayName { get; private set; }
-
-	public bool CanBuy { get; private set; }
-
-	public bool Deactivated { get; private set; }
-
-	public bool UseImagesFromFirstUpgrade { get; private set; }
-
-	private ItemPrice PriceForTierForThisItem
+	protected string alternativeCurrency
 	{
-		get
-		{
-			List<string> list = WeaponUpgrades.ChainForTag(Tag);
-			if (list != null)
-			{
-				string text = WeaponManager.FirstTagForOurTier(Tag);
-				if (text != null)
-				{
-					int num = list.IndexOf(text);
-					if (num >= 0 && _pricesForDifferentTiers.Count > num)
-					{
-						return _pricesForDifferentTiers[num];
-					}
-				}
-			}
-			Debug.LogWarning("Error in PriceForTierForThisItem: tag = " + (Tag ?? "null") + "  PrefabName: " + (PrefabName ?? "null"));
-			return new ItemPrice(100, "Coins");
-		}
-	}
-
-	public ItemPrice Price
-	{
-		get
-		{
-			ItemPrice value;
-			if (Defs2.GunPricesFromServer != null && Defs2.GunPricesFromServer.TryGetValue(PrefabName, out value) && value != null)
-			{
-				return value;
-			}
-			if (_pricesForDifferentTiers != null)
-			{
-				return PriceForTierForThisItem;
-			}
-			if (alternativePrice == -1)
-			{
-				return new ItemPrice(mainPrice, mainCurrency);
-			}
-			WeaponSounds weaponSounds = null;
-			weaponSounds = WeaponManager.AllWrapperPrefabs().Find(_003Cget_Price_003Em__557);
-			if (weaponSounds != null)
-			{
-				int price = ((!mainCurrency.Equals("GemsCurrency")) ? alternativePrice : mainPrice);
-				int num = ((!mainCurrency.Equals("Coins")) ? alternativePrice : mainPrice);
-				return new ItemPrice(price, "GemsCurrency");
-			}
-			return new ItemPrice(mainPrice, mainCurrency);
-		}
-	}
-
-	public bool TemporaryGun
-	{
-		get
-		{
-			return ShopId != null && StorageId == null;
-		}
-	}
-
-	private int mainPrice
-	{
-		get
-		{
-			return _mainPrice.Value;
-		}
+		get;
+		set;
 	}
 
 	protected int alternativePrice
 	{
 		get
 		{
-			return _alternativePrice.Value;
+			return this._alternativePrice.Value;
 		}
 	}
 
-	protected string mainCurrency { get; set; }
+	public bool CanBuy
+	{
+		get;
+		private set;
+	}
 
-	protected string alternativeCurrency { get; set; }
+	public bool Deactivated
+	{
+		get;
+		private set;
+	}
+
+	public int Id
+	{
+		get;
+		private set;
+	}
+
+	protected string mainCurrency
+	{
+		get;
+		set;
+	}
+
+	private int mainPrice
+	{
+		get
+		{
+			return this._mainPrice.Value;
+		}
+	}
+
+	public string PrefabName
+	{
+		get;
+		private set;
+	}
+
+	public ItemPrice Price
+	{
+		get
+		{
+			ItemPrice itemPrice;
+			if (Defs2.GunPricesFromServer != null && Defs2.GunPricesFromServer.TryGetValue(this.PrefabName, out itemPrice) && itemPrice != null)
+			{
+				return itemPrice;
+			}
+			if (this._pricesForDifferentTiers != null)
+			{
+				return this.PriceForTierForThisItem;
+			}
+			if (this.alternativePrice == -1)
+			{
+				return new ItemPrice(this.mainPrice, this.mainCurrency);
+			}
+			if (WeaponManager.AllWrapperPrefabs().Find((WeaponSounds w) => (this.PrefabName == null ? false : w.name == this.PrefabName)) == null)
+			{
+				return new ItemPrice(this.mainPrice, this.mainCurrency);
+			}
+			int num = (!this.mainCurrency.Equals("GemsCurrency") ? this.alternativePrice : this.mainPrice);
+			int num1 = (!this.mainCurrency.Equals("Coins") ? this.alternativePrice : this.mainPrice);
+			return new ItemPrice(num, "GemsCurrency");
+		}
+	}
+
+	private ItemPrice PriceForTierForThisItem
+	{
+		get
+		{
+			List<string> strs = WeaponUpgrades.ChainForTag(this.Tag);
+			if (strs != null)
+			{
+				string str = WeaponManager.FirstTagForOurTier(this.Tag);
+				if (str != null)
+				{
+					int num = strs.IndexOf(str);
+					if (num >= 0 && this._pricesForDifferentTiers.Count > num)
+					{
+						return this._pricesForDifferentTiers[num];
+					}
+				}
+			}
+			Debug.LogWarning(string.Concat("Error in PriceForTierForThisItem: tag = ", this.Tag ?? "null", "  PrefabName: ", this.PrefabName ?? "null"));
+			return new ItemPrice(100, "Coins");
+		}
+	}
+
+	public string ShopDisplayName
+	{
+		get;
+		private set;
+	}
+
+	public string ShopId
+	{
+		get;
+		private set;
+	}
+
+	public string StorageId
+	{
+		get;
+		private set;
+	}
+
+	public string Tag
+	{
+		get;
+		private set;
+	}
+
+	public bool TemporaryGun
+	{
+		get
+		{
+			return (this.ShopId == null ? false : this.StorageId == null);
+		}
+	}
+
+	public bool UseImagesFromFirstUpgrade
+	{
+		get;
+		private set;
+	}
+
+	static ItemRecord()
+	{
+		ItemRecord._prng = new System.Random(1879142401);
+	}
 
 	public ItemRecord(int id, string tag, string storageId, string prefabName, string shopId, string shopDisplayName, bool canBuy, bool deactivated, List<ItemPrice> pricesForDiffTiers, bool useImageOfFirstUpgrade = false)
 	{
-		SetMainFields(id, tag, storageId, prefabName, shopId, shopDisplayName, canBuy, deactivated, useImageOfFirstUpgrade);
-		_pricesForDifferentTiers = pricesForDiffTiers;
-		if (_pricesForDifferentTiers == null || _pricesForDifferentTiers.Count < 3)
+		this.SetMainFields(id, tag, storageId, prefabName, shopId, shopDisplayName, canBuy, deactivated, useImageOfFirstUpgrade);
+		this._pricesForDifferentTiers = pricesForDiffTiers;
+		if (this._pricesForDifferentTiers == null || this._pricesForDifferentTiers.Count < 3)
 		{
 			Debug.LogError("ItemRecord: _pricesForDifferentTiers is null, or Count < 3!");
 		}
@@ -123,29 +170,23 @@ public class ItemRecord
 
 	public ItemRecord(int id, string tag, string storageId, string prefabName, string shopId, string shopDisplayName, int price, bool canBuy, bool deactivated, string currency = "Coins", int secondCurrencyPrice = -1, bool useImageOfFirstUpgrade = false)
 	{
-		SetMainFields(id, tag, storageId, prefabName, shopId, shopDisplayName, canBuy, deactivated, useImageOfFirstUpgrade);
-		_mainPrice = new SaltedInt(_prng.Next(), price);
-		_alternativePrice = new SaltedInt(_prng.Next(), secondCurrencyPrice);
-		mainCurrency = currency;
-		alternativeCurrency = ((!mainCurrency.Equals("Coins")) ? "Coins" : "GemsCurrency");
+		this.SetMainFields(id, tag, storageId, prefabName, shopId, shopDisplayName, canBuy, deactivated, useImageOfFirstUpgrade);
+		this._mainPrice = new SaltedInt(ItemRecord._prng.Next(), price);
+		this._alternativePrice = new SaltedInt(ItemRecord._prng.Next(), secondCurrencyPrice);
+		this.mainCurrency = currency;
+		this.alternativeCurrency = (!this.mainCurrency.Equals("Coins") ? "Coins" : "GemsCurrency");
 	}
 
 	private void SetMainFields(int id, string tag, string storageId, string prefabName, string shopId, string shopDisplayName, bool canBuy, bool deactivated, bool useImageOfFirstUpgrade)
 	{
-		Id = id;
-		Tag = tag;
-		StorageId = storageId;
-		PrefabName = prefabName;
-		ShopId = shopId;
-		ShopDisplayName = shopDisplayName;
-		CanBuy = canBuy;
-		Deactivated = deactivated;
-		UseImagesFromFirstUpgrade = useImageOfFirstUpgrade;
-	}
-
-	[CompilerGenerated]
-	private bool _003Cget_Price_003Em__557(WeaponSounds w)
-	{
-		return PrefabName != null && w.name == PrefabName;
+		this.Id = id;
+		this.Tag = tag;
+		this.StorageId = storageId;
+		this.PrefabName = prefabName;
+		this.ShopId = shopId;
+		this.ShopDisplayName = shopDisplayName;
+		this.CanBuy = canBuy;
+		this.Deactivated = deactivated;
+		this.UseImagesFromFirstUpgrade = useImageOfFirstUpgrade;
 	}
 }

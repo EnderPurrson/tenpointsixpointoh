@@ -19,44 +19,44 @@ namespace Rilisoft
 
 		public ScopeLogger(string caller, string callee, bool enabled)
 		{
-			_caller = caller ?? string.Empty;
-			_callee = callee ?? string.Empty;
-			_enabled = enabled;
-			if (_enabled)
+			this._caller = caller ?? string.Empty;
+			this._callee = callee ?? string.Empty;
+			this._enabled = enabled;
+			if (!this._enabled)
 			{
-				_startTime = Time.realtimeSinceStartup;
-				_startFrame = Time.frameCount;
-				string text = ((!string.IsNullOrEmpty(_caller)) ? "{0} > {1}: {2:f3}, {3}" : "> {1}: {2:f3}, {3}");
-				string format = ((!Application.isEditor) ? text : ("<color=orange>" + text + "</color>"));
-				Debug.LogFormat(format, _caller, _callee, _startTime, _startFrame);
+				this._startTime = 0f;
+				this._startFrame = 0;
 			}
 			else
 			{
-				_startTime = 0f;
-				_startFrame = 0;
+				this._startTime = Time.realtimeSinceStartup;
+				this._startFrame = Time.frameCount;
+				string str = (!string.IsNullOrEmpty(this._caller) ? "{0} > {1}: {2:f3}, {3}" : "> {1}: {2:f3}, {3}");
+				string str1 = (!Application.isEditor ? str : string.Concat("<color=orange>", str, "</color>"));
+				Debug.LogFormat(str1, new object[] { this._caller, this._callee, this._startTime, this._startFrame });
 			}
-			_initialized = true;
+			this._initialized = true;
 		}
 
-		public ScopeLogger(string callee, bool enabled)
-			: this(string.Empty, callee, enabled)
+		public ScopeLogger(string callee, bool enabled) : this(string.Empty, callee, enabled)
 		{
 		}
 
 		public void Dispose()
 		{
-			if (_initialized)
+			if (!this._initialized)
 			{
-				if (_enabled)
-				{
-					string text = ((!string.IsNullOrEmpty(_caller)) ? "{0} < {1}: +{2:f3}, +{3}" : "< {1}: +{2:f3}, +{3}");
-					string format = ((!Application.isEditor) ? text : ("<color=orange>" + text + "</color>"));
-					Debug.LogFormat(format, _caller, _callee, Time.realtimeSinceStartup - _startTime, Time.frameCount - _startFrame);
-				}
-				_callee = string.Empty;
-				_caller = string.Empty;
-				_initialized = false;
+				return;
 			}
+			if (this._enabled)
+			{
+				string str = (!string.IsNullOrEmpty(this._caller) ? "{0} < {1}: +{2:f3}, +{3}" : "< {1}: +{2:f3}, +{3}");
+				string str1 = (!Application.isEditor ? str : string.Concat("<color=orange>", str, "</color>"));
+				Debug.LogFormat(str1, new object[] { this._caller, this._callee, Time.realtimeSinceStartup - this._startTime, Time.frameCount - this._startFrame });
+			}
+			this._callee = string.Empty;
+			this._caller = string.Empty;
+			this._initialized = false;
 		}
 	}
 }

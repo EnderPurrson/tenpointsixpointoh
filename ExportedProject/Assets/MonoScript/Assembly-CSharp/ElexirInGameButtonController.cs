@@ -1,5 +1,6 @@
-using System.Linq;
 using Rilisoft;
+using System;
+using System.Linq;
 using UnityEngine;
 
 public class ElexirInGameButtonController : MonoBehaviour
@@ -26,112 +27,113 @@ public class ElexirInGameButtonController : MonoBehaviour
 
 	public string idForPriceInDaterRegim;
 
+	public ElexirInGameButtonController()
+	{
+	}
+
 	private void Awake()
 	{
-		string text = ((!Defs.isDaterRegim) ? myPotion.name : idForPriceInDaterRegim);
-		string text2 = myPotion.name;
-		if (GearManager.Gear.Contains(text))
+		string str = (!Defs.isDaterRegim ? this.myPotion.name : this.idForPriceInDaterRegim);
+		string str1 = this.myPotion.name;
+		if (GearManager.Gear.Contains<string>(str))
 		{
-			text = GearManager.OneItemIDForGear(text, GearManager.CurrentNumberOfUphradesForGear(text));
+			str = GearManager.OneItemIDForGear(str, GearManager.CurrentNumberOfUphradesForGear(str));
 		}
-		isKnifeMap = SceneLoader.ActiveSceneName.Equals("Knife");
-		if (Defs.isHunger || isKnifeMap)
+		this.isKnifeMap = SceneLoader.ActiveSceneName.Equals("Knife");
+		if (Defs.isHunger || this.isKnifeMap)
 		{
-			myButton.disabledSprite = "game_clear";
-			myButton.isEnabled = false;
-			lockSprite.SetActive(true);
+			this.myButton.disabledSprite = "game_clear";
+			this.myButton.isEnabled = false;
+			this.lockSprite.SetActive(true);
 		}
-		ItemPrice itemPrice = VirtualCurrencyHelper.Price(text);
-		if (text2 != null && text2.Equals(GearManager.Grenade))
+		ItemPrice itemPrice = VirtualCurrencyHelper.Price(str);
+		if (str1 != null && str1.Equals(GearManager.Grenade))
 		{
 			itemPrice = new ItemPrice(itemPrice.Price * GearManager.ItemsInPackForGear(GearManager.Grenade), itemPrice.Currency);
 		}
-		priceLabel.GetComponent<UILabel>().text = itemPrice.Price.ToString();
-		PotionsController.PotionDisactivated += HandlePotionDisactivated;
-	}
-
-	private void Start()
-	{
-		OnEnable();
+		this.priceLabel.GetComponent<UILabel>().text = itemPrice.Price.ToString();
+		PotionsController.PotionDisactivated += new Action<string>(this.HandlePotionDisactivated);
 	}
 
 	private void HandlePotionDisactivated(string obj)
 	{
-		if (obj.Equals(myPotion.name))
+		if (!obj.Equals(this.myPotion.name))
 		{
-			myButton.isEnabled = true;
-			myLabelTime.text = string.Empty;
-			string key = ((!Defs.isDaterRegim) ? obj : GearManager.HolderQuantityForID(idForPriceInDaterRegim));
-			int @int = Storager.getInt(key, false);
-			myLabelTime.enabled = false;
-			isActivePotion = false;
-			myLabelTime.gameObject.SetActive(base.gameObject.activeSelf);
-			if (@int == 0)
-			{
-				SetStateBuy();
-			}
-			else
-			{
-				SetStateUse();
-			}
+			return;
+		}
+		this.myButton.isEnabled = true;
+		this.myLabelTime.text = string.Empty;
+		int num = Storager.getInt((!Defs.isDaterRegim ? obj : GearManager.HolderQuantityForID(this.idForPriceInDaterRegim)), false);
+		this.myLabelTime.enabled = false;
+		this.isActivePotion = false;
+		this.myLabelTime.gameObject.SetActive(base.gameObject.activeSelf);
+		if (num != 0)
+		{
+			this.SetStateUse();
+		}
+		else
+		{
+			this.SetStateBuy();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		PotionsController.PotionDisactivated -= new Action<string>(this.HandlePotionDisactivated);
+	}
+
+	private void OnDisable()
+	{
+		if (!this.isActivePotion)
+		{
+			this.myLabelTime.gameObject.SetActive(false);
+		}
+	}
+
+	private void OnEnable()
+	{
+		int num = Storager.getInt((!Defs.isDaterRegim ? this.myPotion.name : GearManager.HolderQuantityForID(this.idForPriceInDaterRegim)), false);
+		this.myLabelCount.text = num.ToString();
+		this.myLabelTime.gameObject.SetActive(true);
+		if (num != 0)
+		{
+			this.SetStateUse();
+		}
+		else if (!this.isActivePotion)
+		{
+			this.SetStateBuy();
 		}
 	}
 
 	private void SetStateBuy()
 	{
-		myButton.normalSprite = "game_clear_yellow";
-		myButton.pressedSprite = "game_clear_yellow_n";
-		priceLabel.SetActive(true);
-		myLabelCount.gameObject.SetActive(false);
-		plusSprite.SetActive(true);
-		myLabelTime.enabled = false;
+		this.myButton.normalSprite = "game_clear_yellow";
+		this.myButton.pressedSprite = "game_clear_yellow_n";
+		this.priceLabel.SetActive(true);
+		this.myLabelCount.gameObject.SetActive(false);
+		this.plusSprite.SetActive(true);
+		this.myLabelTime.enabled = false;
 	}
 
 	private void SetStateUse()
 	{
-		myLabelCount.gameObject.SetActive(true);
-		plusSprite.SetActive(false);
-		myButton.normalSprite = "game_clear";
-		myButton.pressedSprite = "game_clear_n";
-		priceLabel.SetActive(false);
-		if (!isActivePotion)
+		this.myLabelCount.gameObject.SetActive(true);
+		this.plusSprite.SetActive(false);
+		this.myButton.normalSprite = "game_clear";
+		this.myButton.pressedSprite = "game_clear_n";
+		this.priceLabel.SetActive(false);
+		if (!this.isActivePotion)
 		{
-			myLabelTime.enabled = false;
+			this.myLabelTime.enabled = false;
 		}
+	}
+
+	private void Start()
+	{
+		this.OnEnable();
 	}
 
 	private void Update()
 	{
-	}
-
-	private void OnDestroy()
-	{
-		PotionsController.PotionDisactivated -= HandlePotionDisactivated;
-	}
-
-	private void OnEnable()
-	{
-		int @int = Storager.getInt((!Defs.isDaterRegim) ? myPotion.name : GearManager.HolderQuantityForID(idForPriceInDaterRegim), false);
-		myLabelCount.text = @int.ToString();
-		myLabelTime.gameObject.SetActive(true);
-		if (@int == 0)
-		{
-			if (!isActivePotion)
-			{
-				SetStateBuy();
-			}
-		}
-		else
-		{
-			SetStateUse();
-		}
-	}
-
-	private void OnDisable()
-	{
-		if (!isActivePotion)
-		{
-			myLabelTime.gameObject.SetActive(false);
-		}
 	}
 }

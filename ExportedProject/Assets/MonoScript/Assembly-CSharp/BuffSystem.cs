@@ -1,246 +1,39 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public class BuffSystem : MonoBehaviour
 {
-	public class ParamByTier
-	{
-		public float timeToGetGunLow;
-
-		public float timeToGetGunMiddle;
-
-		public float timeToGetGunHigh;
-
-		public float lowKillRate;
-
-		public float highKillRate;
-
-		public float a;
-
-		public float b;
-
-		public float midbottom;
-
-		public float midtop;
-
-		public float top;
-
-		public float bottom;
-
-		public ParamByTier()
-		{
-			timeToGetGunLow = 2400f;
-			timeToGetGunMiddle = 3600f;
-			timeToGetGunHigh = 4800f;
-			lowKillRate = 0.5f;
-			highKillRate = 1.2f;
-			a = 50f;
-			b = 50f;
-			midbottom = 0.8f;
-			midtop = 1.2f;
-			top = 2f;
-			bottom = 0f;
-		}
-
-		public ParamByTier(Dictionary<string, object> dictionary)
-		{
-			timeToGetGunLow = Convert.ToSingle(dictionary["timeGunLow"]);
-			timeToGetGunMiddle = Convert.ToSingle(dictionary["timeGunMiddle"]);
-			timeToGetGunHigh = Convert.ToSingle(dictionary["timeGunHigh"]);
-			lowKillRate = Convert.ToSingle(dictionary["lowKillRate"]);
-			highKillRate = Convert.ToSingle(dictionary["highKillRate"]);
-			a = Convert.ToSingle(dictionary["form_a"]);
-			b = Convert.ToSingle(dictionary["form_b"]);
-			midbottom = Convert.ToSingle(dictionary["form_midbottom"]);
-			midtop = Convert.ToSingle(dictionary["form_midtop"]);
-			top = Convert.ToSingle(dictionary["form_top"]);
-			if (dictionary.ContainsKey("form_bottom"))
-			{
-				bottom = Convert.ToSingle(dictionary["form_bottom"]);
-			}
-		}
-	}
-
-	private class BuffParameter
-	{
-		public int priority;
-
-		public SituationBuffType type;
-
-		public float healthBuff;
-
-		public float damageBuff;
-
-		public float time;
-
-		public float timeForPurchase;
-
-		public BuffParameter(SituationBuffType type, float healthBuff, float damageBuff, float time, int priority)
-		{
-			this.type = type;
-			this.healthBuff = healthBuff;
-			this.damageBuff = damageBuff;
-			this.priority = priority;
-			this.time = time;
-			timeForPurchase = 1800f;
-		}
-
-		public BuffParameter(Dictionary<string, object> dictionary)
-		{
-			type = (SituationBuffType)(int)Enum.Parse(typeof(SituationBuffType), Convert.ToString(dictionary["type"]));
-			if (dictionary.ContainsKey("health"))
-			{
-				healthBuff = Convert.ToSingle(dictionary["health"]);
-			}
-			else
-			{
-				healthBuff = 1f;
-			}
-			if (dictionary.ContainsKey("damage"))
-			{
-				damageBuff = Convert.ToSingle(dictionary["damage"]);
-			}
-			else
-			{
-				damageBuff = 1f;
-			}
-			if (dictionary.ContainsKey("timeToBuy"))
-			{
-				timeForPurchase = Convert.ToSingle(dictionary["timeToBuy"]);
-			}
-			else
-			{
-				timeForPurchase = 0f;
-			}
-			priority = Convert.ToInt32(dictionary["prior"]);
-			time = Convert.ToSingle(dictionary["time"]);
-		}
-	}
-
-	private class SituationBuff
-	{
-		public BuffParameter param;
-
-		private float expireTime;
-
-		public string weapon;
-
-		public bool isDebuff
-		{
-			get
-			{
-				return param.healthBuff < 1f || param.damageBuff < 1f;
-			}
-		}
-
-		public bool expired
-		{
-			get
-			{
-				return expireTime < NotificationController.instance.currentPlayTimeMatch;
-			}
-		}
-
-		public SituationBuff(BuffParameter param, string weaponBuff)
-		{
-			this.param = param;
-			weapon = weaponBuff;
-			expireTime = NotificationController.instance.currentPlayTimeMatch + param.time;
-		}
-
-		public SituationBuff(BuffParameter param, string weaponBuff, float savedTime)
-		{
-			this.param = param;
-			weapon = weaponBuff;
-			expireTime = savedTime;
-		}
-
-		public Dictionary<string, object> Serialize()
-		{
-			Dictionary<string, object> dictionary = new Dictionary<string, object>();
-			dictionary["type"] = (int)param.type;
-			dictionary["expire"] = expireTime;
-			if (!string.IsNullOrEmpty(weapon))
-			{
-				dictionary["weapon"] = weapon;
-			}
-			return dictionary;
-		}
-	}
-
-	private enum CheckStatus
-	{
-		None = 0,
-		NewPlayer = 1,
-		OldPlayer = 2,
-		Regular = 3
-	}
-
-	private enum InteractionType
-	{
-		None = 0,
-		Kill = 1,
-		Death = 2
-	}
-
-	private enum SituationBuffType
-	{
-		DebuffBeforeGun = 0,
-		DebuffAfterGun = 1,
-		TierLvlUp = 2,
-		TryGunBuff = 3,
-		BuyedTryGun = 4,
-		Coin1 = 5,
-		Coin7 = 6,
-		Coin2 = 7,
-		Coin3 = 8,
-		Coin4 = 9,
-		Coin5 = 10,
-		Coin8 = 11,
-		Gem1 = 12,
-		Gem2 = 13,
-		Gem3 = 14,
-		Gem4 = 15,
-		Gem5 = 16,
-		Gem6 = 17,
-		Gem7 = 18,
-		Count = 19
-	}
-
 	public const int DiscountTryGun = 50;
 
 	public const int TryGunPromoDuration = 3600;
 
 	private static BuffSystem _instance;
 
-	private bool[] interactionBuffs = new bool[17]
-	{
-		true, true, false, true, false, true, false, false, true, false,
-		false, true, false, false, true, false, false
-	};
+	private bool[] interactionBuffs = new bool[] { typeof(u003cPrivateImplementationDetailsu003e).GetField("$$field-32").FieldHandle };
 
-	private ParamByTier[] paramsByTier;
+	private BuffSystem.ParamByTier[] paramsByTier;
 
-	private Dictionary<SituationBuffType, BuffParameter> buffParamByType;
+	private Dictionary<BuffSystem.SituationBuffType, BuffSystem.BuffParameter> buffParamByType;
 
-	private List<SituationBuff> situationBuffs = new List<SituationBuff>();
+	private List<BuffSystem.SituationBuff> situationBuffs = new List<BuffSystem.SituationBuff>();
 
-	private SituationBuff currentBuff;
+	private BuffSystem.SituationBuff currentBuff;
 
-	private SituationBuff weaponBuff;
+	private BuffSystem.SituationBuff weaponBuff;
 
 	private bool configLoaded;
 
 	private bool loadValuesCalled;
 
-	private CheckStatus status;
+	private BuffSystem.CheckStatus status;
 
-	private InteractionType[] interactions = new InteractionType[30];
+	private BuffSystem.InteractionType[] interactions = new BuffSystem.InteractionType[30];
 
 	private bool interactionsChanged;
 
@@ -248,7 +41,7 @@ public class BuffSystem : MonoBehaviour
 
 	private int interactionCounter;
 
-	private BuffParameter waitingForPurchaseBuff;
+	private BuffSystem.BuffParameter waitingForPurchaseBuff;
 
 	private float waitingForPurchaseTime;
 
@@ -286,59 +79,15 @@ public class BuffSystem : MonoBehaviour
 
 	private float killRateCached = -1f;
 
-	private readonly SituationBuffType[] gemsBuffByIndex = new SituationBuffType[7]
-	{
-		SituationBuffType.Gem1,
-		SituationBuffType.Gem2,
-		SituationBuffType.Gem3,
-		SituationBuffType.Gem4,
-		SituationBuffType.Gem5,
-		SituationBuffType.Gem6,
-		SituationBuffType.Gem7
-	};
+	private readonly BuffSystem.SituationBuffType[] gemsBuffByIndex = new BuffSystem.SituationBuffType[] { BuffSystem.SituationBuffType.Gem1, BuffSystem.SituationBuffType.Gem2, BuffSystem.SituationBuffType.Gem3, BuffSystem.SituationBuffType.Gem4, BuffSystem.SituationBuffType.Gem5, BuffSystem.SituationBuffType.Gem6, BuffSystem.SituationBuffType.Gem7 };
 
-	private readonly SituationBuffType[] coinsBuffByIndex = new SituationBuffType[7]
-	{
-		SituationBuffType.Coin1,
-		SituationBuffType.Coin7,
-		SituationBuffType.Coin2,
-		SituationBuffType.Coin3,
-		SituationBuffType.Coin4,
-		SituationBuffType.Coin5,
-		SituationBuffType.Coin8
-	};
+	private readonly BuffSystem.SituationBuffType[] coinsBuffByIndex = new BuffSystem.SituationBuffType[] { BuffSystem.SituationBuffType.Coin1, BuffSystem.SituationBuffType.Coin7, BuffSystem.SituationBuffType.Coin2, BuffSystem.SituationBuffType.Coin3, BuffSystem.SituationBuffType.Coin4, BuffSystem.SituationBuffType.Coin5, BuffSystem.SituationBuffType.Coin8 };
 
-	[CompilerGenerated]
-	private static Func<object, ParamByTier> _003C_003Ef__am_0024cache23;
-
-	[CompilerGenerated]
-	private static Func<object, InteractionType> _003C_003Ef__am_0024cache24;
-
-	[CompilerGenerated]
-	private static Func<SituationBuff, Dictionary<string, object>> _003C_003Ef__am_0024cache25;
-
-	[CompilerGenerated]
-	private static Func<InteractionType, int> _003C_003Ef__am_0024cache26;
-
-	public static BuffSystem instance
+	public bool haveAllInteractons
 	{
 		get
 		{
-			if (_instance == null)
-			{
-				GameObject gameObject = new GameObject("BuffSystem");
-				UnityEngine.Object.DontDestroyOnLoad(gameObject);
-				_instance = gameObject.AddComponent<BuffSystem>();
-			}
-			return _instance;
-		}
-	}
-
-	private ParamByTier tierParam
-	{
-		get
-		{
-			return paramsByTier[ExpController.Instance.OurTier];
+			return this.status != BuffSystem.CheckStatus.NewPlayer;
 		}
 	}
 
@@ -346,15 +95,29 @@ public class BuffSystem : MonoBehaviour
 	{
 		get
 		{
-			return interactionCounter >= 4;
+			return this.interactionCounter >= 4;
 		}
 	}
 
-	public bool haveAllInteractons
+	public static BuffSystem instance
 	{
 		get
 		{
-			return status != CheckStatus.NewPlayer;
+			if (BuffSystem._instance == null)
+			{
+				GameObject gameObject = new GameObject("BuffSystem");
+				UnityEngine.Object.DontDestroyOnLoad(gameObject);
+				BuffSystem._instance = gameObject.AddComponent<BuffSystem>();
+			}
+			return BuffSystem._instance;
+		}
+	}
+
+	private BuffSystem.ParamByTier tierParam
+	{
+		get
+		{
+			return this.paramsByTier[ExpController.Instance.OurTier];
 		}
 	}
 
@@ -362,769 +125,1005 @@ public class BuffSystem : MonoBehaviour
 	{
 		get
 		{
-			return (weaponBuff == null) ? 1f : Mathf.Clamp(weaponBuff.param.damageBuff, (GetKillrateByInteractions() < 0.8f) ? 1 : 0, (GetKillrateByInteractions() > 2f) ? 1 : 2);
+			float single;
+			object obj;
+			if (this.weaponBuff == null)
+			{
+				single = 1f;
+			}
+			else
+			{
+				float single1 = this.weaponBuff.param.damageBuff;
+				if (this.GetKillrateByInteractions() >= 0.8f)
+				{
+					obj = null;
+				}
+				else
+				{
+					obj = 1;
+				}
+				single = Mathf.Clamp(single1, (float)obj, (float)((this.GetKillrateByInteractions() <= 2f ? 2 : 1)));
+			}
+			return single;
 		}
+	}
+
+	public BuffSystem()
+	{
+	}
+
+	private void AddSituationBuff(BuffSystem.SituationBuffType type, string buffForWeapon = "")
+	{
+		this.situationBuffs.Add(new BuffSystem.SituationBuff(this.buffParamByType[type], buffForWeapon));
+		this.SaveValues();
+		this.CheckForPlayerBuff();
+	}
+
+	private void Awake()
+	{
+		this.TryLoadConfig();
+		this.LoadValues();
+		this.CheckForPlayerBuff();
+		ShopNGUIController.GunOrArmorBought += new Action(this.OnGunBuyed);
 	}
 
 	public void BuffsActive(bool value)
 	{
-		buffsActive = value;
-		CheckExpiredBuffs();
+		this.buffsActive = value;
+		this.CheckExpiredBuffs();
+	}
+
+	private void CheckAndWriteInteraction(BuffSystem.InteractionType value)
+	{
+		if (!this.buffsActive)
+		{
+			return;
+		}
+		switch (this.status)
+		{
+			case BuffSystem.CheckStatus.NewPlayer:
+			{
+				if (this.interactionCounter < (int)this.interactionBuffs.Length && !this.interactionBuffs[this.interactionCounter])
+				{
+					this.WriteInteraction(value);
+				}
+				this.interactionCounter++;
+				if (this.interactionCounter >= (int)this.interactionBuffs.Length)
+				{
+					this.lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
+					this.status = BuffSystem.CheckStatus.Regular;
+				}
+				break;
+			}
+			case BuffSystem.CheckStatus.OldPlayer:
+			{
+				this.WriteInteraction(value);
+				this.interactionCounter++;
+				if (this.interactionCounter >= this.interactionCountForOldPlayer)
+				{
+					this.lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
+					this.status = BuffSystem.CheckStatus.Regular;
+				}
+				break;
+			}
+			case BuffSystem.CheckStatus.Regular:
+			{
+				this.WriteInteraction(value);
+				this.interactionCounter++;
+				break;
+			}
+		}
+		this.CheckForPlayerBuff();
+	}
+
+	private void CheckExpiredBuffs()
+	{
+		if (this.buffsActive)
+		{
+			for (int i = 0; i < this.situationBuffs.Count; i++)
+			{
+				if (this.situationBuffs[i].expired && this.situationBuffs[i].param.type != BuffSystem.SituationBuffType.TryGunBuff)
+				{
+					if (this.situationBuffs[i].param.type == BuffSystem.SituationBuffType.DebuffBeforeGun)
+					{
+						this.GiveTryGunToPlayer();
+					}
+					this.situationBuffs.RemoveAt(i);
+					i--;
+				}
+			}
+		}
 	}
 
 	public void CheckForPlayerBuff()
 	{
-		damageBuff = 1f;
-		healthBuff = 1f;
-		if (buffsActive)
+		object obj;
+		object obj1;
+		this.damageBuff = 1f;
+		this.healthBuff = 1f;
+		if (this.buffsActive)
 		{
-			float killrateByInteractions = GetKillrateByInteractions();
-			currentBuff = null;
-			weaponBuff = null;
-			for (int i = 0; i < situationBuffs.Count; i++)
+			float killrateByInteractions = this.GetKillrateByInteractions();
+			this.currentBuff = null;
+			this.weaponBuff = null;
+			for (int i = 0; i < this.situationBuffs.Count; i++)
 			{
-				if (string.IsNullOrEmpty(situationBuffs[i].weapon))
+				if (!string.IsNullOrEmpty(this.situationBuffs[i].weapon))
 				{
-					if (currentBuff == null || currentBuff.param.priority < situationBuffs[i].param.priority)
+					if (this.weaponBuff == null || this.weaponBuff.param.priority < this.situationBuffs[i].param.priority)
 					{
-						currentBuff = situationBuffs[i];
+						this.weaponBuff = this.situationBuffs[i];
 					}
-					if (currentBuff != null)
+					if (this.weaponBuff != null)
 					{
-						Debug.Log(string.Format("<color=green>Buff active: {0}</color>", currentBuff.param.type.ToString()));
+						Debug.Log(string.Format("<color=green>Weapon buff active: {0}</color>", this.weaponBuffValue));
 					}
 				}
 				else
 				{
-					if (weaponBuff == null || weaponBuff.param.priority < situationBuffs[i].param.priority)
+					if (this.currentBuff == null || this.currentBuff.param.priority < this.situationBuffs[i].param.priority)
 					{
-						weaponBuff = situationBuffs[i];
+						this.currentBuff = this.situationBuffs[i];
 					}
-					if (weaponBuff != null)
+					if (this.currentBuff != null)
 					{
-						Debug.Log(string.Format("<color=green>Weapon buff active: {0}</color>", weaponBuffValue));
+						Debug.Log(string.Format("<color=green>Buff active: {0}</color>", this.currentBuff.param.type.ToString()));
 					}
 				}
 			}
-			switch (status)
+			switch (this.status)
 			{
-			case CheckStatus.NewPlayer:
-				if (interactionCounter < interactionBuffs.Length && interactionBuffs[interactionCounter])
+				case BuffSystem.CheckStatus.NewPlayer:
 				{
-					healthBuff = ((ExperienceController.sharedController.currentLevel != 1 && !ShopNGUIController.NoviceArmorAvailable) ? firstBuffNoArmor : firstBuffArmor);
+					if (this.interactionCounter < (int)this.interactionBuffs.Length && this.interactionBuffs[this.interactionCounter])
+					{
+						this.healthBuff = (ExperienceController.sharedController.currentLevel == 1 || ShopNGUIController.NoviceArmorAvailable ? this.firstBuffArmor : this.firstBuffNoArmor);
+					}
+					goto case BuffSystem.CheckStatus.OldPlayer;
 				}
-				break;
-			case CheckStatus.Regular:
-				if (currentBuff != null)
+				case BuffSystem.CheckStatus.OldPlayer:
 				{
-					damageBuff = currentBuff.param.damageBuff;
-					healthBuff = currentBuff.param.healthBuff;
+					if (this.status == BuffSystem.CheckStatus.NewPlayer)
+					{
+						break;
+					}
+					float single = this.damageBuff;
+					if (killrateByInteractions >= 0.8f)
+					{
+						obj = null;
+					}
+					else
+					{
+						obj = 1;
+					}
+					this.damageBuff = Mathf.Clamp(single, (float)obj, (float)((killrateByInteractions <= 2f ? 2 : 1)));
+					float single1 = this.healthBuff;
+					if (killrateByInteractions >= 0.8f)
+					{
+						obj1 = null;
+					}
+					else
+					{
+						obj1 = 1;
+					}
+					this.healthBuff = Mathf.Clamp(single1, (float)obj1, (float)((killrateByInteractions <= 2f ? 2 : 1)));
+					break;
 				}
-				else
+				case BuffSystem.CheckStatus.Regular:
 				{
-					healthBuff = (damageBuff = 1f + 0.01f * GetBuffPercentByKillRate(killrateByInteractions));
+					if (this.currentBuff == null)
+					{
+						float buffPercentByKillRate = 1f + 0.01f * this.GetBuffPercentByKillRate(killrateByInteractions);
+						this.damageBuff = buffPercentByKillRate;
+						this.healthBuff = buffPercentByKillRate;
+					}
+					else
+					{
+						this.damageBuff = this.currentBuff.param.damageBuff;
+						this.healthBuff = this.currentBuff.param.healthBuff;
+					}
+					goto case BuffSystem.CheckStatus.OldPlayer;
 				}
-				break;
-			}
-			if (status != CheckStatus.NewPlayer)
-			{
-				damageBuff = Mathf.Clamp(damageBuff, (killrateByInteractions < 0.8f) ? 1 : 0, (killrateByInteractions > 2f) ? 1 : 2);
-				healthBuff = Mathf.Clamp(healthBuff, (killrateByInteractions < 0.8f) ? 1 : 0, (killrateByInteractions > 2f) ? 1 : 2);
+				default:
+				{
+					goto case BuffSystem.CheckStatus.OldPlayer;
+				}
 			}
 		}
 		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayerMoveC != null)
 		{
-			WeaponManager.sharedManager.myPlayerMoveC.SetupBuffParameters(damageBuff, healthBuff);
+			WeaponManager.sharedManager.myPlayerMoveC.SetupBuffParameters(this.damageBuff, this.healthBuff);
 		}
 	}
 
-	private float GetBuffPercentByKillRate(float value)
+	private void ClearBuffOfType(BuffSystem.SituationBuffType type)
 	{
-		float num = Mathf.Round(10f * value) / 10f;
-		Debug.Log(string.Format("<color=green>Killrate: {0}</color>", num));
-		if (tierParam.midbottom < num && num < tierParam.midtop)
+		for (int i = 0; i < this.situationBuffs.Count; i++)
 		{
-			return 0f;
+			if (this.situationBuffs[i].param.type == type)
+			{
+				this.situationBuffs.RemoveAt(i);
+				i--;
+			}
 		}
-		return tierParam.b - Mathf.Clamp(num, tierParam.bottom, tierParam.top) * tierParam.a;
 	}
 
-	public void KillInteraction()
+	private void ClearDebuffs()
 	{
-		CheckAndWriteInteraction(InteractionType.Kill);
+		for (int i = 0; i < this.situationBuffs.Count; i++)
+		{
+			if (this.situationBuffs[i].isDebuff)
+			{
+				this.situationBuffs.RemoveAt(i);
+				i--;
+			}
+		}
 	}
 
 	public void DeathInteraction()
 	{
-		CheckAndWriteInteraction(InteractionType.Death);
-		SaveInteractions();
+		this.CheckAndWriteInteraction(BuffSystem.InteractionType.Death);
+		this.SaveInteractions();
 	}
 
-	private void CheckAndWriteInteraction(InteractionType value)
+	public void EndRound()
 	{
-		if (!buffsActive)
+		float killrateByInteractions = this.GetKillrateByInteractions();
+		Debug.Log(killrateByInteractions);
+		if (this.isFirstRounds && this.allRoundsCount < 10)
 		{
-			return;
+			AnalyticsStuff.LogFirstBattlesKillRate(this.allRoundsCount, killrateByInteractions);
 		}
-		switch (status)
+		this.allRoundsCount++;
+		if (this.allRoundsCount == 3)
 		{
-		case CheckStatus.NewPlayer:
-			if (interactionCounter < interactionBuffs.Length && !interactionBuffs[interactionCounter])
-			{
-				WriteInteraction(value);
-			}
-			interactionCounter++;
-			if (interactionCounter >= interactionBuffs.Length)
-			{
-				lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
-				status = CheckStatus.Regular;
-			}
-			break;
-		case CheckStatus.OldPlayer:
-			WriteInteraction(value);
-			interactionCounter++;
-			if (interactionCounter >= interactionCountForOldPlayer)
-			{
-				lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
-				status = CheckStatus.Regular;
-			}
-			break;
-		case CheckStatus.Regular:
-			WriteInteraction(value);
-			interactionCounter++;
-			break;
+			AnalyticsStuff.TrySendOnceToAppsFlyer("third_round_complete");
 		}
-		CheckForPlayerBuff();
+		if (this.allRoundsCount > 9)
+		{
+			this.isFirstRounds = false;
+		}
+		if (this.buffsActive && this.configLoaded)
+		{
+			this.CheckExpiredBuffs();
+			if (this.status != BuffSystem.CheckStatus.NewPlayer && this.status != BuffSystem.CheckStatus.OldPlayer)
+			{
+				if (this.lastGiveGunTime + this.GetTimeForGun() < NotificationController.instance.currentPlayTimeMatch)
+				{
+					this.lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
+					if (this.GetKillrateByInteractions() <= this.debuffKillrateForGun)
+					{
+						this.GiveTryGunToPlayer();
+					}
+					else
+					{
+						this.AddSituationBuff(BuffSystem.SituationBuffType.DebuffBeforeGun, string.Empty);
+					}
+				}
+				if (this.readyToGiveGun && WeaponManager.sharedManager._currentFilterMap == 0)
+				{
+					this.giveTryGun = true;
+				}
+			}
+		}
+		this.SaveValues();
+		this.CheckForPlayerBuff();
 	}
 
-	private void WriteInteraction(InteractionType value)
+	private float GetBuffPercentByKillRate(float value)
 	{
-		interactionsChanged = true;
-		killRateCached = -1f;
-		for (int num = interactions.Length - 2; num >= 0; num--)
+		float single = Mathf.Round(10f * value) / 10f;
+		Debug.Log(string.Format("<color=green>Killrate: {0}</color>", single));
+		if (this.tierParam.midbottom < single && single < this.tierParam.midtop)
 		{
-			interactions[num + 1] = interactions[num];
+			return 0f;
 		}
-		interactions[0] = value;
+		return this.tierParam.b - Mathf.Clamp(single, this.tierParam.bottom, this.tierParam.top) * this.tierParam.a;
 	}
 
 	public float GetKillrateByInteractions()
 	{
-		if (killRateCached != -1f)
+		if (this.killRateCached != -1f)
 		{
-			return killRateCached;
+			return this.killRateCached;
 		}
 		int num = 0;
-		int num2 = 0;
-		for (int i = 0; i < interactions.Length; i++)
+		int num1 = 0;
+		for (int i = 0; i < (int)this.interactions.Length; i++)
 		{
-			switch (interactions[i])
+			BuffSystem.InteractionType interactionType = this.interactions[i];
+			if (interactionType == BuffSystem.InteractionType.Kill)
 			{
-			case InteractionType.Kill:
 				num++;
-				break;
-			case InteractionType.Death:
-				num2++;
-				break;
+			}
+			else if (interactionType == BuffSystem.InteractionType.Death)
+			{
+				num1++;
 			}
 		}
-		if (num2 != 0)
+		if (num1 == 0)
 		{
-			killRateCached = (float)num / (float)num2;
+			this.killRateCached = (float)num;
 		}
 		else
 		{
-			killRateCached = num;
+			this.killRateCached = (float)num / (float)num1;
 		}
-		return killRateCached;
+		return this.killRateCached;
 	}
 
-	public void OnGetProgress()
+	public int GetRoundsForGun()
 	{
-		if (status == CheckStatus.None || status == CheckStatus.NewPlayer)
+		float killrateByInteractions = this.GetKillrateByInteractions();
+		if (killrateByInteractions < this.tierParam.lowKillRate)
 		{
-			status = CheckStatus.OldPlayer;
-			damageBuff = 1f;
-			healthBuff = 1f;
-			isFirstRounds = false;
+			return this.roundsForGunLow;
 		}
-		SaveValues();
+		if (killrateByInteractions < this.tierParam.highKillRate)
+		{
+			return this.roundsForGunMiddle;
+		}
+		return this.roundsForGunHigh;
 	}
 
-	private void WriteDefaultParameters()
+	private float GetTimeForGun()
 	{
-		configLoaded = false;
-		if (paramsByTier == null)
+		float killrateByInteractions = this.GetKillrateByInteractions();
+		if (killrateByInteractions < this.tierParam.lowKillRate)
 		{
-			paramsByTier = new ParamByTier[6];
-			for (int i = 0; i < paramsByTier.Length; i++)
-			{
-				paramsByTier[i] = new ParamByTier();
-			}
+			return this.tierParam.timeToGetGunLow;
 		}
-		buffParamByType = new Dictionary<SituationBuffType, BuffParameter>();
-		buffParamByType.Add(SituationBuffType.DebuffBeforeGun, new BuffParameter(SituationBuffType.DebuffBeforeGun, 1f, 0.5f, 540f, -1));
-		buffParamByType.Add(SituationBuffType.DebuffAfterGun, new BuffParameter(SituationBuffType.DebuffAfterGun, 1f, 0.5f, 180f, -1));
-		buffParamByType.Add(SituationBuffType.TierLvlUp, new BuffParameter(SituationBuffType.TierLvlUp, 1f, 0.7f, 240f, -1));
-		buffParamByType.Add(SituationBuffType.TryGunBuff, new BuffParameter(SituationBuffType.TryGunBuff, 1f, 1.25f, 0f, 1));
-		buffParamByType.Add(SituationBuffType.BuyedTryGun, new BuffParameter(SituationBuffType.BuyedTryGun, 1f, 1.25f, 600f, 2));
-		buffParamByType.Add(SituationBuffType.Coin1, new BuffParameter(SituationBuffType.Coin1, 1f, 1.25f, 300f, 3));
-		buffParamByType.Add(SituationBuffType.Coin7, new BuffParameter(SituationBuffType.Coin7, 1f, 1.25f, 400f, 3));
-		buffParamByType.Add(SituationBuffType.Coin2, new BuffParameter(SituationBuffType.Coin2, 1f, 1.25f, 500f, 3));
-		buffParamByType.Add(SituationBuffType.Coin3, new BuffParameter(SituationBuffType.Coin3, 1f, 1.25f, 600f, 3));
-		buffParamByType.Add(SituationBuffType.Coin4, new BuffParameter(SituationBuffType.Coin4, 1f, 1.25f, 700f, 3));
-		buffParamByType.Add(SituationBuffType.Coin5, new BuffParameter(SituationBuffType.Coin5, 1f, 1.25f, 800f, 3));
-		buffParamByType.Add(SituationBuffType.Coin8, new BuffParameter(SituationBuffType.Coin8, 1f, 1.25f, 900f, 3));
-		buffParamByType.Add(SituationBuffType.Gem1, new BuffParameter(SituationBuffType.Gem1, 1f, 1.25f, 300f, 4));
-		buffParamByType.Add(SituationBuffType.Gem2, new BuffParameter(SituationBuffType.Gem2, 1f, 1.25f, 400f, 4));
-		buffParamByType.Add(SituationBuffType.Gem3, new BuffParameter(SituationBuffType.Gem3, 1f, 1.25f, 500f, 4));
-		buffParamByType.Add(SituationBuffType.Gem4, new BuffParameter(SituationBuffType.Gem4, 1f, 1.25f, 600f, 4));
-		buffParamByType.Add(SituationBuffType.Gem5, new BuffParameter(SituationBuffType.Gem5, 1f, 1.25f, 700f, 4));
-		buffParamByType.Add(SituationBuffType.Gem6, new BuffParameter(SituationBuffType.Gem6, 1f, 1.25f, 800f, 4));
-		buffParamByType.Add(SituationBuffType.Gem7, new BuffParameter(SituationBuffType.Gem7, 1f, 1.25f, 900f, 4));
+		if (killrateByInteractions < this.tierParam.highKillRate)
+		{
+			return this.tierParam.timeToGetGunMiddle;
+		}
+		return this.tierParam.timeToGetGunHigh;
 	}
 
-	public void TryLoadConfig()
+	private void GiveTryGunToPlayer()
 	{
-		if (configLoaded)
-		{
-			return;
-		}
-		if (!Storager.hasKey("BuffsParam"))
-		{
-			WriteDefaultParameters();
-			return;
-		}
-		string @string = Storager.getString("BuffsParam", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary == null || !dictionary.ContainsKey("buffSettings"))
-		{
-			WriteDefaultParameters();
-			return;
-		}
-		Dictionary<string, object> dictionary2 = dictionary["buffSettings"] as Dictionary<string, object>;
-		string text = string.Empty;
-		if (dictionary2.ContainsKey("roundsForGunLow"))
-		{
-			roundsForGunLow = Convert.ToInt32(dictionary2["roundsForGunLow"]);
-		}
-		else
-		{
-			text = "get roundsForGunLow";
-		}
-		if (dictionary2.ContainsKey("roundsForGunMiddle"))
-		{
-			roundsForGunMiddle = Convert.ToInt32(dictionary2["roundsForGunMiddle"]);
-		}
-		else
-		{
-			text = "get roundsForGunMiddle";
-		}
-		if (dictionary2.ContainsKey("roundsForGunHigh"))
-		{
-			roundsForGunHigh = Convert.ToInt32(dictionary2["roundsForGunHigh"]);
-		}
-		else
-		{
-			text = "get roundsForGunHigh";
-		}
-		if (dictionary2.ContainsKey("timeForDiscount"))
-		{
-			timeForDiscount = Convert.ToSingle(dictionary2["timeForDiscount"]);
-		}
-		else
-		{
-			text = "get timeForDiscount";
-		}
-		if (dictionary2.ContainsKey("discountValue"))
-		{
-			discountValue = Convert.ToInt32(dictionary2["discountValue"]);
-		}
-		else
-		{
-			text = "get discountValue";
-		}
-		if (dictionary2.ContainsKey("debuffKillrateForGun"))
-		{
-			debuffKillrateForGun = Convert.ToSingle(dictionary2["debuffKillrateForGun"]);
-		}
-		else
-		{
-			text = "get debuffKillrateForGun";
-		}
-		if (dictionary2.ContainsKey("firstBuffArmor"))
-		{
-			firstBuffArmor = Convert.ToSingle(dictionary2["firstBuffArmor"]);
-		}
-		else
-		{
-			text = "get firstBuffArmor";
-		}
-		if (dictionary2.ContainsKey("firstBuffNoArmor"))
-		{
-			firstBuffNoArmor = Convert.ToSingle(dictionary2["firstBuffNoArmor"]);
-		}
-		else
-		{
-			text = "get firstBuffNoArmor";
-		}
-		if (dictionary2.ContainsKey("tierParams"))
-		{
-			List<object> list = dictionary2["tierParams"] as List<object>;
-			if (list != null)
-			{
-				if (_003C_003Ef__am_0024cache23 == null)
-				{
-					_003C_003Ef__am_0024cache23 = _003CTryLoadConfig_003Em__3;
-				}
-				paramsByTier = list.Select(_003C_003Ef__am_0024cache23).ToArray();
-			}
-			else
-			{
-				text = "tierParams == null";
-			}
-		}
-		else
-		{
-			text = "get tierParams";
-		}
-		if (dictionary2.ContainsKey("buffsParams"))
-		{
-			List<object> list2 = dictionary2["buffsParams"] as List<object>;
-			buffParamByType = new Dictionary<SituationBuffType, BuffParameter>();
-			for (int i = 0; i < list2.Count; i++)
-			{
-				Dictionary<string, object> dictionary3 = list2[i] as Dictionary<string, object>;
-				SituationBuffType key = (SituationBuffType)(int)Enum.Parse(typeof(SituationBuffType), Convert.ToString(dictionary3["type"]));
-				buffParamByType.Add(key, new BuffParameter(dictionary3));
-			}
-		}
-		else
-		{
-			text = "get buffsParams";
-		}
-		if (!string.IsNullOrEmpty(text))
-		{
-			Debug.LogError("Error Deserialize JSON: buffSettings - " + text);
-			WriteDefaultParameters();
-		}
-		else
-		{
-			configLoaded = true;
-		}
+		this.readyToGiveGun = true;
+	}
+
+	public bool haveBuffForWeapon(string weapon)
+	{
+		return (this.weaponBuff == null || string.IsNullOrEmpty(weapon) ? false : this.weaponBuff.weapon == weapon);
+	}
+
+	public void KillInteraction()
+	{
+		this.CheckAndWriteInteraction(BuffSystem.InteractionType.Kill);
 	}
 
 	private void LoadValues()
 	{
-		loadValuesCalled = true;
-		string @string = Storager.getString("buffsValues", false);
-		Dictionary<string, object> dictionary = Json.Deserialize(@string) as Dictionary<string, object>;
-		if (dictionary != null)
+		this.loadValuesCalled = true;
+		string str = Storager.getString("buffsValues", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs != null)
 		{
-			if (dictionary.ContainsKey("interactionCount"))
+			if (strs.ContainsKey("interactionCount"))
 			{
-				interactionCounter = Convert.ToInt32(dictionary["interactionCount"]);
+				this.interactionCounter = Convert.ToInt32(strs["interactionCount"]);
 			}
-			if (dictionary.ContainsKey("allRoundsCount"))
+			if (strs.ContainsKey("allRoundsCount"))
 			{
-				allRoundsCount = Convert.ToInt32(dictionary["allRoundsCount"]);
+				this.allRoundsCount = Convert.ToInt32(strs["allRoundsCount"]);
 			}
-			if (dictionary.ContainsKey("isFirstRounds"))
+			if (strs.ContainsKey("isFirstRounds"))
 			{
-				isFirstRounds = Convert.ToInt32(dictionary["isFirstRounds"]) == 1;
+				this.isFirstRounds = Convert.ToInt32(strs["isFirstRounds"]) == 1;
 			}
-			if (dictionary.ContainsKey("status"))
+			if (strs.ContainsKey("status"))
 			{
-				status = (CheckStatus)Convert.ToInt32(dictionary["status"]);
+				this.status = (BuffSystem.CheckStatus)Convert.ToInt32(strs["status"]);
 			}
-			if (dictionary.ContainsKey("lastGiveGunTime"))
+			if (strs.ContainsKey("lastGiveGunTime"))
 			{
-				lastGiveGunTime = Convert.ToSingle(dictionary["lastGiveGunTime"]);
+				this.lastGiveGunTime = Convert.ToSingle(strs["lastGiveGunTime"]);
 			}
-			if (dictionary.ContainsKey("giveGun"))
+			if (strs.ContainsKey("giveGun"))
 			{
-				readyToGiveGun = Convert.ToInt32(dictionary["giveGun"]) == 1;
+				this.readyToGiveGun = Convert.ToInt32(strs["giveGun"]) == 1;
 			}
-			if (dictionary.ContainsKey("waitTime"))
+			if (strs.ContainsKey("waitTime"))
 			{
-				waitingForPurchaseTime = Convert.ToSingle(dictionary["waitTime"]);
+				this.waitingForPurchaseTime = Convert.ToSingle(strs["waitTime"]);
 			}
-			if (dictionary.ContainsKey("waitBuff"))
+			if (strs.ContainsKey("waitBuff"))
 			{
-				SituationBuffType key = (SituationBuffType)Convert.ToInt32(dictionary["waitBuff"]);
-				if (buffParamByType.ContainsKey(key))
+				BuffSystem.SituationBuffType num = (BuffSystem.SituationBuffType)Convert.ToInt32(strs["waitBuff"]);
+				if (this.buffParamByType.ContainsKey(num))
 				{
-					waitingForPurchaseBuff = buffParamByType[key];
+					this.waitingForPurchaseBuff = this.buffParamByType[num];
 				}
 			}
-			if (dictionary.ContainsKey("buffs"))
+			if (strs.ContainsKey("buffs"))
 			{
-				List<object> list = dictionary["buffs"] as List<object>;
-				for (int i = 0; i < list.Count; i++)
+				List<object> item = strs["buffs"] as List<object>;
+				for (int i = 0; i < item.Count; i++)
 				{
-					Dictionary<string, object> dictionary2 = list[i] as Dictionary<string, object>;
-					SituationBuffType key2 = (SituationBuffType)Convert.ToInt32(dictionary2["type"]);
-					string text = ((!dictionary2.ContainsKey("weapon")) ? string.Empty : Convert.ToString(dictionary2["weapon"]));
-					float savedTime = Convert.ToSingle(dictionary2["expire"]);
-					SituationBuff item = new SituationBuff(buffParamByType[key2], text, savedTime);
-					situationBuffs.Add(item);
+					Dictionary<string, object> item1 = item[i] as Dictionary<string, object>;
+					BuffSystem.SituationBuffType situationBuffType = (BuffSystem.SituationBuffType)Convert.ToInt32(item1["type"]);
+					string str1 = (!item1.ContainsKey("weapon") ? string.Empty : Convert.ToString(item1["weapon"]));
+					float single = Convert.ToSingle(item1["expire"]);
+					BuffSystem.SituationBuff situationBuff = new BuffSystem.SituationBuff(this.buffParamByType[situationBuffType], str1, single);
+					this.situationBuffs.Add(situationBuff);
 				}
 			}
 		}
-		if (status == CheckStatus.None)
+		if (this.status == BuffSystem.CheckStatus.None)
 		{
-			if (Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) != 1)
+			if (Storager.getInt(Defs.TrainingCompleted_4_4_Sett, false) == 1)
 			{
-				status = CheckStatus.NewPlayer;
-				isFirstRounds = true;
+				this.status = BuffSystem.CheckStatus.OldPlayer;
 			}
 			else
 			{
-				status = CheckStatus.OldPlayer;
+				this.status = BuffSystem.CheckStatus.NewPlayer;
+				this.isFirstRounds = true;
 			}
-			SaveValues();
+			this.SaveValues();
 		}
-		string string2 = Storager.getString("buffsPlayerInteractions", false);
-		List<object> list2 = Json.Deserialize(string2) as List<object>;
-		if (list2 != null)
+		string str2 = Storager.getString("buffsPlayerInteractions", false);
+		List<object> objs = Json.Deserialize(str2) as List<object>;
+		if (objs != null)
 		{
-			if (_003C_003Ef__am_0024cache24 == null)
+			this.interactions = (
+				from o in objs
+				select (BuffSystem.InteractionType)Convert.ToInt32(o)).ToArray<BuffSystem.InteractionType>();
+		}
+	}
+
+	public void LogFirstBattlesResult(bool isWinner)
+	{
+		if (this.isFirstRounds && this.allRoundsCount < 10)
+		{
+			AnalyticsStuff.LogFirstBattlesResult(this.allRoundsCount, isWinner);
+		}
+	}
+
+	public void OnCurrencyBuyed(bool isGems, int index)
+	{
+		BuffSystem.SituationBuffType situationBuffType;
+		if (!isGems)
+		{
+			if (index >= (int)this.coinsBuffByIndex.Length)
 			{
-				_003C_003Ef__am_0024cache24 = _003CLoadValues_003Em__4;
+				return;
 			}
-			interactions = list2.Select(_003C_003Ef__am_0024cache24).ToArray();
+			situationBuffType = this.coinsBuffByIndex[index];
+		}
+		else
+		{
+			if (index >= (int)this.gemsBuffByIndex.Length)
+			{
+				return;
+			}
+			situationBuffType = this.gemsBuffByIndex[index];
+		}
+		if (!this.buffParamByType.ContainsKey(situationBuffType))
+		{
+			return;
+		}
+		BuffSystem.BuffParameter item = this.buffParamByType[situationBuffType];
+		if (this.waitingForPurchaseBuff == null || this.waitingForPurchaseTime < item.timeForPurchase + NotificationController.instance.currentPlayTime)
+		{
+			this.waitingForPurchaseBuff = item;
+			this.waitingForPurchaseTime = this.waitingForPurchaseBuff.timeForPurchase + NotificationController.instance.currentPlayTime;
+		}
+		this.SaveValues();
+	}
+
+	public void OnGetProgress()
+	{
+		if (this.status == BuffSystem.CheckStatus.None || this.status == BuffSystem.CheckStatus.NewPlayer)
+		{
+			this.status = BuffSystem.CheckStatus.OldPlayer;
+			this.damageBuff = 1f;
+			this.healthBuff = 1f;
+			this.isFirstRounds = false;
+		}
+		this.SaveValues();
+	}
+
+	public void OnGunBuyed()
+	{
+		this.ClearDebuffs();
+		this.lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
+		this.SaveValues();
+		this.CheckForPlayerBuff();
+	}
+
+	public void OnGunTakeOff()
+	{
+		this.ClearBuffOfType(BuffSystem.SituationBuffType.TryGunBuff);
+		this.AddSituationBuff(BuffSystem.SituationBuffType.DebuffAfterGun, string.Empty);
+	}
+
+	public void OnSomethingPurchased()
+	{
+		if (this.waitingForPurchaseBuff != null)
+		{
+			if (this.waitingForPurchaseTime <= NotificationController.instance.currentPlayTime)
+			{
+				this.waitingForPurchaseBuff = null;
+				this.waitingForPurchaseTime = 0f;
+				this.SaveValues();
+			}
+			else
+			{
+				BuffSystem.SituationBuffType situationBuffType = this.waitingForPurchaseBuff.type;
+				this.waitingForPurchaseBuff = null;
+				this.waitingForPurchaseTime = 0f;
+				this.ClearDebuffs();
+				this.AddSituationBuff(situationBuffType, string.Empty);
+			}
+		}
+	}
+
+	public void OnTierLvlUp()
+	{
+		this.AddSituationBuff(BuffSystem.SituationBuffType.TierLvlUp, string.Empty);
+	}
+
+	public void OnTryGunBuyed(string weaponName)
+	{
+		this.ClearDebuffs();
+		this.AddSituationBuff(BuffSystem.SituationBuffType.BuyedTryGun, weaponName);
+	}
+
+	public void PlayerLeaved()
+	{
+		this.CheckExpiredBuffs();
+		this.SaveValues();
+	}
+
+	public void RemoveGunBuff()
+	{
+		this.ClearBuffOfType(BuffSystem.SituationBuffType.TryGunBuff);
+	}
+
+	private void SaveInteractions()
+	{
+		if (this.interactionsChanged)
+		{
+			this.interactionsChanged = false;
+			Storager.setString("buffsPlayerInteractions", Json.Serialize((
+				from o in (IEnumerable<BuffSystem.InteractionType>)this.interactions
+				select (int)o).ToArray<int>()), false);
 		}
 	}
 
 	private void SaveValues()
 	{
-		if (!loadValuesCalled)
+		if (!this.loadValuesCalled)
 		{
 			return;
 		}
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		if (interactionCounter > 0)
+		Dictionary<string, object> strs = new Dictionary<string, object>();
+		if (this.interactionCounter > 0)
 		{
-			dictionary["interactionCount"] = interactionCounter;
+			strs["interactionCount"] = this.interactionCounter;
 		}
-		if (isFirstRounds)
+		if (this.isFirstRounds)
 		{
-			dictionary["isFirstRounds"] = 1;
+			strs["isFirstRounds"] = 1;
 		}
-		if (readyToGiveGun)
+		if (this.readyToGiveGun)
 		{
-			dictionary["giveGun"] = 1;
+			strs["giveGun"] = 1;
 		}
-		if (allRoundsCount > 0)
+		if (this.allRoundsCount > 0)
 		{
-			dictionary["allRoundsCount"] = allRoundsCount;
+			strs["allRoundsCount"] = this.allRoundsCount;
 		}
-		if (situationBuffs != null && situationBuffs.Count > 0)
+		if (this.situationBuffs != null && this.situationBuffs.Count > 0)
 		{
-			List<SituationBuff> source = situationBuffs;
-			if (_003C_003Ef__am_0024cache25 == null)
-			{
-				_003C_003Ef__am_0024cache25 = _003CSaveValues_003Em__5;
-			}
-			dictionary["buffs"] = source.Select(_003C_003Ef__am_0024cache25).ToArray();
+			strs["buffs"] = (
+				from o in this.situationBuffs
+				select o.Serialize()).ToArray<Dictionary<string, object>>();
 		}
-		if (lastGiveGunTime > 0f)
+		if (this.lastGiveGunTime > 0f)
 		{
-			dictionary["lastGiveGunTime"] = lastGiveGunTime;
+			strs["lastGiveGunTime"] = this.lastGiveGunTime;
 		}
-		if (waitingForPurchaseTime > 0f)
+		if (this.waitingForPurchaseTime > 0f)
 		{
-			dictionary["waitTime"] = waitingForPurchaseTime;
+			strs["waitTime"] = this.waitingForPurchaseTime;
 		}
-		if (waitingForPurchaseBuff != null)
+		if (this.waitingForPurchaseBuff != null)
 		{
-			dictionary["waitBuff"] = (int)waitingForPurchaseBuff.type;
+			strs["waitBuff"] = (int)this.waitingForPurchaseBuff.type;
 		}
-		dictionary["status"] = (int)status;
-		Storager.setString("buffsValues", Json.Serialize(dictionary), false);
-		SaveInteractions();
-	}
-
-	private void SaveInteractions()
-	{
-		if (interactionsChanged)
-		{
-			interactionsChanged = false;
-			InteractionType[] source = interactions;
-			if (_003C_003Ef__am_0024cache26 == null)
-			{
-				_003C_003Ef__am_0024cache26 = _003CSaveInteractions_003Em__6;
-			}
-			Storager.setString("buffsPlayerInteractions", Json.Serialize(source.Select(_003C_003Ef__am_0024cache26).ToArray()), false);
-		}
-	}
-
-	private void GiveTryGunToPlayer()
-	{
-		readyToGiveGun = true;
-	}
-
-	private float GetTimeForGun()
-	{
-		float killrateByInteractions = GetKillrateByInteractions();
-		if (killrateByInteractions < tierParam.lowKillRate)
-		{
-			return tierParam.timeToGetGunLow;
-		}
-		if (killrateByInteractions < tierParam.highKillRate)
-		{
-			return tierParam.timeToGetGunMiddle;
-		}
-		return tierParam.timeToGetGunHigh;
-	}
-
-	private void CheckExpiredBuffs()
-	{
-		if (!buffsActive)
-		{
-			return;
-		}
-		for (int i = 0; i < situationBuffs.Count; i++)
-		{
-			if (situationBuffs[i].expired && situationBuffs[i].param.type != SituationBuffType.TryGunBuff)
-			{
-				if (situationBuffs[i].param.type == SituationBuffType.DebuffBeforeGun)
-				{
-					GiveTryGunToPlayer();
-				}
-				situationBuffs.RemoveAt(i);
-				i--;
-			}
-		}
-	}
-
-	public void PlayerLeaved()
-	{
-		CheckExpiredBuffs();
-		SaveValues();
-	}
-
-	public void EndRound()
-	{
-		float killrateByInteractions = GetKillrateByInteractions();
-		Debug.Log(killrateByInteractions);
-		if (isFirstRounds && allRoundsCount < 10)
-		{
-			AnalyticsStuff.LogFirstBattlesKillRate(allRoundsCount, killrateByInteractions);
-		}
-		allRoundsCount++;
-		if (allRoundsCount == 3)
-		{
-			AnalyticsStuff.TrySendOnceToAppsFlyer("third_round_complete");
-		}
-		if (allRoundsCount > 9)
-		{
-			isFirstRounds = false;
-		}
-		if (buffsActive && configLoaded)
-		{
-			CheckExpiredBuffs();
-			if (status != CheckStatus.NewPlayer && status != CheckStatus.OldPlayer)
-			{
-				if (lastGiveGunTime + GetTimeForGun() < NotificationController.instance.currentPlayTimeMatch)
-				{
-					lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
-					if (GetKillrateByInteractions() > debuffKillrateForGun)
-					{
-						AddSituationBuff(SituationBuffType.DebuffBeforeGun, string.Empty);
-					}
-					else
-					{
-						GiveTryGunToPlayer();
-					}
-				}
-				if (readyToGiveGun && WeaponManager.sharedManager._currentFilterMap == 0)
-				{
-					giveTryGun = true;
-				}
-			}
-		}
-		SaveValues();
-		CheckForPlayerBuff();
-	}
-
-	private void AddSituationBuff(SituationBuffType type, string buffForWeapon = "")
-	{
-		situationBuffs.Add(new SituationBuff(buffParamByType[type], buffForWeapon));
-		SaveValues();
-		CheckForPlayerBuff();
-	}
-
-	private void ClearDebuffs()
-	{
-		for (int i = 0; i < situationBuffs.Count; i++)
-		{
-			if (situationBuffs[i].isDebuff)
-			{
-				situationBuffs.RemoveAt(i);
-				i--;
-			}
-		}
-	}
-
-	private void ClearBuffOfType(SituationBuffType type)
-	{
-		for (int i = 0; i < situationBuffs.Count; i++)
-		{
-			if (situationBuffs[i].param.type == type)
-			{
-				situationBuffs.RemoveAt(i);
-				i--;
-			}
-		}
+		strs["status"] = (int)this.status;
+		Storager.setString("buffsValues", Json.Serialize(strs), false);
+		this.SaveInteractions();
 	}
 
 	public void SetGetTryGun(string weaponName)
 	{
-		giveTryGun = false;
-		readyToGiveGun = false;
-		ClearDebuffs();
-		AddSituationBuff(SituationBuffType.TryGunBuff, weaponName);
+		this.giveTryGun = false;
+		this.readyToGiveGun = false;
+		this.ClearDebuffs();
+		this.AddSituationBuff(BuffSystem.SituationBuffType.TryGunBuff, weaponName);
 	}
 
-	public void OnTryGunBuyed(string weaponName)
+	public void TryLoadConfig()
 	{
-		ClearDebuffs();
-		AddSituationBuff(SituationBuffType.BuyedTryGun, weaponName);
-	}
-
-	public void OnGunBuyed()
-	{
-		ClearDebuffs();
-		lastGiveGunTime = NotificationController.instance.currentPlayTimeMatch;
-		SaveValues();
-		CheckForPlayerBuff();
-	}
-
-	public void OnCurrencyBuyed(bool isGems, int index)
-	{
-		SituationBuffType key;
-		if (isGems)
+		if (this.configLoaded)
 		{
-			if (index >= gemsBuffByIndex.Length)
-			{
-				return;
-			}
-			key = gemsBuffByIndex[index];
+			return;
+		}
+		if (!Storager.hasKey("BuffsParam"))
+		{
+			this.WriteDefaultParameters();
+			return;
+		}
+		string str = Storager.getString("BuffsParam", false);
+		Dictionary<string, object> strs = Json.Deserialize(str) as Dictionary<string, object>;
+		if (strs == null || !strs.ContainsKey("buffSettings"))
+		{
+			this.WriteDefaultParameters();
+			return;
+		}
+		Dictionary<string, object> item = strs["buffSettings"] as Dictionary<string, object>;
+		string empty = string.Empty;
+		if (!item.ContainsKey("roundsForGunLow"))
+		{
+			empty = "get roundsForGunLow";
 		}
 		else
 		{
-			if (index >= coinsBuffByIndex.Length)
-			{
-				return;
-			}
-			key = coinsBuffByIndex[index];
+			this.roundsForGunLow = Convert.ToInt32(item["roundsForGunLow"]);
 		}
-		if (buffParamByType.ContainsKey(key))
+		if (!item.ContainsKey("roundsForGunMiddle"))
 		{
-			BuffParameter buffParameter = buffParamByType[key];
-			if (waitingForPurchaseBuff == null || waitingForPurchaseTime < buffParameter.timeForPurchase + NotificationController.instance.currentPlayTime)
-			{
-				waitingForPurchaseBuff = buffParameter;
-				waitingForPurchaseTime = waitingForPurchaseBuff.timeForPurchase + NotificationController.instance.currentPlayTime;
-			}
-			SaveValues();
+			empty = "get roundsForGunMiddle";
 		}
-	}
-
-	public void OnSomethingPurchased()
-	{
-		if (waitingForPurchaseBuff != null)
+		else
 		{
-			if (waitingForPurchaseTime > NotificationController.instance.currentPlayTime)
+			this.roundsForGunMiddle = Convert.ToInt32(item["roundsForGunMiddle"]);
+		}
+		if (!item.ContainsKey("roundsForGunHigh"))
+		{
+			empty = "get roundsForGunHigh";
+		}
+		else
+		{
+			this.roundsForGunHigh = Convert.ToInt32(item["roundsForGunHigh"]);
+		}
+		if (!item.ContainsKey("timeForDiscount"))
+		{
+			empty = "get timeForDiscount";
+		}
+		else
+		{
+			this.timeForDiscount = Convert.ToSingle(item["timeForDiscount"]);
+		}
+		if (!item.ContainsKey("discountValue"))
+		{
+			empty = "get discountValue";
+		}
+		else
+		{
+			this.discountValue = Convert.ToInt32(item["discountValue"]);
+		}
+		if (!item.ContainsKey("debuffKillrateForGun"))
+		{
+			empty = "get debuffKillrateForGun";
+		}
+		else
+		{
+			this.debuffKillrateForGun = Convert.ToSingle(item["debuffKillrateForGun"]);
+		}
+		if (!item.ContainsKey("firstBuffArmor"))
+		{
+			empty = "get firstBuffArmor";
+		}
+		else
+		{
+			this.firstBuffArmor = Convert.ToSingle(item["firstBuffArmor"]);
+		}
+		if (!item.ContainsKey("firstBuffNoArmor"))
+		{
+			empty = "get firstBuffNoArmor";
+		}
+		else
+		{
+			this.firstBuffNoArmor = Convert.ToSingle(item["firstBuffNoArmor"]);
+		}
+		if (!item.ContainsKey("tierParams"))
+		{
+			empty = "get tierParams";
+		}
+		else
+		{
+			List<object> objs = item["tierParams"] as List<object>;
+			if (objs == null)
 			{
-				SituationBuffType type = waitingForPurchaseBuff.type;
-				waitingForPurchaseBuff = null;
-				waitingForPurchaseTime = 0f;
-				ClearDebuffs();
-				AddSituationBuff(type, string.Empty);
+				empty = "tierParams == null";
 			}
 			else
 			{
-				waitingForPurchaseBuff = null;
-				waitingForPurchaseTime = 0f;
-				SaveValues();
+				this.paramsByTier = (
+					from e in objs
+					select new BuffSystem.ParamByTier(e as Dictionary<string, object>)).ToArray<BuffSystem.ParamByTier>();
+			}
+		}
+		if (!item.ContainsKey("buffsParams"))
+		{
+			empty = "get buffsParams";
+		}
+		else
+		{
+			List<object> item1 = item["buffsParams"] as List<object>;
+			this.buffParamByType = new Dictionary<BuffSystem.SituationBuffType, BuffSystem.BuffParameter>();
+			for (int i = 0; i < item1.Count; i++)
+			{
+				Dictionary<string, object> strs1 = item1[i] as Dictionary<string, object>;
+				BuffSystem.SituationBuffType situationBuffType = (BuffSystem.SituationBuffType)((int)Enum.Parse(typeof(BuffSystem.SituationBuffType), Convert.ToString(strs1["type"])));
+				this.buffParamByType.Add(situationBuffType, new BuffSystem.BuffParameter(strs1));
+			}
+		}
+		if (string.IsNullOrEmpty(empty))
+		{
+			this.configLoaded = true;
+		}
+		else
+		{
+			Debug.LogError(string.Concat("Error Deserialize JSON: buffSettings - ", empty));
+			this.WriteDefaultParameters();
+		}
+	}
+
+	private void WriteDefaultParameters()
+	{
+		this.configLoaded = false;
+		if (this.paramsByTier == null)
+		{
+			this.paramsByTier = new BuffSystem.ParamByTier[6];
+			for (int i = 0; i < (int)this.paramsByTier.Length; i++)
+			{
+				this.paramsByTier[i] = new BuffSystem.ParamByTier();
+			}
+		}
+		this.buffParamByType = new Dictionary<BuffSystem.SituationBuffType, BuffSystem.BuffParameter>()
+		{
+			{ BuffSystem.SituationBuffType.DebuffBeforeGun, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.DebuffBeforeGun, 1f, 0.5f, 540f, -1) },
+			{ BuffSystem.SituationBuffType.DebuffAfterGun, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.DebuffAfterGun, 1f, 0.5f, 180f, -1) },
+			{ BuffSystem.SituationBuffType.TierLvlUp, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.TierLvlUp, 1f, 0.7f, 240f, -1) },
+			{ BuffSystem.SituationBuffType.TryGunBuff, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.TryGunBuff, 1f, 1.25f, 0f, 1) },
+			{ BuffSystem.SituationBuffType.BuyedTryGun, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.BuyedTryGun, 1f, 1.25f, 600f, 2) },
+			{ BuffSystem.SituationBuffType.Coin1, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin1, 1f, 1.25f, 300f, 3) },
+			{ BuffSystem.SituationBuffType.Coin7, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin7, 1f, 1.25f, 400f, 3) },
+			{ BuffSystem.SituationBuffType.Coin2, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin2, 1f, 1.25f, 500f, 3) },
+			{ BuffSystem.SituationBuffType.Coin3, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin3, 1f, 1.25f, 600f, 3) },
+			{ BuffSystem.SituationBuffType.Coin4, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin4, 1f, 1.25f, 700f, 3) },
+			{ BuffSystem.SituationBuffType.Coin5, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin5, 1f, 1.25f, 800f, 3) },
+			{ BuffSystem.SituationBuffType.Coin8, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Coin8, 1f, 1.25f, 900f, 3) },
+			{ BuffSystem.SituationBuffType.Gem1, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem1, 1f, 1.25f, 300f, 4) },
+			{ BuffSystem.SituationBuffType.Gem2, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem2, 1f, 1.25f, 400f, 4) },
+			{ BuffSystem.SituationBuffType.Gem3, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem3, 1f, 1.25f, 500f, 4) },
+			{ BuffSystem.SituationBuffType.Gem4, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem4, 1f, 1.25f, 600f, 4) },
+			{ BuffSystem.SituationBuffType.Gem5, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem5, 1f, 1.25f, 700f, 4) },
+			{ BuffSystem.SituationBuffType.Gem6, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem6, 1f, 1.25f, 800f, 4) },
+			{ BuffSystem.SituationBuffType.Gem7, new BuffSystem.BuffParameter(BuffSystem.SituationBuffType.Gem7, 1f, 1.25f, 900f, 4) }
+		};
+	}
+
+	private void WriteInteraction(BuffSystem.InteractionType value)
+	{
+		this.interactionsChanged = true;
+		this.killRateCached = -1f;
+		for (int i = (int)this.interactions.Length - 2; i >= 0; i--)
+		{
+			this.interactions[i + 1] = this.interactions[i];
+		}
+		this.interactions[0] = value;
+	}
+
+	private class BuffParameter
+	{
+		public int priority;
+
+		public BuffSystem.SituationBuffType type;
+
+		public float healthBuff;
+
+		public float damageBuff;
+
+		public float time;
+
+		public float timeForPurchase;
+
+		public BuffParameter(BuffSystem.SituationBuffType type, float healthBuff, float damageBuff, float time, int priority)
+		{
+			this.type = type;
+			this.healthBuff = healthBuff;
+			this.damageBuff = damageBuff;
+			this.priority = priority;
+			this.time = time;
+			this.timeForPurchase = 1800f;
+		}
+
+		public BuffParameter(Dictionary<string, object> dictionary)
+		{
+			this.type = (BuffSystem.SituationBuffType)((int)Enum.Parse(typeof(BuffSystem.SituationBuffType), Convert.ToString(dictionary["type"])));
+			if (!dictionary.ContainsKey("health"))
+			{
+				this.healthBuff = 1f;
+			}
+			else
+			{
+				this.healthBuff = Convert.ToSingle(dictionary["health"]);
+			}
+			if (!dictionary.ContainsKey("damage"))
+			{
+				this.damageBuff = 1f;
+			}
+			else
+			{
+				this.damageBuff = Convert.ToSingle(dictionary["damage"]);
+			}
+			if (!dictionary.ContainsKey("timeToBuy"))
+			{
+				this.timeForPurchase = 0f;
+			}
+			else
+			{
+				this.timeForPurchase = Convert.ToSingle(dictionary["timeToBuy"]);
+			}
+			this.priority = Convert.ToInt32(dictionary["prior"]);
+			this.time = Convert.ToSingle(dictionary["time"]);
+		}
+	}
+
+	private enum CheckStatus
+	{
+		None,
+		NewPlayer,
+		OldPlayer,
+		Regular
+	}
+
+	private enum InteractionType
+	{
+		None,
+		Kill,
+		Death
+	}
+
+	public class ParamByTier
+	{
+		public float timeToGetGunLow;
+
+		public float timeToGetGunMiddle;
+
+		public float timeToGetGunHigh;
+
+		public float lowKillRate;
+
+		public float highKillRate;
+
+		public float a;
+
+		public float b;
+
+		public float midbottom;
+
+		public float midtop;
+
+		public float top;
+
+		public float bottom;
+
+		public ParamByTier()
+		{
+			this.timeToGetGunLow = 2400f;
+			this.timeToGetGunMiddle = 3600f;
+			this.timeToGetGunHigh = 4800f;
+			this.lowKillRate = 0.5f;
+			this.highKillRate = 1.2f;
+			this.a = 50f;
+			this.b = 50f;
+			this.midbottom = 0.8f;
+			this.midtop = 1.2f;
+			this.top = 2f;
+			this.bottom = 0f;
+		}
+
+		public ParamByTier(Dictionary<string, object> dictionary)
+		{
+			this.timeToGetGunLow = Convert.ToSingle(dictionary["timeGunLow"]);
+			this.timeToGetGunMiddle = Convert.ToSingle(dictionary["timeGunMiddle"]);
+			this.timeToGetGunHigh = Convert.ToSingle(dictionary["timeGunHigh"]);
+			this.lowKillRate = Convert.ToSingle(dictionary["lowKillRate"]);
+			this.highKillRate = Convert.ToSingle(dictionary["highKillRate"]);
+			this.a = Convert.ToSingle(dictionary["form_a"]);
+			this.b = Convert.ToSingle(dictionary["form_b"]);
+			this.midbottom = Convert.ToSingle(dictionary["form_midbottom"]);
+			this.midtop = Convert.ToSingle(dictionary["form_midtop"]);
+			this.top = Convert.ToSingle(dictionary["form_top"]);
+			if (dictionary.ContainsKey("form_bottom"))
+			{
+				this.bottom = Convert.ToSingle(dictionary["form_bottom"]);
 			}
 		}
 	}
 
-	public void OnGunTakeOff()
+	private class SituationBuff
 	{
-		ClearBuffOfType(SituationBuffType.TryGunBuff);
-		AddSituationBuff(SituationBuffType.DebuffAfterGun, string.Empty);
-	}
+		public BuffSystem.BuffParameter param;
 
-	public void RemoveGunBuff()
-	{
-		ClearBuffOfType(SituationBuffType.TryGunBuff);
-	}
+		private float expireTime;
 
-	public void OnTierLvlUp()
-	{
-		AddSituationBuff(SituationBuffType.TierLvlUp, string.Empty);
-	}
+		public string weapon;
 
-	public int GetRoundsForGun()
-	{
-		float killrateByInteractions = GetKillrateByInteractions();
-		if (killrateByInteractions < tierParam.lowKillRate)
+		public bool expired
 		{
-			return roundsForGunLow;
+			get
+			{
+				return this.expireTime < NotificationController.instance.currentPlayTimeMatch;
+			}
 		}
-		if (killrateByInteractions < tierParam.highKillRate)
+
+		public bool isDebuff
 		{
-			return roundsForGunMiddle;
+			get
+			{
+				return (this.param.healthBuff < 1f ? true : this.param.damageBuff < 1f);
+			}
 		}
-		return roundsForGunHigh;
-	}
 
-	public bool haveBuffForWeapon(string weapon)
-	{
-		return weaponBuff != null && !string.IsNullOrEmpty(weapon) && weaponBuff.weapon == weapon;
-	}
-
-	public void LogFirstBattlesResult(bool isWinner)
-	{
-		if (isFirstRounds && allRoundsCount < 10)
+		public SituationBuff(BuffSystem.BuffParameter param, string weaponBuff)
 		{
-			AnalyticsStuff.LogFirstBattlesResult(allRoundsCount, isWinner);
+			this.param = param;
+			this.weapon = weaponBuff;
+			this.expireTime = NotificationController.instance.currentPlayTimeMatch + param.time;
+		}
+
+		public SituationBuff(BuffSystem.BuffParameter param, string weaponBuff, float savedTime)
+		{
+			this.param = param;
+			this.weapon = weaponBuff;
+			this.expireTime = savedTime;
+		}
+
+		public Dictionary<string, object> Serialize()
+		{
+			Dictionary<string, object> strs = new Dictionary<string, object>();
+			strs["type"] = (int)this.param.type;
+			strs["expire"] = this.expireTime;
+			if (!string.IsNullOrEmpty(this.weapon))
+			{
+				strs["weapon"] = this.weapon;
+			}
+			return strs;
 		}
 	}
 
-	private void Awake()
+	private enum SituationBuffType
 	{
-		TryLoadConfig();
-		LoadValues();
-		CheckForPlayerBuff();
-		ShopNGUIController.GunOrArmorBought += OnGunBuyed;
-	}
-
-	[CompilerGenerated]
-	private static ParamByTier _003CTryLoadConfig_003Em__3(object e)
-	{
-		return new ParamByTier(e as Dictionary<string, object>);
-	}
-
-	[CompilerGenerated]
-	private static InteractionType _003CLoadValues_003Em__4(object o)
-	{
-		return (InteractionType)Convert.ToInt32(o);
-	}
-
-	[CompilerGenerated]
-	private static Dictionary<string, object> _003CSaveValues_003Em__5(SituationBuff o)
-	{
-		return o.Serialize();
-	}
-
-	[CompilerGenerated]
-	private static int _003CSaveInteractions_003Em__6(InteractionType o)
-	{
-		return (int)o;
+		DebuffBeforeGun,
+		DebuffAfterGun,
+		TierLvlUp,
+		TryGunBuff,
+		BuyedTryGun,
+		Coin1,
+		Coin7,
+		Coin2,
+		Coin3,
+		Coin4,
+		Coin5,
+		Coin8,
+		Gem1,
+		Gem2,
+		Gem3,
+		Gem4,
+		Gem5,
+		Gem6,
+		Gem7,
+		Count
 	}
 }

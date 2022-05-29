@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PressController : MonoBehaviour
@@ -11,19 +12,31 @@ public class PressController : MonoBehaviour
 	[HideInInspector]
 	public GameObject secondCollision;
 
+	public PressController()
+	{
+	}
+
+	public void CheckSmash()
+	{
+		if (this.firstCollision == this.secondCollision)
+		{
+			this.firstCollision.GetComponent<SkinName>().playerMoveC.KillSelf();
+		}
+	}
+
 	private void OnTriggerEnter(Collider col)
 	{
 		if (col.transform.gameObject == WeaponManager.sharedManager.myPlayer)
 		{
-			if (isPrimary)
+			if (!this.isPrimary)
 			{
-				firstCollision = col.transform.gameObject;
-				CheckSmash();
+				this.primaryPress.secondCollision = col.transform.gameObject;
+				this.primaryPress.CheckSmash();
 			}
 			else
 			{
-				primaryPress.secondCollision = col.transform.gameObject;
-				primaryPress.CheckSmash();
+				this.firstCollision = col.transform.gameObject;
+				this.CheckSmash();
 			}
 		}
 	}
@@ -32,23 +45,14 @@ public class PressController : MonoBehaviour
 	{
 		if (col.transform.gameObject == WeaponManager.sharedManager.myPlayer)
 		{
-			if (isPrimary)
+			if (!this.isPrimary)
 			{
-				firstCollision = null;
+				this.primaryPress.secondCollision = null;
 			}
 			else
 			{
-				primaryPress.secondCollision = null;
+				this.firstCollision = null;
 			}
-		}
-	}
-
-	public void CheckSmash()
-	{
-		if (firstCollision == secondCollision)
-		{
-			Player_move_c playerMoveC = firstCollision.GetComponent<SkinName>().playerMoveC;
-			playerMoveC.KillSelf();
 		}
 	}
 

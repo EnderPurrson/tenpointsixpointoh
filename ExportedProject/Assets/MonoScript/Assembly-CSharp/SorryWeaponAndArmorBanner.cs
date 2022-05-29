@@ -1,4 +1,5 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class SorryWeaponAndArmorBanner : BannerWindow
@@ -19,61 +20,68 @@ public class SorryWeaponAndArmorBanner : BannerWindow
 
 	private SaltedInt _compensationGemsCount;
 
-	public override void Show()
+	public SorryWeaponAndArmorBanner()
 	{
-		if (sorryArmorHatRemoved)
-		{
-			_compensationGemsCount.Value = 0;
-		}
-		else if (sorryGearRemoved)
-		{
-			_compensationGoldCount.Value = 0;
-		}
-		for (int i = 0; i < labelGoldCompensations.Length; i++)
-		{
-			labelGoldCompensations[i].text = _compensationGoldCount.Value.ToString();
-		}
-		for (int j = 0; j < labelGemsCompensations.Length; j++)
-		{
-			labelGemsCompensations[j].text = _compensationGemsCount.Value.ToString();
-		}
-		AligmentCompensationContainer();
-		base.Show();
 	}
 
 	private void AligmentCompensationContainer()
 	{
-		if (_compensationGoldCount.Value > 0 && _compensationGemsCount.Value == 0)
+		if (this._compensationGoldCount.Value > 0 && this._compensationGemsCount.Value == 0)
 		{
-			goldContainer.gameObject.SetActive(true);
-			gemsContainer.gameObject.SetActive(false);
+			this.goldContainer.gameObject.SetActive(true);
+			this.gemsContainer.gameObject.SetActive(false);
 		}
-		else if (_compensationGoldCount.Value == 0 && _compensationGemsCount.Value > 0)
+		else if (this._compensationGoldCount.Value == 0 && this._compensationGemsCount.Value > 0)
 		{
-			goldContainer.gameObject.SetActive(false);
-			gemsContainer.gameObject.SetActive(true);
+			this.goldContainer.gameObject.SetActive(false);
+			this.gemsContainer.gameObject.SetActive(true);
 		}
-		else if (_compensationGoldCount.Value > 0 && _compensationGemsCount.Value > 0)
+		else if (this._compensationGoldCount.Value > 0 && this._compensationGemsCount.Value > 0)
 		{
-			Vector3 localPosition = goldContainer.transform.localPosition;
-			goldContainer.transform.localPosition = new Vector3(localPosition.x, localPosition.y - (float)(goldContainer.height / 2), localPosition.z);
-			localPosition = gemsContainer.transform.localPosition;
-			gemsContainer.transform.localPosition = new Vector3(localPosition.x, localPosition.y + (float)(gemsContainer.height / 2), localPosition.z);
+			Vector3 vector3 = this.goldContainer.transform.localPosition;
+			this.goldContainer.transform.localPosition = new Vector3(vector3.x, vector3.y - (float)(this.goldContainer.height / 2), vector3.z);
+			vector3 = this.gemsContainer.transform.localPosition;
+			this.gemsContainer.transform.localPosition = new Vector3(vector3.x, vector3.y + (float)(this.gemsContainer.height / 2), vector3.z);
 		}
+	}
+
+	public override void Show()
+	{
+		if (this.sorryArmorHatRemoved)
+		{
+			this._compensationGemsCount.Value = 0;
+		}
+		else if (this.sorryGearRemoved)
+		{
+			this._compensationGoldCount.Value = 0;
+		}
+		for (int i = 0; i < (int)this.labelGoldCompensations.Length; i++)
+		{
+			this.labelGoldCompensations[i].text = this._compensationGoldCount.Value.ToString();
+		}
+		for (int j = 0; j < (int)this.labelGemsCompensations.Length; j++)
+		{
+			this.labelGemsCompensations[j].text = this._compensationGemsCount.Value.ToString();
+		}
+		this.AligmentCompensationContainer();
+		base.Show();
 	}
 
 	public void SorryWeaponAndArmorExitClick()
 	{
-		if (_compensationGoldCount.Value > 0)
+		if (this._compensationGoldCount.Value > 0)
 		{
-			BankController.AddCoins(_compensationGoldCount.Value);
+			BankController.AddCoins(this._compensationGoldCount.Value, true, AnalyticsConstants.AccrualType.Earned);
 		}
-		if (_compensationGemsCount.Value > 0)
+		if (this._compensationGemsCount.Value > 0)
 		{
-			BankController.AddGems(_compensationGemsCount.Value);
+			BankController.AddGems(this._compensationGemsCount.Value, true, AnalyticsConstants.AccrualType.Earned);
 		}
-		if (sorryArmorHatRemoved || sorryGearRemoved)
+		if (!this.sorryArmorHatRemoved)
 		{
+			if (this.sorryGearRemoved)
+			{
+			}
 		}
 		Storager.setInt(Defs.ShowSorryWeaponAndArmor, 1, false);
 		AudioClip audioClip = Resources.Load("coin_get") as AudioClip;

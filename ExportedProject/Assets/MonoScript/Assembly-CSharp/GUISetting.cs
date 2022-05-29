@@ -1,5 +1,7 @@
 using Rilisoft;
+using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class GUISetting : MonoBehaviour
 {
@@ -25,6 +27,63 @@ public sealed class GUISetting : MonoBehaviour
 
 	private float mySens;
 
+	public GUISetting()
+	{
+	}
+
+	private void OnDestroy()
+	{
+		ActivityIndicator.IsActiveIndicator = false;
+	}
+
+	private void OnGUI()
+	{
+		object obj;
+		GUI.depth = 2;
+		float single = (float)Screen.height / 768f;
+		GUI.DrawTexture(new Rect((float)Screen.width / 2f - 683f * single, 0f, 1366f * single, (float)Screen.height), this.fon);
+		GUI.DrawTexture(new Rect((float)Screen.width / 2f - (float)this.settingPlashka.width * single * 0.5f, (float)Screen.height * 0.52f - (float)this.settingPlashka.height * single * 0.5f, (float)this.settingPlashka.width * single, (float)this.settingPlashka.height * single), this.settingPlashka);
+		GUI.DrawTexture(new Rect((float)Screen.width / 2f - (float)this.settingTitle.width / 2f * Defs.Coef, (float)Screen.height * 0.08f, (float)this.settingTitle.width * Defs.Coef, (float)this.settingTitle.height * Defs.Coef), this.settingTitle);
+		Rect rect = new Rect((float)Screen.width * 0.5f - (float)this.soundOnOff.normal.background.width * 0.5f * single, (float)Screen.height * 0.52f - (float)this.soundOnOff.normal.background.height * 0.5f * single, (float)this.soundOnOff.normal.background.width * single, (float)this.soundOnOff.normal.background.height * single);
+		bool flag = PlayerPrefsX.GetBool(PlayerPrefsX.SndSetting, true);
+		flag = GUI.Toggle(rect, flag, string.Empty, this.soundOnOff);
+		if (!flag)
+		{
+			obj = null;
+		}
+		else
+		{
+			obj = 1;
+		}
+		AudioListener.volume = (float)obj;
+		PlayerPrefsX.SetBool(PlayerPrefsX.SndSetting, flag);
+		PlayerPrefs.Save();
+		Rect rect1 = new Rect((float)Screen.width * 0.5f - (float)this.soundOnOff.normal.background.width * 0.5f * single, (float)Screen.height * 0.72f - (float)this.soundOnOff.normal.background.height * 0.5f * single, (float)this.soundOnOff.normal.background.width * single, (float)this.soundOnOff.normal.background.height * single);
+		bool isChatOn = Defs.IsChatOn;
+		isChatOn = GUI.Toggle(rect1, isChatOn, string.Empty, this.soundOnOff);
+		Defs.IsChatOn = isChatOn;
+		PlayerPrefs.Save();
+		if (GUI.Button(new Rect(21f * single, (float)Screen.height - (21f + (float)this.back.normal.background.height) * single, (float)this.back.normal.background.width * single, (float)this.back.normal.background.height * single), string.Empty, this.back))
+		{
+			FlurryPluginWrapper.LogEvent("Back to Main Menu");
+			Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene, LoadSceneMode.Single);
+		}
+		GUI.enabled = !StoreKitEventListener.purchaseInProcess;
+		Rect rect2 = new Rect((float)Screen.width / 2f - (float)this.restore.normal.background.width * single * 0.5f, (float)Screen.height - (21f + (float)this.restore.normal.background.height) * single, (float)this.restore.normal.background.width * single, (float)this.restore.normal.background.height * single);
+		if (GUI.Button(rect2, string.Empty, this.restore))
+		{
+			StoreKitEventListener.purchaseInProcess = true;
+		}
+		GUI.enabled = true;
+		this.sliderStyle.fixedWidth = (float)this.slow_fast.width * single;
+		this.sliderStyle.fixedHeight = (float)this.slow_fast.height * single;
+		this.thumbStyle.fixedWidth = (float)this.polzunok.width * single;
+		this.thumbStyle.fixedHeight = (float)this.polzunok.height * single;
+		Rect rect3 = new Rect((float)Screen.width * 0.5f - (float)this.slow_fast.width * 0.5f * single, (float)Screen.height * 0.81f - (float)this.slow_fast.height * 0.5f * single, (float)this.slow_fast.width * single, (float)this.slow_fast.height * single);
+		this.mySens = GUI.HorizontalSlider(rect3, Defs.Sensitivity, 6f, 18f, this.sliderStyle, this.thumbStyle);
+		Defs.Sensitivity = this.mySens;
+	}
+
 	private void Start()
 	{
 	}
@@ -32,48 +91,5 @@ public sealed class GUISetting : MonoBehaviour
 	private void Update()
 	{
 		ActivityIndicator.IsActiveIndicator = StoreKitEventListener.purchaseInProcess;
-	}
-
-	private void OnGUI()
-	{
-		GUI.depth = 2;
-		float num = (float)Screen.height / 768f;
-		GUI.DrawTexture(new Rect((float)Screen.width / 2f - 683f * num, 0f, 1366f * num, Screen.height), fon);
-		GUI.DrawTexture(new Rect((float)Screen.width / 2f - (float)settingPlashka.width * num * 0.5f, (float)Screen.height * 0.52f - (float)settingPlashka.height * num * 0.5f, (float)settingPlashka.width * num, (float)settingPlashka.height * num), settingPlashka);
-		GUI.DrawTexture(new Rect((float)Screen.width / 2f - (float)settingTitle.width / 2f * Defs.Coef, (float)Screen.height * 0.08f, (float)settingTitle.width * Defs.Coef, (float)settingTitle.height * Defs.Coef), settingTitle);
-		Rect position = new Rect((float)Screen.width * 0.5f - (float)soundOnOff.normal.background.width * 0.5f * num, (float)Screen.height * 0.52f - (float)soundOnOff.normal.background.height * 0.5f * num, (float)soundOnOff.normal.background.width * num, (float)soundOnOff.normal.background.height * num);
-		bool @bool = PlayerPrefsX.GetBool(PlayerPrefsX.SndSetting, true);
-		@bool = GUI.Toggle(position, @bool, string.Empty, soundOnOff);
-		AudioListener.volume = (@bool ? 1 : 0);
-		PlayerPrefsX.SetBool(PlayerPrefsX.SndSetting, @bool);
-		PlayerPrefs.Save();
-		Rect position2 = new Rect((float)Screen.width * 0.5f - (float)soundOnOff.normal.background.width * 0.5f * num, (float)Screen.height * 0.72f - (float)soundOnOff.normal.background.height * 0.5f * num, (float)soundOnOff.normal.background.width * num, (float)soundOnOff.normal.background.height * num);
-		bool isChatOn = Defs.IsChatOn;
-		isChatOn = (Defs.IsChatOn = GUI.Toggle(position2, isChatOn, string.Empty, soundOnOff));
-		PlayerPrefs.Save();
-		if (GUI.Button(new Rect(21f * num, (float)Screen.height - (21f + (float)back.normal.background.height) * num, (float)back.normal.background.width * num, (float)back.normal.background.height * num), string.Empty, back))
-		{
-			FlurryPluginWrapper.LogEvent("Back to Main Menu");
-			Singleton<SceneLoader>.Instance.LoadScene(Defs.MainMenuScene);
-		}
-		GUI.enabled = !StoreKitEventListener.purchaseInProcess;
-		Rect position3 = new Rect((float)Screen.width / 2f - (float)restore.normal.background.width * num * 0.5f, (float)Screen.height - (21f + (float)restore.normal.background.height) * num, (float)restore.normal.background.width * num, (float)restore.normal.background.height * num);
-		if (GUI.Button(position3, string.Empty, restore))
-		{
-			StoreKitEventListener.purchaseInProcess = true;
-		}
-		GUI.enabled = true;
-		sliderStyle.fixedWidth = (float)slow_fast.width * num;
-		sliderStyle.fixedHeight = (float)slow_fast.height * num;
-		thumbStyle.fixedWidth = (float)polzunok.width * num;
-		thumbStyle.fixedHeight = (float)polzunok.height * num;
-		Rect position4 = new Rect((float)Screen.width * 0.5f - (float)slow_fast.width * 0.5f * num, (float)Screen.height * 0.81f - (float)slow_fast.height * 0.5f * num, (float)slow_fast.width * num, (float)slow_fast.height * num);
-		mySens = GUI.HorizontalSlider(position4, Defs.Sensitivity, 6f, 18f, sliderStyle, thumbStyle);
-		Defs.Sensitivity = mySens;
-	}
-
-	private void OnDestroy()
-	{
-		ActivityIndicator.IsActiveIndicator = false;
 	}
 }

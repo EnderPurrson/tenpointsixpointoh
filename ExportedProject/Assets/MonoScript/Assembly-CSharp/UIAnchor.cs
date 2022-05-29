@@ -5,24 +5,11 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UIAnchor : MonoBehaviour
 {
-	public enum Side
-	{
-		BottomLeft = 0,
-		Left = 1,
-		TopLeft = 2,
-		Top = 3,
-		TopRight = 4,
-		Right = 5,
-		BottomRight = 6,
-		Bottom = 7,
-		Center = 8
-	}
-
 	public Camera uiCamera;
 
 	public GameObject container;
 
-	public Side side = Side.Center;
+	public UIAnchor.Side side = UIAnchor.Side.Center;
 
 	public bool runOnlyOnce = true;
 
@@ -38,181 +25,225 @@ public class UIAnchor : MonoBehaviour
 
 	private Animation mAnim;
 
-	private Rect mRect = default(Rect);
+	private Rect mRect = new Rect();
 
 	private UIRoot mRoot;
 
 	private bool mStarted;
 
+	public UIAnchor()
+	{
+	}
+
 	private void Awake()
 	{
-		mTrans = base.transform;
-		mAnim = GetComponent<Animation>();
-		UICamera.onScreenResize = (UICamera.OnScreenResize)Delegate.Combine(UICamera.onScreenResize, new UICamera.OnScreenResize(ScreenSizeChanged));
+		this.mTrans = base.transform;
+		this.mAnim = base.GetComponent<Animation>();
+		UICamera.onScreenResize += new UICamera.OnScreenResize(this.ScreenSizeChanged);
 	}
 
 	private void OnDestroy()
 	{
-		UICamera.onScreenResize = (UICamera.OnScreenResize)Delegate.Remove(UICamera.onScreenResize, new UICamera.OnScreenResize(ScreenSizeChanged));
+		UICamera.onScreenResize -= new UICamera.OnScreenResize(this.ScreenSizeChanged);
 	}
 
 	private void ScreenSizeChanged()
 	{
-		if (mStarted && runOnlyOnce)
+		if (this.mStarted && this.runOnlyOnce)
 		{
-			Update();
+			this.Update();
 		}
 	}
 
 	private void Start()
 	{
-		if (container == null && widgetContainer != null)
+		if (this.container == null && this.widgetContainer != null)
 		{
-			container = widgetContainer.gameObject;
-			widgetContainer = null;
+			this.container = this.widgetContainer.gameObject;
+			this.widgetContainer = null;
 		}
-		mRoot = NGUITools.FindInParents<UIRoot>(base.gameObject);
-		if (uiCamera == null)
+		this.mRoot = NGUITools.FindInParents<UIRoot>(base.gameObject);
+		if (this.uiCamera == null)
 		{
-			uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
+			this.uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
 		}
-		Update();
-		mStarted = true;
+		this.Update();
+		this.mStarted = true;
 	}
 
 	private void Update()
 	{
-		if (mAnim != null && mAnim.enabled && mAnim.isPlaying)
+		UIWidget component;
+		UIPanel uIPanel;
+		if (this.mAnim != null && this.mAnim.enabled && this.mAnim.isPlaying)
 		{
 			return;
 		}
 		bool flag = false;
-		UIWidget uIWidget = ((!(container == null)) ? container.GetComponent<UIWidget>() : null);
-		UIPanel uIPanel = ((!(container == null) || !(uIWidget == null)) ? container.GetComponent<UIPanel>() : null);
-		if (uIWidget != null)
+		if (this.container != null)
 		{
-			Bounds bounds = uIWidget.CalculateBounds(container.transform.parent);
-			mRect.x = bounds.min.x;
-			mRect.y = bounds.min.y;
-			mRect.width = bounds.size.x;
-			mRect.height = bounds.size.y;
-		}
-		else if (uIPanel != null)
-		{
-			if (uIPanel.clipping == UIDrawCall.Clipping.None)
-			{
-				float num = ((!(mRoot != null)) ? 0.5f : ((float)mRoot.activeHeight / (float)Screen.height * 0.5f));
-				mRect.xMin = (float)(-Screen.width) * num;
-				mRect.yMin = (float)(-Screen.height) * num;
-				mRect.xMax = 0f - mRect.xMin;
-				mRect.yMax = 0f - mRect.yMin;
-			}
-			else
-			{
-				Vector4 finalClipRegion = uIPanel.finalClipRegion;
-				mRect.x = finalClipRegion.x - finalClipRegion.z * 0.5f;
-				mRect.y = finalClipRegion.y - finalClipRegion.w * 0.5f;
-				mRect.width = finalClipRegion.z;
-				mRect.height = finalClipRegion.w;
-			}
-		}
-		else if (container != null)
-		{
-			Transform parent = container.transform.parent;
-			Bounds bounds2 = ((!(parent != null)) ? NGUIMath.CalculateRelativeWidgetBounds(container.transform) : NGUIMath.CalculateRelativeWidgetBounds(parent, container.transform));
-			mRect.x = bounds2.min.x;
-			mRect.y = bounds2.min.y;
-			mRect.width = bounds2.size.x;
-			mRect.height = bounds2.size.y;
+			component = this.container.GetComponent<UIWidget>();
 		}
 		else
 		{
-			if (!(uiCamera != null))
+			component = null;
+		}
+		UIWidget uIWidget = component;
+		if (!(this.container == null) || !(uIWidget == null))
+		{
+			uIPanel = this.container.GetComponent<UIPanel>();
+		}
+		else
+		{
+			uIPanel = null;
+		}
+		UIPanel uIPanel1 = uIPanel;
+		if (uIWidget != null)
+		{
+			Bounds bound = uIWidget.CalculateBounds(this.container.transform.parent);
+			Vector3 vector3 = bound.min;
+			this.mRect.x = vector3.x;
+			Vector3 vector31 = bound.min;
+			this.mRect.y = vector31.y;
+			Vector3 vector32 = bound.size;
+			this.mRect.width = vector32.x;
+			Vector3 vector33 = bound.size;
+			this.mRect.height = vector33.y;
+		}
+		else if (uIPanel1 != null)
+		{
+			if (uIPanel1.clipping != UIDrawCall.Clipping.None)
+			{
+				Vector4 vector4 = uIPanel1.finalClipRegion;
+				this.mRect.x = vector4.x - vector4.z * 0.5f;
+				this.mRect.y = vector4.y - vector4.w * 0.5f;
+				this.mRect.width = vector4.z;
+				this.mRect.height = vector4.w;
+			}
+			else
+			{
+				float single = (this.mRoot == null ? 0.5f : (float)this.mRoot.activeHeight / (float)Screen.height * 0.5f);
+				this.mRect.xMin = (float)(-Screen.width) * single;
+				this.mRect.yMin = (float)(-Screen.height) * single;
+				this.mRect.xMax = -this.mRect.xMin;
+				this.mRect.yMax = -this.mRect.yMin;
+			}
+		}
+		else if (this.container == null)
+		{
+			if (this.uiCamera == null)
 			{
 				return;
 			}
 			flag = true;
-			mRect = uiCamera.pixelRect;
-		}
-		float x = (mRect.xMin + mRect.xMax) * 0.5f;
-		float y = (mRect.yMin + mRect.yMax) * 0.5f;
-		Vector3 vector = new Vector3(x, y, 0f);
-		if (side != Side.Center)
-		{
-			if (side == Side.Right || side == Side.TopRight || side == Side.BottomRight)
-			{
-				vector.x = mRect.xMax;
-			}
-			else if (side == Side.Top || side == Side.Center || side == Side.Bottom)
-			{
-				vector.x = x;
-			}
-			else
-			{
-				vector.x = mRect.xMin;
-			}
-			if (side == Side.Top || side == Side.TopRight || side == Side.TopLeft)
-			{
-				vector.y = mRect.yMax;
-			}
-			else if (side == Side.Left || side == Side.Center || side == Side.Right)
-			{
-				vector.y = y;
-			}
-			else
-			{
-				vector.y = mRect.yMin;
-			}
-		}
-		float width = mRect.width;
-		float height = mRect.height;
-		vector.x += pixelOffset.x + relativeOffset.x * width;
-		vector.y += pixelOffset.y + relativeOffset.y * height;
-		if (flag)
-		{
-			if (uiCamera.orthographic)
-			{
-				vector.x = Mathf.Round(vector.x);
-				vector.y = Mathf.Round(vector.y);
-			}
-			vector.z = uiCamera.WorldToScreenPoint(mTrans.position).z;
-			vector = uiCamera.ScreenToWorldPoint(vector);
+			this.mRect = this.uiCamera.pixelRect;
 		}
 		else
 		{
-			vector.x = Mathf.Round(vector.x);
-			vector.y = Mathf.Round(vector.y);
-			if (uIPanel != null)
+			Transform transforms = this.container.transform.parent;
+			Bounds bound1 = (transforms == null ? NGUIMath.CalculateRelativeWidgetBounds(this.container.transform) : NGUIMath.CalculateRelativeWidgetBounds(transforms, this.container.transform));
+			Vector3 vector34 = bound1.min;
+			this.mRect.x = vector34.x;
+			Vector3 vector35 = bound1.min;
+			this.mRect.y = vector35.y;
+			Vector3 vector36 = bound1.size;
+			this.mRect.width = vector36.x;
+			Vector3 vector37 = bound1.size;
+			this.mRect.height = vector37.y;
+		}
+		float single1 = (this.mRect.xMin + this.mRect.xMax) * 0.5f;
+		float single2 = (this.mRect.yMin + this.mRect.yMax) * 0.5f;
+		Vector3 worldPoint = new Vector3(single1, single2, 0f);
+		if (this.side != UIAnchor.Side.Center)
+		{
+			if (this.side == UIAnchor.Side.Right || this.side == UIAnchor.Side.TopRight || this.side == UIAnchor.Side.BottomRight)
 			{
-				vector = uIPanel.cachedTransform.TransformPoint(vector);
+				worldPoint.x = this.mRect.xMax;
 			}
-			else if (container != null)
+			else if (this.side == UIAnchor.Side.Top || this.side == UIAnchor.Side.Center || this.side == UIAnchor.Side.Bottom)
 			{
-				Transform parent2 = container.transform.parent;
-				if (parent2 != null)
+				worldPoint.x = single1;
+			}
+			else
+			{
+				worldPoint.x = this.mRect.xMin;
+			}
+			if (this.side == UIAnchor.Side.Top || this.side == UIAnchor.Side.TopRight || this.side == UIAnchor.Side.TopLeft)
+			{
+				worldPoint.y = this.mRect.yMax;
+			}
+			else if (this.side == UIAnchor.Side.Left || this.side == UIAnchor.Side.Center || this.side == UIAnchor.Side.Right)
+			{
+				worldPoint.y = single2;
+			}
+			else
+			{
+				worldPoint.y = this.mRect.yMin;
+			}
+		}
+		float single3 = this.mRect.width;
+		float single4 = this.mRect.height;
+		worldPoint.x = worldPoint.x + (this.pixelOffset.x + this.relativeOffset.x * single3);
+		worldPoint.y = worldPoint.y + (this.pixelOffset.y + this.relativeOffset.y * single4);
+		if (!flag)
+		{
+			worldPoint.x = Mathf.Round(worldPoint.x);
+			worldPoint.y = Mathf.Round(worldPoint.y);
+			if (uIPanel1 != null)
+			{
+				worldPoint = uIPanel1.cachedTransform.TransformPoint(worldPoint);
+			}
+			else if (this.container != null)
+			{
+				Transform transforms1 = this.container.transform.parent;
+				if (transforms1 != null)
 				{
-					vector = parent2.TransformPoint(vector);
+					worldPoint = transforms1.TransformPoint(worldPoint);
 				}
 			}
-			vector.z = mTrans.position.z;
+			worldPoint.z = this.mTrans.position.z;
 		}
-		if (flag && uiCamera.orthographic && mTrans.parent != null)
+		else
 		{
-			vector = mTrans.parent.InverseTransformPoint(vector);
-			vector.x = Mathf.RoundToInt(vector.x);
-			vector.y = Mathf.RoundToInt(vector.y);
-			if (mTrans.localPosition != vector)
+			if (this.uiCamera.orthographic)
 			{
-				mTrans.localPosition = vector;
+				worldPoint.x = Mathf.Round(worldPoint.x);
+				worldPoint.y = Mathf.Round(worldPoint.y);
+			}
+			Vector3 screenPoint = this.uiCamera.WorldToScreenPoint(this.mTrans.position);
+			worldPoint.z = screenPoint.z;
+			worldPoint = this.uiCamera.ScreenToWorldPoint(worldPoint);
+		}
+		if (flag && this.uiCamera.orthographic && this.mTrans.parent != null)
+		{
+			worldPoint = this.mTrans.parent.InverseTransformPoint(worldPoint);
+			worldPoint.x = (float)Mathf.RoundToInt(worldPoint.x);
+			worldPoint.y = (float)Mathf.RoundToInt(worldPoint.y);
+			if (this.mTrans.localPosition != worldPoint)
+			{
+				this.mTrans.localPosition = worldPoint;
 			}
 		}
-		else if (mTrans.position != vector)
+		else if (this.mTrans.position != worldPoint)
 		{
-			mTrans.position = vector;
+			this.mTrans.position = worldPoint;
 		}
-		if (runOnlyOnce && Application.isPlaying)
+		if (this.runOnlyOnce && Application.isPlaying)
 		{
 			base.enabled = false;
 		}
+	}
+
+	public enum Side
+	{
+		BottomLeft,
+		Left,
+		TopLeft,
+		Top,
+		TopRight,
+		Right,
+		BottomRight,
+		Bottom,
+		Center
 	}
 }

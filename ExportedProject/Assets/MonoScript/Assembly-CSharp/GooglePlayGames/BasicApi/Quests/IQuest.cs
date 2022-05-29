@@ -4,24 +4,54 @@ namespace GooglePlayGames.BasicApi.Quests
 {
 	public interface IQuest
 	{
-		string Id { get; }
+		DateTime? AcceptedTime
+		{
+			get;
+		}
 
-		string Name { get; }
+		string BannerUrl
+		{
+			get;
+		}
 
-		string Description { get; }
+		string Description
+		{
+			get;
+		}
 
-		string BannerUrl { get; }
+		DateTime ExpirationTime
+		{
+			get;
+		}
 
-		string IconUrl { get; }
+		string IconUrl
+		{
+			get;
+		}
 
-		DateTime StartTime { get; }
+		string Id
+		{
+			get;
+		}
 
-		DateTime ExpirationTime { get; }
+		IQuestMilestone Milestone
+		{
+			get;
+		}
 
-		DateTime? AcceptedTime { get; }
+		string Name
+		{
+			get;
+		}
 
-		IQuestMilestone Milestone { get; }
+		DateTime StartTime
+		{
+			get;
+		}
 
-		QuestState State { get; }
+		QuestState State
+		{
+			get;
+		}
 	}
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -13,40 +14,8 @@ public sealed class AmmoButtonInGamePanel : MonoBehaviour
 
 	public InGameGUI inGameGui;
 
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache4;
-
-	[CompilerGenerated]
-	private static Action _003C_003Ef__am_0024cache5;
-
-	private void Start()
+	public AmmoButtonInGamePanel()
 	{
-		priceLabel.text = Defs.ammoInGamePanelPrice.ToString();
-	}
-
-	private void Update()
-	{
-		UpdateState();
-	}
-
-	private void UpdateState(bool isDelta = true)
-	{
-		Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
-		int currentAmmoInBackpack = weapon.currentAmmoInBackpack;
-		WeaponSounds component = weapon.weaponPrefab.GetComponent<WeaponSounds>();
-		int maxAmmoWithEffectApplied = component.MaxAmmoWithEffectApplied;
-		bool flag = currentAmmoInBackpack == maxAmmoWithEffectApplied;
-		if (flag == myButton.isEnabled || !isDelta)
-		{
-			fullLabel.SetActive(flag);
-			myButton.isEnabled = !flag;
-			priceLabel.gameObject.SetActive(!flag);
-		}
-	}
-
-	private void OnEnable()
-	{
-		UpdateState(false);
 	}
 
 	private void OnClick()
@@ -57,47 +26,58 @@ public sealed class AmmoButtonInGamePanel : MonoBehaviour
 		}
 		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
 		{
-			Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
-			WeaponSounds component = weapon.weaponPrefab.GetComponent<WeaponSounds>();
-			weapon.currentAmmoInBackpack = component.MaxAmmoWithEffectApplied;
+			Weapon maxAmmoWithEffectApplied = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
+			maxAmmoWithEffectApplied.currentAmmoInBackpack = maxAmmoWithEffectApplied.weaponPrefab.GetComponent<WeaponSounds>().MaxAmmoWithEffectApplied;
 			return;
 		}
-		GameObject mainPanel = inGameGui.gameObject;
-		ItemPrice price = new ItemPrice(Defs.ammoInGamePanelPrice, "Coins");
-		if (_003C_003Ef__am_0024cache4 == null)
-		{
-			_003C_003Ef__am_0024cache4 = _003COnClick_003Em__0;
-		}
-		Action onSuccess = _003C_003Ef__am_0024cache4;
-		if (_003C_003Ef__am_0024cache5 == null)
-		{
-			_003C_003Ef__am_0024cache5 = _003COnClick_003Em__1;
-		}
-		ShopNGUIController.TryToBuy(mainPanel, price, onSuccess, _003C_003Ef__am_0024cache5);
+		ShopNGUIController.TryToBuy(this.inGameGui.gameObject, new ItemPrice(Defs.ammoInGamePanelPrice, "Coins"), () => {
+			if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
+			{
+				InGameGUI.sharedInGameGUI.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Ammo);
+			}
+			Weapon item = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
+			item.currentAmmoInBackpack = item.weaponPrefab.GetComponent<WeaponSounds>().MaxAmmoWithEffectApplied;
+			FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, "Ammo", 1, true);
+			FlurryPluginWrapper.LogGearPurchases("Ammo", 1, true);
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+			{
+				{ "Succeeded", "Ammo" }
+			}, true);
+			FlurryPluginWrapper.LogFastPurchase("Ammo");
+		}, () => {
+			JoystickController.leftJoystick.Reset();
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", new Dictionary<string, string>()
+			{
+				{ "Failed", "Ammo" }
+			}, true);
+		}, null, null, null, null);
 	}
 
-	[CompilerGenerated]
-	private static void _003COnClick_003Em__0()
+	private void OnEnable()
 	{
-		if (InGameGUI.sharedInGameGUI != null && InGameGUI.sharedInGameGUI.playerMoveC != null)
-		{
-			InGameGUI.sharedInGameGUI.playerMoveC.ShowBonuseParticle(Player_move_c.TypeBonuses.Ammo);
-		}
-		Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
-		WeaponSounds component = weapon.weaponPrefab.GetComponent<WeaponSounds>();
-		weapon.currentAmmoInBackpack = component.MaxAmmoWithEffectApplied;
-		FlurryPluginWrapper.LogPurchaseByModes(ShopNGUIController.CategoryNames.GearCategory, "Ammo", 1, true);
-		FlurryPluginWrapper.LogGearPurchases("Ammo", 1, true);
-		Dictionary<string, string> parameters = new Dictionary<string, string> { { "Succeeded", "Ammo" } };
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
-		FlurryPluginWrapper.LogFastPurchase("Ammo");
+		this.UpdateState(false);
 	}
 
-	[CompilerGenerated]
-	private static void _003COnClick_003Em__1()
+	private void Start()
 	{
-		JoystickController.leftJoystick.Reset();
-		Dictionary<string, string> parameters = new Dictionary<string, string> { { "Failed", "Ammo" } };
-		FlurryPluginWrapper.LogEventAndDublicateToConsole("Fast Purchase", parameters);
+		this.priceLabel.text = Defs.ammoInGamePanelPrice.ToString();
+	}
+
+	private void Update()
+	{
+		this.UpdateState(true);
+	}
+
+	private void UpdateState(bool isDelta = true)
+	{
+		Weapon item = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
+		int num = item.currentAmmoInBackpack;
+		bool maxAmmoWithEffectApplied = num == item.weaponPrefab.GetComponent<WeaponSounds>().MaxAmmoWithEffectApplied;
+		if (maxAmmoWithEffectApplied == this.myButton.isEnabled || !isDelta)
+		{
+			this.fullLabel.SetActive(maxAmmoWithEffectApplied);
+			this.myButton.isEnabled = !maxAmmoWithEffectApplied;
+			this.priceLabel.gameObject.SetActive(!maxAmmoWithEffectApplied);
+		}
 	}
 }

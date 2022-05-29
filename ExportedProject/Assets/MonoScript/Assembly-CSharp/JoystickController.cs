@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 internal sealed class JoystickController : MonoBehaviour
@@ -14,22 +15,30 @@ internal sealed class JoystickController : MonoBehaviour
 
 	public TouchPadInJoystick _leftTouchPad;
 
-	private void Awake()
+	static JoystickController()
 	{
-		leftJoystick = _leftJoystick;
-		rightJoystick = _rightJoystick;
-		leftTouchPad = _leftTouchPad;
 	}
 
-	private void OnDestroy()
+	public JoystickController()
 	{
-		leftJoystick = null;
-		rightJoystick = null;
-		leftTouchPad = null;
+	}
+
+	private void Awake()
+	{
+		JoystickController.leftJoystick = this._leftJoystick;
+		JoystickController.rightJoystick = this._rightJoystick;
+		JoystickController.leftTouchPad = this._leftTouchPad;
 	}
 
 	public static bool IsButtonFireUp()
 	{
-		return !leftTouchPad.isShooting && !rightJoystick.isShooting;
+		return (JoystickController.leftTouchPad.isShooting ? false : !JoystickController.rightJoystick.isShooting);
+	}
+
+	private void OnDestroy()
+	{
+		JoystickController.leftJoystick = null;
+		JoystickController.rightJoystick = null;
+		JoystickController.leftTouchPad = null;
 	}
 }

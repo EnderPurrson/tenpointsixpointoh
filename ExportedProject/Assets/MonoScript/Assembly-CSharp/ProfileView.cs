@@ -1,20 +1,13 @@
+using Rilisoft;
 using System;
 using System.Collections;
-using Rilisoft;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class ProfileView : MonoBehaviour
 {
-	public class InputEventArgs : EventArgs
-	{
-		public string Input { get; private set; }
-
-		public InputEventArgs(string input)
-		{
-			Input = input ?? string.Empty;
-		}
-	}
-
 	public UILabel pixelgunFriendsID;
 
 	public GameObject interfaceHolder;
@@ -77,214 +70,24 @@ internal sealed class ProfileView : MonoBehaviour
 
 	public CharacterView characterView;
 
-	public string DeathmatchWinCount
-	{
-		get
-		{
-			return GetText(deathmatchWinCount);
-		}
-		set
-		{
-			SetText(deathmatchWinCount, value);
-		}
-	}
-
-	public string TotalWeeklyWinCount
-	{
-		get
-		{
-			return GetText(totalWeeklyWinsCount);
-		}
-		set
-		{
-			SetText(totalWeeklyWinsCount, value);
-		}
-	}
-
-	public string TeamBattleWinCount
-	{
-		get
-		{
-			return GetText(teamBattleWinCount);
-		}
-		set
-		{
-			SetText(teamBattleWinCount, value);
-		}
-	}
-
-	public string CapturePointWinCount
-	{
-		get
-		{
-			return GetText(capturePointCount);
-		}
-		set
-		{
-			SetText(capturePointCount, value);
-		}
-	}
-
-	public string DeadlyGamesWinCount
-	{
-		get
-		{
-			return GetText(deadlyGamesWinCount);
-		}
-		set
-		{
-			SetText(deadlyGamesWinCount, value);
-		}
-	}
-
-	public string FlagCaptureWinCount
-	{
-		get
-		{
-			return GetText(flagCaptureWinCount);
-		}
-		set
-		{
-			SetText(flagCaptureWinCount, value);
-		}
-	}
-
-	public string TotalWinCount
-	{
-		get
-		{
-			return GetText(totalWinCount);
-		}
-		set
-		{
-			SetText(totalWinCount, value);
-		}
-	}
-
-	public string PixelgunFriendsID
-	{
-		get
-		{
-			return GetText(pixelgunFriendsID);
-		}
-		set
-		{
-			SetText(pixelgunFriendsID, "ID: " + value);
-		}
-	}
-
-	public string CoopTimeSurvivalPointCount
-	{
-		get
-		{
-			return GetText(coopTimeSurvivalPointCount);
-		}
-		set
-		{
-			SetText(coopTimeSurvivalPointCount, value);
-		}
-	}
-
-	public string GameTotalKills
-	{
-		get
-		{
-			return GetText(lbGameTotalKills);
-		}
-		set
-		{
-			SetText(lbGameTotalKills, value);
-		}
-	}
-
-	public string GameKillrate
-	{
-		get
-		{
-			return GetText(lbGameKillrate);
-		}
-		set
-		{
-			SetText(lbGameKillrate, value);
-		}
-	}
-
-	public string GameAccuracy
-	{
-		get
-		{
-			return GetText(lbGameAccuracy);
-		}
-		set
-		{
-			SetText(lbGameAccuracy, value);
-		}
-	}
-
-	public string GameLikes
-	{
-		get
-		{
-			return GetText(lbGameLikes);
-		}
-		set
-		{
-			SetText(lbGameLikes, value);
-		}
-	}
-
-	public string WaveCountLabel
-	{
-		get
-		{
-			return GetText(waveCountLabel);
-		}
-		set
-		{
-			SetText(waveCountLabel, value);
-		}
-	}
-
-	public string KilledCountLabel
-	{
-		get
-		{
-			return GetText(killedCountLabel);
-		}
-		set
-		{
-			SetText(killedCountLabel, value);
-		}
-	}
-
-	public string SurvivalScoreLabel
-	{
-		get
-		{
-			return GetText(survivalScoreLabel);
-		}
-		set
-		{
-			SetText(survivalScoreLabel, value);
-		}
-	}
+	private EventHandler<ProfileView.InputEventArgs> NicknameInput;
 
 	public string Box1StarsLabel
 	{
 		get
 		{
-			return GetText(box1StarsLabel);
+			return ProfileView.GetText(this.box1StarsLabel);
 		}
 		set
 		{
-			SetText(box1StarsLabel, value);
-			if (box1StarsLabel != null)
+			ProfileView.SetText(this.box1StarsLabel, value);
+			if (this.box1StarsLabel != null)
 			{
-				UISprite componentInChildren = box1StarsLabel.GetComponentInChildren<UISprite>();
+				UISprite componentInChildren = this.box1StarsLabel.GetComponentInChildren<UISprite>();
 				if (componentInChildren != null)
 				{
-					Vector3 localPosition = box1StarsLabel.transform.localPosition;
-					componentInChildren.transform.localPosition = new Vector3(-box1StarsLabel.width, localPosition.y, localPosition.z);
+					Vector3 vector3 = this.box1StarsLabel.transform.localPosition;
+					componentInChildren.transform.localPosition = new Vector3((float)(-this.box1StarsLabel.width), vector3.y, vector3.z);
 				}
 			}
 		}
@@ -294,18 +97,18 @@ internal sealed class ProfileView : MonoBehaviour
 	{
 		get
 		{
-			return GetText(box2StarsLabel);
+			return ProfileView.GetText(this.box2StarsLabel);
 		}
 		set
 		{
-			SetText(box2StarsLabel, value);
-			if (box2StarsLabel != null)
+			ProfileView.SetText(this.box2StarsLabel, value);
+			if (this.box2StarsLabel != null)
 			{
-				UISprite componentInChildren = box2StarsLabel.GetComponentInChildren<UISprite>();
+				UISprite componentInChildren = this.box2StarsLabel.GetComponentInChildren<UISprite>();
 				if (componentInChildren != null)
 				{
-					Vector3 localPosition = box2StarsLabel.transform.localPosition;
-					componentInChildren.transform.localPosition = new Vector3(-box2StarsLabel.width, localPosition.y, localPosition.z);
+					Vector3 vector3 = this.box2StarsLabel.transform.localPosition;
+					componentInChildren.transform.localPosition = new Vector3((float)(-this.box2StarsLabel.width), vector3.y, vector3.z);
 				}
 			}
 		}
@@ -315,77 +118,128 @@ internal sealed class ProfileView : MonoBehaviour
 	{
 		get
 		{
-			return GetText(box3StarsLabel);
+			return ProfileView.GetText(this.box3StarsLabel);
 		}
 		set
 		{
-			SetText(box3StarsLabel, value);
-			if (box3StarsLabel != null)
+			ProfileView.SetText(this.box3StarsLabel, value);
+			if (this.box3StarsLabel != null)
 			{
-				UISprite componentInChildren = box3StarsLabel.GetComponentInChildren<UISprite>();
+				UISprite componentInChildren = this.box3StarsLabel.GetComponentInChildren<UISprite>();
 				if (componentInChildren != null)
 				{
-					Vector3 localPosition = box3StarsLabel.transform.localPosition;
-					componentInChildren.transform.localPosition = new Vector3(-box3StarsLabel.width, localPosition.y, localPosition.z);
+					Vector3 vector3 = this.box3StarsLabel.transform.localPosition;
+					componentInChildren.transform.localPosition = new Vector3((float)(-this.box3StarsLabel.width), vector3.y, vector3.z);
 				}
 			}
 		}
 	}
 
-	public string SecretCoinsLabel
+	public string CapturePointWinCount
 	{
 		get
 		{
-			return GetText(secretCoinsLabel);
+			return ProfileView.GetText(this.capturePointCount);
 		}
 		set
 		{
-			if (!(secretCoinsLabel == null))
-			{
-				SetText(secretCoinsLabel, value);
-				UISprite componentInChildren = secretCoinsLabel.GetComponentInChildren<UISprite>();
-				if (!(componentInChildren == null))
-				{
-					Vector3 localPosition = secretCoinsLabel.transform.localPosition;
-					componentInChildren.transform.localPosition = new Vector3(-secretCoinsLabel.width, localPosition.y, localPosition.z);
-				}
-			}
+			ProfileView.SetText(this.capturePointCount, value);
 		}
 	}
 
-	public string SecretGemsLabel
+	public string CoopTimeSurvivalPointCount
 	{
 		get
 		{
-			return GetText(secretGemsLabel);
+			return ProfileView.GetText(this.coopTimeSurvivalPointCount);
 		}
 		set
 		{
-			if (!(secretGemsLabel == null))
-			{
-				SetText(secretGemsLabel, value);
-				UISprite componentInChildren = secretGemsLabel.GetComponentInChildren<UISprite>();
-				if (!(componentInChildren == null))
-				{
-					Vector3 localPosition = secretGemsLabel.transform.localPosition;
-					componentInChildren.transform.localPosition = new Vector3(-secretGemsLabel.width, localPosition.y, localPosition.z);
-				}
-			}
+			ProfileView.SetText(this.coopTimeSurvivalPointCount, value);
 		}
 	}
 
-	public string Nickname
+	public string DeadlyGamesWinCount
 	{
 		get
 		{
-			return (!(nicknameInput != null)) ? string.Empty : (nicknameInput.value ?? string.Empty);
+			return ProfileView.GetText(this.deadlyGamesWinCount);
 		}
 		set
 		{
-			if (nicknameInput != null)
-			{
-				nicknameInput.value = value ?? string.Empty;
-			}
+			ProfileView.SetText(this.deadlyGamesWinCount, value);
+		}
+	}
+
+	public string DeathmatchWinCount
+	{
+		get
+		{
+			return ProfileView.GetText(this.deathmatchWinCount);
+		}
+		set
+		{
+			ProfileView.SetText(this.deathmatchWinCount, value);
+		}
+	}
+
+	public string FlagCaptureWinCount
+	{
+		get
+		{
+			return ProfileView.GetText(this.flagCaptureWinCount);
+		}
+		set
+		{
+			ProfileView.SetText(this.flagCaptureWinCount, value);
+		}
+	}
+
+	public string GameAccuracy
+	{
+		get
+		{
+			return ProfileView.GetText(this.lbGameAccuracy);
+		}
+		set
+		{
+			ProfileView.SetText(this.lbGameAccuracy, value);
+		}
+	}
+
+	public string GameKillrate
+	{
+		get
+		{
+			return ProfileView.GetText(this.lbGameKillrate);
+		}
+		set
+		{
+			ProfileView.SetText(this.lbGameKillrate, value);
+		}
+	}
+
+	public string GameLikes
+	{
+		get
+		{
+			return ProfileView.GetText(this.lbGameLikes);
+		}
+		set
+		{
+			ProfileView.SetText(this.lbGameLikes, value);
+		}
+	}
+
+	public string GameTotalKills
+	{
+		get
+		{
+			return ProfileView.GetText(this.lbGameTotalKills);
+		}
+		set
+		{
+			ProfileView.SetText(this.lbGameTotalKills, value);
 		}
 	}
 
@@ -393,128 +247,177 @@ internal sealed class ProfileView : MonoBehaviour
 	{
 		get
 		{
-			return FriendsController.sharedController != null && !string.IsNullOrEmpty(FriendsController.sharedController.id);
+			return (FriendsController.sharedController == null ? false : !string.IsNullOrEmpty(FriendsController.sharedController.id));
 		}
 	}
 
-	public event EventHandler BackButtonPressed
+	public string KilledCountLabel
 	{
-		add
+		get
 		{
-			if (backButton != null)
-			{
-				backButton.Clicked += value;
-			}
+			return ProfileView.GetText(this.killedCountLabel);
 		}
-		remove
+		set
 		{
-			if (backButton != null)
+			ProfileView.SetText(this.killedCountLabel, value);
+		}
+	}
+
+	public string Nickname
+	{
+		get
+		{
+			return (this.nicknameInput == null ? string.Empty : this.nicknameInput.@value ?? string.Empty);
+		}
+		set
+		{
+			if (this.nicknameInput != null)
 			{
-				backButton.Clicked -= value;
+				this.nicknameInput.@value = value ?? string.Empty;
 			}
 		}
 	}
 
-	public event EventHandler<InputEventArgs> NicknameInput;
+	public string PixelgunFriendsID
+	{
+		get
+		{
+			return ProfileView.GetText(this.pixelgunFriendsID);
+		}
+		set
+		{
+			ProfileView.SetText(this.pixelgunFriendsID, string.Concat("ID: ", value));
+		}
+	}
+
+	public string SecretCoinsLabel
+	{
+		get
+		{
+			return ProfileView.GetText(this.secretCoinsLabel);
+		}
+		set
+		{
+			if (this.secretCoinsLabel == null)
+			{
+				return;
+			}
+			ProfileView.SetText(this.secretCoinsLabel, value);
+			UISprite componentInChildren = this.secretCoinsLabel.GetComponentInChildren<UISprite>();
+			if (componentInChildren == null)
+			{
+				return;
+			}
+			Vector3 vector3 = this.secretCoinsLabel.transform.localPosition;
+			componentInChildren.transform.localPosition = new Vector3((float)(-this.secretCoinsLabel.width), vector3.y, vector3.z);
+		}
+	}
+
+	public string SecretGemsLabel
+	{
+		get
+		{
+			return ProfileView.GetText(this.secretGemsLabel);
+		}
+		set
+		{
+			if (this.secretGemsLabel == null)
+			{
+				return;
+			}
+			ProfileView.SetText(this.secretGemsLabel, value);
+			UISprite componentInChildren = this.secretGemsLabel.GetComponentInChildren<UISprite>();
+			if (componentInChildren == null)
+			{
+				return;
+			}
+			Vector3 vector3 = this.secretGemsLabel.transform.localPosition;
+			componentInChildren.transform.localPosition = new Vector3((float)(-this.secretGemsLabel.width), vector3.y, vector3.z);
+		}
+	}
+
+	public string SurvivalScoreLabel
+	{
+		get
+		{
+			return ProfileView.GetText(this.survivalScoreLabel);
+		}
+		set
+		{
+			ProfileView.SetText(this.survivalScoreLabel, value);
+		}
+	}
+
+	public string TeamBattleWinCount
+	{
+		get
+		{
+			return ProfileView.GetText(this.teamBattleWinCount);
+		}
+		set
+		{
+			ProfileView.SetText(this.teamBattleWinCount, value);
+		}
+	}
+
+	public string TotalWeeklyWinCount
+	{
+		get
+		{
+			return ProfileView.GetText(this.totalWeeklyWinsCount);
+		}
+		set
+		{
+			ProfileView.SetText(this.totalWeeklyWinsCount, value);
+		}
+	}
+
+	public string TotalWinCount
+	{
+		get
+		{
+			return ProfileView.GetText(this.totalWinCount);
+		}
+		set
+		{
+			ProfileView.SetText(this.totalWinCount, value);
+		}
+	}
+
+	public string WaveCountLabel
+	{
+		get
+		{
+			return ProfileView.GetText(this.waveCountLabel);
+		}
+		set
+		{
+			ProfileView.SetText(this.waveCountLabel, value);
+		}
+	}
+
+	public ProfileView()
+	{
+	}
 
 	private void Awake()
 	{
-		if (copyIdButton != null && BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
+		if (this.copyIdButton != null && BuildSettings.BuildTargetPlatform == RuntimePlatform.MetroPlayerX64)
 		{
-			copyIdButton.gameObject.SetActive(false);
+			this.copyIdButton.gameObject.SetActive(false);
 		}
 	}
 
-	public void OnSubmit()
+	public void CheckBtnCopy()
 	{
-		if (!(nicknameInput == null))
-		{
-			EventHandler<InputEventArgs> eventHandler = this.NicknameInput;
-			if (eventHandler != null)
-			{
-				eventHandler(this, new InputEventArgs(nicknameInput.value));
-			}
-		}
+		base.StartCoroutine(this.Crt_CheckBtnCopy());
 	}
 
-	public void OnCopyIdClick()
+	[DebuggerHidden]
+	private IEnumerator Crt_CheckBtnCopy()
 	{
-		FriendsController.CopyMyIdToClipboard();
-	}
-
-	public void SetClanLogo(string logoBase64)
-	{
-		if (clanLogo == null)
-		{
-			Debug.LogWarning("clanLogo == null");
-			return;
-		}
-		Texture2D texture2D = CharacterView.GetClanLogo(logoBase64);
-		if (texture2D == null)
-		{
-			clanLogo.transform.parent.gameObject.SetActive(false);
-		}
-		else
-		{
-			clanLogo.mainTexture = texture2D;
-		}
-	}
-
-	public void SetWeaponAndSkin(string tg, bool replaceRemovedWeapons)
-	{
-		characterView.SetWeaponAndSkin(tg, SkinsController.currentSkinForPers, replaceRemovedWeapons);
-	}
-
-	public void UpdateHat(string hat)
-	{
-		characterView.UpdateHat(hat);
-		ShopNGUIController.SetPersHatVisible(characterView.hatPoint);
-	}
-
-	public void RemoveHat()
-	{
-		characterView.RemoveHat();
-	}
-
-	public void UpdateMask(string mask)
-	{
-		characterView.UpdateMask(mask);
-	}
-
-	public void RemoveMask()
-	{
-		characterView.RemoveMask();
-	}
-
-	public void UpdateCape(string cape)
-	{
-		characterView.UpdateCape(cape);
-	}
-
-	public void RemoveCape()
-	{
-		characterView.RemoveCape();
-	}
-
-	public void UpdateBoots(string bs)
-	{
-		characterView.UpdateBoots(bs);
-	}
-
-	public void RemoveBoots()
-	{
-		characterView.RemoveBoots();
-	}
-
-	public void UpdateArmor(string armor)
-	{
-		characterView.UpdateArmor(armor);
-		ShopNGUIController.SetPersArmorVisible(characterView.armorPoint);
-	}
-
-	public void RemoveArmor()
-	{
-		characterView.RemoveArmor();
+		ProfileView.u003cCrt_CheckBtnCopyu003ec__Iterator17D variable = null;
+		return variable;
 	}
 
 	private static string GetText(UILabel label)
@@ -526,6 +429,67 @@ internal sealed class ProfileView : MonoBehaviour
 		return label.text ?? string.Empty;
 	}
 
+	public void OnCopyIdClick()
+	{
+		FriendsController.CopyMyIdToClipboard();
+	}
+
+	public void OnSubmit()
+	{
+		if (this.nicknameInput == null)
+		{
+			return;
+		}
+		EventHandler<ProfileView.InputEventArgs> nicknameInput = this.NicknameInput;
+		if (nicknameInput != null)
+		{
+			nicknameInput(this, new ProfileView.InputEventArgs(this.nicknameInput.@value));
+		}
+	}
+
+	public void RemoveArmor()
+	{
+		this.characterView.RemoveArmor();
+	}
+
+	public void RemoveBoots()
+	{
+		this.characterView.RemoveBoots();
+	}
+
+	public void RemoveCape()
+	{
+		this.characterView.RemoveCape();
+	}
+
+	public void RemoveHat()
+	{
+		this.characterView.RemoveHat();
+	}
+
+	public void RemoveMask()
+	{
+		this.characterView.RemoveMask();
+	}
+
+	public void SetClanLogo(string logoBase64)
+	{
+		if (this.clanLogo == null)
+		{
+			UnityEngine.Debug.LogWarning("clanLogo == null");
+			return;
+		}
+		Texture2D clanLogo = CharacterView.GetClanLogo(logoBase64);
+		if (clanLogo != null)
+		{
+			this.clanLogo.mainTexture = clanLogo;
+		}
+		else
+		{
+			this.clanLogo.transform.parent.gameObject.SetActive(false);
+		}
+	}
+
 	private static void SetText(UILabel label, string value)
 	{
 		if (label != null)
@@ -534,24 +498,81 @@ internal sealed class ProfileView : MonoBehaviour
 		}
 	}
 
-	public void CheckBtnCopy()
+	public void SetWeaponAndSkin(string tg, bool replaceRemovedWeapons)
 	{
-		StartCoroutine(Crt_CheckBtnCopy());
+		this.characterView.SetWeaponAndSkin(tg, SkinsController.currentSkinForPers, replaceRemovedWeapons);
 	}
 
-	private IEnumerator Crt_CheckBtnCopy()
+	public void UpdateArmor(string armor)
 	{
-		if ((bool)copyIdButton)
+		this.characterView.UpdateArmor(armor);
+		ShopNGUIController.SetPersArmorVisible(this.characterView.armorPoint);
+	}
+
+	public void UpdateBoots(string bs)
+	{
+		this.characterView.UpdateBoots(bs);
+	}
+
+	public void UpdateCape(string cape)
+	{
+		this.characterView.UpdateCape(cape, null);
+	}
+
+	public void UpdateHat(string hat)
+	{
+		this.characterView.UpdateHat(hat);
+		ShopNGUIController.SetPersHatVisible(this.characterView.hatPoint);
+	}
+
+	public void UpdateMask(string mask)
+	{
+		this.characterView.UpdateMask(mask);
+	}
+
+	public event EventHandler BackButtonPressed
+	{
+		add
 		{
-			copyIdButton.gameObject.SetActive(false);
+			if (this.backButton != null)
+			{
+				this.backButton.Clicked += value;
+			}
 		}
-		while (!IdPlayerExist)
+		remove
 		{
-			yield return new WaitForSeconds(1f);
+			if (this.backButton != null)
+			{
+				this.backButton.Clicked -= value;
+			}
 		}
-		if ((bool)copyIdButton)
+	}
+
+	public event EventHandler<ProfileView.InputEventArgs> NicknameInput
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
 		{
-			copyIdButton.gameObject.SetActive(true);
+			this.NicknameInput += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.NicknameInput -= value;
+		}
+	}
+
+	public class InputEventArgs : EventArgs
+	{
+		public string Input
+		{
+			get;
+			private set;
+		}
+
+		public InputEventArgs(string input)
+		{
+			this.Input = input ?? string.Empty;
 		}
 	}
 }

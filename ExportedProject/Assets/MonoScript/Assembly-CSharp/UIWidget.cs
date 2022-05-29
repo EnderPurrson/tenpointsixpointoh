@@ -6,55 +6,29 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class UIWidget : UIRect
 {
-	public enum Pivot
-	{
-		TopLeft = 0,
-		Top = 1,
-		TopRight = 2,
-		Left = 3,
-		Center = 4,
-		Right = 5,
-		BottomLeft = 6,
-		Bottom = 7,
-		BottomRight = 8
-	}
-
-	public enum AspectRatioSource
-	{
-		Free = 0,
-		BasedOnWidth = 1,
-		BasedOnHeight = 2
-	}
-
-	public delegate void OnDimensionsChanged();
-
-	public delegate void OnPostFillCallback(UIWidget widget, int bufferOffset, BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols);
-
-	public delegate bool HitCheck(Vector3 worldPos);
-
 	[HideInInspector]
 	[SerializeField]
 	protected Color mColor = Color.white;
 
-	[SerializeField]
 	[HideInInspector]
-	protected Pivot mPivot = Pivot.Center;
+	[SerializeField]
+	protected UIWidget.Pivot mPivot = UIWidget.Pivot.Center;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected int mWidth = 100;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected int mHeight = 100;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	protected int mDepth;
 
-	public OnDimensionsChanged onChange;
+	public UIWidget.OnDimensionsChanged onChange;
 
-	public OnPostFillCallback onPostFill;
+	public UIWidget.OnPostFillCallback onPostFill;
 
 	public UIDrawCall.OnRenderCallback mOnRender;
 
@@ -62,11 +36,11 @@ public class UIWidget : UIRect
 
 	public bool hideIfOffScreen;
 
-	public AspectRatioSource keepAspectRatio;
+	public UIWidget.AspectRatioSource keepAspectRatio;
 
 	public float aspectRatio = 1f;
 
-	public HitCheck hitCheck;
+	public UIWidget.HitCheck hitCheck;
 
 	[NonSerialized]
 	public UIPanel panel;
@@ -116,453 +90,19 @@ public class UIWidget : UIRect
 
 	private Vector3 mOldV1;
 
-	public UIDrawCall.OnRenderCallback onRender
-	{
-		get
-		{
-			return mOnRender;
-		}
-		set
-		{
-			if (mOnRender != value)
-			{
-				if (drawCall != null && drawCall.onRender != null && mOnRender != null)
-				{
-					UIDrawCall uIDrawCall = drawCall;
-					uIDrawCall.onRender = (UIDrawCall.OnRenderCallback)Delegate.Remove(uIDrawCall.onRender, mOnRender);
-				}
-				mOnRender = value;
-				if (drawCall != null)
-				{
-					UIDrawCall uIDrawCall2 = drawCall;
-					uIDrawCall2.onRender = (UIDrawCall.OnRenderCallback)Delegate.Combine(uIDrawCall2.onRender, value);
-				}
-			}
-		}
-	}
-
-	public Vector4 drawRegion
-	{
-		get
-		{
-			return mDrawRegion;
-		}
-		set
-		{
-			if (mDrawRegion != value)
-			{
-				mDrawRegion = value;
-				if (autoResizeBoxCollider)
-				{
-					ResizeCollider();
-				}
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public Vector2 pivotOffset
-	{
-		get
-		{
-			return NGUIMath.GetPivotOffset(pivot);
-		}
-	}
-
-	public int width
-	{
-		get
-		{
-			return mWidth;
-		}
-		set
-		{
-			int num = minWidth;
-			if (value < num)
-			{
-				value = num;
-			}
-			if (mWidth == value || keepAspectRatio == AspectRatioSource.BasedOnHeight)
-			{
-				return;
-			}
-			if (isAnchoredHorizontally)
-			{
-				if (leftAnchor.target != null && rightAnchor.target != null)
-				{
-					if (mPivot == Pivot.BottomLeft || mPivot == Pivot.Left || mPivot == Pivot.TopLeft)
-					{
-						NGUIMath.AdjustWidget(this, 0f, 0f, value - mWidth, 0f);
-						return;
-					}
-					if (mPivot == Pivot.BottomRight || mPivot == Pivot.Right || mPivot == Pivot.TopRight)
-					{
-						NGUIMath.AdjustWidget(this, mWidth - value, 0f, 0f, 0f);
-						return;
-					}
-					int num2 = value - mWidth;
-					num2 -= num2 & 1;
-					if (num2 != 0)
-					{
-						NGUIMath.AdjustWidget(this, (float)(-num2) * 0.5f, 0f, (float)num2 * 0.5f, 0f);
-					}
-				}
-				else if (leftAnchor.target != null)
-				{
-					NGUIMath.AdjustWidget(this, 0f, 0f, value - mWidth, 0f);
-				}
-				else
-				{
-					NGUIMath.AdjustWidget(this, mWidth - value, 0f, 0f, 0f);
-				}
-			}
-			else
-			{
-				SetDimensions(value, mHeight);
-			}
-		}
-	}
-
-	public int height
-	{
-		get
-		{
-			return mHeight;
-		}
-		set
-		{
-			int num = minHeight;
-			if (value < num)
-			{
-				value = num;
-			}
-			if (mHeight == value || keepAspectRatio == AspectRatioSource.BasedOnWidth)
-			{
-				return;
-			}
-			if (isAnchoredVertically)
-			{
-				if (bottomAnchor.target != null && topAnchor.target != null)
-				{
-					if (mPivot == Pivot.BottomLeft || mPivot == Pivot.Bottom || mPivot == Pivot.BottomRight)
-					{
-						NGUIMath.AdjustWidget(this, 0f, 0f, 0f, value - mHeight);
-						return;
-					}
-					if (mPivot == Pivot.TopLeft || mPivot == Pivot.Top || mPivot == Pivot.TopRight)
-					{
-						NGUIMath.AdjustWidget(this, 0f, mHeight - value, 0f, 0f);
-						return;
-					}
-					int num2 = value - mHeight;
-					num2 -= num2 & 1;
-					if (num2 != 0)
-					{
-						NGUIMath.AdjustWidget(this, 0f, (float)(-num2) * 0.5f, 0f, (float)num2 * 0.5f);
-					}
-				}
-				else if (bottomAnchor.target != null)
-				{
-					NGUIMath.AdjustWidget(this, 0f, 0f, 0f, value - mHeight);
-				}
-				else
-				{
-					NGUIMath.AdjustWidget(this, 0f, mHeight - value, 0f, 0f);
-				}
-			}
-			else
-			{
-				SetDimensions(mWidth, value);
-			}
-		}
-	}
-
-	public Color color
-	{
-		get
-		{
-			return mColor;
-		}
-		set
-		{
-			if (mColor != value)
-			{
-				bool includeChildren = mColor.a != value.a;
-				mColor = value;
-				Invalidate(includeChildren);
-			}
-		}
-	}
-
 	public override float alpha
 	{
 		get
 		{
-			return mColor.a;
+			return this.mColor.a;
 		}
 		set
 		{
-			if (mColor.a != value)
+			if (this.mColor.a != value)
 			{
-				mColor.a = value;
-				Invalidate(true);
+				this.mColor.a = value;
+				this.Invalidate(true);
 			}
-		}
-	}
-
-	public bool isVisible
-	{
-		get
-		{
-			return mIsVisibleByPanel && mIsVisibleByAlpha && mIsInFront && finalAlpha > 0.001f && NGUITools.GetActive(this);
-		}
-	}
-
-	public bool hasVertices
-	{
-		get
-		{
-			return geometry != null && geometry.hasVertices;
-		}
-	}
-
-	public Pivot rawPivot
-	{
-		get
-		{
-			return mPivot;
-		}
-		set
-		{
-			if (mPivot != value)
-			{
-				mPivot = value;
-				if (autoResizeBoxCollider)
-				{
-					ResizeCollider();
-				}
-				MarkAsChanged();
-			}
-		}
-	}
-
-	public Pivot pivot
-	{
-		get
-		{
-			return mPivot;
-		}
-		set
-		{
-			if (mPivot != value)
-			{
-				Vector3 vector = worldCorners[0];
-				mPivot = value;
-				mChanged = true;
-				Vector3 vector2 = worldCorners[0];
-				Transform transform = base.cachedTransform;
-				Vector3 position = transform.position;
-				float z = transform.localPosition.z;
-				position.x += vector.x - vector2.x;
-				position.y += vector.y - vector2.y;
-				base.cachedTransform.position = position;
-				position = base.cachedTransform.localPosition;
-				position.x = Mathf.Round(position.x);
-				position.y = Mathf.Round(position.y);
-				position.z = z;
-				base.cachedTransform.localPosition = position;
-			}
-		}
-	}
-
-	public int depth
-	{
-		get
-		{
-			return mDepth;
-		}
-		set
-		{
-			if (mDepth == value)
-			{
-				return;
-			}
-			if (panel != null)
-			{
-				panel.RemoveWidget(this);
-			}
-			mDepth = value;
-			if (panel != null)
-			{
-				panel.AddWidget(this);
-				if (!Application.isPlaying)
-				{
-					panel.SortWidgets();
-					panel.RebuildAllDrawCalls();
-				}
-			}
-		}
-	}
-
-	public int raycastDepth
-	{
-		get
-		{
-			if (panel == null)
-			{
-				CreatePanel();
-			}
-			return (!(panel != null)) ? mDepth : (mDepth + panel.depth * 1000);
-		}
-	}
-
-	public override Vector3[] localCorners
-	{
-		get
-		{
-			Vector2 vector = pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float x = num + (float)mWidth;
-			float y = num2 + (float)mHeight;
-			mCorners[0] = new Vector3(num, num2);
-			mCorners[1] = new Vector3(num, y);
-			mCorners[2] = new Vector3(x, y);
-			mCorners[3] = new Vector3(x, num2);
-			return mCorners;
-		}
-	}
-
-	public virtual Vector2 localSize
-	{
-		get
-		{
-			Vector3[] array = localCorners;
-			return array[2] - array[0];
-		}
-	}
-
-	public Vector3 localCenter
-	{
-		get
-		{
-			Vector3[] array = localCorners;
-			return Vector3.Lerp(array[0], array[2], 0.5f);
-		}
-	}
-
-	public override Vector3[] worldCorners
-	{
-		get
-		{
-			Vector2 vector = pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float x = num + (float)mWidth;
-			float y = num2 + (float)mHeight;
-			Transform transform = base.cachedTransform;
-			mCorners[0] = transform.TransformPoint(num, num2, 0f);
-			mCorners[1] = transform.TransformPoint(num, y, 0f);
-			mCorners[2] = transform.TransformPoint(x, y, 0f);
-			mCorners[3] = transform.TransformPoint(x, num2, 0f);
-			return mCorners;
-		}
-	}
-
-	public Vector3 worldCenter
-	{
-		get
-		{
-			return base.cachedTransform.TransformPoint(localCenter);
-		}
-	}
-
-	public virtual Vector4 drawingDimensions
-	{
-		get
-		{
-			Vector2 vector = pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float num3 = num + (float)mWidth;
-			float num4 = num2 + (float)mHeight;
-			return new Vector4((mDrawRegion.x != 0f) ? Mathf.Lerp(num, num3, mDrawRegion.x) : num, (mDrawRegion.y != 0f) ? Mathf.Lerp(num2, num4, mDrawRegion.y) : num2, (mDrawRegion.z != 1f) ? Mathf.Lerp(num, num3, mDrawRegion.z) : num3, (mDrawRegion.w != 1f) ? Mathf.Lerp(num2, num4, mDrawRegion.w) : num4);
-		}
-	}
-
-	public virtual Material material
-	{
-		get
-		{
-			return null;
-		}
-		set
-		{
-			throw new NotImplementedException(string.Concat(GetType(), " has no material setter"));
-		}
-	}
-
-	public virtual Texture mainTexture
-	{
-		get
-		{
-			Material material = this.material;
-			return (!(material != null)) ? null : material.mainTexture;
-		}
-		set
-		{
-			throw new NotImplementedException(string.Concat(GetType(), " has no mainTexture setter"));
-		}
-	}
-
-	public virtual Shader shader
-	{
-		get
-		{
-			Material material = this.material;
-			return (!(material != null)) ? null : material.shader;
-		}
-		set
-		{
-			throw new NotImplementedException(string.Concat(GetType(), " has no shader setter"));
-		}
-	}
-
-	[Obsolete("There is no relative scale anymore. Widgets now have width and height instead")]
-	public Vector2 relativeSize
-	{
-		get
-		{
-			return Vector2.one;
-		}
-	}
-
-	public bool hasBoxCollider
-	{
-		get
-		{
-			BoxCollider boxCollider = GetComponent<Collider>() as BoxCollider;
-			if (boxCollider != null)
-			{
-				return true;
-			}
-			return GetComponent<BoxCollider2D>() != null;
-		}
-	}
-
-	public virtual int minWidth
-	{
-		get
-		{
-			return 2;
-		}
-	}
-
-	public virtual int minHeight
-	{
-		get
-		{
-			return 2;
 		}
 	}
 
@@ -577,87 +117,567 @@ public class UIWidget : UIRect
 		}
 	}
 
-	public void SetDimensions(int w, int h)
+	public Color color
 	{
-		if (mWidth != w || mHeight != h)
+		get
 		{
-			mWidth = w;
-			mHeight = h;
-			if (keepAspectRatio == AspectRatioSource.BasedOnWidth)
+			return this.mColor;
+		}
+		set
+		{
+			if (this.mColor != value)
 			{
-				mHeight = Mathf.RoundToInt((float)mWidth / aspectRatio);
+				bool flag = this.mColor.a != value.a;
+				this.mColor = value;
+				this.Invalidate(flag);
 			}
-			else if (keepAspectRatio == AspectRatioSource.BasedOnHeight)
-			{
-				mWidth = Mathf.RoundToInt((float)mHeight * aspectRatio);
-			}
-			else if (keepAspectRatio == AspectRatioSource.Free)
-			{
-				aspectRatio = (float)mWidth / (float)mHeight;
-			}
-			mMoved = true;
-			if (autoResizeBoxCollider)
-			{
-				ResizeCollider();
-			}
-			MarkAsChanged();
 		}
 	}
 
-	public override Vector3[] GetSides(Transform relativeTo)
+	public int depth
 	{
-		Vector2 vector = pivotOffset;
-		float num = (0f - vector.x) * (float)mWidth;
-		float num2 = (0f - vector.y) * (float)mHeight;
-		float num3 = num + (float)mWidth;
-		float num4 = num2 + (float)mHeight;
-		float x = (num + num3) * 0.5f;
-		float y = (num2 + num4) * 0.5f;
-		Transform transform = base.cachedTransform;
-		mCorners[0] = transform.TransformPoint(num, y, 0f);
-		mCorners[1] = transform.TransformPoint(x, num4, 0f);
-		mCorners[2] = transform.TransformPoint(num3, y, 0f);
-		mCorners[3] = transform.TransformPoint(x, num2, 0f);
-		if (relativeTo != null)
+		get
 		{
-			for (int i = 0; i < 4; i++)
+			return this.mDepth;
+		}
+		set
+		{
+			if (this.mDepth != value)
 			{
-				mCorners[i] = relativeTo.InverseTransformPoint(mCorners[i]);
+				if (this.panel != null)
+				{
+					this.panel.RemoveWidget(this);
+				}
+				this.mDepth = value;
+				if (this.panel != null)
+				{
+					this.panel.AddWidget(this);
+					if (!Application.isPlaying)
+					{
+						this.panel.SortWidgets();
+						this.panel.RebuildAllDrawCalls();
+					}
+				}
 			}
 		}
-		return mCorners;
+	}
+
+	public virtual Vector4 drawingDimensions
+	{
+		get
+		{
+			Vector2 vector2 = this.pivotOffset;
+			float single = -vector2.x * (float)this.mWidth;
+			float single1 = -vector2.y * (float)this.mHeight;
+			float single2 = single + (float)this.mWidth;
+			float single3 = single1 + (float)this.mHeight;
+			return new Vector4((this.mDrawRegion.x != 0f ? Mathf.Lerp(single, single2, this.mDrawRegion.x) : single), (this.mDrawRegion.y != 0f ? Mathf.Lerp(single1, single3, this.mDrawRegion.y) : single1), (this.mDrawRegion.z != 1f ? Mathf.Lerp(single, single2, this.mDrawRegion.z) : single2), (this.mDrawRegion.w != 1f ? Mathf.Lerp(single1, single3, this.mDrawRegion.w) : single3));
+		}
+	}
+
+	public Vector4 drawRegion
+	{
+		get
+		{
+			return this.mDrawRegion;
+		}
+		set
+		{
+			if (this.mDrawRegion != value)
+			{
+				this.mDrawRegion = value;
+				if (this.autoResizeBoxCollider)
+				{
+					this.ResizeCollider();
+				}
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public bool hasBoxCollider
+	{
+		get
+		{
+			if (base.GetComponent<Collider>() is BoxCollider)
+			{
+				return true;
+			}
+			return base.GetComponent<BoxCollider2D>() != null;
+		}
+	}
+
+	public bool hasVertices
+	{
+		get
+		{
+			return (this.geometry == null ? false : this.geometry.hasVertices);
+		}
+	}
+
+	public int height
+	{
+		get
+		{
+			return this.mHeight;
+		}
+		set
+		{
+			int num = this.minHeight;
+			if (value < num)
+			{
+				value = num;
+			}
+			if (this.mHeight != value && this.keepAspectRatio != UIWidget.AspectRatioSource.BasedOnWidth)
+			{
+				if (!this.isAnchoredVertically)
+				{
+					this.SetDimensions(this.mWidth, value);
+				}
+				else if (!(this.bottomAnchor.target != null) || !(this.topAnchor.target != null))
+				{
+					if (this.bottomAnchor.target == null)
+					{
+						NGUIMath.AdjustWidget(this, 0f, (float)(this.mHeight - value), 0f, 0f);
+					}
+					else
+					{
+						NGUIMath.AdjustWidget(this, 0f, 0f, 0f, (float)(value - this.mHeight));
+					}
+				}
+				else if (this.mPivot == UIWidget.Pivot.BottomLeft || this.mPivot == UIWidget.Pivot.Bottom || this.mPivot == UIWidget.Pivot.BottomRight)
+				{
+					NGUIMath.AdjustWidget(this, 0f, 0f, 0f, (float)(value - this.mHeight));
+				}
+				else if (this.mPivot == UIWidget.Pivot.TopLeft || this.mPivot == UIWidget.Pivot.Top || this.mPivot == UIWidget.Pivot.TopRight)
+				{
+					NGUIMath.AdjustWidget(this, 0f, (float)(this.mHeight - value), 0f, 0f);
+				}
+				else
+				{
+					int num1 = value - this.mHeight;
+					num1 = num1 - (num1 & 1);
+					if (num1 != 0)
+					{
+						NGUIMath.AdjustWidget(this, 0f, (float)(-num1) * 0.5f, 0f, (float)num1 * 0.5f);
+					}
+				}
+			}
+		}
+	}
+
+	public bool isVisible
+	{
+		get
+		{
+			return (!this.mIsVisibleByPanel || !this.mIsVisibleByAlpha || !this.mIsInFront || this.finalAlpha <= 0.001f ? false : NGUITools.GetActive(this));
+		}
+	}
+
+	public Vector3 localCenter
+	{
+		get
+		{
+			Vector3[] vector3Array = this.localCorners;
+			return Vector3.Lerp(vector3Array[0], vector3Array[2], 0.5f);
+		}
+	}
+
+	public override Vector3[] localCorners
+	{
+		get
+		{
+			Vector2 vector2 = this.pivotOffset;
+			float single = -vector2.x * (float)this.mWidth;
+			float single1 = -vector2.y * (float)this.mHeight;
+			float single2 = single + (float)this.mWidth;
+			float single3 = single1 + (float)this.mHeight;
+			this.mCorners[0] = new Vector3(single, single1);
+			this.mCorners[1] = new Vector3(single, single3);
+			this.mCorners[2] = new Vector3(single2, single3);
+			this.mCorners[3] = new Vector3(single2, single1);
+			return this.mCorners;
+		}
+	}
+
+	public virtual Vector2 localSize
+	{
+		get
+		{
+			Vector3[] vector3Array = this.localCorners;
+			return vector3Array[2] - vector3Array[0];
+		}
+	}
+
+	public virtual Texture mainTexture
+	{
+		get
+		{
+			Texture texture;
+			Material material = this.material;
+			if (material == null)
+			{
+				texture = null;
+			}
+			else
+			{
+				texture = material.mainTexture;
+			}
+			return texture;
+		}
+		set
+		{
+			throw new NotImplementedException(string.Concat(base.GetType(), " has no mainTexture setter"));
+		}
+	}
+
+	public virtual Material material
+	{
+		get
+		{
+			return null;
+		}
+		set
+		{
+			throw new NotImplementedException(string.Concat(base.GetType(), " has no material setter"));
+		}
+	}
+
+	public virtual int minHeight
+	{
+		get
+		{
+			return 2;
+		}
+	}
+
+	public virtual int minWidth
+	{
+		get
+		{
+			return 2;
+		}
+	}
+
+	public UIDrawCall.OnRenderCallback onRender
+	{
+		get
+		{
+			return this.mOnRender;
+		}
+		set
+		{
+			if (this.mOnRender != value)
+			{
+				if (this.drawCall != null && this.drawCall.onRender != null && this.mOnRender != null)
+				{
+					this.drawCall.onRender -= this.mOnRender;
+				}
+				this.mOnRender = value;
+				if (this.drawCall != null)
+				{
+					this.drawCall.onRender += value;
+				}
+			}
+		}
+	}
+
+	public UIWidget.Pivot pivot
+	{
+		get
+		{
+			return this.mPivot;
+		}
+		set
+		{
+			if (this.mPivot != value)
+			{
+				Vector3 vector3 = this.worldCorners[0];
+				this.mPivot = value;
+				this.mChanged = true;
+				Vector3 vector31 = this.worldCorners[0];
+				Transform transforms = base.cachedTransform;
+				Vector3 vector32 = transforms.position;
+				float single = transforms.localPosition.z;
+				vector32.x = vector32.x + (vector3.x - vector31.x);
+				vector32.y = vector32.y + (vector3.y - vector31.y);
+				base.cachedTransform.position = vector32;
+				vector32 = base.cachedTransform.localPosition;
+				vector32.x = Mathf.Round(vector32.x);
+				vector32.y = Mathf.Round(vector32.y);
+				vector32.z = single;
+				base.cachedTransform.localPosition = vector32;
+			}
+		}
+	}
+
+	public Vector2 pivotOffset
+	{
+		get
+		{
+			return NGUIMath.GetPivotOffset(this.pivot);
+		}
+	}
+
+	public UIWidget.Pivot rawPivot
+	{
+		get
+		{
+			return this.mPivot;
+		}
+		set
+		{
+			if (this.mPivot != value)
+			{
+				this.mPivot = value;
+				if (this.autoResizeBoxCollider)
+				{
+					this.ResizeCollider();
+				}
+				this.MarkAsChanged();
+			}
+		}
+	}
+
+	public int raycastDepth
+	{
+		get
+		{
+			if (this.panel == null)
+			{
+				this.CreatePanel();
+			}
+			return (this.panel == null ? this.mDepth : this.mDepth + this.panel.depth * 1000);
+		}
+	}
+
+	[Obsolete("There is no relative scale anymore. Widgets now have width and height instead")]
+	public Vector2 relativeSize
+	{
+		get
+		{
+			return Vector2.one;
+		}
+	}
+
+	public virtual Shader shader
+	{
+		get
+		{
+			Shader shader;
+			Material material = this.material;
+			if (material == null)
+			{
+				shader = null;
+			}
+			else
+			{
+				shader = material.shader;
+			}
+			return shader;
+		}
+		set
+		{
+			throw new NotImplementedException(string.Concat(base.GetType(), " has no shader setter"));
+		}
+	}
+
+	public int width
+	{
+		get
+		{
+			return this.mWidth;
+		}
+		set
+		{
+			int num = this.minWidth;
+			if (value < num)
+			{
+				value = num;
+			}
+			if (this.mWidth != value && this.keepAspectRatio != UIWidget.AspectRatioSource.BasedOnHeight)
+			{
+				if (!this.isAnchoredHorizontally)
+				{
+					this.SetDimensions(value, this.mHeight);
+				}
+				else if (!(this.leftAnchor.target != null) || !(this.rightAnchor.target != null))
+				{
+					if (this.leftAnchor.target == null)
+					{
+						NGUIMath.AdjustWidget(this, (float)(this.mWidth - value), 0f, 0f, 0f);
+					}
+					else
+					{
+						NGUIMath.AdjustWidget(this, 0f, 0f, (float)(value - this.mWidth), 0f);
+					}
+				}
+				else if (this.mPivot == UIWidget.Pivot.BottomLeft || this.mPivot == UIWidget.Pivot.Left || this.mPivot == UIWidget.Pivot.TopLeft)
+				{
+					NGUIMath.AdjustWidget(this, 0f, 0f, (float)(value - this.mWidth), 0f);
+				}
+				else if (this.mPivot == UIWidget.Pivot.BottomRight || this.mPivot == UIWidget.Pivot.Right || this.mPivot == UIWidget.Pivot.TopRight)
+				{
+					NGUIMath.AdjustWidget(this, (float)(this.mWidth - value), 0f, 0f, 0f);
+				}
+				else
+				{
+					int num1 = value - this.mWidth;
+					num1 = num1 - (num1 & 1);
+					if (num1 != 0)
+					{
+						NGUIMath.AdjustWidget(this, (float)(-num1) * 0.5f, 0f, (float)num1 * 0.5f, 0f);
+					}
+				}
+			}
+		}
+	}
+
+	public Vector3 worldCenter
+	{
+		get
+		{
+			return base.cachedTransform.TransformPoint(this.localCenter);
+		}
+	}
+
+	public override Vector3[] worldCorners
+	{
+		get
+		{
+			Vector2 vector2 = this.pivotOffset;
+			float single = -vector2.x * (float)this.mWidth;
+			float single1 = -vector2.y * (float)this.mHeight;
+			float single2 = single + (float)this.mWidth;
+			float single3 = single1 + (float)this.mHeight;
+			Transform transforms = base.cachedTransform;
+			this.mCorners[0] = transforms.TransformPoint(single, single1, 0f);
+			this.mCorners[1] = transforms.TransformPoint(single, single3, 0f);
+			this.mCorners[2] = transforms.TransformPoint(single2, single3, 0f);
+			this.mCorners[3] = transforms.TransformPoint(single2, single1, 0f);
+			return this.mCorners;
+		}
+	}
+
+	public UIWidget()
+	{
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		this.mPlayMode = Application.isPlaying;
+	}
+
+	public Bounds CalculateBounds()
+	{
+		return this.CalculateBounds(null);
+	}
+
+	public Bounds CalculateBounds(Transform relativeParent)
+	{
+		if (relativeParent == null)
+		{
+			Vector3[] vector3Array = this.localCorners;
+			Bounds bound = new Bounds(vector3Array[0], Vector3.zero);
+			for (int i = 1; i < 4; i++)
+			{
+				bound.Encapsulate(vector3Array[i]);
+			}
+			return bound;
+		}
+		Matrix4x4 matrix4x4 = relativeParent.worldToLocalMatrix;
+		Vector3[] vector3Array1 = this.worldCorners;
+		Bounds bound1 = new Bounds(matrix4x4.MultiplyPoint3x4(vector3Array1[0]), Vector3.zero);
+		for (int j = 1; j < 4; j++)
+		{
+			bound1.Encapsulate(matrix4x4.MultiplyPoint3x4(vector3Array1[j]));
+		}
+		return bound1;
+	}
+
+	public float CalculateCumulativeAlpha(int frameID)
+	{
+		UIRect uIRect = base.parent;
+		return (uIRect == null ? this.mColor.a : uIRect.CalculateFinalAlpha(frameID) * this.mColor.a);
 	}
 
 	public override float CalculateFinalAlpha(int frameID)
 	{
-		if (mAlphaFrameID != frameID)
+		if (this.mAlphaFrameID != frameID)
 		{
-			mAlphaFrameID = frameID;
-			UpdateFinalAlpha(frameID);
+			this.mAlphaFrameID = frameID;
+			this.UpdateFinalAlpha(frameID);
 		}
-		return finalAlpha;
+		return this.finalAlpha;
 	}
 
-	protected void UpdateFinalAlpha(int frameID)
+	public void CheckLayer()
 	{
-		if (!mIsVisibleByAlpha || !mIsInFront)
+		if (this.panel != null && this.panel.gameObject.layer != base.gameObject.layer)
 		{
-			finalAlpha = 0f;
-			return;
+			UnityEngine.Debug.LogWarning("You can't place widgets on a layer different than the UIPanel that manages them.\nIf you want to move widgets to a different layer, parent them to a new panel instead.", this);
+			base.gameObject.layer = this.panel.gameObject.layer;
 		}
-		UIRect uIRect = base.parent;
-		finalAlpha = ((!(uIRect != null)) ? mColor.a : (uIRect.CalculateFinalAlpha(frameID) * mColor.a));
+	}
+
+	public UIPanel CreatePanel()
+	{
+		if (this.mStarted && this.panel == null && base.enabled && NGUITools.GetActive(base.gameObject))
+		{
+			this.panel = UIPanel.Find(base.cachedTransform, true, base.cachedGameObject.layer);
+			if (this.panel != null)
+			{
+				this.mParentFound = false;
+				this.panel.AddWidget(this);
+				this.CheckLayer();
+				this.Invalidate(true);
+			}
+		}
+		return this.panel;
+	}
+
+	[DebuggerHidden]
+	[DebuggerStepThrough]
+	public static int FullCompareFunc(UIWidget left, UIWidget right)
+	{
+		int num = UIPanel.CompareFunc(left.panel, right.panel);
+		return (num != 0 ? num : UIWidget.PanelCompareFunc(left, right));
+	}
+
+	public override Vector3[] GetSides(Transform relativeTo)
+	{
+		Vector2 vector2 = this.pivotOffset;
+		float single = -vector2.x * (float)this.mWidth;
+		float single1 = -vector2.y * (float)this.mHeight;
+		float single2 = single + (float)this.mWidth;
+		float single3 = single1 + (float)this.mHeight;
+		float single4 = (single + single2) * 0.5f;
+		float single5 = (single1 + single3) * 0.5f;
+		Transform transforms = base.cachedTransform;
+		this.mCorners[0] = transforms.TransformPoint(single, single5, 0f);
+		this.mCorners[1] = transforms.TransformPoint(single4, single3, 0f);
+		this.mCorners[2] = transforms.TransformPoint(single2, single5, 0f);
+		this.mCorners[3] = transforms.TransformPoint(single4, single1, 0f);
+		if (relativeTo != null)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				this.mCorners[i] = relativeTo.InverseTransformPoint(this.mCorners[i]);
+			}
+		}
+		return this.mCorners;
 	}
 
 	public override void Invalidate(bool includeChildren)
 	{
-		mChanged = true;
-		mAlphaFrameID = -1;
-		if (panel != null)
+		this.mChanged = true;
+		this.mAlphaFrameID = -1;
+		if (this.panel != null)
 		{
-			bool visibleByPanel = (!hideIfOffScreen && !panel.hasCumulativeClipping) || panel.IsVisible(this);
-			UpdateVisibility(CalculateCumulativeAlpha(Time.frameCount) > 0.001f, visibleByPanel);
-			UpdateFinalAlpha(Time.frameCount);
+			bool flag = (this.hideIfOffScreen || this.panel.hasCumulativeClipping ? this.panel.IsVisible(this) : true);
+			this.UpdateVisibility(this.CalculateCumulativeAlpha(Time.frameCount) > 0.001f, flag);
+			this.UpdateFinalAlpha(Time.frameCount);
 			if (includeChildren)
 			{
 				base.Invalidate(true);
@@ -665,78 +685,229 @@ public class UIWidget : UIRect
 		}
 	}
 
-	public float CalculateCumulativeAlpha(int frameID)
+	public virtual void MakePixelPerfect()
 	{
-		UIRect uIRect = base.parent;
-		return (!(uIRect != null)) ? mColor.a : (uIRect.CalculateFinalAlpha(frameID) * mColor.a);
+		Vector3 vector3 = base.cachedTransform.localPosition;
+		vector3.z = Mathf.Round(vector3.z);
+		vector3.x = Mathf.Round(vector3.x);
+		vector3.y = Mathf.Round(vector3.y);
+		base.cachedTransform.localPosition = vector3;
+		Vector3 vector31 = base.cachedTransform.localScale;
+		base.cachedTransform.localScale = new Vector3(Mathf.Sign(vector31.x), Mathf.Sign(vector31.y), 1f);
 	}
 
-	public override void SetRect(float x, float y, float width, float height)
-	{
-		Vector2 vector = pivotOffset;
-		float num = Mathf.Lerp(x, x + width, vector.x);
-		float num2 = Mathf.Lerp(y, y + height, vector.y);
-		int num3 = Mathf.FloorToInt(width + 0.5f);
-		int num4 = Mathf.FloorToInt(height + 0.5f);
-		if (vector.x == 0.5f)
-		{
-			num3 = num3 >> 1 << 1;
-		}
-		if (vector.y == 0.5f)
-		{
-			num4 = num4 >> 1 << 1;
-		}
-		Transform transform = base.cachedTransform;
-		Vector3 localPosition = transform.localPosition;
-		localPosition.x = Mathf.Floor(num + 0.5f);
-		localPosition.y = Mathf.Floor(num2 + 0.5f);
-		if (num3 < minWidth)
-		{
-			num3 = minWidth;
-		}
-		if (num4 < minHeight)
-		{
-			num4 = minHeight;
-		}
-		transform.localPosition = localPosition;
-		this.width = num3;
-		this.height = num4;
-		if (base.isAnchored)
-		{
-			transform = transform.parent;
-			if ((bool)leftAnchor.target)
-			{
-				leftAnchor.SetHorizontal(transform, x);
-			}
-			if ((bool)rightAnchor.target)
-			{
-				rightAnchor.SetHorizontal(transform, x + width);
-			}
-			if ((bool)bottomAnchor.target)
-			{
-				bottomAnchor.SetVertical(transform, y);
-			}
-			if ((bool)topAnchor.target)
-			{
-				topAnchor.SetVertical(transform, y + height);
-			}
-		}
-	}
-
-	public void ResizeCollider()
+	public virtual void MarkAsChanged()
 	{
 		if (NGUITools.GetActive(this))
 		{
-			NGUITools.UpdateWidgetCollider(base.gameObject);
+			this.mChanged = true;
+			if (this.panel != null && base.enabled && NGUITools.GetActive(base.gameObject) && !this.mPlayMode)
+			{
+				this.SetDirty();
+				this.CheckLayer();
+			}
 		}
 	}
 
-	[DebuggerStepThrough]
-	[DebuggerHidden]
-	public static int FullCompareFunc(UIWidget left, UIWidget right)
+	protected override void OnAnchor()
 	{
-		int num = UIPanel.CompareFunc(left.panel, right.panel);
-		return (num != 0) ? num : PanelCompareFunc(left, right);
+		float single;
+		float single1;
+		float single2;
+		float single3;
+		Transform transforms = base.cachedTransform;
+		Transform transforms1 = transforms.parent;
+		Vector3 vector3 = transforms.localPosition;
+		Vector2 vector2 = this.pivotOffset;
+		if (!(this.leftAnchor.target == this.bottomAnchor.target) || !(this.leftAnchor.target == this.rightAnchor.target) || !(this.leftAnchor.target == this.topAnchor.target))
+		{
+			this.mIsInFront = true;
+			if (!this.leftAnchor.target)
+			{
+				single = vector3.x - vector2.x * (float)this.mWidth;
+			}
+			else
+			{
+				Vector3[] sides = this.leftAnchor.GetSides(transforms1);
+				if (sides == null)
+				{
+					Vector3 localPos = base.GetLocalPos(this.leftAnchor, transforms1);
+					single = localPos.x + (float)this.leftAnchor.absolute;
+				}
+				else
+				{
+					single = NGUIMath.Lerp(sides[0].x, sides[2].x, this.leftAnchor.relative) + (float)this.leftAnchor.absolute;
+				}
+			}
+			if (!this.rightAnchor.target)
+			{
+				single2 = vector3.x - vector2.x * (float)this.mWidth + (float)this.mWidth;
+			}
+			else
+			{
+				Vector3[] vector3Array = this.rightAnchor.GetSides(transforms1);
+				if (vector3Array == null)
+				{
+					Vector3 localPos1 = base.GetLocalPos(this.rightAnchor, transforms1);
+					single2 = localPos1.x + (float)this.rightAnchor.absolute;
+				}
+				else
+				{
+					single2 = NGUIMath.Lerp(vector3Array[0].x, vector3Array[2].x, this.rightAnchor.relative) + (float)this.rightAnchor.absolute;
+				}
+			}
+			if (!this.bottomAnchor.target)
+			{
+				single1 = vector3.y - vector2.y * (float)this.mHeight;
+			}
+			else
+			{
+				Vector3[] sides1 = this.bottomAnchor.GetSides(transforms1);
+				if (sides1 == null)
+				{
+					Vector3 vector31 = base.GetLocalPos(this.bottomAnchor, transforms1);
+					single1 = vector31.y + (float)this.bottomAnchor.absolute;
+				}
+				else
+				{
+					single1 = NGUIMath.Lerp(sides1[3].y, sides1[1].y, this.bottomAnchor.relative) + (float)this.bottomAnchor.absolute;
+				}
+			}
+			if (!this.topAnchor.target)
+			{
+				single3 = vector3.y - vector2.y * (float)this.mHeight + (float)this.mHeight;
+			}
+			else
+			{
+				Vector3[] vector3Array1 = this.topAnchor.GetSides(transforms1);
+				if (vector3Array1 == null)
+				{
+					Vector3 localPos2 = base.GetLocalPos(this.topAnchor, transforms1);
+					single3 = localPos2.y + (float)this.topAnchor.absolute;
+				}
+				else
+				{
+					single3 = NGUIMath.Lerp(vector3Array1[3].y, vector3Array1[1].y, this.topAnchor.relative) + (float)this.topAnchor.absolute;
+				}
+			}
+		}
+		else
+		{
+			Vector3[] sides2 = this.leftAnchor.GetSides(transforms1);
+			if (sides2 == null)
+			{
+				Vector3 vector32 = base.GetLocalPos(this.leftAnchor, transforms1);
+				single = vector32.x + (float)this.leftAnchor.absolute;
+				single1 = vector32.y + (float)this.bottomAnchor.absolute;
+				single2 = vector32.x + (float)this.rightAnchor.absolute;
+				single3 = vector32.y + (float)this.topAnchor.absolute;
+				this.mIsInFront = (!this.hideIfOffScreen ? true : vector32.z >= 0f);
+			}
+			else
+			{
+				single = NGUIMath.Lerp(sides2[0].x, sides2[2].x, this.leftAnchor.relative) + (float)this.leftAnchor.absolute;
+				single2 = NGUIMath.Lerp(sides2[0].x, sides2[2].x, this.rightAnchor.relative) + (float)this.rightAnchor.absolute;
+				single1 = NGUIMath.Lerp(sides2[3].y, sides2[1].y, this.bottomAnchor.relative) + (float)this.bottomAnchor.absolute;
+				single3 = NGUIMath.Lerp(sides2[3].y, sides2[1].y, this.topAnchor.relative) + (float)this.topAnchor.absolute;
+				this.mIsInFront = true;
+			}
+		}
+		Vector3 vector33 = new Vector3(Mathf.Lerp(single, single2, vector2.x), Mathf.Lerp(single1, single3, vector2.y), vector3.z)
+		{
+			x = Mathf.Round(vector33.x),
+			y = Mathf.Round(vector33.y)
+		};
+		int num = Mathf.FloorToInt(single2 - single + 0.5f);
+		int num1 = Mathf.FloorToInt(single3 - single1 + 0.5f);
+		if (this.keepAspectRatio != UIWidget.AspectRatioSource.Free && this.aspectRatio != 0f)
+		{
+			if (this.keepAspectRatio != UIWidget.AspectRatioSource.BasedOnHeight)
+			{
+				num1 = Mathf.RoundToInt((float)num / this.aspectRatio);
+			}
+			else
+			{
+				num = Mathf.RoundToInt((float)num1 * this.aspectRatio);
+			}
+		}
+		if (num < this.minWidth)
+		{
+			num = this.minWidth;
+		}
+		if (num1 < this.minHeight)
+		{
+			num1 = this.minHeight;
+		}
+		if (Vector3.SqrMagnitude(vector3 - vector33) > 0.001f)
+		{
+			base.cachedTransform.localPosition = vector33;
+			if (this.mIsInFront)
+			{
+				this.mChanged = true;
+			}
+		}
+		if (this.mWidth != num || this.mHeight != num1)
+		{
+			this.mWidth = num;
+			this.mHeight = num1;
+			if (this.mIsInFront)
+			{
+				this.mChanged = true;
+			}
+			if (this.autoResizeBoxCollider)
+			{
+				this.ResizeCollider();
+			}
+		}
+	}
+
+	private void OnApplicationPause(bool paused)
+	{
+		if (!paused)
+		{
+			this.MarkAsChanged();
+		}
+	}
+
+	private void OnDestroy()
+	{
+		this.RemoveFromPanel();
+	}
+
+	protected override void OnDisable()
+	{
+		this.RemoveFromPanel();
+		base.OnDisable();
+	}
+
+	public virtual void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	{
+	}
+
+	protected override void OnInit()
+	{
+		base.OnInit();
+		this.RemoveFromPanel();
+		this.mMoved = true;
+		if (this.mWidth == 100 && this.mHeight == 100 && base.cachedTransform.localScale.magnitude > 8f)
+		{
+			this.UpgradeFrom265();
+			base.cachedTransform.localScale = Vector3.one;
+		}
+		base.Update();
+	}
+
+	protected override void OnStart()
+	{
+		this.CreatePanel();
+	}
+
+	protected override void OnUpdate()
+	{
+		if (this.panel == null)
+		{
+			this.CreatePanel();
+		}
 	}
 
 	[DebuggerHidden]
@@ -752,8 +923,8 @@ public class UIWidget : UIRect
 			return 1;
 		}
 		Material material = left.material;
-		Material material2 = right.material;
-		if (material == material2)
+		Material material1 = right.material;
+		if (material == material1)
 		{
 			return 0;
 		}
@@ -761,423 +932,300 @@ public class UIWidget : UIRect
 		{
 			return 1;
 		}
-		if (material2 == null)
+		if (material1 == null)
 		{
 			return -1;
 		}
-		return (material.GetInstanceID() >= material2.GetInstanceID()) ? 1 : (-1);
-	}
-
-	public Bounds CalculateBounds()
-	{
-		return CalculateBounds(null);
-	}
-
-	public Bounds CalculateBounds(Transform relativeParent)
-	{
-		if (relativeParent == null)
-		{
-			Vector3[] array = localCorners;
-			Bounds result = new Bounds(array[0], Vector3.zero);
-			for (int i = 1; i < 4; i++)
-			{
-				result.Encapsulate(array[i]);
-			}
-			return result;
-		}
-		Matrix4x4 worldToLocalMatrix = relativeParent.worldToLocalMatrix;
-		Vector3[] array2 = worldCorners;
-		Bounds result2 = new Bounds(worldToLocalMatrix.MultiplyPoint3x4(array2[0]), Vector3.zero);
-		for (int j = 1; j < 4; j++)
-		{
-			result2.Encapsulate(worldToLocalMatrix.MultiplyPoint3x4(array2[j]));
-		}
-		return result2;
-	}
-
-	public void SetDirty()
-	{
-		if (drawCall != null)
-		{
-			drawCall.isDirty = true;
-		}
-		else if (isVisible && hasVertices)
-		{
-			CreatePanel();
-		}
-	}
-
-	public void RemoveFromPanel()
-	{
-		if (panel != null)
-		{
-			panel.RemoveWidget(this);
-			panel = null;
-		}
-		drawCall = null;
-	}
-
-	public virtual void MarkAsChanged()
-	{
-		if (NGUITools.GetActive(this))
-		{
-			mChanged = true;
-			if (panel != null && base.enabled && NGUITools.GetActive(base.gameObject) && !mPlayMode)
-			{
-				SetDirty();
-				CheckLayer();
-			}
-		}
-	}
-
-	public UIPanel CreatePanel()
-	{
-		if (mStarted && panel == null && base.enabled && NGUITools.GetActive(base.gameObject))
-		{
-			panel = UIPanel.Find(base.cachedTransform, true, base.cachedGameObject.layer);
-			if (panel != null)
-			{
-				mParentFound = false;
-				panel.AddWidget(this);
-				CheckLayer();
-				Invalidate(true);
-			}
-		}
-		return panel;
-	}
-
-	public void CheckLayer()
-	{
-		if (panel != null && panel.gameObject.layer != base.gameObject.layer)
-		{
-			UnityEngine.Debug.LogWarning("You can't place widgets on a layer different than the UIPanel that manages them.\nIf you want to move widgets to a different layer, parent them to a new panel instead.", this);
-			base.gameObject.layer = panel.gameObject.layer;
-		}
+		return (material.GetInstanceID() >= material1.GetInstanceID() ? 1 : -1);
 	}
 
 	public override void ParentHasChanged()
 	{
 		base.ParentHasChanged();
-		if (panel != null)
+		if (this.panel != null)
 		{
 			UIPanel uIPanel = UIPanel.Find(base.cachedTransform, true, base.cachedGameObject.layer);
-			if (panel != uIPanel)
+			if (this.panel != uIPanel)
 			{
-				RemoveFromPanel();
-				CreatePanel();
+				this.RemoveFromPanel();
+				this.CreatePanel();
 			}
 		}
 	}
 
-	protected override void Awake()
+	public void RemoveFromPanel()
 	{
-		base.Awake();
-		mPlayMode = Application.isPlaying;
-	}
-
-	protected override void OnInit()
-	{
-		base.OnInit();
-		RemoveFromPanel();
-		mMoved = true;
-		if (mWidth == 100 && mHeight == 100 && base.cachedTransform.localScale.magnitude > 8f)
+		if (this.panel != null)
 		{
-			UpgradeFrom265();
-			base.cachedTransform.localScale = Vector3.one;
+			this.panel.RemoveWidget(this);
+			this.panel = null;
 		}
-		Update();
+		this.drawCall = null;
 	}
 
-	protected virtual void UpgradeFrom265()
+	public void ResizeCollider()
 	{
-		Vector3 localScale = base.cachedTransform.localScale;
-		mWidth = Mathf.Abs(Mathf.RoundToInt(localScale.x));
-		mHeight = Mathf.Abs(Mathf.RoundToInt(localScale.y));
-		NGUITools.UpdateWidgetCollider(base.gameObject, true);
-	}
-
-	protected override void OnStart()
-	{
-		CreatePanel();
-	}
-
-	protected override void OnAnchor()
-	{
-		Transform transform = base.cachedTransform;
-		Transform transform2 = transform.parent;
-		Vector3 localPosition = transform.localPosition;
-		Vector2 vector = pivotOffset;
-		float num;
-		float num2;
-		float num3;
-		float num4;
-		if (leftAnchor.target == bottomAnchor.target && leftAnchor.target == rightAnchor.target && leftAnchor.target == topAnchor.target)
+		if (NGUITools.GetActive(this))
 		{
-			Vector3[] sides = leftAnchor.GetSides(transform2);
-			if (sides != null)
+			NGUITools.UpdateWidgetCollider(base.gameObject);
+		}
+	}
+
+	public void SetDimensions(int w, int h)
+	{
+		if (this.mWidth != w || this.mHeight != h)
+		{
+			this.mWidth = w;
+			this.mHeight = h;
+			if (this.keepAspectRatio == UIWidget.AspectRatioSource.BasedOnWidth)
 			{
-				num = NGUIMath.Lerp(sides[0].x, sides[2].x, leftAnchor.relative) + (float)leftAnchor.absolute;
-				num2 = NGUIMath.Lerp(sides[0].x, sides[2].x, rightAnchor.relative) + (float)rightAnchor.absolute;
-				num3 = NGUIMath.Lerp(sides[3].y, sides[1].y, bottomAnchor.relative) + (float)bottomAnchor.absolute;
-				num4 = NGUIMath.Lerp(sides[3].y, sides[1].y, topAnchor.relative) + (float)topAnchor.absolute;
-				mIsInFront = true;
+				this.mHeight = Mathf.RoundToInt((float)this.mWidth / this.aspectRatio);
 			}
-			else
+			else if (this.keepAspectRatio == UIWidget.AspectRatioSource.BasedOnHeight)
 			{
-				Vector3 localPos = GetLocalPos(leftAnchor, transform2);
-				num = localPos.x + (float)leftAnchor.absolute;
-				num3 = localPos.y + (float)bottomAnchor.absolute;
-				num2 = localPos.x + (float)rightAnchor.absolute;
-				num4 = localPos.y + (float)topAnchor.absolute;
-				mIsInFront = !hideIfOffScreen || localPos.z >= 0f;
+				this.mWidth = Mathf.RoundToInt((float)this.mHeight * this.aspectRatio);
 			}
+			else if (this.keepAspectRatio == UIWidget.AspectRatioSource.Free)
+			{
+				this.aspectRatio = (float)this.mWidth / (float)this.mHeight;
+			}
+			this.mMoved = true;
+			if (this.autoResizeBoxCollider)
+			{
+				this.ResizeCollider();
+			}
+			this.MarkAsChanged();
+		}
+	}
+
+	public void SetDirty()
+	{
+		if (this.drawCall != null)
+		{
+			this.drawCall.isDirty = true;
+		}
+		else if (this.isVisible && this.hasVertices)
+		{
+			this.CreatePanel();
+		}
+	}
+
+	public override void SetRect(float x, float y, float width, float height)
+	{
+		Vector2 vector2 = this.pivotOffset;
+		float single = Mathf.Lerp(x, x + width, vector2.x);
+		float single1 = Mathf.Lerp(y, y + height, vector2.y);
+		int num = Mathf.FloorToInt(width + 0.5f);
+		int num1 = Mathf.FloorToInt(height + 0.5f);
+		if (vector2.x == 0.5f)
+		{
+			num = num >> 1 << 1;
+		}
+		if (vector2.y == 0.5f)
+		{
+			num1 = num1 >> 1 << 1;
+		}
+		Transform transforms = base.cachedTransform;
+		Vector3 vector3 = transforms.localPosition;
+		vector3.x = Mathf.Floor(single + 0.5f);
+		vector3.y = Mathf.Floor(single1 + 0.5f);
+		if (num < this.minWidth)
+		{
+			num = this.minWidth;
+		}
+		if (num1 < this.minHeight)
+		{
+			num1 = this.minHeight;
+		}
+		transforms.localPosition = vector3;
+		this.width = num;
+		this.height = num1;
+		if (base.isAnchored)
+		{
+			transforms = transforms.parent;
+			if (this.leftAnchor.target)
+			{
+				this.leftAnchor.SetHorizontal(transforms, x);
+			}
+			if (this.rightAnchor.target)
+			{
+				this.rightAnchor.SetHorizontal(transforms, x + width);
+			}
+			if (this.bottomAnchor.target)
+			{
+				this.bottomAnchor.SetVertical(transforms, y);
+			}
+			if (this.topAnchor.target)
+			{
+				this.topAnchor.SetVertical(transforms, y + height);
+			}
+		}
+	}
+
+	protected void UpdateFinalAlpha(int frameID)
+	{
+		if (!this.mIsVisibleByAlpha || !this.mIsInFront)
+		{
+			this.finalAlpha = 0f;
 		}
 		else
 		{
-			mIsInFront = true;
-			if ((bool)leftAnchor.target)
-			{
-				Vector3[] sides2 = leftAnchor.GetSides(transform2);
-				num = ((sides2 == null) ? (GetLocalPos(leftAnchor, transform2).x + (float)leftAnchor.absolute) : (NGUIMath.Lerp(sides2[0].x, sides2[2].x, leftAnchor.relative) + (float)leftAnchor.absolute));
-			}
-			else
-			{
-				num = localPosition.x - vector.x * (float)mWidth;
-			}
-			if ((bool)rightAnchor.target)
-			{
-				Vector3[] sides3 = rightAnchor.GetSides(transform2);
-				num2 = ((sides3 == null) ? (GetLocalPos(rightAnchor, transform2).x + (float)rightAnchor.absolute) : (NGUIMath.Lerp(sides3[0].x, sides3[2].x, rightAnchor.relative) + (float)rightAnchor.absolute));
-			}
-			else
-			{
-				num2 = localPosition.x - vector.x * (float)mWidth + (float)mWidth;
-			}
-			if ((bool)bottomAnchor.target)
-			{
-				Vector3[] sides4 = bottomAnchor.GetSides(transform2);
-				num3 = ((sides4 == null) ? (GetLocalPos(bottomAnchor, transform2).y + (float)bottomAnchor.absolute) : (NGUIMath.Lerp(sides4[3].y, sides4[1].y, bottomAnchor.relative) + (float)bottomAnchor.absolute));
-			}
-			else
-			{
-				num3 = localPosition.y - vector.y * (float)mHeight;
-			}
-			if ((bool)topAnchor.target)
-			{
-				Vector3[] sides5 = topAnchor.GetSides(transform2);
-				num4 = ((sides5 == null) ? (GetLocalPos(topAnchor, transform2).y + (float)topAnchor.absolute) : (NGUIMath.Lerp(sides5[3].y, sides5[1].y, topAnchor.relative) + (float)topAnchor.absolute));
-			}
-			else
-			{
-				num4 = localPosition.y - vector.y * (float)mHeight + (float)mHeight;
-			}
-		}
-		Vector3 vector2 = new Vector3(Mathf.Lerp(num, num2, vector.x), Mathf.Lerp(num3, num4, vector.y), localPosition.z);
-		vector2.x = Mathf.Round(vector2.x);
-		vector2.y = Mathf.Round(vector2.y);
-		int num5 = Mathf.FloorToInt(num2 - num + 0.5f);
-		int num6 = Mathf.FloorToInt(num4 - num3 + 0.5f);
-		if (keepAspectRatio != 0 && aspectRatio != 0f)
-		{
-			if (keepAspectRatio == AspectRatioSource.BasedOnHeight)
-			{
-				num5 = Mathf.RoundToInt((float)num6 * aspectRatio);
-			}
-			else
-			{
-				num6 = Mathf.RoundToInt((float)num5 / aspectRatio);
-			}
-		}
-		if (num5 < minWidth)
-		{
-			num5 = minWidth;
-		}
-		if (num6 < minHeight)
-		{
-			num6 = minHeight;
-		}
-		if (Vector3.SqrMagnitude(localPosition - vector2) > 0.001f)
-		{
-			base.cachedTransform.localPosition = vector2;
-			if (mIsInFront)
-			{
-				mChanged = true;
-			}
-		}
-		if (mWidth != num5 || mHeight != num6)
-		{
-			mWidth = num5;
-			mHeight = num6;
-			if (mIsInFront)
-			{
-				mChanged = true;
-			}
-			if (autoResizeBoxCollider)
-			{
-				ResizeCollider();
-			}
+			UIRect uIRect = base.parent;
+			this.finalAlpha = (uIRect == null ? this.mColor.a : uIRect.CalculateFinalAlpha(frameID) * this.mColor.a);
 		}
 	}
 
-	protected override void OnUpdate()
+	public bool UpdateGeometry(int frame)
 	{
-		if (panel == null)
+		float single = this.CalculateFinalAlpha(frame);
+		if (this.mIsVisibleByAlpha && this.mLastAlpha != single)
 		{
-			CreatePanel();
+			this.mChanged = true;
 		}
-	}
-
-	private void OnApplicationPause(bool paused)
-	{
-		if (!paused)
+		this.mLastAlpha = single;
+		if (this.mChanged)
 		{
-			MarkAsChanged();
+			if (this.mIsVisibleByAlpha && single > 0.001f && this.shader != null)
+			{
+				bool flag = this.geometry.hasVertices;
+				if (this.fillGeometry)
+				{
+					this.geometry.Clear();
+					this.OnFill(this.geometry.verts, this.geometry.uvs, this.geometry.cols);
+				}
+				if (!this.geometry.hasVertices)
+				{
+					this.mChanged = false;
+					return flag;
+				}
+				if (this.mMatrixFrame != frame)
+				{
+					this.mLocalToPanel = this.panel.worldToLocal * base.cachedTransform.localToWorldMatrix;
+					this.mMatrixFrame = frame;
+				}
+				this.geometry.ApplyTransform(this.mLocalToPanel, this.panel.generateNormals);
+				this.mMoved = false;
+				this.mChanged = false;
+				return true;
+			}
+			if (this.geometry.hasVertices)
+			{
+				if (this.fillGeometry)
+				{
+					this.geometry.Clear();
+				}
+				this.mMoved = false;
+				this.mChanged = false;
+				return true;
+			}
 		}
-	}
-
-	protected override void OnDisable()
-	{
-		RemoveFromPanel();
-		base.OnDisable();
-	}
-
-	private void OnDestroy()
-	{
-		RemoveFromPanel();
-	}
-
-	public bool UpdateVisibility(bool visibleByAlpha, bool visibleByPanel)
-	{
-		if (mIsVisibleByAlpha != visibleByAlpha || mIsVisibleByPanel != visibleByPanel)
+		else if (this.mMoved && this.geometry.hasVertices)
 		{
-			mChanged = true;
-			mIsVisibleByAlpha = visibleByAlpha;
-			mIsVisibleByPanel = visibleByPanel;
+			if (this.mMatrixFrame != frame)
+			{
+				this.mLocalToPanel = this.panel.worldToLocal * base.cachedTransform.localToWorldMatrix;
+				this.mMatrixFrame = frame;
+			}
+			this.geometry.ApplyTransform(this.mLocalToPanel, this.panel.generateNormals);
+			this.mMoved = false;
+			this.mChanged = false;
 			return true;
 		}
+		this.mMoved = false;
+		this.mChanged = false;
 		return false;
 	}
 
 	public bool UpdateTransform(int frame)
 	{
-		Transform transform = base.cachedTransform;
-		mPlayMode = Application.isPlaying;
-		if (mMoved)
+		Transform transforms = base.cachedTransform;
+		this.mPlayMode = Application.isPlaying;
+		if (this.mMoved)
 		{
-			mMoved = true;
-			mMatrixFrame = -1;
-			transform.hasChanged = false;
-			Vector2 vector = pivotOffset;
-			float num = (0f - vector.x) * (float)mWidth;
-			float num2 = (0f - vector.y) * (float)mHeight;
-			float x = num + (float)mWidth;
-			float y = num2 + (float)mHeight;
-			mOldV0 = panel.worldToLocal.MultiplyPoint3x4(transform.TransformPoint(num, num2, 0f));
-			mOldV1 = panel.worldToLocal.MultiplyPoint3x4(transform.TransformPoint(x, y, 0f));
+			this.mMoved = true;
+			this.mMatrixFrame = -1;
+			transforms.hasChanged = false;
+			Vector2 vector2 = this.pivotOffset;
+			float single = -vector2.x * (float)this.mWidth;
+			float single1 = -vector2.y * (float)this.mHeight;
+			float single2 = single + (float)this.mWidth;
+			float single3 = single1 + (float)this.mHeight;
+			this.mOldV0 = this.panel.worldToLocal.MultiplyPoint3x4(transforms.TransformPoint(single, single1, 0f));
+			this.mOldV1 = this.panel.worldToLocal.MultiplyPoint3x4(transforms.TransformPoint(single2, single3, 0f));
 		}
-		else if (!panel.widgetsAreStatic && transform.hasChanged)
+		else if (!this.panel.widgetsAreStatic && transforms.hasChanged)
 		{
-			mMatrixFrame = -1;
-			transform.hasChanged = false;
-			Vector2 vector2 = pivotOffset;
-			float num3 = (0f - vector2.x) * (float)mWidth;
-			float num4 = (0f - vector2.y) * (float)mHeight;
-			float x2 = num3 + (float)mWidth;
-			float y2 = num4 + (float)mHeight;
-			Vector3 vector3 = panel.worldToLocal.MultiplyPoint3x4(transform.TransformPoint(num3, num4, 0f));
-			Vector3 vector4 = panel.worldToLocal.MultiplyPoint3x4(transform.TransformPoint(x2, y2, 0f));
-			if (Vector3.SqrMagnitude(mOldV0 - vector3) > 1E-06f || Vector3.SqrMagnitude(mOldV1 - vector4) > 1E-06f)
+			this.mMatrixFrame = -1;
+			transforms.hasChanged = false;
+			Vector2 vector21 = this.pivotOffset;
+			float single4 = -vector21.x * (float)this.mWidth;
+			float single5 = -vector21.y * (float)this.mHeight;
+			float single6 = single4 + (float)this.mWidth;
+			float single7 = single5 + (float)this.mHeight;
+			Vector3 vector3 = this.panel.worldToLocal.MultiplyPoint3x4(transforms.TransformPoint(single4, single5, 0f));
+			Vector3 vector31 = this.panel.worldToLocal.MultiplyPoint3x4(transforms.TransformPoint(single6, single7, 0f));
+			if (Vector3.SqrMagnitude(this.mOldV0 - vector3) > 1E-06f || Vector3.SqrMagnitude(this.mOldV1 - vector31) > 1E-06f)
 			{
-				mMoved = true;
-				mOldV0 = vector3;
-				mOldV1 = vector4;
+				this.mMoved = true;
+				this.mOldV0 = vector3;
+				this.mOldV1 = vector31;
 			}
 		}
-		if (mMoved && onChange != null)
+		if (this.mMoved && this.onChange != null)
 		{
-			onChange();
+			this.onChange();
 		}
-		return mMoved || mChanged;
+		return (this.mMoved ? true : this.mChanged);
 	}
 
-	public bool UpdateGeometry(int frame)
+	public bool UpdateVisibility(bool visibleByAlpha, bool visibleByPanel)
 	{
-		float num = CalculateFinalAlpha(frame);
-		if (mIsVisibleByAlpha && mLastAlpha != num)
+		if (this.mIsVisibleByAlpha == visibleByAlpha && this.mIsVisibleByPanel == visibleByPanel)
 		{
-			mChanged = true;
+			return false;
 		}
-		mLastAlpha = num;
-		if (mChanged)
-		{
-			if (mIsVisibleByAlpha && num > 0.001f && shader != null)
-			{
-				bool result = geometry.hasVertices;
-				if (fillGeometry)
-				{
-					geometry.Clear();
-					OnFill(geometry.verts, geometry.uvs, geometry.cols);
-				}
-				if (geometry.hasVertices)
-				{
-					if (mMatrixFrame != frame)
-					{
-						mLocalToPanel = panel.worldToLocal * base.cachedTransform.localToWorldMatrix;
-						mMatrixFrame = frame;
-					}
-					geometry.ApplyTransform(mLocalToPanel, panel.generateNormals);
-					mMoved = false;
-					mChanged = false;
-					return true;
-				}
-				mChanged = false;
-				return result;
-			}
-			if (geometry.hasVertices)
-			{
-				if (fillGeometry)
-				{
-					geometry.Clear();
-				}
-				mMoved = false;
-				mChanged = false;
-				return true;
-			}
-		}
-		else if (mMoved && geometry.hasVertices)
-		{
-			if (mMatrixFrame != frame)
-			{
-				mLocalToPanel = panel.worldToLocal * base.cachedTransform.localToWorldMatrix;
-				mMatrixFrame = frame;
-			}
-			geometry.ApplyTransform(mLocalToPanel, panel.generateNormals);
-			mMoved = false;
-			mChanged = false;
-			return true;
-		}
-		mMoved = false;
-		mChanged = false;
-		return false;
+		this.mChanged = true;
+		this.mIsVisibleByAlpha = visibleByAlpha;
+		this.mIsVisibleByPanel = visibleByPanel;
+		return true;
+	}
+
+	protected virtual void UpgradeFrom265()
+	{
+		Vector3 vector3 = base.cachedTransform.localScale;
+		this.mWidth = Mathf.Abs(Mathf.RoundToInt(vector3.x));
+		this.mHeight = Mathf.Abs(Mathf.RoundToInt(vector3.y));
+		NGUITools.UpdateWidgetCollider(base.gameObject, true);
 	}
 
 	public void WriteToBuffers(BetterList<Vector3> v, BetterList<Vector2> u, BetterList<Color32> c, BetterList<Vector3> n, BetterList<Vector4> t)
 	{
-		geometry.WriteToBuffers(v, u, c, n, t);
+		this.geometry.WriteToBuffers(v, u, c, n, t);
 	}
 
-	public virtual void MakePixelPerfect()
+	public enum AspectRatioSource
 	{
-		Vector3 localPosition = base.cachedTransform.localPosition;
-		localPosition.z = Mathf.Round(localPosition.z);
-		localPosition.x = Mathf.Round(localPosition.x);
-		localPosition.y = Mathf.Round(localPosition.y);
-		base.cachedTransform.localPosition = localPosition;
-		Vector3 localScale = base.cachedTransform.localScale;
-		base.cachedTransform.localScale = new Vector3(Mathf.Sign(localScale.x), Mathf.Sign(localScale.y), 1f);
+		Free,
+		BasedOnWidth,
+		BasedOnHeight
 	}
 
-	public virtual void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols)
+	public delegate bool HitCheck(Vector3 worldPos);
+
+	public delegate void OnDimensionsChanged();
+
+	public delegate void OnPostFillCallback(UIWidget widget, int bufferOffset, BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols);
+
+	public enum Pivot
 	{
+		TopLeft,
+		Top,
+		TopRight,
+		Left,
+		Center,
+		Right,
+		BottomLeft,
+		Bottom,
+		BottomRight
 	}
 }

@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class ECPNManager : MonoBehaviour
@@ -13,103 +17,73 @@ public class ECPNManager : MonoBehaviour
 
 	private AndroidJavaObject playerActivityContext;
 
+	public ECPNManager()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DeleteDeviceFromServer(string rID)
+	{
+		ECPNManager.u003cDeleteDeviceFromServeru003ec__Iterator2 variable = null;
+		return variable;
+	}
+
+	public string GetDevToken()
+	{
+		return this.devToken;
+	}
+
+	public void RegisterAndroidDevice(string rID)
+	{
+		UnityEngine.Debug.Log(string.Concat("DeviceToken: ", rID));
+		base.StartCoroutine(this.StoreDeviceID(rID, "android"));
+	}
+
 	public void RequestDeviceToken()
 	{
 		if (!Application.isEditor)
 		{
-			if (playerActivityContext == null)
+			if (this.playerActivityContext == null)
 			{
-				AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-				playerActivityContext = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+				this.playerActivityContext = (new AndroidJavaClass("com.unity3d.player.UnityPlayer")).GetStatic<AndroidJavaObject>("currentActivity");
 			}
-			AndroidJavaClass androidJavaClass2 = new AndroidJavaClass(packageName + ".GCMRegistration");
-			androidJavaClass2.CallStatic("RegisterDevice", playerActivityContext, GoogleCloudMessageProjectID);
+			AndroidJavaClass androidJavaClass = new AndroidJavaClass(string.Concat(this.packageName, ".GCMRegistration"));
+			androidJavaClass.CallStatic("RegisterDevice", new object[] { this.playerActivityContext, this.GoogleCloudMessageProjectID });
 		}
 	}
 
 	public void RequestUnregisterDevice()
 	{
-		if (playerActivityContext == null)
+		if (this.playerActivityContext == null)
 		{
-			AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-			playerActivityContext = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+			this.playerActivityContext = (new AndroidJavaClass("com.unity3d.player.UnityPlayer")).GetStatic<AndroidJavaObject>("currentActivity");
 		}
-		AndroidJavaClass androidJavaClass2 = new AndroidJavaClass(packageName + ".GCMRegistration");
-		androidJavaClass2.CallStatic("UnregisterDevice", playerActivityContext);
+		AndroidJavaClass androidJavaClass = new AndroidJavaClass(string.Concat(this.packageName, ".GCMRegistration"));
+		androidJavaClass.CallStatic("UnregisterDevice", new object[] { this.playerActivityContext });
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SendECPNmessage()
+	{
+		ECPNManager.u003cSendECPNmessageu003ec__Iterator1 variable = null;
+		return variable;
 	}
 
 	public void SendMessageToAll()
 	{
-		StartCoroutine(SendECPNmessage());
+		base.StartCoroutine(this.SendECPNmessage());
 	}
 
-	public string GetDevToken()
+	[DebuggerHidden]
+	private IEnumerator StoreDeviceID(string rID, string os)
 	{
-		return devToken;
-	}
-
-	public void RegisterAndroidDevice(string rID)
-	{
-		Debug.Log("DeviceToken: " + rID);
-		StartCoroutine(StoreDeviceID(rID, "android"));
+		ECPNManager.u003cStoreDeviceIDu003ec__Iterator0 variable = null;
+		return variable;
 	}
 
 	public void UnregisterDevice(string rID)
 	{
-		Debug.Log("Unregister DeviceToken: " + rID);
-		StartCoroutine(DeleteDeviceFromServer(rID));
-	}
-
-	private IEnumerator StoreDeviceID(string rID, string os)
-	{
-		devToken = rID;
-		WWWForm form = new WWWForm();
-		form.AddField("user", SystemInfo.deviceUniqueIdentifier);
-		form.AddField("OS", os);
-		form.AddField("regID", devToken);
-		WWW w = new WWW(phpFilesLocation + "/RegisterDeviceIDtoDB.php", form);
-		yield return w;
-		int errorCode2;
-		if (w.error != null)
-		{
-			errorCode2 = -1;
-			yield break;
-		}
-		string formText = w.text;
-		w.Dispose();
-		errorCode2 = int.Parse(formText);
-	}
-
-	private IEnumerator SendECPNmessage()
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("user", SystemInfo.deviceUniqueIdentifier);
-		WWW w = new WWW(phpFilesLocation + "/SendECPNmessageAll.php", form);
-		yield return w;
-		if (w.error != null)
-		{
-			Debug.Log("Error while sending message to all: " + w.error);
-			yield break;
-		}
-		Debug.Log(w.text);
-		w.Dispose();
-	}
-
-	private IEnumerator DeleteDeviceFromServer(string rID)
-	{
-		WWWForm form = new WWWForm();
-		form.AddField("regID", rID);
-		WWW w = new WWW(phpFilesLocation + "/UnregisterDeviceIDfromDB.php", form);
-		yield return w;
-		int errorCode2;
-		if (w.error != null)
-		{
-			errorCode2 = -1;
-			yield break;
-		}
-		string formText = w.text;
-		w.Dispose();
-		errorCode2 = int.Parse(formText);
-		devToken = string.Empty;
+		UnityEngine.Debug.Log(string.Concat("Unregister DeviceToken: ", rID));
+		base.StartCoroutine(this.DeleteDeviceFromServer(rID));
 	}
 }

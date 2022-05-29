@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class EveryplayTest : MonoBehaviour
@@ -13,88 +17,45 @@ public class EveryplayTest : MonoBehaviour
 
 	private GUIText uploadStatusLabel;
 
+	public EveryplayTest()
+	{
+	}
+
 	private void Awake()
 	{
-		if (base.enabled && showUploadStatus)
+		if (base.enabled && this.showUploadStatus)
 		{
-			CreateUploadStatusLabel();
+			this.CreateUploadStatusLabel();
 		}
-		Object.DontDestroyOnLoad(base.gameObject);
-	}
-
-	private void Start()
-	{
-		if (uploadStatusLabel != null)
-		{
-			Everyplay.UploadDidStart += UploadDidStart;
-			Everyplay.UploadDidProgress += UploadDidProgress;
-			Everyplay.UploadDidComplete += UploadDidComplete;
-		}
-		Everyplay.RecordingStarted += RecordingStarted;
-		Everyplay.RecordingStopped += RecordingStopped;
-	}
-
-	private void Destroy()
-	{
-		if (uploadStatusLabel != null)
-		{
-			Everyplay.UploadDidStart -= UploadDidStart;
-			Everyplay.UploadDidProgress -= UploadDidProgress;
-			Everyplay.UploadDidComplete -= UploadDidComplete;
-		}
-		Everyplay.RecordingStarted -= RecordingStarted;
-		Everyplay.RecordingStopped -= RecordingStopped;
-	}
-
-	private void RecordingStarted()
-	{
-		isRecording = true;
-		isPaused = false;
-		isRecordingFinished = false;
-	}
-
-	private void RecordingStopped()
-	{
-		isRecording = false;
-		isRecordingFinished = true;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	private void CreateUploadStatusLabel()
 	{
-		GameObject gameObject = new GameObject("UploadStatus", typeof(GUIText));
-		if ((bool)gameObject)
+		GameObject gameObject = new GameObject("UploadStatus", new Type[] { typeof(GUIText) });
+		if (gameObject)
 		{
 			gameObject.transform.parent = base.transform;
-			uploadStatusLabel = gameObject.GetComponent<GUIText>();
-			if (uploadStatusLabel != null)
+			this.uploadStatusLabel = gameObject.GetComponent<GUIText>();
+			if (this.uploadStatusLabel != null)
 			{
-				uploadStatusLabel.anchor = TextAnchor.LowerLeft;
-				uploadStatusLabel.alignment = TextAlignment.Left;
-				uploadStatusLabel.text = "Not uploading";
+				this.uploadStatusLabel.anchor = TextAnchor.LowerLeft;
+				this.uploadStatusLabel.alignment = TextAlignment.Left;
+				this.uploadStatusLabel.text = "Not uploading";
 			}
 		}
 	}
 
-	private void UploadDidStart(int videoId)
+	private void Destroy()
 	{
-		uploadStatusLabel.text = "Upload " + videoId + " started.";
-	}
-
-	private void UploadDidProgress(int videoId, float progress)
-	{
-		uploadStatusLabel.text = "Upload " + videoId + " is " + Mathf.RoundToInt(progress * 100f) + "% completed.";
-	}
-
-	private void UploadDidComplete(int videoId)
-	{
-		uploadStatusLabel.text = "Upload " + videoId + " completed.";
-		StartCoroutine(ResetUploadStatusAfterDelay(2f));
-	}
-
-	private IEnumerator ResetUploadStatusAfterDelay(float time)
-	{
-		yield return new WaitForSeconds(time);
-		uploadStatusLabel.text = "Not uploading";
+		if (this.uploadStatusLabel != null)
+		{
+			Everyplay.UploadDidStart -= new Everyplay.UploadDidStartDelegate(this.UploadDidStart);
+			Everyplay.UploadDidProgress -= new Everyplay.UploadDidProgressDelegate(this.UploadDidProgress);
+			Everyplay.UploadDidComplete -= new Everyplay.UploadDidCompleteDelegate(this.UploadDidComplete);
+		}
+		Everyplay.RecordingStarted -= new Everyplay.RecordingStartedDelegate(this.RecordingStarted);
+		Everyplay.RecordingStopped -= new Everyplay.RecordingStoppedDelegate(this.RecordingStopped);
 	}
 
 	private void OnGUI()
@@ -103,38 +64,86 @@ public class EveryplayTest : MonoBehaviour
 		{
 			Everyplay.Show();
 		}
-		if (isRecording && GUI.Button(new Rect(10f, 64f, 138f, 48f), "Stop Recording"))
+		if (this.isRecording && GUI.Button(new Rect(10f, 64f, 138f, 48f), "Stop Recording"))
 		{
 			Everyplay.StopRecording();
 		}
-		else if (!isRecording && GUI.Button(new Rect(10f, 64f, 138f, 48f), "Start Recording"))
+		else if (!this.isRecording && GUI.Button(new Rect(10f, 64f, 138f, 48f), "Start Recording"))
 		{
 			Everyplay.StartRecording();
 		}
-		if (isRecording)
+		if (this.isRecording)
 		{
-			if (!isPaused && GUI.Button(new Rect(160f, 64f, 138f, 48f), "Pause Recording"))
+			if (!this.isPaused && GUI.Button(new Rect(160f, 64f, 138f, 48f), "Pause Recording"))
 			{
 				Everyplay.PauseRecording();
-				isPaused = true;
+				this.isPaused = true;
 			}
-			else if (isPaused && GUI.Button(new Rect(160f, 64f, 138f, 48f), "Resume Recording"))
+			else if (this.isPaused && GUI.Button(new Rect(160f, 64f, 138f, 48f), "Resume Recording"))
 			{
 				Everyplay.ResumeRecording();
-				isPaused = false;
+				this.isPaused = false;
 			}
 		}
-		if (isRecordingFinished && GUI.Button(new Rect(10f, 118f, 138f, 48f), "Play Last Recording"))
+		if (this.isRecordingFinished && GUI.Button(new Rect(10f, 118f, 138f, 48f), "Play Last Recording"))
 		{
 			Everyplay.PlayLastRecording();
 		}
-		if (isRecording && GUI.Button(new Rect(10f, 118f, 138f, 48f), "Take Thumbnail"))
+		if (this.isRecording && GUI.Button(new Rect(10f, 118f, 138f, 48f), "Take Thumbnail"))
 		{
 			Everyplay.TakeThumbnail();
 		}
-		if (isRecordingFinished && GUI.Button(new Rect(10f, 172f, 138f, 48f), "Show sharing modal"))
+		if (this.isRecordingFinished && GUI.Button(new Rect(10f, 172f, 138f, 48f), "Show sharing modal"))
 		{
 			Everyplay.ShowSharingModal();
 		}
+	}
+
+	private void RecordingStarted()
+	{
+		this.isRecording = true;
+		this.isPaused = false;
+		this.isRecordingFinished = false;
+	}
+
+	private void RecordingStopped()
+	{
+		this.isRecording = false;
+		this.isRecordingFinished = true;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ResetUploadStatusAfterDelay(float time)
+	{
+		EveryplayTest.u003cResetUploadStatusAfterDelayu003ec__Iterator7 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		if (this.uploadStatusLabel != null)
+		{
+			Everyplay.UploadDidStart += new Everyplay.UploadDidStartDelegate(this.UploadDidStart);
+			Everyplay.UploadDidProgress += new Everyplay.UploadDidProgressDelegate(this.UploadDidProgress);
+			Everyplay.UploadDidComplete += new Everyplay.UploadDidCompleteDelegate(this.UploadDidComplete);
+		}
+		Everyplay.RecordingStarted += new Everyplay.RecordingStartedDelegate(this.RecordingStarted);
+		Everyplay.RecordingStopped += new Everyplay.RecordingStoppedDelegate(this.RecordingStopped);
+	}
+
+	private void UploadDidComplete(int videoId)
+	{
+		this.uploadStatusLabel.text = string.Concat("Upload ", videoId, " completed.");
+		base.StartCoroutine(this.ResetUploadStatusAfterDelay(2f));
+	}
+
+	private void UploadDidProgress(int videoId, float progress)
+	{
+		this.uploadStatusLabel.text = string.Concat(new object[] { "Upload ", videoId, " is ", Mathf.RoundToInt((float)progress * 100f), "% completed." });
+	}
+
+	private void UploadDidStart(int videoId)
+	{
+		this.uploadStatusLabel.text = string.Concat("Upload ", videoId, " started.");
 	}
 }

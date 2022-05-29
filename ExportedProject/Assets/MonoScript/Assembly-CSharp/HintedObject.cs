@@ -1,24 +1,9 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class HintedObject : MonoBehaviour
 {
-	public enum ArrowPos
-	{
-		botRight = 0,
-		botCenter = 1,
-		botLeft = 2,
-		leftBot = 3,
-		leftCenter = 4,
-		leftTop = 5,
-		rightTop = 6,
-		rightCenter = 7,
-		rightBot = 8,
-		topLeft = 9,
-		topCenter = 10,
-		topRight = 11
-	}
-
 	public int fontSize = 20;
 
 	public string term = "hint";
@@ -29,7 +14,7 @@ public class HintedObject : MonoBehaviour
 
 	public Vector3 position;
 
-	public ArrowPos arrowPos;
+	public HintedObject.ArrowPos arrowPos;
 
 	public bool showOnPress;
 
@@ -43,91 +28,111 @@ public class HintedObject : MonoBehaviour
 
 	private bool isShowing;
 
+	public HintedObject()
+	{
+	}
+
+	public void CloseHint()
+	{
+		this.isShowing = false;
+		this.hintObj.gameObject.SetActive(false);
+		if (Application.isPlaying)
+		{
+			this.hintObj.tween.ResetToBeginning();
+		}
+		this.timer = this.timeToShowHint;
+		this.hintObj.body.transform.parent = this.hintObj.transform;
+	}
+
 	private void OnPress(bool pressed)
 	{
-		timer = timeToShowHint;
-		press = pressed;
-		if (!pressed && hintObj.isActiveAndEnabled)
+		this.timer = this.timeToShowHint;
+		this.press = pressed;
+		if (!pressed && this.hintObj.isActiveAndEnabled)
 		{
-			CloseHint();
+			this.CloseHint();
 		}
 	}
 
 	public void ShowHint()
 	{
-		isShowing = true;
-		hintObj.gameObject.SetActive(true);
-		hintObj.body.transform.parent = base.transform;
-		hintObj.botRightArrow.SetActive(arrowPos == ArrowPos.botRight);
-		hintObj.botCenterArrow.SetActive(arrowPos == ArrowPos.botCenter);
-		hintObj.botLeftArrow.SetActive(arrowPos == ArrowPos.botLeft);
-		hintObj.leftBotArrow.SetActive(arrowPos == ArrowPos.leftBot);
-		hintObj.leftCenterArrow.SetActive(arrowPos == ArrowPos.leftCenter);
-		hintObj.leftTopArrow.SetActive(arrowPos == ArrowPos.leftTop);
-		hintObj.rightTopArrow.SetActive(arrowPos == ArrowPos.rightTop);
-		hintObj.rightCenterArrow.SetActive(arrowPos == ArrowPos.rightCenter);
-		hintObj.rightBotArrow.SetActive(arrowPos == ArrowPos.rightBot);
-		hintObj.topLeftArrow.SetActive(arrowPos == ArrowPos.topLeft);
-		hintObj.topCenterArrow.SetActive(arrowPos == ArrowPos.topCenter);
-		hintObj.topRightArrow.SetActive(arrowPos == ArrowPos.topRight);
-		hintObj.label.text = LocalizationStore.Get(term);
-		hintObj.label.fontSize = fontSize;
-		hintObj.label.transform.localPosition = new Vector3(0f, 0f);
-		hintObj.body.transform.localPosition = position;
+		this.isShowing = true;
+		this.hintObj.gameObject.SetActive(true);
+		this.hintObj.body.transform.parent = base.transform;
+		this.hintObj.botRightArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.botRight);
+		this.hintObj.botCenterArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.botCenter);
+		this.hintObj.botLeftArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.botLeft);
+		this.hintObj.leftBotArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.leftBot);
+		this.hintObj.leftCenterArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.leftCenter);
+		this.hintObj.leftTopArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.leftTop);
+		this.hintObj.rightTopArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.rightTop);
+		this.hintObj.rightCenterArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.rightCenter);
+		this.hintObj.rightBotArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.rightBot);
+		this.hintObj.topLeftArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.topLeft);
+		this.hintObj.topCenterArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.topCenter);
+		this.hintObj.topRightArrow.SetActive(this.arrowPos == HintedObject.ArrowPos.topRight);
+		this.hintObj.label.text = LocalizationStore.Get(this.term);
+		this.hintObj.label.fontSize = this.fontSize;
+		this.hintObj.label.transform.localPosition = new Vector3(0f, 0f);
+		this.hintObj.body.transform.localPosition = this.position;
 		if (Application.isPlaying)
 		{
-			hintObj.tween.PlayForward();
+			this.hintObj.tween.PlayForward();
 		}
-		if (arrowPos == ArrowPos.leftTop || arrowPos == ArrowPos.rightTop || arrowPos == ArrowPos.topCenter || arrowPos == ArrowPos.topLeft || arrowPos == ArrowPos.topRight)
+		if (this.arrowPos == HintedObject.ArrowPos.leftTop || this.arrowPos == HintedObject.ArrowPos.rightTop || this.arrowPos == HintedObject.ArrowPos.topCenter || this.arrowPos == HintedObject.ArrowPos.topLeft || this.arrowPos == HintedObject.ArrowPos.topRight)
 		{
-			hintObj.label.pivot = UIWidget.Pivot.TopRight;
+			this.hintObj.label.pivot = UIWidget.Pivot.TopRight;
 		}
-		else if (arrowPos == ArrowPos.leftCenter || arrowPos == ArrowPos.rightCenter)
+		else if (this.arrowPos == HintedObject.ArrowPos.leftCenter || this.arrowPos == HintedObject.ArrowPos.rightCenter)
 		{
-			hintObj.label.pivot = UIWidget.Pivot.Right;
+			this.hintObj.label.pivot = UIWidget.Pivot.Right;
 		}
 		else
 		{
-			hintObj.label.pivot = UIWidget.Pivot.BottomRight;
+			this.hintObj.label.pivot = UIWidget.Pivot.BottomRight;
 		}
-	}
-
-	public void CloseHint()
-	{
-		isShowing = false;
-		hintObj.gameObject.SetActive(false);
-		if (Application.isPlaying)
-		{
-			hintObj.tween.ResetToBeginning();
-		}
-		timer = timeToShowHint;
-		hintObj.body.transform.parent = hintObj.transform;
 	}
 
 	private void Update()
 	{
-		if (press && showOnPress)
+		if (this.press && this.showOnPress)
 		{
-			timer -= Time.deltaTime;
-			if (timer < 0f)
+			this.timer -= Time.deltaTime;
+			if (this.timer < 0f)
 			{
-				ShowHint();
+				this.ShowHint();
 			}
 		}
-		if (isShowing && showOnPress && !press)
+		if (this.isShowing && this.showOnPress && !this.press)
 		{
-			CloseHint();
+			this.CloseHint();
 		}
 		if (!Application.isPlaying)
 		{
-			if (preview)
+			if (this.preview)
 			{
-				ShowHint();
+				this.ShowHint();
 			}
-			if (isShowing && !preview)
+			if (this.isShowing && !this.preview)
 			{
-				CloseHint();
+				this.CloseHint();
 			}
 		}
+	}
+
+	public enum ArrowPos
+	{
+		botRight,
+		botCenter,
+		botLeft,
+		leftBot,
+		leftCenter,
+		leftTop,
+		rightTop,
+		rightCenter,
+		rightBot,
+		topLeft,
+		topCenter,
+		topRight
 	}
 }

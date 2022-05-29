@@ -1,44 +1,44 @@
+using GooglePlayGames.BasicApi.Multiplayer;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.BasicApi.Multiplayer;
-using GooglePlayGames.Native.Cwrapper;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class MultiplayerInvitation : BaseReferenceHolder
 	{
-		internal MultiplayerInvitation(IntPtr selfPointer)
-			: base(selfPointer)
+		internal MultiplayerInvitation(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
-		internal MultiplayerParticipant Inviter()
+		internal Invitation AsInvitation()
 		{
-			MultiplayerParticipant multiplayerParticipant = new MultiplayerParticipant(GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_InvitingParticipant(SelfPtr()));
-			if (!multiplayerParticipant.Valid())
+			Participant participant;
+			Participant participant1;
+			Invitation.InvType invType = GooglePlayGames.Native.PInvoke.MultiplayerInvitation.ToInvType(this.Type());
+			string str = this.Id();
+			int num = (int)this.Variant();
+			using (GooglePlayGames.Native.PInvoke.MultiplayerParticipant multiplayerParticipant = this.Inviter())
 			{
-				multiplayerParticipant.Dispose();
-				return null;
+				if (multiplayerParticipant != null)
+				{
+					participant1 = multiplayerParticipant.AsParticipant();
+				}
+				else
+				{
+					participant1 = null;
+				}
+				participant = participant1;
 			}
-			return multiplayerParticipant;
+			return new Invitation(invType, str, participant, num);
 		}
 
-		internal uint Variant()
+		internal uint AutomatchingSlots()
 		{
-			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Variant(SelfPtr());
-		}
-
-		internal Types.MultiplayerInvitationType Type()
-		{
-			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Type(SelfPtr());
-		}
-
-		internal string Id()
-		{
-			return PInvokeUtilities.OutParamsToString(_003CId_003Em__12E);
+			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_AutomatchingSlotsAvailable(base.SelfPtr());
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -46,56 +46,59 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Dispose(selfPointer);
 		}
 
-		internal uint AutomatchingSlots()
-		{
-			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_AutomatchingSlotsAvailable(SelfPtr());
-		}
-
-		internal uint ParticipantCount()
-		{
-			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Participants_Length(SelfPtr()).ToUInt32();
-		}
-
-		private static Invitation.InvType ToInvType(Types.MultiplayerInvitationType invitationType)
-		{
-			switch (invitationType)
-			{
-			case Types.MultiplayerInvitationType.REAL_TIME:
-				return Invitation.InvType.RealTime;
-			case Types.MultiplayerInvitationType.TURN_BASED:
-				return Invitation.InvType.TurnBased;
-			default:
-				Logger.d("Found unknown invitation type: " + invitationType);
-				return Invitation.InvType.Unknown;
-			}
-		}
-
-		internal Invitation AsInvitation()
-		{
-			Invitation.InvType invType = ToInvType(Type());
-			string invId = Id();
-			int variant = (int)Variant();
-			Participant inviter;
-			using (MultiplayerParticipant multiplayerParticipant = Inviter())
-			{
-				inviter = ((multiplayerParticipant != null) ? multiplayerParticipant.AsParticipant() : null);
-			}
-			return new Invitation(invType, invId, inviter, variant);
-		}
-
-		internal static MultiplayerInvitation FromPointer(IntPtr selfPointer)
+		internal static GooglePlayGames.Native.PInvoke.MultiplayerInvitation FromPointer(IntPtr selfPointer)
 		{
 			if (PInvokeUtilities.IsNull(selfPointer))
 			{
 				return null;
 			}
-			return new MultiplayerInvitation(selfPointer);
+			return new GooglePlayGames.Native.PInvoke.MultiplayerInvitation(selfPointer);
 		}
 
-		[CompilerGenerated]
-		private UIntPtr _003CId_003Em__12E(StringBuilder out_string, UIntPtr size)
+		internal string Id()
 		{
-			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Id(SelfPtr(), out_string, size);
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr size) => GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Id(base.SelfPtr(), out_string, size));
+		}
+
+		internal GooglePlayGames.Native.PInvoke.MultiplayerParticipant Inviter()
+		{
+			GooglePlayGames.Native.PInvoke.MultiplayerParticipant multiplayerParticipant = new GooglePlayGames.Native.PInvoke.MultiplayerParticipant(GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_InvitingParticipant(base.SelfPtr()));
+			if (multiplayerParticipant.Valid())
+			{
+				return multiplayerParticipant;
+			}
+			multiplayerParticipant.Dispose();
+			return null;
+		}
+
+		internal uint ParticipantCount()
+		{
+			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Participants_Length(base.SelfPtr()).ToUInt32();
+		}
+
+		private static Invitation.InvType ToInvType(Types.MultiplayerInvitationType invitationType)
+		{
+			Types.MultiplayerInvitationType multiplayerInvitationType = invitationType;
+			if (multiplayerInvitationType == Types.MultiplayerInvitationType.TURN_BASED)
+			{
+				return Invitation.InvType.TurnBased;
+			}
+			if (multiplayerInvitationType == Types.MultiplayerInvitationType.REAL_TIME)
+			{
+				return Invitation.InvType.RealTime;
+			}
+			Logger.d(string.Concat("Found unknown invitation type: ", invitationType));
+			return Invitation.InvType.Unknown;
+		}
+
+		internal Types.MultiplayerInvitationType Type()
+		{
+			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Type(base.SelfPtr());
+		}
+
+		internal uint Variant()
+		{
+			return GooglePlayGames.Native.Cwrapper.MultiplayerInvitation.MultiplayerInvitation_Variant(base.SelfPtr());
 		}
 	}
 }

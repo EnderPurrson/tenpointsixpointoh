@@ -1,21 +1,26 @@
+using System;
 using UnityEngine;
 
 public class CoinsLabel : MonoBehaviour
 {
 	public UILabel mylabel;
 
-	private void Start()
+	public CoinsLabel()
 	{
-		SetCountCoins();
-	}
-
-	private void Update()
-	{
-		SetCountCoins();
 	}
 
 	private void SetCountCoins()
 	{
-		mylabel.text = "1234";
+		this.mylabel.text = "1234";
+	}
+
+	private void Start()
+	{
+		this.SetCountCoins();
+	}
+
+	private void Update()
+	{
+		this.SetCountCoins();
 	}
 }

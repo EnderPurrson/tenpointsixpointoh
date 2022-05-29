@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Drag and Drop Container")]
@@ -5,11 +6,15 @@ public class UIDragDropContainer : MonoBehaviour
 {
 	public Transform reparentTarget;
 
+	public UIDragDropContainer()
+	{
+	}
+
 	protected virtual void Start()
 	{
-		if (reparentTarget == null)
+		if (this.reparentTarget == null)
 		{
-			reparentTarget = base.transform;
+			this.reparentTarget = base.transform;
 		}
 	}
 }

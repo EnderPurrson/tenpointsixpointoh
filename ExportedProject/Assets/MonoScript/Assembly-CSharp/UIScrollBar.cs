@@ -1,17 +1,10 @@
 using System;
 using UnityEngine;
 
-[ExecuteInEditMode]
 [AddComponentMenu("NGUI/Interaction/NGUI Scroll Bar")]
+[ExecuteInEditMode]
 public class UIScrollBar : UISlider
 {
-	private enum Direction
-	{
-		Horizontal = 0,
-		Vertical = 1,
-		Upgraded = 2
-	}
-
 	[HideInInspector]
 	[SerializeField]
 	protected float mSize = 1f;
@@ -22,136 +15,150 @@ public class UIScrollBar : UISlider
 
 	[HideInInspector]
 	[SerializeField]
-	private Direction mDir = Direction.Upgraded;
+	private UIScrollBar.Direction mDir = UIScrollBar.Direction.Upgraded;
+
+	public float barSize
+	{
+		get
+		{
+			return this.mSize;
+		}
+		set
+		{
+			float single = Mathf.Clamp01(value);
+			if (this.mSize != single)
+			{
+				this.mSize = single;
+				this.mIsDirty = true;
+				if (NGUITools.GetActive(this))
+				{
+					if (UIProgressBar.current == null && this.onChange != null)
+					{
+						UIProgressBar.current = this;
+						EventDelegate.Execute(this.onChange);
+						UIProgressBar.current = null;
+					}
+					this.ForceUpdate();
+				}
+			}
+		}
+	}
 
 	[Obsolete("Use 'value' instead")]
 	public float scrollValue
 	{
 		get
 		{
-			return base.value;
+			return base.@value;
 		}
 		set
 		{
-			base.value = value;
+			base.@value = value;
 		}
 	}
 
-	public float barSize
+	public UIScrollBar()
 	{
-		get
-		{
-			return mSize;
-		}
-		set
-		{
-			float num = Mathf.Clamp01(value);
-			if (mSize == num)
-			{
-				return;
-			}
-			mSize = num;
-			mIsDirty = true;
-			if (NGUITools.GetActive(this))
-			{
-				if (UIProgressBar.current == null && onChange != null)
-				{
-					UIProgressBar.current = this;
-					EventDelegate.Execute(onChange);
-					UIProgressBar.current = null;
-				}
-				ForceUpdate();
-			}
-		}
 	}
 
-	protected override void Upgrade()
+	public override void ForceUpdate()
 	{
-		if (mDir != Direction.Upgraded)
+		if (this.mFG == null)
 		{
-			mValue = mScroll;
-			if (mDir == Direction.Horizontal)
+			base.ForceUpdate();
+		}
+		else
+		{
+			this.mIsDirty = false;
+			float single = Mathf.Clamp01(this.mSize) * 0.5f;
+			float single1 = Mathf.Lerp(single, 1f - single, base.@value);
+			float single2 = single1 - single;
+			float single3 = single1 + single;
+			if (!base.isHorizontal)
 			{
-				mFill = (mInverted ? FillDirection.RightToLeft : FillDirection.LeftToRight);
+				this.mFG.drawRegion = (!base.isInverted ? new Vector4(0f, single2, 1f, single3) : new Vector4(0f, 1f - single3, 1f, 1f - single2));
 			}
 			else
 			{
-				mFill = ((!mInverted) ? FillDirection.TopToBottom : FillDirection.BottomToTop);
+				this.mFG.drawRegion = (!base.isInverted ? new Vector4(single2, 0f, single3, 1f) : new Vector4(1f - single3, 0f, 1f - single2, 1f));
 			}
-			mDir = Direction.Upgraded;
-		}
-	}
-
-	protected override void OnStart()
-	{
-		base.OnStart();
-		if (mFG != null && mFG.gameObject != base.gameObject && (mFG.GetComponent<Collider>() != null || mFG.GetComponent<Collider2D>() != null))
-		{
-			UIEventListener uIEventListener = UIEventListener.Get(mFG.gameObject);
-			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(base.OnPressForeground));
-			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(base.OnDragForeground));
-			mFG.autoResizeBoxCollider = true;
+			if (this.thumb != null)
+			{
+				Vector4 vector4 = this.mFG.drawingDimensions;
+				Vector3 vector3 = new Vector3(Mathf.Lerp(vector4.x, vector4.z, 0.5f), Mathf.Lerp(vector4.y, vector4.w, 0.5f));
+				base.SetThumbPosition(this.mFG.cachedTransform.TransformPoint(vector3));
+			}
 		}
 	}
 
 	protected override float LocalToValue(Vector2 localPos)
 	{
-		if (mFG != null)
+		if (this.mFG == null)
 		{
-			float num = Mathf.Clamp01(mSize) * 0.5f;
-			float t = num;
-			float t2 = 1f - num;
-			Vector3[] localCorners = mFG.localCorners;
-			if (base.isHorizontal)
-			{
-				t = Mathf.Lerp(localCorners[0].x, localCorners[2].x, t);
-				t2 = Mathf.Lerp(localCorners[0].x, localCorners[2].x, t2);
-				float num2 = t2 - t;
-				if (num2 == 0f)
-				{
-					return base.value;
-				}
-				return (!base.isInverted) ? ((localPos.x - t) / num2) : ((t2 - localPos.x) / num2);
-			}
-			t = Mathf.Lerp(localCorners[0].y, localCorners[1].y, t);
-			t2 = Mathf.Lerp(localCorners[3].y, localCorners[2].y, t2);
-			float num3 = t2 - t;
-			if (num3 == 0f)
-			{
-				return base.value;
-			}
-			return (!base.isInverted) ? ((localPos.y - t) / num3) : ((t2 - localPos.y) / num3);
+			return base.LocalToValue(localPos);
 		}
-		return base.LocalToValue(localPos);
+		float single = Mathf.Clamp01(this.mSize) * 0.5f;
+		float single1 = single;
+		float single2 = 1f - single;
+		Vector3[] vector3Array = this.mFG.localCorners;
+		if (base.isHorizontal)
+		{
+			single1 = Mathf.Lerp(vector3Array[0].x, vector3Array[2].x, single1);
+			single2 = Mathf.Lerp(vector3Array[0].x, vector3Array[2].x, single2);
+			float single3 = single2 - single1;
+			if (single3 == 0f)
+			{
+				return base.@value;
+			}
+			return (!base.isInverted ? (localPos.x - single1) / single3 : (single2 - localPos.x) / single3);
+		}
+		single1 = Mathf.Lerp(vector3Array[0].y, vector3Array[1].y, single1);
+		single2 = Mathf.Lerp(vector3Array[3].y, vector3Array[2].y, single2);
+		float single4 = single2 - single1;
+		if (single4 == 0f)
+		{
+			return base.@value;
+		}
+		return (!base.isInverted ? (localPos.y - single1) / single4 : (single2 - localPos.y) / single4);
 	}
 
-	public override void ForceUpdate()
+	protected override void OnStart()
 	{
-		if (mFG != null)
+		base.OnStart();
+		if (this.mFG != null && this.mFG.gameObject != base.gameObject)
 		{
-			mIsDirty = false;
-			float num = Mathf.Clamp01(mSize) * 0.5f;
-			float num2 = Mathf.Lerp(num, 1f - num, base.value);
-			float num3 = num2 - num;
-			float num4 = num2 + num;
-			if (base.isHorizontal)
+			if ((this.mFG.GetComponent<Collider>() != null ? false : this.mFG.GetComponent<Collider2D>() == null))
 			{
-				mFG.drawRegion = ((!base.isInverted) ? new Vector4(num3, 0f, num4, 1f) : new Vector4(1f - num4, 0f, 1f - num3, 1f));
+				return;
+			}
+			UIEventListener boolDelegate = UIEventListener.Get(this.mFG.gameObject);
+			boolDelegate.onPress += new UIEventListener.BoolDelegate(this.OnPressForeground);
+			boolDelegate.onDrag += new UIEventListener.VectorDelegate(this.OnDragForeground);
+			this.mFG.autoResizeBoxCollider = true;
+		}
+	}
+
+	protected override void Upgrade()
+	{
+		if (this.mDir != UIScrollBar.Direction.Upgraded)
+		{
+			this.mValue = this.mScroll;
+			if (this.mDir != UIScrollBar.Direction.Horizontal)
+			{
+				this.mFill = (!this.mInverted ? UIProgressBar.FillDirection.TopToBottom : UIProgressBar.FillDirection.BottomToTop);
 			}
 			else
 			{
-				mFG.drawRegion = ((!base.isInverted) ? new Vector4(0f, num3, 1f, num4) : new Vector4(0f, 1f - num4, 1f, 1f - num3));
+				this.mFill = (!this.mInverted ? UIProgressBar.FillDirection.LeftToRight : UIProgressBar.FillDirection.RightToLeft);
 			}
-			if (thumb != null)
-			{
-				Vector4 drawingDimensions = mFG.drawingDimensions;
-				Vector3 position = new Vector3(Mathf.Lerp(drawingDimensions.x, drawingDimensions.z, 0.5f), Mathf.Lerp(drawingDimensions.y, drawingDimensions.w, 0.5f));
-				SetThumbPosition(mFG.cachedTransform.TransformPoint(position));
-			}
+			this.mDir = UIScrollBar.Direction.Upgraded;
 		}
-		else
-		{
-			base.ForceUpdate();
-		}
+	}
+
+	private enum Direction
+	{
+		Horizontal,
+		Vertical,
+		Upgraded
 	}
 }

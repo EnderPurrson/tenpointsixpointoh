@@ -1,79 +1,38 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class AGSAchievementsClient : MonoBehaviour
 {
 	private static AmazonJavaWrapper JavaObject;
 
-	private static readonly string PROXY_CLASS_NAME;
-
-	public static event Action<AGSUpdateAchievementResponse> UpdateAchievementCompleted;
-
-	public static event Action<AGSRequestAchievementsResponse> RequestAchievementsCompleted;
-
-	public static event Action<AGSRequestAchievementsForPlayerResponse> RequestAchievementsForPlayerCompleted;
-
-	[Obsolete("UpdateAchievementFailedEvent is deprecated. Use UpdateAchievementCompleted instead.")]
-	public static event Action<string, string> UpdateAchievementFailedEvent;
-
-	[Obsolete("UpdateAchievementSucceededEvent is deprecated. Use UpdateAchievementCompleted instead.")]
-	public static event Action<string> UpdateAchievementSucceededEvent;
-
-	[Obsolete("RequestAchievementsSucceededEvent is deprecated. Use RequestAchievementsCompleted instead.")]
-	public static event Action<List<AGSAchievement>> RequestAchievementsSucceededEvent;
-
-	[Obsolete("RequestAchievementsFailedEvent is deprecated. Use RequestAchievementsCompleted instead.")]
-	public static event Action<string> RequestAchievementsFailedEvent;
+	private readonly static string PROXY_CLASS_NAME;
 
 	static AGSAchievementsClient()
 	{
-		PROXY_CLASS_NAME = "com.amazon.ags.api.unity.AchievementsClientProxyImpl";
-		JavaObject = new AmazonJavaWrapper();
-		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(PROXY_CLASS_NAME))
+		AGSAchievementsClient.PROXY_CLASS_NAME = "com.amazon.ags.api.unity.AchievementsClientProxyImpl";
+		AGSAchievementsClient.JavaObject = new AmazonJavaWrapper();
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass(AGSAchievementsClient.PROXY_CLASS_NAME))
 		{
-			if (androidJavaClass.GetRawClass() == IntPtr.Zero)
+			if (androidJavaClass.GetRawClass() != IntPtr.Zero)
 			{
-				AGSClient.LogGameCircleWarning(string.Format("No java class {0} present, can't use AGSAchievementsClient", PROXY_CLASS_NAME));
+				AGSAchievementsClient.JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
 			}
 			else
 			{
-				JavaObject.setAndroidJavaObject(androidJavaClass.CallStatic<AndroidJavaObject>("getInstance", new object[0]));
+				AGSClient.LogGameCircleWarning(string.Format("No java class {0} present, can't use AGSAchievementsClient", AGSAchievementsClient.PROXY_CLASS_NAME));
 			}
 		}
 	}
 
-	public static void UpdateAchievementProgress(string achievementId, float progress, int userData = 0)
+	public AGSAchievementsClient()
 	{
-		JavaObject.Call("updateAchievementProgress", achievementId, progress, userData);
 	}
 
 	public static void RequestAchievements(int userData = 0)
 	{
-		JavaObject.Call("requestAchievements", userData);
-	}
-
-	public static void RequestAchievementsForPlayer(string playerId, int userData = 0)
-	{
-		JavaObject.Call("requestAchievementsForPlayer", playerId, userData);
-	}
-
-	public static void ShowAchievementsOverlay()
-	{
-		JavaObject.Call("showAchievementsOverlay");
-	}
-
-	public static void RequestAchievementsSucceeded(string json)
-	{
-		AGSRequestAchievementsResponse aGSRequestAchievementsResponse = AGSRequestAchievementsResponse.FromJSON(json);
-		if (!aGSRequestAchievementsResponse.IsError() && AGSAchievementsClient.RequestAchievementsSucceededEvent != null)
-		{
-			AGSAchievementsClient.RequestAchievementsSucceededEvent(aGSRequestAchievementsResponse.achievements);
-		}
-		if (AGSAchievementsClient.RequestAchievementsCompleted != null)
-		{
-			AGSAchievementsClient.RequestAchievementsCompleted(aGSRequestAchievementsResponse);
-		}
+		AGSAchievementsClient.JavaObject.Call("requestAchievements", new object[] { userData });
 	}
 
 	public static void RequestAchievementsFailed(string json)
@@ -89,6 +48,37 @@ public class AGSAchievementsClient : MonoBehaviour
 		}
 	}
 
+	public static void RequestAchievementsForPlayer(string playerId, int userData = 0)
+	{
+		AGSAchievementsClient.JavaObject.Call("requestAchievementsForPlayer", new object[] { playerId, userData });
+	}
+
+	public static void RequestAchievementsForPlayerComplete(string json)
+	{
+		if (AGSAchievementsClient.RequestAchievementsForPlayerCompleted != null)
+		{
+			AGSAchievementsClient.RequestAchievementsForPlayerCompleted(AGSRequestAchievementsForPlayerResponse.FromJSON(json));
+		}
+	}
+
+	public static void RequestAchievementsSucceeded(string json)
+	{
+		AGSRequestAchievementsResponse aGSRequestAchievementsResponse = AGSRequestAchievementsResponse.FromJSON(json);
+		if (!aGSRequestAchievementsResponse.IsError() && AGSAchievementsClient.RequestAchievementsSucceededEvent != null)
+		{
+			AGSAchievementsClient.RequestAchievementsSucceededEvent(aGSRequestAchievementsResponse.achievements);
+		}
+		if (AGSAchievementsClient.RequestAchievementsCompleted != null)
+		{
+			AGSAchievementsClient.RequestAchievementsCompleted(aGSRequestAchievementsResponse);
+		}
+	}
+
+	public static void ShowAchievementsOverlay()
+	{
+		AGSAchievementsClient.JavaObject.Call("showAchievementsOverlay", new object[0]);
+	}
+
 	public static void UpdateAchievementFailed(string json)
 	{
 		AGSUpdateAchievementResponse aGSUpdateAchievementResponse = AGSUpdateAchievementResponse.FromJSON(json);
@@ -100,6 +90,11 @@ public class AGSAchievementsClient : MonoBehaviour
 		{
 			AGSAchievementsClient.UpdateAchievementCompleted(aGSUpdateAchievementResponse);
 		}
+	}
+
+	public static void UpdateAchievementProgress(string achievementId, float progress, int userData = 0)
+	{
+		AGSAchievementsClient.JavaObject.Call("updateAchievementProgress", new object[] { achievementId, progress, userData });
 	}
 
 	public static void UpdateAchievementSucceeded(string json)
@@ -115,11 +110,21 @@ public class AGSAchievementsClient : MonoBehaviour
 		}
 	}
 
-	public static void RequestAchievementsForPlayerComplete(string json)
-	{
-		if (AGSAchievementsClient.RequestAchievementsForPlayerCompleted != null)
-		{
-			AGSAchievementsClient.RequestAchievementsForPlayerCompleted(AGSRequestAchievementsForPlayerResponse.FromJSON(json));
-		}
-	}
+	public static event Action<AGSRequestAchievementsResponse> RequestAchievementsCompleted;
+
+	[Obsolete("RequestAchievementsFailedEvent is deprecated. Use RequestAchievementsCompleted instead.")]
+	public static event Action<string> RequestAchievementsFailedEvent;
+
+	public static event Action<AGSRequestAchievementsForPlayerResponse> RequestAchievementsForPlayerCompleted;
+
+	[Obsolete("RequestAchievementsSucceededEvent is deprecated. Use RequestAchievementsCompleted instead.")]
+	public static event Action<List<AGSAchievement>> RequestAchievementsSucceededEvent;
+
+	public static event Action<AGSUpdateAchievementResponse> UpdateAchievementCompleted;
+
+	[Obsolete("UpdateAchievementFailedEvent is deprecated. Use UpdateAchievementCompleted instead.")]
+	public static event Action<string, string> UpdateAchievementFailedEvent;
+
+	[Obsolete("UpdateAchievementSucceededEvent is deprecated. Use UpdateAchievementCompleted instead.")]
+	public static event Action<string> UpdateAchievementSucceededEvent;
 }

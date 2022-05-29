@@ -1,8 +1,10 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Rilisoft.MiniJson;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class TouchPadInJoystick : MonoBehaviour
@@ -17,7 +19,7 @@ public class TouchPadInJoystick : MonoBehaviour
 
 	public bool isActiveFireButton;
 
-	private Rect _fireRect = default(Rect);
+	private Rect _fireRect = new Rect();
 
 	private bool _shouldRecalcRects;
 
@@ -31,70 +33,47 @@ public class TouchPadInJoystick : MonoBehaviour
 
 	private bool pressured;
 
-	private IEnumerator ReCalcRects()
+	public TouchPadInJoystick()
 	{
-		yield return null;
-		yield return null;
-		CalcRects();
 	}
 
-	public void SetJoystickActive(bool active)
-	{
-		_joyActive = active;
-		if (!active)
-		{
-			isShooting = false;
-		}
-	}
-
-	private void OnEnable()
-	{
-		isShooting = false;
-		if (_shouldRecalcRects)
-		{
-			StartCoroutine(ReCalcRects());
-		}
-		_shouldRecalcRects = false;
-		StartCoroutine(_SetIsFirstFrame());
-	}
-
+	[DebuggerHidden]
 	private IEnumerator _SetIsFirstFrame()
 	{
-		float tm = Time.realtimeSinceStartup;
-		do
+		TouchPadInJoystick.u003c_SetIsFirstFrameu003ec__Iterator1C5 variable = null;
+		return variable;
+	}
+
+	private void CalcRects()
+	{
+		Transform root = NGUITools.GetRoot(base.gameObject).transform;
+		Camera component = root.GetChild(0).GetChild(0).GetComponent<Camera>();
+		Transform transforms = component.transform;
+		float single = 768f;
+		float single1 = single * ((float)Screen.width / (float)Screen.height);
+		List<object> objs = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]")) as List<object>;
+		if (objs == null)
 		{
-			yield return null;
+			objs = new List<object>();
+			UnityEngine.Debug.LogWarning(objs.GetType().FullName);
 		}
-		while (Time.realtimeSinceStartup - tm < 0.1f);
-		_isFirstFrame = false;
-	}
-
-	private IEnumerator Start()
-	{
-		if (Defs.isHunger)
+		int[] array = objs.Select<object, int>(new Func<object, int>(Convert.ToInt32)).ToArray<int>();
+		Bounds vector3 = NGUIMath.CalculateRelativeWidgetBounds(transforms, this.fireSprite, true, true);
+		float single2 = 60f;
+		if ((int)array.Length > 6)
 		{
-			_hungerGameController = GameObject.FindGameObjectWithTag("HungerGameController").GetComponent<HungerGameController>();
+			single2 = (float)array[6] * 0.5f;
 		}
-		PauseNGUIController.PlayerHandUpdated += SetSideAndCalcRects;
-		ControlsSettingsBase.ControlsChanged += SetShouldRecalcRects;
-		yield return null;
-		yield return null;
-		CalcRects();
-	}
-
-	private void SetSideAndCalcRects()
-	{
-		SetShouldRecalcRects();
-	}
-
-	private void SetShouldRecalcRects()
-	{
-		_shouldRecalcRects = true;
+		vector3.center = vector3.center + new Vector3(single1 * 0.5f, single * 0.5f, 0f);
+		Vector3 vector31 = vector3.center;
+		float coef = (vector31.x - single2) * Defs.Coef;
+		Vector3 vector32 = vector3.center;
+		this._fireRect = new Rect(coef, (vector32.y - single2) * Defs.Coef, 2f * single2 * Defs.Coef, 2f * single2 * Defs.Coef);
 	}
 
 	private bool IsActiveFireButton()
 	{
-		if ((!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None) || Defs.isTurretWeapon)
+		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None || Defs.isTurretWeapon)
 		{
 			return false;
 		}
@@ -102,113 +81,139 @@ public class TouchPadInJoystick : MonoBehaviour
 		{
 			return true;
 		}
-		if (Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Sniper && _playerMoveC != null && _playerMoveC.isZooming)
+		if (Defs.gameSecondFireButtonMode == Defs.GameSecondFireButtonMode.Sniper && this._playerMoveC != null && this._playerMoveC.isZooming)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	private void Update()
+	private void OnDestroy()
 	{
-		if (_playerMoveC == null)
+		PauseNGUIController.PlayerHandUpdated -= new Action(this.SetSideAndCalcRects);
+		ControlsSettingsBase.ControlsChanged -= new Action(this.SetShouldRecalcRects);
+	}
+
+	private void OnEnable()
+	{
+		this.isShooting = false;
+		if (this._shouldRecalcRects)
 		{
-			if (Defs.isMulti && WeaponManager.sharedManager != null && WeaponManager.sharedManager.myPlayer != null)
-			{
-				_playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
-			}
-			else
-			{
-				GameObject gameObject = GameObject.FindGameObjectWithTag("Player");
-				if (gameObject != null)
-				{
-					_playerMoveC = gameObject.GetComponent<SkinName>().playerMoveC;
-				}
-			}
+			base.StartCoroutine(this.ReCalcRects());
 		}
-		if (!_joyActive)
+		this._shouldRecalcRects = false;
+		base.StartCoroutine(this._SetIsFirstFrame());
+	}
+
+	private void OnPress(bool isDown)
+	{
+		if (!this._joyActive)
 		{
-			isShooting = false;
 			return;
 		}
-		isActiveFireButton = IsActiveFireButton();
-		if (isActiveFireButton != fireSprite.gameObject.activeSelf)
+		if (this.inGameGUI.playerMoveC == null)
 		{
-			fireSprite.gameObject.SetActive(isActiveFireButton);
+			return;
+		}
+		if (this._fireRect.width.Equals(0f))
+		{
+			this.CalcRects();
+		}
+		if (this._isFirstFrame)
+		{
+			return;
+		}
+		if (isDown && this._fireRect.Contains(UICamera.lastTouchPosition) && this.fireSprite.gameObject.activeSelf)
+		{
+			this.isShooting = true;
+		}
+		if (!isDown)
+		{
+			this.isShooting = false;
 		}
 	}
 
 	private void OnPressure(float pressure)
 	{
-		if (Defs.touchPressureSupported && Defs.isUse3DTouch && pressure > 0.8f)
+		if (!Defs.touchPressureSupported || !Defs.isUse3DTouch || pressure <= 0.8f)
 		{
-			if (!pressured)
-			{
-				pressured = true;
-				isJumpPressed = true;
-				if (TrainingController.sharedController != null)
-				{
-					TrainingController.sharedController.Hide3dTouchJump();
-				}
-			}
+			this.pressured = false;
+			this.isJumpPressed = false;
 		}
 		else
 		{
-			pressured = false;
-			isJumpPressed = false;
+			if (this.pressured)
+			{
+				return;
+			}
+			this.pressured = true;
+			this.isJumpPressed = true;
+			if (TrainingController.sharedController != null)
+			{
+				TrainingController.sharedController.Hide3dTouchJump();
+			}
 		}
 	}
 
-	private void OnPress(bool isDown)
+	[DebuggerHidden]
+	private IEnumerator ReCalcRects()
 	{
-		if (!_joyActive || inGameGUI.playerMoveC == null)
+		TouchPadInJoystick.u003cReCalcRectsu003ec__Iterator1C4 variable = null;
+		return variable;
+	}
+
+	public void SetJoystickActive(bool active)
+	{
+		this._joyActive = active;
+		if (!active)
 		{
+			this.isShooting = false;
+		}
+	}
+
+	private void SetShouldRecalcRects()
+	{
+		this._shouldRecalcRects = true;
+	}
+
+	private void SetSideAndCalcRects()
+	{
+		this.SetShouldRecalcRects();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		TouchPadInJoystick.u003cStartu003ec__Iterator1C6 variable = null;
+		return variable;
+	}
+
+	private void Update()
+	{
+		if (this._playerMoveC == null)
+		{
+			if (!Defs.isMulti || !(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.myPlayer != null))
+			{
+				GameObject gameObject = GameObject.FindGameObjectWithTag("Player");
+				if (gameObject != null)
+				{
+					this._playerMoveC = gameObject.GetComponent<SkinName>().playerMoveC;
+				}
+			}
+			else
+			{
+				this._playerMoveC = WeaponManager.sharedManager.myPlayerMoveC;
+			}
+		}
+		if (!this._joyActive)
+		{
+			this.isShooting = false;
 			return;
 		}
-		if (_fireRect.width.Equals(0f))
+		this.isActiveFireButton = this.IsActiveFireButton();
+		if (this.isActiveFireButton != this.fireSprite.gameObject.activeSelf)
 		{
-			CalcRects();
+			this.fireSprite.gameObject.SetActive(this.isActiveFireButton);
 		}
-		if (!_isFirstFrame)
-		{
-			if (isDown && _fireRect.Contains(UICamera.lastTouchPosition) && fireSprite.gameObject.activeSelf)
-			{
-				isShooting = true;
-			}
-			if (!isDown)
-			{
-				isShooting = false;
-			}
-		}
-	}
-
-	private void CalcRects()
-	{
-		Transform transform = NGUITools.GetRoot(base.gameObject).transform;
-		Camera component = transform.GetChild(0).GetChild(0).GetComponent<Camera>();
-		Transform relativeTo = component.transform;
-		float num = 768f;
-		float num2 = num * ((float)Screen.width / (float)Screen.height);
-		List<object> list = Json.Deserialize(PlayerPrefs.GetString("Controls.Size", "[]")) as List<object>;
-		if (list == null)
-		{
-			list = new List<object>();
-			Debug.LogWarning(list.GetType().FullName);
-		}
-		int[] array = list.Select(Convert.ToInt32).ToArray();
-		Bounds bounds = NGUIMath.CalculateRelativeWidgetBounds(relativeTo, fireSprite, true);
-		float num3 = 60f;
-		if (array.Length > 6)
-		{
-			num3 = (float)array[6] * 0.5f;
-		}
-		bounds.center += new Vector3(num2 * 0.5f, num * 0.5f, 0f);
-		_fireRect = new Rect((bounds.center.x - num3) * Defs.Coef, (bounds.center.y - num3) * Defs.Coef, 2f * num3 * Defs.Coef, 2f * num3 * Defs.Coef);
-	}
-
-	private void OnDestroy()
-	{
-		PauseNGUIController.PlayerHandUpdated -= SetSideAndCalcRects;
-		ControlsSettingsBase.ControlsChanged -= SetShouldRecalcRects;
 	}
 }

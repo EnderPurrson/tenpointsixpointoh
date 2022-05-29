@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MoveButtonInLobbiInX3 : MonoBehaviour
@@ -10,24 +11,33 @@ public class MoveButtonInLobbiInX3 : MonoBehaviour
 
 	private bool oldStateX3;
 
-	private void Start()
+	public MoveButtonInLobbiInX3()
 	{
-		myTransform = base.transform;
-		yNotX3 = myTransform.localPosition.y;
-		Move();
 	}
 
 	private void Move()
 	{
-		if (oldStateX3 != PromoActionsManager.sharedManager.IsEventX3Active)
+		float single;
+		if (this.oldStateX3 != PromoActionsManager.sharedManager.IsEventX3Active)
 		{
-			oldStateX3 = PromoActionsManager.sharedManager.IsEventX3Active;
-			myTransform.localPosition = new Vector3(myTransform.localPosition.x, (!oldStateX3) ? yNotX3 : yX3, myTransform.localPosition.z);
+			this.oldStateX3 = PromoActionsManager.sharedManager.IsEventX3Active;
+			Transform vector3 = this.myTransform;
+			float single1 = this.myTransform.localPosition.x;
+			single = (!this.oldStateX3 ? this.yNotX3 : this.yX3);
+			Vector3 vector31 = this.myTransform.localPosition;
+			vector3.localPosition = new Vector3(single1, single, vector31.z);
 		}
+	}
+
+	private void Start()
+	{
+		this.myTransform = base.transform;
+		this.yNotX3 = this.myTransform.localPosition.y;
+		this.Move();
 	}
 
 	private void Update()
 	{
-		Move();
+		this.Move();
 	}
 }

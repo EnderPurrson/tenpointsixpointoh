@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public class ChestBonusesData
@@ -8,15 +9,20 @@ public class ChestBonusesData
 
 	public List<ChestBonusData> bonuses;
 
+	public ChestBonusesData()
+	{
+	}
+
 	public void Clear()
 	{
-		if (bonuses != null)
+		if (this.bonuses == null)
 		{
-			for (int i = 0; i < bonuses.Count; i++)
-			{
-				bonuses[i].items.Clear();
-			}
-			bonuses.Clear();
+			return;
 		}
+		for (int i = 0; i < this.bonuses.Count; i++)
+		{
+			this.bonuses[i].items.Clear();
+		}
+		this.bonuses.Clear();
 	}
 }

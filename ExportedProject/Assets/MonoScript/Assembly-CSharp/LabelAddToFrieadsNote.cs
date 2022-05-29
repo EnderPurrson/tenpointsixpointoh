@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class LabelAddToFrieadsNote : MonoBehaviour
@@ -6,20 +7,24 @@ public class LabelAddToFrieadsNote : MonoBehaviour
 
 	private bool isBigPorogOld;
 
+	public LabelAddToFrieadsNote()
+	{
+	}
+
 	private void Update()
 	{
-		isBigPorog = !Defs2.IsAvalibleAddFrends();
-		if (isBigPorog != isBigPorogOld)
+		this.isBigPorog = !Defs2.IsAvalibleAddFrends();
+		if (this.isBigPorog != this.isBigPorogOld)
 		{
-			if (!isBigPorog)
+			if (this.isBigPorog)
 			{
-				GetComponent<UILabel>().text = Defs.smallPorogString;
+				base.GetComponent<UILabel>().text = Defs.bigPorogString;
 			}
 			else
 			{
-				GetComponent<UILabel>().text = Defs.bigPorogString;
+				base.GetComponent<UILabel>().text = Defs.smallPorogString;
 			}
 		}
-		isBigPorogOld = isBigPorog;
+		this.isBigPorogOld = this.isBigPorog;
 	}
 }

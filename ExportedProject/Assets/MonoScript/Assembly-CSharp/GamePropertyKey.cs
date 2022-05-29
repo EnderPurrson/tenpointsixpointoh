@@ -1,6 +1,8 @@
+using System;
+
 public class GamePropertyKey
 {
-	public const byte MaxPlayers = byte.MaxValue;
+	public const byte MaxPlayers = 255;
 
 	public const byte IsVisible = 254;
 
@@ -17,4 +19,8 @@ public class GamePropertyKey
 	public const byte MasterClientId = 248;
 
 	public const byte ExpectedUsers = 247;
+
+	public GamePropertyKey()
+	{
+	}
 }

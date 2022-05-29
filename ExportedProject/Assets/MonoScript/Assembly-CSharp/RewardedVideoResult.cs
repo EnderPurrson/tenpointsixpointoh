@@ -1,3 +1,5 @@
+using System;
+
 internal static class RewardedVideoResult
 {
 	public const string Finished = "CLOSE_FINISHED";

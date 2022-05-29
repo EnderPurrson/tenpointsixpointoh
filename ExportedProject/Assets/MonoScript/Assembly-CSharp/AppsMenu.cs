@@ -1,14 +1,17 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using Rilisoft;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[Obfuscation(Exclude = true)]
+[Obfuscation(Exclude=true)]
 internal sealed class AppsMenu : MonoBehaviour
 {
 	private const string _suffix = "Scene";
@@ -33,11 +36,11 @@ internal sealed class AppsMenu : MonoBehaviour
 
 	internal volatile object _preventAggressiveOptimisation;
 
-	private static volatile uint _preventInlining = 3565584061u;
+	private static volatile uint _preventInlining;
 
 	private IDisposable _backSubscription;
 
-	private Lazy<string> _expansionFilePath = new Lazy<string>(GooglePlayDownloader.GetExpansionFilePath);
+	private Lazy<string> _expansionFilePath = new Lazy<string>(new Func<string>(GooglePlayDownloader.GetExpansionFilePath));
 
 	private readonly TaskCompletionSource<bool> _storagePermissionGrantedPromise = new TaskCompletionSource<bool>();
 
@@ -53,98 +56,40 @@ internal sealed class AppsMenu : MonoBehaviour
 		}
 	}
 
-	private Task<bool> StoragePermissionFuture
-	{
-		get
-		{
-			return _storagePermissionGrantedPromise.Task;
-		}
-	}
-
 	private Task<string> FetchObbFuture
 	{
 		get
 		{
-			if (_fetchObbPromise == null)
+			if (this._fetchObbPromise == null)
 			{
 				return null;
 			}
-			return _fetchObbPromise.Task;
+			return this._fetchObbPromise.Task;
 		}
 	}
 
+	private Task<bool> StoragePermissionFuture
+	{
+		get
+		{
+			return this._storagePermissionGrantedPromise.Task;
+		}
+	}
+
+	static AppsMenu()
+	{
+		AppsMenu._preventInlining = -729383235;
+	}
+
+	public AppsMenu()
+	{
+	}
+
+	[DebuggerHidden]
 	internal IEnumerable<float> AppsMenuAwakeCoroutine()
 	{
-		yield return 0.1f;
-		Device.isPixelGunLow = Device.isPixelGunLowDevice;
-		Application.targetFrameRate = ((!GlobalGameController.is60FPSEnable) ? 30 : 60);
-		_startFrameIndex = Time.frameCount;
-		yield return 0.2f;
-		if (!Launcher.UsingNewLauncher)
-		{
-			m_Material = fadeMaterial;
-		}
-		if ((float)Screen.width / (float)Screen.height > 1.7777778f)
-		{
-			Screen.SetResolution(Mathf.RoundToInt((float)Screen.height * 16f / 9f), Mathf.RoundToInt(Screen.height), false);
-		}
-	}
-
-	private static IEnumerator MeetTheCoroutine(string sceneName, long abuseTicks, long nowTicks)
-	{
-		TimeSpan timespan = TimeSpan.FromTicks(Math.Abs(nowTicks - abuseTicks));
-		if (Defs.IsDeveloperBuild)
-		{
-			if (timespan.TotalMinutes < 3.0)
-			{
-				yield break;
-			}
-		}
-		else if (timespan.TotalDays < 1.0)
-		{
-			yield break;
-		}
-		System.Random prng = new System.Random(nowTicks.GetHashCode());
-		float delaySeconds = prng.Next(15, 60);
-		yield return new WaitForSeconds(delaySeconds);
-		SceneManager.LoadScene(sceneName);
-	}
-
-	private static string GetAbuseKey_53232de5(uint pad)
-	{
-		uint num = 0x97C95CDCu ^ pad;
-		_preventInlining++;
-		return num.ToString("x");
-	}
-
-	private static string GetAbuseKey_21493d18(uint pad)
-	{
-		uint num = 0xE5A34C21u ^ pad;
-		_preventInlining++;
-		return num.ToString("x");
-	}
-
-	private static string GetTerminalSceneName_4de1(uint gamma)
-	{
-		return "Closing4de1Scene".Replace(gamma.ToString("x"), string.Empty);
-	}
-
-	private void OnEnable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-		}
-		_backSubscription = BackSystem.Instance.Register(Application.Quit, "AppsMenu");
-	}
-
-	private void OnDisable()
-	{
-		if (_backSubscription != null)
-		{
-			_backSubscription.Dispose();
-			_backSubscription = null;
-		}
+		AppsMenu.u003cAppsMenuAwakeCoroutineu003ec__Iterator3 variable = null;
+		return variable;
 	}
 
 	private void Awake()
@@ -152,272 +97,85 @@ internal sealed class AppsMenu : MonoBehaviour
 		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.ShootingRangeCompleted && Storager.getInt("ShopNGUIController.TrainingShopStageStepKey", false) == 6)
 		{
 			TrainingController.CompletedTrainingStage = TrainingController.NewTrainingCompletedStage.ShopCompleted;
-			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Back_Shop);
+			AnalyticsStuff.Tutorial(AnalyticsConstants.TutorialState.Back_Shop, true);
 		}
-		currentFon = riliFon;
-		if (ActivityIndicator.instance == null && activityIndikatorPrefab != null)
+		this.currentFon = this.riliFon;
+		if (ActivityIndicator.instance == null && this.activityIndikatorPrefab != null)
 		{
-			UnityEngine.Object target = UnityEngine.Object.Instantiate(activityIndikatorPrefab);
-			UnityEngine.Object.DontDestroyOnLoad(target);
+			UnityEngine.Object.DontDestroyOnLoad(UnityEngine.Object.Instantiate<GameObject>(this.activityIndikatorPrefab));
 		}
-		ActivityIndicator.SetLoadingFon(currentFon);
+		ActivityIndicator.SetLoadingFon(this.currentFon);
 		ActivityIndicator.IsShowWindowLoading = true;
-	}
-
-	private IEnumerator Start()
-	{
-		yield return null;
-		Switcher.timer.Start();
-		if (Defs.IsDeveloperBuild && Application.platform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.Amazon)
-		{
-			StringBuilder message = new StringBuilder("[Rilisoft] Trying to instantiate `android.os.AsyncTask`... ");
-			try
-			{
-				using (new AndroidJavaClass("android.os.AsyncTask"))
-				{
-					message.Append("Done.");
-				}
-			}
-			catch (Exception ex3)
-			{
-				Exception ex = ex3;
-				message.Append("Failed.");
-				Debug.LogException(ex);
-			}
-			Debug.Log(message.ToString());
-		}
-		yield return null;
-		if (!Storager.hasKey(Defs.PremiumEnabledFromServer))
-		{
-			Storager.setInt(Defs.PremiumEnabledFromServer, 0, false);
-		}
-		ActivityIndicator.IsActiveIndicator = false;
-		foreach (float item in AppsMenuAwakeCoroutine())
-		{
-			float step = item;
-			yield return null;
-			_preventAggressiveOptimisation = step;
-		}
-		if (Launcher.UsingNewLauncher)
-		{
-			yield break;
-		}
-		if (Application.platform == RuntimePlatform.Android && Defs.AndroidEdition == Defs.RuntimeAndroidEdition.GoogleLite)
-		{
-			if (_003CStart_003Ec__Iterator5._003C_003Ef__am_0024cacheF == null)
-			{
-				_003CStart_003Ec__Iterator5._003C_003Ef__am_0024cacheF = _003CStart_003Ec__Iterator5._003C_003Em__2;
-			}
-			Action<string> handle = _003CStart_003Ec__Iterator5._003C_003Ef__am_0024cacheF;
-			LicenseVerificationController.PackageInfo actualPackageInfo = default(LicenseVerificationController.PackageInfo);
-			try
-			{
-				actualPackageInfo = LicenseVerificationController.GetPackageInfo();
-				Launcher.PackageInfo = actualPackageInfo;
-			}
-			catch (Exception ex4)
-			{
-				Exception ex2 = ex4;
-				Debug.Log("LicenseVerificationController.GetPackageInfo() failed:    " + ex2);
-				handle(GetTerminalSceneName_4de1(19937u));
-			}
-			finally
-			{
-				if (actualPackageInfo.SignatureHash == null)
-				{
-					Debug.Log("actualPackageInfo.SignatureHash == null");
-					handle(GetTerminalSceneName_4de1(19937u));
-				}
-			}
-			string actualPackageName = actualPackageInfo.PackageName;
-			if (string.Compare(actualPackageName, Defs.GetIntendedAndroidPackageName(), StringComparison.Ordinal) != 0)
-			{
-				Debug.LogWarning("Verification FakeBundleDetected:    " + actualPackageName);
-				FlurryPluginWrapper.LogEventWithParameterAndValue("Verification FakeBundleDetected", "Actual Package Name", actualPackageName);
-				handle(GetTerminalSceneName_4de1(19937u));
-			}
-			else
-			{
-				Debug.Log("Package check passed.");
-			}
-			if (string.IsNullOrEmpty(intendedSignatureHash))
-			{
-				Debug.LogWarning("String.IsNullOrEmpty(intendedSignatureHash)");
-				handle(GetTerminalSceneName_4de1(19937u));
-			}
-			string actualSignatureHash = actualPackageInfo.SignatureHash;
-			if (string.Compare(actualSignatureHash, intendedSignatureHash, StringComparison.Ordinal) != 0)
-			{
-				Debug.LogWarning("Verification FakeSignatureDetected:    " + actualSignatureHash);
-				FlurryPluginWrapper.LogEventWithParameterAndValue("Verification FakeSignatureDetected", "Actual Signature Hash", actualSignatureHash);
-				Switcher.AppendAbuseMethod(AbuseMetod.AndroidPackageSignature);
-				handle(GetTerminalSceneName_4de1(19937u));
-			}
-			else
-			{
-				Debug.Log("Signature check passed.");
-			}
-		}
-		if (!Application.isEditor && ApplicationBinarySplitted)
-		{
-			Debug.LogFormat("Expansion file path: '{0}'", _expansionFilePath.Value);
-			string mainPath2 = GooglePlayDownloader.GetMainOBBPath(_expansionFilePath.Value);
-			if (mainPath2 == null)
-			{
-				if (_fetchObbPromise != null)
-				{
-					_fetchObbPromise.TrySetCanceled();
-				}
-				_fetchObbPromise = new TaskCompletionSource<string>();
-				Debug.LogWarning("Waiting mainPath...");
-				if (!_storagePermissionRequested)
-				{
-					_storagePermissionRequested = true;
-					NoodlePermissionGranter.PermissionRequestCallback = HandleStoragePermissionDialog;
-					NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.WRITE_EXTERNAL_STORAGE);
-				}
-				while (!StoragePermissionFuture.IsCompleted)
-				{
-					yield return null;
-				}
-				if (!StoragePermissionFuture.Result)
-				{
-					Application.Quit();
-					yield break;
-				}
-				GooglePlayDownloader.FetchOBB();
-				WaitForSeconds awaiter = new WaitForSeconds(0.5f);
-				while (true)
-				{
-					mainPath2 = GooglePlayDownloader.GetMainOBBPath(_expansionFilePath.Value);
-					if (mainPath2 != null)
-					{
-						break;
-					}
-					yield return awaiter;
-				}
-				_fetchObbPromise.TrySetResult(mainPath2);
-				Debug.LogFormat("Main path: '{0}'", mainPath2);
-			}
-			else
-			{
-				Debug.LogFormat("OBB already exists: '{0}'", mainPath2);
-			}
-		}
-		yield return null;
-		NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.ACCESS_COARSE_LOCATION);
-		StartCoroutine(Fade(1f, 1f));
-		SetCurrentLanguage();
-	}
-
-	private void HandleStoragePermissionDialog(bool permissionGranted)
-	{
-		_storagePermissionGrantedPromise.TrySetResult(permissionGranted);
-		NoodlePermissionGranter.PermissionRequestCallback = null;
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		bool fetchingObb = FetchObbFuture != null && !FetchObbFuture.IsCompleted;
-		Debug.LogFormat("AppsMenu pause: {0}; fetching OBB: {1}", pause, fetchingObb);
-		if (pause || FetchObbFuture == null || (FetchObbFuture.IsCompleted && !FetchObbFuture.IsFaulted && !FetchObbFuture.IsCanceled && !string.IsNullOrEmpty(FetchObbFuture.Result)))
-		{
-			yield break;
-		}
-		if (_fetchObbPromise != null)
-		{
-			_fetchObbPromise.TrySetCanceled();
-		}
-		_fetchObbPromise = new TaskCompletionSource<string>();
-		if (StoragePermissionFuture.IsCompleted)
-		{
-			if (!StoragePermissionFuture.Result)
-			{
-				Application.Quit();
-			}
-			yield break;
-		}
-		if (!_storagePermissionRequested)
-		{
-			_storagePermissionRequested = true;
-			NoodlePermissionGranter.PermissionRequestCallback = HandleStoragePermissionDialog;
-			NoodlePermissionGranter.GrantPermission(NoodlePermissionGranter.NoodleAndroidPermission.WRITE_EXTERNAL_STORAGE);
-		}
-		while (!StoragePermissionFuture.IsCompleted)
-		{
-			yield return null;
-		}
-		if (!StoragePermissionFuture.Result)
-		{
-			Application.Quit();
-		}
-		else
-		{
-			GooglePlayDownloader.FetchOBB();
-		}
 	}
 
 	private static void CheckRenameOldLanguageName()
 	{
+		int num;
 		if (Storager.IsInitialized(Defs.ChangeOldLanguageName))
 		{
 			return;
 		}
 		Storager.SetInitialized(Defs.ChangeOldLanguageName);
-		string @string = PlayerPrefs.GetString(Defs.CurrentLanguage, string.Empty);
-		if (!string.IsNullOrEmpty(@string))
+		string str = PlayerPrefs.GetString(Defs.CurrentLanguage, string.Empty);
+		if (string.IsNullOrEmpty(str))
 		{
-			switch (@string)
+			return;
+		}
+		string str1 = str;
+		if (str1 != null)
+		{
+			if (AppsMenu.u003cu003ef__switchu0024map0 == null)
 			{
-			case "Français":
-				PlayerPrefs.SetString(Defs.CurrentLanguage, "French");
-				PlayerPrefs.Save();
-				break;
-			case "Deutsch":
-				PlayerPrefs.SetString(Defs.CurrentLanguage, "German");
-				PlayerPrefs.Save();
-				break;
-			case "日本人":
-				PlayerPrefs.SetString(Defs.CurrentLanguage, "Japanese");
-				PlayerPrefs.Save();
-				break;
-			case "Español":
-				PlayerPrefs.SetString(Defs.CurrentLanguage, "Spanish");
-				PlayerPrefs.Save();
-				break;
+				Dictionary<string, int> strs = new Dictionary<string, int>(4)
+				{
+					{ "Français", 0 },
+					{ "Deutsch", 1 },
+					{ "日本人", 2 },
+					{ "Español", 3 }
+				};
+				AppsMenu.u003cu003ef__switchu0024map0 = strs;
+			}
+			if (AppsMenu.u003cu003ef__switchu0024map0.TryGetValue(str1, out num))
+			{
+				switch (num)
+				{
+					case 0:
+					{
+						PlayerPrefs.SetString(Defs.CurrentLanguage, "French");
+						PlayerPrefs.Save();
+						break;
+					}
+					case 1:
+					{
+						PlayerPrefs.SetString(Defs.CurrentLanguage, "German");
+						PlayerPrefs.Save();
+						break;
+					}
+					case 2:
+					{
+						PlayerPrefs.SetString(Defs.CurrentLanguage, "Japanese");
+						PlayerPrefs.Save();
+						break;
+					}
+					case 3:
+					{
+						PlayerPrefs.SetString(Defs.CurrentLanguage, "Spanish");
+						PlayerPrefs.Save();
+						break;
+					}
+				}
 			}
 		}
-	}
-
-	internal static void SetCurrentLanguage()
-	{
-		CheckRenameOldLanguageName();
-		string @string = PlayerPrefs.GetString(Defs.CurrentLanguage);
-		if (string.IsNullOrEmpty(@string))
-		{
-			@string = LocalizationStore.CurrentLanguage;
-		}
-		else
-		{
-			LocalizationStore.CurrentLanguage = @string;
-		}
-	}
-
-	private static void HandleNotification(string message, Dictionary<string, object> additionalData, bool isActive)
-	{
-		Debug.LogFormat("GameThrive HandleNotification('{0}', ..., {1})", message, isActive);
-	}
-
-	private void LoadLoading()
-	{
-		GlobalGameController.currentLevel = -1;
-		SceneManager.LoadSceneAsync("Loading");
 	}
 
 	private void DrawQuad(Color aColor, float aAlpha)
 	{
 		aColor.a = aAlpha;
-		if (m_Material != null && m_Material.SetPass(0))
+		if (!(AppsMenu.m_Material != null) || !AppsMenu.m_Material.SetPass(0))
+		{
+			UnityEngine.Debug.LogWarning("Couldnot set pass for material.");
+		}
+		else
 		{
 			GL.PushMatrix();
 			GL.LoadOrtho();
@@ -430,67 +188,124 @@ internal sealed class AppsMenu : MonoBehaviour
 			GL.End();
 			GL.PopMatrix();
 		}
-		else
-		{
-			Debug.LogWarning("Couldnot set pass for material.");
-		}
 	}
 
+	[DebuggerHidden]
 	private IEnumerator Fade(float aFadeOutTime, float aFadeInTime)
 	{
-		Color aColor = Color.black;
-		for (float t2 = 0f; t2 < aFadeOutTime; t2 += Time.deltaTime)
-		{
-			float alpha = Mathf.InverseLerp(0f, aFadeOutTime, t2);
-			DrawQuad(aColor, alpha);
-			yield return null;
-		}
-		if (!TrainingController.TrainingCompleted && TrainingController.CompletedTrainingStage == TrainingController.NewTrainingCompletedStage.None)
-		{
-			currentFon = commicsFon;
-			if (ActivityIndicator.instance != null)
-			{
-				ActivityIndicator.instance.legendLabel.gameObject.SetActive(true);
-				ActivityIndicator.instance.legendLabel.text = LocalizationStore.Get("Key_1925");
-			}
-			else
-			{
-				Debug.LogWarning("ActivityIndicator.instance is null.");
-			}
-			ActivityIndicator.IsActiveIndicator = false;
-		}
-		else
-		{
-			currentFon = androidFon;
-			ActivityIndicator.IsActiveIndicator = true;
-		}
-		ActivityIndicator.SetLoadingFon(currentFon);
-		for (float t = 0f; t < aFadeInTime; t += Time.deltaTime)
-		{
-			float alpha2 = Mathf.InverseLerp(0f, aFadeInTime, t);
-			DrawQuad(aColor, 1f - alpha2);
-			yield return null;
-		}
-		LoadLoading();
+		AppsMenu.u003cFadeu003ec__Iterator7 variable = null;
+		return variable;
 	}
 
-	public static Rect RiliFonRect()
+	private static string GetAbuseKey_21493d18(uint pad)
 	{
-		float num = (float)Screen.height * 1.7766234f;
-		return new Rect((float)Screen.width / 2f - num / 2f, 0f, num, Screen.height);
+		uint num = -442282975 ^ pad;
+		AppsMenu._preventInlining++;
+		return num.ToString("x");
+	}
+
+	private static string GetAbuseKey_53232de5(uint pad)
+	{
+		uint num = -1748411172 ^ pad;
+		AppsMenu._preventInlining++;
+		return num.ToString("x");
+	}
+
+	private static string GetTerminalSceneName_4de1(uint gamma)
+	{
+		return "Closing4de1Scene".Replace(gamma.ToString("x"), string.Empty);
+	}
+
+	private static void HandleNotification(string message, Dictionary<string, object> additionalData, bool isActive)
+	{
+		UnityEngine.Debug.LogFormat("GameThrive HandleNotification('{0}', ..., {1})", new object[] { message, isActive });
+	}
+
+	private void HandleStoragePermissionDialog(bool permissionGranted)
+	{
+		this._storagePermissionGrantedPromise.TrySetResult(permissionGranted);
+		NoodlePermissionGranter.PermissionRequestCallback = null;
+	}
+
+	private void LoadLoading()
+	{
+		GlobalGameController.currentLevel = -1;
+		SceneManager.LoadSceneAsync("Loading");
+	}
+
+	[DebuggerHidden]
+	private IEnumerator LoadLoadingScene()
+	{
+		return new AppsMenu.u003cLoadLoadingSceneu003ec__Iterator8();
+	}
+
+	[DebuggerHidden]
+	private static IEnumerator MeetTheCoroutine(string sceneName, long abuseTicks, long nowTicks)
+	{
+		AppsMenu.u003cMeetTheCoroutineu003ec__Iterator4 variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		AppsMenu.u003cOnApplicationPauseu003ec__Iterator6 variable = null;
+		return variable;
+	}
+
+	private void OnDisable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+			this._backSubscription = null;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this._backSubscription != null)
+		{
+			this._backSubscription.Dispose();
+		}
+		this._backSubscription = BackSystem.Instance.Register(new Action(Application.Quit), "AppsMenu");
 	}
 
 	private void OnGUI()
 	{
-		if (!Launcher.UsingNewLauncher && !Application.isEditor && !GooglePlayDownloader.RunningOnAndroid())
+		if (Launcher.UsingNewLauncher)
 		{
-			GUI.Label(new Rect(10f, 10f, Screen.width - 10, 20f), "Use GooglePlayDownloader only on Android device!");
+			return;
 		}
+		if (Application.isEditor || GooglePlayDownloader.RunningOnAndroid())
+		{
+			return;
+		}
+		GUI.Label(new Rect(10f, 10f, (float)(Screen.width - 10), 20f), "Use GooglePlayDownloader only on Android device!");
 	}
 
-	private IEnumerator LoadLoadingScene()
+	public static Rect RiliFonRect()
 	{
-		yield return new WaitForSeconds(0.5f);
-		Singleton<SceneLoader>.Instance.LoadScene("Loading");
+		float single = (float)Screen.height * 1.7766234f;
+		return new Rect((float)Screen.width / 2f - single / 2f, 0f, single, (float)Screen.height);
+	}
+
+	internal static void SetCurrentLanguage()
+	{
+		AppsMenu.CheckRenameOldLanguageName();
+		string str = PlayerPrefs.GetString(Defs.CurrentLanguage);
+		if (string.IsNullOrEmpty(str))
+		{
+			str = LocalizationStore.CurrentLanguage;
+			return;
+		}
+		LocalizationStore.CurrentLanguage = str;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Start()
+	{
+		AppsMenu.u003cStartu003ec__Iterator5 variable = null;
+		return variable;
 	}
 }

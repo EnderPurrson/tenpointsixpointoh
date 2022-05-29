@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class EveryplayFaceCamSettings : MonoBehaviour
@@ -28,26 +29,30 @@ public class EveryplayFaceCamSettings : MonoBehaviour
 
 	public bool audioOnly;
 
+	public EveryplayFaceCamSettings()
+	{
+	}
+
 	private void Start()
 	{
-		if (Everyplay.GetUserInterfaceIdiom() == 1)
+		if (Everyplay.GetUserInterfaceIdiom() != 1)
 		{
-			Everyplay.FaceCamSetPreviewSideWidth(iPadPreviewSideWidth);
-			Everyplay.FaceCamSetPreviewBorderWidth(iPadPreviewBorderWidth);
-			Everyplay.FaceCamSetPreviewPositionX(iPadPreviewPositionX);
-			Everyplay.FaceCamSetPreviewPositionY(iPadPreviewPositionY);
+			Everyplay.FaceCamSetPreviewSideWidth(this.iPhonePreviewSideWidth);
+			Everyplay.FaceCamSetPreviewBorderWidth(this.iPhonePreviewBorderWidth);
+			Everyplay.FaceCamSetPreviewPositionX(this.iPhonePreviewPositionX);
+			Everyplay.FaceCamSetPreviewPositionY(this.iPhonePreviewPositionY);
 		}
 		else
 		{
-			Everyplay.FaceCamSetPreviewSideWidth(iPhonePreviewSideWidth);
-			Everyplay.FaceCamSetPreviewBorderWidth(iPhonePreviewBorderWidth);
-			Everyplay.FaceCamSetPreviewPositionX(iPhonePreviewPositionX);
-			Everyplay.FaceCamSetPreviewPositionY(iPhonePreviewPositionY);
+			Everyplay.FaceCamSetPreviewSideWidth(this.iPadPreviewSideWidth);
+			Everyplay.FaceCamSetPreviewBorderWidth(this.iPadPreviewBorderWidth);
+			Everyplay.FaceCamSetPreviewPositionX(this.iPadPreviewPositionX);
+			Everyplay.FaceCamSetPreviewPositionY(this.iPadPreviewPositionY);
 		}
-		Everyplay.FaceCamSetPreviewBorderColor(previewBorderColor.r, previewBorderColor.g, previewBorderColor.b, previewBorderColor.a);
-		Everyplay.FaceCamSetPreviewOrigin(previewOrigin);
-		Everyplay.FaceCamSetPreviewScaleRetina(previewScaleRetina);
-		Everyplay.FaceCamSetPreviewVisible(previewVisible);
-		Everyplay.FaceCamSetAudioOnly(audioOnly);
+		Everyplay.FaceCamSetPreviewBorderColor(this.previewBorderColor.r, this.previewBorderColor.g, this.previewBorderColor.b, this.previewBorderColor.a);
+		Everyplay.FaceCamSetPreviewOrigin(this.previewOrigin);
+		Everyplay.FaceCamSetPreviewScaleRetina(this.previewScaleRetina);
+		Everyplay.FaceCamSetPreviewVisible(this.previewVisible);
+		Everyplay.FaceCamSetAudioOnly(this.audioOnly);
 	}
 }

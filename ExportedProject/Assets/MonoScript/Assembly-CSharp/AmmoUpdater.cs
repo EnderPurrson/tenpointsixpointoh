@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 internal sealed class AmmoUpdater : MonoBehaviour
@@ -6,28 +8,32 @@ internal sealed class AmmoUpdater : MonoBehaviour
 
 	public GameObject ammoSprite;
 
+	public AmmoUpdater()
+	{
+	}
+
 	private void Start()
 	{
-		_label = GetComponent<UILabel>();
+		this._label = base.GetComponent<UILabel>();
 	}
 
 	private void Update()
 	{
-		if (WeaponManager.sharedManager != null && WeaponManager.sharedManager.currentWeaponSounds != null && (!((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isMelee || ((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) && _label != null)
+		if (!(WeaponManager.sharedManager != null) || !(WeaponManager.sharedManager.currentWeaponSounds != null) || ((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isMelee && !((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isShotMelee || !(this._label != null))
 		{
-			Weapon weapon = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
-			_label.text = ((!((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isShotMelee) ? string.Format("{0}/{1}", weapon.currentAmmoInClip, weapon.currentAmmoInBackpack) : (weapon.currentAmmoInClip + weapon.currentAmmoInBackpack).ToString());
-			if (ammoSprite != null && !ammoSprite.activeSelf)
+			this._label.text = string.Empty;
+			if (this.ammoSprite != null && this.ammoSprite.activeSelf)
 			{
-				ammoSprite.SetActive(true);
+				this.ammoSprite.SetActive(false);
 			}
 		}
 		else
 		{
-			_label.text = string.Empty;
-			if (ammoSprite != null && ammoSprite.activeSelf)
+			Weapon item = (Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex];
+			this._label.text = (!((Weapon)WeaponManager.sharedManager.playerWeapons[WeaponManager.sharedManager.CurrentWeaponIndex]).weaponPrefab.GetComponent<WeaponSounds>().isShotMelee ? string.Format("{0}/{1}", item.currentAmmoInClip, item.currentAmmoInBackpack) : (item.currentAmmoInClip + item.currentAmmoInBackpack).ToString());
+			if (this.ammoSprite != null && !this.ammoSprite.activeSelf)
 			{
-				ammoSprite.SetActive(false);
+				this.ammoSprite.SetActive(true);
 			}
 		}
 	}

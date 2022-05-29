@@ -1,3 +1,5 @@
+using System;
+
 namespace LitJson
 {
 	internal enum ParserToken

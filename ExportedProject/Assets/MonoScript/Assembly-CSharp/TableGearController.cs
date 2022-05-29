@@ -1,16 +1,9 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TableGearController : MonoBehaviour
 {
-	private enum TypeGear
-	{
-		Turret = 0,
-		Mech = 1,
-		Jetpack = 2,
-		InvisibilityPotion = 3
-	}
-
 	public static TableGearController sharedController;
 
 	public TimePotionUpdate[] potionLables;
@@ -19,86 +12,98 @@ public class TableGearController : MonoBehaviour
 
 	public UILabel activatePotionLabel;
 
-	private string[] keysForLabel = new string[4] { "Key_1813", "Key_1810", "Key_1812", "Key_1811" };
+	private string[] keysForLabel = new string[] { "Key_1813", "Key_1810", "Key_1812", "Key_1811" };
 
-	private string[] keysForLabelDater = new string[4] { "Key_1853", "Key_1851", "Key_1854", "Key_1852" };
+	private string[] keysForLabelDater = new string[] { "Key_1853", "Key_1851", "Key_1854", "Key_1852" };
 
 	private float timerShowLabel = -1f;
 
-	private void Start()
+	static TableGearController()
 	{
-		sharedController = this;
+	}
+
+	public TableGearController()
+	{
 	}
 
 	private void OnDestroy()
 	{
-		sharedController = null;
+		TableGearController.sharedController = null;
 	}
 
-	private void Update()
+	public void ReactivatePotion(string _potion)
 	{
-		if (timerShowLabel > 0f)
-		{
-			timerShowLabel -= Time.deltaTime;
-			if (timerShowLabel < 0f)
-			{
-				activatePotionLabel.gameObject.SetActive(false);
-			}
-		}
-		for (int i = 0; i < potionLables.Length; i++)
-		{
-			if (!PotionsController.sharedController.PotionIsActive(potionLables[i].myPotionName))
-			{
-				if (potionLables[i].gameObject.activeSelf)
-				{
-					potionLables[i].gameObject.SetActive(false);
-					potionLables[i].myLabel.text = string.Empty;
-					table.Reposition();
-				}
-				continue;
-			}
-			if (!potionLables[i].gameObject.activeSelf)
-			{
-				potionLables[i].transform.GetChild(0).GetComponent<TweenScale>().enabled = true;
-				potionLables[i].gameObject.SetActive(true);
-				ReNameLabelObjects();
-				table.Reposition();
-				string myPotionName = potionLables[i].myPotionName;
-				TypeGear typeGear = (TypeGear)(int)Enum.Parse(typeof(TypeGear), myPotionName);
-				int num = (int)typeGear;
-				activatePotionLabel.text = LocalizationStore.Get((!Defs.isDaterRegim) ? keysForLabel[num] : keysForLabelDater[num]);
-				activatePotionLabel.gameObject.SetActive(true);
-				timerShowLabel = 2f;
-			}
-			potionLables[i].timerUpdate -= Time.deltaTime;
-			if (potionLables[i].timerUpdate < 0f)
-			{
-				potionLables[i].timerUpdate = 0.25f;
-				potionLables[i].UpdateTime();
-			}
-		}
+		int num = (int)Enum.Parse(typeof(TableGearController.TypeGear), _potion);
+		this.potionLables[num].transform.GetChild(0).GetComponent<TweenScale>().enabled = true;
+		this.ReNameLabelObjects();
+		this.table.Reposition();
+		this.activatePotionLabel.text = LocalizationStore.Get((!Defs.isDaterRegim ? this.keysForLabel[num] : this.keysForLabelDater[num]));
+		this.activatePotionLabel.gameObject.SetActive(true);
+		this.timerShowLabel = 2f;
 	}
 
 	private void ReNameLabelObjects()
 	{
 		for (int i = 0; i < PotionsController.sharedController.activePotionsList.Count; i++)
 		{
-			string value = PotionsController.sharedController.activePotionsList[i];
-			TypeGear typeGear = (TypeGear)(int)Enum.Parse(typeof(TypeGear), value);
-			int num = (int)typeGear;
-			potionLables[num].name = i.ToString();
+			string item = PotionsController.sharedController.activePotionsList[i];
+			TableGearController.TypeGear typeGear = (TableGearController.TypeGear)((int)Enum.Parse(typeof(TableGearController.TypeGear), item));
+			this.potionLables[(int)typeGear].name = i.ToString();
 		}
 	}
 
-	public void ReactivatePotion(string _potion)
+	private void Start()
 	{
-		TypeGear typeGear = (TypeGear)(int)Enum.Parse(typeof(TypeGear), _potion);
-		int num = (int)typeGear;
-		potionLables[num].transform.GetChild(0).GetComponent<TweenScale>().enabled = true;
-		ReNameLabelObjects();
-		table.Reposition();
-		activatePotionLabel.text = LocalizationStore.Get((!Defs.isDaterRegim) ? keysForLabel[num] : keysForLabelDater[num]);
-		activatePotionLabel.gameObject.SetActive(true);
-		timerShowLabel = 2f;
+		TableGearController.sharedController = this;
+	}
+
+	private void Update()
+	{
+		if (this.timerShowLabel > 0f)
+		{
+			this.timerShowLabel -= Time.deltaTime;
+			if (this.timerShowLabel < 0f)
+			{
+				this.activatePotionLabel.gameObject.SetActive(false);
+			}
+		}
+		for (int i = 0; i < (int)this.potionLables.Length; i++)
+		{
+			if (PotionsController.sharedController.PotionIsActive(this.potionLables[i].myPotionName))
+			{
+				if (!this.potionLables[i].gameObject.activeSelf)
+				{
+					this.potionLables[i].transform.GetChild(0).GetComponent<TweenScale>().enabled = true;
+					this.potionLables[i].gameObject.SetActive(true);
+					this.ReNameLabelObjects();
+					this.table.Reposition();
+					string str = this.potionLables[i].myPotionName;
+					int num = (int)Enum.Parse(typeof(TableGearController.TypeGear), str);
+					this.activatePotionLabel.text = LocalizationStore.Get((!Defs.isDaterRegim ? this.keysForLabel[num] : this.keysForLabelDater[num]));
+					this.activatePotionLabel.gameObject.SetActive(true);
+					this.timerShowLabel = 2f;
+				}
+				this.potionLables[i].timerUpdate -= Time.deltaTime;
+				if (this.potionLables[i].timerUpdate < 0f)
+				{
+					this.potionLables[i].timerUpdate = 0.25f;
+					this.potionLables[i].UpdateTime();
+				}
+			}
+			else if (this.potionLables[i].gameObject.activeSelf)
+			{
+				this.potionLables[i].gameObject.SetActive(false);
+				this.potionLables[i].myLabel.text = string.Empty;
+				this.table.Reposition();
+			}
+		}
+	}
+
+	private enum TypeGear
+	{
+		Turret,
+		Mech,
+		Jetpack,
+		InvisibilityPotion
 	}
 }

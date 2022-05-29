@@ -1,28 +1,14 @@
+using Rilisoft.MiniJson;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public class UploadShopItemDataToServer : MonoBehaviour
 {
-	private enum PlatformType
-	{
-		IOS = 0,
-		Test = 1,
-		Android = 2,
-		Amazon = 3,
-		WindowsPhone = 4
-	}
-
-	public enum TypeWindow
-	{
-		UploadFileToServer = 0,
-		ChangePlatform = 1
-	}
-
 	public UIToggle defaultToggle;
 
 	public UIToggle defaultFilterToggle;
@@ -37,142 +23,90 @@ public class UploadShopItemDataToServer : MonoBehaviour
 
 	public UIWidget checkAllContainer;
 
-	private PlatformType _typePlatform;
+	private UploadShopItemDataToServer.PlatformType _typePlatform;
 
-	private TypeWindow _typeWindow;
+	private UploadShopItemDataToServer.TypeWindow _typeWindow;
 
-	private string GenerateJsonStringWithData()
+	public UploadShopItemDataToServer()
 	{
-		Dictionary<string, object> dictionary = new Dictionary<string, object>();
-		List<List<object>> value = new List<List<object>>();
-		List<string> list = new List<string>();
-		list.Add(WeaponTags.DragonGun_Tag);
-		list.Add(WeaponTags.FreezeGun_0_Tag);
-		list.Add(WeaponTags.FreezeGunTag);
-		list.Add(WeaponTags.AK74Tag);
-		List<string> value2 = list;
-		list = new List<string>();
-		list.Add(WeaponTags.RailgunTag);
-		list.Add(WeaponTags.MinigunTag);
-		list.Add(WeaponTags.GlockTag);
-		List<string> value3 = list;
-		List<string> list2 = new List<string>();
-		List<string> list3 = new List<string>();
-		List<List<object>> list4 = new List<List<object>>();
-		for (int i = 0; i < itemsData.Count; i++)
-		{
-			if (itemsData[i].isNew)
-			{
-				list2.Add(itemsData[i].tag);
-			}
-			if (itemsData[i].isTop)
-			{
-				list3.Add(itemsData[i].tag);
-			}
-			if (itemsData[i].discount > 0)
-			{
-				List<object> list5 = new List<object>();
-				list5.Add(itemsData[i].tag);
-				list5.Add(itemsData[i].discount);
-				list4.Add(list5);
-			}
-		}
-		dictionary.Add("discounts", value);
-		dictionary.Add("news", value2);
-		dictionary.Add("news_up", list2);
-		dictionary.Add("topSellers", value3);
-		dictionary.Add("topSellers_up", list3);
-		dictionary.Add("discounts_up", list4);
-		return Json.Serialize(dictionary);
 	}
 
-	public void Show(TypeWindow type)
+	public void ApplyButtonClick()
 	{
-		base.gameObject.GetComponent<UIPanel>().alpha = 1f;
-		_typePlatform = PlatformType.Test;
-		defaultToggle.value = true;
-		_typeWindow = type;
-		if (_typeWindow == TypeWindow.UploadFileToServer)
+		UploadShopItemDataToServer.TypeWindow typeWindow = this._typeWindow;
+		if (typeWindow == UploadShopItemDataToServer.TypeWindow.UploadFileToServer)
 		{
-			buttonApplyLabel.text = "Upload to server";
+			this.UploadFileToServer();
 		}
-		else if (_typeWindow == TypeWindow.ChangePlatform)
+		else if (typeWindow == UploadShopItemDataToServer.TypeWindow.ChangePlatform)
 		{
-			buttonApplyLabel.text = "Download from server";
+			this.generateButton.gameObject.SetActive(true);
+			this.filtersContainer.gameObject.SetActive(true);
+			this.checkAllContainer.gameObject.SetActive(true);
+			this.defaultFilterToggle.@value = true;
 		}
-	}
-
-	public void Hide()
-	{
-		base.gameObject.GetComponent<UIPanel>().alpha = 0f;
+		this.Hide();
 	}
 
 	public void ChangeCurrentPlatform(UIToggle toggle)
 	{
-		if (!(toggle == null) && toggle.value)
+		int num;
+		if (toggle == null || !toggle.@value)
 		{
-			switch (toggle.name)
+			return;
+		}
+		string str = toggle.name;
+		if (str != null)
+		{
+			if (UploadShopItemDataToServer.u003cu003ef__switchu0024mapA == null)
 			{
-			case "IOSCheckbox":
-				_typePlatform = PlatformType.IOS;
-				break;
-			case "TestCheckbox":
-				_typePlatform = PlatformType.Test;
-				break;
-			case "AndroidCheckbox":
-				_typePlatform = PlatformType.Android;
-				break;
-			case "AmazonCheckbox":
-				_typePlatform = PlatformType.Amazon;
-				break;
-			case "WindowsPhoneCheckbox":
-				_typePlatform = PlatformType.WindowsPhone;
-				break;
+				Dictionary<string, int> strs = new Dictionary<string, int>(5)
+				{
+					{ "IOSCheckbox", 0 },
+					{ "TestCheckbox", 1 },
+					{ "AndroidCheckbox", 2 },
+					{ "AmazonCheckbox", 3 },
+					{ "WindowsPhoneCheckbox", 4 }
+				};
+				UploadShopItemDataToServer.u003cu003ef__switchu0024mapA = strs;
 			}
-		}
-	}
-
-	private string GetFileNameForPlatform(PlatformType type)
-	{
-		switch (_typePlatform)
-		{
-		case PlatformType.Amazon:
-			return "promo_actions_amazon.php";
-		case PlatformType.Android:
-			return "promo_actions_android.php";
-		case PlatformType.IOS:
-			return "promo_actions.php";
-		case PlatformType.Test:
-			return "promo_actions_test1.php";
-		case PlatformType.WindowsPhone:
-			return "promo_actions_wp8.php";
-		default:
-			return "promo_actions_test1.php";
-		}
-	}
-
-	public string GetPromoActionUrl()
-	{
-		switch (_typePlatform)
-		{
-		case PlatformType.Amazon:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_amazon.json";
-		case PlatformType.Android:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_android.json";
-		case PlatformType.IOS:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions.json";
-		case PlatformType.Test:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_test.json";
-		case PlatformType.WindowsPhone:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_wp8.json";
-		default:
-			return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions.json";
+			if (UploadShopItemDataToServer.u003cu003ef__switchu0024mapA.TryGetValue(str, out num))
+			{
+				switch (num)
+				{
+					case 0:
+					{
+						this._typePlatform = UploadShopItemDataToServer.PlatformType.IOS;
+						break;
+					}
+					case 1:
+					{
+						this._typePlatform = UploadShopItemDataToServer.PlatformType.Test;
+						break;
+					}
+					case 2:
+					{
+						this._typePlatform = UploadShopItemDataToServer.PlatformType.Android;
+						break;
+					}
+					case 3:
+					{
+						this._typePlatform = UploadShopItemDataToServer.PlatformType.Amazon;
+						break;
+					}
+					case 4:
+					{
+						this._typePlatform = UploadShopItemDataToServer.PlatformType.WindowsPhone;
+						break;
+					}
+				}
+			}
 		}
 	}
 
 	private string CreatePhpFileByString(string text)
 	{
-		string fileNameForPlatform = GetFileNameForPlatform(_typePlatform);
+		string fileNameForPlatform = this.GetFileNameForPlatform(this._typePlatform);
 		try
 		{
 			if (File.Exists(fileNameForPlatform))
@@ -181,72 +115,194 @@ public class UploadShopItemDataToServer : MonoBehaviour
 			}
 			using (FileStream fileStream = File.Create(fileNameForPlatform))
 			{
-				byte[] bytes = new UTF8Encoding(true).GetBytes(text);
-				fileStream.Write(bytes, 0, bytes.Length);
-				return fileNameForPlatform;
+				byte[] bytes = (new UTF8Encoding(true)).GetBytes(text);
+				fileStream.Write(bytes, 0, (int)bytes.Length);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			Debug.LogError(ex.ToString());
-			return fileNameForPlatform;
+			Debug.LogError(exception.ToString());
 		}
+		return fileNameForPlatform;
 	}
 
-	private void UploadPhpFileToServer(string fileName)
+	private string GenerateJsonStringWithData()
 	{
-		try
+		Dictionary<string, object> strs = new Dictionary<string, object>();
+		List<List<object>> lists = new List<List<object>>();
+		List<string> strs1 = new List<string>()
 		{
-			FtpWebRequest ftpWebRequest = (FtpWebRequest)WebRequest.Create("ftp://secure.pixelgunserver.com//test.htm");
-			ftpWebRequest.Method = "STOR";
-			ftpWebRequest.UsePassive = false;
-			ftpWebRequest.Credentials = new NetworkCredential("rilisoft", "11QQwwee");
-			FtpWebResponse ftpWebResponse = (FtpWebResponse)ftpWebRequest.GetResponse();
-			Debug.Log(string.Format("Upload File Complete, status {0}", ftpWebResponse.StatusDescription));
-			ftpWebResponse.Close();
-		}
-		catch (WebException ex)
+			WeaponTags.DragonGun_Tag,
+			WeaponTags.FreezeGun_0_Tag,
+			WeaponTags.FreezeGunTag,
+			WeaponTags.AK74Tag
+		};
+		List<string> strs2 = strs1;
+		strs1 = new List<string>()
 		{
-			string statusDescription = ((FtpWebResponse)ex.Response).StatusDescription;
-			Debug.Log(statusDescription);
+			WeaponTags.RailgunTag,
+			WeaponTags.MinigunTag,
+			WeaponTags.GlockTag
+		};
+		List<string> strs3 = strs1;
+		List<string> strs4 = new List<string>();
+		List<string> strs5 = new List<string>();
+		List<List<object>> lists1 = new List<List<object>>();
+		for (int i = 0; i < this.itemsData.Count; i++)
+		{
+			if (this.itemsData[i].isNew)
+			{
+				strs4.Add(this.itemsData[i].tag);
+			}
+			if (this.itemsData[i].isTop)
+			{
+				strs5.Add(this.itemsData[i].tag);
+			}
+			if (this.itemsData[i].discount > 0)
+			{
+				List<object> objs = new List<object>()
+				{
+					this.itemsData[i].tag,
+					this.itemsData[i].discount
+				};
+				lists1.Add(objs);
+			}
 		}
+		strs.Add("discounts", lists);
+		strs.Add("news", strs2);
+		strs.Add("news_up", strs4);
+		strs.Add("topSellers", strs3);
+		strs.Add("topSellers_up", strs5);
+		strs.Add("discounts_up", lists1);
+		return Json.Serialize(strs);
 	}
 
 	public string GenerateTextForUploadFile()
 	{
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.AppendLine("<?php");
-		string text = GenerateJsonStringWithData();
-		text = text.Replace("\"", "\\\"");
-		text += "\\r\\n";
-		stringBuilder.AppendFormat("$val = \"{0}\";\n", text);
+		string str = this.GenerateJsonStringWithData().Replace("\"", "\\\"");
+		str = string.Concat(str, "\\r\\n");
+		stringBuilder.AppendFormat("$val = \"{0}\";\n", str);
 		stringBuilder.AppendLine("echo $val;");
 		stringBuilder.AppendLine("?>");
 		return stringBuilder.ToString();
 	}
 
-	private void UploadFileToServer()
+	private string GetFileNameForPlatform(UploadShopItemDataToServer.PlatformType type)
 	{
-		string text = GenerateTextForUploadFile();
-		string text2 = CreatePhpFileByString(text);
-		UploadPhpFileToServer(text2);
-		Debug.Log(text2);
+		switch (this._typePlatform)
+		{
+			case UploadShopItemDataToServer.PlatformType.IOS:
+			{
+				return "promo_actions.php";
+			}
+			case UploadShopItemDataToServer.PlatformType.Test:
+			{
+				return "promo_actions_test1.php";
+			}
+			case UploadShopItemDataToServer.PlatformType.Android:
+			{
+				return "promo_actions_android.php";
+			}
+			case UploadShopItemDataToServer.PlatformType.Amazon:
+			{
+				return "promo_actions_amazon.php";
+			}
+			case UploadShopItemDataToServer.PlatformType.WindowsPhone:
+			{
+				return "promo_actions_wp8.php";
+			}
+		}
+		return "promo_actions_test1.php";
 	}
 
-	public void ApplyButtonClick()
+	public string GetPromoActionUrl()
 	{
-		switch (_typeWindow)
+		switch (this._typePlatform)
 		{
-		case TypeWindow.UploadFileToServer:
-			UploadFileToServer();
-			break;
-		case TypeWindow.ChangePlatform:
-			generateButton.gameObject.SetActive(true);
-			filtersContainer.gameObject.SetActive(true);
-			checkAllContainer.gameObject.SetActive(true);
-			defaultFilterToggle.value = true;
-			break;
+			case UploadShopItemDataToServer.PlatformType.IOS:
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions.json";
+			}
+			case UploadShopItemDataToServer.PlatformType.Test:
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_test.json";
+			}
+			case UploadShopItemDataToServer.PlatformType.Android:
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_android.json";
+			}
+			case UploadShopItemDataToServer.PlatformType.Amazon:
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_amazon.json";
+			}
+			case UploadShopItemDataToServer.PlatformType.WindowsPhone:
+			{
+				return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions_wp8.json";
+			}
 		}
-		Hide();
+		return "https://secure.pixelgunserver.com/pixelgun3d-config/PromoActions/promo_actions.json";
+	}
+
+	public void Hide()
+	{
+		base.gameObject.GetComponent<UIPanel>().alpha = 0f;
+	}
+
+	public void Show(UploadShopItemDataToServer.TypeWindow type)
+	{
+		base.gameObject.GetComponent<UIPanel>().alpha = 1f;
+		this._typePlatform = UploadShopItemDataToServer.PlatformType.Test;
+		this.defaultToggle.@value = true;
+		this._typeWindow = type;
+		if (this._typeWindow == UploadShopItemDataToServer.TypeWindow.UploadFileToServer)
+		{
+			this.buttonApplyLabel.text = "Upload to server";
+		}
+		else if (this._typeWindow == UploadShopItemDataToServer.TypeWindow.ChangePlatform)
+		{
+			this.buttonApplyLabel.text = "Download from server";
+		}
+	}
+
+	private void UploadFileToServer()
+	{
+		string str = this.CreatePhpFileByString(this.GenerateTextForUploadFile());
+		this.UploadPhpFileToServer(str);
+		Debug.Log(str);
+	}
+
+	private void UploadPhpFileToServer(string fileName)
+	{
+		try
+		{
+			FtpWebRequest networkCredential = (FtpWebRequest)WebRequest.Create("ftp://secure.pixelgunserver.com//test.htm");
+			networkCredential.Method = "STOR";
+			networkCredential.UsePassive = false;
+			networkCredential.Credentials = new NetworkCredential("rilisoft", "11QQwwee");
+			FtpWebResponse response = (FtpWebResponse)networkCredential.GetResponse();
+			Debug.Log(string.Format("Upload File Complete, status {0}", response.StatusDescription));
+			response.Close();
+		}
+		catch (WebException webException)
+		{
+			Debug.Log(((FtpWebResponse)webException.Response).StatusDescription);
+		}
+	}
+
+	private enum PlatformType
+	{
+		IOS,
+		Test,
+		Android,
+		Amazon,
+		WindowsPhone
+	}
+
+	public enum TypeWindow
+	{
+		UploadFileToServer,
+		ChangePlatform
 	}
 }

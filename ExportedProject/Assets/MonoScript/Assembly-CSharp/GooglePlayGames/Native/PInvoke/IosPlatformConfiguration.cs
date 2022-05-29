@@ -1,21 +1,14 @@
-using System;
-using System.Runtime.InteropServices;
 using GooglePlayGames.Native.Cwrapper;
 using GooglePlayGames.OurUtils;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal sealed class IosPlatformConfiguration : PlatformConfiguration
 	{
-		private IosPlatformConfiguration(IntPtr selfPointer)
-			: base(selfPointer)
+		private IosPlatformConfiguration(IntPtr selfPointer) : base(selfPointer)
 		{
-		}
-
-		internal void SetClientId(string clientId)
-		{
-			Misc.CheckNotNull(clientId);
-			GooglePlayGames.Native.Cwrapper.IosPlatformConfiguration.IosPlatformConfiguration_SetClientID(SelfPtr(), clientId);
 		}
 
 		protected override void CallDispose(HandleRef selfPointer)
@@ -23,9 +16,15 @@ namespace GooglePlayGames.Native.PInvoke
 			GooglePlayGames.Native.Cwrapper.IosPlatformConfiguration.IosPlatformConfiguration_Dispose(selfPointer);
 		}
 
-		internal static IosPlatformConfiguration Create()
+		internal static GooglePlayGames.Native.PInvoke.IosPlatformConfiguration Create()
 		{
-			return new IosPlatformConfiguration(GooglePlayGames.Native.Cwrapper.IosPlatformConfiguration.IosPlatformConfiguration_Construct());
+			return new GooglePlayGames.Native.PInvoke.IosPlatformConfiguration(GooglePlayGames.Native.Cwrapper.IosPlatformConfiguration.IosPlatformConfiguration_Construct());
+		}
+
+		internal void SetClientId(string clientId)
+		{
+			Misc.CheckNotNull<string>(clientId);
+			GooglePlayGames.Native.Cwrapper.IosPlatformConfiguration.IosPlatformConfiguration_SetClientID(base.SelfPtr(), clientId);
 		}
 	}
 }

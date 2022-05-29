@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,7 +11,7 @@ namespace Rilisoft
 		protected UIPanel _panel;
 
 		[SerializeField]
-		public Direction Direction = Direction.Horizontal;
+		public Rilisoft.Direction Direction = Rilisoft.Direction.Horizontal;
 
 		[SerializeField]
 		public float Slack = 0.1f;
@@ -31,60 +32,68 @@ namespace Rilisoft
 		{
 			get
 			{
-				Vector3[] worldCorners = _panel.worldCorners;
-				return (worldCorners[2] + worldCorners[0]) * 0.5f;
+				Vector3[] vector3Array = this._panel.worldCorners;
+				return (vector3Array[2] + vector3Array[0]) * 0.5f;
 			}
 		}
 
-		public CenterDirection CenterDirection
+		public Rilisoft.CenterDirection CenterDirection
 		{
 			get
 			{
-				return (!(Center.x - base.transform.position.x > 0f)) ? CenterDirection.OnRight : CenterDirection.OnLeft;
+				return (this.Center.x - base.transform.position.x <= 0f ? Rilisoft.CenterDirection.OnRight : Rilisoft.CenterDirection.OnLeft);
 			}
+		}
+
+		public UICenterOnPanelComponent()
+		{
 		}
 
 		private void Awake()
 		{
-			_panel = NGUITools.FindInParents<UIPanel>(base.gameObject);
-			OnCentered = OnCentered ?? new UnityEvent();
-			OnCenteredLoss = OnCenteredLoss ?? new UnityEvent();
+			this._panel = NGUITools.FindInParents<UIPanel>(base.gameObject);
+			this.OnCentered = this.OnCentered ?? new UnityEvent();
+			this.OnCenteredLoss = this.OnCenteredLoss ?? new UnityEvent();
 		}
 
 		private void OnEnable()
 		{
-			_centered = false;
+			this._centered = false;
 		}
 
 		protected virtual void Update()
 		{
-			if (_panel == null)
+			if (this._panel == null)
 			{
-				_panel = NGUITools.FindInParents<UIPanel>(base.gameObject);
+				this._panel = NGUITools.FindInParents<UIPanel>(base.gameObject);
 			}
-			if (_panel == null)
+			if (this._panel == null)
 			{
 				return;
 			}
-			Offset = new Vector2(Mathf.Abs(Center.x - base.transform.position.x), Mathf.Abs(Center.y - base.transform.position.y));
-			float num = ((Direction != Direction.Horizontal) ? Offset.y : Offset.x);
-			if (num <= Slack)
+			float center = this.Center.x;
+			Vector3 vector3 = base.transform.position;
+			float single = Mathf.Abs(center - vector3.x);
+			float center1 = this.Center.y;
+			Vector3 vector31 = base.transform.position;
+			this.Offset = new Vector2(single, Mathf.Abs(center1 - vector31.y));
+			if ((this.Direction != Rilisoft.Direction.Horizontal ? this.Offset.y : this.Offset.x) <= this.Slack)
 			{
-				if (!_centered)
+				if (!this._centered)
 				{
-					_centered = true;
-					if (OnCentered != null)
+					this._centered = true;
+					if (this.OnCentered != null)
 					{
-						OnCentered.Invoke();
+						this.OnCentered.Invoke();
 					}
 				}
 			}
-			else if (_centered)
+			else if (this._centered)
 			{
-				_centered = false;
-				if (OnCenteredLoss != null)
+				this._centered = false;
+				if (this.OnCenteredLoss != null)
 				{
-					OnCenteredLoss.Invoke();
+					this.OnCenteredLoss.Invoke();
 				}
 			}
 		}

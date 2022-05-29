@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class BulletForBot : MonoBehaviour
 {
-	public delegate void OnBulletDamageDelegate(GameObject targetDamage, Vector3 positionDamage);
-
 	[NonSerialized]
 	public float lifeTime;
 
@@ -23,138 +24,101 @@ internal sealed class BulletForBot : MonoBehaviour
 
 	private bool _isMoveByPhysics;
 
-	public bool needDestroyByStop { get; set; }
+	private BulletForBot.OnBulletDamageDelegate OnBulletDamage;
 
-	public bool IsUse { get; private set; }
-
-	public event OnBulletDamageDelegate OnBulletDamage;
-
-	public void StartBullet(Vector3 startPos, Vector3 endPos, float bulletSpeed, bool isFriendlyFire, bool doDamage)
+	public bool IsUse
 	{
-		_isMoveByPhysics = false;
-		_startPos = startPos;
-		_endPos = endPos;
-		_isFrienlyFire = isFriendlyFire;
-		_bulletSpeed = bulletSpeed;
-		base.transform.position = _startPos;
-		IsUse = true;
-		base.transform.gameObject.SetActive(true);
-		_startBulletTime = Time.realtimeSinceStartup;
-		base.transform.rotation = Quaternion.LookRotation(endPos - startPos);
-		this.doDamage = doDamage;
+		get;
+		private set;
 	}
 
-	private void StopBullet()
+	public bool needDestroyByStop
 	{
-		if (needDestroyByStop)
-		{
-			UnityEngine.Object.Destroy(base.gameObject);
-			return;
-		}
-		if (_isMoveByPhysics)
-		{
-			SetVisible(false);
-		}
-		else
-		{
-			base.transform.gameObject.SetActive(false);
-		}
-		base.transform.position = Vector3.zero;
-		base.transform.rotation = Quaternion.identity;
-		IsUse = false;
-		if (_isMoveByPhysics)
-		{
-			EnablePhysicsGravityControll(false);
-		}
+		get;
+		set;
 	}
 
-	private void OnTriggerEnter(Collider collisionObj)
+	public BulletForBot()
 	{
-		CollisionEvent(collisionObj.gameObject);
 	}
 
-	private void OnCollisionEnter(Collision collisionObj)
+	[DebuggerHidden]
+	private IEnumerator ApplyForce(Vector3 force)
 	{
-		CollisionEvent(collisionObj.gameObject);
-	}
-
-	private void CollisionEvent(GameObject collisionObj)
-	{
-		if (!IsUse)
-		{
-			return;
-		}
-		Transform root = collisionObj.transform.root;
-		if (!(base.transform.root == root.transform.root) && (_isFrienlyFire || !root.tag.Equals("Enemy")))
-		{
-			if (root.tag.Equals("Player") || root.tag.Equals("Turret"))
-			{
-				CheckRunDamageEvent(root.gameObject);
-			}
-			else if (_isFrienlyFire && root.tag.Equals("Enemy"))
-			{
-				CheckRunDamageEvent(root.gameObject);
-			}
-			else
-			{
-				CheckRunDamageEvent(null);
-			}
-		}
-	}
-
-	private void CheckRunDamageEvent(GameObject target)
-	{
-		if (this.OnBulletDamage != null)
-		{
-			if (doDamage)
-			{
-				this.OnBulletDamage(target, base.transform.position);
-			}
-			StopBullet();
-		}
-	}
-
-	private void Update()
-	{
-		if (IsUse)
-		{
-			if (!_isMoveByPhysics)
-			{
-				Vector3 vector = _endPos - _startPos;
-				base.transform.position += vector.normalized * _bulletSpeed * Time.deltaTime;
-			}
-			if (Time.realtimeSinceStartup - _startBulletTime >= lifeTime)
-			{
-				StopBullet();
-			}
-		}
-	}
-
-	private void EnablePhysicsGravityControll(bool enable)
-	{
-		GetComponent<Rigidbody>().useGravity = enable;
-		GetComponent<Rigidbody>().isKinematic = !enable;
+		BulletForBot.u003cApplyForceu003ec__Iterator11A variable = null;
+		return variable;
 	}
 
 	public void ApplyForceFroBullet(Vector3 startPos, Vector3 endPos, bool isFriendlyFire, float forceValue, Vector3 forceVector, bool doDamage)
 	{
-		_isMoveByPhysics = true;
-		_isFrienlyFire = isFriendlyFire;
-		_startBulletTime = Time.realtimeSinceStartup;
+		this._isMoveByPhysics = true;
+		this._isFrienlyFire = isFriendlyFire;
+		this._startBulletTime = Time.realtimeSinceStartup;
 		base.transform.position = startPos;
 		base.transform.rotation = Quaternion.LookRotation(endPos - startPos);
-		GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
-		SetVisible(true);
-		EnablePhysicsGravityControll(true);
-		IsUse = true;
+		base.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeRotation;
+		this.SetVisible(true);
+		this.EnablePhysicsGravityControll(true);
+		this.IsUse = true;
 		this.doDamage = doDamage;
-		StartCoroutine(ApplyForce(forceVector * forceValue));
+		base.StartCoroutine(this.ApplyForce(forceVector * forceValue));
 	}
 
-	private IEnumerator ApplyForce(Vector3 force)
+	private void CheckRunDamageEvent(GameObject target)
 	{
-		yield return new WaitForEndOfFrame();
-		GetComponent<Rigidbody>().AddForce(force, ForceMode.Impulse);
+		if (this.OnBulletDamage == null)
+		{
+			return;
+		}
+		if (this.doDamage)
+		{
+			this.OnBulletDamage(target, base.transform.position);
+		}
+		this.StopBullet();
+	}
+
+	private void CollisionEvent(GameObject collisionObj)
+	{
+		if (!this.IsUse)
+		{
+			return;
+		}
+		Transform transforms = collisionObj.transform.root;
+		if (base.transform.root == transforms.transform.root)
+		{
+			return;
+		}
+		if (!this._isFrienlyFire && transforms.tag.Equals("Enemy"))
+		{
+			return;
+		}
+		if (transforms.tag.Equals("Player") || transforms.tag.Equals("Turret"))
+		{
+			this.CheckRunDamageEvent(transforms.gameObject);
+			return;
+		}
+		if (!this._isFrienlyFire || !transforms.tag.Equals("Enemy"))
+		{
+			this.CheckRunDamageEvent(null);
+			return;
+		}
+		this.CheckRunDamageEvent(transforms.gameObject);
+	}
+
+	private void EnablePhysicsGravityControll(bool enable)
+	{
+		base.GetComponent<Rigidbody>().useGravity = enable;
+		base.GetComponent<Rigidbody>().isKinematic = !enable;
+	}
+
+	private void OnCollisionEnter(Collision collisionObj)
+	{
+		this.CollisionEvent(collisionObj.gameObject);
+	}
+
+	private void OnTriggerEnter(Collider collisionObj)
+	{
+		this.CollisionEvent(collisionObj.gameObject);
 	}
 
 	private void SetVisible(bool enable)
@@ -163,17 +127,90 @@ internal sealed class BulletForBot : MonoBehaviour
 		{
 			base.gameObject.SetActive(true);
 		}
-		if (GetComponent<Renderer>() != null)
+		if (base.GetComponent<Renderer>() != null)
 		{
-			GetComponent<Renderer>().enabled = enable;
+			base.GetComponent<Renderer>().enabled = enable;
 		}
-		if (GetComponent<ParticleSystem>() != null)
+		if (base.GetComponent<ParticleSystem>() != null)
 		{
-			GetComponent<ParticleSystem>().enableEmission = enable;
+			base.GetComponent<ParticleSystem>().enableEmission = enable;
 		}
-		if (GetComponent<Collider>() != null)
+		if (base.GetComponent<Collider>() != null)
 		{
-			GetComponent<Collider>().enabled = enable;
+			base.GetComponent<Collider>().enabled = enable;
 		}
 	}
+
+	public void StartBullet(Vector3 startPos, Vector3 endPos, float bulletSpeed, bool isFriendlyFire, bool doDamage)
+	{
+		this._isMoveByPhysics = false;
+		this._startPos = startPos;
+		this._endPos = endPos;
+		this._isFrienlyFire = isFriendlyFire;
+		this._bulletSpeed = bulletSpeed;
+		base.transform.position = this._startPos;
+		this.IsUse = true;
+		base.transform.gameObject.SetActive(true);
+		this._startBulletTime = Time.realtimeSinceStartup;
+		base.transform.rotation = Quaternion.LookRotation(endPos - startPos);
+		this.doDamage = doDamage;
+	}
+
+	private void StopBullet()
+	{
+		if (this.needDestroyByStop)
+		{
+			UnityEngine.Object.Destroy(base.gameObject);
+			return;
+		}
+		if (!this._isMoveByPhysics)
+		{
+			base.transform.gameObject.SetActive(false);
+		}
+		else
+		{
+			this.SetVisible(false);
+		}
+		base.transform.position = Vector3.zero;
+		base.transform.rotation = Quaternion.identity;
+		this.IsUse = false;
+		if (this._isMoveByPhysics)
+		{
+			this.EnablePhysicsGravityControll(false);
+		}
+	}
+
+	private void Update()
+	{
+		if (!this.IsUse)
+		{
+			return;
+		}
+		if (!this._isMoveByPhysics)
+		{
+			Vector3 vector3 = this._endPos - this._startPos;
+			Transform transforms = base.transform;
+			transforms.position = transforms.position + ((vector3.normalized * this._bulletSpeed) * Time.deltaTime);
+		}
+		if (Time.realtimeSinceStartup - this._startBulletTime >= this.lifeTime)
+		{
+			this.StopBullet();
+		}
+	}
+
+	public event BulletForBot.OnBulletDamageDelegate OnBulletDamage
+	{
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		add
+		{
+			this.OnBulletDamage += value;
+		}
+		[MethodImpl(MethodImplOptions.Synchronized)]
+		remove
+		{
+			this.OnBulletDamage -= value;
+		}
+	}
+
+	public delegate void OnBulletDamageDelegate(GameObject targetDamage, Vector3 positionDamage);
 }

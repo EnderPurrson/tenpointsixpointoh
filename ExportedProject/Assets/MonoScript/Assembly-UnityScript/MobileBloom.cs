@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 
-[Serializable]
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("Image Effects/Mobile Bloom V2")]
 [ExecuteInEditMode]
+[RequireComponent(typeof(Camera))]
+[Serializable]
 public class MobileBloom : MonoBehaviour
 {
 	public float intensity;
@@ -25,113 +25,117 @@ public class MobileBloom : MonoBehaviour
 
 	public MobileBloom()
 	{
-		intensity = 0.7f;
-		threshhold = 0.75f;
-		blurWidth = 1f;
-	}
-
-	public override bool Supported()
-	{
-		int result;
-		if (supported)
-		{
-			result = 1;
-		}
-		else
-		{
-			bool num = SystemInfo.supportsImageEffects;
-			if (num)
-			{
-				num = SystemInfo.supportsRenderTextures;
-			}
-			if (num)
-			{
-				num = bloomMaterial.shader.isSupported;
-			}
-			supported = num;
-			result = (supported ? 1 : 0);
-		}
-		return (byte)result != 0;
+		this.intensity = 0.7f;
+		this.threshhold = 0.75f;
+		this.blurWidth = 1f;
 	}
 
 	public override void CreateBuffers()
 	{
-		if (!tempRtA)
+		if (!this.tempRtA)
 		{
-			tempRtA = new RenderTexture(Screen.width / 4, Screen.height / 4, 0);
-			tempRtA.hideFlags = HideFlags.DontSave;
+			this.tempRtA = new RenderTexture(Screen.width / 4, Screen.height / 4, 0)
+			{
+				hideFlags = HideFlags.DontSave
+			};
 		}
-		if (!tempRtB)
+		if (!this.tempRtB)
 		{
-			tempRtB = new RenderTexture(Screen.width / 4, Screen.height / 4, 0);
-			tempRtB.hideFlags = HideFlags.DontSave;
-		}
-	}
-
-	public override void OnDisable()
-	{
-		if ((bool)tempRtA)
-		{
-			UnityEngine.Object.DestroyImmediate(tempRtA);
-			tempRtA = null;
-		}
-		if ((bool)tempRtB)
-		{
-			UnityEngine.Object.DestroyImmediate(tempRtB);
-			tempRtB = null;
+			this.tempRtB = new RenderTexture(Screen.width / 4, Screen.height / 4, 0)
+			{
+				hideFlags = HideFlags.DontSave
+			};
 		}
 	}
 
 	public override bool EarlyOutIfNotSupported(RenderTexture source, RenderTexture destination)
 	{
-		int result;
-		if (!Supported())
+		bool flag;
+		if (this.Supported())
 		{
-			enabled = false;
-			Graphics.Blit(source, destination);
-			result = 1;
+			flag = false;
 		}
 		else
 		{
-			result = 0;
+			this.enabled = false;
+			Graphics.Blit(source, destination);
+			flag = true;
 		}
-		return (byte)result != 0;
-	}
-
-	public override void OnRenderImage(RenderTexture source, RenderTexture destination)
-	{
-		CreateBuffers();
-		if (!EarlyOutIfNotSupported(source, destination))
-		{
-			bloomMaterial.SetVector("_Parameter", new Vector4(0f, 0f, threshhold, intensity / (1f - threshhold)));
-			float num = 1f / ((float)source.width * 1f);
-			float num2 = 1f / ((float)source.height * 1f);
-			bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * num, 1.5f * num2, -1.5f * num, 1.5f * num2));
-			bloomMaterial.SetVector("_OffsetsB", new Vector4(-1.5f * num, -1.5f * num2, 1.5f * num, -1.5f * num2));
-			Graphics.Blit(source, tempRtB, bloomMaterial, 1);
-			num *= 4f * blurWidth;
-			num2 *= 4f * blurWidth;
-			bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * num, 0f, -1.5f * num, 0f));
-			bloomMaterial.SetVector("_OffsetsB", new Vector4(0.5f * num, 0f, -0.5f * num, 0f));
-			Graphics.Blit(tempRtB, tempRtA, bloomMaterial, 2);
-			bloomMaterial.SetVector("_OffsetsA", new Vector4(0f, 1.5f * num2, 0f, -1.5f * num2));
-			bloomMaterial.SetVector("_OffsetsB", new Vector4(0f, 0.5f * num2, 0f, -0.5f * num2));
-			Graphics.Blit(tempRtA, tempRtB, bloomMaterial, 2);
-			if (extraBlurry)
-			{
-				bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * num, 0f, -1.5f * num, 0f));
-				bloomMaterial.SetVector("_OffsetsB", new Vector4(0.5f * num, 0f, -0.5f * num, 0f));
-				Graphics.Blit(tempRtB, tempRtA, bloomMaterial, 2);
-				bloomMaterial.SetVector("_OffsetsA", new Vector4(0f, 1.5f * num2, 0f, -1.5f * num2));
-				bloomMaterial.SetVector("_OffsetsB", new Vector4(0f, 0.5f * num2, 0f, -0.5f * num2));
-				Graphics.Blit(tempRtA, tempRtB, bloomMaterial, 2);
-			}
-			bloomMaterial.SetTexture("_Bloom", tempRtB);
-			Graphics.Blit(source, destination, bloomMaterial, 0);
-		}
+		return flag;
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override void OnDisable()
+	{
+		if (this.tempRtA)
+		{
+			UnityEngine.Object.DestroyImmediate(this.tempRtA);
+			this.tempRtA = null;
+		}
+		if (this.tempRtB)
+		{
+			UnityEngine.Object.DestroyImmediate(this.tempRtB);
+			this.tempRtB = null;
+		}
+	}
+
+	public override void OnRenderImage(RenderTexture source, RenderTexture destination)
+	{
+		this.CreateBuffers();
+		if (!this.EarlyOutIfNotSupported(source, destination))
+		{
+			this.bloomMaterial.SetVector("_Parameter", new Vector4((float)0, (float)0, this.threshhold, this.intensity / (1f - this.threshhold)));
+			float single = 1f / ((float)source.width * 1f);
+			float single1 = 1f / ((float)source.height * 1f);
+			this.bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * single, 1.5f * single1, -1.5f * single, 1.5f * single1));
+			this.bloomMaterial.SetVector("_OffsetsB", new Vector4(-1.5f * single, -1.5f * single1, 1.5f * single, -1.5f * single1));
+			Graphics.Blit(source, this.tempRtB, this.bloomMaterial, 1);
+			single = single * (4f * this.blurWidth);
+			single1 = single1 * (4f * this.blurWidth);
+			this.bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * single, (float)0, -1.5f * single, (float)0));
+			this.bloomMaterial.SetVector("_OffsetsB", new Vector4(0.5f * single, (float)0, -0.5f * single, (float)0));
+			Graphics.Blit(this.tempRtB, this.tempRtA, this.bloomMaterial, 2);
+			this.bloomMaterial.SetVector("_OffsetsA", new Vector4((float)0, 1.5f * single1, (float)0, -1.5f * single1));
+			this.bloomMaterial.SetVector("_OffsetsB", new Vector4((float)0, 0.5f * single1, (float)0, -0.5f * single1));
+			Graphics.Blit(this.tempRtA, this.tempRtB, this.bloomMaterial, 2);
+			if (this.extraBlurry)
+			{
+				this.bloomMaterial.SetVector("_OffsetsA", new Vector4(1.5f * single, (float)0, -1.5f * single, (float)0));
+				this.bloomMaterial.SetVector("_OffsetsB", new Vector4(0.5f * single, (float)0, -0.5f * single, (float)0));
+				Graphics.Blit(this.tempRtB, this.tempRtA, this.bloomMaterial, 2);
+				this.bloomMaterial.SetVector("_OffsetsA", new Vector4((float)0, 1.5f * single1, (float)0, -1.5f * single1));
+				this.bloomMaterial.SetVector("_OffsetsB", new Vector4((float)0, 0.5f * single1, (float)0, -0.5f * single1));
+				Graphics.Blit(this.tempRtA, this.tempRtB, this.bloomMaterial, 2);
+			}
+			this.bloomMaterial.SetTexture("_Bloom", this.tempRtB);
+			Graphics.Blit(source, destination, this.bloomMaterial, 0);
+		}
+	}
+
+	public override bool Supported()
+	{
+		bool flag;
+		if (!this.supported)
+		{
+			bool flag1 = SystemInfo.supportsImageEffects;
+			if (flag1)
+			{
+				flag1 = SystemInfo.supportsRenderTextures;
+			}
+			if (flag1)
+			{
+				flag1 = this.bloomMaterial.shader.isSupported;
+			}
+			this.supported = flag1;
+			flag = this.supported;
+		}
+		else
+		{
+			flag = true;
+		}
+		return flag;
 	}
 }

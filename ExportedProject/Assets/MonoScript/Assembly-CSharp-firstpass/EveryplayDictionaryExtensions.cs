@@ -1,12 +1,23 @@
+using EveryplayMiniJSON;
 using System;
 using System.Collections.Generic;
-using EveryplayMiniJSON;
+using System.Runtime.CompilerServices;
 
 public static class EveryplayDictionaryExtensions
 {
+	public static Dictionary<string, object> JsonToDictionary(string json)
+	{
+		if (json == null || json.Length <= 0)
+		{
+			return null;
+		}
+		return Json.Deserialize(json) as Dictionary<string, object>;
+	}
+
 	public static bool TryGetValue<T>(this Dictionary<string, object> dict, string key, out T value)
 	{
-		//Discarded unreachable code: IL_0069
+		bool flag;
+		T t;
 		if (dict != null && dict.ContainsKey(key))
 		{
 			if (dict[key].GetType() == typeof(T))
@@ -17,22 +28,18 @@ public static class EveryplayDictionaryExtensions
 			try
 			{
 				value = (T)Convert.ChangeType(dict[key], typeof(T));
-				return true;
+				flag = true;
 			}
 			catch
 			{
+				t = default(T);
+				value = t;
+				return false;
 			}
+			return flag;
 		}
-		value = default(T);
+		t = default(T);
+		value = t;
 		return false;
-	}
-
-	public static Dictionary<string, object> JsonToDictionary(string json)
-	{
-		if (json != null && json.Length > 0)
-		{
-			return Json.Deserialize(json) as Dictionary<string, object>;
-		}
-		return null;
 	}
 }

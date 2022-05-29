@@ -1,5 +1,5 @@
-using System;
 using GooglePlayGames.OurUtils;
+using System;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
@@ -13,26 +13,26 @@ namespace GooglePlayGames.BasicApi.Nearby
 
 		private readonly long mLocalClientId;
 
-		public long LocalClientId
-		{
-			get
-			{
-				return mLocalClientId;
-			}
-		}
-
 		public Action<InitializationStatus> InitializationCallback
 		{
 			get
 			{
-				return mInitializationCallback;
+				return this.mInitializationCallback;
+			}
+		}
+
+		public long LocalClientId
+		{
+			get
+			{
+				return this.mLocalClientId;
 			}
 		}
 
 		public NearbyConnectionConfiguration(Action<InitializationStatus> callback, long localClientId)
 		{
-			mInitializationCallback = Misc.CheckNotNull(callback);
-			mLocalClientId = localClientId;
+			this.mInitializationCallback = Misc.CheckNotNull<Action<InitializationStatus>>(callback);
+			this.mLocalClientId = localClientId;
 		}
 	}
 }

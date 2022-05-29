@@ -10,5 +10,9 @@ namespace Rilisoft
 		[ReadOnly]
 		[SerializeField]
 		public List<ExistsSceneInfo> Infos = new List<ExistsSceneInfo>();
+
+		public ScenesList()
+		{
+		}
 	}
 }

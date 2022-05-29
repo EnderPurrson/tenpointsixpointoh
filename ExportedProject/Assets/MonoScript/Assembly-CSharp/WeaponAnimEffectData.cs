@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [Serializable]
@@ -16,7 +17,19 @@ public class WeaponAnimEffectData
 
 	public ParticleSystem[] particleSystems;
 
-	public float animationLength { get; set; }
+	public float animationLength
+	{
+		get;
+		set;
+	}
 
-	public bool isPlaying { get; set; }
+	public bool isPlaying
+	{
+		get;
+		set;
+	}
+
+	public WeaponAnimEffectData()
+	{
+	}
 }

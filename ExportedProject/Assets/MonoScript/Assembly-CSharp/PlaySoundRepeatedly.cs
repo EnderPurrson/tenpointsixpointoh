@@ -1,4 +1,8 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PlaySoundRepeatedly : MonoBehaviour
@@ -11,25 +15,19 @@ public class PlaySoundRepeatedly : MonoBehaviour
 
 	public float Interval = 60f;
 
-	private void OnEnable()
+	public PlaySoundRepeatedly()
 	{
-		StartCoroutine(SoundCoroutine());
 	}
 
+	private void OnEnable()
+	{
+		base.StartCoroutine(this.SoundCoroutine());
+	}
+
+	[DebuggerHidden]
 	private IEnumerator SoundCoroutine()
 	{
-		yield return new WaitForSeconds(Delay);
-		while (true)
-		{
-			for (int i = 0; i < Repeats; i++)
-			{
-				if (Defs.isSoundFX)
-				{
-					GetComponent<AudioSource>().Play();
-				}
-				yield return new WaitForSeconds(Between);
-			}
-			yield return new WaitForSeconds(Mathf.Max(0f, Interval - Between * (float)Repeats));
-		}
+		PlaySoundRepeatedly.u003cSoundCoroutineu003ec__Iterator177 variable = null;
+		return variable;
 	}
 }

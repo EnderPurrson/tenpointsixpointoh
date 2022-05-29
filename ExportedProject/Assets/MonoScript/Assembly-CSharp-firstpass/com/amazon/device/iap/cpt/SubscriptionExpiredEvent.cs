@@ -1,98 +1,114 @@
+using com.amazon.device.iap.cpt.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.device.iap.cpt.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.device.iap.cpt
 {
 	public sealed class SubscriptionExpiredEvent : Jsonable
 	{
-		public string Sku { get; set; }
-
-		public string ToJson()
+		public string Sku
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		public SubscriptionExpiredEvent()
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("sku", Sku);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
 		}
 
 		public static SubscriptionExpiredEvent CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			SubscriptionExpiredEvent subscriptionExpiredEvent;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					SubscriptionExpiredEvent item = new SubscriptionExpiredEvent();
+					if (jsonMap.ContainsKey("sku"))
+					{
+						item.Sku = (string)jsonMap["sku"];
+					}
+					subscriptionExpiredEvent = item;
 				}
-				SubscriptionExpiredEvent subscriptionExpiredEvent = new SubscriptionExpiredEvent();
-				if (jsonMap.ContainsKey("sku"))
+				else
 				{
-					subscriptionExpiredEvent.Sku = (string)jsonMap["sku"];
+					subscriptionExpiredEvent = null;
 				}
-				return subscriptionExpiredEvent;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return subscriptionExpiredEvent;
 		}
 
 		public static SubscriptionExpiredEvent CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			SubscriptionExpiredEvent subscriptionExpiredEvent;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				subscriptionExpiredEvent = SubscriptionExpiredEvent.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return subscriptionExpiredEvent;
 		}
 
-		public static Dictionary<string, SubscriptionExpiredEvent> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, SubscriptionExpiredEvent> dictionary = new Dictionary<string, SubscriptionExpiredEvent>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				SubscriptionExpiredEvent value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "sku", this.Sku }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<SubscriptionExpiredEvent> ListFromJson(List<object> array)
 		{
-			List<SubscriptionExpiredEvent> list = new List<SubscriptionExpiredEvent>();
-			foreach (object item in array)
+			List<SubscriptionExpiredEvent> subscriptionExpiredEvents = new List<SubscriptionExpiredEvent>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				subscriptionExpiredEvents.Add(SubscriptionExpiredEvent.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return subscriptionExpiredEvents;
+		}
+
+		public static Dictionary<string, SubscriptionExpiredEvent> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, SubscriptionExpiredEvent> strs = new Dictionary<string, SubscriptionExpiredEvent>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				SubscriptionExpiredEvent subscriptionExpiredEvent = SubscriptionExpiredEvent.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, subscriptionExpiredEvent);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

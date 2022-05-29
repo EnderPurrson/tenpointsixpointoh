@@ -1,12 +1,15 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 internal sealed class LevelCompleteLoader : MonoBehaviour
 {
 	public static Action action;
 
-	public static string sceneName = string.Empty;
+	public static string sceneName;
 
 	private Texture fon;
 
@@ -14,41 +17,48 @@ internal sealed class LevelCompleteLoader : MonoBehaviour
 
 	private Texture loadingNote;
 
+	static LevelCompleteLoader()
+	{
+		LevelCompleteLoader.sceneName = string.Empty;
+	}
+
+	public LevelCompleteLoader()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator loadNext()
+	{
+		return new LevelCompleteLoader.u003cloadNextu003ec__IteratorA5();
+	}
+
 	private void Start()
 	{
 		ActivityIndicator.IsActiveIndicator = true;
-		if (!sceneName.Equals("LevelComplete"))
+		if (LevelCompleteLoader.sceneName.Equals("LevelComplete"))
 		{
-			string path = ConnectSceneNGUIController.MainLoadingTexture();
-			fon = Resources.Load<Texture>(path);
+			string str = string.Concat("LevelLoadings", (!Device.isRetinaAndStrong ? string.Empty : "/Hi"), "/LevelComplete_back");
+			if (Defs.IsSurvival)
+			{
+				str = "GameOver_Coliseum";
+			}
+			this.fon = Resources.Load<Texture>(str);
 		}
 		else
 		{
-			string path2 = "LevelLoadings" + ((!Device.isRetinaAndStrong) ? string.Empty : "/Hi") + "/LevelComplete_back";
-			if (Defs.IsSurvival)
-			{
-				path2 = "GameOver_Coliseum";
-			}
-			fon = Resources.Load<Texture>(path2);
+			this.fon = Resources.Load<Texture>(ConnectSceneNGUIController.MainLoadingTexture());
 		}
-		GameObject gameObject = new GameObject();
-		UITexture uITexture = gameObject.AddComponent<UITexture>();
-		uITexture.mainTexture = fon;
+		UITexture uITexture = (new GameObject()).AddComponent<UITexture>();
+		uITexture.mainTexture = this.fon;
 		uITexture.SetRect(0f, 0f, 1366f, 768f);
-		uITexture.transform.SetParent(myUICam.transform, false);
+		uITexture.transform.SetParent(this.myUICam.transform, false);
 		uITexture.transform.localScale = Vector3.one;
 		uITexture.transform.localPosition = Vector3.zero;
-		StartCoroutine(loadNext());
+		base.StartCoroutine(this.loadNext());
 		CampaignProgress.SaveCampaignProgress();
 		if (Application.platform != RuntimePlatform.IPhonePlayer)
 		{
 			PlayerPrefs.Save();
 		}
-	}
-
-	private IEnumerator loadNext()
-	{
-		yield return new WaitForSeconds(0.25f);
-		Application.LoadLevel(sceneName);
 	}
 }

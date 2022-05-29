@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Rilisoft
 {
-	[RequireComponent(typeof(Collider))]
 	[ExecuteInEditMode]
+	[RequireComponent(typeof(Collider))]
 	public abstract class AreaBase : MonoBehaviour
 	{
 		public const string AREA_OBJECT_TAG = "Area";
@@ -18,22 +18,26 @@ namespace Rilisoft
 		[SerializeField]
 		private string _description;
 
+		protected AreaBase()
+		{
+		}
+
 		protected virtual void Awake()
 		{
-			Collider component = GetComponent<Collider>();
+			Collider component = base.GetComponent<Collider>();
 			if (component == null)
 			{
 				throw new Exception("Collider not found");
 			}
 			if (!component.isTrigger)
 			{
-				Debug.LogWarningFormat("[AREA SYSTEM] collider now is trigger, go:'{0}'", base.gameObject.name);
+				Debug.LogWarningFormat("[AREA SYSTEM] collider now is trigger, go:'{0}'", new object[] { base.gameObject.name });
 				component.isTrigger = true;
 			}
-			int num = LayerMask.NameToLayer("Ignore Raycast");
-			if (base.gameObject.layer != num)
+			int layer = LayerMask.NameToLayer("Ignore Raycast");
+			if (base.gameObject.layer != layer)
 			{
-				base.gameObject.layer = num;
+				base.gameObject.layer = layer;
 			}
 			if (!base.gameObject.CompareTag("Area"))
 			{
@@ -43,12 +47,12 @@ namespace Rilisoft
 
 		public virtual void CheckIn(GameObject to)
 		{
-			_isActive = true;
+			this._isActive = true;
 		}
 
 		public virtual void CheckOut(GameObject from)
 		{
-			_isActive = false;
+			this._isActive = false;
 		}
 	}
 }

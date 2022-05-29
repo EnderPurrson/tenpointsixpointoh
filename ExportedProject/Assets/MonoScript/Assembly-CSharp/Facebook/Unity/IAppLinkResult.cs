@@ -1,15 +1,28 @@
+using System;
 using System.Collections.Generic;
 
 namespace Facebook.Unity
 {
 	public interface IAppLinkResult : IResult
 	{
-		string Url { get; }
+		IDictionary<string, object> Extras
+		{
+			get;
+		}
 
-		string TargetUrl { get; }
+		string Ref
+		{
+			get;
+		}
 
-		string Ref { get; }
+		string TargetUrl
+		{
+			get;
+		}
 
-		IDictionary<string, object> Extras { get; }
+		string Url
+		{
+			get;
+		}
 	}
 }

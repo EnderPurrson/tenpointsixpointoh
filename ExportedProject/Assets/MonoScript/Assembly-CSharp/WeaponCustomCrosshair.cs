@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -6,41 +7,53 @@ public class WeaponCustomCrosshair : MonoBehaviour
 {
 	public const string ASSET_PATH = "Common/crosshairs";
 
-	[SerializeField]
 	[ReadOnly]
+	[SerializeField]
 	private int _dataId;
 
 	private CrosshairData _data;
 
 	private static CrosshairsSo _so;
 
-	public int DataId
-	{
-		get
-		{
-			return _dataId;
-		}
-		set
-		{
-			_dataId = value;
-			_data = null;
-		}
-	}
-
 	public CrosshairData Data
 	{
 		get
 		{
-			if (_data != null)
+			CrosshairData crosshairDatum;
+			if (this._data != null)
 			{
-				return _data;
+				return this._data;
 			}
-			if (So == null)
+			if (WeaponCustomCrosshair.So == null)
 			{
-				return _data = new CrosshairData();
+				CrosshairData crosshairDatum1 = new CrosshairData();
+				crosshairDatum = crosshairDatum1;
+				this._data = crosshairDatum1;
+				return crosshairDatum;
 			}
-			_data = So.Crosshairs.FirstOrDefault(_003Cget_Data_003Em__563);
-			return _data ?? (_data = new CrosshairData());
+			this._data = WeaponCustomCrosshair.So.Crosshairs.FirstOrDefault<CrosshairData>((CrosshairData c) => c.ID == this.DataId);
+			CrosshairData crosshairDatum2 = this._data;
+			if (crosshairDatum2 == null)
+			{
+				CrosshairData crosshairDatum3 = new CrosshairData();
+				crosshairDatum = crosshairDatum3;
+				this._data = crosshairDatum3;
+				crosshairDatum2 = crosshairDatum;
+			}
+			return crosshairDatum2;
+		}
+	}
+
+	public int DataId
+	{
+		get
+		{
+			return this._dataId;
+		}
+		set
+		{
+			this._dataId = value;
+			this._data = null;
 		}
 	}
 
@@ -48,13 +61,17 @@ public class WeaponCustomCrosshair : MonoBehaviour
 	{
 		get
 		{
-			return _so ?? (_so = Resources.Load<CrosshairsSo>("Common/crosshairs"));
+			CrosshairsSo crosshairsSo = WeaponCustomCrosshair._so;
+			if (crosshairsSo == null)
+			{
+				crosshairsSo = Resources.Load<CrosshairsSo>("Common/crosshairs");
+				WeaponCustomCrosshair._so = crosshairsSo;
+			}
+			return crosshairsSo;
 		}
 	}
 
-	[CompilerGenerated]
-	private bool _003Cget_Data_003Em__563(CrosshairData c)
+	public WeaponCustomCrosshair()
 	{
-		return c.ID == DataId;
 	}
 }

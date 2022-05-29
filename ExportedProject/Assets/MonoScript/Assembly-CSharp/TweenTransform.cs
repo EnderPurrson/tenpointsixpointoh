@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Tween/Tween Transform")]
 public class TweenTransform : UITweener
 {
-	public Transform from;
+	public Transform @from;
 
 	public Transform to;
 
@@ -17,45 +18,19 @@ public class TweenTransform : UITweener
 
 	private Vector3 mScale;
 
-	protected override void OnUpdate(float factor, bool isFinished)
+	public TweenTransform()
 	{
-		if (to != null)
-		{
-			if (mTrans == null)
-			{
-				mTrans = base.transform;
-				mPos = mTrans.position;
-				mRot = mTrans.rotation;
-				mScale = mTrans.localScale;
-			}
-			if (from != null)
-			{
-				mTrans.position = from.position * (1f - factor) + to.position * factor;
-				mTrans.localScale = from.localScale * (1f - factor) + to.localScale * factor;
-				mTrans.rotation = Quaternion.Slerp(from.rotation, to.rotation, factor);
-			}
-			else
-			{
-				mTrans.position = mPos * (1f - factor) + to.position * factor;
-				mTrans.localScale = mScale * (1f - factor) + to.localScale * factor;
-				mTrans.rotation = Quaternion.Slerp(mRot, to.rotation, factor);
-			}
-			if (parentWhenFinished && isFinished)
-			{
-				mTrans.parent = to;
-			}
-		}
 	}
 
 	public static TweenTransform Begin(GameObject go, float duration, Transform to)
 	{
-		return Begin(go, duration, null, to);
+		return TweenTransform.Begin(go, duration, null, to);
 	}
 
 	public static TweenTransform Begin(GameObject go, float duration, Transform from, Transform to)
 	{
 		TweenTransform tweenTransform = UITweener.Begin<TweenTransform>(go, duration);
-		tweenTransform.from = from;
+		tweenTransform.@from = from;
 		tweenTransform.to = to;
 		if (duration <= 0f)
 		{
@@ -63,5 +38,35 @@ public class TweenTransform : UITweener
 			tweenTransform.enabled = false;
 		}
 		return tweenTransform;
+	}
+
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		if (this.to != null)
+		{
+			if (this.mTrans == null)
+			{
+				this.mTrans = base.transform;
+				this.mPos = this.mTrans.position;
+				this.mRot = this.mTrans.rotation;
+				this.mScale = this.mTrans.localScale;
+			}
+			if (this.@from == null)
+			{
+				this.mTrans.position = (this.mPos * (1f - factor)) + (this.to.position * factor);
+				this.mTrans.localScale = (this.mScale * (1f - factor)) + (this.to.localScale * factor);
+				this.mTrans.rotation = Quaternion.Slerp(this.mRot, this.to.rotation, factor);
+			}
+			else
+			{
+				this.mTrans.position = (this.@from.position * (1f - factor)) + (this.to.position * factor);
+				this.mTrans.localScale = (this.@from.localScale * (1f - factor)) + (this.to.localScale * factor);
+				this.mTrans.rotation = Quaternion.Slerp(this.@from.rotation, this.to.rotation, factor);
+			}
+			if (this.parentWhenFinished && isFinished)
+			{
+				this.mTrans.parent = this.to;
+			}
+		}
 	}
 }

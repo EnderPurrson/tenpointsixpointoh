@@ -6,30 +6,51 @@ namespace Facebook.Unity
 {
 	internal interface IFacebook
 	{
-		bool LoggedIn { get; }
+		bool Initialized
+		{
+			get;
+		}
 
-		bool LimitEventUsage { get; set; }
+		bool LimitEventUsage
+		{
+			get;
+			set;
+		}
 
-		string SDKName { get; }
+		bool LoggedIn
+		{
+			get;
+		}
 
-		string SDKVersion { get; }
+		string SDKName
+		{
+			get;
+		}
 
-		string SDKUserAgent { get; }
+		string SDKUserAgent
+		{
+			get;
+		}
 
-		bool Initialized { get; }
+		string SDKVersion
+		{
+			get;
+		}
 
-		void LogInWithPublishPermissions(IEnumerable<string> permissions, FacebookDelegate<ILoginResult> callback);
+		void ActivateApp(string appId = null);
 
-		void LogInWithReadPermissions(IEnumerable<string> permissions, FacebookDelegate<ILoginResult> callback);
+		void API(string query, HttpMethod method, IDictionary<string, string> formData, FacebookDelegate<IGraphResult> callback);
 
-		void LogOut();
+		void API(string query, HttpMethod method, WWWForm formData, FacebookDelegate<IGraphResult> callback);
+
+		void AppEventsLogEvent(string logEvent, float? valueToSum, Dictionary<string, object> parameters);
+
+		void AppEventsLogPurchase(float logPurchase, string currency, Dictionary<string, object> parameters);
 
 		[Obsolete]
 		void AppRequest(string message, IEnumerable<string> to, IEnumerable<object> filters, IEnumerable<string> excludeIds, int? maxRecipients, string data, string title, FacebookDelegate<IAppRequestResult> callback);
 
 		void AppRequest(string message, OGActionType? actionType, string objectId, IEnumerable<string> to, IEnumerable<object> filters, IEnumerable<string> excludeIds, int? maxRecipients, string data, string title, FacebookDelegate<IAppRequestResult> callback);
-
-		void ShareLink(Uri contentURL, string contentTitle, string contentDescription, Uri photoURL, FacebookDelegate<IShareResult> callback);
 
 		void FeedShare(string toId, Uri link, string linkName, string linkCaption, string linkDescription, Uri picture, string mediaSource, FacebookDelegate<IShareResult> callback);
 
@@ -37,16 +58,14 @@ namespace Facebook.Unity
 
 		void GameGroupJoin(string id, FacebookDelegate<IGroupJoinResult> callback);
 
-		void API(string query, HttpMethod method, IDictionary<string, string> formData, FacebookDelegate<IGraphResult> callback);
-
-		void API(string query, HttpMethod method, WWWForm formData, FacebookDelegate<IGraphResult> callback);
-
-		void ActivateApp(string appId = null);
-
 		void GetAppLink(FacebookDelegate<IAppLinkResult> callback);
 
-		void AppEventsLogEvent(string logEvent, float? valueToSum, Dictionary<string, object> parameters);
+		void LogInWithPublishPermissions(IEnumerable<string> permissions, FacebookDelegate<ILoginResult> callback);
 
-		void AppEventsLogPurchase(float logPurchase, string currency, Dictionary<string, object> parameters);
+		void LogInWithReadPermissions(IEnumerable<string> permissions, FacebookDelegate<ILoginResult> callback);
+
+		void LogOut();
+
+		void ShareLink(Uri contentURL, string contentTitle, string contentDescription, Uri photoURL, FacebookDelegate<IShareResult> callback);
 	}
 }

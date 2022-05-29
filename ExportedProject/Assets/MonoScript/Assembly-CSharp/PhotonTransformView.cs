@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("Photon Networking/Photon Transform View")]
@@ -23,73 +24,81 @@ public class PhotonTransformView : MonoBehaviour, IPunObservable
 
 	private bool m_ReceivedNetworkUpdate;
 
+	public PhotonTransformView()
+	{
+	}
+
 	private void Awake()
 	{
-		m_PhotonView = GetComponent<PhotonView>();
-		m_PositionControl = new PhotonTransformViewPositionControl(m_PositionModel);
-		m_RotationControl = new PhotonTransformViewRotationControl(m_RotationModel);
-		m_ScaleControl = new PhotonTransformViewScaleControl(m_ScaleModel);
+		this.m_PhotonView = base.GetComponent<PhotonView>();
+		this.m_PositionControl = new PhotonTransformViewPositionControl(this.m_PositionModel);
+		this.m_RotationControl = new PhotonTransformViewRotationControl(this.m_RotationModel);
+		this.m_ScaleControl = new PhotonTransformViewScaleControl(this.m_ScaleModel);
 	}
 
-	private void Update()
+	private void DoDrawEstimatedPositionError()
 	{
-		if (!(m_PhotonView == null) && !m_PhotonView.isMine && PhotonNetwork.connected)
+		Vector3 networkPosition = this.m_PositionControl.GetNetworkPosition();
+		Debug.DrawLine(networkPosition, base.transform.position, Color.red, 2f);
+		Debug.DrawLine(base.transform.position, base.transform.position + Vector3.up, Color.green, 2f);
+		Debug.DrawLine(networkPosition, networkPosition + Vector3.up, Color.red, 2f);
+	}
+
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		this.m_PositionControl.OnPhotonSerializeView(base.transform.localPosition, stream, info);
+		this.m_RotationControl.OnPhotonSerializeView(base.transform.localRotation, stream, info);
+		this.m_ScaleControl.OnPhotonSerializeView(base.transform.localScale, stream, info);
+		if (!this.m_PhotonView.isMine && this.m_PositionModel.DrawErrorGizmo)
 		{
-			UpdatePosition();
-			UpdateRotation();
-			UpdateScale();
+			this.DoDrawEstimatedPositionError();
 		}
-	}
-
-	private void UpdatePosition()
-	{
-		if (m_PositionModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
+		if (stream.isReading)
 		{
-			base.transform.localPosition = m_PositionControl.UpdatePosition(base.transform.localPosition);
-		}
-	}
-
-	private void UpdateRotation()
-	{
-		if (m_RotationModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
-		{
-			base.transform.localRotation = m_RotationControl.GetRotation(base.transform.localRotation);
-		}
-	}
-
-	private void UpdateScale()
-	{
-		if (m_ScaleModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
-		{
-			base.transform.localScale = m_ScaleControl.GetScale(base.transform.localScale);
+			this.m_ReceivedNetworkUpdate = true;
 		}
 	}
 
 	public void SetSynchronizedValues(Vector3 speed, float turnSpeed)
 	{
-		m_PositionControl.SetSynchronizedValues(speed, turnSpeed);
+		this.m_PositionControl.SetSynchronizedValues(speed, turnSpeed);
 	}
 
-	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	private void Update()
 	{
-		m_PositionControl.OnPhotonSerializeView(base.transform.localPosition, stream, info);
-		m_RotationControl.OnPhotonSerializeView(base.transform.localRotation, stream, info);
-		m_ScaleControl.OnPhotonSerializeView(base.transform.localScale, stream, info);
-		if (!m_PhotonView.isMine && m_PositionModel.DrawErrorGizmo)
+		if (this.m_PhotonView == null || this.m_PhotonView.isMine || !PhotonNetwork.connected)
 		{
-			DoDrawEstimatedPositionError();
+			return;
 		}
-		if (stream.isReading)
-		{
-			m_ReceivedNetworkUpdate = true;
-		}
+		this.UpdatePosition();
+		this.UpdateRotation();
+		this.UpdateScale();
 	}
 
-	private void DoDrawEstimatedPositionError()
+	private void UpdatePosition()
 	{
-		Vector3 networkPosition = m_PositionControl.GetNetworkPosition();
-		Debug.DrawLine(networkPosition, base.transform.position, Color.red, 2f);
-		Debug.DrawLine(base.transform.position, base.transform.position + Vector3.up, Color.green, 2f);
-		Debug.DrawLine(networkPosition, networkPosition + Vector3.up, Color.red, 2f);
+		if (!this.m_PositionModel.SynchronizeEnabled || !this.m_ReceivedNetworkUpdate)
+		{
+			return;
+		}
+		base.transform.localPosition = this.m_PositionControl.UpdatePosition(base.transform.localPosition);
+	}
+
+	private void UpdateRotation()
+	{
+		if (!this.m_RotationModel.SynchronizeEnabled || !this.m_ReceivedNetworkUpdate)
+		{
+			return;
+		}
+		base.transform.localRotation = this.m_RotationControl.GetRotation(base.transform.localRotation);
+	}
+
+	private void UpdateScale()
+	{
+		if (!this.m_ScaleModel.SynchronizeEnabled || !this.m_ReceivedNetworkUpdate)
+		{
+			return;
+		}
+		base.transform.localScale = this.m_ScaleControl.GetScale(base.transform.localScale);
 	}
 }

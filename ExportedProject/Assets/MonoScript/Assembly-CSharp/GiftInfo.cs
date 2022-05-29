@@ -1,5 +1,5 @@
-using System;
 using Rilisoft;
+using System;
 using UnityEngine;
 
 [Serializable]
@@ -23,28 +23,34 @@ public class GiftInfo
 	{
 		get
 		{
-			ItemDb.GetByTag(Id);
-			if (Id.IsNullOrEmpty())
+			ItemDb.GetByTag(this.Id);
+			if (this.Id.IsNullOrEmpty())
 			{
 				return null;
 			}
-			int itemCategory = ItemDb.GetItemCategory(Id);
-			if (itemCategory < 0)
+			int itemCategory = ItemDb.GetItemCategory(this.Id);
+			if (itemCategory >= 0)
 			{
-				return null;
+				return new ShopNGUIController.CategoryNames?((ShopNGUIController.CategoryNames)itemCategory);
 			}
-			return (ShopNGUIController.CategoryNames)itemCategory;
+			return null;
 		}
+	}
+
+	public GiftInfo()
+	{
 	}
 
 	public static GiftInfo CreateInfo(GiftInfo rootGift, string giftId, int count = 1)
 	{
-		GiftInfo giftInfo = new GiftInfo();
-		giftInfo.Count = count;
-		giftInfo.Id = giftId;
-		giftInfo.KeyTranslateInfo = rootGift.KeyTranslateInfo;
-		giftInfo.PercentAddInSlot = rootGift.PercentAddInSlot;
-		giftInfo.RootInfo = rootGift;
+		GiftInfo giftInfo = new GiftInfo()
+		{
+			Count = count,
+			Id = giftId,
+			KeyTranslateInfo = rootGift.KeyTranslateInfo,
+			PercentAddInSlot = rootGift.PercentAddInSlot,
+			RootInfo = rootGift
+		};
 		return giftInfo;
 	}
 }

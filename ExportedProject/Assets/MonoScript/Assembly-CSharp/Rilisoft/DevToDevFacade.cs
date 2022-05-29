@@ -1,6 +1,7 @@
-using System;
-using System.Collections.Generic;
 using DevToDev;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Rilisoft
@@ -9,11 +10,11 @@ namespace Rilisoft
 	{
 		private readonly string _appKey;
 
-		public static string Version
+		public static bool LoggingEnabled
 		{
-			get
+			set
 			{
-				return Analytics.SDKVersion;
+				Analytics.SetActiveLog(value);
 			}
 		}
 
@@ -21,17 +22,18 @@ namespace Rilisoft
 		{
 			set
 			{
-				if (!string.IsNullOrEmpty(_appKey))
+				if (string.IsNullOrEmpty(this._appKey))
 				{
+					return;
 				}
 			}
 		}
 
-		public static bool LoggingEnabled
+		public static string Version
 		{
-			set
+			get
 			{
-				Analytics.SetActiveLog(value);
+				return Analytics.SDKVersion;
 			}
 		}
 
@@ -45,8 +47,39 @@ namespace Rilisoft
 			{
 				throw new ArgumentNullException("secretKey");
 			}
-			_appKey = appKey;
+			this._appKey = appKey;
 			Analytics.Initialize(appKey, secretKey);
+		}
+
+		public void CurrencyAccrual(int amount, string currencyName, AccrualType accrualType)
+		{
+			Analytics.CurrencyAccrual(amount, currencyName, accrualType);
+		}
+
+		public void InAppPurchase(string purchaseId, string purchaseType, int purchaseAmount, int purchasePrice, string purchaseCurrency)
+		{
+			purchaseId = purchaseId.Substring(0, Math.Min(purchaseId.Length, 32));
+			purchaseType = purchaseType.Substring(0, Math.Min(purchaseType.Length, 96));
+			Analytics.InAppPurchase(purchaseId, purchaseType, purchaseAmount, purchasePrice, purchaseCurrency);
+		}
+
+		public void LevelUp(int level, Dictionary<string, int> resources)
+		{
+			Analytics.LevelUp(level, resources);
+		}
+
+		public void RealPayment(string paymentId, float inAppPrice, string inAppName, string inAppCurrencyISOCode)
+		{
+			Analytics.RealPayment(paymentId, inAppPrice, inAppName, inAppCurrencyISOCode);
+		}
+
+		public void SendBufferedEvents()
+		{
+			if (string.IsNullOrEmpty(this._appKey))
+			{
+				return;
+			}
+			Analytics.SendBufferedEvents();
 		}
 
 		public void SendCustomEvent(string eventName)
@@ -59,37 +92,11 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Event name must not be empty.", "eventName");
 			}
-			if (!string.IsNullOrEmpty(_appKey))
+			if (string.IsNullOrEmpty(this._appKey))
 			{
-				Analytics.CustomEvent(eventName);
+				return;
 			}
-		}
-
-		public void InAppPurchase(string purchaseId, string purchaseType, int purchaseAmount, int purchasePrice, string purchaseCurrency)
-		{
-			purchaseId = purchaseId.Substring(0, Math.Min(purchaseId.Length, 32));
-			purchaseType = purchaseType.Substring(0, Math.Min(purchaseType.Length, 96));
-			Analytics.InAppPurchase(purchaseId, purchaseType, purchaseAmount, purchasePrice, purchaseCurrency);
-		}
-
-		public void RealPayment(string paymentId, float inAppPrice, string inAppName, string inAppCurrencyISOCode)
-		{
-			Analytics.RealPayment(paymentId, inAppPrice, inAppName, inAppCurrencyISOCode);
-		}
-
-		public void CurrencyAccrual(int amount, string currencyName, AccrualType accrualType)
-		{
-			Analytics.CurrencyAccrual(amount, currencyName, accrualType);
-		}
-
-		public void LevelUp(int level, Dictionary<string, int> resources)
-		{
-			Analytics.LevelUp(level, resources);
-		}
-
-		public void Tutorial(int step)
-		{
-			Analytics.Tutorial(step);
+			Analytics.CustomEvent(eventName);
 		}
 
 		public void SendCustomEvent(string eventName, IDictionary<string, object> eventParams)
@@ -106,48 +113,57 @@ namespace Rilisoft
 			{
 				throw new ArgumentException("Event name must not be empty.", "eventName");
 			}
-			if (string.IsNullOrEmpty(_appKey))
+			if (string.IsNullOrEmpty(this._appKey))
 			{
 				return;
 			}
-			CustomEventParams customEventParams = new CustomEventParams();
-			foreach (KeyValuePair<string, object> eventParam in eventParams)
+			CustomEventParams customEventParam = new CustomEventParams();
+			IEnumerator<KeyValuePair<string, object>> enumerator = eventParams.GetEnumerator();
+			try
 			{
-				string text = eventParam.Value as string;
-				if (text != null)
+				while (enumerator.MoveNext())
 				{
-					customEventParams.AddParam(eventParam.Key, text);
-				}
-				else if (eventParam.Value is int)
-				{
-					customEventParams.AddParam(eventParam.Key, (int)eventParam.Value);
-				}
-				else if (eventParam.Value is long)
-				{
-					customEventParams.AddParam(eventParam.Key, (long)eventParam.Value);
-				}
-				else if (eventParam.Value is float || eventParam.Value is double)
-				{
-					customEventParams.AddParam(eventParam.Key, Convert.ToDouble(eventParam.Value));
-				}
-				else if (eventParam.Value is DateTimeOffset)
-				{
-					Debug.LogError("Trying to pass DateTimeOffset parameter to DevToDev: " + (eventParam.Key ?? "null"));
-				}
-				else
-				{
-					customEventParams.AddParam(eventParam.Key, Convert.ToString(eventParam.Value));
+					KeyValuePair<string, object> current = enumerator.Current;
+					string value = current.Value as string;
+					if (value != null)
+					{
+						customEventParam.AddParam(current.Key, value);
+					}
+					else if (current.Value is int)
+					{
+						customEventParam.AddParam(current.Key, (int)current.Value);
+					}
+					else if (current.Value is long)
+					{
+						customEventParam.AddParam(current.Key, (long)current.Value);
+					}
+					else if (current.Value is float || current.Value is double)
+					{
+						customEventParam.AddParam(current.Key, Convert.ToDouble(current.Value));
+					}
+					else if (!(current.Value is DateTimeOffset))
+					{
+						customEventParam.AddParam(current.Key, Convert.ToString(current.Value));
+					}
+					else
+					{
+						Debug.LogError(string.Concat("Trying to pass DateTimeOffset parameter to DevToDev: ", current.Key ?? "null"));
+					}
 				}
 			}
-			Analytics.CustomEvent(eventName, customEventParams);
+			finally
+			{
+				if (enumerator == null)
+				{
+				}
+				enumerator.Dispose();
+			}
+			Analytics.CustomEvent(eventName, customEventParam);
 		}
 
-		public void SendBufferedEvents()
+		public void Tutorial(int step)
 		{
-			if (!string.IsNullOrEmpty(_appKey))
-			{
-				Analytics.SendBufferedEvents();
-			}
+			Analytics.Tutorial(step);
 		}
 	}
 }

@@ -1,27 +1,19 @@
+using GooglePlayGames.BasicApi.Events;
+using GooglePlayGames.Native.Cwrapper;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using GooglePlayGames.BasicApi.Events;
-using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class NativeEvent : BaseReferenceHolder, IEvent
 	{
-		public string Id
+		public ulong CurrentCount
 		{
 			get
 			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_Id_003Em__13C);
-			}
-		}
-
-		public string Name
-		{
-			get
-			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_Name_003Em__13D);
+				return Event.Event_Count(base.SelfPtr());
 			}
 		}
 
@@ -29,7 +21,15 @@ namespace GooglePlayGames.Native.PInvoke
 		{
 			get
 			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_Description_003Em__13E);
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => Event.Event_Description(base.SelfPtr(), out_string, out_size));
+			}
+		}
+
+		public string Id
+		{
+			get
+			{
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => Event.Event_Id(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
@@ -37,15 +37,15 @@ namespace GooglePlayGames.Native.PInvoke
 		{
 			get
 			{
-				return PInvokeUtilities.OutParamsToString(_003Cget_ImageUrl_003Em__13F);
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => Event.Event_ImageUrl(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
-		public ulong CurrentCount
+		public string Name
 		{
 			get
 			{
-				return Event.Event_Count(SelfPtr());
+				return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => Event.Event_Name(base.SelfPtr(), out_string, out_size));
 			}
 		}
 
@@ -53,21 +53,21 @@ namespace GooglePlayGames.Native.PInvoke
 		{
 			get
 			{
-				Types.EventVisibility eventVisibility = Event.Event_Visibility(SelfPtr());
-				switch (eventVisibility)
+				Types.EventVisibility eventVisibility = Event.Event_Visibility(base.SelfPtr());
+				Types.EventVisibility eventVisibility1 = eventVisibility;
+				if (eventVisibility1 == Types.EventVisibility.HIDDEN)
 				{
-				case Types.EventVisibility.HIDDEN:
 					return EventVisibility.Hidden;
-				case Types.EventVisibility.REVEALED:
-					return EventVisibility.Revealed;
-				default:
-					throw new InvalidOperationException("Unknown visibility: " + eventVisibility);
 				}
+				if (eventVisibility1 != Types.EventVisibility.REVEALED)
+				{
+					throw new InvalidOperationException(string.Concat("Unknown visibility: ", eventVisibility));
+				}
+				return EventVisibility.Revealed;
 			}
 		}
 
-		internal NativeEvent(IntPtr selfPointer)
-			: base(selfPointer)
+		internal NativeEvent(IntPtr selfPointer) : base(selfPointer)
 		{
 		}
 
@@ -78,35 +78,11 @@ namespace GooglePlayGames.Native.PInvoke
 
 		public override string ToString()
 		{
-			if (IsDisposed())
+			if (base.IsDisposed())
 			{
 				return "[NativeEvent: DELETED]";
 			}
-			return string.Format("[NativeEvent: Id={0}, Name={1}, Description={2}, ImageUrl={3}, CurrentCount={4}, Visibility={5}]", Id, Name, Description, ImageUrl, CurrentCount, Visibility);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_Id_003Em__13C(StringBuilder out_string, UIntPtr out_size)
-		{
-			return Event.Event_Id(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_Name_003Em__13D(StringBuilder out_string, UIntPtr out_size)
-		{
-			return Event.Event_Name(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_Description_003Em__13E(StringBuilder out_string, UIntPtr out_size)
-		{
-			return Event.Event_Description(SelfPtr(), out_string, out_size);
-		}
-
-		[CompilerGenerated]
-		private UIntPtr _003Cget_ImageUrl_003Em__13F(StringBuilder out_string, UIntPtr out_size)
-		{
-			return Event.Event_ImageUrl(SelfPtr(), out_string, out_size);
+			return string.Format("[NativeEvent: Id={0}, Name={1}, Description={2}, ImageUrl={3}, CurrentCount={4}, Visibility={5}]", new object[] { this.Id, this.Name, this.Description, this.ImageUrl, this.CurrentCount, this.Visibility });
 		}
 	}
 }

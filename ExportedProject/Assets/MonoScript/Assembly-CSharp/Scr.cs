@@ -1,10 +1,15 @@
+using System;
 using UnityEngine;
 
 public class Scr : MonoBehaviour
 {
+	public Scr()
+	{
+	}
+
 	private void Start()
 	{
-		Object.DontDestroyOnLoad(base.gameObject);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
 	}
 
 	private void Update()

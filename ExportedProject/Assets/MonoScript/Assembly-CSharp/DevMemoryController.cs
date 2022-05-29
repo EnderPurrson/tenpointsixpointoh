@@ -1,13 +1,23 @@
+using System;
 using UnityEngine;
 
 public class DevMemoryController : MonoBehaviour
 {
-	public static string keyActiveMemoryInfo = "keyActiveMemoryInfo";
+	public static string keyActiveMemoryInfo;
 
 	public static DevMemoryController instance;
 
+	static DevMemoryController()
+	{
+		DevMemoryController.keyActiveMemoryInfo = "keyActiveMemoryInfo";
+	}
+
+	public DevMemoryController()
+	{
+	}
+
 	private void Awake()
 	{
-		Object.Destroy(this);
+		UnityEngine.Object.Destroy(this);
 	}
 }

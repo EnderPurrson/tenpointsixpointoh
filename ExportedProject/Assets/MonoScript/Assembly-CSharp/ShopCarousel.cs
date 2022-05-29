@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ShopCarousel : MonoBehaviour
@@ -7,6 +8,10 @@ public class ShopCarousel : MonoBehaviour
 	public UIWrapContent wrapContent;
 
 	public UIPanel scrollViewPanel;
+
+	public ShopCarousel()
+	{
+	}
 
 	private void Start()
 	{

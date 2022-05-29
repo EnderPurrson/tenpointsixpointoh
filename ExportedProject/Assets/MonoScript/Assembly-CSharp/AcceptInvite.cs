@@ -1,8 +1,13 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 internal sealed class AcceptInvite : MonoBehaviour
 {
+	public AcceptInvite()
+	{
+	}
+
 	private void OnClick()
 	{
 		ButtonClickSound.Instance.PlayClick();
@@ -12,7 +17,7 @@ internal sealed class AcceptInvite : MonoBehaviour
 			Debug.LogWarning("invitation == null");
 			return;
 		}
-		FriendsController.sharedController.AcceptInvite(component.id);
+		FriendsController.sharedController.AcceptInvite(component.id, null);
 		component.DisableButtons();
 	}
 }

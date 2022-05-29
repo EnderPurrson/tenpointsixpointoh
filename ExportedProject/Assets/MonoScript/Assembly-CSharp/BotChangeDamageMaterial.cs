@@ -1,4 +1,6 @@
 using RilisoftBot;
+using System;
+using System.Collections;
 using UnityEngine;
 
 public sealed class BotChangeDamageMaterial : MonoBehaviour
@@ -7,41 +9,47 @@ public sealed class BotChangeDamageMaterial : MonoBehaviour
 
 	private Texture _damageTexture;
 
-	private void Start()
+	public BotChangeDamageMaterial()
 	{
-		string text = base.transform.root.GetChild(0).name;
-		Texture texture = null;
-		if (text.Contains("Enemy"))
-		{
-			string text2 = text + "_Level" + CurrentCampaignGame.currentLevel;
-			if (!(texture = SkinsManagerPixlGun.sharedManager.skins[text2] as Texture))
-			{
-				Debug.Log("No skin: " + text2);
-			}
-		}
-		if (texture != null)
-		{
-			_mainTexture = texture;
-			ResetMainMaterial();
-		}
-		else
-		{
-			_mainTexture = GetComponent<Renderer>().material.mainTexture;
-		}
-		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(base.transform.root);
-		if (botScriptForObject != null)
-		{
-			_damageTexture = botScriptForObject.flashDeadthTexture;
-		}
-	}
-
-	public void ShowDamageEffect()
-	{
-		GetComponent<Renderer>().material.mainTexture = _damageTexture;
 	}
 
 	public void ResetMainMaterial()
 	{
-		GetComponent<Renderer>().material.mainTexture = _mainTexture;
+		base.GetComponent<Renderer>().material.mainTexture = this._mainTexture;
+	}
+
+	public void ShowDamageEffect()
+	{
+		base.GetComponent<Renderer>().material.mainTexture = this._damageTexture;
+	}
+
+	private void Start()
+	{
+		string child = base.transform.root.GetChild(0).name;
+		Texture texture = null;
+		if (child.Contains("Enemy"))
+		{
+			string str = string.Concat(child, "_Level", CurrentCampaignGame.currentLevel);
+			Texture item = SkinsManagerPixlGun.sharedManager.skins[str] as Texture;
+			texture = item;
+			if (!item)
+			{
+				Debug.Log(string.Concat("No skin: ", str));
+			}
+		}
+		if (texture == null)
+		{
+			this._mainTexture = base.GetComponent<Renderer>().material.mainTexture;
+		}
+		else
+		{
+			this._mainTexture = texture;
+			this.ResetMainMaterial();
+		}
+		BaseBot botScriptForObject = BaseBot.GetBotScriptForObject(base.transform.root);
+		if (botScriptForObject != null)
+		{
+			this._damageTexture = botScriptForObject.flashDeadthTexture;
+		}
 	}
 }

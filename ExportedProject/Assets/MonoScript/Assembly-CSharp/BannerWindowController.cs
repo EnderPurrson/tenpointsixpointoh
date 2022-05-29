@@ -1,35 +1,25 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using Unity.Linq;
 using UnityEngine;
 
 public class BannerWindowController : MonoBehaviour
 {
-	[CompilerGenerated]
-	private sealed class _003CRegisterWindow_003Ec__AnonStorey29B
-	{
-		internal int layer;
-
-		internal void _003C_003Em__256(GameObject go)
-		{
-			go.layer = layer;
-		}
-	}
-
 	private const float StartBannerShowDelay = 3f;
 
 	public BannerWindow[] bannerWindows;
 
-	public static bool firstScreen = true;
+	public static bool firstScreen;
 
 	[NonSerialized]
 	public AdvertisementController advertiseController;
 
-	private readonly int BannerWindowCount = Enum.GetNames(typeof(BannerWindowType)).Length;
+	private readonly int BannerWindowCount = (int)Enum.GetNames(typeof(BannerWindowType)).Length;
 
 	private Queue<BannerWindow> _bannerQueue;
 
@@ -47,156 +37,34 @@ public class BannerWindowController : MonoBehaviour
 
 	private bool _isBlockShowForNewPlayer;
 
-	public static BannerWindowController SharedController { get; private set; }
-
 	internal bool IsAnyBannerShown
 	{
 		get
 		{
-			return _currentBanner != null;
+			return this._currentBanner != null;
 		}
+	}
+
+	public static BannerWindowController SharedController
+	{
+		get;
+		private set;
+	}
+
+	static BannerWindowController()
+	{
+		BannerWindowController.firstScreen = true;
 	}
 
 	private BannerWindowController()
 	{
-		_bannerShowed = new bool[BannerWindowCount];
-		_needShowBanner = new bool[BannerWindowCount];
-	}
-
-	private void Awake()
-	{
-		SharedController = this;
-	}
-
-	private void Start()
-	{
-		_currentBanner = null;
-		_bannerQueue = new Queue<BannerWindow>();
-		_someBannerShown = false;
-		_whenStart = Time.realtimeSinceStartup + 3f;
-		if (StarterPackController.Get != null)
-		{
-			StarterPackController.Get.CheckShowStarterPack();
-			StarterPackController.Get.UpdateCountShownWindowByTimeCondition();
-		}
-		PromoActionsManager.UpdateDaysOfValorShownCondition();
-		_isBlockShowForNewPlayer = !IsBannersCanShowAfterNewInstall();
+		this._bannerShowed = new bool[this.BannerWindowCount];
+		this._needShowBanner = new bool[this.BannerWindowCount];
 	}
 
 	public void AddBannersTimeout(float seconds)
 	{
-		_lastCheckTime = Time.realtimeSinceStartup + seconds;
-	}
-
-	private void OnDestroy()
-	{
-		SharedController = null;
-		_bannerQueue = null;
-		advertiseController = null;
-		firstScreen = false;
-	}
-
-	private IEnumerator OnApplicationPause(bool pause)
-	{
-		if (!pause)
-		{
-			yield return null;
-			yield return null;
-			yield return null;
-			if (StarterPackController.Get != null)
-			{
-				StarterPackController.Get.UpdateCountShownWindowByTimeCondition();
-			}
-			PromoActionsManager.UpdateDaysOfValorShownCondition();
-			_isBlockShowForNewPlayer = !IsBannersCanShowAfterNewInstall();
-		}
-	}
-
-	public void RegisterWindow(BannerWindow window, BannerWindowType windowType)
-	{
-		_003CRegisterWindow_003Ec__AnonStorey29B _003CRegisterWindow_003Ec__AnonStorey29B = new _003CRegisterWindow_003Ec__AnonStorey29B();
-		if (bannerWindows.Length < (int)(windowType + 1))
-		{
-			List<BannerWindow> list = bannerWindows.ToList();
-			while (list.Count() < (int)(windowType + 1))
-			{
-				list.Add(null);
-			}
-			bannerWindows = list.ToArray();
-		}
-		bannerWindows[(int)windowType] = window;
-		_003CRegisterWindow_003Ec__AnonStorey29B.layer = LayerMask.NameToLayer("Banners");
-		window.gameObject.Descendants().ForEach(_003CRegisterWindow_003Ec__AnonStorey29B._003C_003Em__256);
-	}
-
-	private BannerWindow ShowBannerWindow(BannerWindowType windowType)
-	{
-		if (bannerWindows.Length < 0 || (int)windowType > bannerWindows.Length - 1)
-		{
-			return null;
-		}
-		if (bannerWindows[(int)windowType] == null)
-		{
-			return null;
-		}
-		if (bannerWindows[(int)windowType].gameObject.activeSelf)
-		{
-			return null;
-		}
-		BannerWindow bannerWindow = bannerWindows[(int)windowType];
-		if (_currentBanner == null)
-		{
-			_currentBanner = bannerWindow;
-			_currentBanner.type = windowType;
-			bannerWindow.Show();
-		}
-		else
-		{
-			_bannerQueue.Enqueue(bannerWindow);
-		}
-		return bannerWindow;
-	}
-
-	public void HideBannerWindowNoShowNext()
-	{
-		if (_currentBanner != null)
-		{
-			_currentBanner.Hide();
-			_currentBanner = null;
-		}
-	}
-
-	public void ClearBannerStates()
-	{
-		_bannerShowed = new bool[BannerWindowCount];
-		_needShowBanner = new bool[BannerWindowCount];
-	}
-
-	public void HideBannerWindow()
-	{
-		BuySmileBannerController.openedFromPromoActions = false;
-		HideBannerWindowNoShowNext();
-		if (_bannerQueue.Count > 0)
-		{
-			(_currentBanner = _bannerQueue.Dequeue()).Show();
-		}
-	}
-
-	private void ShowAdmobBanner()
-	{
-		if (!(AdmobPerelivWindow.admobTexture == null) && !string.IsNullOrEmpty(AdmobPerelivWindow.admobUrl))
-		{
-			ShowBannerWindow(BannerWindowType.Admob);
-		}
-	}
-
-	public void AdmobBannerExitClick()
-	{
-		ButtonClickSound.Instance.PlayClick();
-		HideBannerWindow();
-		_bannerShowed[2] = false;
-		_needShowBanner[2] = false;
-		ResetStateBannerShowed(BannerWindowType.Admob);
+		this._lastCheckTime = Time.realtimeSinceStartup + seconds;
 	}
 
 	public void AdmobBannerApplyClick()
@@ -205,45 +73,106 @@ public class BannerWindowController : MonoBehaviour
 		{
 			Dictionary<string, string> levelAndTierParameters = FlurryPluginWrapper.LevelAndTierParameters;
 			levelAndTierParameters.Add("Context", AdmobPerelivWindow.Context);
-			FlurryPluginWrapper.LogEventAndDublicateToConsole("Replace Admob Pereliv Opened", levelAndTierParameters);
+			FlurryPluginWrapper.LogEventAndDublicateToConsole("Replace Admob Pereliv Opened", levelAndTierParameters, true);
 		}
 		Application.OpenURL(AdmobPerelivWindow.admobUrl);
 	}
 
-	private void ShowAdvertisementBanner(AdvertisementController advertisementController)
+	public void AdmobBannerExitClick()
 	{
-		if (!(advertisementController.AdvertisementTexture == null))
-		{
-			advertiseController = advertisementController;
-			BannerWindow bannerWindow = ShowBannerWindow(BannerWindowType.Advertisement);
-			if (!(bannerWindow == null))
-			{
-				bannerWindow.SetBackgroundImage(advertisementController.AdvertisementTexture);
-				bannerWindow.SetEnableExitButton(PromoActionsManager.Advert.btnClose);
-			}
-		}
+		ButtonClickSound.Instance.PlayClick();
+		this.HideBannerWindow();
+		this._bannerShowed[2] = false;
+		this._needShowBanner[2] = false;
+		this.ResetStateBannerShowed(BannerWindowType.Admob);
+	}
+
+	public void AdvertBannerApplyClick()
+	{
+		ButtonClickSound.Instance.PlayClick();
+		this.advertiseController.Close();
+		this.UpdateAdvertShownCount();
+		Application.OpenURL(PromoActionsManager.Advert.adUrl);
+		this.HideBannerWindow();
 	}
 
 	public void AdvertBannerExitClick()
 	{
 		ButtonClickSound.Instance.PlayClick();
-		advertiseController.Close();
-		UpdateAdvertShownCount();
-		HideBannerWindow();
+		this.advertiseController.Close();
+		this.UpdateAdvertShownCount();
+		this.HideBannerWindow();
 	}
 
-	public void NewVersionBannerExitClick()
+	private void Awake()
 	{
-		ButtonClickSound.Instance.PlayClick();
-		UpdateNewVersionShownCount();
-		HideBannerWindow();
+		BannerWindowController.SharedController = this;
 	}
 
-	private static void UpdateNewVersionShownCount()
+	private void CheckBannersShowConditions()
 	{
-		PlayerPrefs.SetInt(Defs.UpdateAvailableShownTimesSN, PlayerPrefs.GetInt(Defs.UpdateAvailableShownTimesSN, 3) - 1);
-		PlayerPrefs.SetString(Defs.LastTimeUpdateAvailableShownSN, DateTimeOffset.Now.ToString("s"));
-		PlayerPrefs.Save();
+		if (PromoActionsManager.sharedManager == null)
+		{
+			return;
+		}
+		if (AdmobPerelivWindow.admobTexture != null && !string.IsNullOrEmpty(AdmobPerelivWindow.admobUrl) && !this._bannerShowed[2])
+		{
+			this._bannerShowed[2] = true;
+			this._needShowBanner[2] = true;
+		}
+		this.CheckDownloadAdvertisement();
+		if (this.IsAdvertisementDownloading())
+		{
+			return;
+		}
+		if (PromoActionsManager.Advert.enabled && this.advertiseController.CurrentState == AdvertisementController.State.Complete && !this._bannerShowed[5])
+		{
+			this._bannerShowed[5] = true;
+			this._needShowBanner[5] = true;
+		}
+		if (!BannerWindowController.firstScreen && PromoActionsManager.sharedManager.IsDayOfValorEventActive && TrainingController.TrainingCompleted && PlayerPrefs.GetInt("DaysOfValorShownCount", 1) > 0 && !this._bannerShowed[6])
+		{
+			this._bannerShowed[6] = true;
+			this._needShowBanner[6] = true;
+		}
+		if (ConnectSceneNGUIController.sharedController != null && ConnectSceneNGUIController.isReturnFromGame && !ReviewController.IsNeedActive && !ReviewHUDWindow.isShow && PromoActionsManager.sharedManager.IsEventX3Active && TrainingController.TrainingCompleted && PlayerPrefs.GetInt(Defs.EventX3WindowShownCount, 1) > 0 && !this._bannerShowed[7])
+		{
+			this._bannerShowed[7] = true;
+			this._needShowBanner[7] = true;
+		}
+		if (GlobalGameController.NewVersionAvailable && PlayerPrefs.GetInt(Defs.UpdateAvailableShownTimesSN, 3) > 0 && !this._bannerShowed[9])
+		{
+			this._bannerShowed[9] = true;
+			this._needShowBanner[9] = true;
+		}
+		if (!BannerWindowController.firstScreen && StarterPackController.Get.IsNeedShowEventWindow() && !this._bannerShowed[10])
+		{
+			this._bannerShowed[10] = true;
+			this._needShowBanner[10] = true;
+		}
+	}
+
+	private void CheckDownloadAdvertisement()
+	{
+		if (BuildSettings.BuildTargetPlatform != RuntimePlatform.IPhonePlayer || ExperienceController.sharedController == null)
+		{
+			return;
+		}
+		int num = ExperienceController.sharedController.currentLevel;
+		PromoActionsManager.AdvertInfo advert = PromoActionsManager.Advert;
+		bool flag = (advert.minLevel == -1 ? true : num >= advert.minLevel);
+		bool flag1 = (advert.maxLevel == -1 ? true : num <= advert.maxLevel);
+		bool flag2 = (!advert.showAlways ? PlayerPrefs.GetInt(Defs.AdvertWindowShownCount, 3) > 0 : true);
+		if ((!advert.enabled ? false : this.advertiseController.CurrentState == AdvertisementController.State.Idle) && flag && flag1 && flag2)
+		{
+			this.advertiseController.Run();
+		}
+	}
+
+	public void ClearBannerStates()
+	{
+		this._bannerShowed = new bool[this.BannerWindowCount];
+		this._needShowBanner = new bool[this.BannerWindowCount];
 	}
 
 	private static void ClearNewVersionShownCount()
@@ -253,28 +182,243 @@ public class BannerWindowController : MonoBehaviour
 		PlayerPrefs.Save();
 	}
 
-	public void AdvertBannerApplyClick()
+	public void EventX3ApplyClick()
 	{
-		ButtonClickSound.Instance.PlayClick();
-		advertiseController.Close();
-		UpdateAdvertShownCount();
-		Application.OpenURL(PromoActionsManager.Advert.adUrl);
-		HideBannerWindow();
+		this.EventX3ExitClick();
+		if (MainMenuController.sharedController != null)
+		{
+			MainMenuController.sharedController.ShowBankWindow();
+			return;
+		}
+		if (ConnectSceneNGUIController.sharedController == null)
+		{
+			return;
+		}
+		ConnectSceneNGUIController.sharedController.ShowBankWindow();
 	}
 
-	public void NewVersionBannerApplyClick()
+	public void EventX3ExitClick()
 	{
-		ButtonClickSound.Instance.PlayClick();
-		ClearNewVersionShownCount();
-		Application.OpenURL(MainMenu.RateUsURL);
-		HideBannerWindow();
+		ButtonClickSound.TryPlayClick();
+		this.UpdateEventX3ShownCount();
+		this.HideBannerWindow();
 	}
 
 	public void EverydayRewardApplyClick()
 	{
 		ButtonClickSound.TryPlayClick();
-		TakeEverydayRewardForPlayer();
-		HideBannerWindow();
+		this.TakeEverydayRewardForPlayer();
+		this.HideBannerWindow();
+	}
+
+	public void ForceShowBanner(BannerWindowType windowType)
+	{
+		if (this._currentBanner == null)
+		{
+			this.ShowBannerWindow(windowType);
+			return;
+		}
+		if (this._currentBanner.type != windowType)
+		{
+			this.HideBannerWindow();
+			this.ShowBannerWindow(windowType);
+		}
+	}
+
+	public void HideBannerWindow()
+	{
+		BuySmileBannerController.openedFromPromoActions = false;
+		this.HideBannerWindowNoShowNext();
+		if (this._bannerQueue.Count > 0)
+		{
+			BannerWindow bannerWindow = this._bannerQueue.Dequeue();
+			this._currentBanner = bannerWindow;
+			bannerWindow.Show();
+		}
+	}
+
+	public void HideBannerWindowNoShowNext()
+	{
+		if (this._currentBanner != null)
+		{
+			this._currentBanner.Hide();
+			this._currentBanner = null;
+		}
+	}
+
+	private bool IsAdvertisementDownloading()
+	{
+		if (this.advertiseController == null)
+		{
+			return false;
+		}
+		AdvertisementController.State currentState = this.advertiseController.CurrentState;
+		return (currentState == AdvertisementController.State.Idle || currentState == AdvertisementController.State.Complete ? false : currentState != AdvertisementController.State.Error);
+	}
+
+	private bool IsBannersCanShowAfterNewInstall()
+	{
+		DateTime dateTime;
+		if (string.IsNullOrEmpty(Defs.StartTimeShowBannersString))
+		{
+			return true;
+		}
+		if (!DateTime.TryParse(Defs.StartTimeShowBannersString, out dateTime))
+		{
+			return true;
+		}
+		return ((DateTime.UtcNow - dateTime).TotalMinutes >= 1440 ? true : Defs.countReturnInConnectScene >= 4);
+	}
+
+	public bool IsBannerShow(BannerWindowType bannerType)
+	{
+		if (this._currentBanner == null)
+		{
+			return false;
+		}
+		return this._currentBanner.type == bannerType;
+	}
+
+	public void NewVersionBannerApplyClick()
+	{
+		ButtonClickSound.Instance.PlayClick();
+		BannerWindowController.ClearNewVersionShownCount();
+		Application.OpenURL(MainMenu.RateUsURL);
+		this.HideBannerWindow();
+	}
+
+	public void NewVersionBannerExitClick()
+	{
+		ButtonClickSound.Instance.PlayClick();
+		BannerWindowController.UpdateNewVersionShownCount();
+		this.HideBannerWindow();
+	}
+
+	[DebuggerHidden]
+	private IEnumerator OnApplicationPause(bool pause)
+	{
+		BannerWindowController.u003cOnApplicationPauseu003ec__Iterator10A variable = null;
+		return variable;
+	}
+
+	private void OnDestroy()
+	{
+		BannerWindowController.SharedController = null;
+		this._bannerQueue = null;
+		this.advertiseController = null;
+		BannerWindowController.firstScreen = false;
+	}
+
+	public void RegisterWindow(BannerWindow window, BannerWindowType windowType)
+	{
+		int num = (int)windowType;
+		if ((int)this.bannerWindows.Length < num + 1)
+		{
+			List<BannerWindow> list = this.bannerWindows.ToList<BannerWindow>();
+			while (list.Count<BannerWindow>() < num + 1)
+			{
+				list.Add(null);
+			}
+			this.bannerWindows = list.ToArray();
+		}
+		this.bannerWindows[num] = window;
+		int layer = LayerMask.NameToLayer("Banners");
+		window.gameObject.Descendants().ForEach<GameObject>((GameObject go) => go.layer = layer);
+	}
+
+	public void ResetStateBannerShowed(BannerWindowType windowType)
+	{
+		int num = (int)windowType;
+		if ((int)this.bannerWindows.Length < 0 || num > (int)this.bannerWindows.Length - 1)
+		{
+			return;
+		}
+		this._bannerShowed[num] = false;
+		this._someBannerShown = false;
+	}
+
+	private void ShowAdmobBanner()
+	{
+		if (AdmobPerelivWindow.admobTexture == null || string.IsNullOrEmpty(AdmobPerelivWindow.admobUrl))
+		{
+			return;
+		}
+		this.ShowBannerWindow(BannerWindowType.Admob);
+	}
+
+	private void ShowAdvertisementBanner(AdvertisementController advertisementController)
+	{
+		if (advertisementController.AdvertisementTexture == null)
+		{
+			return;
+		}
+		this.advertiseController = advertisementController;
+		BannerWindow bannerWindow = this.ShowBannerWindow(BannerWindowType.Advertisement);
+		if (bannerWindow == null)
+		{
+			return;
+		}
+		bannerWindow.SetBackgroundImage(advertisementController.AdvertisementTexture);
+		bannerWindow.SetEnableExitButton(PromoActionsManager.Advert.btnClose);
+	}
+
+	private BannerWindow ShowBannerWindow(BannerWindowType windowType)
+	{
+		int num = (int)windowType;
+		if ((int)this.bannerWindows.Length < 0 || num > (int)this.bannerWindows.Length - 1)
+		{
+			return null;
+		}
+		if (this.bannerWindows[num] == null)
+		{
+			return null;
+		}
+		if (this.bannerWindows[num].gameObject.activeSelf)
+		{
+			return null;
+		}
+		BannerWindow bannerWindow = this.bannerWindows[num];
+		if (this._currentBanner != null)
+		{
+			this._bannerQueue.Enqueue(bannerWindow);
+		}
+		else
+		{
+			this._currentBanner = bannerWindow;
+			this._currentBanner.type = windowType;
+			bannerWindow.Show();
+		}
+		return bannerWindow;
+	}
+
+	public void SorryBannerExitButtonClick()
+	{
+		MainMenuController.sharedController.stubLoading.SetActive(false);
+		this.HideBannerWindow();
+	}
+
+	private void Start()
+	{
+		this._currentBanner = null;
+		this._bannerQueue = new Queue<BannerWindow>();
+		this._someBannerShown = false;
+		this._whenStart = Time.realtimeSinceStartup + 3f;
+		if (StarterPackController.Get != null)
+		{
+			StarterPackController.Get.CheckShowStarterPack();
+			StarterPackController.Get.UpdateCountShownWindowByTimeCondition();
+		}
+		PromoActionsManager.UpdateDaysOfValorShownCondition();
+		this._isBlockShowForNewPlayer = !this.IsBannersCanShowAfterNewInstall();
+	}
+
+	internal void SubmitCurrentBanner()
+	{
+		if (this._currentBanner == null)
+		{
+			return;
+		}
+		this._currentBanner.Submit();
 	}
 
 	private void TakeEverydayRewardForPlayer()
@@ -285,11 +429,11 @@ public class BannerWindowController : MonoBehaviour
 			MainMenu.sharedMenu.isShowAvard = false;
 		}
 		BankController.GiveInitialNumOfCoins();
-		int @int = Storager.getInt("Coins", false);
-		Storager.setInt("Coins", @int + 3, false);
-		AnalyticsFacade.CurrencyAccrual(3, "Coins");
+		int num = Storager.getInt("Coins", false);
+		Storager.setInt("Coins", num + 3, false);
+		AnalyticsFacade.CurrencyAccrual(3, "Coins", AnalyticsConstants.AccrualType.Earned);
 		FlurryEvents.LogCoinsGained("Main Menu", 3);
-		CoinsMessage.FireCoinsAddedEvent();
+		CoinsMessage.FireCoinsAddedEvent(false, 2);
 		AudioClip audioClip = Resources.Load("coin_get") as AudioClip;
 		if (audioClip != null && Defs.isSoundFX)
 		{
@@ -297,30 +441,82 @@ public class BannerWindowController : MonoBehaviour
 		}
 	}
 
-	public void SorryBannerExitButtonClick()
+	private void Update()
 	{
-		MainMenuController.sharedController.stubLoading.SetActive(false);
-		HideBannerWindow();
+		if (this._isBlockShowForNewPlayer)
+		{
+			return;
+		}
+		if (Time.realtimeSinceStartup < this._whenStart)
+		{
+			return;
+		}
+		if (Time.realtimeSinceStartup - this._lastCheckTime >= 1f)
+		{
+			this.CheckBannersShowConditions();
+			for (int i = 0; i < (int)this._needShowBanner.Length; i++)
+			{
+				if ((!this._someBannerShown || i == 2) && this._needShowBanner[i] && !ActivityIndicator.IsActiveIndicator)
+				{
+					if (MainMenuController.IsShowRentExpiredPoint() || MainMenuController.sharedController != null && (MainMenuController.sharedController.FreePanelIsActive || MainMenuController.sharedController.singleModePanel.activeSelf))
+					{
+						break;
+					}
+					else if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
+					{
+						break;
+					}
+					else if (!FreeAwardController.FreeAwardChestIsInIdleState)
+					{
+						break;
+					}
+					else if (MainMenuController.SavedShwonLobbyLevelIsLessThanActual())
+					{
+						break;
+					}
+					else if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
+					{
+						break;
+					}
+					else if (i != 6 || !SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene) || Storager.getInt(Defs.ShownLobbyLevelSN, false) >= 3)
+					{
+						if (i != 1 || SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene))
+						{
+							if (i != 0 || SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene))
+							{
+								this._needShowBanner[i] = false;
+								if (i == 2)
+								{
+									this.ShowAdmobBanner();
+								}
+								else if (i != 5)
+								{
+									this.ShowBannerWindow((BannerWindowType)i);
+								}
+								else
+								{
+									this.ShowAdvertisementBanner(this.advertiseController);
+								}
+								this._someBannerShown = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+			this._lastCheckTime = Time.realtimeSinceStartup;
+		}
 	}
 
-	public void EventX3ExitClick()
+	private void UpdateAdvertShownCount()
 	{
-		ButtonClickSound.TryPlayClick();
-		UpdateEventX3ShownCount();
-		HideBannerWindow();
-	}
-
-	public void EventX3ApplyClick()
-	{
-		EventX3ExitClick();
-		if (MainMenuController.sharedController != null)
+		if (PromoActionsManager.Advert.showAlways)
 		{
-			MainMenuController.sharedController.ShowBankWindow();
+			return;
 		}
-		else if (ConnectSceneNGUIController.sharedController != null)
-		{
-			ConnectSceneNGUIController.sharedController.ShowBankWindow();
-		}
+		PlayerPrefs.SetInt(Defs.AdvertWindowShownCount, PlayerPrefs.GetInt(Defs.AdvertWindowShownCount, 3) - 1);
+		PlayerPrefs.SetString(Defs.AdvertWindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
+		PlayerPrefs.Save();
 	}
 
 	private void UpdateEventX3ShownCount()
@@ -329,173 +525,10 @@ public class BannerWindowController : MonoBehaviour
 		PlayerPrefs.Save();
 	}
 
-	private void UpdateAdvertShownCount()
+	private static void UpdateNewVersionShownCount()
 	{
-		if (!PromoActionsManager.Advert.showAlways)
-		{
-			PlayerPrefs.SetInt(Defs.AdvertWindowShownCount, PlayerPrefs.GetInt(Defs.AdvertWindowShownCount, 3) - 1);
-			PlayerPrefs.SetString(Defs.AdvertWindowShownLastTime, PromoActionsManager.CurrentUnixTime.ToString());
-			PlayerPrefs.Save();
-		}
-	}
-
-	private bool IsBannersCanShowAfterNewInstall()
-	{
-		if (string.IsNullOrEmpty(Defs.StartTimeShowBannersString))
-		{
-			return true;
-		}
-		DateTime result;
-		if (!DateTime.TryParse(Defs.StartTimeShowBannersString, out result))
-		{
-			return true;
-		}
-		return (DateTime.UtcNow - result).TotalMinutes >= 1440.0 || Defs.countReturnInConnectScene >= 4;
-	}
-
-	private void Update()
-	{
-		if (_isBlockShowForNewPlayer || Time.realtimeSinceStartup < _whenStart || !(Time.realtimeSinceStartup - _lastCheckTime >= 1f))
-		{
-			return;
-		}
-		CheckBannersShowConditions();
-		for (int i = 0; i < _needShowBanner.Length; i++)
-		{
-			if ((_someBannerShown && i != 2) || !_needShowBanner[i] || ActivityIndicator.IsActiveIndicator)
-			{
-				continue;
-			}
-			if (MainMenuController.IsShowRentExpiredPoint() || (MainMenuController.sharedController != null && (MainMenuController.sharedController.FreePanelIsActive || MainMenuController.sharedController.singleModePanel.activeSelf)) || (BankController.Instance != null && BankController.Instance.InterfaceEnabled) || !FreeAwardController.FreeAwardChestIsInIdleState || MainMenuController.SavedShwonLobbyLevelIsLessThanActual() || (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown))
-			{
-				break;
-			}
-			if ((i != 6 || !SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene) || Storager.getInt(Defs.ShownLobbyLevelSN, false) >= 3) && (i != 1 || SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene)) && (i != 0 || SceneLoader.ActiveSceneName.Equals(Defs.MainMenuScene)))
-			{
-				_needShowBanner[i] = false;
-				switch (i)
-				{
-				case 2:
-					ShowAdmobBanner();
-					break;
-				case 5:
-					ShowAdvertisementBanner(advertiseController);
-					break;
-				default:
-					ShowBannerWindow((BannerWindowType)i);
-					break;
-				}
-				_someBannerShown = true;
-				break;
-			}
-		}
-		_lastCheckTime = Time.realtimeSinceStartup;
-	}
-
-	private void CheckDownloadAdvertisement()
-	{
-		if (BuildSettings.BuildTargetPlatform == RuntimePlatform.IPhonePlayer && !(ExperienceController.sharedController == null))
-		{
-			int currentLevel = ExperienceController.sharedController.currentLevel;
-			PromoActionsManager.AdvertInfo advert = PromoActionsManager.Advert;
-			bool flag = advert.minLevel == -1 || currentLevel >= advert.minLevel;
-			bool flag2 = advert.maxLevel == -1 || currentLevel <= advert.maxLevel;
-			bool flag3 = advert.showAlways || PlayerPrefs.GetInt(Defs.AdvertWindowShownCount, 3) > 0;
-			if (advert.enabled && advertiseController.CurrentState == AdvertisementController.State.Idle && flag && flag2 && flag3)
-			{
-				advertiseController.Run();
-			}
-		}
-	}
-
-	private bool IsAdvertisementDownloading()
-	{
-		if (advertiseController == null)
-		{
-			return false;
-		}
-		AdvertisementController.State currentState = advertiseController.CurrentState;
-		return currentState != 0 && currentState != AdvertisementController.State.Complete && currentState != AdvertisementController.State.Error;
-	}
-
-	private void CheckBannersShowConditions()
-	{
-		if (PromoActionsManager.sharedManager == null)
-		{
-			return;
-		}
-		if (AdmobPerelivWindow.admobTexture != null && !string.IsNullOrEmpty(AdmobPerelivWindow.admobUrl) && !_bannerShowed[2])
-		{
-			_bannerShowed[2] = true;
-			_needShowBanner[2] = true;
-		}
-		CheckDownloadAdvertisement();
-		if (!IsAdvertisementDownloading())
-		{
-			if (PromoActionsManager.Advert.enabled && advertiseController.CurrentState == AdvertisementController.State.Complete && !_bannerShowed[5])
-			{
-				_bannerShowed[5] = true;
-				_needShowBanner[5] = true;
-			}
-			if (!firstScreen && PromoActionsManager.sharedManager.IsDayOfValorEventActive && TrainingController.TrainingCompleted && PlayerPrefs.GetInt("DaysOfValorShownCount", 1) > 0 && !_bannerShowed[6])
-			{
-				_bannerShowed[6] = true;
-				_needShowBanner[6] = true;
-			}
-			if (ConnectSceneNGUIController.sharedController != null && ConnectSceneNGUIController.isReturnFromGame && !ReviewController.IsNeedActive && !ReviewHUDWindow.isShow && PromoActionsManager.sharedManager.IsEventX3Active && TrainingController.TrainingCompleted && PlayerPrefs.GetInt(Defs.EventX3WindowShownCount, 1) > 0 && !_bannerShowed[7])
-			{
-				_bannerShowed[7] = true;
-				_needShowBanner[7] = true;
-			}
-			if (GlobalGameController.NewVersionAvailable && PlayerPrefs.GetInt(Defs.UpdateAvailableShownTimesSN, 3) > 0 && !_bannerShowed[9])
-			{
-				_bannerShowed[9] = true;
-				_needShowBanner[9] = true;
-			}
-			if (!firstScreen && StarterPackController.Get.IsNeedShowEventWindow() && !_bannerShowed[10])
-			{
-				_bannerShowed[10] = true;
-				_needShowBanner[10] = true;
-			}
-		}
-	}
-
-	public void ResetStateBannerShowed(BannerWindowType windowType)
-	{
-		if (bannerWindows.Length >= 0 && (int)windowType <= bannerWindows.Length - 1)
-		{
-			_bannerShowed[(int)windowType] = false;
-			_someBannerShown = false;
-		}
-	}
-
-	public bool IsBannerShow(BannerWindowType bannerType)
-	{
-		if (_currentBanner == null)
-		{
-			return false;
-		}
-		return _currentBanner.type == bannerType;
-	}
-
-	public void ForceShowBanner(BannerWindowType windowType)
-	{
-		if (_currentBanner == null)
-		{
-			ShowBannerWindow(windowType);
-		}
-		else if (_currentBanner.type != windowType)
-		{
-			HideBannerWindow();
-			ShowBannerWindow(windowType);
-		}
-	}
-
-	internal void SubmitCurrentBanner()
-	{
-		if (!(_currentBanner == null))
-		{
-			_currentBanner.Submit();
-		}
+		PlayerPrefs.SetInt(Defs.UpdateAvailableShownTimesSN, PlayerPrefs.GetInt(Defs.UpdateAvailableShownTimesSN, 3) - 1);
+		PlayerPrefs.SetString(Defs.LastTimeUpdateAvailableShownSN, DateTimeOffset.Now.ToString("s"));
+		PlayerPrefs.Save();
 	}
 }

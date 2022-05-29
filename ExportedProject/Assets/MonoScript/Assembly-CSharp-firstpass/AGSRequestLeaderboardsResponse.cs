@@ -6,43 +6,63 @@ public class AGSRequestLeaderboardsResponse : AGSRequestResponse
 {
 	public List<AGSLeaderboard> leaderboards;
 
+	public AGSRequestLeaderboardsResponse()
+	{
+	}
+
 	public static AGSRequestLeaderboardsResponse FromJSON(string json)
 	{
-		//Discarded unreachable code: IL_00ee, IL_0113
+		AGSRequestLeaderboardsResponse blankResponseWithError;
 		try
 		{
 			AGSRequestLeaderboardsResponse aGSRequestLeaderboardsResponse = new AGSRequestLeaderboardsResponse();
-			Hashtable hashtable = json.hashtableFromJson();
-			aGSRequestLeaderboardsResponse.error = ((!hashtable.ContainsKey("error")) ? string.Empty : hashtable["error"].ToString());
-			aGSRequestLeaderboardsResponse.userData = (hashtable.ContainsKey("userData") ? int.Parse(hashtable["userData"].ToString()) : 0);
+			Hashtable hashtables = json.hashtableFromJson();
+			aGSRequestLeaderboardsResponse.error = (!hashtables.ContainsKey("error") ? string.Empty : hashtables["error"].ToString());
+			aGSRequestLeaderboardsResponse.userData = (!hashtables.ContainsKey("userData") ? 0 : int.Parse(hashtables["userData"].ToString()));
 			aGSRequestLeaderboardsResponse.leaderboards = new List<AGSLeaderboard>();
-			if (hashtable.ContainsKey("leaderboards"))
+			if (hashtables.ContainsKey("leaderboards"))
 			{
-				foreach (Hashtable item in hashtable["leaderboards"] as ArrayList)
+				IEnumerator enumerator = (hashtables["leaderboards"] as ArrayList).GetEnumerator();
+				try
 				{
-					aGSRequestLeaderboardsResponse.leaderboards.Add(AGSLeaderboard.fromHashtable(item));
+					while (enumerator.MoveNext())
+					{
+						Hashtable current = (Hashtable)enumerator.Current;
+						aGSRequestLeaderboardsResponse.leaderboards.Add(AGSLeaderboard.fromHashtable(current));
+					}
+				}
+				finally
+				{
+					IDisposable disposable = enumerator as IDisposable;
+					if (disposable == null)
+					{
+					}
+					disposable.Dispose();
 				}
 			}
-			return aGSRequestLeaderboardsResponse;
+			blankResponseWithError = aGSRequestLeaderboardsResponse;
 		}
-		catch (Exception ex)
+		catch (Exception exception)
 		{
-			AGSClient.LogGameCircleError(ex.ToString());
-			return GetBlankResponseWithError("ERROR_PARSING_JSON");
+			AGSClient.LogGameCircleError(exception.ToString());
+			blankResponseWithError = AGSRequestLeaderboardsResponse.GetBlankResponseWithError("ERROR_PARSING_JSON", 0);
 		}
+		return blankResponseWithError;
 	}
 
 	public static AGSRequestLeaderboardsResponse GetBlankResponseWithError(string error, int userData = 0)
 	{
-		AGSRequestLeaderboardsResponse aGSRequestLeaderboardsResponse = new AGSRequestLeaderboardsResponse();
-		aGSRequestLeaderboardsResponse.error = error;
-		aGSRequestLeaderboardsResponse.userData = userData;
-		aGSRequestLeaderboardsResponse.leaderboards = new List<AGSLeaderboard>();
+		AGSRequestLeaderboardsResponse aGSRequestLeaderboardsResponse = new AGSRequestLeaderboardsResponse()
+		{
+			error = error,
+			userData = userData,
+			leaderboards = new List<AGSLeaderboard>()
+		};
 		return aGSRequestLeaderboardsResponse;
 	}
 
 	public static AGSRequestLeaderboardsResponse GetPlatformNotSupportedResponse(int userData)
 	{
-		return GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
+		return AGSRequestLeaderboardsResponse.GetBlankResponseWithError("PLATFORM_NOT_SUPPORTED", userData);
 	}
 }

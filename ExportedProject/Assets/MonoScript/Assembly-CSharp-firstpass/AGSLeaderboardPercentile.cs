@@ -15,6 +15,10 @@ public class AGSLeaderboardPercentile
 
 	public AGSPlayer player;
 
+	public AGSLeaderboardPercentile()
+	{
+	}
+
 	public static AGSLeaderboardPercentile fromHashTable(Hashtable percentilesHashtable)
 	{
 		AGSLeaderboardPercentile aGSLeaderboardPercentile = new AGSLeaderboardPercentile();
@@ -23,9 +27,9 @@ public class AGSLeaderboardPercentile
 			aGSLeaderboardPercentile.percentile = int.Parse(percentilesHashtable["percentile"].ToString());
 			aGSLeaderboardPercentile.score = long.Parse(percentilesHashtable["score"].ToString());
 		}
-		catch (FormatException ex)
+		catch (FormatException formatException)
 		{
-			AGSClient.Log("Unable to parse percentile item " + ex.Message);
+			AGSClient.Log(string.Concat("Unable to parse percentile item ", formatException.Message));
 		}
 		aGSLeaderboardPercentile.player = AGSPlayer.fromHashtable(percentilesHashtable["player"] as Hashtable);
 		return aGSLeaderboardPercentile;
@@ -33,6 +37,6 @@ public class AGSLeaderboardPercentile
 
 	public override string ToString()
 	{
-		return string.Format("player: {0}, score: {1}, percentile: {2}", player.ToString(), score, percentile);
+		return string.Format("player: {0}, score: {1}, percentile: {2}", this.player.ToString(), this.score, this.percentile);
 	}
 }

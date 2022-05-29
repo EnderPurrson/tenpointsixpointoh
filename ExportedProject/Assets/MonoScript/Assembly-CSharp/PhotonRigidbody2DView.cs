@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("Photon Networking/Photon Rigidbody 2D View")]
@@ -13,33 +14,37 @@ public class PhotonRigidbody2DView : MonoBehaviour
 
 	private Rigidbody2D m_Body;
 
+	public PhotonRigidbody2DView()
+	{
+	}
+
 	private void Awake()
 	{
-		m_Body = GetComponent<Rigidbody2D>();
+		this.m_Body = base.GetComponent<Rigidbody2D>();
 	}
 
 	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
 	{
-		if (stream.isWriting)
+		if (!stream.isWriting)
 		{
-			if (m_SynchronizeVelocity)
+			if (this.m_SynchronizeVelocity)
 			{
-				stream.SendNext(m_Body.velocity);
+				this.m_Body.velocity = (Vector2)stream.ReceiveNext();
 			}
-			if (m_SynchronizeAngularVelocity)
+			if (this.m_SynchronizeAngularVelocity)
 			{
-				stream.SendNext(m_Body.angularVelocity);
+				this.m_Body.angularVelocity = (float)stream.ReceiveNext();
 			}
 		}
 		else
 		{
-			if (m_SynchronizeVelocity)
+			if (this.m_SynchronizeVelocity)
 			{
-				m_Body.velocity = (Vector2)stream.ReceiveNext();
+				stream.SendNext(this.m_Body.velocity);
 			}
-			if (m_SynchronizeAngularVelocity)
+			if (this.m_SynchronizeAngularVelocity)
 			{
-				m_Body.angularVelocity = (float)stream.ReceiveNext();
+				stream.SendNext(this.m_Body.angularVelocity);
 			}
 		}
 	}

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,8 +18,12 @@ public sealed class LoadingNGUIController : MonoBehaviour
 	{
 		set
 		{
-			sceneToLoad = value;
+			this.sceneToLoad = value;
 		}
+	}
+
+	public LoadingNGUIController()
+	{
 	}
 
 	public void Init()
@@ -28,131 +33,138 @@ public sealed class LoadingNGUIController : MonoBehaviour
 		{
 			return;
 		}
-		string text = textAsset.text;
-		if (text == null)
+		string str = textAsset.text;
+		if (str == null)
 		{
 			return;
 		}
-		string[] array = text.Split('\r', '\n');
-		Dictionary<string, List<string>> dictionary = new Dictionary<string, List<string>>();
-		string[] array2 = array;
-		foreach (string text2 in array2)
+		string[] strArrays = str.Split(new char[] { '\r', '\n' });
+		Dictionary<string, List<string>> strs = new Dictionary<string, List<string>>();
+		string[] strArrays1 = strArrays;
+		for (int i = 0; i < (int)strArrays1.Length; i++)
 		{
-			string[] array3 = text2.Split('\t');
-			if (array3.Length < 2 || array3[0] == null || sceneToLoad == null || !array3[0].Equals(sceneToLoad))
+			string str1 = strArrays1[i];
+			string[] tag = str1.Split(new char[] { '\t' });
+			if ((int)tag.Length >= 2)
 			{
-				continue;
-			}
-			List<string> list = new List<string>();
-			for (int j = 1; j < array3.Length; j++)
-			{
-				if (array3[j] != null && array3[j].Equals("armor"))
+				if (tag[0] != null && this.sceneToLoad != null && tag[0].Equals(this.sceneToLoad))
 				{
-					list.AddRange(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0]);
-				}
-				else
-				{
-					if (array3[j] != null && array3[j].Equals("hat"))
+					List<string> strs1 = new List<string>();
+					for (int j = 1; j < (int)tag.Length; j++)
 					{
-						continue;
-					}
-					for (int k = 0; k < WeaponManager.sharedManager.weaponsInGame.Length; k++)
-					{
-						if (WeaponManager.sharedManager.weaponsInGame[k].name.Equals(array3[j]))
+						if (tag[j] != null && tag[j].Equals("armor"))
 						{
-							array3[j] = ItemDb.GetByPrefabName(WeaponManager.sharedManager.weaponsInGame[k].name).Tag;
-							array3[j] = PromoActionsGUIController.FilterForLoadings(array3[j], list) ?? string.Empty;
-							break;
+							strs1.AddRange(Wear.wear[ShopNGUIController.CategoryNames.ArmorCategory][0]);
+						}
+						else if (tag[j] == null || !tag[j].Equals("hat"))
+						{
+							int num = 0;
+							while (num < (int)WeaponManager.sharedManager.weaponsInGame.Length)
+							{
+								if (!WeaponManager.sharedManager.weaponsInGame[num].name.Equals(tag[j]))
+								{
+									num++;
+								}
+								else
+								{
+									tag[j] = ItemDb.GetByPrefabName(WeaponManager.sharedManager.weaponsInGame[num].name).Tag;
+									tag[j] = PromoActionsGUIController.FilterForLoadings(tag[j], strs1) ?? string.Empty;
+									break;
+								}
+							}
+							if (!string.IsNullOrEmpty(tag[j]))
+							{
+								strs1.Add(tag[j]);
+							}
 						}
 					}
-					if (!string.IsNullOrEmpty(array3[j]))
+					foreach (string str2 in PromoActionsGUIController.FilterPurchases(strs1, true, true, false, true))
 					{
-						list.Add(array3[j]);
+						strs1.Remove(str2);
+					}
+					if (!strs.ContainsKey(tag[0]))
+					{
+						strs.Add(tag[0], strs1);
+					}
+					else
+					{
+						strs[tag[0]] = strs1;
 					}
 				}
 			}
-			List<string> list2 = PromoActionsGUIController.FilterPurchases(list, true);
-			foreach (string item in list2)
+		}
+		if (this.sceneToLoad != null)
+		{
+			if (strs.ContainsKey(this.sceneToLoad ?? string.Empty))
 			{
-				list.Remove(item);
+				List<string> item = strs[this.sceneToLoad ?? string.Empty];
+				if (item != null)
+				{
+					for (int k = 0; k < item.Count; k++)
+					{
+						GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("PromoItemForLoading") as GameObject);
+						vector3.transform.parent = this.gunsPoint;
+						vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+						vector3.transform.localPosition = new Vector3(-256f * (float)item.Count / 2f + 128f + (float)k * 256f, 0f, 0f);
+						PromoItemForLoading component = vector3.GetComponent<PromoItemForLoading>();
+						int num1 = PromoActionsGUIController.CatForTg(item[k]);
+						string str3 = PromoActionsGUIController.IconNameForKey(item[k], num1);
+						Texture texture = Resources.Load<Texture>(string.Concat("OfferIcons/", str3));
+						UITexture[] uITextureArray = component.texture;
+						for (int l = 0; l < (int)uITextureArray.Length; l++)
+						{
+							UITexture uITexture = uITextureArray[l];
+							if (texture != null)
+							{
+								uITexture.mainTexture = texture;
+							}
+						}
+						UILabel[] uILabelArray = component.label;
+						for (int m = 0; m < (int)uILabelArray.Length; m++)
+						{
+							UILabel uILabel = uILabelArray[m];
+							uILabel.text = ItemDb.GetItemName(item[k], (ShopNGUIController.CategoryNames)num1).Trim().Replace(" -", "-");
+						}
+					}
+				}
 			}
-			if (dictionary.ContainsKey(array3[0]))
+		}
+		this.recommendedForThisMap.gameObject.SetActive((this.sceneToLoad == null || !strs.ContainsKey(this.sceneToLoad) || strs[this.sceneToLoad] == null ? false : strs[this.sceneToLoad].Count > 0));
+		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(this.sceneToLoad);
+		UILabel[] uILabelArray1 = this.levelNameLabels;
+		for (int n = 0; n < (int)uILabelArray1.Length; n++)
+		{
+			UILabel upper = uILabelArray1[n];
+			if (!(infoScene != null) || string.IsNullOrEmpty(this.sceneToLoad))
 			{
-				dictionary[array3[0]] = list;
+				upper.gameObject.SetActive(false);
 			}
 			else
 			{
-				dictionary.Add(array3[0], list);
+				upper.gameObject.SetActive(true);
+				string str4 = infoScene.TranslatePreviewName.Replace("\n", " ");
+				upper.text = str4.Replace("\r", " ").ToUpper();
 			}
-		}
-		if (sceneToLoad != null && dictionary.ContainsKey(sceneToLoad ?? string.Empty))
-		{
-			List<string> list3 = dictionary[sceneToLoad ?? string.Empty];
-			if (list3 != null)
-			{
-				for (int l = 0; l < list3.Count; l++)
-				{
-					GameObject gameObject = Object.Instantiate(Resources.Load("PromoItemForLoading") as GameObject);
-					gameObject.transform.parent = gunsPoint;
-					gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
-					gameObject.transform.localPosition = new Vector3(-256f * (float)list3.Count / 2f + 128f + (float)l * 256f, 0f, 0f);
-					PromoItemForLoading component = gameObject.GetComponent<PromoItemForLoading>();
-					int num = PromoActionsGUIController.CatForTg(list3[l]);
-					string text3 = PromoActionsGUIController.IconNameForKey(list3[l], num);
-					Texture texture = Resources.Load<Texture>("OfferIcons/" + text3);
-					UITexture[] texture2 = component.texture;
-					foreach (UITexture uITexture in texture2)
-					{
-						if (texture != null)
-						{
-							uITexture.mainTexture = texture;
-						}
-					}
-					UILabel[] label = component.label;
-					foreach (UILabel uILabel in label)
-					{
-						uILabel.text = ItemDb.GetItemName(list3[l], (ShopNGUIController.CategoryNames)num).Trim().Replace(" -", "-");
-					}
-				}
-			}
-		}
-		recommendedForThisMap.gameObject.SetActive(sceneToLoad != null && dictionary.ContainsKey(sceneToLoad) && dictionary[sceneToLoad] != null && dictionary[sceneToLoad].Count > 0);
-		SceneInfo infoScene = SceneInfoController.instance.GetInfoScene(sceneToLoad);
-		UILabel[] array4 = levelNameLabels;
-		foreach (UILabel uILabel2 in array4)
-		{
-			if (infoScene != null && !string.IsNullOrEmpty(sceneToLoad))
-			{
-				uILabel2.gameObject.SetActive(true);
-				string translatePreviewName = infoScene.TranslatePreviewName;
-				translatePreviewName = translatePreviewName.Replace("\n", " ");
-				translatePreviewName = translatePreviewName.Replace("\r", " ");
-				translatePreviewName = (uILabel2.text = translatePreviewName.ToUpper());
-			}
-			else
-			{
-				uILabel2.gameObject.SetActive(false);
-			}
-		}
-	}
-
-	public void SetEnabledMapName(bool enabled)
-	{
-		for (int i = 0; i < levelNameLabels.Length; i++)
-		{
-			levelNameLabels[i].gameObject.SetActive(enabled);
 		}
 	}
 
 	public void SetEnabledGunsScroll(bool enabled)
 	{
-		if (recommendedForThisMap != null)
+		if (this.recommendedForThisMap != null)
 		{
-			recommendedForThisMap.gameObject.SetActive(enabled);
+			this.recommendedForThisMap.gameObject.SetActive(enabled);
 		}
-		if (gunsPoint != null)
+		if (this.gunsPoint != null)
 		{
-			gunsPoint.gameObject.SetActive(enabled);
+			this.gunsPoint.gameObject.SetActive(enabled);
+		}
+	}
+
+	public void SetEnabledMapName(bool enabled)
+	{
+		for (int i = 0; i < (int)this.levelNameLabels.Length; i++)
+		{
+			this.levelNameLabels[i].gameObject.SetActive(enabled);
 		}
 	}
 }

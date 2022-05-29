@@ -1,27 +1,39 @@
 using Rilisoft;
+using System;
 using UnityEngine;
 
 public class GravitySetter : MonoBehaviour
 {
-	public static readonly float normalGravity = -9.81f;
+	public readonly static float normalGravity;
 
-	public static readonly float spaceBaseGravity = -6.54f;
+	public readonly static float spaceBaseGravity;
 
-	public static readonly float matrixGravity = -4.9049997f;
+	public readonly static float matrixGravity;
+
+	static GravitySetter()
+	{
+		GravitySetter.normalGravity = -9.81f;
+		GravitySetter.spaceBaseGravity = -6.54f;
+		GravitySetter.matrixGravity = -4.9049997f;
+	}
+
+	public GravitySetter()
+	{
+	}
 
 	private void OnLevelWasLoaded(int lev)
 	{
 		if (SceneLoader.ActiveSceneName.Equals("Space"))
 		{
-			Physics.gravity = new Vector3(0f, spaceBaseGravity, 0f);
+			Physics.gravity = new Vector3(0f, GravitySetter.spaceBaseGravity, 0f);
 		}
-		else if (SceneLoader.ActiveSceneName.Equals("Matrix"))
+		else if (!SceneLoader.ActiveSceneName.Equals("Matrix"))
 		{
-			Physics.gravity = new Vector3(0f, matrixGravity, 0f);
+			Physics.gravity = new Vector3(0f, GravitySetter.normalGravity, 0f);
 		}
 		else
 		{
-			Physics.gravity = new Vector3(0f, normalGravity, 0f);
+			Physics.gravity = new Vector3(0f, GravitySetter.matrixGravity, 0f);
 		}
 	}
 }

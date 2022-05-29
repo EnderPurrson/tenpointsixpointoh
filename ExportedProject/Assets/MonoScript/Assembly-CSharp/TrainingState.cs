@@ -1,3 +1,5 @@
+using System;
+
 internal enum TrainingState
 {
 	None = 0,

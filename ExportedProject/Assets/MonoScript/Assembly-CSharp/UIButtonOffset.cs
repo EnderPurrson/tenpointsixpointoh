@@ -21,50 +21,44 @@ public class UIButtonOffset : MonoBehaviour
 	[NonSerialized]
 	private bool mPressed;
 
-	private void Start()
+	public UIButtonOffset()
 	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mPos = tweenTarget.localPosition;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
 	}
 
 	private void OnDisable()
 	{
-		if (mStarted && tweenTarget != null)
+		if (this.mStarted && this.tweenTarget != null)
 		{
-			TweenPosition component = tweenTarget.GetComponent<TweenPosition>();
+			TweenPosition component = this.tweenTarget.GetComponent<TweenPosition>();
 			if (component != null)
 			{
-				component.value = mPos;
+				component.@value = this.mPos;
 				component.enabled = false;
 			}
 		}
 	}
 
-	private void OnPress(bool isPressed)
+	private void OnDragOut()
 	{
-		mPressed = isPressed;
-		if (base.enabled)
+		if (this.mPressed)
 		{
-			if (!mStarted)
-			{
-				Start();
-			}
-			TweenPosition.Begin(tweenTarget.gameObject, duration, isPressed ? (mPos + pressed) : ((!UICamera.IsHighlighted(base.gameObject)) ? mPos : (mPos + hover))).method = UITweener.Method.EaseInOut;
+			TweenPosition.Begin(this.tweenTarget.gameObject, this.duration, this.mPos).method = UITweener.Method.EaseInOut;
+		}
+	}
+
+	private void OnDragOver()
+	{
+		if (this.mPressed)
+		{
+			TweenPosition.Begin(this.tweenTarget.gameObject, this.duration, this.mPos + this.hover).method = UITweener.Method.EaseInOut;
+		}
+	}
+
+	private void OnEnable()
+	{
+		if (this.mStarted)
+		{
+			this.OnHover(UICamera.IsHighlighted(base.gameObject));
 		}
 	}
 
@@ -72,27 +66,35 @@ public class UIButtonOffset : MonoBehaviour
 	{
 		if (base.enabled)
 		{
-			if (!mStarted)
+			if (!this.mStarted)
 			{
-				Start();
+				this.Start();
 			}
-			TweenPosition.Begin(tweenTarget.gameObject, duration, (!isOver) ? mPos : (mPos + hover)).method = UITweener.Method.EaseInOut;
+			TweenPosition.Begin(this.tweenTarget.gameObject, this.duration, (!isOver ? this.mPos : this.mPos + this.hover)).method = UITweener.Method.EaseInOut;
 		}
 	}
 
-	private void OnDragOver()
+	private void OnPress(bool isPressed)
 	{
-		if (mPressed)
+		Vector3 vector3;
+		this.mPressed = isPressed;
+		if (base.enabled)
 		{
-			TweenPosition.Begin(tweenTarget.gameObject, duration, mPos + hover).method = UITweener.Method.EaseInOut;
-		}
-	}
-
-	private void OnDragOut()
-	{
-		if (mPressed)
-		{
-			TweenPosition.Begin(tweenTarget.gameObject, duration, mPos).method = UITweener.Method.EaseInOut;
+			if (!this.mStarted)
+			{
+				this.Start();
+			}
+			GameObject gameObject = this.tweenTarget.gameObject;
+			float single = this.duration;
+			if (!isPressed)
+			{
+				vector3 = (!UICamera.IsHighlighted(base.gameObject) ? this.mPos : this.mPos + this.hover);
+			}
+			else
+			{
+				vector3 = this.mPos + this.pressed;
+			}
+			TweenPosition.Begin(gameObject, single, vector3).method = UITweener.Method.EaseInOut;
 		}
 	}
 
@@ -100,7 +102,20 @@ public class UIButtonOffset : MonoBehaviour
 	{
 		if (base.enabled && (!isSelected || UICamera.currentScheme == UICamera.ControlScheme.Controller))
 		{
-			OnHover(isSelected);
+			this.OnHover(isSelected);
+		}
+	}
+
+	private void Start()
+	{
+		if (!this.mStarted)
+		{
+			this.mStarted = true;
+			if (this.tweenTarget == null)
+			{
+				this.tweenTarget = base.transform;
+			}
+			this.mPos = this.tweenTarget.localPosition;
 		}
 	}
 }

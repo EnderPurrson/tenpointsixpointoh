@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ExpHUD : MonoBehaviour
@@ -8,10 +9,8 @@ public class ExpHUD : MonoBehaviour
 
 	public UITexture txExp;
 
-	private void OnEnable()
+	public ExpHUD()
 	{
-		ExpController.Instance.experienceView.VisibleHUD = false;
-		UpdateHUD();
 	}
 
 	private void OnDisable()
@@ -19,28 +18,33 @@ public class ExpHUD : MonoBehaviour
 		if (ExpController.Instance == null)
 		{
 			Debug.LogWarning("ExpController.Instance == null");
+			return;
 		}
-		else if (ExpController.Instance.experienceView == null)
+		if (ExpController.Instance.experienceView == null)
 		{
 			Debug.LogWarning("experienceView == null");
+			return;
 		}
-		else
-		{
-			ExpController.Instance.experienceView.VisibleHUD = true;
-		}
+		ExpController.Instance.experienceView.VisibleHUD = true;
+	}
+
+	private void OnEnable()
+	{
+		ExpController.Instance.experienceView.VisibleHUD = false;
+		this.UpdateHUD();
 	}
 
 	public void UpdateHUD()
 	{
-		lbCurLev.text = ExperienceController.sharedController.currentLevel.ToString();
-		lbExp.text = ExpController.ExpToString();
-		if (ExperienceController.sharedController.currentLevel == ExperienceController.maxLevel)
+		this.lbCurLev.text = ExperienceController.sharedController.currentLevel.ToString();
+		this.lbExp.text = ExpController.ExpToString();
+		if (ExperienceController.sharedController.currentLevel != ExperienceController.maxLevel)
 		{
-			txExp.fillAmount = 1f;
+			this.txExp.fillAmount = ExpController.progressExpInPer();
 		}
 		else
 		{
-			txExp.fillAmount = ExpController.progressExpInPer();
+			this.txExp.fillAmount = 1f;
 		}
 	}
 }

@@ -1,9 +1,10 @@
+using Rilisoft;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using Rilisoft;
 using UnityEngine;
 
 public class PrivateChatController : MonoBehaviour
@@ -84,572 +85,71 @@ public class PrivateChatController : MonoBehaviour
 
 	private bool isKeyboardVisible;
 
-	[CompilerGenerated]
-	private static Comparison<ChatController.PrivateMessage> _003C_003Ef__am_0024cache26;
-
-	[CompilerGenerated]
-	private static Comparison<Transform> _003C_003Ef__am_0024cache27;
+	public PrivateChatController()
+	{
+	}
 
 	private void Awake()
 	{
-		heightFriends = friendsWrap.itemSize;
-		scrollTransform = scrollMessages.transform;
-		scrollFriendsTransform = scrollFriends.transform;
-		scrollPanel = scrollMessages.GetComponent<UIPanel>();
-		scrollFriensPanel = scrollFriends.GetComponent<UIPanel>();
-		sharedController = this;
-		if (sendMessageInput != null)
+		this.heightFriends = (float)this.friendsWrap.itemSize;
+		this.scrollTransform = this.scrollMessages.transform;
+		this.scrollFriendsTransform = this.scrollFriends.transform;
+		this.scrollPanel = this.scrollMessages.GetComponent<UIPanel>();
+		this.scrollFriensPanel = this.scrollFriends.GetComponent<UIPanel>();
+		PrivateChatController.sharedController = this;
+		if (this.sendMessageInput != null)
 		{
-			MyUIInput myUIInput = sendMessageInput;
-			myUIInput.onKeyboardInter = (Action)Delegate.Combine(myUIInput.onKeyboardInter, new Action(SendMessageFromInput));
-			MyUIInput myUIInput2 = sendMessageInput;
-			myUIInput2.onKeyboardCancel = (Action)Delegate.Combine(myUIInput2.onKeyboardCancel, new Action(CancelSendPrivateMessage));
-			MyUIInput myUIInput3 = sendMessageInput;
-			myUIInput3.onKeyboardVisible = (Action)Delegate.Combine(myUIInput3.onKeyboardVisible, new Action(OnKeyboardVisible));
-			MyUIInput myUIInput4 = sendMessageInput;
-			myUIInput4.onKeyboardHide = (Action)Delegate.Combine(myUIInput4.onKeyboardHide, new Action(OnKeyboardHide));
+			this.sendMessageInput.onKeyboardInter += new Action(this.SendMessageFromInput);
+			this.sendMessageInput.onKeyboardCancel += new Action(this.CancelSendPrivateMessage);
+			this.sendMessageInput.onKeyboardVisible += new Action(this.OnKeyboardVisible);
+			this.sendMessageInput.onKeyboardHide += new Action(this.OnKeyboardHide);
 		}
-		smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, stickerPosHide, smilePanelTransform.localPosition.z);
-		isShowSmilePanel = false;
-		isBuySmile = StickersController.IsBuyAnyPack();
-		if (isBuySmile)
+		Transform vector3 = this.smilePanelTransform;
+		float single = this.smilePanelTransform.localPosition.x;
+		float single1 = this.stickerPosHide;
+		Vector3 vector31 = this.smilePanelTransform.localPosition;
+		vector3.localPosition = new Vector3(single, single1, vector31.z);
+		this.isShowSmilePanel = false;
+		this.isBuySmile = StickersController.IsBuyAnyPack();
+		if (!this.isBuySmile)
 		{
-			showSmileButton.SetActive(true);
-			buySmileButton.SetActive(false);
-		}
-		else
-		{
-			showSmileButton.SetActive(false);
-			buySmileButton.SetActive(true);
-		}
-		hideSmileButton.SetActive(false);
-	}
-
-	private void OnEnable()
-	{
-		FriendsController.FriendsUpdated += Start_UpdateFriendList;
-		Start_UpdateFriendListCore(true);
-		sendMessageInput.value = string.Empty;
-		if (string.IsNullOrEmpty(selectedPlayerID) && _friends.Count > 0)
-		{
-			selectedPlayerID = _friends[0];
-		}
-		StartCoroutine(SetSelectedPlayerWithPause(selectedPlayerID));
-	}
-
-	private IEnumerator SetSelectedPlayerWithPause(string _playerId, bool updateToogleState = true)
-	{
-		yield return null;
-		SetSelectedPlayer(selectedPlayerID, updateToogleState);
-	}
-
-	private void OnDisable()
-	{
-		OnKeyboardHide();
-		HideSmilePannelOnClick();
-		sendMessageInput.DeselectInput();
-		FriendsController.FriendsUpdated -= Start_UpdateFriendList;
-	}
-
-	private void Start_UpdateFriendListCore(bool isUpdatePos)
-	{
-		StartCoroutine(UpdateFriendList(isUpdatePos));
-	}
-
-	private void Start_UpdateFriendList()
-	{
-		Start_UpdateFriendListCore(false);
-	}
-
-	private void OnDestroy()
-	{
-		FriendsController.FriendsUpdated -= Start_UpdateFriendList;
-		sharedController = null;
-		if (sendMessageInput != null)
-		{
-			MyUIInput myUIInput = sendMessageInput;
-			myUIInput.onKeyboardInter = (Action)Delegate.Remove(myUIInput.onKeyboardInter, new Action(SendPrivateMessage));
-			MyUIInput myUIInput2 = sendMessageInput;
-			myUIInput2.onKeyboardCancel = (Action)Delegate.Remove(myUIInput2.onKeyboardCancel, new Action(CancelSendPrivateMessage));
-			MyUIInput myUIInput3 = sendMessageInput;
-			myUIInput3.onKeyboardVisible = (Action)Delegate.Remove(myUIInput3.onKeyboardVisible, new Action(OnKeyboardVisible));
-			MyUIInput myUIInput4 = sendMessageInput;
-			myUIInput4.onKeyboardHide = (Action)Delegate.Remove(myUIInput4.onKeyboardHide, new Action(OnKeyboardHide));
-		}
-	}
-
-	private void onFriendItemWrap(GameObject go, int wrapInd, int realInd)
-	{
-		go.GetComponent<FriendPrevInChatItem>().myWrapIndex = Mathf.Abs(realInd);
-		UpdateItemInfo(go.GetComponent<FriendPrevInChatItem>());
-	}
-
-	private void UpdateItemInfo(FriendPrevInChatItem previewItem)
-	{
-		if (_friends.Count > previewItem.myWrapIndex)
-		{
-			if (!previewItem.gameObject.activeSelf)
-			{
-				previewItem.gameObject.SetActive(true);
-			}
-			string text = _friends[previewItem.myWrapIndex];
-			string text2 = text;
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			Dictionary<string, object> value;
-			if (!FriendsController.sharedController.friendsInfo.ContainsKey(text2) || !FriendsController.sharedController.friendsInfo[text2].TryGetValue<Dictionary<string, object>>("player", out value))
-			{
-				return;
-			}
-			foreach (KeyValuePair<string, object> item in value)
-			{
-				dictionary.Add(item.Key, Convert.ToString(item.Value));
-			}
-			previewItem.playerID = text2;
-			previewItem.UpdateCountNewMessage();
-			previewItem.nickLabel.text = dictionary["nick"];
-			previewItem.rank.spriteName = "Rank_" + dictionary["rank"];
-			previewItem.previewTexture.mainTexture = Tools.GetPreviewFromSkin(dictionary["skin"], Tools.PreviewType.Head);
-			previewItem.GetComponent<UIToggle>().Set(selectedPlayerID == text2);
-		}
-		else if (previewItem.gameObject.activeSelf)
-		{
-			previewItem.gameObject.SetActive(false);
-		}
-	}
-
-	private int SortByMessagesCount(string x, string y)
-	{
-		double num = 0.0;
-		double num2 = 0.0;
-		int num3 = 0;
-		int num4 = 0;
-		if (ChatController.privateMessages.ContainsKey(x))
-		{
-			for (int i = 0; i < ChatController.privateMessages[x].Count; i++)
-			{
-				double timeStamp = ChatController.privateMessages[x][i].timeStamp;
-				if (timeStamp > num)
-				{
-					num = timeStamp;
-				}
-				if (!ChatController.privateMessages[x][i].isRead)
-				{
-					num3++;
-				}
-			}
-		}
-		if (ChatController.privateMessages.ContainsKey(y))
-		{
-			for (int j = 0; j < ChatController.privateMessages[y].Count; j++)
-			{
-				double timeStamp2 = ChatController.privateMessages[y][j].timeStamp;
-				if (timeStamp2 > num2)
-				{
-					num2 = timeStamp2;
-				}
-				if (!ChatController.privateMessages[y][j].isRead)
-				{
-					num4++;
-				}
-			}
-		}
-		if (ChatController.privateMessagesForSend.ContainsKey(x))
-		{
-			for (int k = 0; k < ChatController.privateMessagesForSend[x].Count; k++)
-			{
-				double timeStamp3 = ChatController.privateMessagesForSend[x][k].timeStamp;
-				if (timeStamp3 > num)
-				{
-					num = timeStamp3;
-				}
-			}
-		}
-		if (ChatController.privateMessagesForSend.ContainsKey(y))
-		{
-			for (int l = 0; l < ChatController.privateMessagesForSend[y].Count; l++)
-			{
-				double timeStamp4 = ChatController.privateMessagesForSend[y][l].timeStamp;
-				if (timeStamp4 > num2)
-				{
-					num2 = timeStamp4;
-				}
-			}
-		}
-		return (num3 == num4) ? ((num <= num2) ? 1 : (-1)) : ((num3 < num4) ? 1 : (-1));
-	}
-
-	public void UpdateFriendItemsInfoAndSort()
-	{
-		_friends = new List<string>(friendsWithInfo);
-		_friends.Sort(SortByMessagesCount);
-		FriendPrevInChatItem[] componentsInChildren = friendsWrap.GetComponentsInChildren<FriendPrevInChatItem>(true);
-		for (int i = 0; i < componentsInChildren.Length; i++)
-		{
-			UpdateItemInfo(componentsInChildren[i]);
-		}
-	}
-
-	public IEnumerator UpdateFriendList(bool isUpdatePos = false)
-	{
-		friendsWithInfo.Clear();
-		for (int j = 0; j < FriendsController.sharedController.friends.Count; j++)
-		{
-			string _friend = FriendsController.sharedController.friends[j];
-			if (FriendsController.sharedController.friendsInfo.ContainsKey(_friend))
-			{
-				friendsWithInfo.Add(_friend);
-			}
-		}
-		if (!wrapsInit)
-		{
-			friendsWrap.onInitializeItem = onFriendItemWrap;
-			friendPreviewPrefab.transform.GetComponent<UIDragScrollView>().scrollView = friendsWrap.GetComponent<UIScrollView>();
-			for (int f = 0; f < 16; f++)
-			{
-				GameObject friendPreviewItem = NGUITools.AddChild(friendsWrap.gameObject, friendPreviewPrefab);
-				friendPreviewItem.name = "FriendPreviewItem_" + f;
-				friendPreviewItem.GetComponent<UIToggle>().group = 3;
-			}
-			scrollFriends.ResetPosition();
-			friendsWrap.SortAlphabetically();
-			wrapsInit = true;
-		}
-		_friends = new List<string>(friendsWithInfo);
-		_friends.Sort(SortByMessagesCount);
-		friendsWrap.minIndex = _friends.Count * -1;
-		FriendPrevInChatItem[] previewItems = friendsWrap.GetComponentsInChildren<FriendPrevInChatItem>(true);
-		for (int i = 0; i < previewItems.Length; i++)
-		{
-			UpdateItemInfo(previewItems[i]);
-		}
-		if (!string.IsNullOrEmpty(selectedPlayerID) && !FriendsController.sharedController.friends.Contains(selectedPlayerID))
-		{
-			selectedPlayerID = string.Empty;
-			SetSelectedPlayer(selectedPlayerID);
-			OnKeyboardHide();
-			sendMessageInput.DeselectInput();
-		}
-		if (wrapsInit)
-		{
-			friendsWrap.SortAlphabetically();
-			scrollFriends.ResetPosition();
-		}
-		yield return null;
-	}
-
-	public void SetSelectedPlayer(string _playerId, bool updateToogleState = true)
-	{
-		selectedPlayerItem = null;
-		if (string.IsNullOrEmpty(_playerId))
-		{
-			sendMessageInput.gameObject.SetActive(false);
-			showSmileButton.SetActive(false);
-			buySmileButton.SetActive(false);
-			hideSmileButton.SetActive(false);
+			this.showSmileButton.SetActive(false);
+			this.buySmileButton.SetActive(true);
 		}
 		else
 		{
-			if (!sendMessageInput.gameObject.activeSelf)
-			{
-				sendMessageInput.gameObject.SetActive(true);
-			}
-			showSmileButton.SetActive(isBuySmile && !isShowSmilePanel);
-			buySmileButton.SetActive(!isBuySmile);
-			hideSmileButton.SetActive(isBuySmile && isShowSmilePanel);
+			this.showSmileButton.SetActive(true);
+			this.buySmileButton.SetActive(false);
 		}
-		FriendPrevInChatItem[] componentsInChildren = friendsWrap.GetComponentsInChildren<FriendPrevInChatItem>(true);
-		for (int i = 0; i < _friends.Count; i++)
-		{
-			if (_friends[i].Equals(_playerId))
-			{
-				float num = 42 * i;
-				if (Mathf.Abs(scrollFriensPanel.clipOffset.y + 291f) > num)
-				{
-					float yPosition = num - (scrollFriends.transform.localPosition.y - 291f);
-					MoveFriendWrapToPosition(yPosition);
-				}
-				if (Mathf.Abs(scrollFriensPanel.clipOffset.y + 291f) + scrollFriensPanel.baseClipRegion.w - 42f < num)
-				{
-					float yPosition2 = num - (scrollFriends.transform.localPosition.y - 291f + scrollFriensPanel.baseClipRegion.w - 50f);
-					MoveFriendWrapToPosition(yPosition2);
-				}
-			}
-		}
-		for (int j = 0; j < componentsInChildren.Length; j++)
-		{
-			if (componentsInChildren[j].playerID.Equals(_playerId))
-			{
-				selectedPlayerItem = componentsInChildren[j];
-			}
-		}
-		selectedPlayerID = _playerId;
-		UpdateMessageForSelectedUsers(true);
-	}
-
-	private void MoveFriendWrapToPosition(float yPosition)
-	{
-		bool flag = yPosition < 0f;
-		float num = Mathf.Abs(yPosition);
-		int num2 = (int)Mathf.Floor(num / 42f);
-		float num3 = num - (float)(42 * num2);
-		for (int i = 0; i < num2; i++)
-		{
-			scrollFriends.MoveRelative(new Vector3(0f, (!flag) ? 42 : (-42), 0f));
-		}
-		scrollFriends.MoveRelative(new Vector3(0f, (!flag) ? num3 : (0f - num3), 0f));
-		SpringPanel.Begin(scrollFriensPanel.gameObject, scrollFriensPanel.transform.localPosition, 100000f);
-	}
-
-	public void UpdateMessageForSelectedUsers(bool resetPosition = false)
-	{
-		UpdateMessageForSelectedUsersCoroutine(resetPosition);
-	}
-
-	private void UpdateMessageItemInfo(PrivateMessageItem messageItem)
-	{
-		if (curListMessages.Count > messageItem.myWrapIndex)
-		{
-			if (!messageItem.gameObject.activeSelf)
-			{
-				messageItem.gameObject.SetActive(true);
-			}
-			messageItem.transform.localPosition = new Vector3(0f, messageItem.transform.localPosition.y, messageItem.transform.localPosition.z);
-			messageItem.SetWidth(Mathf.RoundToInt(scrollPanel.baseClipRegion.z));
-			ChatController.PrivateMessage privateMessage = curListMessages[messageItem.myWrapIndex];
-			messageItem.isRead = privateMessage.isRead;
-			messageItem.timeStamp = privateMessage.timeStamp.ToString("F8", CultureInfo.InvariantCulture);
-			if (privateMessage.playerIDFrom.Equals(FriendsController.sharedController.id))
-			{
-				messageItem.SetFon(true);
-				messageItem.otherMessageLabel.text = string.Empty;
-				if (privateMessage.message.Contains(Defs.SmileMessageSuffix))
-				{
-					messageItem.yourSmileSprite.spriteName = privateMessage.message.Substring(Defs.SmileMessageSuffix.Length);
-					messageItem.yourMessageLabel.text = string.Empty;
-					messageItem.yourMessageLabel.overflowMethod = UILabel.Overflow.ShrinkContent;
-					messageItem.yourMessageLabel.height = 80;
-					messageItem.yourMessageLabel.width = 80;
-					messageItem.yourSmileSprite.gameObject.SetActive(true);
-				}
-				else
-				{
-					messageItem.yourMessageLabel.text = privateMessage.message;
-					messageItem.yourMessageLabel.overflowMethod = UILabel.Overflow.ResizeHeight;
-					messageItem.yourMessageLabel.width = Mathf.CeilToInt((float)messageItem.yourWidget.width * 0.8f);
-					messageItem.yourSmileSprite.gameObject.SetActive(false);
-				}
-				if (privateMessage.isSending)
-				{
-					DateTime currentTimeByUnixTime = Tools.GetCurrentTimeByUnixTime((int)privateMessage.timeStamp + DateTimeOffset.Now.Offset.Hours * 3600);
-					messageItem.yourTimeLabel.text = currentTimeByUnixTime.Day.ToString("D2") + "." + currentTimeByUnixTime.Month.ToString("D2") + "." + currentTimeByUnixTime.Year + " " + currentTimeByUnixTime.Hour + ":" + currentTimeByUnixTime.Minute.ToString("D2");
-				}
-				else
-				{
-					messageItem.yourTimeLabel.text = LocalizationStore.Get("Key_1556");
-				}
-			}
-			else
-			{
-				messageItem.SetFon(false);
-				messageItem.yourMessageLabel.text = string.Empty;
-				if (privateMessage.message.Contains(Defs.SmileMessageSuffix))
-				{
-					messageItem.otherSmileSprite.spriteName = privateMessage.message.Substring(Defs.SmileMessageSuffix.Length);
-					messageItem.otherMessageLabel.text = string.Empty;
-					messageItem.otherMessageLabel.overflowMethod = UILabel.Overflow.ShrinkContent;
-					messageItem.otherMessageLabel.height = 80;
-					messageItem.otherMessageLabel.width = 80;
-					messageItem.otherSmileSprite.gameObject.SetActive(true);
-				}
-				else
-				{
-					messageItem.otherMessageLabel.text = privateMessage.message;
-					messageItem.otherMessageLabel.overflowMethod = UILabel.Overflow.ResizeHeight;
-					messageItem.otherMessageLabel.width = Mathf.CeilToInt((float)messageItem.otherWidget.width * 0.8f);
-					messageItem.otherSmileSprite.gameObject.SetActive(false);
-				}
-				DateTime currentTimeByUnixTime2 = Tools.GetCurrentTimeByUnixTime((int)privateMessage.timeStamp + DateTimeOffset.Now.Offset.Hours * 3600);
-				messageItem.otherTimeLabel.text = currentTimeByUnixTime2.Day.ToString("D2") + "." + currentTimeByUnixTime2.Month.ToString("D2") + "." + currentTimeByUnixTime2.Year + " " + currentTimeByUnixTime2.Hour + ":" + currentTimeByUnixTime2.Minute.ToString("D2");
-			}
-		}
-		else if (messageItem.gameObject.activeSelf)
-		{
-			messageItem.gameObject.SetActive(false);
-		}
-	}
-
-	private void UpdateMessageForSelectedUsersCoroutine(bool resetPosition)
-	{
-		curListMessages.Clear();
-		if (!string.IsNullOrEmpty(selectedPlayerID))
-		{
-			if (ChatController.privateMessages.ContainsKey(selectedPlayerID))
-			{
-				curListMessages.AddRange(ChatController.privateMessages[selectedPlayerID]);
-			}
-			if (ChatController.privateMessagesForSend.ContainsKey(selectedPlayerID))
-			{
-				curListMessages.AddRange(ChatController.privateMessagesForSend[selectedPlayerID]);
-			}
-		}
-		List<ChatController.PrivateMessage> list = curListMessages;
-		if (_003C_003Ef__am_0024cache26 == null)
-		{
-			_003C_003Ef__am_0024cache26 = _003CUpdateMessageForSelectedUsersCoroutine_003Em__218;
-		}
-		list.Sort(_003C_003Ef__am_0024cache26);
-		if (selectedPlayerItem != null)
-		{
-			UpdateItemInfo(selectedPlayerItem);
-		}
-		while (privateMessageItems.Count < curListMessages.Count)
-		{
-			GameObject gameObject = NGUITools.AddChild(messageTable.gameObject, messagePrefab);
-			if (privateMessageItems.Count > 0)
-			{
-				gameObject.transform.position = privateMessageItems[0].transform.position;
-			}
-			gameObject.name = privateMessageItems.Count.ToString();
-			gameObject.GetComponent<PrivateMessageItem>().myWrapIndex = privateMessageItems.Count;
-			privateMessageItems.Add(gameObject.GetComponent<PrivateMessageItem>());
-		}
-		while (privateMessageItems.Count > curListMessages.Count)
-		{
-			UnityEngine.Object.Destroy(privateMessageItems[privateMessageItems.Count - 1].gameObject);
-			privateMessageItems.RemoveAt(privateMessageItems.Count - 1);
-			for (int i = 0; i < privateMessageItems.Count; i++)
-			{
-				privateMessageItems[i].gameObject.name = i.ToString();
-				privateMessageItems[i].myWrapIndex = i;
-			}
-		}
-		UITable uITable = messageTable;
-		if (_003C_003Ef__am_0024cache27 == null)
-		{
-			_003C_003Ef__am_0024cache27 = _003CUpdateMessageForSelectedUsersCoroutine_003Em__219;
-		}
-		uITable.onCustomSort = _003C_003Ef__am_0024cache27;
-		for (int j = 0; j < privateMessageItems.Count; j++)
-		{
-			UpdateMessageItemInfo(privateMessageItems[j]);
-		}
-		messageTable.transform.localPosition = new Vector3(scrollPanel.baseClipRegion.x, messageTable.transform.localPosition.y, messageTable.transform.localPosition.z);
-		messageTable.repositionNow = true;
-		if (base.gameObject.activeInHierarchy)
-		{
-			StartCoroutine(RepositionNextFrame(resetPosition));
-		}
-	}
-
-	private IEnumerator RepositionNextFrame(bool resetPosition)
-	{
-		yield return new WaitForEndOfFrame();
-		messageTable.repositionNow = true;
-		scrollMessages.ResetPosition();
-	}
-
-	private void Update()
-	{
-		if (!isKeyboardVisible)
-		{
-			panelSmiles.UpdateAnchors();
-			smilePanelTransform.GetComponent<UISprite>().UpdateAnchors();
-			leftInputAnchor.GetComponent<UIWidget>().UpdateAnchors();
-		}
-		if (isShowSmilePanel && smilePanelTransform.localPosition.y < stickerPosShow)
-		{
-			smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, smilePanelTransform.localPosition.y + Time.deltaTime * speedHideOrShowStiker, smilePanelTransform.localPosition.z);
-			scrollMessages.MoveRelative(Vector3.up * Time.deltaTime * speedHideOrShowStiker);
-			if (smilePanelTransform.localPosition.y > stickerPosShow)
-			{
-				smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, stickerPosShow, smilePanelTransform.localPosition.z);
-				scrollMessages.ResetPosition();
-				smilePanelTransform.gameObject.SetActive(false);
-				smilePanelTransform.gameObject.SetActive(true);
-			}
-		}
-		if (!isShowSmilePanel && smilePanelTransform.localPosition.y > stickerPosHide)
-		{
-			smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, smilePanelTransform.localPosition.y - Time.deltaTime * speedHideOrShowStiker, smilePanelTransform.localPosition.z);
-			scrollMessages.MoveRelative(Vector3.down * Time.deltaTime * speedHideOrShowStiker);
-			if (smilePanelTransform.localPosition.y < stickerPosHide)
-			{
-				smilePanelTransform.localPosition = new Vector3(smilePanelTransform.localPosition.x, stickerPosHide, smilePanelTransform.localPosition.z);
-				scrollMessages.ResetPosition();
-				smilePanelTransform.gameObject.SetActive(false);
-				smilePanelTransform.gameObject.SetActive(true);
-			}
-		}
-		bool flag = string.IsNullOrEmpty(sendMessageInput.value);
-		if (sendMessageButton.isEnabled == flag)
-		{
-			sendMessageButton.isEnabled = !flag;
-		}
-	}
-
-	public void CancelSendPrivateMessage()
-	{
-		sendMessageInput.value = string.Empty;
-	}
-
-	public void OnKeyboardVisible()
-	{
-		if (!isKeyboardVisible)
-		{
-			isKeyboardVisible = true;
-			keyboardSize = sendMessageInput.heightKeyboard;
-			if (Application.isEditor)
-			{
-				keyboardSize = 200f;
-			}
-			bottomAnchor.localPosition = new Vector3(bottomAnchor.localPosition.x, bottomAnchor.localPosition.y + keyboardSize / Defs.Coef, bottomAnchor.localPosition.z);
-			sendMessageButton.gameObject.SetActive(true);
-			smilesBtnContainer.localPosition = new Vector3(-1f * smilesBtnContainer.localPosition.x, smilesBtnContainer.localPosition.y, smilesBtnContainer.localPosition.z);
-			leftInputAnchor.localPosition = new Vector3(leftInputAnchor.localPosition.x - 162f, leftInputAnchor.localPosition.y, leftInputAnchor.localPosition.z);
-			StartCoroutine(ResetpositionCoroutine());
-		}
-	}
-
-	private IEnumerator ResetpositionCoroutine()
-	{
-		yield return null;
-		scrollMessages.ResetPosition();
-		smilePanelTransform.gameObject.SetActive(false);
-		smilePanelTransform.gameObject.SetActive(true);
-	}
-
-	public void OnKeyboardHide()
-	{
-		if (isKeyboardVisible)
-		{
-			isKeyboardVisible = false;
-			bottomAnchor.localPosition = new Vector3(bottomAnchor.localPosition.x, bottomAnchor.localPosition.y - keyboardSize / Defs.Coef, bottomAnchor.localPosition.z);
-			sendMessageButton.gameObject.SetActive(false);
-			smilesBtnContainer.localPosition = new Vector3(-1f * smilesBtnContainer.localPosition.x, smilesBtnContainer.localPosition.y, smilesBtnContainer.localPosition.z);
-			leftInputAnchor.localPosition = new Vector3(leftInputAnchor.localPosition.x + 162f, leftInputAnchor.localPosition.y, leftInputAnchor.localPosition.z);
-			StartCoroutine(ResetpositionCoroutine());
-			smilePanelTransform.gameObject.SetActive(false);
-			smilePanelTransform.gameObject.SetActive(true);
-		}
+		this.hideSmileButton.SetActive(false);
 	}
 
 	public void BuySmileOnClick()
 	{
 		ButtonClickSound.TryPlayClick();
-		buySmileBannerPrefab.SetActive(true);
-		sendMessageInput.DeselectInput();
+		this.buySmileBannerPrefab.SetActive(true);
+		this.sendMessageInput.DeselectInput();
 	}
 
-	public void ShowSmilePannelOnClick()
+	public void CancelSendPrivateMessage()
 	{
-		if (ButtonClickSound.Instance != null)
+		this.sendMessageInput.@value = string.Empty;
+	}
+
+	public void HideSmilePannel()
+	{
+		this.isShowSmilePanel = false;
+		if (!this.isBuySmile)
 		{
-			ButtonClickSound.Instance.PlayClick();
+			this.showSmileButton.SetActive(false);
+			this.buySmileButton.SetActive(true);
 		}
-		isShowSmilePanel = true;
-		showSmileButton.SetActive(false);
-		hideSmileButton.SetActive(true);
-		scrollMessages.ResetPosition();
+		else
+		{
+			this.showSmileButton.SetActive(true);
+			this.buySmileButton.SetActive(false);
+		}
+		this.hideSmileButton.SetActive(false);
 	}
 
 	public void HideSmilePannelOnClick()
@@ -658,82 +158,584 @@ public class PrivateChatController : MonoBehaviour
 		{
 			ButtonClickSound.Instance.PlayClick();
 		}
-		HideSmilePannel();
+		this.HideSmilePannel();
 	}
 
-	public void HideSmilePannel()
+	private void MoveFriendWrapToPosition(float yPosition)
 	{
-		isShowSmilePanel = false;
-		if (isBuySmile)
+		bool flag = yPosition < 0f;
+		float single = Mathf.Abs(yPosition);
+		int num = (int)Mathf.Floor(single / 42f);
+		float single1 = single - (float)(42 * num);
+		for (int i = 0; i < num; i++)
 		{
-			showSmileButton.SetActive(true);
-			buySmileButton.SetActive(false);
+			this.scrollFriends.MoveRelative(new Vector3(0f, (float)((!flag ? 42 : -42)), 0f));
 		}
-		else
-		{
-			showSmileButton.SetActive(false);
-			buySmileButton.SetActive(true);
-		}
-		hideSmileButton.SetActive(false);
+		this.scrollFriends.MoveRelative(new Vector3(0f, (!flag ? single1 : -single1), 0f));
+		SpringPanel.Begin(this.scrollFriensPanel.gameObject, this.scrollFriensPanel.transform.localPosition, 100000f);
 	}
 
-	public void SendSmile(string smile)
+	private void OnDestroy()
 	{
-		SendPrivateMessageCore(Defs.SmileMessageSuffix + smile);
-		HideSmilePannel();
+		FriendsController.FriendsUpdated -= new Action(this.Start_UpdateFriendList);
+		PrivateChatController.sharedController = null;
+		if (this.sendMessageInput != null)
+		{
+			this.sendMessageInput.onKeyboardInter -= new Action(this.SendPrivateMessage);
+			this.sendMessageInput.onKeyboardCancel -= new Action(this.CancelSendPrivateMessage);
+			this.sendMessageInput.onKeyboardVisible -= new Action(this.OnKeyboardVisible);
+			this.sendMessageInput.onKeyboardHide -= new Action(this.OnKeyboardHide);
+		}
+	}
+
+	private void OnDisable()
+	{
+		this.OnKeyboardHide();
+		this.HideSmilePannelOnClick();
+		this.sendMessageInput.DeselectInput();
+		FriendsController.FriendsUpdated -= new Action(this.Start_UpdateFriendList);
+	}
+
+	private void OnEnable()
+	{
+		FriendsController.FriendsUpdated += new Action(this.Start_UpdateFriendList);
+		this.Start_UpdateFriendListCore(true);
+		this.sendMessageInput.@value = string.Empty;
+		if (string.IsNullOrEmpty(this.selectedPlayerID) && this._friends.Count > 0)
+		{
+			this.selectedPlayerID = this._friends[0];
+		}
+		base.StartCoroutine(this.SetSelectedPlayerWithPause(this.selectedPlayerID, true));
+	}
+
+	private void onFriendItemWrap(GameObject go, int wrapInd, int realInd)
+	{
+		go.GetComponent<FriendPrevInChatItem>().myWrapIndex = Mathf.Abs(realInd);
+		this.UpdateItemInfo(go.GetComponent<FriendPrevInChatItem>());
+	}
+
+	public void OnKeyboardHide()
+	{
+		if (!this.isKeyboardVisible)
+		{
+			return;
+		}
+		this.isKeyboardVisible = false;
+		Transform vector3 = this.bottomAnchor;
+		float single = this.bottomAnchor.localPosition.x;
+		Vector3 vector31 = this.bottomAnchor.localPosition;
+		float coef = vector31.y - this.keyboardSize / Defs.Coef;
+		Vector3 vector32 = this.bottomAnchor.localPosition;
+		vector3.localPosition = new Vector3(single, coef, vector32.z);
+		this.sendMessageButton.gameObject.SetActive(false);
+		Transform transforms = this.smilesBtnContainer;
+		float single1 = -1f * this.smilesBtnContainer.localPosition.x;
+		float single2 = this.smilesBtnContainer.localPosition.y;
+		Vector3 vector33 = this.smilesBtnContainer.localPosition;
+		transforms.localPosition = new Vector3(single1, single2, vector33.z);
+		Transform transforms1 = this.leftInputAnchor;
+		Vector3 vector34 = this.leftInputAnchor.localPosition;
+		float single3 = this.leftInputAnchor.localPosition.y;
+		Vector3 vector35 = this.leftInputAnchor.localPosition;
+		transforms1.localPosition = new Vector3(vector34.x + 162f, single3, vector35.z);
+		base.StartCoroutine(this.ResetpositionCoroutine());
+		this.smilePanelTransform.gameObject.SetActive(false);
+		this.smilePanelTransform.gameObject.SetActive(true);
+	}
+
+	public void OnKeyboardVisible()
+	{
+		if (this.isKeyboardVisible)
+		{
+			return;
+		}
+		this.isKeyboardVisible = true;
+		this.keyboardSize = this.sendMessageInput.heightKeyboard;
+		if (Application.isEditor)
+		{
+			this.keyboardSize = 200f;
+		}
+		Transform vector3 = this.bottomAnchor;
+		float single = this.bottomAnchor.localPosition.x;
+		Vector3 vector31 = this.bottomAnchor.localPosition;
+		float coef = vector31.y + this.keyboardSize / Defs.Coef;
+		Vector3 vector32 = this.bottomAnchor.localPosition;
+		vector3.localPosition = new Vector3(single, coef, vector32.z);
+		this.sendMessageButton.gameObject.SetActive(true);
+		Transform transforms = this.smilesBtnContainer;
+		float single1 = -1f * this.smilesBtnContainer.localPosition.x;
+		float single2 = this.smilesBtnContainer.localPosition.y;
+		Vector3 vector33 = this.smilesBtnContainer.localPosition;
+		transforms.localPosition = new Vector3(single1, single2, vector33.z);
+		Transform transforms1 = this.leftInputAnchor;
+		Vector3 vector34 = this.leftInputAnchor.localPosition;
+		float single3 = this.leftInputAnchor.localPosition.y;
+		Vector3 vector35 = this.leftInputAnchor.localPosition;
+		transforms1.localPosition = new Vector3(vector34.x - 162f, single3, vector35.z);
+		base.StartCoroutine(this.ResetpositionCoroutine());
+	}
+
+	[DebuggerHidden]
+	private IEnumerator RepositionNextFrame(bool resetPosition)
+	{
+		PrivateChatController.u003cRepositionNextFrameu003ec__IteratorEC variable = null;
+		return variable;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator ResetpositionCoroutine()
+	{
+		PrivateChatController.u003cResetpositionCoroutineu003ec__IteratorED variable = null;
+		return variable;
 	}
 
 	public void SendMessageFromInput()
 	{
-		SendPrivateMessage();
-		if (isShowSmilePanel)
+		this.SendPrivateMessage();
+		if (this.isShowSmilePanel)
 		{
-			HideSmilePannel();
+			this.HideSmilePannel();
 		}
 	}
 
 	public void SendPrivateMessage()
 	{
-		SendPrivateMessageCore(string.Empty);
+		this.SendPrivateMessageCore(string.Empty);
 	}
 
 	public void SendPrivateMessageCore(string customMessage)
 	{
-		if (!string.IsNullOrEmpty(customMessage) || (!string.IsNullOrEmpty(sendMessageInput.value) && !sendMessageInput.value.Contains(Defs.SmileMessageSuffix)))
+		if (string.IsNullOrEmpty(customMessage) && (string.IsNullOrEmpty(this.sendMessageInput.@value) || this.sendMessageInput.@value.Contains(Defs.SmileMessageSuffix)))
 		{
-			bool flag = !string.IsNullOrEmpty(customMessage);
-			ChatController.PrivateMessage item = new ChatController.PrivateMessage(FriendsController.sharedController.id, (!flag) ? FilterBadWorld.FilterString(sendMessageInput.value) : customMessage, Tools.CurrentUnixTime + 10000000, false, true);
-			if (!ChatController.privateMessagesForSend.ContainsKey(selectedPlayerID))
-			{
-				ChatController.privateMessagesForSend.Add(selectedPlayerID, new List<ChatController.PrivateMessage>());
-			}
-			ChatController.privateMessagesForSend[selectedPlayerID].Add(item);
-			ChatController.SavePrivatMessageInPrefs();
-			if (!flag)
-			{
-				sendMessageInput.value = string.Empty;
-			}
-			UpdateMessageForSelectedUsers(true);
-			FriendsController.sharedController.GetFriendsData();
-			if (selectedPlayerItem.myWrapIndex != 0)
-			{
-				_friends = new List<string>(friendsWithInfo);
-				_friends.Sort(SortByMessagesCount);
-				friendsWrap.SortAlphabetically();
-				scrollFriends.ResetPosition();
-			}
+			return;
+		}
+		bool flag = !string.IsNullOrEmpty(customMessage);
+		ChatController.PrivateMessage privateMessage = new ChatController.PrivateMessage(FriendsController.sharedController.id, (!flag ? FilterBadWorld.FilterString(this.sendMessageInput.@value) : customMessage), (double)(Tools.CurrentUnixTime + (long)10000000), false, true);
+		if (!ChatController.privateMessagesForSend.ContainsKey(this.selectedPlayerID))
+		{
+			ChatController.privateMessagesForSend.Add(this.selectedPlayerID, new List<ChatController.PrivateMessage>());
+		}
+		ChatController.privateMessagesForSend[this.selectedPlayerID].Add(privateMessage);
+		ChatController.SavePrivatMessageInPrefs();
+		if (!flag)
+		{
+			this.sendMessageInput.@value = string.Empty;
+		}
+		this.UpdateMessageForSelectedUsers(true);
+		FriendsController.sharedController.GetFriendsData(false);
+		if (this.selectedPlayerItem.myWrapIndex != 0)
+		{
+			this._friends = new List<string>(this.friendsWithInfo);
+			this._friends.Sort(new Comparison<string>(this.SortByMessagesCount));
+			this.friendsWrap.SortAlphabetically();
+			this.scrollFriends.ResetPosition();
 		}
 	}
 
-	[CompilerGenerated]
-	private static int _003CUpdateMessageForSelectedUsersCoroutine_003Em__218(ChatController.PrivateMessage x, ChatController.PrivateMessage y)
+	public void SendSmile(string smile)
 	{
-		return (x.timeStamp <= y.timeStamp) ? 1 : (-1);
+		this.SendPrivateMessageCore(string.Concat(Defs.SmileMessageSuffix, smile));
+		this.HideSmilePannel();
 	}
 
-	[CompilerGenerated]
-	private static int _003CUpdateMessageForSelectedUsersCoroutine_003Em__219(Transform x, Transform y)
+	public void SetSelectedPlayer(string _playerId, bool updateToogleState = true)
 	{
-		return (int.Parse(x.name) > int.Parse(y.name)) ? 1 : (-1);
+		this.selectedPlayerItem = null;
+		if (!string.IsNullOrEmpty(_playerId))
+		{
+			if (!this.sendMessageInput.gameObject.activeSelf)
+			{
+				this.sendMessageInput.gameObject.SetActive(true);
+			}
+			this.showSmileButton.SetActive((!this.isBuySmile ? false : !this.isShowSmilePanel));
+			this.buySmileButton.SetActive(!this.isBuySmile);
+			this.hideSmileButton.SetActive((!this.isBuySmile ? false : this.isShowSmilePanel));
+		}
+		else
+		{
+			this.sendMessageInput.gameObject.SetActive(false);
+			this.showSmileButton.SetActive(false);
+			this.buySmileButton.SetActive(false);
+			this.hideSmileButton.SetActive(false);
+		}
+		FriendPrevInChatItem[] componentsInChildren = this.friendsWrap.GetComponentsInChildren<FriendPrevInChatItem>(true);
+		for (int i = 0; i < this._friends.Count; i++)
+		{
+			if (this._friends[i].Equals(_playerId))
+			{
+				float single = (float)(42 * i);
+				if (Mathf.Abs(this.scrollFriensPanel.clipOffset.y + 291f) > single)
+				{
+					Vector3 vector3 = this.scrollFriends.transform.localPosition;
+					this.MoveFriendWrapToPosition(single - (vector3.y - 291f));
+				}
+				if (Mathf.Abs(this.scrollFriensPanel.clipOffset.y + 291f) + this.scrollFriensPanel.baseClipRegion.w - 42f < single)
+				{
+					Vector3 vector31 = this.scrollFriends.transform.localPosition;
+					Vector4 vector4 = this.scrollFriensPanel.baseClipRegion;
+					float single1 = single - (vector31.y - 291f + vector4.w - 50f);
+					this.MoveFriendWrapToPosition(single1);
+				}
+			}
+		}
+		for (int j = 0; j < (int)componentsInChildren.Length; j++)
+		{
+			if (componentsInChildren[j].playerID.Equals(_playerId))
+			{
+				this.selectedPlayerItem = componentsInChildren[j];
+			}
+		}
+		this.selectedPlayerID = _playerId;
+		this.UpdateMessageForSelectedUsers(true);
+	}
+
+	[DebuggerHidden]
+	private IEnumerator SetSelectedPlayerWithPause(string _playerId, bool updateToogleState = true)
+	{
+		PrivateChatController.u003cSetSelectedPlayerWithPauseu003ec__IteratorEA variable = null;
+		return variable;
+	}
+
+	public void ShowSmilePannelOnClick()
+	{
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
+		}
+		this.isShowSmilePanel = true;
+		this.showSmileButton.SetActive(false);
+		this.hideSmileButton.SetActive(true);
+		this.scrollMessages.ResetPosition();
+	}
+
+	private int SortByMessagesCount(string x, string y)
+	{
+		int num;
+		string str = x;
+		string str1 = y;
+		double num1 = 0;
+		double num2 = 0;
+		int num3 = 0;
+		int num4 = 0;
+		if (ChatController.privateMessages.ContainsKey(str))
+		{
+			for (int i = 0; i < ChatController.privateMessages[str].Count; i++)
+			{
+				double item = ChatController.privateMessages[str][i].timeStamp;
+				if (item > num1)
+				{
+					num1 = item;
+				}
+				if (!ChatController.privateMessages[str][i].isRead)
+				{
+					num3++;
+				}
+			}
+		}
+		if (ChatController.privateMessages.ContainsKey(str1))
+		{
+			for (int j = 0; j < ChatController.privateMessages[str1].Count; j++)
+			{
+				double item1 = ChatController.privateMessages[str1][j].timeStamp;
+				if (item1 > num2)
+				{
+					num2 = item1;
+				}
+				if (!ChatController.privateMessages[str1][j].isRead)
+				{
+					num4++;
+				}
+			}
+		}
+		if (ChatController.privateMessagesForSend.ContainsKey(str))
+		{
+			for (int k = 0; k < ChatController.privateMessagesForSend[str].Count; k++)
+			{
+				double item2 = ChatController.privateMessagesForSend[str][k].timeStamp;
+				if (item2 > num1)
+				{
+					num1 = item2;
+				}
+			}
+		}
+		if (ChatController.privateMessagesForSend.ContainsKey(str1))
+		{
+			for (int l = 0; l < ChatController.privateMessagesForSend[str1].Count; l++)
+			{
+				double item3 = ChatController.privateMessagesForSend[str1][l].timeStamp;
+				if (item3 > num2)
+				{
+					num2 = item3;
+				}
+			}
+		}
+		if (num3 != num4)
+		{
+			num = (num3 >= num4 ? -1 : 1);
+		}
+		else
+		{
+			num = (num1 > num2 ? -1 : 1);
+		}
+		return num;
+	}
+
+	private void Start_UpdateFriendList()
+	{
+		this.Start_UpdateFriendListCore(false);
+	}
+
+	private void Start_UpdateFriendListCore(bool isUpdatePos)
+	{
+		base.StartCoroutine(this.UpdateFriendList(isUpdatePos));
+	}
+
+	private void Update()
+	{
+		if (!this.isKeyboardVisible)
+		{
+			this.panelSmiles.UpdateAnchors();
+			this.smilePanelTransform.GetComponent<UISprite>().UpdateAnchors();
+			this.leftInputAnchor.GetComponent<UIWidget>().UpdateAnchors();
+		}
+		if (this.isShowSmilePanel && this.smilePanelTransform.localPosition.y < this.stickerPosShow)
+		{
+			Transform vector3 = this.smilePanelTransform;
+			float single = this.smilePanelTransform.localPosition.x;
+			Vector3 vector31 = this.smilePanelTransform.localPosition;
+			float single1 = vector31.y + Time.deltaTime * this.speedHideOrShowStiker;
+			Vector3 vector32 = this.smilePanelTransform.localPosition;
+			vector3.localPosition = new Vector3(single, single1, vector32.z);
+			this.scrollMessages.MoveRelative((Vector3.up * Time.deltaTime) * this.speedHideOrShowStiker);
+			if (this.smilePanelTransform.localPosition.y > this.stickerPosShow)
+			{
+				Transform transforms = this.smilePanelTransform;
+				float single2 = this.smilePanelTransform.localPosition.x;
+				float single3 = this.stickerPosShow;
+				Vector3 vector33 = this.smilePanelTransform.localPosition;
+				transforms.localPosition = new Vector3(single2, single3, vector33.z);
+				this.scrollMessages.ResetPosition();
+				this.smilePanelTransform.gameObject.SetActive(false);
+				this.smilePanelTransform.gameObject.SetActive(true);
+			}
+		}
+		if (!this.isShowSmilePanel && this.smilePanelTransform.localPosition.y > this.stickerPosHide)
+		{
+			Transform transforms1 = this.smilePanelTransform;
+			float single4 = this.smilePanelTransform.localPosition.x;
+			Vector3 vector34 = this.smilePanelTransform.localPosition;
+			float single5 = vector34.y - Time.deltaTime * this.speedHideOrShowStiker;
+			Vector3 vector35 = this.smilePanelTransform.localPosition;
+			transforms1.localPosition = new Vector3(single4, single5, vector35.z);
+			this.scrollMessages.MoveRelative((Vector3.down * Time.deltaTime) * this.speedHideOrShowStiker);
+			if (this.smilePanelTransform.localPosition.y < this.stickerPosHide)
+			{
+				Transform transforms2 = this.smilePanelTransform;
+				float single6 = this.smilePanelTransform.localPosition.x;
+				float single7 = this.stickerPosHide;
+				Vector3 vector36 = this.smilePanelTransform.localPosition;
+				transforms2.localPosition = new Vector3(single6, single7, vector36.z);
+				this.scrollMessages.ResetPosition();
+				this.smilePanelTransform.gameObject.SetActive(false);
+				this.smilePanelTransform.gameObject.SetActive(true);
+			}
+		}
+		bool flag = string.IsNullOrEmpty(this.sendMessageInput.@value);
+		if (this.sendMessageButton.isEnabled == flag)
+		{
+			this.sendMessageButton.isEnabled = !flag;
+		}
+	}
+
+	public void UpdateFriendItemsInfoAndSort()
+	{
+		this._friends = new List<string>(this.friendsWithInfo);
+		this._friends.Sort(new Comparison<string>(this.SortByMessagesCount));
+		FriendPrevInChatItem[] componentsInChildren = this.friendsWrap.GetComponentsInChildren<FriendPrevInChatItem>(true);
+		for (int i = 0; i < (int)componentsInChildren.Length; i++)
+		{
+			this.UpdateItemInfo(componentsInChildren[i]);
+		}
+	}
+
+	[DebuggerHidden]
+	public IEnumerator UpdateFriendList(bool isUpdatePos = false)
+	{
+		PrivateChatController.u003cUpdateFriendListu003ec__IteratorEB variable = null;
+		return variable;
+	}
+
+	private void UpdateItemInfo(FriendPrevInChatItem previewItem)
+	{
+		Dictionary<string, object> strs;
+		if (this._friends.Count > previewItem.myWrapIndex)
+		{
+			if (!previewItem.gameObject.activeSelf)
+			{
+				previewItem.gameObject.SetActive(true);
+			}
+			string item = this._friends[previewItem.myWrapIndex];
+			Dictionary<string, string> strs1 = new Dictionary<string, string>();
+			if (FriendsController.sharedController.friendsInfo.ContainsKey(item) && FriendsController.sharedController.friendsInfo[item].TryGetValue<Dictionary<string, object>>("player", out strs))
+			{
+				foreach (KeyValuePair<string, object> keyValuePair in strs)
+				{
+					strs1.Add(keyValuePair.Key, Convert.ToString(keyValuePair.Value));
+				}
+				previewItem.playerID = item;
+				previewItem.UpdateCountNewMessage();
+				previewItem.nickLabel.text = strs1["nick"];
+				previewItem.rank.spriteName = string.Concat("Rank_", strs1["rank"]);
+				previewItem.previewTexture.mainTexture = Tools.GetPreviewFromSkin(strs1["skin"], Tools.PreviewType.Head);
+				previewItem.GetComponent<UIToggle>().Set(this.selectedPlayerID == item);
+			}
+		}
+		else if (previewItem.gameObject.activeSelf)
+		{
+			previewItem.gameObject.SetActive(false);
+		}
+	}
+
+	public void UpdateMessageForSelectedUsers(bool resetPosition = false)
+	{
+		this.UpdateMessageForSelectedUsersCoroutine(resetPosition);
+	}
+
+	private void UpdateMessageForSelectedUsersCoroutine(bool resetPosition)
+	{
+		this.curListMessages.Clear();
+		if (!string.IsNullOrEmpty(this.selectedPlayerID))
+		{
+			if (ChatController.privateMessages.ContainsKey(this.selectedPlayerID))
+			{
+				this.curListMessages.AddRange(ChatController.privateMessages[this.selectedPlayerID]);
+			}
+			if (ChatController.privateMessagesForSend.ContainsKey(this.selectedPlayerID))
+			{
+				this.curListMessages.AddRange(ChatController.privateMessagesForSend[this.selectedPlayerID]);
+			}
+		}
+		this.curListMessages.Sort((ChatController.PrivateMessage x, ChatController.PrivateMessage y) => (x.timeStamp > y.timeStamp ? -1 : 1));
+		if (this.selectedPlayerItem != null)
+		{
+			this.UpdateItemInfo(this.selectedPlayerItem);
+		}
+		while (this.privateMessageItems.Count < this.curListMessages.Count)
+		{
+			GameObject item = NGUITools.AddChild(this.messageTable.gameObject, this.messagePrefab);
+			if (this.privateMessageItems.Count > 0)
+			{
+				item.transform.position = this.privateMessageItems[0].transform.position;
+			}
+			item.name = this.privateMessageItems.Count.ToString();
+			item.GetComponent<PrivateMessageItem>().myWrapIndex = this.privateMessageItems.Count;
+			this.privateMessageItems.Add(item.GetComponent<PrivateMessageItem>());
+		}
+		while (this.privateMessageItems.Count > this.curListMessages.Count)
+		{
+			UnityEngine.Object.Destroy(this.privateMessageItems[this.privateMessageItems.Count - 1].gameObject);
+			this.privateMessageItems.RemoveAt(this.privateMessageItems.Count - 1);
+			for (int i = 0; i < this.privateMessageItems.Count; i++)
+			{
+				this.privateMessageItems[i].gameObject.name = i.ToString();
+				this.privateMessageItems[i].myWrapIndex = i;
+			}
+		}
+		this.messageTable.onCustomSort = (Transform x, Transform y) => (int.Parse(x.name) <= int.Parse(y.name) ? -1 : 1);
+		for (int j = 0; j < this.privateMessageItems.Count; j++)
+		{
+			this.UpdateMessageItemInfo(this.privateMessageItems[j]);
+		}
+		Transform vector3 = this.messageTable.transform;
+		float single = this.scrollPanel.baseClipRegion.x;
+		float single1 = this.messageTable.transform.localPosition.y;
+		Vector3 vector31 = this.messageTable.transform.localPosition;
+		vector3.localPosition = new Vector3(single, single1, vector31.z);
+		this.messageTable.repositionNow = true;
+		if (base.gameObject.activeInHierarchy)
+		{
+			base.StartCoroutine(this.RepositionNextFrame(resetPosition));
+		}
+	}
+
+	private void UpdateMessageItemInfo(PrivateMessageItem messageItem)
+	{
+		if (this.curListMessages.Count > messageItem.myWrapIndex)
+		{
+			if (!messageItem.gameObject.activeSelf)
+			{
+				messageItem.gameObject.SetActive(true);
+			}
+			Transform vector3 = messageItem.transform;
+			float single = messageItem.transform.localPosition.y;
+			Vector3 vector31 = messageItem.transform.localPosition;
+			vector3.localPosition = new Vector3(0f, single, vector31.z);
+			Vector4 vector4 = this.scrollPanel.baseClipRegion;
+			messageItem.SetWidth(Mathf.RoundToInt(vector4.z));
+			ChatController.PrivateMessage item = this.curListMessages[messageItem.myWrapIndex];
+			messageItem.isRead = item.isRead;
+			messageItem.timeStamp = item.timeStamp.ToString("F8", CultureInfo.InvariantCulture);
+			if (!item.playerIDFrom.Equals(FriendsController.sharedController.id))
+			{
+				messageItem.SetFon(false);
+				messageItem.yourMessageLabel.text = string.Empty;
+				if (!item.message.Contains(Defs.SmileMessageSuffix))
+				{
+					messageItem.otherMessageLabel.text = item.message;
+					messageItem.otherMessageLabel.overflowMethod = UILabel.Overflow.ResizeHeight;
+					messageItem.otherMessageLabel.width = Mathf.CeilToInt((float)messageItem.otherWidget.width * 0.8f);
+					messageItem.otherSmileSprite.gameObject.SetActive(false);
+				}
+				else
+				{
+					messageItem.otherSmileSprite.spriteName = item.message.Substring(Defs.SmileMessageSuffix.Length);
+					messageItem.otherMessageLabel.text = string.Empty;
+					messageItem.otherMessageLabel.overflowMethod = UILabel.Overflow.ShrinkContent;
+					messageItem.otherMessageLabel.height = 80;
+					messageItem.otherMessageLabel.width = 80;
+					messageItem.otherSmileSprite.gameObject.SetActive(true);
+				}
+				int num = (int)item.timeStamp;
+				TimeSpan offset = DateTimeOffset.Now.Offset;
+				DateTime currentTimeByUnixTime = Tools.GetCurrentTimeByUnixTime((long)(num + offset.Hours * 3600));
+				messageItem.otherTimeLabel.text = string.Concat(new object[] { currentTimeByUnixTime.Day.ToString("D2"), ".", currentTimeByUnixTime.Month.ToString("D2"), ".", currentTimeByUnixTime.Year, " ", currentTimeByUnixTime.Hour, ":", currentTimeByUnixTime.Minute.ToString("D2") });
+			}
+			else
+			{
+				messageItem.SetFon(true);
+				messageItem.otherMessageLabel.text = string.Empty;
+				if (!item.message.Contains(Defs.SmileMessageSuffix))
+				{
+					messageItem.yourMessageLabel.text = item.message;
+					messageItem.yourMessageLabel.overflowMethod = UILabel.Overflow.ResizeHeight;
+					messageItem.yourMessageLabel.width = Mathf.CeilToInt((float)messageItem.yourWidget.width * 0.8f);
+					messageItem.yourSmileSprite.gameObject.SetActive(false);
+				}
+				else
+				{
+					messageItem.yourSmileSprite.spriteName = item.message.Substring(Defs.SmileMessageSuffix.Length);
+					messageItem.yourMessageLabel.text = string.Empty;
+					messageItem.yourMessageLabel.overflowMethod = UILabel.Overflow.ShrinkContent;
+					messageItem.yourMessageLabel.height = 80;
+					messageItem.yourMessageLabel.width = 80;
+					messageItem.yourSmileSprite.gameObject.SetActive(true);
+				}
+				if (!item.isSending)
+				{
+					messageItem.yourTimeLabel.text = LocalizationStore.Get("Key_1556");
+				}
+				else
+				{
+					int num1 = (int)item.timeStamp;
+					TimeSpan timeSpan = DateTimeOffset.Now.Offset;
+					DateTime dateTime = Tools.GetCurrentTimeByUnixTime((long)(num1 + timeSpan.Hours * 3600));
+					messageItem.yourTimeLabel.text = string.Concat(new object[] { dateTime.Day.ToString("D2"), ".", dateTime.Month.ToString("D2"), ".", dateTime.Year, " ", dateTime.Hour, ":", dateTime.Minute.ToString("D2") });
+				}
+			}
+		}
+		else if (messageItem.gameObject.activeSelf)
+		{
+			messageItem.gameObject.SetActive(false);
+		}
 	}
 }

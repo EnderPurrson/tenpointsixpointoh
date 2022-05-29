@@ -1,100 +1,121 @@
+using com.amazon.mas.cpt.ads.json;
 using System;
 using System.Collections.Generic;
-using com.amazon.mas.cpt.ads.json;
+using System.Runtime.CompilerServices;
 
 namespace com.amazon.mas.cpt.ads
 {
 	public sealed class IsEqual : Jsonable
 	{
-		private static AmazonLogger logger = new AmazonLogger("Pi");
+		private static AmazonLogger logger;
 
-		public bool BooleanValue { get; set; }
-
-		public string ToJson()
+		public bool BooleanValue
 		{
-			//Discarded unreachable code: IL_0013, IL_0025
-			try
-			{
-				Dictionary<string, object> objectDictionary = GetObjectDictionary();
-				return Json.Serialize(objectDictionary);
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while Jsoning", inner);
-			}
+			get;
+			set;
 		}
 
-		public override Dictionary<string, object> GetObjectDictionary()
+		static IsEqual()
 		{
-			//Discarded unreachable code: IL_0023, IL_0035
-			try
-			{
-				Dictionary<string, object> dictionary = new Dictionary<string, object>();
-				dictionary.Add("booleanValue", BooleanValue);
-				return dictionary;
-			}
-			catch (ApplicationException inner)
-			{
-				throw new AmazonException("Error encountered while getting object dictionary", inner);
-			}
+			IsEqual.logger = new AmazonLogger("Pi");
+		}
+
+		public IsEqual()
+		{
 		}
 
 		public static IsEqual CreateFromDictionary(Dictionary<string, object> jsonMap)
 		{
-			//Discarded unreachable code: IL_0040, IL_0052
+			IsEqual isEqual;
 			try
 			{
-				if (jsonMap == null)
+				if (jsonMap != null)
 				{
-					return null;
+					IsEqual item = new IsEqual();
+					if (jsonMap.ContainsKey("booleanValue"))
+					{
+						item.BooleanValue = (bool)jsonMap["booleanValue"];
+					}
+					isEqual = item;
 				}
-				IsEqual isEqual = new IsEqual();
-				if (jsonMap.ContainsKey("booleanValue"))
+				else
 				{
-					isEqual.BooleanValue = (bool)jsonMap["booleanValue"];
+					isEqual = null;
 				}
-				return isEqual;
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while creating Object from dicionary", inner);
+				throw new AmazonException("Error encountered while creating Object from dicionary", applicationException);
 			}
+			return isEqual;
 		}
 
 		public static IsEqual CreateFromJson(string jsonMessage)
 		{
-			//Discarded unreachable code: IL_001e, IL_0030
+			IsEqual isEqual;
 			try
 			{
-				Dictionary<string, object> jsonMap = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
-				Jsonable.CheckForErrors(jsonMap);
-				return CreateFromDictionary(jsonMap);
+				Dictionary<string, object> strs = Json.Deserialize(jsonMessage) as Dictionary<string, object>;
+				Jsonable.CheckForErrors(strs);
+				isEqual = IsEqual.CreateFromDictionary(strs);
 			}
-			catch (ApplicationException inner)
+			catch (ApplicationException applicationException)
 			{
-				throw new AmazonException("Error encountered while UnJsoning", inner);
+				throw new AmazonException("Error encountered while UnJsoning", applicationException);
 			}
+			return isEqual;
 		}
 
-		public static Dictionary<string, IsEqual> MapFromJson(Dictionary<string, object> jsonMap)
+		public override Dictionary<string, object> GetObjectDictionary()
 		{
-			Dictionary<string, IsEqual> dictionary = new Dictionary<string, IsEqual>();
-			foreach (KeyValuePair<string, object> item in jsonMap)
+			Dictionary<string, object> strs;
+			try
 			{
-				IsEqual value = CreateFromDictionary(item.Value as Dictionary<string, object>);
-				dictionary.Add(item.Key, value);
+				strs = new Dictionary<string, object>()
+				{
+					{ "booleanValue", this.BooleanValue }
+				};
 			}
-			return dictionary;
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while getting object dictionary", applicationException);
+			}
+			return strs;
 		}
 
 		public static List<IsEqual> ListFromJson(List<object> array)
 		{
-			List<IsEqual> list = new List<IsEqual>();
-			foreach (object item in array)
+			List<IsEqual> isEquals = new List<IsEqual>();
+			foreach (object obj in array)
 			{
-				list.Add(CreateFromDictionary(item as Dictionary<string, object>));
+				isEquals.Add(IsEqual.CreateFromDictionary(obj as Dictionary<string, object>));
 			}
-			return list;
+			return isEquals;
+		}
+
+		public static Dictionary<string, IsEqual> MapFromJson(Dictionary<string, object> jsonMap)
+		{
+			Dictionary<string, IsEqual> strs = new Dictionary<string, IsEqual>();
+			foreach (KeyValuePair<string, object> keyValuePair in jsonMap)
+			{
+				IsEqual isEqual = IsEqual.CreateFromDictionary(keyValuePair.Value as Dictionary<string, object>);
+				strs.Add(keyValuePair.Key, isEqual);
+			}
+			return strs;
+		}
+
+		public string ToJson()
+		{
+			string str;
+			try
+			{
+				str = Json.Serialize(this.GetObjectDictionary());
+			}
+			catch (ApplicationException applicationException)
+			{
+				throw new AmazonException("Error encountered while Jsoning", applicationException);
+			}
+			return str;
 		}
 	}
 }

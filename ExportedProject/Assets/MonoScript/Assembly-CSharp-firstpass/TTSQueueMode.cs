@@ -1,5 +1,7 @@
+using System;
+
 public enum TTSQueueMode
 {
-	Flush = 0,
-	Add = 1
+	Flush,
+	Add
 }

@@ -1,30 +1,14 @@
+using I2.Loc;
+using Rilisoft.NullExtensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using I2.Loc;
-using Rilisoft.NullExtensions;
 using UnityEngine;
 
 public class FreeAwardShowHandler : MonoBehaviour
 {
-	private enum SkipReason
-	{
-		None = 0,
-		CameraTouchOverGui = 1,
-		FriendsInterfaceEnabled = 2,
-		BankInterfaceEnabled = 3,
-		ShopInterfaceEnabled = 4,
-		RewardedVideoInterfaceEnabled = 5,
-		BannerEnabled = 6,
-		MainMenuComponentEnabled = 7,
-		LeaderboardEnabled = 8,
-		ProfileEnabled = 9,
-		NewsEnabled = 10,
-		LevelUpShown = 11,
-		AskNameWindow = 12
-	}
-
 	public GameObject chestModelCoins;
 
 	public GameObject chestModelGems;
@@ -39,20 +23,11 @@ public class FreeAwardShowHandler : MonoBehaviour
 
 	private bool inside;
 
-	[CompilerGenerated]
-	private static Func<UICamera.MouseOrTouch, bool> _003C_003Ef__am_0024cache7;
-
-	[CompilerGenerated]
-	private static Func<Transform, bool> _003C_003Ef__am_0024cache8;
-
-	[CompilerGenerated]
-	private static Func<FriendsController, bool> _003C_003Ef__am_0024cache9;
-
 	public bool IsInteractable
 	{
 		get
 		{
-			return base.gameObject.GetComponent<Collider>() != null && base.gameObject.GetComponent<Collider>().enabled;
+			return (base.gameObject.GetComponent<Collider>() == null ? false : base.gameObject.GetComponent<Collider>().enabled);
 		}
 		set
 		{
@@ -63,289 +38,283 @@ public class FreeAwardShowHandler : MonoBehaviour
 		}
 	}
 
+	public FreeAwardShowHandler()
+	{
+	}
+
 	private void Awake()
 	{
-		Instance = this;
-		if (FreeAwardController.Instance == null && freeAwardGuiPrefab != null)
+		FreeAwardShowHandler.Instance = this;
+		if (FreeAwardController.Instance == null && this.freeAwardGuiPrefab != null)
 		{
-			UnityEngine.Object @object = UnityEngine.Object.Instantiate(freeAwardGuiPrefab, Vector3.zero, Quaternion.identity);
+			UnityEngine.Object.Instantiate(this.freeAwardGuiPrefab, Vector3.zero, Quaternion.identity);
 		}
-		LocalizationManager.OnLocalizeEvent += OnLocalizationChanged;
+		LocalizationManager.OnLocalizeEvent += new LocalizationManager.OnLocalizeCallback(this.OnLocalizationChanged);
 	}
 
-	private void OnDestroy()
+	public static void CheckShowChest(bool interfaceEnabled)
 	{
-		LocalizationManager.OnLocalizeEvent -= OnLocalizationChanged;
-		Instance = null;
+		if (FreeAwardShowHandler.Instance == null)
+		{
+			return;
+		}
+		if (interfaceEnabled && FreeAwardShowHandler.Instance.gameObject.activeSelf)
+		{
+			FreeAwardShowHandler.Instance.HideChestTitle();
+			FreeAwardShowHandler.Instance.gameObject.SetActive(false);
+		}
 	}
 
-	private void OnLocalizationChanged()
+	private void CheckShowFreeAwardTitle(bool isEnable, bool needExitAnim = false)
 	{
-		SetFreeAwardLocalization();
+		if (this.nickController == null)
+		{
+			this.nickController = this.GetNickController();
+		}
+		if (isEnable && this.nickController != null)
+		{
+			this.SetFreeAwardLocalization();
+			this.nickController.freeAwardTitle.gameObject.SetActive(true);
+			this.PlayeAnimationTitle(false, this.nickController.freeAwardTitle);
+		}
+		else if (needExitAnim)
+		{
+			this.PlayeAnimationTitle(true, this.nickController.freeAwardTitle);
+		}
 	}
 
 	private NickLabelController GetNickController()
 	{
-		return (!(MainMenuController.sharedController != null)) ? null : MainMenuController.sharedController.persNickLabel;
+		NickLabelController nickLabelController;
+		if (MainMenuController.sharedController == null)
+		{
+			nickLabelController = null;
+		}
+		else
+		{
+			nickLabelController = MainMenuController.sharedController.persNickLabel;
+		}
+		return nickLabelController;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator HideChestCoroutine()
+	{
+		FreeAwardShowHandler.u003cHideChestCoroutineu003ec__Iterator13C variable = null;
+		return variable;
+	}
+
+	public void HideChestTitle()
+	{
+		if (this.nickController == null)
+		{
+			return;
+		}
+		this.nickController.freeAwardTitle.gameObject.SetActive(false);
+	}
+
+	public void HideChestWithAnimation()
+	{
+		base.StartCoroutine(this.HideChestCoroutine());
 	}
 
 	private bool NeedToSkip()
 	{
-		SkipReason skipReason = NeedToSkipCore();
-		if (Defs.IsDeveloperBuild && skipReason != 0)
+		FreeAwardShowHandler.SkipReason skipCore = this.NeedToSkipCore();
+		if (Defs.IsDeveloperBuild && skipCore != FreeAwardShowHandler.SkipReason.None)
 		{
-			Debug.Log("Skipping free award chest: " + skipReason);
+			UnityEngine.Debug.Log(string.Concat("Skipping free award chest: ", skipCore));
 		}
-		return skipReason != SkipReason.None;
+		return skipCore != FreeAwardShowHandler.SkipReason.None;
 	}
 
-	private SkipReason NeedToSkipCore()
+	private FreeAwardShowHandler.SkipReason NeedToSkipCore()
 	{
-		UICamera.MouseOrTouch currentTouch = UICamera.currentTouch;
-		if (_003C_003Ef__am_0024cache7 == null)
+		if (UICamera.currentTouch.Map<UICamera.MouseOrTouch, bool>((UICamera.MouseOrTouch t) => t.isOverUI))
 		{
-			_003C_003Ef__am_0024cache7 = _003CNeedToSkipCore_003Em__29B;
-		}
-		if (currentTouch.Map(_003C_003Ef__am_0024cache7))
-		{
-			return SkipReason.CameraTouchOverGui;
+			return FreeAwardShowHandler.SkipReason.CameraTouchOverGui;
 		}
 		if (FriendsWindowGUI.Instance.InterfaceEnabled)
 		{
-			return SkipReason.FriendsInterfaceEnabled;
+			return FreeAwardShowHandler.SkipReason.FriendsInterfaceEnabled;
 		}
 		if (BankController.Instance != null && BankController.Instance.InterfaceEnabled)
 		{
-			return SkipReason.BankInterfaceEnabled;
+			return FreeAwardShowHandler.SkipReason.BankInterfaceEnabled;
 		}
 		if (ShopNGUIController.sharedShop != null && ShopNGUIController.GuiActive)
 		{
-			return SkipReason.ShopInterfaceEnabled;
+			return FreeAwardShowHandler.SkipReason.ShopInterfaceEnabled;
 		}
 		if (FreeAwardController.Instance != null && !FreeAwardController.Instance.IsInState<FreeAwardController.IdleState>())
 		{
-			return SkipReason.RewardedVideoInterfaceEnabled;
+			return FreeAwardShowHandler.SkipReason.RewardedVideoInterfaceEnabled;
 		}
 		if (BannerWindowController.SharedController != null && BannerWindowController.SharedController.IsAnyBannerShown)
 		{
-			return SkipReason.BannerEnabled;
+			return FreeAwardShowHandler.SkipReason.BannerEnabled;
 		}
 		if (AskNameManager.instance != null && !AskNameManager.isComplete)
 		{
-			return SkipReason.AskNameWindow;
+			return FreeAwardShowHandler.SkipReason.AskNameWindow;
 		}
-		MainMenuController sharedController = MainMenuController.sharedController;
-		if (sharedController != null)
+		MainMenuController mainMenuController = MainMenuController.sharedController;
+		if (mainMenuController != null)
 		{
-			Transform rentExpiredPoint = sharedController.RentExpiredPoint;
-			if (_003C_003Ef__am_0024cache8 == null)
+			if (mainMenuController.RentExpiredPoint.Map<Transform, bool>((Transform r) => r.childCount > 0) || mainMenuController.SettingsJoysticksPanel.activeSelf || FeedbackMenuController.Instance != null && FeedbackMenuController.Instance.gameObject.activeSelf || mainMenuController.settingsPanel.activeSelf || mainMenuController.FreePanelIsActive || mainMenuController.singleModePanel.activeSelf)
 			{
-				_003C_003Ef__am_0024cache8 = _003CNeedToSkipCore_003Em__29C;
-			}
-			if (rentExpiredPoint.Map(_003C_003Ef__am_0024cache8) || sharedController.SettingsJoysticksPanel.activeSelf || (FeedbackMenuController.Instance != null && FeedbackMenuController.Instance.gameObject.activeSelf) || sharedController.settingsPanel.activeSelf || sharedController.FreePanelIsActive || sharedController.singleModePanel.activeSelf)
-			{
-				return SkipReason.MainMenuComponentEnabled;
+				return FreeAwardShowHandler.SkipReason.MainMenuComponentEnabled;
 			}
 		}
 		if (LeaderboardScript.Instance != null && LeaderboardScript.Instance.UIEnabled)
 		{
-			return SkipReason.LeaderboardEnabled;
+			return FreeAwardShowHandler.SkipReason.LeaderboardEnabled;
 		}
-		FriendsController sharedController2 = FriendsController.sharedController;
-		if (_003C_003Ef__am_0024cache9 == null)
+		if (FriendsController.sharedController.Map<FriendsController, bool>((FriendsController c) => c.ProfileInterfaceActive))
 		{
-			_003C_003Ef__am_0024cache9 = _003CNeedToSkipCore_003Em__29D;
-		}
-		if (sharedController2.Map(_003C_003Ef__am_0024cache9))
-		{
-			return SkipReason.ProfileEnabled;
+			return FreeAwardShowHandler.SkipReason.ProfileEnabled;
 		}
 		if (NewsLobbyController.sharedController != null && NewsLobbyController.sharedController.gameObject.activeSelf)
 		{
-			return SkipReason.NewsEnabled;
+			return FreeAwardShowHandler.SkipReason.NewsEnabled;
 		}
 		if (ExpController.Instance != null && ExpController.Instance.IsLevelUpShown)
 		{
-			return SkipReason.LevelUpShown;
+			return FreeAwardShowHandler.SkipReason.LevelUpShown;
 		}
-		return SkipReason.None;
+		return FreeAwardShowHandler.SkipReason.None;
+	}
+
+	private void OnDestroy()
+	{
+		LocalizationManager.OnLocalizeEvent -= new LocalizationManager.OnLocalizeCallback(this.OnLocalizationChanged);
+		FreeAwardShowHandler.Instance = null;
+	}
+
+	private void OnEnable()
+	{
+		base.StartCoroutine(this.ShowChestCoroutine());
+	}
+
+	private void OnLocalizationChanged()
+	{
+		this.SetFreeAwardLocalization();
 	}
 
 	private void OnMouseDown()
 	{
-		clicked = true;
-		inside = true;
-	}
-
-	private void OnMouseExit()
-	{
-		inside = false;
+		this.clicked = true;
+		this.inside = true;
 	}
 
 	private void OnMouseEnter()
 	{
-		if (clicked)
+		if (this.clicked)
 		{
-			inside = true;
+			this.inside = true;
 		}
+	}
+
+	private void OnMouseExit()
+	{
+		this.inside = false;
 	}
 
 	private void OnMouseUp()
 	{
-		clicked = false;
-		if (!inside || NeedToSkip())
+		this.clicked = false;
+		if (!this.inside || this.NeedToSkip())
 		{
 			return;
 		}
-		inside = false;
+		this.inside = false;
 		if (!FreeAwardController.Instance.AdvertCountLessThanLimit())
 		{
 			return;
 		}
-		List<double> list = ((!MobileAdManager.IsPayingUser()) ? PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesNonpaying : PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesPaying);
-		if (list.Count == 0)
+		List<double> nums = (!MobileAdManager.IsPayingUser() ? PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesNonpaying : PromoActionsManager.MobileAdvert.RewardedVideoDelayMinutesPaying);
+		if (nums.Count == 0)
 		{
 			return;
 		}
 		DateTime date = DateTime.UtcNow.Date;
 		KeyValuePair<int, DateTime> keyValuePair = FreeAwardController.Instance.LastAdvertShow(date);
 		int num = Math.Max(0, keyValuePair.Key + 1);
-		if (num <= list.Count)
+		if (num > nums.Count)
 		{
-			DateTime dateTime = ((!(keyValuePair.Value < date)) ? keyValuePair.Value : date);
-			TimeSpan timeSpan = TimeSpan.FromMinutes(list[num]);
-			DateTime watchState = dateTime + timeSpan;
-			FreeAwardController.Instance.SetWatchState(watchState);
-			if (ButtonClickSound.Instance != null)
-			{
-				ButtonClickSound.Instance.PlayClick();
-			}
+			return;
+		}
+		DateTime dateTime = (keyValuePair.Value >= date ? keyValuePair.Value : date);
+		TimeSpan timeSpan = TimeSpan.FromMinutes(nums[num]);
+		FreeAwardController.Instance.SetWatchState(dateTime + timeSpan);
+		if (ButtonClickSound.Instance != null)
+		{
+			ButtonClickSound.Instance.PlayClick();
 		}
 	}
 
-	private void OnEnable()
+	private void PlayAnimationShowChest(bool isReserse)
 	{
-		StartCoroutine(ShowChestCoroutine());
+		Animation component = ((FreeAwardController.Instance.CurrencyForAward != "GemsCurrency" ? this.chestModelCoins : this.chestModelGems)).GetComponent<Animation>();
+		if (component == null)
+		{
+			return;
+		}
+		if (!isReserse)
+		{
+			component["Animate"].speed = 1f;
+			component["Animate"].time = 0f;
+		}
+		else
+		{
+			component["Animate"].speed = -1f;
+			component["Animate"].time = component["Animate"].length;
+		}
+		component.Play();
 	}
 
 	private void PlayeAnimationTitle(bool isReverse, GameObject titleLabel)
 	{
 		UIPlayTween component = titleLabel.GetComponent<UIPlayTween>();
 		component.resetOnPlay = true;
-		component.tweenGroup = (isReverse ? 1 : 0);
+		component.tweenGroup = (!isReverse ? 0 : 1);
 		component.Play(true);
-	}
-
-	private void CheckShowFreeAwardTitle(bool isEnable, bool needExitAnim = false)
-	{
-		if (nickController == null)
-		{
-			nickController = GetNickController();
-		}
-		if (isEnable && nickController != null)
-		{
-			SetFreeAwardLocalization();
-			nickController.freeAwardTitle.gameObject.SetActive(true);
-			PlayeAnimationTitle(false, nickController.freeAwardTitle);
-		}
-		else if (needExitAnim)
-		{
-			PlayeAnimationTitle(true, nickController.freeAwardTitle);
-		}
 	}
 
 	private void SetFreeAwardLocalization()
 	{
-		if (nickController == null)
+		if (this.nickController == null)
 		{
-			nickController = GetNickController();
+			this.nickController = this.GetNickController();
 		}
-		if (!(nickController == null))
+		if (this.nickController == null)
 		{
-			UILabel uILabel = nickController.freeAwardTitle.GetComponent<UILabel>() ?? nickController.freeAwardTitle.GetComponentInChildren<UILabel>();
-			uILabel.text = ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? ScriptLocalization.Get("Key_1155") : ScriptLocalization.Get("Key_2046"));
+			return;
 		}
+		(this.nickController.freeAwardTitle.GetComponent<UILabel>() ?? this.nickController.freeAwardTitle.GetComponentInChildren<UILabel>()).text = (FreeAwardController.Instance.CurrencyForAward != "GemsCurrency" ? ScriptLocalization.Get("Key_1155") : ScriptLocalization.Get("Key_2046"));
 	}
 
+	[DebuggerHidden]
 	private IEnumerator ShowChestCoroutine()
 	{
-		yield return null;
-		PlayAnimationShowChest(false);
-		chestModelCoins.SetActive(FreeAwardController.Instance.CurrencyForAward == "Coins");
-		chestModelGems.SetActive(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency");
-		CheckShowFreeAwardTitle(true);
+		FreeAwardShowHandler.u003cShowChestCoroutineu003ec__Iterator13B variable = null;
+		return variable;
 	}
 
-	private IEnumerator HideChestCoroutine()
+	private enum SkipReason
 	{
-		PlayAnimationShowChest(true);
-		CheckShowFreeAwardTitle(false, true);
-		GameObject obj = ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? chestModelCoins : chestModelGems);
-		Animation animationSystem = obj.GetComponent<Animation>();
-		if (animationSystem != null)
-		{
-			yield return new WaitForSeconds(animationSystem["Animate"].length);
-		}
-		base.gameObject.SetActive(false);
-	}
-
-	private void PlayAnimationShowChest(bool isReserse)
-	{
-		GameObject gameObject = ((!(FreeAwardController.Instance.CurrencyForAward == "GemsCurrency")) ? chestModelCoins : chestModelGems);
-		Animation component = gameObject.GetComponent<Animation>();
-		if (!(component == null))
-		{
-			if (isReserse)
-			{
-				component["Animate"].speed = -1f;
-				component["Animate"].time = component["Animate"].length;
-			}
-			else
-			{
-				component["Animate"].speed = 1f;
-				component["Animate"].time = 0f;
-			}
-			component.Play();
-		}
-	}
-
-	public void HideChestWithAnimation()
-	{
-		StartCoroutine(HideChestCoroutine());
-	}
-
-	public void HideChestTitle()
-	{
-		if (!(nickController == null))
-		{
-			nickController.freeAwardTitle.gameObject.SetActive(false);
-		}
-	}
-
-	public static void CheckShowChest(bool interfaceEnabled)
-	{
-		if (!(Instance == null) && interfaceEnabled && Instance.gameObject.activeSelf)
-		{
-			Instance.HideChestTitle();
-			Instance.gameObject.SetActive(false);
-		}
-	}
-
-	[CompilerGenerated]
-	private static bool _003CNeedToSkipCore_003Em__29B(UICamera.MouseOrTouch t)
-	{
-		return t.isOverUI;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CNeedToSkipCore_003Em__29C(Transform r)
-	{
-		return r.childCount > 0;
-	}
-
-	[CompilerGenerated]
-	private static bool _003CNeedToSkipCore_003Em__29D(FriendsController c)
-	{
-		return c.ProfileInterfaceActive;
+		None,
+		CameraTouchOverGui,
+		FriendsInterfaceEnabled,
+		BankInterfaceEnabled,
+		ShopInterfaceEnabled,
+		RewardedVideoInterfaceEnabled,
+		BannerEnabled,
+		MainMenuComponentEnabled,
+		LeaderboardEnabled,
+		ProfileEnabled,
+		NewsEnabled,
+		LevelUpShown,
+		AskNameWindow
 	}
 }

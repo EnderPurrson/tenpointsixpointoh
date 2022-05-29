@@ -1,20 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Drag and Drop Item")]
 public class UIDragDropItem : MonoBehaviour
 {
-	public enum Restriction
-	{
-		None = 0,
-		Horizontal = 1,
-		Vertical = 2,
-		PressAndHold = 3
-	}
-
-	public Restriction restriction;
+	public UIDragDropItem.Restriction restriction;
 
 	public bool cloneOnDrag;
 
@@ -62,293 +56,335 @@ public class UIDragDropItem : MonoBehaviour
 	[NonSerialized]
 	protected UICamera.MouseOrTouch mTouch;
 
-	public static List<UIDragDropItem> draggedItems = new List<UIDragDropItem>();
+	public static List<UIDragDropItem> draggedItems;
+
+	static UIDragDropItem()
+	{
+		UIDragDropItem.draggedItems = new List<UIDragDropItem>();
+	}
+
+	public UIDragDropItem()
+	{
+	}
 
 	protected virtual void Awake()
 	{
-		mTrans = base.transform;
-		mCollider = base.gameObject.GetComponent<Collider>();
-		mCollider2D = base.gameObject.GetComponent<Collider2D>();
+		this.mTrans = base.transform;
+		this.mCollider = base.gameObject.GetComponent<Collider>();
+		this.mCollider2D = base.gameObject.GetComponent<Collider2D>();
 	}
 
-	protected virtual void OnEnable()
+	[DebuggerHidden]
+	protected IEnumerator EnableDragScrollView()
 	{
-	}
-
-	protected virtual void OnDisable()
-	{
-		if (mDragging)
-		{
-			StopDragging(UICamera.hoveredObject);
-		}
-	}
-
-	protected virtual void Start()
-	{
-		mButton = GetComponent<UIButton>();
-		mDragScrollView = GetComponent<UIDragScrollView>();
-	}
-
-	protected virtual void OnPress(bool isPressed)
-	{
-		if (!interactable || UICamera.currentTouchID == -2 || UICamera.currentTouchID == -3)
-		{
-			return;
-		}
-		if (isPressed)
-		{
-			if (!mPressed)
-			{
-				mTouch = UICamera.currentTouch;
-				mDragStartTime = RealTime.time + pressAndHoldDelay;
-				mPressed = true;
-			}
-		}
-		else if (mPressed && mTouch == UICamera.currentTouch)
-		{
-			mPressed = false;
-			mTouch = null;
-		}
-	}
-
-	protected virtual void Update()
-	{
-		if (restriction == Restriction.PressAndHold && mPressed && !mDragging && mDragStartTime < RealTime.time)
-		{
-			StartDragging();
-		}
-	}
-
-	protected virtual void OnDragStart()
-	{
-		if (!interactable || !base.enabled || mTouch != UICamera.currentTouch)
-		{
-			return;
-		}
-		if (restriction != 0)
-		{
-			if (restriction == Restriction.Horizontal)
-			{
-				Vector2 totalDelta = mTouch.totalDelta;
-				if (Mathf.Abs(totalDelta.x) < Mathf.Abs(totalDelta.y))
-				{
-					return;
-				}
-			}
-			else if (restriction == Restriction.Vertical)
-			{
-				Vector2 totalDelta2 = mTouch.totalDelta;
-				if (Mathf.Abs(totalDelta2.x) > Mathf.Abs(totalDelta2.y))
-				{
-					return;
-				}
-			}
-			else if (restriction == Restriction.PressAndHold)
-			{
-				return;
-			}
-		}
-		StartDragging();
-	}
-
-	public virtual void StartDragging()
-	{
-		if (!interactable || mDragging)
-		{
-			return;
-		}
-		if (cloneOnDrag)
-		{
-			mPressed = false;
-			GameObject gameObject = NGUITools.AddChild(base.transform.parent.gameObject, base.gameObject);
-			gameObject.transform.localPosition = base.transform.localPosition;
-			gameObject.transform.localRotation = base.transform.localRotation;
-			gameObject.transform.localScale = base.transform.localScale;
-			UIButtonColor component = gameObject.GetComponent<UIButtonColor>();
-			if (component != null)
-			{
-				component.defaultColor = GetComponent<UIButtonColor>().defaultColor;
-			}
-			if (mTouch != null && mTouch.pressed == base.gameObject)
-			{
-				mTouch.current = gameObject;
-				mTouch.pressed = gameObject;
-				mTouch.dragged = gameObject;
-				mTouch.last = gameObject;
-			}
-			UIDragDropItem component2 = gameObject.GetComponent<UIDragDropItem>();
-			component2.mTouch = mTouch;
-			component2.mPressed = true;
-			component2.mDragging = true;
-			component2.Start();
-			component2.OnClone(base.gameObject);
-			component2.OnDragDropStart();
-			if (UICamera.currentTouch == null)
-			{
-				UICamera.currentTouch = mTouch;
-			}
-			mTouch = null;
-			UICamera.Notify(base.gameObject, "OnPress", false);
-			UICamera.Notify(base.gameObject, "OnHover", false);
-		}
-		else
-		{
-			mDragging = true;
-			OnDragDropStart();
-		}
+		UIDragDropItem.u003cEnableDragScrollViewu003ec__IteratorBF variable = null;
+		return variable;
 	}
 
 	protected virtual void OnClone(GameObject original)
 	{
 	}
 
+	protected virtual void OnDisable()
+	{
+		if (this.mDragging)
+		{
+			this.StopDragging(UICamera.hoveredObject);
+		}
+	}
+
 	protected virtual void OnDrag(Vector2 delta)
 	{
-		if (interactable && mDragging && base.enabled && mTouch == UICamera.currentTouch)
+		if (!this.interactable)
 		{
-			OnDragDropMove(delta * mRoot.pixelSizeAdjustment);
+			return;
+		}
+		if (!this.mDragging || !base.enabled || this.mTouch != UICamera.currentTouch)
+		{
+			return;
+		}
+		this.OnDragDropMove(delta * this.mRoot.pixelSizeAdjustment);
+	}
+
+	protected virtual void OnDragDropEnd()
+	{
+		UIDragDropItem.draggedItems.Remove(this);
+	}
+
+	protected virtual void OnDragDropMove(Vector2 delta)
+	{
+		Transform transforms = this.mTrans;
+		transforms.localPosition = transforms.localPosition + delta;
+	}
+
+	protected virtual void OnDragDropRelease(GameObject surface)
+	{
+		UIDragDropContainer uIDragDropContainer;
+		if (this.cloneOnDrag)
+		{
+			NGUITools.Destroy(base.gameObject);
+		}
+		else
+		{
+			if (this.mButton != null)
+			{
+				this.mButton.isEnabled = true;
+			}
+			else if (this.mCollider != null)
+			{
+				this.mCollider.enabled = true;
+			}
+			else if (this.mCollider2D != null)
+			{
+				this.mCollider2D.enabled = true;
+			}
+			if (!surface)
+			{
+				uIDragDropContainer = null;
+			}
+			else
+			{
+				uIDragDropContainer = NGUITools.FindInParents<UIDragDropContainer>(surface);
+			}
+			UIDragDropContainer uIDragDropContainer1 = uIDragDropContainer;
+			if (uIDragDropContainer1 == null)
+			{
+				this.mTrans.parent = this.mParent;
+			}
+			else
+			{
+				this.mTrans.parent = (uIDragDropContainer1.reparentTarget == null ? uIDragDropContainer1.transform : uIDragDropContainer1.reparentTarget);
+				Vector3 vector3 = this.mTrans.localPosition;
+				vector3.z = 0f;
+				this.mTrans.localPosition = vector3;
+			}
+			this.mParent = this.mTrans.parent;
+			this.mGrid = NGUITools.FindInParents<UIGrid>(this.mParent);
+			this.mTable = NGUITools.FindInParents<UITable>(this.mParent);
+			if (this.mDragScrollView != null)
+			{
+				base.StartCoroutine(this.EnableDragScrollView());
+			}
+			NGUITools.MarkParentAsChanged(base.gameObject);
+			if (this.mTable != null)
+			{
+				this.mTable.repositionNow = true;
+			}
+			if (this.mGrid != null)
+			{
+				this.mGrid.repositionNow = true;
+			}
+		}
+		this.OnDragDropEnd();
+	}
+
+	protected virtual void OnDragDropStart()
+	{
+		if (!UIDragDropItem.draggedItems.Contains(this))
+		{
+			UIDragDropItem.draggedItems.Add(this);
+		}
+		if (this.mDragScrollView != null)
+		{
+			this.mDragScrollView.enabled = false;
+		}
+		if (this.mButton != null)
+		{
+			this.mButton.isEnabled = false;
+		}
+		else if (this.mCollider != null)
+		{
+			this.mCollider.enabled = false;
+		}
+		else if (this.mCollider2D != null)
+		{
+			this.mCollider2D.enabled = false;
+		}
+		this.mParent = this.mTrans.parent;
+		this.mRoot = NGUITools.FindInParents<UIRoot>(this.mParent);
+		this.mGrid = NGUITools.FindInParents<UIGrid>(this.mParent);
+		this.mTable = NGUITools.FindInParents<UITable>(this.mParent);
+		if (UIDragDropRoot.root != null)
+		{
+			this.mTrans.parent = UIDragDropRoot.root;
+		}
+		Vector3 vector3 = this.mTrans.localPosition;
+		vector3.z = 0f;
+		this.mTrans.localPosition = vector3;
+		TweenPosition component = base.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		SpringPosition springPosition = base.GetComponent<SpringPosition>();
+		if (springPosition != null)
+		{
+			springPosition.enabled = false;
+		}
+		NGUITools.MarkParentAsChanged(base.gameObject);
+		if (this.mTable != null)
+		{
+			this.mTable.repositionNow = true;
+		}
+		if (this.mGrid != null)
+		{
+			this.mGrid.repositionNow = true;
 		}
 	}
 
 	protected virtual void OnDragEnd()
 	{
-		if (interactable && base.enabled && mTouch == UICamera.currentTouch)
+		if (!this.interactable)
 		{
-			StopDragging(UICamera.hoveredObject);
+			return;
+		}
+		if (!base.enabled || this.mTouch != UICamera.currentTouch)
+		{
+			return;
+		}
+		this.StopDragging(UICamera.hoveredObject);
+	}
+
+	protected virtual void OnDragStart()
+	{
+		if (!this.interactable)
+		{
+			return;
+		}
+		if (!base.enabled || this.mTouch != UICamera.currentTouch)
+		{
+			return;
+		}
+		if (this.restriction != UIDragDropItem.Restriction.None)
+		{
+			if (this.restriction == UIDragDropItem.Restriction.Horizontal)
+			{
+				Vector2 vector2 = this.mTouch.totalDelta;
+				if (Mathf.Abs(vector2.x) < Mathf.Abs(vector2.y))
+				{
+					return;
+				}
+			}
+			else if (this.restriction == UIDragDropItem.Restriction.Vertical)
+			{
+				Vector2 vector21 = this.mTouch.totalDelta;
+				if (Mathf.Abs(vector21.x) > Mathf.Abs(vector21.y))
+				{
+					return;
+				}
+			}
+			else if (this.restriction == UIDragDropItem.Restriction.PressAndHold)
+			{
+				return;
+			}
+		}
+		this.StartDragging();
+	}
+
+	protected virtual void OnEnable()
+	{
+	}
+
+	protected virtual void OnPress(bool isPressed)
+	{
+		if (!this.interactable || UICamera.currentTouchID == -2 || UICamera.currentTouchID == -3)
+		{
+			return;
+		}
+		if (isPressed)
+		{
+			if (!this.mPressed)
+			{
+				this.mTouch = UICamera.currentTouch;
+				this.mDragStartTime = RealTime.time + this.pressAndHoldDelay;
+				this.mPressed = true;
+			}
+		}
+		else if (this.mPressed && this.mTouch == UICamera.currentTouch)
+		{
+			this.mPressed = false;
+			this.mTouch = null;
+		}
+	}
+
+	protected virtual void Start()
+	{
+		this.mButton = base.GetComponent<UIButton>();
+		this.mDragScrollView = base.GetComponent<UIDragScrollView>();
+	}
+
+	public virtual void StartDragging()
+	{
+		if (!this.interactable)
+		{
+			return;
+		}
+		if (!this.mDragging)
+		{
+			if (!this.cloneOnDrag)
+			{
+				this.mDragging = true;
+				this.OnDragDropStart();
+			}
+			else
+			{
+				this.mPressed = false;
+				GameObject gameObject = NGUITools.AddChild(base.transform.parent.gameObject, base.gameObject);
+				gameObject.transform.localPosition = base.transform.localPosition;
+				gameObject.transform.localRotation = base.transform.localRotation;
+				gameObject.transform.localScale = base.transform.localScale;
+				UIButtonColor component = gameObject.GetComponent<UIButtonColor>();
+				if (component != null)
+				{
+					component.defaultColor = base.GetComponent<UIButtonColor>().defaultColor;
+				}
+				if (this.mTouch != null && this.mTouch.pressed == base.gameObject)
+				{
+					this.mTouch.current = gameObject;
+					this.mTouch.pressed = gameObject;
+					this.mTouch.dragged = gameObject;
+					this.mTouch.last = gameObject;
+				}
+				UIDragDropItem uIDragDropItem = gameObject.GetComponent<UIDragDropItem>();
+				uIDragDropItem.mTouch = this.mTouch;
+				uIDragDropItem.mPressed = true;
+				uIDragDropItem.mDragging = true;
+				uIDragDropItem.Start();
+				uIDragDropItem.OnClone(base.gameObject);
+				uIDragDropItem.OnDragDropStart();
+				if (UICamera.currentTouch == null)
+				{
+					UICamera.currentTouch = this.mTouch;
+				}
+				this.mTouch = null;
+				UICamera.Notify(base.gameObject, "OnPress", false);
+				UICamera.Notify(base.gameObject, "OnHover", false);
+			}
 		}
 	}
 
 	public void StopDragging(GameObject go)
 	{
-		if (mDragging)
+		if (this.mDragging)
 		{
-			mDragging = false;
-			OnDragDropRelease(go);
+			this.mDragging = false;
+			this.OnDragDropRelease(go);
 		}
 	}
 
-	protected virtual void OnDragDropStart()
+	protected virtual void Update()
 	{
-		if (!draggedItems.Contains(this))
+		if (this.restriction == UIDragDropItem.Restriction.PressAndHold && this.mPressed && !this.mDragging && this.mDragStartTime < RealTime.time)
 		{
-			draggedItems.Add(this);
-		}
-		if (mDragScrollView != null)
-		{
-			mDragScrollView.enabled = false;
-		}
-		if (mButton != null)
-		{
-			mButton.isEnabled = false;
-		}
-		else if (mCollider != null)
-		{
-			mCollider.enabled = false;
-		}
-		else if (mCollider2D != null)
-		{
-			mCollider2D.enabled = false;
-		}
-		mParent = mTrans.parent;
-		mRoot = NGUITools.FindInParents<UIRoot>(mParent);
-		mGrid = NGUITools.FindInParents<UIGrid>(mParent);
-		mTable = NGUITools.FindInParents<UITable>(mParent);
-		if (UIDragDropRoot.root != null)
-		{
-			mTrans.parent = UIDragDropRoot.root;
-		}
-		Vector3 localPosition = mTrans.localPosition;
-		localPosition.z = 0f;
-		mTrans.localPosition = localPosition;
-		TweenPosition component = GetComponent<TweenPosition>();
-		if (component != null)
-		{
-			component.enabled = false;
-		}
-		SpringPosition component2 = GetComponent<SpringPosition>();
-		if (component2 != null)
-		{
-			component2.enabled = false;
-		}
-		NGUITools.MarkParentAsChanged(base.gameObject);
-		if (mTable != null)
-		{
-			mTable.repositionNow = true;
-		}
-		if (mGrid != null)
-		{
-			mGrid.repositionNow = true;
+			this.StartDragging();
 		}
 	}
 
-	protected virtual void OnDragDropMove(Vector2 delta)
+	public enum Restriction
 	{
-		mTrans.localPosition += (Vector3)delta;
-	}
-
-	protected virtual void OnDragDropRelease(GameObject surface)
-	{
-		if (!cloneOnDrag)
-		{
-			if (mButton != null)
-			{
-				mButton.isEnabled = true;
-			}
-			else if (mCollider != null)
-			{
-				mCollider.enabled = true;
-			}
-			else if (mCollider2D != null)
-			{
-				mCollider2D.enabled = true;
-			}
-			UIDragDropContainer uIDragDropContainer = ((!surface) ? null : NGUITools.FindInParents<UIDragDropContainer>(surface));
-			if (uIDragDropContainer != null)
-			{
-				mTrans.parent = ((!(uIDragDropContainer.reparentTarget != null)) ? uIDragDropContainer.transform : uIDragDropContainer.reparentTarget);
-				Vector3 localPosition = mTrans.localPosition;
-				localPosition.z = 0f;
-				mTrans.localPosition = localPosition;
-			}
-			else
-			{
-				mTrans.parent = mParent;
-			}
-			mParent = mTrans.parent;
-			mGrid = NGUITools.FindInParents<UIGrid>(mParent);
-			mTable = NGUITools.FindInParents<UITable>(mParent);
-			if (mDragScrollView != null)
-			{
-				StartCoroutine(EnableDragScrollView());
-			}
-			NGUITools.MarkParentAsChanged(base.gameObject);
-			if (mTable != null)
-			{
-				mTable.repositionNow = true;
-			}
-			if (mGrid != null)
-			{
-				mGrid.repositionNow = true;
-			}
-		}
-		else
-		{
-			NGUITools.Destroy(base.gameObject);
-		}
-		OnDragDropEnd();
-	}
-
-	protected virtual void OnDragDropEnd()
-	{
-		draggedItems.Remove(this);
-	}
-
-	protected IEnumerator EnableDragScrollView()
-	{
-		yield return new WaitForEndOfFrame();
-		if (mDragScrollView != null)
-		{
-			mDragScrollView.enabled = true;
-		}
+		None,
+		Horizontal,
+		Vertical,
+		PressAndHold
 	}
 }

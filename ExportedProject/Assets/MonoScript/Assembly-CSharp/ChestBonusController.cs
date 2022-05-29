@@ -1,15 +1,15 @@
+using Rilisoft;
+using Rilisoft.MiniJson;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Rilisoft;
-using Rilisoft.MiniJson;
 using UnityEngine;
 
 public sealed class ChestBonusController : MonoBehaviour
 {
-	public delegate void OnChestBonusEnabledDelegate();
-
 	private const float BonusUpdateTimeout = 870f;
 
 	public static bool chestBonusesObtainedOnceInCurrentRun;
@@ -28,204 +28,101 @@ public sealed class ChestBonusController : MonoBehaviour
 
 	private float _eventGetBonusInfoStartTime;
 
-	public static ChestBonusController Get { get; private set; }
-
-	public bool IsBonusActive { get; private set; }
-
-	public static event OnChestBonusEnabledDelegate OnChestBonusChange;
-
-	private void Start()
+	public static ChestBonusController Get
 	{
-		Get = this;
-		_bonusesData = new ChestBonusesData();
-		_timeStartBonus = default(DateTime);
-		_timeEndBonus = default(DateTime);
-		Task firstResponse = PersistentCacheManager.Instance.FirstResponse;
-		StartCoroutine(GetEventBonusInfoLoop(firstResponse));
+		get;
+		private set;
 	}
 
-	private void OnDestroy()
+	public bool IsBonusActive
 	{
-		Get = null;
+		get;
+		private set;
+	}
+
+	static ChestBonusController()
+	{
+	}
+
+	public ChestBonusController()
+	{
+	}
+
+	[DebuggerHidden]
+	private IEnumerator DownloadDataAboutBonuses()
+	{
+		ChestBonusController.u003cDownloadDataAboutBonusesu003ec__Iterator127 variable = null;
+		return variable;
+	}
+
+	public ChestBonusData GetBonusData(PurchaseEventArgs purchaseInfo)
+	{
+		bool currency = purchaseInfo.Currency == "GemsCurrency";
+		return this.GetBonusData(currency, purchaseInfo.Index);
+	}
+
+	private ChestBonusData GetBonusData(bool isGemsPack, int packOrder)
+	{
+		if (this._bonusesData == null || this._bonusesData.bonuses == null)
+		{
+			return null;
+		}
+		string str = (!isGemsPack ? "coins" : "gems");
+		string str1 = string.Format("{0}_{1}", str, packOrder + 1);
+		for (int i = 0; i < this._bonusesData.bonuses.Count; i++)
+		{
+			ChestBonusData item = this._bonusesData.bonuses[i];
+			if (item.linkKey == str1)
+			{
+				return item;
+			}
+		}
+		return null;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator GetEventBonusInfoLoop(Task futureToWait)
+	{
+		ChestBonusController.u003cGetEventBonusInfoLoopu003ec__Iterator126 variable = null;
+		return variable;
+	}
+
+	private bool IsBonusActivate()
+	{
+		if (this._bonusesData.timeStart == 0 || this._bonusesData.duration == 0)
+		{
+			return false;
+		}
+		DateTime utcNow = DateTime.UtcNow;
+		return (utcNow < this._timeStartBonus ? false : utcNow <= this._timeEndBonus);
+	}
+
+	public bool IsBonusActiveForItem(PurchaseEventArgs purchaseInfo)
+	{
+		if (!this.IsBonusActive)
+		{
+			return false;
+		}
+		ChestBonusData bonusData = this.GetBonusData(purchaseInfo);
+		return (bonusData == null ? false : bonusData.isVisible);
 	}
 
 	private void OnApplicationPause(bool pause)
 	{
 		if (!pause)
 		{
-			StartCoroutine(DownloadDataAboutBonuses());
+			base.StartCoroutine(this.DownloadDataAboutBonuses());
 		}
 	}
 
-	private IEnumerator GetEventBonusInfoLoop(Task futureToWait)
+	private void OnDestroy()
 	{
-		yield return new WaitUntil(((_003CGetEventBonusInfoLoop_003Ec__Iterator126)(object)this)._003C_003Em__268);
-		while (true)
-		{
-			yield return StartCoroutine(DownloadDataAboutBonuses());
-			while (Time.realtimeSinceStartup - _eventGetBonusInfoStartTime < 870f)
-			{
-				yield return null;
-			}
-		}
-	}
-
-	private void Update()
-	{
-		if (IsBonusActive && Time.realtimeSinceStartup - _lastCheckEventTime >= 1f)
-		{
-			IsBonusActive = IsBonusActivate();
-			if (_lastBonusActive != IsBonusActive && ChestBonusController.OnChestBonusChange != null)
-			{
-				ChestBonusController.OnChestBonusChange();
-				_lastBonusActive = IsBonusActive;
-			}
-			_lastCheckEventTime = Time.realtimeSinceStartup;
-		}
-	}
-
-	private IEnumerator DownloadDataAboutBonuses()
-	{
-		if (_isGetBonusInfoRunning)
-		{
-			yield break;
-		}
-		_eventGetBonusInfoStartTime = Time.realtimeSinceStartup;
-		_isGetBonusInfoRunning = true;
-		string bonusesDataAddress = ChestBonusModel.GetUrlForDownloadBonusesData();
-		string cachedResponse = PersistentCacheManager.Instance.GetValue(bonusesDataAddress);
-		string responseText;
-		if (!string.IsNullOrEmpty(cachedResponse))
-		{
-			PersistentCacheManager.DebugReportCacheHit(bonusesDataAddress);
-			responseText = cachedResponse;
-		}
-		else
-		{
-			PersistentCacheManager.DebugReportCacheMiss(bonusesDataAddress);
-			WWW downloadData = Tools.CreateWwwIfNotConnected(bonusesDataAddress);
-			if (downloadData == null)
-			{
-				_isGetBonusInfoRunning = false;
-				yield break;
-			}
-			yield return downloadData;
-			if (!string.IsNullOrEmpty(downloadData.error))
-			{
-				Debug.LogError("DownloadDataAboutBonuses error: " + downloadData.error);
-				_bonusesData.Clear();
-				_isGetBonusInfoRunning = false;
-				yield break;
-			}
-			responseText = URLs.Sanitize(downloadData);
-			PersistentCacheManager.Instance.SetValue(bonusesDataAddress, responseText);
-		}
-		Dictionary<string, object> bonusesData = Json.Deserialize(responseText) as Dictionary<string, object>;
-		if (bonusesData == null)
-		{
-			Debug.LogWarning("DownloadDataAboutBonuses bonusesData = null");
-			_isGetBonusInfoRunning = false;
-			yield break;
-		}
-		chestBonusesObtainedOnceInCurrentRun = true;
-		_bonusesData.Clear();
-		if (bonusesData.ContainsKey("start"))
-		{
-			_bonusesData.timeStart = Convert.ToInt32((long)bonusesData["start"]);
-		}
-		if (bonusesData.ContainsKey("duration"))
-		{
-			long duration2 = Math.Min(Convert.ToInt64(bonusesData["duration"]), 2147483647L);
-			duration2 = Math.Max(duration2, -2147483648L);
-			_bonusesData.duration = Convert.ToInt32(duration2);
-		}
-		if (_bonusesData.timeStart == 0 || _bonusesData.duration == 0)
-		{
-			_isGetBonusInfoRunning = false;
-			yield break;
-		}
-		if (!bonusesData.ContainsKey("bonuses"))
-		{
-			_isGetBonusInfoRunning = false;
-			yield break;
-		}
-		List<object> bonusesList = bonusesData["bonuses"] as List<object>;
-		if (bonusesList != null)
-		{
-			_bonusesData.bonuses = new List<ChestBonusData>();
-			for (int i = 0; i < bonusesList.Count; i++)
-			{
-				Dictionary<string, object> bonusElement = bonusesList[i] as Dictionary<string, object>;
-				if (bonusElement == null)
-				{
-					continue;
-				}
-				ChestBonusData newBonus = new ChestBonusData();
-				if (bonusElement.ContainsKey("linkKey"))
-				{
-					newBonus.linkKey = (string)bonusElement["linkKey"];
-				}
-				if (bonusElement.ContainsKey("isVisible"))
-				{
-					int value = Convert.ToInt32((long)bonusElement["isVisible"]);
-					newBonus.isVisible = value == 1;
-				}
-				if (bonusElement.ContainsKey("items"))
-				{
-					List<object> bonusItemsList = bonusElement["items"] as List<object>;
-					if (bonusItemsList != null)
-					{
-						newBonus.items = new List<ChestBonusItemData>();
-						for (int j = 0; j < bonusItemsList.Count; j++)
-						{
-							Dictionary<string, object> bonusItemData = bonusItemsList[j] as Dictionary<string, object>;
-							if (bonusItemData != null)
-							{
-								ChestBonusItemData newItem = new ChestBonusItemData();
-								if (bonusItemData.ContainsKey("tag"))
-								{
-									newItem.tag = (string)bonusItemData["tag"];
-								}
-								if (bonusItemData.ContainsKey("count"))
-								{
-									newItem.count = Convert.ToInt32((long)bonusItemData["count"]);
-								}
-								if (bonusItemData.ContainsKey("timeLife"))
-								{
-									newItem.timeLife = Convert.ToInt32((long)bonusItemData["timeLife"]);
-								}
-								newBonus.items.Add(newItem);
-							}
-						}
-					}
-				}
-				_bonusesData.bonuses.Add(newBonus);
-			}
-		}
-		_timeStartBonus = StarterPackModel.GetCurrentTimeByUnixTime(_bonusesData.timeStart);
-		int timeEnd = _bonusesData.timeStart + _bonusesData.duration;
-		_timeEndBonus = StarterPackModel.GetCurrentTimeByUnixTime(timeEnd);
-		IsBonusActive = IsBonusActivate();
-		if (ChestBonusController.OnChestBonusChange != null)
-		{
-			ChestBonusController.OnChestBonusChange();
-		}
-		_isGetBonusInfoRunning = false;
-	}
-
-	private bool IsBonusActivate()
-	{
-		if (_bonusesData.timeStart == 0 || _bonusesData.duration == 0)
-		{
-			return false;
-		}
-		DateTime utcNow = DateTime.UtcNow;
-		return utcNow >= _timeStartBonus && utcNow <= _timeEndBonus;
+		ChestBonusController.Get = null;
 	}
 
 	public void ShowBonusWindowForItem(PurchaseEventArgs purchaseInfo)
 	{
-		ChestBonusData bonusData = GetBonusData(purchaseInfo);
+		ChestBonusData bonusData = this.GetBonusData(purchaseInfo);
 		BankController instance = BankController.Instance;
 		if (bonusData != null && instance != null)
 		{
@@ -233,44 +130,19 @@ public sealed class ChestBonusController : MonoBehaviour
 		}
 	}
 
-	public bool IsBonusActiveForItem(PurchaseEventArgs purchaseInfo)
+	private void Start()
 	{
-		if (!IsBonusActive)
-		{
-			return false;
-		}
-		ChestBonusData bonusData = GetBonusData(purchaseInfo);
-		return bonusData != null && bonusData.isVisible;
-	}
-
-	public ChestBonusData GetBonusData(PurchaseEventArgs purchaseInfo)
-	{
-		bool isGemsPack = purchaseInfo.Currency == "GemsCurrency";
-		return GetBonusData(isGemsPack, purchaseInfo.Index);
-	}
-
-	private ChestBonusData GetBonusData(bool isGemsPack, int packOrder)
-	{
-		if (_bonusesData == null || _bonusesData.bonuses == null)
-		{
-			return null;
-		}
-		string arg = ((!isGemsPack) ? "coins" : "gems");
-		string text = string.Format("{0}_{1}", arg, packOrder + 1);
-		for (int i = 0; i < _bonusesData.bonuses.Count; i++)
-		{
-			ChestBonusData chestBonusData = _bonusesData.bonuses[i];
-			if (chestBonusData.linkKey == text)
-			{
-				return chestBonusData;
-			}
-		}
-		return null;
+		ChestBonusController.Get = this;
+		this._bonusesData = new ChestBonusesData();
+		this._timeStartBonus = new DateTime();
+		this._timeEndBonus = new DateTime();
+		Task firstResponse = PersistentCacheManager.Instance.FirstResponse;
+		base.StartCoroutine(this.GetEventBonusInfoLoop(firstResponse));
 	}
 
 	public static bool TryTakeChestBonus(bool isGemsPack, int packOrder)
 	{
-		ChestBonusController get = Get;
+		ChestBonusController get = ChestBonusController.Get;
 		if (get == null)
 		{
 			return false;
@@ -290,21 +162,44 @@ public sealed class ChestBonusController : MonoBehaviour
 		}
 		for (int i = 0; i < bonusData.items.Count; i++)
 		{
-			ChestBonusItemData chestBonusItemData = bonusData.items[i];
-			ShopNGUIController.CategoryNames itemCategory = (ShopNGUIController.CategoryNames)ItemDb.GetItemCategory(chestBonusItemData.tag);
-			ShopNGUIController.ProvideAllTypeShopItem(itemCategory, chestBonusItemData.tag, chestBonusItemData.count, chestBonusItemData.timeLife);
+			ChestBonusItemData item = bonusData.items[i];
+			ShopNGUIController.CategoryNames itemCategory = (ShopNGUIController.CategoryNames)ItemDb.GetItemCategory(item.tag);
+			ShopNGUIController.ProvideAllTypeShopItem(itemCategory, item.tag, item.count, item.timeLife);
 		}
 		int currentLevel = ExperienceController.GetCurrentLevel();
-		int num = ((!(ExpController.Instance == null)) ? ExpController.Instance.OurTier : 0);
-		string arg = ((!isGemsPack) ? "coins" : "gems");
-		string value = string.Format("{0}_{1}", arg, packOrder + 1);
-		Dictionary<string, string> dictionary = new Dictionary<string, string>();
-		dictionary.Add("Level", currentLevel.ToString());
-		dictionary.Add("Tier", num.ToString());
-		dictionary.Add("SKU", value);
-		Dictionary<string, string> parameters = dictionary;
-		string eventName = ((!isGemsPack) ? "Bonus-Coins" : "Bonus-Gems");
-		FlurryPluginWrapper.LogEventAndDublicateToConsole(eventName, parameters);
+		int num = (ExpController.Instance != null ? ExpController.Instance.OurTier : 0);
+		string str = (!isGemsPack ? "coins" : "gems");
+		string str1 = string.Format("{0}_{1}", str, packOrder + 1);
+		Dictionary<string, string> strs = new Dictionary<string, string>()
+		{
+			{ "Level", currentLevel.ToString() },
+			{ "Tier", num.ToString() },
+			{ "SKU", str1 }
+		};
+		Dictionary<string, string> strs1 = strs;
+		FlurryPluginWrapper.LogEventAndDublicateToConsole((!isGemsPack ? "Bonus-Coins" : "Bonus-Gems"), strs1, true);
 		return true;
 	}
+
+	private void Update()
+	{
+		if (!this.IsBonusActive)
+		{
+			return;
+		}
+		if (Time.realtimeSinceStartup - this._lastCheckEventTime >= 1f)
+		{
+			this.IsBonusActive = this.IsBonusActivate();
+			if (this._lastBonusActive != this.IsBonusActive && ChestBonusController.OnChestBonusChange != null)
+			{
+				ChestBonusController.OnChestBonusChange();
+				this._lastBonusActive = this.IsBonusActive;
+			}
+			this._lastCheckEventTime = Time.realtimeSinceStartup;
+		}
+	}
+
+	public static event ChestBonusController.OnChestBonusEnabledDelegate OnChestBonusChange;
+
+	public delegate void OnChestBonusEnabledDelegate();
 }

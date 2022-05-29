@@ -1,123 +1,40 @@
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using AOT;
-using GooglePlayGames.Native.Cwrapper;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class AchievementManager
 	{
-		internal class FetchResponse : BaseReferenceHolder
+		private readonly GooglePlayGames.Native.PInvoke.GameServices mServices;
+
+		internal AchievementManager(GooglePlayGames.Native.PInvoke.GameServices services)
 		{
-			internal FetchResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_GetStatus(SelfPtr());
-			}
-
-			internal NativeAchievement Achievement()
-			{
-				IntPtr selfPointer = GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_GetData(SelfPtr());
-				return new NativeAchievement(selfPointer);
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new FetchResponse(pointer);
-			}
+			this.mServices = Misc.CheckNotNull<GooglePlayGames.Native.PInvoke.GameServices>(services);
 		}
 
-		internal class FetchAllResponse : BaseReferenceHolder, IEnumerable, IEnumerable<NativeAchievement>
+		internal void Fetch(string achId, Action<GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse> callback)
 		{
-			internal FetchAllResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			IEnumerator IEnumerable.GetEnumerator()
-			{
-				return GetEnumerator();
-			}
-
-			internal CommonErrorStatus.ResponseStatus Status()
-			{
-				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetStatus(SelfPtr());
-			}
-
-			private UIntPtr Length()
-			{
-				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_Length(SelfPtr());
-			}
-
-			private NativeAchievement GetElement(UIntPtr index)
-			{
-				if (index.ToUInt64() >= Length().ToUInt64())
-				{
-					throw new ArgumentOutOfRangeException();
-				}
-				return new NativeAchievement(GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_GetElement(SelfPtr(), index));
-			}
-
-			public IEnumerator<NativeAchievement> GetEnumerator()
-			{
-				return PInvokeUtilities.ToEnumerator(GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_Length(SelfPtr()), _003CGetEnumerator_003Em__120);
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchAllResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new FetchAllResponse(pointer);
-			}
-
-			[CompilerGenerated]
-			private NativeAchievement _003CGetEnumerator_003Em__120(UIntPtr index)
-			{
-				return GetElement(index);
-			}
+			Misc.CheckNotNull<string>(achId);
+			Misc.CheckNotNull<Action<GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse>>(callback);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Fetch(this.mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, achId, new GooglePlayGames.Native.Cwrapper.AchievementManager.FetchCallback(GooglePlayGames.Native.PInvoke.AchievementManager.InternalFetchCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse>(GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse.FromPointer)));
 		}
 
-		private readonly GameServices mServices;
-
-		internal AchievementManager(GameServices services)
+		internal void FetchAll(Action<GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse> callback)
 		{
-			mServices = Misc.CheckNotNull(services);
+			Misc.CheckNotNull<Action<GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse>>(callback);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAll(this.mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, new GooglePlayGames.Native.Cwrapper.AchievementManager.FetchAllCallback(GooglePlayGames.Native.PInvoke.AchievementManager.InternalFetchAllCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse>(GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse.FromPointer)));
 		}
 
-		internal void ShowAllUI(Action<CommonErrorStatus.UIStatus> callback)
+		internal void Increment(string achievementId, uint numSteps)
 		{
-			Misc.CheckNotNull(callback);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_ShowAllUI(mServices.AsHandle(), Callbacks.InternalShowUICallback, Callbacks.ToIntPtr(callback));
-		}
-
-		internal void FetchAll(Action<FetchAllResponse> callback)
-		{
-			Misc.CheckNotNull(callback);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAll(mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, InternalFetchAllCallback, Callbacks.ToIntPtr(callback, FetchAllResponse.FromPointer));
+			Misc.CheckNotNull<string>(achievementId);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Increment(this.mServices.AsHandle(), achievementId, numSteps);
 		}
 
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.AchievementManager.FetchAllCallback))]
@@ -126,41 +43,115 @@ namespace GooglePlayGames.Native.PInvoke
 			Callbacks.PerformInternalCallback("AchievementManager#InternalFetchAllCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void Fetch(string achId, Action<FetchResponse> callback)
-		{
-			Misc.CheckNotNull(achId);
-			Misc.CheckNotNull(callback);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Fetch(mServices.AsHandle(), Types.DataSource.CACHE_OR_NETWORK, achId, InternalFetchCallback, Callbacks.ToIntPtr(callback, FetchResponse.FromPointer));
-		}
-
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.AchievementManager.FetchCallback))]
 		private static void InternalFetchCallback(IntPtr response, IntPtr data)
 		{
 			Callbacks.PerformInternalCallback("AchievementManager#InternalFetchCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void Increment(string achievementId, uint numSteps)
+		internal void Reveal(string achievementId)
 		{
-			Misc.CheckNotNull(achievementId);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Increment(mServices.AsHandle(), achievementId, numSteps);
+			Misc.CheckNotNull<string>(achievementId);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Reveal(this.mServices.AsHandle(), achievementId);
 		}
 
 		internal void SetStepsAtLeast(string achivementId, uint numSteps)
 		{
-			Misc.CheckNotNull(achivementId);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_SetStepsAtLeast(mServices.AsHandle(), achivementId, numSteps);
+			Misc.CheckNotNull<string>(achivementId);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_SetStepsAtLeast(this.mServices.AsHandle(), achivementId, numSteps);
 		}
 
-		internal void Reveal(string achievementId)
+		internal void ShowAllUI(Action<CommonErrorStatus.UIStatus> callback)
 		{
-			Misc.CheckNotNull(achievementId);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Reveal(mServices.AsHandle(), achievementId);
+			Misc.CheckNotNull<Action<CommonErrorStatus.UIStatus>>(callback);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_ShowAllUI(this.mServices.AsHandle(), new GooglePlayGames.Native.Cwrapper.AchievementManager.ShowAllUICallback(Callbacks.InternalShowUICallback), Callbacks.ToIntPtr(callback));
 		}
 
 		internal void Unlock(string achievementId)
 		{
-			Misc.CheckNotNull(achievementId);
-			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Unlock(mServices.AsHandle(), achievementId);
+			Misc.CheckNotNull<string>(achievementId);
+			GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_Unlock(this.mServices.AsHandle(), achievementId);
+		}
+
+		internal class FetchAllResponse : BaseReferenceHolder, IEnumerable, IEnumerable<NativeAchievement>
+		{
+			internal FetchAllResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_Dispose(selfPointer);
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.AchievementManager.FetchAllResponse(pointer);
+			}
+
+			private NativeAchievement GetElement(UIntPtr index)
+			{
+				if (index.ToUInt64() >= this.Length().ToUInt64())
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+				return new NativeAchievement(GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_GetElement(base.SelfPtr(), index));
+			}
+
+			public IEnumerator<NativeAchievement> GetEnumerator()
+			{
+				return PInvokeUtilities.ToEnumerator<NativeAchievement>(GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_Length(base.SelfPtr()), (UIntPtr index) => this.GetElement(index));
+			}
+
+			private UIntPtr Length()
+			{
+				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetData_Length(base.SelfPtr());
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchAllResponse_GetStatus(base.SelfPtr());
+			}
+
+			IEnumerator System.Collections.IEnumerable.GetEnumerator()
+			{
+				return this.GetEnumerator();
+			}
+		}
+
+		internal class FetchResponse : BaseReferenceHolder
+		{
+			internal FetchResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			internal NativeAchievement Achievement()
+			{
+				return new NativeAchievement(GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_GetData(base.SelfPtr()));
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_Dispose(selfPointer);
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.AchievementManager.FetchResponse(pointer);
+			}
+
+			internal CommonErrorStatus.ResponseStatus Status()
+			{
+				return GooglePlayGames.Native.Cwrapper.AchievementManager.AchievementManager_FetchResponse_GetStatus(base.SelfPtr());
+			}
 		}
 	}
 }

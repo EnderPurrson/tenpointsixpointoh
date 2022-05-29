@@ -1,124 +1,36 @@
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using AOT;
-using GooglePlayGames.Native.Cwrapper;
-using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
 	internal class EventManager
 	{
-		internal class FetchResponse : BaseReferenceHolder
+		private readonly GooglePlayGames.Native.PInvoke.GameServices mServices;
+
+		internal EventManager(GooglePlayGames.Native.PInvoke.GameServices services)
 		{
-			internal FetchResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.ResponseStatus ResponseStatus()
-			{
-				return GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_GetStatus(SelfPtr());
-			}
-
-			internal bool RequestSucceeded()
-			{
-				return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
-			}
-
-			internal NativeEvent Data()
-			{
-				if (!RequestSucceeded())
-				{
-					return null;
-				}
-				return new NativeEvent(GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_GetData(SelfPtr()));
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new FetchResponse(pointer);
-			}
+			this.mServices = Misc.CheckNotNull<GooglePlayGames.Native.PInvoke.GameServices>(services);
 		}
 
-		internal class FetchAllResponse : BaseReferenceHolder
+		internal void Fetch(Types.DataSource source, string eventId, Action<GooglePlayGames.Native.PInvoke.EventManager.FetchResponse> callback)
 		{
-			[CompilerGenerated]
-			private static Func<IntPtr, NativeEvent> _003C_003Ef__am_0024cache0;
-
-			internal FetchAllResponse(IntPtr selfPointer)
-				: base(selfPointer)
-			{
-			}
-
-			internal CommonErrorStatus.ResponseStatus ResponseStatus()
-			{
-				return GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_GetStatus(SelfPtr());
-			}
-
-			internal List<NativeEvent> Data()
-			{
-				IntPtr[] source = PInvokeUtilities.OutParamsToArray<IntPtr>(_003CData_003Em__128);
-				if (_003C_003Ef__am_0024cache0 == null)
-				{
-					_003C_003Ef__am_0024cache0 = _003CData_003Em__129;
-				}
-				return source.Select(_003C_003Ef__am_0024cache0).ToList();
-			}
-
-			internal bool RequestSucceeded()
-			{
-				return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
-			}
-
-			protected override void CallDispose(HandleRef selfPointer)
-			{
-				GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_Dispose(selfPointer);
-			}
-
-			internal static FetchAllResponse FromPointer(IntPtr pointer)
-			{
-				if (pointer.Equals(IntPtr.Zero))
-				{
-					return null;
-				}
-				return new FetchAllResponse(pointer);
-			}
-
-			[CompilerGenerated]
-			private UIntPtr _003CData_003Em__128(IntPtr[] out_arg, UIntPtr out_size)
-			{
-				return GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_GetData(SelfPtr(), out_arg, out_size);
-			}
-
-			[CompilerGenerated]
-			private static NativeEvent _003CData_003Em__129(IntPtr ptr)
-			{
-				return new NativeEvent(ptr);
-			}
+			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_Fetch(this.mServices.AsHandle(), source, eventId, new GooglePlayGames.Native.Cwrapper.EventManager.FetchCallback(GooglePlayGames.Native.PInvoke.EventManager.InternalFetchCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.EventManager.FetchResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.EventManager.FetchResponse>(GooglePlayGames.Native.PInvoke.EventManager.FetchResponse.FromPointer)));
 		}
 
-		private readonly GameServices mServices;
-
-		internal EventManager(GameServices services)
+		internal void FetchAll(Types.DataSource source, Action<GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse> callback)
 		{
-			mServices = Misc.CheckNotNull(services);
+			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAll(this.mServices.AsHandle(), source, new GooglePlayGames.Native.Cwrapper.EventManager.FetchAllCallback(GooglePlayGames.Native.PInvoke.EventManager.InternalFetchAllCallback), Callbacks.ToIntPtr<GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse>(callback, new Func<IntPtr, GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse>(GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse.FromPointer)));
 		}
 
-		internal void FetchAll(Types.DataSource source, Action<FetchAllResponse> callback)
+		internal void Increment(string eventId, uint steps)
 		{
-			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAll(mServices.AsHandle(), source, InternalFetchAllCallback, Callbacks.ToIntPtr(callback, FetchAllResponse.FromPointer));
+			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_Increment(this.mServices.AsHandle(), eventId, steps);
 		}
 
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.EventManager.FetchAllCallback))]
@@ -127,20 +39,88 @@ namespace GooglePlayGames.Native.PInvoke
 			Callbacks.PerformInternalCallback("EventManager#FetchAllCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void Fetch(Types.DataSource source, string eventId, Action<FetchResponse> callback)
-		{
-			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_Fetch(mServices.AsHandle(), source, eventId, InternalFetchCallback, Callbacks.ToIntPtr(callback, FetchResponse.FromPointer));
-		}
-
 		[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.EventManager.FetchCallback))]
 		internal static void InternalFetchCallback(IntPtr response, IntPtr data)
 		{
 			Callbacks.PerformInternalCallback("EventManager#FetchCallback", Callbacks.Type.Temporary, response, data);
 		}
 
-		internal void Increment(string eventId, uint steps)
+		internal class FetchAllResponse : BaseReferenceHolder
 		{
-			GooglePlayGames.Native.Cwrapper.EventManager.EventManager_Increment(mServices.AsHandle(), eventId, steps);
+			internal FetchAllResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_Dispose(selfPointer);
+			}
+
+			internal List<NativeEvent> Data()
+			{
+				return (
+					from ptr in (IEnumerable<IntPtr>)PInvokeUtilities.OutParamsToArray<IntPtr>((IntPtr[] out_arg, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_GetData(base.SelfPtr(), out_arg, out_size))
+					select new NativeEvent(ptr)).ToList<NativeEvent>();
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.EventManager.FetchAllResponse(pointer);
+			}
+
+			internal bool RequestSucceeded()
+			{
+				return (int)this.ResponseStatus() > 0;
+			}
+
+			internal CommonErrorStatus.ResponseStatus ResponseStatus()
+			{
+				return GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchAllResponse_GetStatus(base.SelfPtr());
+			}
+		}
+
+		internal class FetchResponse : BaseReferenceHolder
+		{
+			internal FetchResponse(IntPtr selfPointer) : base(selfPointer)
+			{
+			}
+
+			protected override void CallDispose(HandleRef selfPointer)
+			{
+				GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_Dispose(selfPointer);
+			}
+
+			internal NativeEvent Data()
+			{
+				if (!this.RequestSucceeded())
+				{
+					return null;
+				}
+				return new NativeEvent(GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_GetData(base.SelfPtr()));
+			}
+
+			internal static GooglePlayGames.Native.PInvoke.EventManager.FetchResponse FromPointer(IntPtr pointer)
+			{
+				if (pointer.Equals(IntPtr.Zero))
+				{
+					return null;
+				}
+				return new GooglePlayGames.Native.PInvoke.EventManager.FetchResponse(pointer);
+			}
+
+			internal bool RequestSucceeded()
+			{
+				return (int)this.ResponseStatus() > 0;
+			}
+
+			internal CommonErrorStatus.ResponseStatus ResponseStatus()
+			{
+				return GooglePlayGames.Native.Cwrapper.EventManager.EventManager_FetchResponse_GetStatus(base.SelfPtr());
+			}
 		}
 	}
 }

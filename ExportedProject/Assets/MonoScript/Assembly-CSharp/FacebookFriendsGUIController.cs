@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class FacebookFriendsGUIController : MonoBehaviour
@@ -8,18 +11,8 @@ public class FacebookFriendsGUIController : MonoBehaviour
 
 	public bool _infoRequested;
 
-	private void Start()
+	public FacebookFriendsGUIController()
 	{
-		sharedController = this;
-	}
-
-	private void Update()
-	{
-		if (FacebookController.FacebookSupported && FacebookController.sharedController.friendsList != null && FacebookController.sharedController.friendsList.Count != 0 && FriendsController.sharedController.facebookFriendsInfo.Count == 0 && !_infoRequested && FriendsController.sharedController.GetFacebookFriendsCallback == null)
-		{
-			FriendsController.sharedController.GetFacebookFriendsInfo(GetFacebookFriendsCallback);
-			_infoRequested = true;
-		}
 	}
 
 	private void GetFacebookFriendsCallback()
@@ -28,7 +21,7 @@ public class FacebookFriendsGUIController : MonoBehaviour
 		{
 			return;
 		}
-		Dictionary<string, Dictionary<string, object>> dictionary = new Dictionary<string, Dictionary<string, object>>();
+		Dictionary<string, Dictionary<string, object>> strs = new Dictionary<string, Dictionary<string, object>>();
 		foreach (string key in FriendsController.sharedController.facebookFriendsInfo.Keys)
 		{
 			bool flag = false;
@@ -36,103 +29,100 @@ public class FacebookFriendsGUIController : MonoBehaviour
 			{
 				foreach (string friend in FriendsController.sharedController.friends)
 				{
-					if (friend.Equals(key))
+					if (!friend.Equals(key))
 					{
-						flag = true;
-						break;
+						continue;
 					}
+					flag = true;
+					break;
 				}
 			}
-			if (!flag)
+			if (flag)
 			{
-				dictionary.Add(key, FriendsController.sharedController.facebookFriendsInfo[key]);
+				continue;
 			}
+			strs.Add(key, FriendsController.sharedController.facebookFriendsInfo[key]);
 		}
-		UIGrid componentInChildren = GetComponentInChildren<UIGrid>();
+		UIGrid componentInChildren = base.GetComponentInChildren<UIGrid>();
 		if (componentInChildren == null)
 		{
 			return;
 		}
-		FriendPreview[] array = GetComponentsInChildren<FriendPreview>(true);
-		if (array == null)
+		FriendPreview[] componentsInChildren = base.GetComponentsInChildren<FriendPreview>(true) ?? new FriendPreview[0];
+		Dictionary<string, FriendPreview> strs1 = new Dictionary<string, FriendPreview>();
+		FriendPreview[] friendPreviewArray = componentsInChildren;
+		for (int i = 0; i < (int)friendPreviewArray.Length; i++)
 		{
-			array = new FriendPreview[0];
-		}
-		Dictionary<string, FriendPreview> dictionary2 = new Dictionary<string, FriendPreview>();
-		FriendPreview[] array2 = array;
-		foreach (FriendPreview friendPreview in array2)
-		{
-			if (friendPreview.id != null && dictionary.ContainsKey(friendPreview.id))
+			FriendPreview friendPreview = friendPreviewArray[i];
+			if (friendPreview.id == null || !strs.ContainsKey(friendPreview.id))
 			{
-				dictionary2.Add(friendPreview.id, friendPreview);
-				continue;
+				friendPreview.transform.parent = null;
+				UnityEngine.Object.Destroy(friendPreview.gameObject);
 			}
-			friendPreview.transform.parent = null;
-			Object.Destroy(friendPreview.gameObject);
-		}
-		foreach (KeyValuePair<string, Dictionary<string, object>> item in dictionary)
-		{
-			Dictionary<string, string> dictionary3 = new Dictionary<string, string>();
-			foreach (KeyValuePair<string, object> item2 in item.Value)
+			else
 			{
-				dictionary3.Add(item2.Key, item2.Value as string);
+				strs1.Add(friendPreview.id, friendPreview);
 			}
-			if (dictionary2.ContainsKey(item.Key))
+		}
+		foreach (KeyValuePair<string, Dictionary<string, object>> str in strs)
+		{
+			Dictionary<string, string> strs2 = new Dictionary<string, string>();
+			foreach (KeyValuePair<string, object> value in str.Value)
 			{
-				GameObject gameObject = dictionary2[item.Key].gameObject;
-				gameObject.GetComponent<FriendPreview>().facebookFriend = true;
-				gameObject.GetComponent<FriendPreview>().id = item.Key;
-				if (item.Value.ContainsKey("nick"))
+				strs2.Add(value.Key, value.Value as string);
+			}
+			if (!strs1.ContainsKey(str.Key))
+			{
+				GameObject vector3 = UnityEngine.Object.Instantiate<GameObject>(Resources.Load("Friend") as GameObject);
+				vector3.transform.parent = componentInChildren.transform;
+				vector3.transform.localScale = new Vector3(1f, 1f, 1f);
+				vector3.GetComponent<FriendPreview>().facebookFriend = true;
+				vector3.GetComponent<FriendPreview>().id = str.Key;
+				if (str.Value.ContainsKey("nick"))
 				{
-					gameObject.GetComponent<FriendPreview>().nm.text = item.Value["nick"] as string;
+					vector3.GetComponent<FriendPreview>().nm.text = str.Value["nick"] as string;
 				}
-				if (item.Value.ContainsKey("rank"))
+				if (str.Value.ContainsKey("rank"))
 				{
-					string text = item.Value["rank"] as string;
-					if (text.Equals("0"))
+					string item = str.Value["rank"] as string;
+					if (item.Equals("0"))
 					{
-						text = "1";
+						item = "1";
 					}
-					gameObject.GetComponent<FriendPreview>().rank.spriteName = "Rank_" + text;
+					vector3.GetComponent<FriendPreview>().rank.spriteName = string.Concat("Rank_", item);
 				}
-				if (item.Value.ContainsKey("skin"))
+				if (str.Value.ContainsKey("skin"))
 				{
-					gameObject.GetComponent<FriendPreview>().SetSkin(item.Value["skin"] as string);
+					vector3.GetComponent<FriendPreview>().SetSkin(str.Value["skin"] as string);
 				}
-				gameObject.GetComponent<FriendPreview>().FillClanAttrs(dictionary3);
-				continue;
+				vector3.GetComponent<FriendPreview>().FillClanAttrs(strs2);
 			}
-			GameObject gameObject2 = Object.Instantiate(Resources.Load("Friend") as GameObject);
-			gameObject2.transform.parent = componentInChildren.transform;
-			gameObject2.transform.localScale = new Vector3(1f, 1f, 1f);
-			gameObject2.GetComponent<FriendPreview>().facebookFriend = true;
-			gameObject2.GetComponent<FriendPreview>().id = item.Key;
-			if (item.Value.ContainsKey("nick"))
+			else
 			{
-				gameObject2.GetComponent<FriendPreview>().nm.text = item.Value["nick"] as string;
-			}
-			if (item.Value.ContainsKey("rank"))
-			{
-				string text2 = item.Value["rank"] as string;
-				if (text2.Equals("0"))
+				GameObject gameObject = strs1[str.Key].gameObject;
+				gameObject.GetComponent<FriendPreview>().facebookFriend = true;
+				gameObject.GetComponent<FriendPreview>().id = str.Key;
+				if (str.Value.ContainsKey("nick"))
 				{
-					text2 = "1";
+					gameObject.GetComponent<FriendPreview>().nm.text = str.Value["nick"] as string;
 				}
-				gameObject2.GetComponent<FriendPreview>().rank.spriteName = "Rank_" + text2;
+				if (str.Value.ContainsKey("rank"))
+				{
+					string item1 = str.Value["rank"] as string;
+					if (item1.Equals("0"))
+					{
+						item1 = "1";
+					}
+					gameObject.GetComponent<FriendPreview>().rank.spriteName = string.Concat("Rank_", item1);
+				}
+				if (str.Value.ContainsKey("skin"))
+				{
+					gameObject.GetComponent<FriendPreview>().SetSkin(str.Value["skin"] as string);
+				}
+				gameObject.GetComponent<FriendPreview>().FillClanAttrs(strs2);
 			}
-			if (item.Value.ContainsKey("skin"))
-			{
-				gameObject2.GetComponent<FriendPreview>().SetSkin(item.Value["skin"] as string);
-			}
-			gameObject2.GetComponent<FriendPreview>().FillClanAttrs(dictionary3);
 		}
-		StartCoroutine(Repos(componentInChildren));
-	}
-
-	private IEnumerator Repos(UIGrid grid)
-	{
-		yield return null;
-		grid.Reposition();
+		base.StartCoroutine(this.Repos(componentInChildren));
 	}
 
 	private void OnApplicationPause(bool pause)
@@ -140,13 +130,42 @@ public class FacebookFriendsGUIController : MonoBehaviour
 		if (pause)
 		{
 			FriendsController.sharedController.facebookFriendsInfo.Clear();
-			_infoRequested = false;
+			this._infoRequested = false;
 		}
 	}
 
 	private void OnDestroy()
 	{
 		FriendsController.sharedController.GetFacebookFriendsCallback = null;
-		sharedController = null;
+		FacebookFriendsGUIController.sharedController = null;
+	}
+
+	[DebuggerHidden]
+	private IEnumerator Repos(UIGrid grid)
+	{
+		FacebookFriendsGUIController.u003cReposu003ec__Iterator26 variable = null;
+		return variable;
+	}
+
+	private void Start()
+	{
+		FacebookFriendsGUIController.sharedController = this;
+	}
+
+	private void Update()
+	{
+		if (!FacebookController.FacebookSupported)
+		{
+			return;
+		}
+		if (FacebookController.sharedController.friendsList == null || FacebookController.sharedController.friendsList.Count == 0)
+		{
+			return;
+		}
+		if (FriendsController.sharedController.facebookFriendsInfo.Count == 0 && !this._infoRequested && FriendsController.sharedController.GetFacebookFriendsCallback == null)
+		{
+			FriendsController.sharedController.GetFacebookFriendsInfo(new Action(this.GetFacebookFriendsCallback));
+			this._infoRequested = true;
+		}
 	}
 }

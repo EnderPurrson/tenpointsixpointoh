@@ -1,4 +1,7 @@
 using ExitGames.Client.Photon;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 public class RoomInfo
 {
@@ -18,15 +21,25 @@ public class RoomInfo
 
 	protected internal int masterClientIdField;
 
-	public bool removedFromList { get; internal set; }
-
-	protected internal bool serverSideMasterClient { get; private set; }
-
 	public Hashtable customProperties
 	{
 		get
 		{
-			return customPropertiesField;
+			return this.customPropertiesField;
+		}
+	}
+
+	public bool isLocalClientInside
+	{
+		get;
+		set;
+	}
+
+	public byte maxPlayers
+	{
+		get
+		{
+			return this.maxPlayersField;
 		}
 	}
 
@@ -34,19 +47,7 @@ public class RoomInfo
 	{
 		get
 		{
-			return nameField;
-		}
-	}
-
-	public int playerCount { get; private set; }
-
-	public bool isLocalClientInside { get; set; }
-
-	public byte maxPlayers
-	{
-		get
-		{
-			return maxPlayersField;
+			return this.nameField;
 		}
 	}
 
@@ -54,84 +55,92 @@ public class RoomInfo
 	{
 		get
 		{
-			return openField;
+			return this.openField;
 		}
+	}
+
+	public int playerCount
+	{
+		get;
+		private set;
+	}
+
+	public bool removedFromList
+	{
+		get;
+		internal set;
+	}
+
+	protected internal bool serverSideMasterClient
+	{
+		get;
+		private set;
 	}
 
 	public bool visible
 	{
 		get
 		{
-			return visibleField;
+			return this.visibleField;
 		}
 	}
 
 	protected internal RoomInfo(string roomName, Hashtable properties)
 	{
-		InternalCacheProperties(properties);
-		nameField = roomName;
+		this.InternalCacheProperties(properties);
+		this.nameField = roomName;
 	}
 
 	public override bool Equals(object other)
 	{
 		RoomInfo roomInfo = other as RoomInfo;
-		return roomInfo != null && name.Equals(roomInfo.nameField);
+		return (roomInfo == null ? false : this.name.Equals(roomInfo.nameField));
 	}
 
 	public override int GetHashCode()
 	{
-		return nameField.GetHashCode();
-	}
-
-	public override string ToString()
-	{
-		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, playerCount);
-	}
-
-	public string ToStringFull()
-	{
-		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, playerCount, customPropertiesField.ToStringFull());
+		return this.nameField.GetHashCode();
 	}
 
 	protected internal void InternalCacheProperties(Hashtable propertiesToCache)
 	{
-		if (propertiesToCache == null || propertiesToCache.Count == 0 || customPropertiesField.Equals(propertiesToCache))
+		if (propertiesToCache == null || propertiesToCache.Count == 0 || this.customPropertiesField.Equals(propertiesToCache))
 		{
 			return;
 		}
 		if (propertiesToCache.ContainsKey((byte)251))
 		{
-			removedFromList = (bool)propertiesToCache[(byte)251];
-			if (removedFromList)
+			this.removedFromList = (bool)propertiesToCache[(byte)251];
+			if (this.removedFromList)
 			{
 				return;
 			}
 		}
-		if (propertiesToCache.ContainsKey(byte.MaxValue))
+		if (propertiesToCache.ContainsKey((byte)255))
 		{
-			maxPlayersField = (byte)propertiesToCache[byte.MaxValue];
+			this.maxPlayersField = (byte)propertiesToCache[(byte)255];
 		}
 		if (propertiesToCache.ContainsKey((byte)253))
 		{
-			openField = (bool)propertiesToCache[(byte)253];
+			this.openField = (bool)propertiesToCache[(byte)253];
 		}
 		if (propertiesToCache.ContainsKey((byte)254))
 		{
-			visibleField = (bool)propertiesToCache[(byte)254];
+			this.visibleField = (bool)propertiesToCache[(byte)254];
 		}
 		if (propertiesToCache.ContainsKey((byte)252))
 		{
-			playerCount = (byte)propertiesToCache[(byte)252];
+			this.playerCount = (byte)propertiesToCache[(byte)252];
 		}
 		if (propertiesToCache.ContainsKey((byte)249))
 		{
-			autoCleanUpField = (bool)propertiesToCache[(byte)249];
+			this.autoCleanUpField = (bool)propertiesToCache[(byte)249];
 		}
 		if (propertiesToCache.ContainsKey((byte)248))
 		{
-			serverSideMasterClient = true;
-			bool flag = masterClientIdField != 0;
-			masterClientIdField = (int)propertiesToCache[(byte)248];
+			this.serverSideMasterClient = true;
+			bool flag = this.masterClientIdField != 0;
+			this.masterClientIdField = (int)propertiesToCache[(byte)248];
 			if (flag)
 			{
 				PhotonNetwork.networkingPeer.UpdateMasterClient();
@@ -139,8 +148,29 @@ public class RoomInfo
 		}
 		if (propertiesToCache.ContainsKey((byte)247))
 		{
-			expectedUsersField = (string[])propertiesToCache[(byte)247];
+			this.expectedUsersField = (string[])propertiesToCache[(byte)247];
 		}
-		customPropertiesField.MergeStringKeys(propertiesToCache);
+		this.customPropertiesField.MergeStringKeys(propertiesToCache);
+	}
+
+	public override string ToString()
+	{
+		object[] objArray = new object[] { this.nameField, null, null, null, null };
+		objArray[1] = (!this.visibleField ? "hidden" : "visible");
+		objArray[2] = (!this.openField ? "closed" : "open");
+		objArray[3] = this.maxPlayersField;
+		objArray[4] = this.playerCount;
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", objArray);
+	}
+
+	public string ToStringFull()
+	{
+		object[] stringFull = new object[] { this.nameField, null, null, null, null, null };
+		stringFull[1] = (!this.visibleField ? "hidden" : "visible");
+		stringFull[2] = (!this.openField ? "closed" : "open");
+		stringFull[3] = this.maxPlayersField;
+		stringFull[4] = this.playerCount;
+		stringFull[5] = this.customPropertiesField.ToStringFull();
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", stringFull);
 	}
 }

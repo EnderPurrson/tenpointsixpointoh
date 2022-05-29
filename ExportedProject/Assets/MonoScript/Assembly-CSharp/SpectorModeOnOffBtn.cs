@@ -1,8 +1,13 @@
+using System;
 using UnityEngine;
 
 public class SpectorModeOnOffBtn : MonoBehaviour
 {
 	public bool isOnBtn;
+
+	public SpectorModeOnOffBtn()
+	{
+	}
 
 	private void OnClick()
 	{
@@ -11,7 +16,7 @@ public class SpectorModeOnOffBtn : MonoBehaviour
 			return;
 		}
 		ButtonClickSound.Instance.PlayClick();
-		if (!isOnBtn)
+		if (!this.isOnBtn)
 		{
 			if (NetworkStartTableNGUIController.sharedController != null)
 			{

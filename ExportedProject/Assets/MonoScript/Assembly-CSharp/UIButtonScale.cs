@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [AddComponentMenu("NGUI/Interaction/Button Scale")]
@@ -15,49 +16,28 @@ public class UIButtonScale : MonoBehaviour
 
 	private bool mStarted;
 
-	private void Start()
+	public UIButtonScale()
 	{
-		if (!mStarted)
-		{
-			mStarted = true;
-			if (tweenTarget == null)
-			{
-				tweenTarget = base.transform;
-			}
-			mScale = tweenTarget.localScale;
-		}
-	}
-
-	private void OnEnable()
-	{
-		if (mStarted)
-		{
-			OnHover(UICamera.IsHighlighted(base.gameObject));
-		}
 	}
 
 	private void OnDisable()
 	{
-		if (mStarted && tweenTarget != null)
+		if (this.mStarted && this.tweenTarget != null)
 		{
-			TweenScale component = tweenTarget.GetComponent<TweenScale>();
+			TweenScale component = this.tweenTarget.GetComponent<TweenScale>();
 			if (component != null)
 			{
-				component.value = mScale;
+				component.@value = this.mScale;
 				component.enabled = false;
 			}
 		}
 	}
 
-	private void OnPress(bool isPressed)
+	private void OnEnable()
 	{
-		if (base.enabled)
+		if (this.mStarted)
 		{
-			if (!mStarted)
-			{
-				Start();
-			}
-			TweenScale.Begin(tweenTarget.gameObject, duration, isPressed ? Vector3.Scale(mScale, pressed) : ((!UICamera.IsHighlighted(base.gameObject)) ? mScale : Vector3.Scale(mScale, hover))).method = UITweener.Method.EaseInOut;
+			this.OnHover(UICamera.IsHighlighted(base.gameObject));
 		}
 	}
 
@@ -65,11 +45,34 @@ public class UIButtonScale : MonoBehaviour
 	{
 		if (base.enabled)
 		{
-			if (!mStarted)
+			if (!this.mStarted)
 			{
-				Start();
+				this.Start();
 			}
-			TweenScale.Begin(tweenTarget.gameObject, duration, (!isOver) ? mScale : Vector3.Scale(mScale, hover)).method = UITweener.Method.EaseInOut;
+			TweenScale.Begin(this.tweenTarget.gameObject, this.duration, (!isOver ? this.mScale : Vector3.Scale(this.mScale, this.hover))).method = UITweener.Method.EaseInOut;
+		}
+	}
+
+	private void OnPress(bool isPressed)
+	{
+		Vector3 vector3;
+		if (base.enabled)
+		{
+			if (!this.mStarted)
+			{
+				this.Start();
+			}
+			GameObject gameObject = this.tweenTarget.gameObject;
+			float single = this.duration;
+			if (!isPressed)
+			{
+				vector3 = (!UICamera.IsHighlighted(base.gameObject) ? this.mScale : Vector3.Scale(this.mScale, this.hover));
+			}
+			else
+			{
+				vector3 = Vector3.Scale(this.mScale, this.pressed);
+			}
+			TweenScale.Begin(gameObject, single, vector3).method = UITweener.Method.EaseInOut;
 		}
 	}
 
@@ -77,7 +80,20 @@ public class UIButtonScale : MonoBehaviour
 	{
 		if (base.enabled && (!isSelected || UICamera.currentScheme == UICamera.ControlScheme.Controller))
 		{
-			OnHover(isSelected);
+			this.OnHover(isSelected);
+		}
+	}
+
+	private void Start()
+	{
+		if (!this.mStarted)
+		{
+			this.mStarted = true;
+			if (this.tweenTarget == null)
+			{
+				this.tweenTarget = base.transform;
+			}
+			this.mScale = this.tweenTarget.localScale;
 		}
 	}
 }

@@ -1,6 +1,7 @@
+using I2.Loc;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using I2.Loc;
 using UnityEngine;
 
 namespace Rilisoft
@@ -8,8 +9,8 @@ namespace Rilisoft
 	[ExecuteInEditMode]
 	public class TextGroup : MonoBehaviour
 	{
-		[SerializeField]
 		[ReadOnly]
+		[SerializeField]
 		private List<UILabel> _labels = new List<UILabel>();
 
 		[SerializeField]
@@ -18,45 +19,42 @@ namespace Rilisoft
 		[SerializeField]
 		private string _localizationKey;
 
-		public string Text
-		{
-			get
-			{
-				return _text;
-			}
-			set
-			{
-				_text = value;
-				if (_labels != null)
-				{
-					_labels.ForEach(_003Cset_Text_003Em__463);
-				}
-			}
-		}
-
 		public string LocalizationKey
 		{
 			get
 			{
-				return _localizationKey;
+				return this._localizationKey;
 			}
 			set
 			{
-				_localizationKey = value;
-				if (!_localizationKey.IsNullOrEmpty())
+				this._localizationKey = value;
+				if (this._localizationKey.IsNullOrEmpty())
 				{
-					if (UseLocalizationComponents)
-					{
-						SetLocalizeComponents();
-					}
-					else
-					{
-						Text = LocalizationStore.Get(value);
-					}
+					this.Text = this._text;
+				}
+				else if (!this.UseLocalizationComponents)
+				{
+					this.Text = LocalizationStore.Get(value);
 				}
 				else
 				{
-					Text = _text;
+					this.SetLocalizeComponents();
+				}
+			}
+		}
+
+		public string Text
+		{
+			get
+			{
+				return this._text;
+			}
+			set
+			{
+				this._text = value;
+				if (this._labels != null)
+				{
+					this._labels.ForEach((UILabel l) => l.text = this._text);
 				}
 			}
 		}
@@ -65,81 +63,76 @@ namespace Rilisoft
 		{
 			get
 			{
-				return GetComponent<Localize>() != null;
+				return base.GetComponent<Localize>() != null;
 			}
 		}
 
-		private void OnEnable()
+		public TextGroup()
 		{
-			LocalizationStore.AddEventCallAfterLocalize(HandleLocalizationChanged);
-			SetLabels();
-			if (UseLocalizationComponents)
+		}
+
+		private void HandleLocalizationChanged()
+		{
+			if (this.LocalizationKey.IsNullOrEmpty())
 			{
-				SetLocalizeComponents();
+				this.Text = this._text;
 			}
-			else if (!LocalizationKey.IsNullOrEmpty())
+			else if (!this.UseLocalizationComponents)
 			{
-				Text = LocalizationStore.Get(LocalizationKey);
+				this.Text = LocalizationStore.Get(this.LocalizationKey);
 			}
 			else
 			{
-				Text = _text;
+				this.SetLocalizeComponents();
 			}
 		}
 
 		private void OnDisable()
 		{
-			LocalizationStore.DelEventCallAfterLocalize(HandleLocalizationChanged);
+			LocalizationStore.DelEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+		}
+
+		private void OnEnable()
+		{
+			LocalizationStore.AddEventCallAfterLocalize(new LocalizationManager.OnLocalizeCallback(this.HandleLocalizationChanged));
+			this.SetLabels();
+			if (this.UseLocalizationComponents)
+			{
+				this.SetLocalizeComponents();
+			}
+			else if (this.LocalizationKey.IsNullOrEmpty())
+			{
+				this.Text = this._text;
+			}
+			else
+			{
+				this.Text = LocalizationStore.Get(this.LocalizationKey);
+			}
 		}
 
 		private void SetLabels()
 		{
-			_labels.Clear();
-			UILabel component = GetComponent<UILabel>();
+			this._labels.Clear();
+			UILabel component = base.GetComponent<UILabel>();
 			if (component != null)
 			{
-				_labels.Add(component);
+				this._labels.Add(component);
 			}
-			_labels.AddRange(GetComponentsInChildren<UILabel>(true));
-		}
-
-		private void HandleLocalizationChanged()
-		{
-			if (!LocalizationKey.IsNullOrEmpty())
-			{
-				if (UseLocalizationComponents)
-				{
-					SetLocalizeComponents();
-				}
-				else
-				{
-					Text = LocalizationStore.Get(LocalizationKey);
-				}
-			}
-			else
-			{
-				Text = _text;
-			}
+			this._labels.AddRange(base.GetComponentsInChildren<UILabel>(true));
 		}
 
 		private void SetLocalizeComponents()
 		{
-			foreach (UILabel label in _labels)
+			foreach (UILabel _label in this._labels)
 			{
-				Localize localize = label.gameObject.GetComponent<Localize>();
-				if (localize == null)
+				Localize component = _label.gameObject.GetComponent<Localize>();
+				if (component == null)
 				{
-					localize = label.gameObject.AddComponent<Localize>();
+					component = _label.gameObject.AddComponent<Localize>();
 				}
-				localize.Term = LocalizationKey;
+				component.Term = this.LocalizationKey;
 			}
-			Text = LocalizationStore.Get(LocalizationKey);
-		}
-
-		[CompilerGenerated]
-		private void _003Cset_Text_003Em__463(UILabel l)
-		{
-			l.text = _text;
+			this.Text = LocalizationStore.Get(this.LocalizationKey);
 		}
 	}
 }

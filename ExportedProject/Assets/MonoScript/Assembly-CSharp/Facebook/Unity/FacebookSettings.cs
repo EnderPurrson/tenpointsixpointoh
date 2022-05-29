@@ -6,30 +6,6 @@ namespace Facebook.Unity
 {
 	public class FacebookSettings : ScriptableObject
 	{
-		[Serializable]
-		public class UrlSchemes
-		{
-			[SerializeField]
-			private List<string> list;
-
-			public List<string> Schemes
-			{
-				get
-				{
-					return list;
-				}
-				set
-				{
-					list = value;
-				}
-			}
-
-			public UrlSchemes(List<string> schemes = null)
-			{
-				list = ((schemes != null) ? schemes : new List<string>());
-			}
-		}
-
 		private const string FacebookSettingsAssetName = "FacebookSettings";
 
 		private const string FacebookSettingsPath = "FacebookSDK/SDK/Resources";
@@ -42,10 +18,16 @@ namespace Facebook.Unity
 		private int selectedAppIndex;
 
 		[SerializeField]
-		private List<string> appIds = new List<string> { "0" };
+		private List<string> appIds = new List<string>()
+		{
+			"0"
+		};
 
 		[SerializeField]
-		private List<string> appLabels = new List<string> { "App Name" };
+		private List<string> appLabels = new List<string>()
+		{
+			"App Name"
+		};
 
 		[SerializeField]
 		private bool cookie = true;
@@ -66,24 +48,16 @@ namespace Facebook.Unity
 		private string iosURLSuffix = string.Empty;
 
 		[SerializeField]
-		private List<UrlSchemes> appLinkSchemes = new List<UrlSchemes>
+		private List<FacebookSettings.UrlSchemes> appLinkSchemes = new List<FacebookSettings.UrlSchemes>()
 		{
-			new UrlSchemes()
+			new FacebookSettings.UrlSchemes(null)
 		};
 
-		public static int SelectedAppIndex
+		public static string AppId
 		{
 			get
 			{
-				return Instance.selectedAppIndex;
-			}
-			set
-			{
-				if (Instance.selectedAppIndex != value)
-				{
-					Instance.selectedAppIndex = value;
-					DirtyEditor();
-				}
+				return FacebookSettings.AppIds[FacebookSettings.SelectedAppIndex];
 			}
 		}
 
@@ -91,14 +65,14 @@ namespace Facebook.Unity
 		{
 			get
 			{
-				return Instance.appIds;
+				return FacebookSettings.Instance.appIds;
 			}
 			set
 			{
-				if (Instance.appIds != value)
+				if (FacebookSettings.Instance.appIds != value)
 				{
-					Instance.appIds = value;
-					DirtyEditor();
+					FacebookSettings.Instance.appIds = value;
+					FacebookSettings.DirtyEditor();
 				}
 			}
 		}
@@ -107,110 +81,30 @@ namespace Facebook.Unity
 		{
 			get
 			{
-				return Instance.appLabels;
+				return FacebookSettings.Instance.appLabels;
 			}
 			set
 			{
-				if (Instance.appLabels != value)
+				if (FacebookSettings.Instance.appLabels != value)
 				{
-					Instance.appLabels = value;
-					DirtyEditor();
+					FacebookSettings.Instance.appLabels = value;
+					FacebookSettings.DirtyEditor();
 				}
 			}
 		}
 
-		public static string AppId
+		public static List<FacebookSettings.UrlSchemes> AppLinkSchemes
 		{
 			get
 			{
-				return AppIds[SelectedAppIndex];
-			}
-		}
-
-		public static bool IsValidAppId
-		{
-			get
-			{
-				return AppId != null && AppId.Length > 0 && !AppId.Equals("0");
-			}
-		}
-
-		public static bool Cookie
-		{
-			get
-			{
-				return Instance.cookie;
+				return FacebookSettings.Instance.appLinkSchemes;
 			}
 			set
 			{
-				if (Instance.cookie != value)
+				if (FacebookSettings.Instance.appLinkSchemes != value)
 				{
-					Instance.cookie = value;
-					DirtyEditor();
-				}
-			}
-		}
-
-		public static bool Logging
-		{
-			get
-			{
-				return Instance.logging;
-			}
-			set
-			{
-				if (Instance.logging != value)
-				{
-					Instance.logging = value;
-					DirtyEditor();
-				}
-			}
-		}
-
-		public static bool Status
-		{
-			get
-			{
-				return Instance.status;
-			}
-			set
-			{
-				if (Instance.status != value)
-				{
-					Instance.status = value;
-					DirtyEditor();
-				}
-			}
-		}
-
-		public static bool Xfbml
-		{
-			get
-			{
-				return Instance.xfbml;
-			}
-			set
-			{
-				if (Instance.xfbml != value)
-				{
-					Instance.xfbml = value;
-					DirtyEditor();
-				}
-			}
-		}
-
-		public static string IosURLSuffix
-		{
-			get
-			{
-				return Instance.iosURLSuffix;
-			}
-			set
-			{
-				if (Instance.iosURLSuffix != value)
-				{
-					Instance.iosURLSuffix = value;
-					DirtyEditor();
+					FacebookSettings.Instance.appLinkSchemes = value;
+					FacebookSettings.DirtyEditor();
 				}
 			}
 		}
@@ -223,34 +117,34 @@ namespace Facebook.Unity
 			}
 		}
 
-		public static bool FrictionlessRequests
+		public static bool Cookie
 		{
 			get
 			{
-				return Instance.frictionlessRequests;
+				return FacebookSettings.Instance.cookie;
 			}
 			set
 			{
-				if (Instance.frictionlessRequests != value)
+				if (FacebookSettings.Instance.cookie != value)
 				{
-					Instance.frictionlessRequests = value;
-					DirtyEditor();
+					FacebookSettings.Instance.cookie = value;
+					FacebookSettings.DirtyEditor();
 				}
 			}
 		}
 
-		public static List<UrlSchemes> AppLinkSchemes
+		public static bool FrictionlessRequests
 		{
 			get
 			{
-				return Instance.appLinkSchemes;
+				return FacebookSettings.Instance.frictionlessRequests;
 			}
 			set
 			{
-				if (Instance.appLinkSchemes != value)
+				if (FacebookSettings.Instance.frictionlessRequests != value)
 				{
-					Instance.appLinkSchemes = value;
-					DirtyEditor();
+					FacebookSettings.Instance.frictionlessRequests = value;
+					FacebookSettings.DirtyEditor();
 				}
 			}
 		}
@@ -259,25 +153,141 @@ namespace Facebook.Unity
 		{
 			get
 			{
-				if (instance == null)
+				if (FacebookSettings.instance == null)
 				{
-					instance = Resources.Load("FacebookSettings") as FacebookSettings;
-					if (instance == null)
+					FacebookSettings.instance = Resources.Load("FacebookSettings") as FacebookSettings;
+					if (FacebookSettings.instance == null)
 					{
-						instance = ScriptableObject.CreateInstance<FacebookSettings>();
+						FacebookSettings.instance = ScriptableObject.CreateInstance<FacebookSettings>();
 					}
 				}
-				return instance;
+				return FacebookSettings.instance;
 			}
 		}
 
-		public static void SettingsChanged()
+		public static string IosURLSuffix
 		{
-			DirtyEditor();
+			get
+			{
+				return FacebookSettings.Instance.iosURLSuffix;
+			}
+			set
+			{
+				if (FacebookSettings.Instance.iosURLSuffix != value)
+				{
+					FacebookSettings.Instance.iosURLSuffix = value;
+					FacebookSettings.DirtyEditor();
+				}
+			}
+		}
+
+		public static bool IsValidAppId
+		{
+			get
+			{
+				return (FacebookSettings.AppId == null || FacebookSettings.AppId.Length <= 0 ? false : !FacebookSettings.AppId.Equals("0"));
+			}
+		}
+
+		public static bool Logging
+		{
+			get
+			{
+				return FacebookSettings.Instance.logging;
+			}
+			set
+			{
+				if (FacebookSettings.Instance.logging != value)
+				{
+					FacebookSettings.Instance.logging = value;
+					FacebookSettings.DirtyEditor();
+				}
+			}
+		}
+
+		public static int SelectedAppIndex
+		{
+			get
+			{
+				return FacebookSettings.Instance.selectedAppIndex;
+			}
+			set
+			{
+				if (FacebookSettings.Instance.selectedAppIndex != value)
+				{
+					FacebookSettings.Instance.selectedAppIndex = value;
+					FacebookSettings.DirtyEditor();
+				}
+			}
+		}
+
+		public static bool Status
+		{
+			get
+			{
+				return FacebookSettings.Instance.status;
+			}
+			set
+			{
+				if (FacebookSettings.Instance.status != value)
+				{
+					FacebookSettings.Instance.status = value;
+					FacebookSettings.DirtyEditor();
+				}
+			}
+		}
+
+		public static bool Xfbml
+		{
+			get
+			{
+				return FacebookSettings.Instance.xfbml;
+			}
+			set
+			{
+				if (FacebookSettings.Instance.xfbml != value)
+				{
+					FacebookSettings.Instance.xfbml = value;
+					FacebookSettings.DirtyEditor();
+				}
+			}
+		}
+
+		public FacebookSettings()
+		{
 		}
 
 		private static void DirtyEditor()
 		{
+		}
+
+		public static void SettingsChanged()
+		{
+			FacebookSettings.DirtyEditor();
+		}
+
+		[Serializable]
+		public class UrlSchemes
+		{
+			[SerializeField]
+			private List<string> list;
+
+			public List<string> Schemes
+			{
+				get
+				{
+					return this.list;
+				}
+				set
+				{
+					this.list = value;
+				}
+			}
+
+			public UrlSchemes(List<string> schemes = null)
+			{
+				this.list = (schemes != null ? schemes : new List<string>());
+			}
 		}
 	}
 }

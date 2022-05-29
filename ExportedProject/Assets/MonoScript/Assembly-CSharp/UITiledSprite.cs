@@ -1,13 +1,18 @@
+using System;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class UITiledSprite : UISlicedSprite
 {
-	public override Type type
+	public override UIBasicSprite.Type type
 	{
 		get
 		{
-			return Type.Tiled;
+			return UIBasicSprite.Type.Tiled;
 		}
+	}
+
+	public UITiledSprite()
+	{
 	}
 }

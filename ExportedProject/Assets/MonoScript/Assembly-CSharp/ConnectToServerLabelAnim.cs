@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class ConnectToServerLabelAnim : MonoBehaviour
@@ -12,30 +13,34 @@ public class ConnectToServerLabelAnim : MonoBehaviour
 
 	private float maxTimer = 1f;
 
+	public ConnectToServerLabelAnim()
+	{
+	}
+
 	private void Start()
 	{
-		timer = maxTimer;
-		startText = LocalizationStore.Key_0564;
-		myLabel.text = startText;
+		this.timer = this.maxTimer;
+		this.startText = LocalizationStore.Key_0564;
+		this.myLabel.text = this.startText;
 	}
 
 	private void Update()
 	{
-		timer -= Time.deltaTime;
-		if (timer < 0f)
+		this.timer -= Time.deltaTime;
+		if (this.timer < 0f)
 		{
-			timer = maxTimer;
-			stateLabel++;
-			if (stateLabel > 3)
+			this.timer = this.maxTimer;
+			this.stateLabel++;
+			if (this.stateLabel > 3)
 			{
-				stateLabel = 0;
+				this.stateLabel = 0;
 			}
-			string text = string.Empty;
-			for (int i = 0; i < stateLabel; i++)
+			string empty = string.Empty;
+			for (int i = 0; i < this.stateLabel; i++)
 			{
-				text += ".";
+				empty = string.Concat(empty, ".");
 			}
-			myLabel.text = string.Format("{0} {1}", startText, text);
+			this.myLabel.text = string.Format("{0} {1}", this.startText, empty);
 		}
 	}
 }

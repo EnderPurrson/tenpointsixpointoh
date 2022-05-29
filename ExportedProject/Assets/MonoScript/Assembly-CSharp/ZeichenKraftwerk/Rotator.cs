@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ZeichenKraftwerk
@@ -8,14 +9,18 @@ namespace ZeichenKraftwerk
 
 		private Transform myTransform;
 
+		public Rotator()
+		{
+		}
+
 		public void Start()
 		{
-			myTransform = base.transform;
+			this.myTransform = base.transform;
 		}
 
 		private void Update()
 		{
-			myTransform.Rotate(eulersPerSecond * RealTime.deltaTime);
+			this.myTransform.Rotate(this.eulersPerSecond * RealTime.deltaTime);
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,48 +13,33 @@ public class UIToggledObjects : MonoBehaviour
 	[SerializeField]
 	private GameObject target;
 
-	[SerializeField]
 	[HideInInspector]
+	[SerializeField]
 	private bool inverse;
+
+	public UIToggledObjects()
+	{
+	}
 
 	private void Awake()
 	{
-		if (target != null)
+		if (this.target != null)
 		{
-			if (activate.Count == 0 && deactivate.Count == 0)
+			if (this.activate.Count != 0 || this.deactivate.Count != 0)
 			{
-				if (inverse)
-				{
-					deactivate.Add(target);
-				}
-				else
-				{
-					activate.Add(target);
-				}
+				this.target = null;
+			}
+			else if (!this.inverse)
+			{
+				this.activate.Add(this.target);
 			}
 			else
 			{
-				target = null;
+				this.deactivate.Add(this.target);
 			}
 		}
-		UIToggle component = GetComponent<UIToggle>();
-		EventDelegate.Add(component.onChange, Toggle);
-	}
-
-	public void Toggle()
-	{
-		bool value = UIToggle.current.value;
-		if (base.enabled)
-		{
-			for (int i = 0; i < activate.Count; i++)
-			{
-				Set(activate[i], value);
-			}
-			for (int j = 0; j < deactivate.Count; j++)
-			{
-				Set(deactivate[j], !value);
-			}
-		}
+		UIToggle component = base.GetComponent<UIToggle>();
+		EventDelegate.Add(component.onChange, new EventDelegate.Callback(this.Toggle));
 	}
 
 	private void Set(GameObject go, bool state)
@@ -61,6 +47,22 @@ public class UIToggledObjects : MonoBehaviour
 		if (go != null)
 		{
 			NGUITools.SetActive(go, state);
+		}
+	}
+
+	public void Toggle()
+	{
+		bool flag = UIToggle.current.@value;
+		if (base.enabled)
+		{
+			for (int i = 0; i < this.activate.Count; i++)
+			{
+				this.Set(this.activate[i], flag);
+			}
+			for (int j = 0; j < this.deactivate.Count; j++)
+			{
+				this.Set(this.deactivate[j], !flag);
+			}
 		}
 	}
 }

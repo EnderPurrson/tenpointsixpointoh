@@ -1,15 +1,10 @@
+using System;
 using UnityEngine;
 
 namespace RilisoftBot
 {
 	public class MeleeShootBot : ShootingBot
 	{
-		public enum AttackType
-		{
-			MeleeAndShoot = 0,
-			MeleeAndShootAtTime = 1
-		}
-
 		[Header("Melee damage settings")]
 		public float meleeAttackDetect = 6f;
 
@@ -18,7 +13,7 @@ namespace RilisoftBot
 		public float meleeDamagePerHit = 5f;
 
 		[Header("Attack settings")]
-		public AttackType attackType;
+		public MeleeShootBot.AttackType attackType;
 
 		public float minTimeToShoot = 30f;
 
@@ -34,117 +29,127 @@ namespace RilisoftBot
 
 		private float nextShootTime;
 
-		private string GameNameMeleeAnimation()
+		public MeleeShootBot()
 		{
-			if (modelCollider == null)
-			{
-				return string.Empty;
-			}
-			string arg = modelCollider.gameObject.name;
-			return string.Format("{0}_shooting", arg);
-		}
-
-		protected override void Initialize()
-		{
-			base.Initialize();
-			animationNameMelee = GameNameMeleeAnimation();
-			nextShootTime = Time.time + Random.Range(minTimeToShoot, maxTimeToShoot);
-		}
-
-		public override void DelayShootAfterEvent(float seconds)
-		{
-			if (nextShootTime < Time.time + seconds)
-			{
-				nextShootTime = Time.time + seconds;
-			}
 		}
 
 		public override bool CheckEnemyInAttackZone(float distanceToEnemy)
 		{
-			float squareAttackDistance = GetSquareAttackDistance();
-			isEnemyInMeleeZone = false;
+			float squareAttackDistance = base.GetSquareAttackDistance();
+			this.isEnemyInMeleeZone = false;
 			if (distanceToEnemy < squareAttackDistance)
 			{
-				if (distanceToEnemy < meleeAttackDetect * meleeAttackDetect)
+				if (distanceToEnemy < this.meleeAttackDetect * this.meleeAttackDetect)
 				{
-					isEnemyInMeleeZone = true;
-					if (distanceToEnemy < meleeAttackDistance * meleeAttackDistance)
+					this.isEnemyInMeleeZone = true;
+					if (distanceToEnemy < this.meleeAttackDistance * this.meleeAttackDistance)
 					{
 						return true;
 					}
 					return false;
 				}
-				if (attackType == AttackType.MeleeAndShootAtTime && nextShootTime < Time.time)
+				if (this.attackType == MeleeShootBot.AttackType.MeleeAndShootAtTime && this.nextShootTime < Time.time)
 				{
 					return true;
 				}
-				if (attackType != AttackType.MeleeAndShootAtTime)
+				if (this.attackType != MeleeShootBot.AttackType.MeleeAndShootAtTime)
 				{
-					isEnemyEnterInAttackZone = true;
+					this.isEnemyEnterInAttackZone = true;
 					return true;
 				}
 			}
-			if (isEnemyEnterInAttackZone)
+			if (this.isEnemyEnterInAttackZone)
 			{
-				squareAttackDistance += rangeShootingDistance * rangeShootingDistance;
+				squareAttackDistance = squareAttackDistance + this.rangeShootingDistance * this.rangeShootingDistance;
 				if (distanceToEnemy < squareAttackDistance)
 				{
 					return true;
 				}
 			}
-			isEnemyEnterInAttackZone = false;
+			this.isEnemyEnterInAttackZone = false;
 			return false;
+		}
+
+		public override void DelayShootAfterEvent(float seconds)
+		{
+			if (this.nextShootTime < Time.time + seconds)
+			{
+				this.nextShootTime = Time.time + seconds;
+			}
+		}
+
+		private string GameNameMeleeAnimation()
+		{
+			if (this.modelCollider == null)
+			{
+				return string.Empty;
+			}
+			return string.Format("{0}_shooting", this.modelCollider.gameObject.name);
+		}
+
+		protected override void Initialize()
+		{
+			base.Initialize();
+			this.animationNameMelee = this.GameNameMeleeAnimation();
+			this.nextShootTime = Time.time + UnityEngine.Random.Range(this.minTimeToShoot, this.maxTimeToShoot);
 		}
 
 		protected override void MakeShot(GameObject target)
 		{
-			if (wasMeleeShot)
+			if (!this.wasMeleeShot)
 			{
-				Melee(target);
-				return;
-			}
-			if (attackType == AttackType.MeleeAndShootAtTime)
-			{
-				nextShootTime = Time.time + Random.Range(minTimeToShoot, maxTimeToShoot);
-			}
-			base.MakeShot(target);
-		}
-
-		protected override void PlayAnimationZombieAttackOrStop()
-		{
-			if (isEnemyInMeleeZone)
-			{
-				wasMeleeShot = true;
-				if ((bool)animations[animationNameMelee])
+				if (this.attackType == MeleeShootBot.AttackType.MeleeAndShootAtTime)
 				{
-					animations.CrossFade(animationNameMelee);
+					this.nextShootTime = Time.time + UnityEngine.Random.Range(this.minTimeToShoot, this.maxTimeToShoot);
 				}
-				else if ((bool)animations[animationsName.Stop])
-				{
-					animations.CrossFade(animationsName.Stop);
-				}
+				base.MakeShot(target);
 			}
 			else
 			{
-				wasMeleeShot = false;
-				if ((bool)animations[animationsName.Attack])
-				{
-					animations.CrossFade(animationsName.Attack);
-				}
-				else if ((bool)animations[animationsName.Stop])
-				{
-					animations.CrossFade(animationsName.Stop);
-				}
+				this.Melee(target);
 			}
 		}
 
 		private void Melee(GameObject target)
 		{
-			float num = Vector3.SqrMagnitude(target.transform.position - base.transform.position);
-			if (num < meleeAttackDistance * meleeAttackDistance)
+			if (Vector3.SqrMagnitude(target.transform.position - base.transform.position) < this.meleeAttackDistance * this.meleeAttackDistance)
 			{
-				MakeDamage(target.transform, meleeDamagePerHit);
+				base.MakeDamage(target.transform, this.meleeDamagePerHit);
 			}
+		}
+
+		protected override void PlayAnimationZombieAttackOrStop()
+		{
+			if (!this.isEnemyInMeleeZone)
+			{
+				this.wasMeleeShot = false;
+				if (this.animations[this.animationsName.Attack])
+				{
+					this.animations.CrossFade(this.animationsName.Attack);
+				}
+				else if (this.animations[this.animationsName.Stop])
+				{
+					this.animations.CrossFade(this.animationsName.Stop);
+				}
+			}
+			else
+			{
+				this.wasMeleeShot = true;
+				if (this.animations[this.animationNameMelee])
+				{
+					this.animations.CrossFade(this.animationNameMelee);
+				}
+				else if (this.animations[this.animationsName.Stop])
+				{
+					this.animations.CrossFade(this.animationsName.Stop);
+				}
+			}
+		}
+
+		public enum AttackType
+		{
+			MeleeAndShoot,
+			MeleeAndShootAtTime
 		}
 	}
 }

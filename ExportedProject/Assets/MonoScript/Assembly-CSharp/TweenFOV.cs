@@ -1,11 +1,11 @@
 using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
 [AddComponentMenu("NGUI/Tween/Tween Field of View")]
+[RequireComponent(typeof(Camera))]
 public class TweenFOV : UITweener
 {
-	public float from = 45f;
+	public float @from = 45f;
 
 	public float to = 45f;
 
@@ -15,11 +15,11 @@ public class TweenFOV : UITweener
 	{
 		get
 		{
-			if (mCam == null)
+			if (this.mCam == null)
 			{
-				mCam = GetComponent<Camera>();
+				this.mCam = base.GetComponent<Camera>();
 			}
-			return mCam;
+			return this.mCam;
 		}
 	}
 
@@ -28,35 +28,34 @@ public class TweenFOV : UITweener
 	{
 		get
 		{
-			return value;
+			return this.@value;
 		}
 		set
 		{
-			this.value = value;
+			this.@value = value;
 		}
 	}
 
-	public float value
+	public float @value
 	{
 		get
 		{
-			return cachedCamera.fieldOfView;
+			return this.cachedCamera.fieldOfView;
 		}
 		set
 		{
-			cachedCamera.fieldOfView = value;
+			this.cachedCamera.fieldOfView = value;
 		}
 	}
 
-	protected override void OnUpdate(float factor, bool isFinished)
+	public TweenFOV()
 	{
-		value = from * (1f - factor) + to * factor;
 	}
 
 	public static TweenFOV Begin(GameObject go, float duration, float to)
 	{
 		TweenFOV tweenFOV = UITweener.Begin<TweenFOV>(go, duration);
-		tweenFOV.from = tweenFOV.value;
+		tweenFOV.@from = tweenFOV.@value;
 		tweenFOV.to = to;
 		if (duration <= 0f)
 		{
@@ -66,27 +65,32 @@ public class TweenFOV : UITweener
 		return tweenFOV;
 	}
 
-	[ContextMenu("Set 'From' to current value")]
-	public override void SetStartToCurrentValue()
+	protected override void OnUpdate(float factor, bool isFinished)
 	{
-		from = value;
-	}
-
-	[ContextMenu("Set 'To' to current value")]
-	public override void SetEndToCurrentValue()
-	{
-		to = value;
-	}
-
-	[ContextMenu("Assume value of 'From'")]
-	private void SetCurrentValueToStart()
-	{
-		value = from;
+		this.@value = this.@from * (1f - factor) + this.to * factor;
 	}
 
 	[ContextMenu("Assume value of 'To'")]
 	private void SetCurrentValueToEnd()
 	{
-		value = to;
+		this.@value = this.to;
+	}
+
+	[ContextMenu("Assume value of 'From'")]
+	private void SetCurrentValueToStart()
+	{
+		this.@value = this.@from;
+	}
+
+	[ContextMenu("Set 'To' to current value")]
+	public override void SetEndToCurrentValue()
+	{
+		this.to = this.@value;
+	}
+
+	[ContextMenu("Set 'From' to current value")]
+	public override void SetStartToCurrentValue()
+	{
+		this.@from = this.@value;
 	}
 }

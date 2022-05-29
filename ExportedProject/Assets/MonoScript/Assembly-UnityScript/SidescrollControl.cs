@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
 
-[Serializable]
 [RequireComponent(typeof(CharacterController))]
+[Serializable]
 public class SidescrollControl : MonoBehaviour
 {
 	public Joystick moveTouchPad;
@@ -27,70 +27,72 @@ public class SidescrollControl : MonoBehaviour
 
 	public SidescrollControl()
 	{
-		forwardSpeed = 4f;
-		backwardSpeed = 4f;
-		jumpSpeed = 16f;
-		inAirMultiplier = 0.25f;
-		canJump = true;
-	}
-
-	public override void Start()
-	{
-		thisTransform = (Transform)GetComponent(typeof(Transform));
-		character = (CharacterController)GetComponent(typeof(CharacterController));
-		GameObject gameObject = GameObject.Find("PlayerSpawn");
-		if ((bool)gameObject)
-		{
-			thisTransform.position = gameObject.transform.position;
-		}
-	}
-
-	public override void OnEndGame()
-	{
-		moveTouchPad.Disable();
-		jumpTouchPad.Disable();
-		enabled = false;
-	}
-
-	public override void Update()
-	{
-		Vector3 zero = Vector3.zero;
-		zero = ((moveTouchPad.position.x <= 0f) ? (Vector3.right * backwardSpeed * moveTouchPad.position.x) : (Vector3.right * forwardSpeed * moveTouchPad.position.x));
-		if (character.isGrounded)
-		{
-			bool flag = false;
-			Joystick joystick = jumpTouchPad;
-			if (!joystick.IsFingerDown())
-			{
-				canJump = true;
-			}
-			if (canJump && joystick.IsFingerDown())
-			{
-				flag = true;
-				canJump = false;
-			}
-			if (flag)
-			{
-				velocity = character.velocity;
-				velocity.y = jumpSpeed;
-			}
-		}
-		else
-		{
-			velocity.y += Physics.gravity.y * Time.deltaTime;
-			zero.x *= inAirMultiplier;
-		}
-		zero += velocity;
-		zero += Physics.gravity;
-		zero *= Time.deltaTime;
-		character.Move(zero);
-		if (character.isGrounded)
-		{
-			velocity = Vector3.zero;
-		}
+		this.forwardSpeed = (float)4;
+		this.backwardSpeed = (float)4;
+		this.jumpSpeed = (float)16;
+		this.inAirMultiplier = 0.25f;
+		this.canJump = true;
 	}
 
 	public override void Main()
 	{
+	}
+
+	public override void OnEndGame()
+	{
+		this.moveTouchPad.Disable();
+		this.jumpTouchPad.Disable();
+		this.enabled = false;
+	}
+
+	public override void Start()
+	{
+		this.thisTransform = (Transform)this.GetComponent(typeof(Transform));
+		this.character = (CharacterController)this.GetComponent(typeof(CharacterController));
+		GameObject gameObject = GameObject.Find("PlayerSpawn");
+		if (gameObject)
+		{
+			this.thisTransform.position = gameObject.transform.position;
+		}
+	}
+
+	public override void Update()
+	{
+		Vector3 vector3 = Vector3.zero;
+		vector3 = (this.moveTouchPad.position.x <= (float)0 ? (Vector3.right * this.backwardSpeed) * this.moveTouchPad.position.x : (Vector3.right * this.forwardSpeed) * this.moveTouchPad.position.x);
+		if (!this.character.isGrounded)
+		{
+			float single = this.velocity.y;
+			Vector3 vector31 = Physics.gravity;
+			this.velocity.y = single + vector31.y * Time.deltaTime;
+			vector3.x *= this.inAirMultiplier;
+		}
+		else
+		{
+			bool flag = false;
+			Joystick joystick = this.jumpTouchPad;
+			if (!joystick.IsFingerDown())
+			{
+				this.canJump = true;
+			}
+			if (this.canJump && joystick.IsFingerDown())
+			{
+				flag = true;
+				this.canJump = false;
+			}
+			if (flag)
+			{
+				this.velocity = this.character.velocity;
+				this.velocity.y = this.jumpSpeed;
+			}
+		}
+		vector3 += this.velocity;
+		vector3 += Physics.gravity;
+		vector3 *= Time.deltaTime;
+		this.character.Move(vector3);
+		if (this.character.isGrounded)
+		{
+			this.velocity = Vector3.zero;
+		}
 	}
 }

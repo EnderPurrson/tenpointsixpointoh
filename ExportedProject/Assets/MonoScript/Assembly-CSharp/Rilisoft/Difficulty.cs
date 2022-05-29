@@ -1,10 +1,12 @@
+using System;
+
 namespace Rilisoft
 {
 	public enum Difficulty
 	{
-		None = 0,
-		Easy = 1,
-		Normal = 2,
-		Hard = 3
+		None,
+		Easy,
+		Normal,
+		Hard
 	}
 }

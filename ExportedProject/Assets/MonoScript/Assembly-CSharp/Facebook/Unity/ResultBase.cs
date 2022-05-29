@@ -1,112 +1,133 @@
+using Facebook.MiniJSON;
 using System;
 using System.Collections.Generic;
-using Facebook.MiniJSON;
+using System.Runtime.CompilerServices;
 
 namespace Facebook.Unity
 {
 	internal abstract class ResultBase : IInternalResult, IResult
 	{
-		public virtual string Error { get; protected set; }
+		public virtual string CallbackId
+		{
+			get;
+			protected set;
+		}
 
-		public virtual IDictionary<string, object> ResultDictionary { get; protected set; }
+		public virtual bool Cancelled
+		{
+			get;
+			protected set;
+		}
 
-		public virtual string RawResult { get; protected set; }
+		public virtual string Error
+		{
+			get;
+			protected set;
+		}
 
-		public virtual bool Cancelled { get; protected set; }
+		public virtual string RawResult
+		{
+			get;
+			protected set;
+		}
 
-		public virtual string CallbackId { get; protected set; }
+		public virtual IDictionary<string, object> ResultDictionary
+		{
+			get;
+			protected set;
+		}
 
 		internal ResultBase(string result)
 		{
-			string error = null;
-			bool cancelled = false;
+			string errorValue = null;
+			bool cancelledValue = false;
 			string callbackId = null;
 			if (!string.IsNullOrEmpty(result))
 			{
-				Dictionary<string, object> dictionary = Json.Deserialize(result) as Dictionary<string, object>;
-				if (dictionary != null)
+				Dictionary<string, object> strs = Json.Deserialize(result) as Dictionary<string, object>;
+				if (strs != null)
 				{
-					ResultDictionary = dictionary;
-					error = GetErrorValue(dictionary);
-					cancelled = GetCancelledValue(dictionary);
-					callbackId = GetCallbackId(dictionary);
+					this.ResultDictionary = strs;
+					errorValue = ResultBase.GetErrorValue(strs);
+					cancelledValue = ResultBase.GetCancelledValue(strs);
+					callbackId = ResultBase.GetCallbackId(strs);
 				}
 			}
-			Init(result, error, cancelled, callbackId);
+			this.Init(result, errorValue, cancelledValue, callbackId);
 		}
 
 		internal ResultBase(string result, string error, bool cancelled)
 		{
-			Init(result, error, cancelled, null);
+			this.Init(result, error, cancelled, null);
 		}
 
-		public override string ToString()
+		private static string GetCallbackId(IDictionary<string, object> result)
 		{
-			return string.Format("[BaseResult: Error={0}, Result={1}, RawResult={2}, Cancelled={3}]", Error, ResultDictionary, RawResult, Cancelled);
-		}
-
-		protected void Init(string result, string error, bool cancelled, string callbackId)
-		{
-			RawResult = result;
-			Cancelled = cancelled;
-			Error = error;
-			CallbackId = callbackId;
-		}
-
-		private static string GetErrorValue(IDictionary<string, object> result)
-		{
+			string str;
 			if (result == null)
 			{
 				return null;
 			}
-			string value;
-			if (result.TryGetValue<string>("error", out value))
+			if (result.TryGetValue<string>("callback_id", out str))
 			{
-				return value;
+				return str;
 			}
 			return null;
 		}
 
 		private static bool GetCancelledValue(IDictionary<string, object> result)
 		{
+			object obj;
 			if (result == null)
 			{
 				return false;
 			}
-			object value;
-			if (result.TryGetValue("cancelled", out value))
+			if (result.TryGetValue("cancelled", out obj))
 			{
-				bool? flag = value as bool?;
-				if (flag.HasValue)
+				bool? nullable = (bool?)(obj as bool?);
+				if (nullable.HasValue)
 				{
-					return flag.HasValue && flag.Value;
+					return (!nullable.HasValue ? false : nullable.Value);
 				}
-				string text = value as string;
-				if (text != null)
+				string str = obj as string;
+				if (str != null)
 				{
-					return Convert.ToBoolean(text);
+					return Convert.ToBoolean(str);
 				}
-				int? num = value as int?;
-				if (num.HasValue)
+				int? nullable1 = (int?)(obj as int?);
+				if (nullable1.HasValue)
 				{
-					return num.HasValue && num.Value != 0;
+					return (!nullable1.HasValue ? false : nullable1.Value != 0);
 				}
 			}
 			return false;
 		}
 
-		private static string GetCallbackId(IDictionary<string, object> result)
+		private static string GetErrorValue(IDictionary<string, object> result)
 		{
+			string str;
 			if (result == null)
 			{
 				return null;
 			}
-			string value;
-			if (result.TryGetValue<string>("callback_id", out value))
+			if (result.TryGetValue<string>("error", out str))
 			{
-				return value;
+				return str;
 			}
 			return null;
+		}
+
+		protected void Init(string result, string error, bool cancelled, string callbackId)
+		{
+			this.RawResult = result;
+			this.Cancelled = cancelled;
+			this.Error = error;
+			this.CallbackId = callbackId;
+		}
+
+		public override string ToString()
+		{
+			return string.Format("[BaseResult: Error={0}, Result={1}, RawResult={2}, Cancelled={3}]", new object[] { this.Error, this.ResultDictionary, this.RawResult, this.Cancelled });
 		}
 	}
 }

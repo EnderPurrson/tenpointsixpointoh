@@ -5,7 +5,7 @@ public class OperationCode
 	[Obsolete("Exchanging encrpytion keys is done internally in the lib now. Don't expect this operation-result.")]
 	public const byte ExchangeKeysForEncryption = 250;
 
-	public const byte Join = byte.MaxValue;
+	public const byte Join = 255;
 
 	public const byte Authenticate = 230;
 
@@ -36,4 +36,8 @@ public class OperationCode
 	public const byte GetRegions = 220;
 
 	public const byte WebRpc = 219;
+
+	public OperationCode()
+	{
+	}
 }

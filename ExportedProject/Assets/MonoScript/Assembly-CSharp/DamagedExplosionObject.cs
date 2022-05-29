@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DamagedExplosionObject : BaseExplosionObject
@@ -17,43 +18,54 @@ public class DamagedExplosionObject : BaseExplosionObject
 
 	private float _maxHealth;
 
+	public DamagedExplosionObject()
+	{
+	}
+
 	public void GetDamage(float damage)
 	{
-		if (!(healthPoints <= 0f))
+		if (this.healthPoints <= 0f)
 		{
-			float num = healthPoints / 100f * healthPoints;
-			if (num <= percentHealthForFireEffect && !fireEffect.activeSelf)
-			{
-				SetVisibleFireEffect(true);
-				Invoke("RunExplosion", timeToDestroyByFire);
-			}
-			healthPoints += damage;
-			if (healthPoints <= 0f)
-			{
-				healthPoints = 0f;
-				RunExplosion();
-			}
+			return;
+		}
+		if (this.healthPoints / 100f * this.healthPoints <= this.percentHealthForFireEffect && !this.fireEffect.activeSelf)
+		{
+			this.SetVisibleFireEffect(true);
+			base.Invoke("RunExplosion", this.timeToDestroyByFire);
+		}
+		this.healthPoints += damage;
+		if (this.healthPoints <= 0f)
+		{
+			this.healthPoints = 0f;
+			base.RunExplosion();
 		}
 	}
 
 	protected override void InitializeData()
 	{
 		base.InitializeData();
-		_maxHealth = healthPoints;
-		SetVisibleFireEffect(false);
+		this._maxHealth = this.healthPoints;
+		this.SetVisibleFireEffect(false);
 	}
 
 	private void SetVisibleFireEffect(bool visible)
 	{
-		if (isMultiplayerMode)
+		if (!this.isMultiplayerMode)
 		{
-			SetVisibleFireEffectRpc(visible);
-			photonView.RPC("SetVisibleFireEffectRpc", PhotonTargets.Others, visible);
+			this.fireEffect.SetActive(visible);
 		}
 		else
 		{
-			fireEffect.SetActive(visible);
+			this.SetVisibleFireEffectRpc(visible);
+			this.photonView.RPC("SetVisibleFireEffectRpc", PhotonTargets.Others, new object[] { visible });
 		}
+	}
+
+	[PunRPC]
+	[RPC]
+	private void SetVisibleFireEffectRpc(bool visible)
+	{
+		this.fireEffect.SetActive(visible);
 	}
 
 	public static void TryApplyDamageToObject(GameObject explosionObject, float damage)
@@ -63,12 +75,5 @@ public class DamagedExplosionObject : BaseExplosionObject
 		{
 			component.GetDamage(damage);
 		}
-	}
-
-	[PunRPC]
-	[RPC]
-	private void SetVisibleFireEffectRpc(bool visible)
-	{
-		fireEffect.SetActive(visible);
 	}
 }

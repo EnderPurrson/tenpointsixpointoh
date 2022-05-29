@@ -1,5 +1,7 @@
-using System;
 using GooglePlayGames.BasicApi.SavedGame;
+using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Rilisoft
 {
@@ -19,7 +21,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return GetType().Name;
+				return this.GetType().Name;
 			}
 		}
 
@@ -27,7 +29,7 @@ namespace Rilisoft
 		{
 			get
 			{
-				return _filename;
+				return this._filename;
 			}
 		}
 
@@ -39,7 +41,29 @@ namespace Rilisoft
 			}
 		}
 
-		public DateTime LastModifiedTimestamp { get; private set; }
+		public DateTime LastModifiedTimestamp
+		{
+			get
+			{
+				return JustDecompileGenerated_get_LastModifiedTimestamp();
+			}
+			set
+			{
+				JustDecompileGenerated_set_LastModifiedTimestamp(value);
+			}
+		}
+
+		private DateTime JustDecompileGenerated_LastModifiedTimestamp_k__BackingField;
+
+		public DateTime JustDecompileGenerated_get_LastModifiedTimestamp()
+		{
+			return this.JustDecompileGenerated_LastModifiedTimestamp_k__BackingField;
+		}
+
+		private void JustDecompileGenerated_set_LastModifiedTimestamp(DateTime value)
+		{
+			this.JustDecompileGenerated_LastModifiedTimestamp_k__BackingField = value;
+		}
 
 		public TimeSpan TotalTimePlayed
 		{
@@ -51,8 +75,8 @@ namespace Rilisoft
 
 		public DummySavedGameMetadata(string filename)
 		{
-			_filename = filename ?? string.Empty;
-			LastModifiedTimestamp = DateTime.Now;
+			this._filename = filename ?? string.Empty;
+			this.LastModifiedTimestamp = DateTime.Now;
 		}
 	}
 }

@@ -4,16 +4,34 @@ namespace GooglePlayGames.BasicApi.SavedGame
 {
 	public interface ISavedGameMetadata
 	{
-		bool IsOpen { get; }
+		string CoverImageURL
+		{
+			get;
+		}
 
-		string Filename { get; }
+		string Description
+		{
+			get;
+		}
 
-		string Description { get; }
+		string Filename
+		{
+			get;
+		}
 
-		string CoverImageURL { get; }
+		bool IsOpen
+		{
+			get;
+		}
 
-		TimeSpan TotalTimePlayed { get; }
+		DateTime LastModifiedTimestamp
+		{
+			get;
+		}
 
-		DateTime LastModifiedTimestamp { get; }
+		TimeSpan TotalTimePlayed
+		{
+			get;
+		}
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class loaddex
@@ -12,8 +13,21 @@ public class loaddex
 		}
 		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.appodeal.loaddex.LoadDex"))
 		{
-			_plugin = androidJavaClass.CallStatic<AndroidJavaObject>("instance", new object[0]);
+			loaddex._plugin = androidJavaClass.CallStatic<AndroidJavaObject>("instance", new object[0]);
 		}
+	}
+
+	public loaddex()
+	{
+	}
+
+	private static void load()
+	{
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return;
+		}
+		loaddex._plugin.Call("loadDex", new object[0]);
 	}
 
 	public static void loadDex()
@@ -24,18 +38,10 @@ public class loaddex
 		}
 		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
 		{
-			using (AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity"))
+			using (AndroidJavaObject @static = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity"))
 			{
-				androidJavaObject.Call("runOnUiThread", new AndroidJavaRunnable(load));
+				@static.Call("runOnUiThread", new object[] { new AndroidJavaRunnable(loaddex.load) });
 			}
-		}
-	}
-
-	private static void load()
-	{
-		if (Application.platform == RuntimePlatform.Android)
-		{
-			_plugin.Call("loadDex");
 		}
 	}
 }

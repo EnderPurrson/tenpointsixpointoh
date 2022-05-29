@@ -6,111 +6,6 @@ namespace LitJson
 {
 	public class JsonMockWrapper : IEnumerable, IList, IDictionary, ICollection, IOrderedDictionary, IJsonWrapper
 	{
-		bool IList.IsFixedSize
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		bool IList.IsReadOnly
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		object IList.this[int index]
-		{
-			get
-			{
-				return null;
-			}
-			set
-			{
-			}
-		}
-
-		int ICollection.Count
-		{
-			get
-			{
-				return 0;
-			}
-		}
-
-		bool ICollection.IsSynchronized
-		{
-			get
-			{
-				return false;
-			}
-		}
-
-		object ICollection.SyncRoot
-		{
-			get
-			{
-				return null;
-			}
-		}
-
-		bool IDictionary.IsFixedSize
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		bool IDictionary.IsReadOnly
-		{
-			get
-			{
-				return true;
-			}
-		}
-
-		ICollection IDictionary.Keys
-		{
-			get
-			{
-				return null;
-			}
-		}
-
-		ICollection IDictionary.Values
-		{
-			get
-			{
-				return null;
-			}
-		}
-
-		object IDictionary.this[object key]
-		{
-			get
-			{
-				return null;
-			}
-			set
-			{
-			}
-		}
-
-		object IOrderedDictionary.this[int idx]
-		{
-			get
-			{
-				return null;
-			}
-			set
-			{
-			}
-		}
-
 		public bool IsArray
 		{
 			get
@@ -167,78 +62,112 @@ namespace LitJson
 			}
 		}
 
-		int IList.Add(object value)
+		int System.Collections.ICollection.Count
 		{
-			return 0;
+			get
+			{
+				return 0;
+			}
 		}
 
-		void IList.Clear()
+		bool System.Collections.ICollection.IsSynchronized
 		{
+			get
+			{
+				return false;
+			}
 		}
 
-		bool IList.Contains(object value)
+		object System.Collections.ICollection.SyncRoot
 		{
-			return false;
+			get
+			{
+				return null;
+			}
 		}
 
-		int IList.IndexOf(object value)
+		bool System.Collections.IDictionary.IsFixedSize
 		{
-			return -1;
+			get
+			{
+				return true;
+			}
 		}
 
-		void IList.Insert(int i, object v)
+		bool System.Collections.IDictionary.IsReadOnly
 		{
+			get
+			{
+				return true;
+			}
 		}
 
-		void IList.Remove(object value)
+		object System.Collections.IDictionary.this[object key]
 		{
+			get
+			{
+				return null;
+			}
+			set
+			{
+			}
 		}
 
-		void IList.RemoveAt(int index)
+		ICollection System.Collections.IDictionary.Keys
 		{
+			get
+			{
+				return null;
+			}
 		}
 
-		void ICollection.CopyTo(Array array, int index)
+		ICollection System.Collections.IDictionary.Values
 		{
+			get
+			{
+				return null;
+			}
 		}
 
-		IEnumerator IEnumerable.GetEnumerator()
+		bool System.Collections.IList.IsFixedSize
 		{
-			return null;
+			get
+			{
+				return true;
+			}
 		}
 
-		void IDictionary.Add(object k, object v)
+		bool System.Collections.IList.IsReadOnly
 		{
+			get
+			{
+				return true;
+			}
 		}
 
-		void IDictionary.Clear()
+		object System.Collections.IList.this[int index]
 		{
+			get
+			{
+				return null;
+			}
+			set
+			{
+			}
 		}
 
-		bool IDictionary.Contains(object key)
+		object System.Collections.Specialized.IOrderedDictionary.this[int idx]
 		{
-			return false;
+			get
+			{
+				return null;
+			}
+			set
+			{
+			}
 		}
 
-		void IDictionary.Remove(object key)
-		{
-		}
-
-		IDictionaryEnumerator IDictionary.GetEnumerator()
-		{
-			return null;
-		}
-
-		IDictionaryEnumerator IOrderedDictionary.GetEnumerator()
-		{
-			return null;
-		}
-
-		void IOrderedDictionary.Insert(int i, object k, object v)
-		{
-		}
-
-		void IOrderedDictionary.RemoveAt(int i)
+		public JsonMockWrapper()
 		{
 		}
 
@@ -249,7 +178,7 @@ namespace LitJson
 
 		public double GetDouble()
 		{
-			return 0.0;
+			return 0;
 		}
 
 		public int GetInt()
@@ -264,7 +193,7 @@ namespace LitJson
 
 		public long GetLong()
 		{
-			return 0L;
+			return (long)0;
 		}
 
 		public string GetString()
@@ -293,6 +222,81 @@ namespace LitJson
 		}
 
 		public void SetString(string val)
+		{
+		}
+
+		void System.Collections.ICollection.CopyTo(Array array, int index)
+		{
+		}
+
+		void System.Collections.IDictionary.Add(object k, object v)
+		{
+		}
+
+		void System.Collections.IDictionary.Clear()
+		{
+		}
+
+		bool System.Collections.IDictionary.Contains(object key)
+		{
+			return false;
+		}
+
+		IDictionaryEnumerator System.Collections.IDictionary.GetEnumerator()
+		{
+			return null;
+		}
+
+		void System.Collections.IDictionary.Remove(object key)
+		{
+		}
+
+		IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return null;
+		}
+
+		int System.Collections.IList.Add(object value)
+		{
+			return 0;
+		}
+
+		void System.Collections.IList.Clear()
+		{
+		}
+
+		bool System.Collections.IList.Contains(object value)
+		{
+			return false;
+		}
+
+		int System.Collections.IList.IndexOf(object value)
+		{
+			return -1;
+		}
+
+		void System.Collections.IList.Insert(int i, object v)
+		{
+		}
+
+		void System.Collections.IList.Remove(object value)
+		{
+		}
+
+		void System.Collections.IList.RemoveAt(int index)
+		{
+		}
+
+		IDictionaryEnumerator System.Collections.Specialized.IOrderedDictionary.GetEnumerator()
+		{
+			return null;
+		}
+
+		void System.Collections.Specialized.IOrderedDictionary.Insert(int i, object k, object v)
+		{
+		}
+
+		void System.Collections.Specialized.IOrderedDictionary.RemoveAt(int i)
 		{
 		}
 
